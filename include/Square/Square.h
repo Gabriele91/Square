@@ -13,7 +13,10 @@
 #include "Square/Core/UtfConvert.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/SmartPointers.h"
+#include "Square/Core/Variant.h"
 //Math
 #include "Square/Math/Linear.h"
 #include "Square/Math/Tangent.h"
+//Graphics
+#include "Square/Graphics/Render.h"
 

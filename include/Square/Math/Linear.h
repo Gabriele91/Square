@@ -51,7 +51,7 @@ namespace Square
     template < typename Scalar, glm::precision P = glm::defaultp >  using  TMat3 = glm::tmat3x3< Scalar, P >;
     template < typename Scalar, glm::precision P = glm::defaultp >  using  TMat4 = glm::tmat4x4< Scalar, P >;
 
-    namespace constants
+    namespace Constants
     {
         template <class T>
         inline T pi()
@@ -63,6 +63,16 @@ namespace Square
 		{
 			return glm::pi<T>()*((T)2.0);
 		}
+		template <class T>
+		inline T e()
+		{
+			return glm::e<T>();
+		}
+		template <class T>
+		inline T golden_ratio()
+		{
+			return glm::golden_ratio<T>();
+		}		
     }
     
     template < class T >
@@ -259,10 +269,10 @@ namespace Square
     template < typename Scalar = float >
     inline void eigenvalues_rotate(TMat3< Scalar >& mat, const Scalar& c, const Scalar& s, size_t i0, size_t j0, size_t i1, size_t j1)
     {
-        double a = c * mat[i0][j0] - s * mat[i1][j1];
-        double b = s * mat[i0][j0] + c * mat[i1][j1];
-        mat[i0][j0] = (float)a;
-        mat[i1][j1] = (float)b;
+		Scalar a = c * mat[i0][j0] - s * mat[i1][j1];
+		Scalar b = s * mat[i0][j0] + c * mat[i1][j1];
+        mat[i0][j0] = (Scalar)a;
+        mat[i1][j1] = (Scalar)b;
     }
     
     /**

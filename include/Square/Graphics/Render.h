@@ -7,65 +7,71 @@
 #pragma once
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
+#include "Square/Core/Variant.h"
 
 namespace Square
 {
-	class context_texture;
-	class context_const_buffer;
-	class context_render_target;
-	class context_vertex_buffer;
-	class context_index_buffer;
-	class context_input_layout;
-	class context_uniform;
-	//shader
-	class context_shader;
+namespace Render
+{
+	////////////////////////////////////////////////
+	// CLASS
+	class Texture;
+	class ConstBuffer;
+	class Target;
+	class VertexBuffer;
+	class IndexBuffer;
+	class InputLayout;
+	class Uniform;
+	class Shader;
+	////////////////////////////////////////////////
+	// SHADER
 	//uniform
-	class HCUBE_RENDER_API context_uniform
+	class SQUARE_RENDER_API Uniform
 	{
 	public:
-		void set_value(context_texture* in_texture);
+		void set_value(Texture* in_texture);
 		void set_value(int i);
 		void set_value(float f);
-		void set_value(const vec2& v2);
-		void set_value(const vec3& v3);
-		void set_value(const vec4& v4);
-		void set_value(const mat3& m3);
-		void set_value(const mat4& m4);
+		void set_value(const Vec2& v2);
+		void set_value(const Vec3& v3);
+		void set_value(const Vec4& v4);
+		void set_value(const Mat3& m3);
+		void set_value(const Mat4& m4);
 
 		void set_value(const int* i, size_t n);
 		void set_value(const float* f, size_t n);
-		void set_value(const vec2* v2, size_t n);
-		void set_value(const vec3* v3, size_t n);
-		void set_value(const vec4* v4, size_t n);
-		void set_value(const mat3* m3, size_t n);
-		void set_value(const mat4* m4, size_t n);
+		void set_value(const Vec2* v2, size_t n);
+		void set_value(const Vec3* v3, size_t n);
+		void set_value(const Vec4* v4, size_t n);
+		void set_value(const Mat3* m3, size_t n);
+		void set_value(const Mat4* m4, size_t n);
 
 		void set_value(const std::vector < int >& i);
 		void set_value(const std::vector < float >& f);
-		void set_value(const std::vector < vec2 >& v2);
-		void set_value(const std::vector < vec3 >& v3);
-		void set_value(const std::vector < vec4 >& v4);
-		void set_value(const std::vector < mat3 >& m3);
-		void set_value(const std::vector < mat4 >& m4);
+		void set_value(const std::vector < Vec2 >& v2);
+		void set_value(const std::vector < Vec3 >& v3);
+		void set_value(const std::vector < Vec4 >& v4);
+		void set_value(const std::vector < Mat3 >& m3);
+		void set_value(const std::vector < Mat4 >& m4);
 
-		void set_value(const context_const_buffer*);
+		void set_value(const ConstBuffer*);
 		
 		bool is_valid();
 
-		context_shader* get_shader();
+		Shader* get_shader();
 
-		context_uniform(context_shader* shader = nullptr, void* data = nullptr);
+		Uniform(Shader* shader = nullptr, void* data = nullptr);
 
-		virtual ~context_uniform();
+		virtual ~Uniform();
 
 	protected:
 
 		void*			m_data;
-		context_shader* m_shader;
+		Shader* m_shader;
 
 	};
 	//shader type
-	enum shader_type
+	enum ShaderType
 	{
 		ST_VERTEX_SHADER,
 		ST_FRAGMENT_SHADER,
@@ -76,14 +82,14 @@ namespace Square
 		ST_N_SHADER
 	};
 	//shader info
-	struct shader_source_information
+	struct ShaderSourceInformation
 	{
-		const shader_type  m_type;
+		const ShaderType  m_type;
 		const std::string  m_shader_header;
 		const std::string& m_shader_source;
 		const size_t m_line;
 
-		shader_source_information(const shader_source_information& info)
+		ShaderSourceInformation(const ShaderSourceInformation& info)
 		: m_type(info.m_type)
 		, m_shader_header(info.m_shader_header)
 		, m_shader_source(info.m_shader_source)
@@ -92,9 +98,9 @@ namespace Square
 
 		}
 
-		shader_source_information
+		ShaderSourceInformation
 		(
-			shader_type type,
+			ShaderType type,
 			const std::string& shader_source,
 			const size_t line = 0
 		)
@@ -104,9 +110,9 @@ namespace Square
 		{
 		}
 
-		shader_source_information
+		ShaderSourceInformation
 		(
-			shader_type type,
+			ShaderType type,
 			const std::string& shader_header,
 			const std::string& shader_source,
 			const size_t line = 0
@@ -117,33 +123,18 @@ namespace Square
 		, m_line(line)
 		{
 		}
-	};
-
-
-	using context_texture_ptr		= std::shared_ptr< context_texture >;
-	using context_render_target_ptr = std::shared_ptr< context_render_target >;
-	using context_vertex_buffer_ptr = std::shared_ptr< context_vertex_buffer >;
-	using context_index_buffer_ptr  = std::shared_ptr< context_index_buffer >;
-	using context_input_layout_ptr  = std::shared_ptr< context_input_layout >;
-	using context_shader_ptr	    = std::shared_ptr< context_shader >;
-    
-    enum render_driver
-    {
-        DR_OPENGL,
-        DR_OPENGL_ES,
-        DR_VULKAN,
-        DR_DIRECTX
-    };
-    
-    static const char* render_driver_str[]
-    {
-        "OpenGL",
-        "OpenGLES",
-        "Vulkan",
-        "DirectX"
-    };
-
-	enum cullface_type
+	};   
+	////////////////////////////////////////////////
+	// POINTERS
+	using TextureSPtr = std::shared_ptr< Texture >;
+	using TargetSPtr = std::shared_ptr< Target >;
+	using VertexBufferSPtr = std::shared_ptr< VertexBuffer >;
+	using IndexBufferSPtr = std::shared_ptr< IndexBuffer >;
+	using InputLayoutSPtr = std::shared_ptr< InputLayout >;
+	using ShaderSPtr = std::shared_ptr< Shader >;
+	////////////////////////////////////////////////
+	// Types
+	enum CullfaceType
 	{
 		CF_DISABLE = 0,
 		CF_FRONT,
@@ -151,7 +142,7 @@ namespace Square
 		CF_FRONT_AND_BACK
 	};
 
-	enum draw_type
+	enum DrawType
 	{
 		DRAW_POINTS,
 		DRAW_LINES,
@@ -160,7 +151,7 @@ namespace Square
 		DRAW_TRIANGLE_STRIP
 	};
 
-	enum blend_type
+	enum BlendType
 	{
 		BLEND_ZERO,
 		BLEND_ONE,
@@ -177,8 +168,42 @@ namespace Square
 		BLEND_SRC_ALPHA,
 		BLEND_SRC_ALPHA_SATURATE
 	};
+	
+	enum DepthFuncType
+	{
+		DT_NEVER,
+		DT_LESS,          // <
+		DT_GREATER,       // >
+		DT_EQUAL,         // ==
+		DT_LESS_EQUAL,    // <=
+		DT_GREATER_EQUAL, // >=
+		DT_NOT_EQUAL,     // !=
+		DT_ALWAYS
+	};
 
-	enum texture_format
+	enum MappingType
+	{
+		MAP_WRITE,
+		MAP_READ,
+		MAP_WRITE_AND_READ
+	};
+	
+	enum ClearType
+	{
+		CLEAR_COLOR = 0x01,
+		CLEAR_DEPTH = 0x02,
+		CLEAR_COLOR_DEPTH = 0x03
+	};
+
+	enum DepthMode
+	{
+		DM_DISABLE,
+		DM_ENABLE_AND_WRITE,
+		DM_ENABLE_ONLY_READ
+	};
+	////////////////////////////////////////////////
+	// TEXTURE
+	enum TextureFormat
 	{
 		////////////////////
 		//RGBA
@@ -241,7 +266,7 @@ namespace Square
 		TF_DEPTH_COMPONENT32,
 	};
 
-	enum texture_type
+	enum TextureType
 	{
 		TT_R,
 		TT_RG,
@@ -251,7 +276,7 @@ namespace Square
 		TT_DEPTH_STENCIL
 	};
 
-	enum texture_type_format
+	enum TextureTypeFormat
 	{
 		TTF_FLOAT,
 		TTF_UNSIGNED_BYTE,
@@ -261,13 +286,13 @@ namespace Square
         TTF_FLOAT_32_UNSIGNED_INT_24_8
 	};
 
-	enum texture_mag_filter_type
+	enum TextureMagFilterType
 	{
 		TMAG_NEAREST,
 		TMAG_LINEAR
 	};
 
-	enum texture_min_filter_type
+	enum TextureMinFilterType
 	{
 		TMIN_NEAREST,
 		TMIN_NEAREST_MIPMAP_NEAREST,
@@ -277,13 +302,68 @@ namespace Square
 		TMIN_LINEAR_MIPMAP_LINEAR,
 	};
 
-	enum texture_edge_type
+	enum TextureEdgeType
 	{
 		TEDGE_CLAMP,
 		TEDGE_REPEAT
 	};
-	 
-	enum render_target_type
+	
+	struct TextureRawDataInformation
+	{
+		TextureFormat		m_format;
+		unsigned int		m_width;
+		unsigned int		m_height;
+		const unsigned char*m_bytes;
+		TextureType		m_type;
+		TextureTypeFormat m_type_format;
+	};
+
+	struct TextureGpuDataInformation
+	{
+		TextureMinFilterType		 m_min_type;
+		TextureMagFilterType		 m_mag_type;
+		TextureEdgeType			 m_edge_s;
+		TextureEdgeType			 m_edge_t;
+		TextureEdgeType			 m_edge_r;
+		bool						 m_build_mipmap;
+		//cube texture
+		TextureGpuDataInformation
+		(
+			TextureMinFilterType		 min_type,
+			TextureMagFilterType		 mag_type,
+			TextureEdgeType			 edge_s,
+			TextureEdgeType			 edge_t,
+			TextureEdgeType			 edge_r,
+			bool						 build_mipmap
+		)
+		{
+			m_min_type = min_type;
+			m_mag_type = mag_type;
+			m_edge_s = edge_s;
+			m_edge_t = edge_t;
+			m_edge_r = edge_r;
+			m_build_mipmap = build_mipmap;
+		}
+		//2D texture
+		TextureGpuDataInformation
+		(
+			TextureMinFilterType		 min_type,
+			TextureMagFilterType		 mag_type,
+			TextureEdgeType			 edge_s,
+			TextureEdgeType			 edge_t,
+			bool						 build_mipmap
+		)
+		{
+			m_min_type = min_type;
+			m_mag_type = mag_type;
+			m_edge_s = edge_s;
+			m_edge_t = edge_t;
+			m_build_mipmap = build_mipmap;
+		}
+	};
+	////////////////////////////////////////////////
+	// TARGET
+	enum TargetType
 	{
 		RT_COLOR,
 		RT_DEPTH,
@@ -291,7 +371,14 @@ namespace Square
 		RT_STENCIL
 	};
 
-	enum attribute_type
+	struct TargetField
+	{
+		Texture*   m_texture;
+		TargetType m_type;
+	};
+	////////////////////////////////////////////////
+	// ATTRIBUTES
+	enum AttributeType
 	{
 		//POSITION TRANSFORM
 		ATT_POSITIONT = 0,
@@ -321,7 +408,7 @@ namespace Square
 		ATT_COLOR2 = 17
 	};
 
-	enum attribute_strip_type
+	enum AttributeStripType
 	{
 		AST_FLOAT,
 		AST_FLOAT2,
@@ -344,39 +431,14 @@ namespace Square
 		AST_TLESS4,
 	};
 
-	enum depth_func_type
+	struct Attribute
 	{
-		DT_NEVER,
-		DT_LESS,          // <
-		DT_GREATER,       // >
-		DT_EQUAL,         // ==
-		DT_LESS_EQUAL,    // <=
-		DT_GREATER_EQUAL, // >=
-		DT_NOT_EQUAL,     // !=
-		DT_ALWAYS
-	};
-
-	enum depth_mode
-	{
-		DM_DISABLE,
-		DM_ENABLE_AND_WRITE,
-		DM_ENABLE_ONLY_READ
-	};
-
-	struct target_field
-	{
-		context_texture*   m_texture;
-		render_target_type m_type;
-	};
-
-	struct attribute
-	{
-		attribute_type       m_attribute;
-		attribute_strip_type m_strip;
+		AttributeType       m_attribute;
+		AttributeStripType m_strip;
 		size_t               m_offset;
 
-		attribute(attribute_type       attribute,
-			attribute_strip_type strip,
+		Attribute(AttributeType       attribute,
+			AttributeStripType strip,
 			size_t               offset)
 		{
 			m_attribute = attribute;
@@ -401,14 +463,14 @@ namespace Square
 		}
 	};
 
-	class attribute_list
+	class AttributeList
 	{
 
 	public:
 
-		using raw_attribute_list = std::vector<attribute>;
+		using raw_attribute_list = std::vector<Attribute>;
 
-		attribute_list(const std::initializer_list<attribute>& atts) :m_size(0)
+		AttributeList(const std::initializer_list<Attribute>& atts) :m_size(0)
 		{
 			for (const auto& att : atts)
 			{
@@ -416,7 +478,7 @@ namespace Square
 			}
 		}
 
-		attribute_list(size_t size, const std::initializer_list<attribute>& atts) :m_size(size)
+		AttributeList(size_t size, const std::initializer_list<Attribute>& atts) :m_size(size)
 		{
 			for (const auto& att : atts)
 			{
@@ -424,7 +486,7 @@ namespace Square
 			}
 		}
 
-		void push(const attribute& attr)
+		void push(const Attribute& attr)
 		{
 			m_list.push_back(attr);
 			m_size += attr.size();
@@ -452,56 +514,57 @@ namespace Square
 		size_t             m_size;
 
 	};
-	
-	struct viewport_state
+	/////////////////////////////////
+	// STATE
+	struct ViewportState
 	{
 
-		vec4 m_viewport;
+		Vec4 m_viewport;
 		//costructors
-		viewport_state() {}
-		viewport_state(const vec4& vp) : m_viewport(vp) {}
+		ViewportState() {}
+		ViewportState(const Vec4& vp) : m_viewport(vp) {}
 		//operators
-		bool operator==(const viewport_state& vs) const
+		bool operator==(const ViewportState& vs) const
 		{
 			return m_viewport == vs.m_viewport;
 		}
-		bool operator!=(const viewport_state& vs) const
+		bool operator!=(const ViewportState& vs) const
 		{
 			return m_viewport != vs.m_viewport;
 		}
 
 	};
 
-	struct blend_state
+	struct BlendState
 	{
 		bool       m_enable;
-		blend_type m_src, m_dst;
+		BlendType m_src, m_dst;
 		//constructor
-		blend_state() : m_enable(false) {}
-		blend_state(blend_type src, blend_type dst) :m_src(src), m_dst(dst), m_enable(true) {}
+		BlendState() : m_enable(false) {}
+		BlendState(BlendType src, BlendType dst) :m_src(src), m_dst(dst), m_enable(true) {}
 		//operators
-		bool operator==(const blend_state& bs) const
+		bool operator==(const BlendState& bs) const
 		{
 			return m_src == bs.m_src && m_dst == bs.m_dst && m_enable == bs.m_enable;
 		}
-		bool operator!=(const blend_state& bs) const
+		bool operator!=(const BlendState& bs) const
 		{
 			return m_src != bs.m_src || m_dst != bs.m_dst || m_enable != bs.m_enable;
 		}
 	};
 
-	struct cullface_state
+	struct CullfaceState
 	{
 		//face cull
-		cullface_type m_cullface;
+		CullfaceType m_cullface;
 		//cullface
-		cullface_state(cullface_type cullface = CF_DISABLE) : m_cullface(cullface) {}
+		CullfaceState(CullfaceType cullface = CF_DISABLE) : m_cullface(cullface) {}
 		//operators
-		bool operator==(const cullface_state& cl)const
+		bool operator==(const CullfaceState& cl)const
 		{
 			return m_cullface == cl.m_cullface;
 		}
-		bool operator!=(const cullface_state& cl)const
+		bool operator!=(const CullfaceState& cl)const
 		{
 			return m_cullface != cl.m_cullface;
 		}
@@ -510,75 +573,75 @@ namespace Square
 		{
 			return (int)m_cullface;
 		}
-		operator cullface_type () const
+		operator CullfaceType () const
 		{
 			return m_cullface;
 		}
 
 	};
 	
-	struct depth_buffer_state
+	struct DepthBufferState
 	{
 		//value
-		depth_mode      m_mode;
-		depth_func_type m_type;
+		DepthMode      m_mode;
+		DepthFuncType m_type;
 		//zbuffer
-		depth_buffer_state(depth_func_type type, depth_mode mode = DM_ENABLE_AND_WRITE) : m_mode(mode), m_type(type) {}
-		depth_buffer_state(depth_mode mode = DM_ENABLE_AND_WRITE) : m_mode(mode), m_type(DT_LESS) {}
+		DepthBufferState(DepthFuncType type, DepthMode mode = DM_ENABLE_AND_WRITE) : m_mode(mode), m_type(type) {}
+		DepthBufferState(DepthMode mode = DM_ENABLE_AND_WRITE) : m_mode(mode), m_type(DT_LESS) {}
 		//operators
-		bool operator==(const depth_buffer_state& zb)const
+		bool operator==(const DepthBufferState& zb)const
 		{
 			return m_mode == zb.m_mode && m_type == zb.m_type;
 		}
-		bool operator!=(const depth_buffer_state& zb)const
+		bool operator!=(const DepthBufferState& zb)const
 		{
 			return m_mode != zb.m_mode || m_type != zb.m_type;
 		}
 		//cast operator
-		operator depth_mode() const
+		operator DepthMode() const
 		{
 			return m_mode;
 		}
 
 	};
 
-	struct clear_color_state
+	struct ClearColorState
 	{
 		//color
-		vec4 m_color;
+		Vec4 m_color;
 		//color
-		clear_color_state() :m_color(0, 0, 0, 0) {}
-		clear_color_state(const vec4& color) :m_color(color) {}
+		ClearColorState() :m_color(0, 0, 0, 0) {}
+		ClearColorState(const Vec4& color) :m_color(color) {}
 		//operators
-		bool operator==(const clear_color_state& c)const
+		bool operator==(const ClearColorState& c)const
 		{
 			return m_color == c.m_color;
 		}
-		bool operator!=(const clear_color_state& c)const
+		bool operator!=(const ClearColorState& c)const
 		{
 			return m_color != c.m_color;
 		}
 		//cast operator
-		operator vec4& ()
+		operator Vec4& ()
 		{
 			return m_color;
 		}
-		operator const vec4& () const
+		operator const Vec4& () const
 		{
 			return m_color;
 		}
 
 	};
 	
-	struct render_state
+	struct State
 	{
-		clear_color_state  m_clear_color;
-		viewport_state     m_viewport;
-		cullface_state     m_cullface;
-		depth_buffer_state m_depth;
-		blend_state        m_blend;
+		ClearColorState  m_clear_color;
+		ViewportState     m_viewport;
+		CullfaceState     m_cullface;
+		DepthBufferState m_depth;
+		BlendState        m_blend;
 
-		bool operator == (const render_state& rs) const
+		bool operator == (const State& rs) const
 		{
 			return
 				m_cullface == rs.m_cullface
@@ -587,7 +650,7 @@ namespace Square
 				&& m_depth == rs.m_depth
 				&& m_blend == rs.m_blend;
 		}
-		bool operator != (const render_state& rs) const
+		bool operator != (const State& rs) const
 		{
 			return
 				m_cullface != rs.m_cullface
@@ -597,224 +660,172 @@ namespace Square
 				&& m_blend != rs.m_blend;
 		}
 	};
-
-	enum mapping_type
+	/////////////////////////////////
+	// DRIVER INFO
+	enum RenderDriver
 	{
-		MAP_WRITE,
-		MAP_READ,
-		MAP_WRITE_AND_READ
+		DR_OPENGL,
+		DR_OPENGL_ES,
+		DR_VULKAN,
+		DR_DIRECTX
 	};
 
-	struct texture_raw_data_information
+	static const char* render_driver_str[]
 	{
-		texture_format		m_format;
-		unsigned int		m_width;
-		unsigned int		m_height;
-		const unsigned char*m_bytes;
-		texture_type		m_type;
-		texture_type_format m_type_format;
+		"OpenGL",
+		"OpenGLES",
+		"Vulkan",
+		"DirectX"
 	};
 
-	struct texture_gpu_data_information
-	{
-		texture_min_filter_type		 m_min_type;
-		texture_mag_filter_type		 m_mag_type;
-		texture_edge_type			 m_edge_s;
-		texture_edge_type			 m_edge_t;
-		texture_edge_type			 m_edge_r;
-		bool						 m_build_mipmap;
-		//cube texture
-		texture_gpu_data_information
-		(
-			texture_min_filter_type		 min_type,
-			texture_mag_filter_type		 mag_type,
-			texture_edge_type			 edge_s,
-			texture_edge_type			 edge_t,
-			texture_edge_type			 edge_r,
-			bool						 build_mipmap
-		)
-		{
-			m_min_type = min_type;
-			m_mag_type = mag_type;
-			m_edge_s = edge_s;
-			m_edge_t = edge_t;
-			m_edge_r = edge_r;
-			m_build_mipmap = build_mipmap;
-		}
-		//2D texture
-		texture_gpu_data_information
-		(
-			texture_min_filter_type		 min_type,
-			texture_mag_filter_type		 mag_type,
-			texture_edge_type			 edge_s,
-			texture_edge_type			 edge_t,
-			bool						 build_mipmap
-		)
-		{
-			m_min_type = min_type;
-			m_mag_type = mag_type;
-			m_edge_s = edge_s;
-			m_edge_t = edge_t;
-			m_build_mipmap = build_mipmap;
-		}
-	};
-
-    enum clear_type
+    struct RenderDriverInfo
     {
-        CLEAR_COLOR       = 0x01,
-        CLEAR_DEPTH       = 0x02,
-        CLEAR_COLOR_DEPTH = 0x03
-    };
-    
-    struct render_driver_info
-    {
-        render_driver m_render_driver;
+        RenderDriver m_render_driver;
         std::string   m_name;
         int           m_major_version;
         int           m_minor_version;
         std::string   m_shader_language;
         int           m_shader_version;
     };
-    
-	namespace render
-    {
-        HCUBE_RENDER_API render_driver get_render_driver();
-        HCUBE_RENDER_API render_driver_info get_render_driver_info();
-        HCUBE_RENDER_API void print_info();
+	/////////////////////////////////
+	// Draw call
+    SQUARE_RENDER_API RenderDriver get_render_driver();
+    SQUARE_RENDER_API RenderDriverInfo get_render_driver_info();
+    SQUARE_RENDER_API void print_info();
 
-		HCUBE_RENDER_API bool init();
-		HCUBE_RENDER_API void close();
+	SQUARE_RENDER_API bool init();
+	SQUARE_RENDER_API void close();
 
-		HCUBE_RENDER_API const clear_color_state& get_clear_color_state();
-        HCUBE_RENDER_API void set_clear_color_state(const clear_color_state& cf);
-        HCUBE_RENDER_API void clear(int type = CLEAR_COLOR_DEPTH);
+	SQUARE_RENDER_API const ClearColorState& get_clear_color_state();
+    SQUARE_RENDER_API void set_clear_color_state(const ClearColorState& cf);
+    SQUARE_RENDER_API void clear(int type = CLEAR_COLOR_DEPTH);
 
-		HCUBE_RENDER_API const depth_buffer_state& get_depth_buffer_state();
-		HCUBE_RENDER_API void set_depth_buffer_state(const depth_buffer_state& cf);
+	SQUARE_RENDER_API const DepthBufferState& get_depth_buffer_state();
+	SQUARE_RENDER_API void set_depth_buffer_state(const DepthBufferState& cf);
 
-		HCUBE_RENDER_API const cullface_state& get_cullface_state();
-		HCUBE_RENDER_API void set_cullface_state(const cullface_state& cf);
+	SQUARE_RENDER_API const CullfaceState& get_cullface_state();
+	SQUARE_RENDER_API void set_cullface_state(const CullfaceState& cf);
 
-		HCUBE_RENDER_API const viewport_state& get_viewport_state();
-		HCUBE_RENDER_API void set_viewport_state(const viewport_state& vs);
+	SQUARE_RENDER_API const ViewportState& get_viewport_state();
+	SQUARE_RENDER_API void set_viewport_state(const ViewportState& vs);
 
-		HCUBE_RENDER_API const blend_state& get_blend_state();
-		HCUBE_RENDER_API void set_blend_state(const blend_state& bs);
+	SQUARE_RENDER_API const BlendState& get_blend_state();
+	SQUARE_RENDER_API void set_blend_state(const BlendState& bs);
 
-		HCUBE_RENDER_API const render_state& get_render_state();
-		HCUBE_RENDER_API void set_render_state(const render_state& rs);
+	SQUARE_RENDER_API const State& get_render_state();
+	SQUARE_RENDER_API void set_render_state(const State& rs);
 
-		//BO
-		HCUBE_RENDER_API context_const_buffer* create_stream_CB(const unsigned char* data, size_t size);
-		HCUBE_RENDER_API context_vertex_buffer* create_stream_VBO(const unsigned char* vbo, size_t stride, size_t n);
-		HCUBE_RENDER_API context_index_buffer* create_stream_IBO(const unsigned int* ibo, size_t size);
+	//BO
+	SQUARE_RENDER_API ConstBuffer* create_stream_CB(const unsigned char* data, size_t size);
+	SQUARE_RENDER_API VertexBuffer* create_stream_VBO(const unsigned char* vbo, size_t stride, size_t n);
+	SQUARE_RENDER_API IndexBuffer* create_stream_IBO(const unsigned int* ibo, size_t size);
 
-		HCUBE_RENDER_API context_const_buffer* create_CB(const unsigned char* data, size_t size);
-		HCUBE_RENDER_API context_vertex_buffer* create_VBO(const unsigned char* vbo, size_t stride, size_t n);
-		HCUBE_RENDER_API context_index_buffer* create_IBO(const unsigned int* ibo, size_t size);
+	SQUARE_RENDER_API ConstBuffer* create_CB(const unsigned char* data, size_t size);
+	SQUARE_RENDER_API VertexBuffer* create_VBO(const unsigned char* vbo, size_t stride, size_t n);
+	SQUARE_RENDER_API IndexBuffer* create_IBO(const unsigned int* ibo, size_t size);
 
-		HCUBE_RENDER_API variant get_native_CB(const context_const_buffer*);
-		HCUBE_RENDER_API variant get_native_VBO(const context_vertex_buffer*);
-		HCUBE_RENDER_API variant get_native_IBO(const context_index_buffer*);
+	SQUARE_RENDER_API Variant get_native_CB(const ConstBuffer*);
+	SQUARE_RENDER_API Variant get_native_VBO(const VertexBuffer*);
+	SQUARE_RENDER_API Variant get_native_IBO(const IndexBuffer*);
 
-		HCUBE_RENDER_API void update_steam_CB(context_const_buffer* cb, const unsigned char* vb, size_t n);
-		HCUBE_RENDER_API void update_steam_VBO(context_vertex_buffer* vbo, const unsigned char* vb, size_t n);
-		HCUBE_RENDER_API void update_steam_IBO(context_index_buffer* vbo, const unsigned int* ib, size_t n);
+	SQUARE_RENDER_API void update_steam_CB(ConstBuffer* cb, const unsigned char* vb, size_t n);
+	SQUARE_RENDER_API void update_steam_VBO(VertexBuffer* vbo, const unsigned char* vb, size_t n);
+	SQUARE_RENDER_API void update_steam_IBO(IndexBuffer* vbo, const unsigned int* ib, size_t n);
 
-		HCUBE_RENDER_API void bind_CB(context_const_buffer*);
-		HCUBE_RENDER_API void bind_VBO(context_vertex_buffer*);
-		HCUBE_RENDER_API void bind_IBO(context_index_buffer*);
+	SQUARE_RENDER_API void bind_CB(ConstBuffer*);
+	SQUARE_RENDER_API void bind_VBO(VertexBuffer*);
+	SQUARE_RENDER_API void bind_IBO(IndexBuffer*);
 
-		HCUBE_RENDER_API void unbind_CB(context_const_buffer*);
-		HCUBE_RENDER_API void unbind_VBO(context_vertex_buffer*);
-		HCUBE_RENDER_API void unbind_IBO(context_index_buffer*);
+	SQUARE_RENDER_API void unbind_CB(ConstBuffer*);
+	SQUARE_RENDER_API void unbind_VBO(VertexBuffer*);
+	SQUARE_RENDER_API void unbind_IBO(IndexBuffer*);
 
-		HCUBE_RENDER_API unsigned char* map_CB(context_const_buffer*, size_t start, size_t n, mapping_type type);
-		HCUBE_RENDER_API void unmap_CB(context_const_buffer*);
+	SQUARE_RENDER_API unsigned char* map_CB(ConstBuffer*, size_t start, size_t n, MappingType type);
+	SQUARE_RENDER_API void unmap_CB(ConstBuffer*);
 
-		HCUBE_RENDER_API unsigned char* map_VBO(context_vertex_buffer*, size_t start, size_t n, mapping_type type);
-		HCUBE_RENDER_API void unmap_VBO(context_vertex_buffer*);
+	SQUARE_RENDER_API unsigned char* map_VBO(VertexBuffer*, size_t start, size_t n, MappingType type);
+	SQUARE_RENDER_API void unmap_VBO(VertexBuffer*);
 
-		HCUBE_RENDER_API unsigned int*  map_IBO(context_index_buffer*, size_t start, size_t n, mapping_type type);
-		HCUBE_RENDER_API void unmap_IBO(context_index_buffer*);
+	SQUARE_RENDER_API unsigned int*  map_IBO(IndexBuffer*, size_t start, size_t n, MappingType type);
+	SQUARE_RENDER_API void unmap_IBO(IndexBuffer*);
 
-		HCUBE_RENDER_API unsigned char* map_TBO(context_texture*, mapping_type type);
-		HCUBE_RENDER_API void unmap_TBO(context_texture*);
+	SQUARE_RENDER_API unsigned char* map_TBO(Texture*, MappingType type);
+	SQUARE_RENDER_API void unmap_TBO(Texture*);
 
-		HCUBE_RENDER_API void delete_CB(context_const_buffer*&);
-		HCUBE_RENDER_API void delete_VBO(context_vertex_buffer*&);
-		HCUBE_RENDER_API void delete_IBO(context_index_buffer*&);
-		//draw
-		HCUBE_RENDER_API void draw_arrays(draw_type type, unsigned int n);
-		HCUBE_RENDER_API void draw_arrays(draw_type type, unsigned int start, unsigned int size);
-		HCUBE_RENDER_API void draw_elements(draw_type type, unsigned int n);
+	SQUARE_RENDER_API void delete_CB(ConstBuffer*&);
+	SQUARE_RENDER_API void delete_VBO(VertexBuffer*&);
+	SQUARE_RENDER_API void delete_IBO(IndexBuffer*&);
+	//draw
+	SQUARE_RENDER_API void draw_arrays(DrawType type, unsigned int n);
+	SQUARE_RENDER_API void draw_arrays(DrawType type, unsigned int start, unsigned int size);
+	SQUARE_RENDER_API void draw_elements(DrawType type, unsigned int n);
 
-		//IL=Input Layaut
-		HCUBE_RENDER_API context_input_layout* create_IL(const attribute_list& atl);
-		HCUBE_RENDER_API size_t size_IL(const context_input_layout* layout);
-		HCUBE_RENDER_API bool   has_a_position_IL(const context_input_layout* layout);
-		HCUBE_RENDER_API size_t position_offset_IL(const context_input_layout* layout);
-		HCUBE_RENDER_API void delete_IL(context_input_layout*&);
-		HCUBE_RENDER_API void bind_IL(context_input_layout*);
-		HCUBE_RENDER_API void unbind_IL(context_input_layout* il);
+	//IL=Input Layaut
+	SQUARE_RENDER_API InputLayout* create_IL(const AttributeList& atl);
+	SQUARE_RENDER_API size_t size_IL(const InputLayout* layout);
+	SQUARE_RENDER_API bool   has_a_position_IL(const InputLayout* layout);
+	SQUARE_RENDER_API size_t position_offset_IL(const InputLayout* layout);
+	SQUARE_RENDER_API void delete_IL(InputLayout*&);
+	SQUARE_RENDER_API void bind_IL(InputLayout*);
+	SQUARE_RENDER_API void unbind_IL(InputLayout* il);
 
-		//depth
-		HCUBE_RENDER_API float get_depth(const vec2& pixel);
-		//color
-		HCUBE_RENDER_API vec4 get_color(const vec2& pixel);
+	//depth
+	SQUARE_RENDER_API float get_depth(const Vec2& pixel);
+	//color
+	SQUARE_RENDER_API Vec4 get_color(const Vec2& pixel);
 
-		//texture
-		HCUBE_RENDER_API context_texture* create_texture
-		(
-			const texture_raw_data_information& data,
-			const texture_gpu_data_information& info
-		);
-		HCUBE_RENDER_API context_texture* create_cube_texture
-		(
-			const texture_raw_data_information  data[6],
-			const texture_gpu_data_information& info
-		);
-		HCUBE_RENDER_API std::vector< unsigned char > get_texture(context_texture*, int level = 0);
-		HCUBE_RENDER_API void bind_texture(context_texture*, int n);
-		HCUBE_RENDER_API void unbind_texture(context_texture*);
-        HCUBE_RENDER_API void unbind_texture(int n);
-		HCUBE_RENDER_API void delete_texture(context_texture*&);
+	//texture
+	SQUARE_RENDER_API Texture* create_texture
+	(
+		const TextureRawDataInformation& data,
+		const TextureGpuDataInformation& info
+	);
+	SQUARE_RENDER_API Texture* create_cube_texture
+	(
+		const TextureRawDataInformation  data[6],
+		const TextureGpuDataInformation& info
+	);
+	SQUARE_RENDER_API std::vector< unsigned char > get_texture(Texture*, int level = 0);
+	SQUARE_RENDER_API void bind_texture(Texture*, int n);
+	SQUARE_RENDER_API void unbind_texture(Texture*);
+    SQUARE_RENDER_API void unbind_texture(int n);
+	SQUARE_RENDER_API void delete_texture(Texture*&);
 
-		//shader
-		HCUBE_RENDER_API context_shader* create_shader(const std::vector< shader_source_information >& infos);
+	//shader
+	SQUARE_RENDER_API Shader* create_shader(const std::vector< ShaderSourceInformation >& infos);
 
-		HCUBE_RENDER_API bool shader_compiled_with_errors(context_shader* shader);
-		HCUBE_RENDER_API bool shader_linked_with_error(context_shader* shader);
-		HCUBE_RENDER_API std::vector< std::string > get_shader_compiler_errors(context_shader* shader);
-		HCUBE_RENDER_API std::string get_shader_liker_error(context_shader* shader);
+	SQUARE_RENDER_API bool shader_compiled_with_errors(Shader* shader);
+	SQUARE_RENDER_API bool shader_linked_with_error(Shader* shader);
+	SQUARE_RENDER_API std::vector< std::string > get_shader_compiler_errors(Shader* shader);
+	SQUARE_RENDER_API std::string get_shader_liker_error(Shader* shader);
 
-		HCUBE_RENDER_API void bind_shader(context_shader* shader);
-		HCUBE_RENDER_API void unbind_shader(context_shader* shader);
+	SQUARE_RENDER_API void bind_shader(Shader* shader);
+	SQUARE_RENDER_API void unbind_shader(Shader* shader);
 
-		HCUBE_RENDER_API void delete_shader(context_shader*&);
+	SQUARE_RENDER_API void delete_shader(Shader*&);
 
-		HCUBE_RENDER_API context_shader*  get_bind_shader();
-		HCUBE_RENDER_API context_uniform* get_uniform(context_shader*,const std::string& uname);
+	SQUARE_RENDER_API Shader*  get_bind_shader();
+	SQUARE_RENDER_API Uniform* get_uniform(Shader*,const std::string& uname);
 
-		//target
-		HCUBE_RENDER_API context_render_target* create_render_target(const std::vector< target_field >& textures);
-		HCUBE_RENDER_API void enable_render_target(context_render_target*);
-		HCUBE_RENDER_API void disable_render_target(context_render_target*);
-		HCUBE_RENDER_API void delete_render_target(context_render_target*&);
-		//copy target
-		HCUBE_RENDER_API void copy_target_to_target(
-			const vec4& from_area,
-			context_render_target* from,
-			const vec4& to_area,
-			context_render_target* to,
-			render_target_type	mask
-		);
+	//target
+	SQUARE_RENDER_API Target* create_render_target(const std::vector< TargetField >& textures);
+	SQUARE_RENDER_API void enable_render_target(Target*);
+	SQUARE_RENDER_API void disable_render_target(Target*);
+	SQUARE_RENDER_API void delete_render_target(Target*&);
+	//copy target
+	SQUARE_RENDER_API void copy_target_to_target(
+		const IVec4& from_area,
+		Target* from,
+		const IVec4& to_area,
+		Target* to,
+		TargetType	mask
+	);
 
-		//debug
-		HCUBE_RENDER_API bool print_errors();
-		//Output file name and line
-		HCUBE_RENDER_API bool print_errors(const char* source_file_name, int line);
-		#define HCUBE_RENDER_PRINT_ERRORS ::hcube::render::print_errors(__FILE__,__LINE__);
+	//debug
+	SQUARE_RENDER_API bool print_errors();
+	//Output file name and line
+	SQUARE_RENDER_API bool print_errors(const char* source_file_name, int line);
+	#define HCUBE_RENDER_PRINT_ERRORS ::hcube::render::print_errors(__FILE__,__LINE__);
 
-	};
+};
 }

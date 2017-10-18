@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Include">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source\Core">
+      <UniqueIdentifier>{1b39dcac-f1f7-4602-89dd-d06067e49057}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Graphics">
+      <UniqueIdentifier>{06fdf6ad-e0ca-490a-a527-30fca41dd669}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Square">
+      <UniqueIdentifier>{42f86c04-7162-4d89-9867-58a1ae610f5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Square\Core">
+      <UniqueIdentifier>{659525eb-edc1-46c1-b99b-d7423bb63140}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Square\Graphics">
+      <UniqueIdentifier>{c57db836-7e9a-4578-80ae-5bdfae1325ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Square\Math">
+      <UniqueIdentifier>{69d0d0c1-8460-4493-86c2-0551431f89a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Square\Graphics\OpenGL">
+      <UniqueIdentifier>{eee83957-d42a-4e2b-8bf6-f95ac37ef89e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Square\Math\Linear.h">
+      <Filter>Include\Square\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Math\Tangent.h">
+      <Filter>Include\Square\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Config.h">
+      <Filter>Include\Square</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Square.h">
+      <Filter>Include\Square</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Graphics\Render.h">
+      <Filter>Include\Square\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Graphics\OpenGL\OpenGL4.h">
+      <Filter>Include\Square\Graphics\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Core\Filesystem.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Core\SmartPointers.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Core\Time.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Core\Uncopyable.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Core\UtfConvert.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Core\Variant.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="source\Core\Filesystem.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Core\Time.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Core\UtfConvert.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Graphics\Render.cpp">
+      <Filter>Source\Graphics</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
