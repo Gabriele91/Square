@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E00558591F98AEEF0055DC1F /* Json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E00558581F98AEEF0055DC1F /* Json.cpp */; };
+		E005585B1F98AFD20055DC1F /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E005585A1F98AFD10055DC1F /* OpenGL.framework */; };
 		E014645A1F975F7A00E43E2D /* Filesystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E01464581F975F7A00E43E2D /* Filesystem.cpp */; };
 		E014645B1F975F7A00E43E2D /* Time.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E01464591F975F7A00E43E2D /* Time.cpp */; };
 		E014645E1F97633900E43E2D /* UtfConvert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E014645D1F97633900E43E2D /* UtfConvert.cpp */; };
@@ -27,6 +29,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E00558561F98AEE30055DC1F /* Json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Json.h; sourceTree = "<group>"; };
+		E00558581F98AEEF0055DC1F /* Json.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Json.cpp; sourceTree = "<group>"; };
+		E005585A1F98AFD10055DC1F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		E01464581F975F7A00E43E2D /* Filesystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Filesystem.cpp; sourceTree = "<group>"; };
 		E01464591F975F7A00E43E2D /* Time.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Time.cpp; sourceTree = "<group>"; };
 		E014645C1F97619C00E43E2D /* Filesystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Filesystem.h; sourceTree = "<group>"; };
@@ -833,12 +838,29 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E005585B1F98AFD20055DC1F /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		E00558551F98AEE30055DC1F /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				E00558561F98AEE30055DC1F /* Json.h */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		E00558571F98AEEF0055DC1F /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				E00558581F98AEEF0055DC1F /* Json.cpp */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
 		E01464571F975F7A00E43E2D /* Core */ = {
 			isa = PBXGroup;
 			children = (
@@ -881,6 +903,7 @@
 		E079CF881F964AD300E7992F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				E005585A1F98AFD10055DC1F /* OpenGL.framework */,
 				E079CF891F964AD400E7992F /* libSDL2.a */,
 			);
 			name = Frameworks;
@@ -897,6 +920,7 @@
 		E079CF921F964BDB00E7992F /* source */ = {
 			isa = PBXGroup;
 			children = (
+				E00558571F98AEEF0055DC1F /* Data */,
 				E0D4FB611F97A84E0056C236 /* Graphics */,
 				E01464571F975F7A00E43E2D /* Core */,
 			);
@@ -1878,6 +1902,7 @@
 		E079D2D11F9652D300E7992F /* Square */ = {
 			isa = PBXGroup;
 			children = (
+				E00558551F98AEE30055DC1F /* Data */,
 				E0D4FB641F97A8D00056C236 /* Graphics */,
 				E01464641F9768E700E43E2D /* Math */,
 				E079D2D31F9652D300E7992F /* Core */,
@@ -1992,6 +2017,7 @@
 				E014645B1F975F7A00E43E2D /* Time.cpp in Sources */,
 				E014645A1F975F7A00E43E2D /* Filesystem.cpp in Sources */,
 				E014645E1F97633900E43E2D /* UtfConvert.cpp in Sources */,
+				E00558591F98AEEF0055DC1F /* Json.cpp in Sources */,
 				E0D4FB631F97A84F0056C236 /* Render.cpp in Sources */,
 				E01464601F9765B900E43E2D /* main.cpp in Sources */,
 			);

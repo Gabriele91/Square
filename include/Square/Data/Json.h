@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele on 02/07/16.
-//  Copyright © 2016 Gabriele. All rights reserved.
+//  Copyright ï¿½ 2016 Gabriele. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -31,10 +31,17 @@ namespace Square
 		};
 		//get
 		JsonString& string();
-		double      number();
-		bool        boolean();
+		double&     number();
+		bool&       boolean();
 		JsonArray&  array();
 		JsonObject& object();
+        
+        const JsonString& string() const;
+        double            number() const;
+        bool              boolean() const;
+        const JsonArray&  array() const;
+        const JsonObject& object() const;
+        Type              type() const;
 		//info		
 		bool is_null() const;
 		bool is_string() const;
@@ -45,6 +52,7 @@ namespace Square
 		//init
 		JsonValue( /* null */);
 		JsonValue(const JsonValue& v);
+        JsonValue(const char* value);
 		JsonValue(const std::string& value);
 		JsonValue(double);
 		JsonValue(int);
@@ -59,8 +67,9 @@ namespace Square
 		JsonValue& operator[] (const std::string& key);
 		const JsonValue& operator[] (const size_t& key) const;
 		const JsonValue& operator[] (const std::string& key) const;
-		// move assignment 
-		JsonValue& operator= (JsonValue&&);
+		// move assignment
+        JsonValue& operator= (JsonValue&&);
+        JsonValue& operator= (const JsonValue&);
 
 	private:
 
@@ -77,4 +86,43 @@ namespace Square
 		//Type
 		Type m_type;
 	};
+    
+    class JSon
+    {
+    public:
+        
+        //parse
+        JSon();
+        JSon(const std::string& source);
+
+        //parsing
+        bool parser(const std::string& source);
+        
+        //get error
+        std::string errors();
+        
+        //get document
+        JsonValue& document();
+    
+    protected:
+        
+        struct ErrorLine
+        {
+            ErrorLine()
+            {
+            }
+            
+            ErrorLine(size_t line, const std::string& error)
+            : m_line(line)
+            , m_error(error)
+            {
+            }
+            
+            size_t m_line{ 0 };
+            std::string m_error;
+        };
+        
+        JsonValue                m_document;
+        std::vector< ErrorLine > m_list_errors;
+    };
 }
