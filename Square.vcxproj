@@ -138,6 +138,7 @@
     <ClInclude Include="include\Square\Core\Uncopyable.h" />
     <ClInclude Include="include\Square\Core\UtfConvert.h" />
     <ClInclude Include="include\Square\Core\Variant.h" />
+    <ClInclude Include="include\Square\Data\Json.h" />
     <ClInclude Include="include\Square\Graphics\OpenGL\OpenGL4.h" />
     <ClInclude Include="include\Square\Graphics\Render.h" />
     <ClInclude Include="include\Square\Math\Linear.h" />
@@ -149,6 +150,7 @@
     <ClCompile Include="source\Core\Filesystem.cpp" />
     <ClCompile Include="source\Core\Time.cpp" />
     <ClCompile Include="source\Core\UtfConvert.cpp" />
+    <ClCompile Include="source\Data\Json.cpp" />
     <ClCompile Include="source\Graphics\Render.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

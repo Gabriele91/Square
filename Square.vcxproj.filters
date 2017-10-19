@@ -34,6 +34,12 @@
     <Filter Include="Include\Square\Graphics\OpenGL">
       <UniqueIdentifier>{eee83957-d42a-4e2b-8bf6-f95ac37ef89e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include\Square\Data">
+      <UniqueIdentifier>{ad3f869c-4542-43f9-b3df-4ec24db7d7e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Data">
+      <UniqueIdentifier>{35af5853-5fd4-44cb-8bef-48bfa4d31132}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Square\Math\Linear.h">
@@ -72,6 +78,9 @@
     <ClInclude Include="include\Square\Core\Variant.h">
       <Filter>Include\Square\Core</Filter>
     </ClInclude>
+    <ClInclude Include="include\Square\Data\Json.h">
+      <Filter>Include\Square\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -86,6 +95,9 @@
     </ClCompile>
     <ClCompile Include="source\Graphics\Render.cpp">
       <Filter>Source\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Data\Json.cpp">
+      <Filter>Source\Data</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

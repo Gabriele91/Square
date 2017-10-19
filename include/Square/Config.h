@@ -5,13 +5,30 @@
 //  Copyright © 2016 Gabriele. All rights reserved.
 //
 #pragma once
-//DEFAULT INCLUDE
+
+/////////////////////////////////////////////////////////////////////////////
+// DEFAULT INCLUDE
 #include <string>
 #include <vector>
 #include <memory>
 #include <limits>
 
-//EXPORT/IMPOT
+/////////////////////////////////////////////////////////////////////////////
+// MACRO
+#if defined( _MSC_VER )
+	#define PACKED( __Declaration__ )\
+		__pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
+	#define ALIGNED( size, __Declaration__ )\
+		__declspec(align(size)) __Declaration__
+#else
+	#define PACKED( __Declaration__ )\
+		__Declaration__ __attribute__((__packed__))
+	#define ALIGNED( size, __Declaration__ )\
+		__Declaration__ __attribute__ ((aligned(size)))
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// EXPORT/IMPOT
 #if defined(SQUARE_LIBRARY_EXPORT)
 	// inside DLL
 	#define SQUARE_API   __declspec(dllexport)

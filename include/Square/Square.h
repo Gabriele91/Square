@@ -17,6 +17,8 @@
 //Math
 #include "Square/Math/Linear.h"
 #include "Square/Math/Tangent.h"
+//Data
+#include "Square/Data/Json.h"
 //Graphics
 #include "Square/Graphics/Render.h"
 

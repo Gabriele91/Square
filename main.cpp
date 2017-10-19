@@ -8,5 +8,12 @@
 
 int main()
 {
+	using namespace Square;
+	JsonValue value
+	({ 
+		{"nome", "mario" },
+		{"eta",  10.0    },
+	});
+
     return 0;
 }
