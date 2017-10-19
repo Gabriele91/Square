@@ -19,7 +19,7 @@ namespace Square
 	JsonObject& JsonValue::object() { return *m_object;}
     
     const JsonString& JsonValue::string() const { return *m_string; }
-    double            JsonValue::number() const { return m_boolean; }
+    double            JsonValue::number() const { return m_number; }
     bool              JsonValue::boolean() const{ return m_boolean; }
     const JsonArray&  JsonValue::array() const  { return *m_array; }
     const JsonObject& JsonValue::object() const { return *m_object; }
@@ -159,12 +159,102 @@ namespace Square
         return *this;
     }
 
+	//stream
+	inline std::string json_string_dump(const std::string& str)
+	{
+		//copy ptr
+		const char *tmp = str.c_str();
+		//start '"'
+		std::string out = "\"";
+		//push all chars
+		while (*tmp)
+		{
+			switch (*tmp)
+			{
+			case '\n':
+				out += "\\n";
+				break;
+			case '\t':
+				out += "\\t";
+				break;
+			case '\b':
+				out += "\\b";
+				break;
+			case '\r':
+				out += "\\r";
+				break;
+			case '\f':
+				out += "\\f";
+				break;
+			case '\a':
+				out += "\\a";
+				break;
+			case '\\':
+				out += "\\\\";
+				break;
+			case '\?':
+				out += "\\?";
+				break;
+			case '\'':
+				out += "\\\'";
+				break;
+			case '\"':
+				out += "\\\"";
+				break;
+			default:
+				out += *tmp;
+				break;
+			}
+			++tmp;
+		}
+		return out + "\"";
+	}
+	std::ostream& operator<< (std::ostream& stream, const Json& value)
+	{
+		return (stream << value.document());
+	}
+	std::ostream& operator<< (std::ostream& stream, const JsonValue& value)
+	{
+		switch (value.type())
+		{
+			case JsonValue::Type::IS_NULL:   stream << "null"; break;
+			case JsonValue::Type::IS_BOOL:   stream << (value.boolean() ? "true" : "false"); break;
+			case JsonValue::Type::IS_NUMBER: stream << value.number(); break;
+			case JsonValue::Type::IS_STRING: stream << json_string_dump(value.string()); break;
+			case JsonValue::Type::IS_ARRAY:
+			{
+				stream << "[";
+				for (size_t i = 0; i < value.size(); ++i)
+				{
+					stream << value.operator[](i) << (i != value.size() - 1 ? "," : "");
+				}
+				stream << "]";
+			}
+			break;
+			case JsonValue::Type::IS_OBJECT:
+			{
+				stream << "{";
+				{
+					int i = 0;
+					for (auto& k_v : value.object())
+					{ 
+						stream << json_string_dump(k_v.first) << ":" << k_v.second << (++i != value.object().size() ? "," : "");
+					}
+				}
+				stream << "}";
+			}
+			break;
+		}
+		return stream;
+	}
     ////////////////////////////////////////////////////////////////////////////////////
     //parse
-    JSon::JSon(){}
-    JSon::JSon(const std::string& source){ parser(source); }
+	Json::Json(){}
+	Json::Json(const JsonValue& document) :m_document(document) {}
+	Json::Json(const std::string& source){ parser(source); }
     
-    //parsing
+    //parser
+	#pragma	region parser
     static inline bool json_is_space(char c)
     {
         return c == ' ' || (c >= '\t' && c <= '\r');
@@ -184,8 +274,7 @@ namespace Square
     {
         return c == '.'  || (c >= '0' && c <= '9');
     }
-    
-    
+        
     static inline bool json_is_xdigit(char c)
     {
         return (c >= '0' && c <= '9') || ((c & ~' ') >= 'A' && (c & ~' ') <= 'F');
@@ -243,20 +332,8 @@ namespace Square
         //result
         return ch == '-' ? -result : result;
     }
-    
-    static void json_skip_space(size_t& line, const char*& source)
-    {
-        while (json_is_space(*source))
-        {
-            //count line
-            if(*source == '\n') ++line;
-            //jump
-            ++source;
-            //exit
-            if (!*source) break;
-        }
-    }
-    struct json_string_out { std::string m_str; bool m_success; };
+
+	struct json_string_out { std::string m_str; bool m_success; };
     static json_string_out json_string(size_t& line,  const char*& source)
     {
         //init
@@ -370,8 +447,68 @@ namespace Square
         return { out, false };
     }
 
-    
-    bool JSon::parser(const std::string& cppsource)
+	static bool json_skip_line_comment(size_t& line, const char*& inout)
+	{
+		//not a line comment
+		if ((*inout) != '/' || *(inout+1) != '/') return false;
+		//skeep
+		while (*(inout) != EOF && *(inout) != '\0'&& *(inout) != '\n') ++(inout);
+		//jump endline
+		if ((*(inout)) == '\n')
+		{
+			++line;  ++inout;
+		}
+		//ok
+		return true;
+	}
+
+	static bool json_skip_multilines_comment(size_t& line, const char*& inout)
+	{
+		//not a multilines comment
+		if ((*inout) != '/' || *(inout + 1) != '*') return false;
+		//jump
+		while 
+		(
+			*(inout) != EOF &&
+			*(inout) != '\0' && 
+				((*inout) != '*' || *(inout + 1) != '/')
+		)
+		{
+			line += (*(inout)) == '\n';
+			++inout;
+		}
+		//jmp last one
+		if ((*inout) == '*' && *(inout + 1) == '/') inout += 2;
+		//ok
+		return true;
+	}
+
+	static bool json_skip_space(size_t& line, const char*& source)
+	{
+		bool a_space_is_skipped = false;
+		while (json_is_space(*source))
+		{
+			//to true
+			a_space_is_skipped = true;
+			//count line
+			if (*source == '\n') ++line;
+			//jump
+			++source;
+			//exit
+			if (!*source) break;
+		}
+		return a_space_is_skipped;
+	}
+
+	static void json_skip_space_and_comments(size_t& line, const char*& source)
+	{
+		while (json_skip_space(line, source)
+			|| json_skip_line_comment(line, source)
+			|| json_skip_multilines_comment(line, source));
+	}
+	#pragma endregion
+	
+	bool Json::parser(const std::string& cppsource)
     {
         //get ptr
         const char* source = cppsource.c_str();
@@ -467,12 +604,12 @@ namespace Square
         while(*source)
         {
             //skip
-            json_skip_space(line,source);
+			json_skip_space_and_comments(line,source);
             //switch
             switch (*source)
             {
-                // // // // // // // // // // // // // // // // // // // // // // // //
-                // number
+				////////////////////////////////////////////////////////////////////////////////////
+				// number
                 case '-':
                 if (!json_is_digit_or_point(*source))
                 {
@@ -496,7 +633,7 @@ namespace Square
                     return false;
                 }
                 break;
-                // // // // // // // // // // // // // // // // // // // // // // // //
+				////////////////////////////////////////////////////////////////////////////////////
                 // string
                 case '"':
                 {
@@ -509,7 +646,7 @@ namespace Square
                     push(JsonValue{ jstr_pret.m_str });
                 }
                 break;
-                // // // // // // // // // // // // // // // // // // // // // // // //
+				////////////////////////////////////////////////////////////////////////////////////
                 // null/true/false
                 case 'n':
                     if(std::strncmp(source, "null", 4) == 0)
@@ -547,7 +684,7 @@ namespace Square
                         return false;
                     }
                 break;
-                // // // // // // // // // // // // // // // // // // // // // // // //
+				////////////////////////////////////////////////////////////////////////////////////
                 // table
                 case '{':
                     push(JsonObject());
@@ -563,7 +700,7 @@ namespace Square
                     pop();
                     ++source;
                 break;
-                // // // // // // // // // // // // // // // // // // // // // // // //
+				////////////////////////////////////////////////////////////////////////////////////
                 // array
                 case '[':
                     push(JsonArray());
@@ -579,7 +716,7 @@ namespace Square
                     pop();
                     ++source;
                 break;
-                // // // // // // // // // // // // // // // // // // // // // // // //
+				////////////////////////////////////////////////////////////////////////////////////
                 // separator
                 case ':':
                     if(separator || !added_key || !in_object())
@@ -599,11 +736,11 @@ namespace Square
                     separator = true;
                     ++source;
                 continue;
-                // // // // // // // // // // // // // // // // // // // // // // // //
+				////////////////////////////////////////////////////////////////////////////////////
                 // EOF
                 case '\0':
                     continue;
-                // // // // // // // // // // // // // // // // // // // // // // // //
+				////////////////////////////////////////////////////////////////////////////////////
                 default:
                     m_list_errors.push_back({line,"JSON_UNEXPECTED_CHARACTER"});
                     return false;
@@ -615,8 +752,9 @@ namespace Square
         //end
         return true;
     }
-    //get error
-    std::string JSon::errors()
+	
+	//get error
+    std::string Json::errors() const
     {
         std::stringstream ssout;
         for(auto& error : m_list_errors)
@@ -627,8 +765,13 @@ namespace Square
     }
     
     //get document
-    JsonValue& JSon::document()
-    {
-        return m_document;
-    }
+	JsonValue& Json::document()
+	{
+		return m_document;
+	}
+	const JsonValue& Json::document() const
+	{
+		return m_document;
+	}
+	//end
 }

@@ -11,12 +11,16 @@
 namespace Square
 {
 	//list of types
+	class Json;
 	class JsonValue;
 	using JsonString = std::string;
 	using JsonArray  = std::vector< JsonValue >;
 	using JsonObject = std::unordered_map< JsonString, JsonValue >;
+	//stream
+	SQUARE_API std::ostream& operator<< (std::ostream& stream, const Json& value);
+	SQUARE_API std::ostream& operator<< (std::ostream& stream, const JsonValue& value);
 	//value
-	class JsonValue
+	class SQUARE_API JsonValue
 	{
 	public:
 		//type
@@ -87,22 +91,24 @@ namespace Square
 		Type m_type;
 	};
     
-    class JSon
+    class SQUARE_API Json
     {
     public:
         
         //parse
-        JSon();
-        JSon(const std::string& source);
+		Json();
+		Json(const JsonValue& document);
+		Json(const std::string& source);
 
         //parsing
         bool parser(const std::string& source);
         
         //get error
-        std::string errors();
+        std::string errors() const;
         
         //get document
-        JsonValue& document();
+		JsonValue& document();
+		const JsonValue& document() const;
     
     protected:
         
@@ -125,4 +131,10 @@ namespace Square
         JsonValue                m_document;
         std::vector< ErrorLine > m_list_errors;
     };
+
+	//string illiterals
+	inline Json operator "" _json(const char* s, std::size_t n)
+	{
+		return std::string(s);
+	}
 }
