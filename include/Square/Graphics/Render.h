@@ -66,7 +66,7 @@ namespace Render
 
 	protected:
 
-		void*			m_data;
+		void*	m_data;
 		Shader* m_shader;
 
 	};

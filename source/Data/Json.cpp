@@ -83,7 +83,7 @@ namespace Data
 	JsonValue::JsonValue(bool value)
 	{
 		m_type   = Type::IS_BOOL;
-		m_number = value;
+		m_boolean = value;
 	}
 	JsonValue::JsonValue(const JsonArray& value)
 	{
@@ -676,9 +676,9 @@ namespace Data
                     }
                 break;
                 case 'f':
-                    if(std::strncmp(source, "false", 4) == 0)
+                    if(std::strncmp(source, "false", 5) == 0)
                     {
-                        source += 4;
+                        source += 5;
                         push({false});
                     }
                     else

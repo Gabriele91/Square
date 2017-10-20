@@ -1653,6 +1653,8 @@ namespace Render
 		}
 		return info_log;
 	}
+    
+#if 0
 	static const char* glsl_type_to_string(GLenum type)
 	{
 		switch (type)
@@ -1674,7 +1676,8 @@ namespace Render
 		}
 		return "other";
 	}
-
+#endif
+    
 	Shader* create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
@@ -1825,7 +1828,7 @@ namespace Render
 		//if find
 		if (uit != shader->m_uniform_map.end()) return &uit->second;
 		//else
-		int uid = glGetUniformLocation(shader->m_shader_id,uname.c_str());
+		long long uid = glGetUniformLocation(shader->m_shader_id,uname.c_str());
 		if (uid < 0) return nullptr;
 		//add and return
 		return &(shader->m_uniform_map[uname] = Uniform(shader, (void*)uid));

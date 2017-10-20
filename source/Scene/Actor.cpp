@@ -17,6 +17,17 @@ namespace Scene
         child->m_parent = shared_from_this();
         m_childs.push_back(child);
     }
+    void Actor::add(Component::SPtr component)
+    {
+        //Olready added
+        if(component->actor() == this) return;
+        //Remove
+        component->remove_from_parent();
+        //Add
+        m_components.push_back(component);
+        //submit
+        component->submit_add(this);
+    }
     
     //remove a child
     void Actor::remove(Actor::SPtr child)
@@ -29,6 +40,16 @@ namespace Scene
             auto it = std::find(m_childs.begin(), m_childs.end(), child);
             if(it != m_childs.end()) m_childs.erase(it);
         }
+    }
+    void Actor::remove(Component::SPtr component)
+    {
+        //Is your own
+        if(component->actor() != this) return;
+        //event
+        component->submit_remove();
+        //find and remove
+        auto it = std::find(m_components.begin(), m_components.end(), component);
+        if(it != m_components.end()) m_components.erase(it);
     }
     void Actor::remove_from_parent()
     {
@@ -51,6 +72,33 @@ namespace Scene
         //fail
         return false;
     }
+    bool Actor::contains(Component::SPtr component) const
+    {
+        return  std::find(m_components.begin(), m_components.end(), component) != m_components.end();
+    }
+    
+    //message to components
+    void Actor::send_message(const Variant& variant, bool brodcast)
+    {
+        //create message
+        Message msg(this,variant);
+        //send
+        send_message(msg, brodcast);
+    }
+    void Actor::send_message(const Message& msg, bool brodcast)
+    {
+        //send
+        for(auto component : m_components)
+        {
+            component->submit_message(msg);
+        }
+        //brodcast
+        if(brodcast) for(auto child : m_childs)
+        {
+            child->send_message(msg, brodcast);
+        }
+    }
+    
 
     
     //matrix op
@@ -160,6 +208,9 @@ namespace Scene
     
     void Actor::send_dirty()
     {
+        //to components
+        for(auto component : m_components) component->on_transform();
+        //to childs
         for (auto child : m_childs) child->set_dirty();
     }
     

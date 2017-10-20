@@ -1,0 +1,24 @@
+{
+    "scene" :
+    {
+        "name" : "p"            //name of actor
+        /*
+         Transform of actor
+        */
+        "position" : [ 1,2,3 ],
+        "scale" : [ 2,3,4 ],
+        "rotation" : [ 1,2,3 ],
+        "picking" : "false",
+        "visible" : true,
+        "components" : null,
+        //childs
+        "childs" :
+        [
+            {
+                 "position" : [ 1,2,3 ],
+                 "scale" : [ 2,3,4 ],
+                 "rotation" : [ 1,2,3 ]
+            }
+        ]
+    }
+}

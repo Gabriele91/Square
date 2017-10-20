@@ -9,20 +9,30 @@
 #include "Square/Math/Linear.h"
 #include "Square/Core/Uncopyable.h"
 #include "Square/Core/SmartPointers.h"
+#include "Square/Scene/Component.h"
 
 namespace Square
 {
 namespace Scene
 {
+    //..................
+    //declaretion
+    class Actor;
+    class Component;
+    class Message;
+    //..................
+    
     class SQUARE_API Actor : public SmartPointers<Actor>, public Uncopyable
     {
     public:
         
         //add a child
         void add(Actor::SPtr child);
-        
+        void add(Component::SPtr component);
+
         //remove a child
         void remove(Actor::SPtr child);
+        void remove(Component::SPtr component);
         void remove_from_parent();
         
         //get parent
@@ -30,6 +40,12 @@ namespace Scene
         
         //contains an actor
         bool contains(Actor::SPtr child) const;
+        bool contains(Component::SPtr child) const;
+        
+        //message
+        void send_message(const Variant& value, bool brodcast = false);
+        void send_message(const Message& msg, bool brodcast = false);
+
         
         //matrix op
         void translation(const Vec3& vector);
@@ -72,6 +88,7 @@ namespace Scene
         Actor::SPtr m_parent;
         //child list
         std::vector< Actor::SPtr > m_childs;
+        std::vector< Component::SPtr > m_components;
     };
 }
 }
