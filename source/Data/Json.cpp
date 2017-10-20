@@ -765,13 +765,13 @@ namespace Square
     }
     
     //get document
-	JsonValue& Json::document()
-	{
-		return m_document;
-	}
-	const JsonValue& Json::document() const
-	{
-		return m_document;
-	}
-	//end
+	JsonValue& Json::document(){ return m_document; }
+	const JsonValue& Json::document() const{ return m_document; }
+	//operators
+    Json::operator JsonValue& ()                                    { return document(); }
+    Json::operator const JsonValue& () const                        { return document(); }
+    JsonValue& Json::operator[] (const size_t& key)                 { return document()[key]; }
+    JsonValue& Json::operator[] (const std::string& key)            { return document()[key]; }
+    const JsonValue& Json::operator[] (const size_t& key) const     { return document()[key]; }
+    const JsonValue& Json::operator[] (const std::string& key) const{ return document()[key]; }
 }

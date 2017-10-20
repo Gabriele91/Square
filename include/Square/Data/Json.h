@@ -109,6 +109,14 @@ namespace Square
         //get document
 		JsonValue& document();
 		const JsonValue& document() const;
+        
+        //operators
+        operator JsonValue& ();
+        operator const JsonValue& () const;
+        JsonValue& operator[] (const size_t& key);
+        JsonValue& operator[] (const std::string& key);
+        const JsonValue& operator[] (const size_t& key) const;
+        const JsonValue& operator[] (const std::string& key) const;
     
     protected:
         

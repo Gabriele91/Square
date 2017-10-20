@@ -30,7 +30,7 @@ int main()
 		//sss [[,],{,}]
 		[{"m":[2,3]} /*??*/,[1,2]]
 	)"_json;
-	obj.document()[0] = "[1,2,4]"_json.document();
+	obj[0] = "[1,2,4]"_json;
 	std::cout << obj;
 	//end
     return 0;
