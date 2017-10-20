@@ -14,6 +14,7 @@
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Variant.h"
+#include "Square/Core/BaseEC.h"
 //Math
 #include "Square/Math/Linear.h"
 #include "Square/Math/Tangent.h"
@@ -21,4 +22,6 @@
 #include "Square/Data/Json.h"
 //Graphics
 #include "Square/Graphics/Render.h"
+//Scene
+#include "Square/Scene/Actor.h"
 

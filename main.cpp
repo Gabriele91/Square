@@ -9,7 +9,8 @@
 #include <sstream>
 int main()
 {
-	using namespace Square;
+    using namespace Square;
+    using namespace Square::Data;
 	//define
 	Json jin
 	({

@@ -11,6 +11,9 @@
 
 namespace Square
 {
+namespace Data
+{
+
 	//get
 	JsonString& JsonValue::string() { return *m_string; }
 	double&		JsonValue::number() { return m_number; }
@@ -774,4 +777,5 @@ namespace Square
     JsonValue& Json::operator[] (const std::string& key)            { return document()[key]; }
     const JsonValue& Json::operator[] (const size_t& key) const     { return document()[key]; }
     const JsonValue& Json::operator[] (const std::string& key) const{ return document()[key]; }
+}
 }

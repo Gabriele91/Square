@@ -10,6 +10,8 @@
 
 namespace Square
 {
+namespace Data
+{
 	//list of types
 	class Json;
 	class JsonValue;
@@ -145,4 +147,5 @@ namespace Square
 	{
 		return std::string(s);
 	}
+}
 }
