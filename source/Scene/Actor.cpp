@@ -13,12 +13,14 @@ namespace Scene
     //add a child
     void Actor::add(Actor::SPtr child)
     {
+		if (!child) return;
         child->remove_from_parent();
         child->m_parent = shared_from_this();
         m_childs.push_back(child);
     }
     void Actor::add(Component::SPtr component)
     {
+		if (!component) return;
         //Olready added
         if(component->actor() == this) return;
         //Remove
@@ -76,7 +78,30 @@ namespace Scene
     {
         return  std::find(m_components.begin(), m_components.end(), component) != m_components.end();
     }
-    
+
+	Component::SPtr Actor::component(int id)
+	{
+		for (auto& components : m_components)
+		{
+			if (components->id() == id)
+			{
+				return components;
+			}
+		}
+		return nullptr;
+	}
+	Component::SPtr Actor::component(const std::string& name)
+	{
+		for (auto& components : m_components)
+		{
+			if (components->name() == name)
+			{
+				return components;
+			}
+		}
+		return nullptr;
+	}
+
     //message to components
     void Actor::send_message(const Variant& variant, bool brodcast)
     {

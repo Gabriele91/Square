@@ -19,7 +19,7 @@ namespace Scene
     //declaretion
     class Actor;
     class Component;
-    class Message;
+    struct Message;
     //..................
     
     class SQUARE_API Actor : public SmartPointers<Actor>, public Uncopyable
@@ -40,7 +40,23 @@ namespace Scene
         
         //contains an actor
         bool contains(Actor::SPtr child) const;
-        bool contains(Component::SPtr child) const;
+        bool contains(Component::SPtr component) const;
+		
+		//get by type
+		template< class T >
+		std::shared_ptr< T > component()
+		{
+			for (auto& components : m_components)
+			{
+				if (dynamic_cast<T*>(components.get()))
+				{
+					return std::static_pointer_cast<T>(components);
+				}
+			}
+			return nullptr;
+		}
+		Component::SPtr component(int id);
+		Component::SPtr component(const std::string& name);
         
         //message
         void send_message(const Variant& value, bool brodcast = false);

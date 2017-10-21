@@ -15,13 +15,25 @@ namespace Square
 namespace Scene
 {
     //class factory of scene component
-    class ComponentFactory
+    class SQUARE_API ComponentFactory
     {
         
     public:
-        //EvolutionMethod classes map
+
+        //element
         typedef Component::SPtr(*CreateComponent)(const std::string& name, size_t id);
-        
+
+		//element in list
+		struct IDCreateComponent
+		{
+			std::string     m_name;
+			CreateComponent m_create;
+		};
+
+		//types
+		using ComponentList = std::vector < IDCreateComponent >;
+		using ComponentIdMap = std::unordered_map < std::string, size_t >;
+
         //public
         static Component::SPtr create(size_t id);
         static Component::SPtr create(const std::string& name);
@@ -35,26 +47,12 @@ namespace Scene
         //info
         static bool exists(const std::string& name);
         
-    protected:
-        
-        struct Object
-        {
-            size_t          m_id;
-            CreateComponent m_create;
-        };
-        
-        using ObjectMap = std::unordered_map < std::string, Object >;
-        using IdMap     = std::unordered_map < size_t, std::string >;
-
-        static std::unique_ptr< size_t >    m_id_counter;
-        static std::unique_ptr< ObjectMap > m_component_map;
-        static std::unique_ptr< IdMap >     m_id_map;
 
     };
     
     //class used for static registration of a object class
     template<class T>
-    class ComponentItem
+    class SQUARE_API ComponentItem
     {
         
         static Component::SPtr create(const std::string& name, size_t id)
@@ -68,8 +66,7 @@ namespace Scene
         }
         
     public:
-        
-        
+                
         static ComponentItem<T>& instance(const std::string& name)
         {
             static ComponentItem<T> object_item(name);

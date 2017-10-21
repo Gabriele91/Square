@@ -19,8 +19,12 @@
 #include "Square/Math/Tangent.h"
 //Data
 #include "Square/Data/Json.h"
+#include "Square/Data/Image.h"
 //Graphics
 #include "Square/Graphics/Render.h"
+//Resource
+#include "Square/Resource/Interface.h"
+#include "Square/Resource/Texture.h"
 //Scene
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"

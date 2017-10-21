@@ -7,56 +7,62 @@
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/ComponentFactory.h"
 #include <sstream>
+#include <iterator>
 
 namespace Square
 {
 namespace Scene
 {
-    //values
-    std::unique_ptr< size_t >                      ComponentFactory::m_id_counter;
-    std::unique_ptr< ComponentFactory::ObjectMap > ComponentFactory::m_component_map;
-    std::unique_ptr< ComponentFactory::IdMap  >    ComponentFactory::m_id_map;
+	//static 
+	static ComponentFactory::ComponentList& component_list()
+	{
+		static ComponentFactory::ComponentList component_list;
+		return component_list;
+	};
+	static ComponentFactory::ComponentIdMap& component_id_map()
+	{
+		static ComponentFactory::ComponentIdMap component_list;
+		return component_list;
+	}
     //public
     Component::SPtr ComponentFactory::create(size_t id)
     {
-        //map is alloc?
-        if (!m_id_map) return nullptr;
-        //find
-        auto obj = m_id_map->find(id);
+        //test
+		if (id >= component_list().size()) return nullptr;
+		//objs
+		auto& idcc = component_list()[id];
         //return
-        return create((*obj).second);
+		return idcc.m_create(idcc.m_name, id);
     }
     Component::SPtr ComponentFactory::create(const std::string& name)
     {
-        //map is alloc?
-        if (!m_component_map) return nullptr;
         //find
-        auto obj = m_component_map->find(name);
+        auto obj = component_id_map().find(name);
+		//find?
+		if (obj == component_id_map().end()) return nullptr;
         //return
-        return (*obj).second.m_create(name, (*obj).second.m_id);
+        return create(obj->second);
     }
     void ComponentFactory::append(const std::string& name, ComponentFactory::CreateComponent fun)
     {
-        //alloc
-        if (!m_id_counter)    m_id_counter    = std::make_unique< size_t >(0);
-        if (!m_component_map) m_component_map = std::make_unique< ComponentFactory::ObjectMap >();
-        if (!m_id_map)        m_id_map        = std::make_unique< ComponentFactory::IdMap >();
+		//failed
+		if (exists(name)) throw std::runtime_error("ComponentFactory: "+name+", already registered");
         //add
-        m_id_map->operator[](*m_id_counter) = name;
-        m_component_map->operator[](name)   = Object{ (*m_id_counter)++, fun };
+		component_id_map().insert({ name, component_list().size() });
+		component_list().push_back({ name, fun });
     }
     size_t ComponentFactory::id(const std::string& name)
     {
         //find
-        auto obj = m_component_map->find(name);
+        auto obj = component_id_map().find(name);
         //return
-        return (*obj).second.m_id;
+        return (*obj).second;
     }
     //list of methods
     std::vector< std::string > ComponentFactory::list_of_components()
     {
         std::vector< std::string > list;
-        for (const auto & pair : *m_component_map) list.push_back(pair.first);
+        for (const auto & occid : component_list()) list.push_back(occid.m_name);
         return list;
     }
     std::string  ComponentFactory::names_of_components(const std::string& sep)
@@ -70,10 +76,7 @@ namespace Scene
     //info
     bool ComponentFactory::exists(const std::string& name)
     {
-        //find
-        auto it = m_component_map->find(name);
-        //return
-        return it != m_component_map->end();
+        return  component_id_map().find(name) != component_id_map().end();
     }
 }
 }

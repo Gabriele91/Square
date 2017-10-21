@@ -31,7 +31,6 @@ public:
     }
 };
 REGISTERED_COMPONENT(Sprite, "Sprite")
-
 int main()
 {
     using namespace Square;
@@ -45,7 +44,8 @@ int main()
     std::cout << (jout.errors().size() ? jout.errors() : jout.document()) << std::endl;
     //test
     Scene::Actor player;
-    player.add(ComponentFactory::create("Sprite"));
+    player.add(ComponentFactory::create("Sprite")); 
+	player.component<Sprite>();
     //End
     return 0;
 }

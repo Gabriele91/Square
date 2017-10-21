@@ -12,6 +12,7 @@
 #include <vector>
 #include <memory>
 #include <limits>
+#include <stdexcept> 
 
 /////////////////////////////////////////////////////////////////////////////
 // MACRO
@@ -42,3 +43,4 @@
 	#define SQUARE_API
 	#define SQUARE_RENDER_API
 #endif
+

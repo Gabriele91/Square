@@ -16,9 +16,9 @@ namespace Scene
 {
     //..................
     //declaretion
-    class Actor;
-    class Component;
-    class Message;
+    class  Actor;
+    class  Component;
+	struct Message;
     //..................
     struct SQUARE_API Message
     {
