@@ -54,7 +54,7 @@ int main()
 		Video::Screen screen = Video::Screen::by_index(0);
 
 		Video::WindowInfo winfo(&screen);
-		winfo.m_context.m_color = 32;
+		winfo.m_context.m_color = 24;
 		winfo.m_size[0] = 1280;
 		winfo.m_size[1] = 720;
 		winfo.m_fullscreen = false;

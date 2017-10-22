@@ -140,11 +140,11 @@ namespace Data
 		if (ext != ".png"
 			&& ext != ".jpg"
 			&& ext != ".jpeg"
-			&& ext != ".tga") return nullptr;
+			&& ext != ".tga") return false;
 		//read all file
 		std::vector<char> data_file = Filesystem::file_read_all(path);
 		//fail to read?
-		if (!data_file.size()) return nullptr;
+		if (!data_file.size()) return false;
 		//png
 		if (   ext == ".png"
 			|| ext == ".jpg"

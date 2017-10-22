@@ -328,7 +328,7 @@ namespace Render
 
 	void Uniform::set_value(const ConstBuffer* buffer)
 	{
-		glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_shader->m_shader_id, (GLuint)get_native_CB(buffer));
+		glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_shader->m_shader_id, get_native_CB(buffer).get<GLuint>());
 	}
 
 	bool Uniform::is_valid(){ return m_shader && uniform_id(m_shader) != -1; }

@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele on 14/08/16.
-//  Copyright © 2016 Gabriele. All rights reserved.
+//  Copyright ï¿½ 2016 Gabriele. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -519,9 +519,9 @@ namespace Video
 	////////////////////////////////////////////////////////////////////////////////////
 	// this is the main message handler for the program	
 	LRESULT CALLBACK win32_event_wrapper(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-	static InputWin32* input_create(Window* wnd);
+	static InputWin32* input_create(Window* wnd, Input* input);
 	static void input_delete(InputWin32*& in);
-	static WindowWin32* window_create(const WindowInfo& info);
+	static WindowWin32* window_create(const WindowInfo& info, Window* window);
 	static void	window_delete(WindowWin32*& window);
 	////////////////////////////////////////////////////////////////////////////////////
 	// VIDEO
@@ -743,7 +743,7 @@ namespace Video
 	void close()
 	{
 		//remove all inputs/windows 
-		for (auto inp_it : s_os_context.m_input)   inp_it.second->m_window_ref->destoy();
+		for (auto inp_it : s_os_context.m_input)   inp_it.second->m_input_ref->destoy();
 		for (auto wnd_it : s_os_context.m_windows) wnd_it.second->m_window_ref->destoy();
 		s_os_context.m_input.clear();
 		s_os_context.m_windows.clear();

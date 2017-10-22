@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele on 14/08/16.
-//  Copyright © 2016 Gabriele. All rights reserved.
+//  Copyright ï¿½ 2016 Gabriele. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -70,11 +70,11 @@ namespace Video
 	{
 		const Screen*   m_screen{ nullptr };
 		ContextInfo	    m_context;
-		std::string		m_title{ "hcube" };
+		std::string		m_title		{ "Square" };
 		unsigned int	m_size[2]	{ 1280, 720 };
 		int				m_position[2]{ 0,	0   };
 		bool			m_fullscreen{ false };
-		bool			m_resize{ false };
+		bool			m_resize    { false };
 
 		WindowInfo() {}
 		WindowInfo(Screen* screen) :m_screen(screen) {}

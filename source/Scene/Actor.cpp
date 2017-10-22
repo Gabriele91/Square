@@ -5,6 +5,7 @@
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Scene/Actor.h"
+#include <algorithm>
 
 namespace Square
 {

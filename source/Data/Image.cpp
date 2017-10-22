@@ -213,9 +213,9 @@ namespace  Data
 		for(int x = 0; x != m_width;  ++x)
 		{
 			//normalize
-			unsigned char r = unsigned char(float(m_buffer[x+m_width*y].m_r) / 255.0f * 32.0f); // 0 0 0 R R R R R
-			unsigned char g = unsigned char(float(m_buffer[x+m_width*y].m_g) / 255.0f * 64.0f); // 0 0 G G G G G G
-			unsigned char b = unsigned char(float(m_buffer[x+m_width*y].m_b) / 255.0f * 32.0f); // 0 0 0 B B B B B
+			unsigned char r = (unsigned char)(float(m_buffer[x+m_width*y].m_r) / 255.0f * 32.0f); // 0 0 0 R R R R R
+			unsigned char g = (unsigned char)(float(m_buffer[x+m_width*y].m_g) / 255.0f * 64.0f); // 0 0 G G G G G G
+			unsigned char b = (unsigned char)(float(m_buffer[x+m_width*y].m_b) / 255.0f * 32.0f); // 0 0 0 B B B B B
 			// R R R R R G G G bytes[i*2+0]
 			// G G G B B B B B bytes[i*2+1]
 			output[x*2+m_width*2*y+0] = (r << 3) | ((g >> 3) & 0x03);
