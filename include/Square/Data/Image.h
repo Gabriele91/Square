@@ -9,7 +9,7 @@
 #include "Square/Config.h"
 #include "Square/Core/Uncopyable.h"
 #include "Square/Core/SmartPointers.h"
-#include "Square/Graphics/Render.h"
+#include "Square/Driver/Render.h"
 
 namespace Square
 {

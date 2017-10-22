@@ -5,7 +5,7 @@
 //  Copyright © 2016 Gabriele. All rights reserved.
 //
 #include "Square/Config.h"
-#include "Square/Graphics/Render.h"
+#include "Square/Driver/Render.h"
 #include <cstring>
 #include <assert.h>
 

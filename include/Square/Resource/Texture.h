@@ -6,7 +6,7 @@
 //
 #pragma once
 #include "Square/Config.h"
-#include "Square/Graphics/Render.h"
+#include "Square/Driver/Render.h"
 #include "Square/Resource/Interface.h"
 
 namespace Square

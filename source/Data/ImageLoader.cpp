@@ -6,7 +6,7 @@
 //
 #include "Square/Config.h"
 #include "Square/Core/Filesystem.h"
-#include "Square/Graphics/Render.h"
+#include "Square/Driver/Render.h"
 #include "Square/Data/Image.h"
 
 extern "C"

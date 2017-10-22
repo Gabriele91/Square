@@ -16,23 +16,14 @@
     <Filter Include="Source\Core">
       <UniqueIdentifier>{1b39dcac-f1f7-4602-89dd-d06067e49057}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Graphics">
-      <UniqueIdentifier>{06fdf6ad-e0ca-490a-a527-30fca41dd669}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Include\Square">
       <UniqueIdentifier>{42f86c04-7162-4d89-9867-58a1ae610f5b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include\Square\Core">
       <UniqueIdentifier>{659525eb-edc1-46c1-b99b-d7423bb63140}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Include\Square\Graphics">
-      <UniqueIdentifier>{c57db836-7e9a-4578-80ae-5bdfae1325ea}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Include\Square\Math">
       <UniqueIdentifier>{69d0d0c1-8460-4493-86c2-0551431f89a9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Include\Square\Graphics\OpenGL">
-      <UniqueIdentifier>{eee83957-d42a-4e2b-8bf6-f95ac37ef89e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include\Square\Data">
       <UniqueIdentifier>{ad3f869c-4542-43f9-b3df-4ec24db7d7e1}</UniqueIdentifier>
@@ -52,6 +43,18 @@
     <Filter Include="Source\Data\ImageUtils">
       <UniqueIdentifier>{0df156a3-f679-4212-bd7f-ea88a7b62377}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Resource">
+      <UniqueIdentifier>{38544b5e-af94-4495-9845-204efe915700}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Square\Driver">
+      <UniqueIdentifier>{33420c6c-7918-40a3-b951-eaa8fc02c6b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Square\Driver\OpenGL">
+      <UniqueIdentifier>{60cfea4d-1286-4854-b1d6-bd6adff456d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Driver">
+      <UniqueIdentifier>{1765bbf0-91e0-47b9-a9d1-852bd0bc17a3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Square\Math\Linear.h">
@@ -65,12 +68,6 @@
     </ClInclude>
     <ClInclude Include="include\Square\Square.h">
       <Filter>Include\Square</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Square\Graphics\Render.h">
-      <Filter>Include\Square\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Square\Graphics\OpenGL\OpenGL4.h">
-      <Filter>Include\Square\Graphics\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="include\Square\Core\Filesystem.h">
       <Filter>Include\Square\Core</Filter>
@@ -111,6 +108,18 @@
     <ClInclude Include="include\Square\Data\Image.h">
       <Filter>Include\Square\Data</Filter>
     </ClInclude>
+    <ClInclude Include="include\Square\Driver\Render.h">
+      <Filter>Include\Square\Driver</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Driver\OpenGL\OpenGL4.h">
+      <Filter>Include\Square\Driver\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Driver\Input.h">
+      <Filter>Include\Square\Driver</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Driver\Window.h">
+      <Filter>Include\Square\Driver</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -122,9 +131,6 @@
     </ClCompile>
     <ClCompile Include="source\Core\UtfConvert.cpp">
       <Filter>Source\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="source\Graphics\Render.cpp">
-      <Filter>Source\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="source\Data\Json.cpp">
       <Filter>Source\Data</Filter>
@@ -138,9 +144,6 @@
     <ClCompile Include="source\Scene\ComponentFactory.cpp">
       <Filter>Source\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="source\Resource\Texture.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="source\Data\ImageLoader.cpp">
       <Filter>Source\Data</Filter>
     </ClCompile>
@@ -152,6 +155,15 @@
     </ClCompile>
     <ClCompile Include="source\Data\ImageUtils\tga.cpp">
       <Filter>Source\Data\ImageUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Resource\Texture.cpp">
+      <Filter>Source\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Driver\Render.cpp">
+      <Filter>Source\Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Driver\Window_win32.cpp">
+      <Filter>Source\Driver</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

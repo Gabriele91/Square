@@ -140,8 +140,10 @@
     <ClInclude Include="include\Square\Core\Variant.h" />
     <ClInclude Include="include\Square\Data\Image.h" />
     <ClInclude Include="include\Square\Data\Json.h" />
-    <ClInclude Include="include\Square\Graphics\OpenGL\OpenGL4.h" />
-    <ClInclude Include="include\Square\Graphics\Render.h" />
+    <ClInclude Include="include\Square\Driver\Input.h" />
+    <ClInclude Include="include\Square\Driver\OpenGL\OpenGL4.h" />
+    <ClInclude Include="include\Square\Driver\Render.h" />
+    <ClInclude Include="include\Square\Driver\Window.h" />
     <ClInclude Include="include\Square\Math\Linear.h" />
     <ClInclude Include="include\Square\Math\Tangent.h" />
     <ClInclude Include="include\Square\Resource\Interface.h" />
@@ -161,7 +163,8 @@
     <ClCompile Include="source\Data\ImageUtils\stb_image.cpp" />
     <ClCompile Include="source\Data\ImageUtils\tga.cpp" />
     <ClCompile Include="source\Data\Json.cpp" />
-    <ClCompile Include="source\Graphics\Render.cpp" />
+    <ClCompile Include="source\Driver\Render.cpp" />
+    <ClCompile Include="source\Driver\Window_win32.cpp" />
     <ClCompile Include="source\Resource\Texture.cpp" />
     <ClCompile Include="source\Scene\Actor.cpp" />
     <ClCompile Include="source\Scene\Component.cpp" />

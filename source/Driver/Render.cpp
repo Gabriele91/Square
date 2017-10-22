@@ -5,8 +5,8 @@
 //  Copyright © 2016 Gabriele. All rights reserved.
 //
 #include "Square/Config.h"
-#include "Square/Graphics/Render.h"
-#include "Square/Graphics/OpenGL/OpenGL4.h"
+#include "Square/Driver/Render.h"
+#include "Square/Driver/OpenGL/OpenGL4.h"
 //--------------------------------------------------
 #include <iostream>
 #include <unordered_map>
