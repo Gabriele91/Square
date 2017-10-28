@@ -19,6 +19,11 @@
 		E007D8BD1F9DF1C50059D333 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E007D8BC1F9DF1C40059D333 /* CoreVideo.framework */; };
 		E007D8BF1F9DF1C90059D333 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E007D8BE1F9DF1C90059D333 /* Cocoa.framework */; };
 		E01464601F9765B900E43E2D /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E014645F1F9765B900E43E2D /* main.cpp */; };
+		E09DFEDA1FA3FD4200E93E7C /* Intersection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E09DFED51FA3FD4100E93E7C /* Intersection.cpp */; };
+		E09DFEDB1FA3FD4200E93E7C /* OBoundingBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E09DFED61FA3FD4100E93E7C /* OBoundingBox.cpp */; };
+		E09DFEDC1FA3FD4200E93E7C /* CreateBounding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E09DFED71FA3FD4100E93E7C /* CreateBounding.cpp */; };
+		E09DFEDD1FA3FD4200E93E7C /* AABoundingBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E09DFED81FA3FD4100E93E7C /* AABoundingBox.cpp */; };
+		E09DFEDE1FA3FD4200E93E7C /* Frustum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E09DFED91FA3FD4200E93E7C /* Frustum.cpp */; };
 		E0A499751F9A250800FCBEBE /* Actor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0A499741F9A250800FCBEBE /* Actor.cpp */; };
 		E0A4997F1F9A439800FCBEBE /* Filesystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0A4997B1F9A439700FCBEBE /* Filesystem.cpp */; };
 		E0A499801F9A439800FCBEBE /* Time.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0A4997C1F9A439700FCBEBE /* Time.cpp */; };
@@ -860,12 +865,23 @@
 		E079D2BC1F964D5D00E7992F /* glew32s.lib */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = glew32s.lib; sourceTree = "<group>"; };
 		E079D2BD1F964D5D00E7992F /* libbz2.lib */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libbz2.lib; sourceTree = "<group>"; };
 		E079D2BE1F964D5D00E7992F /* zlibstatic.lib */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = zlibstatic.lib; sourceTree = "<group>"; };
+		E09DFED31FA3FC3000E93E7C /* Frustum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Frustum.h; sourceTree = "<group>"; };
+		E09DFED51FA3FD4100E93E7C /* Intersection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Intersection.cpp; sourceTree = "<group>"; };
+		E09DFED61FA3FD4100E93E7C /* OBoundingBox.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OBoundingBox.cpp; sourceTree = "<group>"; };
+		E09DFED71FA3FD4100E93E7C /* CreateBounding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CreateBounding.cpp; sourceTree = "<group>"; };
+		E09DFED81FA3FD4100E93E7C /* AABoundingBox.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AABoundingBox.cpp; sourceTree = "<group>"; };
+		E09DFED91FA3FD4200E93E7C /* Frustum.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Frustum.cpp; sourceTree = "<group>"; };
+		E09DFEE01FA3FE7300E93E7C /* Intersection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Intersection.h; sourceTree = "<group>"; };
+		E09DFEE11FA3FE7300E93E7C /* Sphere.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Sphere.h; sourceTree = "<group>"; };
+		E09DFEE21FA3FE7300E93E7C /* AABoundingBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AABoundingBox.h; sourceTree = "<group>"; };
 		E0A499741F9A250800FCBEBE /* Actor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Actor.cpp; sourceTree = "<group>"; };
 		E0A4997B1F9A439700FCBEBE /* Filesystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Filesystem.cpp; sourceTree = "<group>"; };
 		E0A4997C1F9A439700FCBEBE /* Time.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Time.cpp; sourceTree = "<group>"; };
 		E0A4997D1F9A439700FCBEBE /* UtfConvert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UtfConvert.cpp; sourceTree = "<group>"; };
 		E0AD6A751F9A6BA900D6E2FE /* Component.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Component.cpp; sourceTree = "<group>"; };
 		E0AD6A781F9A75B100D6E2FE /* ComponentFactory.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ComponentFactory.cpp; sourceTree = "<group>"; };
+		E0CBE3C31FA492F100FDCA3E /* OBoundingBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBoundingBox.h; sourceTree = "<group>"; };
+		E0CBE3C41FA497ED00FDCA3E /* CreateBounding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CreateBounding.h; sourceTree = "<group>"; };
 		E0D94E0F1F9A4D220028CE79 /* scene.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = scene.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -897,7 +913,7 @@
 		E007D8861F9DE4400059D333 /* Square */ = {
 			isa = PBXGroup;
 			children = (
-				E007D8871F9DE4400059D333 /* Config.h */,
+				E09DFED21FA3FC3000E93E7C /* Geometry */,
 				E007D8881F9DE4400059D333 /* Core */,
 				E007D88F1F9DE4400059D333 /* Data */,
 				E007D8921F9DE4400059D333 /* Driver */,
@@ -906,6 +922,7 @@
 				E007D89F1F9DE4400059D333 /* Resource */,
 				E007D8A21F9DE4400059D333 /* Scene */,
 				E007D8A61F9DE4400059D333 /* Square.h */,
+				E007D8871F9DE4400059D333 /* Config.h */,
 			);
 			path = Square;
 			sourceTree = "<group>";
@@ -1067,6 +1084,7 @@
 		E079CF921F964BDB00E7992F /* source */ = {
 			isa = PBXGroup;
 			children = (
+				E09DFED41FA3FD2D00E93E7C /* Geometry */,
 				E007D8A71F9DE4630059D333 /* Driver */,
 				E007D8AB1F9DE4630059D333 /* Resource */,
 				E0A499791F9A439700FCBEBE /* Core */,
@@ -2048,6 +2066,31 @@
 			path = lib;
 			sourceTree = "<group>";
 		};
+		E09DFED21FA3FC3000E93E7C /* Geometry */ = {
+			isa = PBXGroup;
+			children = (
+				E0CBE3C41FA497ED00FDCA3E /* CreateBounding.h */,
+				E0CBE3C31FA492F100FDCA3E /* OBoundingBox.h */,
+				E09DFEE21FA3FE7300E93E7C /* AABoundingBox.h */,
+				E09DFEE11FA3FE7300E93E7C /* Sphere.h */,
+				E09DFED31FA3FC3000E93E7C /* Frustum.h */,
+				E09DFEE01FA3FE7300E93E7C /* Intersection.h */,
+			);
+			path = Geometry;
+			sourceTree = "<group>";
+		};
+		E09DFED41FA3FD2D00E93E7C /* Geometry */ = {
+			isa = PBXGroup;
+			children = (
+				E09DFED71FA3FD4100E93E7C /* CreateBounding.cpp */,
+				E09DFED61FA3FD4100E93E7C /* OBoundingBox.cpp */,
+				E09DFED81FA3FD4100E93E7C /* AABoundingBox.cpp */,
+				E09DFED91FA3FD4200E93E7C /* Frustum.cpp */,
+				E09DFED51FA3FD4100E93E7C /* Intersection.cpp */,
+			);
+			path = Geometry;
+			sourceTree = "<group>";
+		};
 		E0A499731F9A250800FCBEBE /* Scene */ = {
 			isa = PBXGroup;
 			children = (
@@ -2126,6 +2169,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E0A4997F1F9A439800FCBEBE /* Filesystem.cpp in Sources */,
+				E09DFEDB1FA3FD4200E93E7C /* OBoundingBox.cpp in Sources */,
 				E0A499751F9A250800FCBEBE /* Actor.cpp in Sources */,
 				E00558591F98AEEF0055DC1F /* Json.cpp in Sources */,
 				E0AD6A791F9A75B100D6E2FE /* ComponentFactory.cpp in Sources */,
@@ -2133,8 +2177,12 @@
 				E0A499801F9A439800FCBEBE /* Time.cpp in Sources */,
 				E01464601F9765B900E43E2D /* main.cpp in Sources */,
 				E0A499811F9A439800FCBEBE /* UtfConvert.cpp in Sources */,
+				E09DFEDA1FA3FD4200E93E7C /* Intersection.cpp in Sources */,
 				E007D8AD1F9DE4630059D333 /* Render.cpp in Sources */,
+				E09DFEDC1FA3FD4200E93E7C /* CreateBounding.cpp in Sources */,
 				E007D8B01F9DE4630059D333 /* Texture.cpp in Sources */,
+				E09DFEDD1FA3FD4200E93E7C /* AABoundingBox.cpp in Sources */,
+				E09DFEDE1FA3FD4200E93E7C /* Frustum.cpp in Sources */,
 				E0AD6A761F9A6BA900D6E2FE /* Component.cpp in Sources */,
 				E007D8BB1F9DEF170059D333 /* Window_cocoa.mm in Sources */,
 				E007D8B71F9DE4780059D333 /* Image.cpp in Sources */,

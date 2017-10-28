@@ -17,6 +17,12 @@
 //Math
 #include "Square/Math/Linear.h"
 #include "Square/Math/Tangent.h"
+//Geometry
+#include "Square/Geometry/Sphere.h"
+#include "Square/Geometry/Frustum.h"
+#include "Square/Geometry/OBoundingBox.h"
+#include "Square/Geometry/AABoundingBox.h"
+#include "Square/Geometry/Intersection.h"
 //Data
 #include "Square/Data/Json.h"
 #include "Square/Data/Image.h"
