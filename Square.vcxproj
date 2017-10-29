@@ -144,6 +144,12 @@
     <ClInclude Include="include\Square\Driver\OpenGL\OpenGL4.h" />
     <ClInclude Include="include\Square\Driver\Render.h" />
     <ClInclude Include="include\Square\Driver\Window.h" />
+    <ClInclude Include="include\Square\Geometry\AABoundingBox.h" />
+    <ClInclude Include="include\Square\Geometry\CreateBounding.h" />
+    <ClInclude Include="include\Square\Geometry\Frustum.h" />
+    <ClInclude Include="include\Square\Geometry\Intersection.h" />
+    <ClInclude Include="include\Square\Geometry\OBoundingBox.h" />
+    <ClInclude Include="include\Square\Geometry\Sphere.h" />
     <ClInclude Include="include\Square\Math\Linear.h" />
     <ClInclude Include="include\Square\Math\Tangent.h" />
     <ClInclude Include="include\Square\Resource\Interface.h" />
@@ -152,6 +158,10 @@
     <ClInclude Include="include\Square\Scene\Component.h" />
     <ClInclude Include="include\Square\Scene\ComponentFactory.h" />
     <ClInclude Include="include\Square\Square.h" />
+    <ClInclude Include="source\Driver\Win32\Input_private.h" />
+    <ClInclude Include="source\Driver\Win32\Screen_private.h" />
+    <ClInclude Include="source\Driver\Win32\Window_private.h" />
+    <ClInclude Include="source\Driver\Win32\Wrapper_private.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -164,11 +174,34 @@
     <ClCompile Include="source\Data\ImageUtils\tga.cpp" />
     <ClCompile Include="source\Data\Json.cpp" />
     <ClCompile Include="source\Driver\Render.cpp" />
-    <ClCompile Include="source\Driver\Window_win32.cpp" />
+    <ClCompile Include="source\Driver\Win32\Input_private.cpp" />
+    <ClCompile Include="source\Driver\Win32\Screen_private.cpp" />
+    <ClCompile Include="source\Driver\Win32\Window_private.cpp" />
+    <ClCompile Include="source\Driver\Win32\Wrapper.cpp" />
+    <ClCompile Include="source\Driver\Window_xorg.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="source\Geometry\AABoundingBox.cpp" />
+    <ClCompile Include="source\Geometry\CreateBounding.cpp" />
+    <ClCompile Include="source\Geometry\Frustum.cpp" />
+    <ClCompile Include="source\Geometry\Intersection.cpp" />
+    <ClCompile Include="source\Geometry\OBoundingBox.cpp" />
     <ClCompile Include="source\Resource\Texture.cpp" />
     <ClCompile Include="source\Scene\Actor.cpp" />
     <ClCompile Include="source\Scene\Component.cpp" />
     <ClCompile Include="source\Scene\ComponentFactory.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\Driver\Window_cocoa.mm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

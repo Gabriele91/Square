@@ -55,6 +55,15 @@
     <Filter Include="Source\Driver">
       <UniqueIdentifier>{1765bbf0-91e0-47b9-a9d1-852bd0bc17a3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include\Square\Geometry">
+      <UniqueIdentifier>{23787cbd-2290-402e-8f38-f608f7b1515d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Geometry">
+      <UniqueIdentifier>{f5ea3472-4b2c-4316-ad3a-b7a938ef9bbb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Driver\Win32">
+      <UniqueIdentifier>{6c16c117-6925-4b60-979d-654e20bbdcac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Square\Math\Linear.h">
@@ -120,6 +129,39 @@
     <ClInclude Include="include\Square\Driver\Window.h">
       <Filter>Include\Square\Driver</Filter>
     </ClInclude>
+    <ClInclude Include="include\Square\Geometry\AABoundingBox.h">
+      <Filter>Include\Square\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Geometry\CreateBounding.h">
+      <Filter>Include\Square\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Geometry\Frustum.h">
+      <Filter>Include\Square\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Geometry\Intersection.h">
+      <Filter>Include\Square\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Geometry\OBoundingBox.h">
+      <Filter>Include\Square\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Geometry\Sphere.h">
+      <Filter>Include\Square\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Window_cocoa.mm">
+      <Filter>Source\Driver</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Win32\Input_private.h">
+      <Filter>Source\Driver\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Win32\Screen_private.h">
+      <Filter>Source\Driver\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Win32\Window_private.h">
+      <Filter>Source\Driver\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Win32\Wrapper_private.h">
+      <Filter>Source\Driver\Win32</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -162,8 +204,35 @@
     <ClCompile Include="source\Driver\Render.cpp">
       <Filter>Source\Driver</Filter>
     </ClCompile>
-    <ClCompile Include="source\Driver\Window_win32.cpp">
+    <ClCompile Include="source\Geometry\AABoundingBox.cpp">
+      <Filter>Source\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Geometry\CreateBounding.cpp">
+      <Filter>Source\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Geometry\Frustum.cpp">
+      <Filter>Source\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Geometry\Intersection.cpp">
+      <Filter>Source\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Geometry\OBoundingBox.cpp">
+      <Filter>Source\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Driver\Window_xorg.cpp">
       <Filter>Source\Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Driver\Win32\Input_private.cpp">
+      <Filter>Source\Driver\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Driver\Win32\Screen_private.cpp">
+      <Filter>Source\Driver\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Driver\Win32\Window_private.cpp">
+      <Filter>Source\Driver\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Driver\Win32\Wrapper.cpp">
+      <Filter>Source\Driver\Win32</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

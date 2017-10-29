@@ -8,521 +8,118 @@
 #include "Square/Config.h"
 #include "Square/Driver/Window.h"
 #include "Square/Driver/Input.h"
+#include "Wrapper_private.h"
+#include <unordered_map>
 
-#include <windows.h>
-#include <windowsx.h>
-#include <dwmapi.h>
-#include <map>
-#include <vector>
-#include <iostream>
-#define WINDOW_CLASS_NAME TEXT("Square")
-#define WINDOW_INPUT_NAME_REF  TEXT("g_wrapper_input")
-#define WINDOW_ERROR_BAD_LENGTH (ERROR_BAD_LENGTH-4);
-#define HCUBE_WINDOW_STYLE WS_TILEDWINDOW
-#define HCUBE_FULLSCREEN_STYLE (WS_POPUP | WS_VISIBLE)
 typedef HRESULT(WINAPI * DwmIsCompositionEnabledFunction)(__out BOOL* isEnabled);
-typedef HRESULT(WINAPI *DwmGetWindowAttributeFunction) (__in  HWND hwnd,__in  DWORD dwAttribute,__out PVOID pvAttribute,DWORD cbAttribute);
+typedef HRESULT(WINAPI *DwmGetWindowAttributeFunction) (__in  HWND hwnd, __in  DWORD dwAttribute, __out PVOID pvAttribute, DWORD cbAttribute);
 
 namespace Square
 {
 namespace Video
 {
-	////////////////////////////////////////////////////////////////////////////////////
-	static std::string win32_get_last_error_as_string()
+	///////////////////////////////////////////////////////////////////////////////////
+	// Wrapper
+	namespace Win32
 	{
-		//Get the error message, if any.
-		DWORD error_message_id = ::GetLastError();
-		//no error
-		if (!error_message_id) return {};
-		//get error string
-		LPSTR message_buffer = nullptr;
-		size_t size = FormatMessageA
-		(
-			  FORMAT_MESSAGE_ALLOCATE_BUFFER 
-			| FORMAT_MESSAGE_FROM_SYSTEM 
-			| FORMAT_MESSAGE_IGNORE_INSERTS
-			,NULL
-			, error_message_id
-			, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)
-			, (LPSTR)&message_buffer
-			, 0
-			, NULL
-		);
-		//C++ message
-		std::string message(message_buffer, size);
-		//free the buffer.
-		LocalFree(message_buffer);
-		//return msg
-		return message;
-	}
-
-	static void get_rect_of_window_including_aero(HWND wnd, RECT *rect)
-	{
-		// default to old way of getting the window rectandle
-		::GetWindowRect(wnd, rect);
-		// Load the dll and keep the handle to it
-		// must load dynamicaly because this dll exists only in vista -- not in xp.
-		// if this is running on XP then use old way.
-		auto dwmapi_dll_handle = LoadLibrary("dwmapi.dll");
-		// not on Vista/Windows7 so no aero so no need to account for aero.  could use GetVersion to determine this faster.
-		if (dwmapi_dll_handle)
+		std::string win32_get_last_error_as_string()
 		{
-			HRESULT a_result = S_OK;
-			BOOL is_enabled = false;
-			if (auto dwm_is_composition_enabled = (DwmIsCompositionEnabledFunction)::GetProcAddress(dwmapi_dll_handle, "DwmIsCompositionEnabled"))
-			{
-				a_result = dwm_is_composition_enabled(&is_enabled);
-			}
-			//
-			if (SUCCEEDED(a_result) && is_enabled)
-			{
-				if (auto dwm_get_window_attribute = (DwmGetWindowAttributeFunction)::GetProcAddress(dwmapi_dll_handle, "DwmGetWindowAttribute"))
-				{
-					a_result = dwm_get_window_attribute(wnd, DWMWA_EXTENDED_FRAME_BOUNDS, rect, sizeof(RECT));
-					// hopefully we're ok either way
-					//if (SUCCEEDED(a_result)) dwm_get_window_attribute( wnd, DWMWA_EXTENDED_FRAME_BOUNDS, rect, sizeof(RECT));
-				}
-			}
-			FreeLibrary(dwmapi_dll_handle);
-		}
-	}
-
-	static void compute_window_size(const unsigned int size_in[2], unsigned int size_out[2])
-	{
-		RECT window_rect
-		{
-			  0
-			, 0
-			, size_in[0] // right = Width
-			, size_in[1] // bottom = Height
-		};
-		AdjustWindowRectEx(&window_rect, HCUBE_WINDOW_STYLE, true, 0);
-		//calc size window
-		size_out[0] = window_rect.right - window_rect.left;
-		size_out[1] = window_rect.bottom - window_rect.top - WINDOW_ERROR_BAD_LENGTH;
-	}
-	////////////////////////////////////////////////////////////////////////////////////
-	struct ScreenWin32
-	{
-		bool m_only_display;
-		//screen name
-		TCHAR    m_display_name[32];
-		TCHAR	 m_monitor_name[32];
-		HMONITOR m_monitor{ nullptr };
-		//set name
-		ScreenWin32(const TCHAR display[32])
-		{
-			m_only_display = true;
-			std::memcpy(m_display_name, display, sizeof(m_display_name));
-			try_to_get_monitor_hendler();
-		}
-		ScreenWin32(const TCHAR display[32], const TCHAR monitor[32])
-		{
-			m_only_display = false;
-			std::memcpy(m_display_name, display, sizeof(m_display_name));
-			std::memcpy(m_monitor_name, monitor, sizeof(m_monitor_name));
-			try_to_get_monitor_hendler();
-		}
-		//utility
-		void get_position(int& xpos, int& ypos) const 
-		{
-			DEVMODE dev_mode;
-			ZeroMemory(&dev_mode, sizeof(DEVMODE));
-			dev_mode.dmSize = sizeof(DEVMODE);
-
-			EnumDisplaySettings(m_display_name, ENUM_CURRENT_SETTINGS, &dev_mode);
-			xpos = dev_mode.dmPosition.x;
-			ypos = dev_mode.dmPosition.y;
-		}
-		void get_size(unsigned int& width, unsigned int& height) const
-		{
-			DEVMODE dev_mode;
-			ZeroMemory(&dev_mode, sizeof(DEVMODE));
-			dev_mode.dmSize = sizeof(DEVMODE);
-
-			EnumDisplaySettings(m_display_name, ENUM_CURRENT_SETTINGS, &dev_mode);
-			width = dev_mode.dmPelsWidth;
-			height = dev_mode.dmPelsHeight;
-		}		
-		void get_monitor_size(unsigned int& width, unsigned int& height) const
-		{
-			if (m_monitor)
-			{
-				//alloc
-				MONITORINFOEX minfo;
-				minfo.cbSize = sizeof(minfo);
-				//info 
-				GetMonitorInfo(m_monitor, &minfo);
-				width = minfo.rcWork.right - minfo.rcWork.left;
-				height = minfo.rcWork.bottom - minfo.rcWork.top;
-			}
-			else
-			{
-				get_size(width, height);
-			}
-		}
-
-	protected:
-
-		bool try_to_get_monitor_hendler()
-		{
-			BOOL res = EnumDisplayMonitors
+			//Get the error message, if any.
+			DWORD error_message_id = ::GetLastError();
+			//no error
+			if (!error_message_id) return {};
+			//get error string
+			LPSTR message_buffer = nullptr;
+			size_t size = FormatMessageA
 			(
-				NULL, NULL,
-				[](HMONITOR hMonitor, HDC hDC, LPRECT rc, LPARAM data) -> BOOL
+				FORMAT_MESSAGE_ALLOCATE_BUFFER
+				| FORMAT_MESSAGE_FROM_SYSTEM
+				| FORMAT_MESSAGE_IGNORE_INSERTS
+				, NULL
+				, error_message_id
+				, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)
+				, (LPSTR)&message_buffer
+				, 0
+				, NULL
+			);
+			//C++ message
+			std::string message(message_buffer, size);
+			//free the buffer.
+			LocalFree(message_buffer);
+			//return msg
+			return message;
+		}
+
+		void get_rect_of_window_including_aero(HWND wnd, RECT *rect)
+		{
+			// default to old way of getting the window rectandle
+			::GetWindowRect(wnd, rect);
+			// Load the dll and keep the handle to it
+			// must load dynamicaly because this dll exists only in vista -- not in xp.
+			// if this is running on XP then use old way.
+			auto dwmapi_dll_handle = LoadLibrary("dwmapi.dll");
+			// not on Vista/Windows7 so no aero so no need to account for aero.  could use GetVersion to determine this faster.
+			if (dwmapi_dll_handle)
+			{
+				HRESULT a_result = S_OK;
+				BOOL is_enabled = false;
+				if (auto dwm_is_composition_enabled = (DwmIsCompositionEnabledFunction)::GetProcAddress(dwmapi_dll_handle, "DwmIsCompositionEnabled"))
 				{
-					//self
-					auto* self = (ScreenWin32*)data;
-					//info
-					MONITORINFOEX minfo;
-					minfo.cbSize = sizeof(minfo);
-					//test
-					if (GetMonitorInfo(hMonitor, &minfo) && std::strcmp(minfo.szDevice,self->m_display_name) ==0)
+					a_result = dwm_is_composition_enabled(&is_enabled);
+				}
+				//
+				if (SUCCEEDED(a_result) && is_enabled)
+				{
+					if (auto dwm_get_window_attribute = (DwmGetWindowAttributeFunction)::GetProcAddress(dwmapi_dll_handle, "DwmGetWindowAttribute"))
 					{
-						self->m_monitor = hMonitor;
-						return FALSE;
+						a_result = dwm_get_window_attribute(wnd, DWMWA_EXTENDED_FRAME_BOUNDS, rect, sizeof(RECT));
+						// hopefully we're ok either way
+						//if (SUCCEEDED(a_result)) dwm_get_window_attribute( wnd, DWMWA_EXTENDED_FRAME_BOUNDS, rect, sizeof(RECT));
 					}
-					return TRUE;
-				},
-				(LPARAM)(this)
-			);
-			return res;
-		}
-
-	};
-
-	struct WindowWin32
-	{
-		enum window_type
-		{
-			UNKNOW_WINDOW,
-			GL_WINDOW,
-			DX_WINDOW
-		};		
-		//conteiner
-		Window*	m_window_ref{ nullptr };
-		//window type
-		window_type m_type{ UNKNOW_WINDOW };
-		//info about init windows
-		WindowInfo m_info;
-		//virtual methods
-		virtual void swap() const = 0;
-		virtual void acquire_context() const = 0;
-		virtual bool is_fullscreen() const = 0;
-		virtual bool is_resizable() const = 0;
-		virtual void get_size(unsigned int size[2]) const = 0;
-		virtual void get_position(int position[2]) const = 0;
-		virtual void set_size(unsigned int size[2]) = 0;
-		virtual void set_position(int position[2]) = 0;
-		virtual bool enable_resize(bool enable) = 0;
-		virtual bool enable_fullscreen(bool enable) = 0;
-		virtual HWND narive() const = 0;
-		//virtual destructor
-		virtual ~WindowWin32() {};
-	};
-
-	struct WindowGL : WindowWin32
-	{
-		HDC		    m_hDC;				/* device context */
-		HGLRC	    m_hRC;				/* opengl context */
-		HWND	    m_hWnd;				/* window */
-
-		WindowGL(HDC hDC, HGLRC hRC, HWND  hWnd, const WindowInfo& info)
-		{
-			m_type = GL_WINDOW;
-			m_hDC  = hDC;
-			m_hRC  = hRC;
-			m_hWnd = hWnd;
-			m_info = info;
-			//set
-			enable_resize(info.m_fullscreen);
-			//get info
-			update_last_window_attributes();
-			//set full screen
-			enable_fullscreen(info.m_fullscreen);
-		}
-
-		virtual void swap() const
-		{
-			if (m_hDC)
-			{
-				SwapBuffers(m_hDC);
-			}
-		}
-
-		virtual void acquire_context() const
-		{
-			if (m_hDC && m_hRC)
-			{
-				wglMakeCurrent(m_hDC, m_hRC);
-			}
-		}
-
-		virtual bool is_fullscreen() const
-		{
-			return m_info.m_fullscreen;
-		}
-		
-		virtual bool is_resizable() const 
-		{
-			return m_info.m_resize;
-		}
-
-		virtual void get_size(unsigned int size[2]) const
-		{
-			RECT window_box{ 0, 0, 0, 0 };
-			GetClientRect(m_hWnd, &window_box);
-			//get_rect_of_window_including_aero(m_hWnd, &window_box);
-			size[0] = window_box.right  - window_box.left;
-			size[1] = window_box.bottom - window_box.top;
-		}
-
-		virtual void get_position(int position[2]) const 
-		{
-			POINT pos{ 0, 0 };
-			ClientToScreen(m_hWnd, &pos);
-			position[0] = pos.x;
-			position[1] = pos.y;
-		}
-
-		virtual void set_size(unsigned int size[2]) 
-		{
-			//calc size window
-			unsigned int window_real_size[2] = { 0,0 };
-			compute_window_size(size, window_real_size);
-			//Resize
-			if (SetWindowPos(
-				m_hWnd
-				, HWND_NOTOPMOST
-				, m_info.m_position[0]
-				, m_info.m_position[1]
-				, window_real_size[0]
-				, window_real_size[1]
-				, SWP_SHOWWINDOW
-			))
-			{
-				//save new size
-				m_info.m_size[0] = size[0];
-				m_info.m_size[1] = size[1];
-			}
-		}
-
-		virtual void set_position(int position[2])
-		{
-			//calc size window
-			unsigned int window_real_size[2] = { 0,0 };
-			compute_window_size(m_info.m_size, window_real_size);
-			//Resize
-			if (SetWindowPos(
-				m_hWnd
-				, HWND_NOTOPMOST
-				, position[0]
-				, position[1]
-				, window_real_size[0]
-				, window_real_size[1]
-				, SWP_SHOWWINDOW
-			))
-			{
-				//save new position
-				m_info.m_position[0] = position[0];
-				m_info.m_position[1] = position[1];
-			}
-		}
-
-		virtual bool enable_resize(bool enable)
-		{
-			m_info.m_resize = enable;
-			LONG style = GetWindowLong(m_hWnd, GWL_STYLE);
-			return SetWindowLong(
-				  m_hWnd
-				, GWL_STYLE
-				, enable ? (style | WS_SIZEBOX) : (style & ~WS_SIZEBOX)
-			);
-		}
-
-		virtual bool enable_fullscreen(bool enable)
-		{
-			if (m_info.m_fullscreen == enable) return true;
-			//...
-			bool is_change_successful;
-			//hide window
-			ShowWindow(m_hWnd, SW_HIDE);
-			//test
-			if (enable)
-			{
-				update_last_window_attributes();
-
-				DEVMODE fullscreen_settings;
-				fullscreen_settings.dmSize = sizeof(fullscreen_settings);
-				DEVMODE dm;
-
-				auto* screen = (ScreenWin32*)(m_info.m_screen->conteiner());
-				EnumDisplaySettings(screen->m_display_name, 0, &fullscreen_settings);
-				fullscreen_settings.dmPelsWidth        = m_info.m_size[0];
-				fullscreen_settings.dmPelsHeight       = m_info.m_size[1];
-				fullscreen_settings.dmBitsPerPel       = m_info.m_context.m_color;
-				fullscreen_settings.dmFields = DM_PELSWIDTH |
-											   DM_PELSHEIGHT |
-											   DM_BITSPERPEL ;
-				
-				is_change_successful = ChangeDisplaySettings(&fullscreen_settings, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL;
-				//change only if a success
-				if (is_change_successful)
-				{
-					SetWindowLongPtr(m_hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
-					SetWindowLongPtr(m_hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
-					SetWindowPos(
-						m_hWnd
-						, HWND_TOPMOST
-						, 0
-						, 0
-						, m_info.m_size[0]
-						, m_info.m_size[1]
-						, SWP_SHOWWINDOW
-					);
-					ShowWindow(m_hWnd, SW_MAXIMIZE);
-					//update
-					m_info.m_fullscreen = enable;
 				}
+				FreeLibrary(dwmapi_dll_handle);
 			}
-			else
+		}
+
+		void compute_window_size(const unsigned int size_in[2], unsigned int size_out[2])
+		{
+			RECT window_rect
 			{
-				is_change_successful = ChangeDisplaySettings(NULL, CDS_RESET) == DISP_CHANGE_SUCCESSFUL;
-				//change only if a success
-				if (is_change_successful)
-				{
-					SetWindowLongPtr(m_hWnd, GWL_EXSTYLE, m_last_window_exstyle);
-					SetWindowLongPtr(m_hWnd, GWL_STYLE, m_last_window_style);	
-					//calc size window
-					unsigned int last_window_real_size[2] = { 0,0 };
-					compute_window_size(m_last_window_size, last_window_real_size);
-					//Resize
-					SetWindowPos(
-						m_hWnd
-						, HWND_NOTOPMOST
-						, m_last_window_position[0]
-						, m_last_window_position[1]
-						, last_window_real_size[0]
-						, last_window_real_size[1]
-						, SWP_SHOWWINDOW
-					);
-					//update
-					m_info.m_fullscreen = enable;
-				}
-			}
-			//show window
-			ShowWindow(m_hWnd, SW_SHOW);
-			//end
-			return is_change_successful;
+				0
+				, 0
+				, size_in[0] // right = Width
+				, size_in[1] // bottom = Height
+			};
+			AdjustWindowRectEx(&window_rect, HCUBE_WINDOW_STYLE, true, 0);
+			//calc size window
+			size_out[0] = window_rect.right - window_rect.left;
+			size_out[1] = window_rect.bottom - window_rect.top - WINDOW_ERROR_BAD_LENGTH;
 		}
-
-		virtual HWND narive() const
-		{
-			return m_hWnd;
-		}
-
-		virtual ~WindowGL() 
-		{
-			//dattach RC 
-			wglMakeCurrent(NULL, NULL);
-			//release RC
-			if(m_hRC)		     wglDeleteContext(m_hRC);
-			//release DC
-			if (m_hWnd && m_hDC) ReleaseDC(m_hWnd,m_hDC);
-			//delete Window
-			if (m_hWnd)			 DestroyWindow(m_hWnd);
-			//all to null 
-			m_hRC  = nullptr;
-			m_hDC  = nullptr;
-			m_hWnd = nullptr;
-		}
-
-	protected:
-
-		//info bf fullscreen
-		int          m_last_window_position[2]{ 0, 0 };
-		unsigned int m_last_window_size[2]{ 0,0 };
-		LONG         m_last_window_style;
-		LONG         m_last_window_exstyle;
-		void		 update_last_window_attributes()
-		{
-			get_position(m_last_window_position);
-			get_size(m_last_window_size);
-			m_last_window_exstyle = GetWindowLong(m_hWnd, GWL_EXSTYLE);
-			m_last_window_style = GetWindowLong(m_hWnd, GWL_STYLE);
-		}
-	};
-
-	struct InputWin32
-	{
-		Window*																					 m_window_ref   { nullptr };
-		Input*																					 m_input_ref    { nullptr };
-		std::function<void(KeyboardEvent kevent, short mode, ActionEvent action)>                m_keyboard     { nullptr };
-		std::function<void(int character, short mode, int plain)>                                m_character    { nullptr };
-		std::function<void(MouseButtonEvent mevent, ActionEvent action)>						 m_mouse_button { nullptr };
-		std::function<void(double x, double y)>													 m_mouse_move   { nullptr };
-		std::function<void(double scroll)>														 m_scroll	    { nullptr };
-		std::function<void(FingerEvent fevent, ActionEvent action)>						         m_touch        { nullptr };
-		std::function<void(WindowEvent wevent)>												     m_window       { nullptr };
-		std::function<void(double x, double y)>												     m_window_move  { nullptr };
-
-		void send_keyboard_event(KeyboardEvent kevent, short mode, ActionEvent action)
-		{
-			if (m_keyboard) m_keyboard(kevent, mode, action);
-		}
-		void send_character_event(int character, short mode, bool plain)
-		{
-			if (m_character) m_character(character, mode, plain);
-		}
-		void send_mouse_button_event(MouseButtonEvent mevent, ActionEvent action)
-		{
-			if (m_mouse_button) m_mouse_button(mevent, action);
-		}
-		void send_mouse_move_event(double x, double y)
-		{
-			if (m_mouse_move) m_mouse_move(x, y);
-		}
-		void send_mouse_scroll_event(double scroll)
-		{
-			if (m_scroll) m_scroll(scroll);
-		}
-		void send_touch_event(FingerEvent fevent, ActionEvent action)
-		{
-			if (m_touch) m_touch(fevent, action);
-		}
-		void send_window_event(WindowEvent wevent)
-		{
-			if (m_window) m_window(wevent);
-		}
-		void send_window_move_event(double x, double y)
-		{
-			if (m_window_move) m_window_move(x,y);
-		}
-	};
-	
-	struct input_key_map
+	}
+	////////////////////////////////////////////////////////////////////////////////////
+	struct InputKeyMap
 	{
 		unsigned int  m_scancodes[512];
 		KeyboardEvent m_keyboard[512];
 	};
-	////////////////////////////////////////////////////////////////////////////////////
+
 	struct WrapperContext
 	{
-		std::vector<ScreenWin32>			 m_screens;
-		std::map<WindowWin32*, WindowWin32*> m_windows;
-		std::map<InputWin32*, InputWin32*>	 m_input;
+		std::vector<Win32::ScreenWin32>			           m_screens;
+		std::unordered_map<Win32::WindowWin32*, Win32::WindowWin32*> m_windows;
+		std::unordered_map<Win32::InputWin32*, Win32::InputWin32*>   m_input;
 		//key map
-		input_key_map						 m_key_map;
+		InputKeyMap						           m_key_map;
 	};
 
 	static WrapperContext s_os_context;
 	////////////////////////////////////////////////////////////////////////////////////
 	// this is the main message handler for the program	
 	LRESULT CALLBACK win32_event_wrapper(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-	static InputWin32* input_create(Window* wnd, Input* input);
-	static void input_delete(InputWin32*& in);
-	static WindowWin32* window_create(const WindowInfo& info, Window* window);
-	static void	window_delete(WindowWin32*& window);
+	static Win32::InputWin32* input_create(Window* wnd, Input* input);
+	static void input_delete(Win32::InputWin32*& in);
+	static Win32::WindowWin32* window_create(const WindowInfo& info, Window* window);
+	static void	window_delete(Win32::WindowWin32*& window);
 	////////////////////////////////////////////////////////////////////////////////////
 	// VIDEO
 	static bool helper_screen_init()
@@ -778,15 +375,15 @@ namespace Video
 
 	void Screen::get_size(unsigned int& width, unsigned int& height)
 	{
-		((ScreenWin32*)m_native)->get_size(width, height);
+		((Win32::ScreenWin32*)m_native)->get_size(width, height);
 	}	
 	////////////////////////////////////////////////////////////////////////////////////
 	// Window	
-	static WindowWin32* gl_window_create(const WindowInfo& info)
+	static Win32::WindowWin32* gl_window_create(const WindowInfo& info)
 	{
 		//////////////////////////////////////////////////////////////////////
 		unsigned int last_window_real_size[2] = { 0,0 };
-		compute_window_size(info.m_size, last_window_real_size);
+		Win32::compute_window_size(info.m_size, last_window_real_size);
 		//screen position
 		int sc_position[2]{ 0,0 };
 		//screen size
@@ -794,8 +391,8 @@ namespace Video
 		//to screen position
 		if (info.m_screen)
 		{
-			((ScreenWin32*)info.m_screen->conteiner())->get_position(sc_position[0], sc_position[1]);
-			((ScreenWin32*)info.m_screen->conteiner())->get_monitor_size(sc_size[0], sc_size[1]);
+			((Win32::ScreenWin32*)info.m_screen->conteiner())->get_position(sc_position[0], sc_position[1]);
+			((Win32::ScreenWin32*)info.m_screen->conteiner())->get_monitor_size(sc_size[0], sc_size[1]);
 		}
 		else
 		{
@@ -892,7 +489,7 @@ namespace Video
 		//set new context
 		wglMakeCurrent(hDC, hRC);
 		//return opengl conteinter
-		WindowGL* wnd_gl = new WindowGL(hDC, hRC, hWnd, info);
+		Win32::WindowGL* wnd_gl = new Win32::WindowGL(hDC, hRC, hWnd, info);
 		//fullscreen
 		if (wnd_gl->m_info.m_fullscreen)
 		{
@@ -903,15 +500,15 @@ namespace Video
 		return  wnd_gl;
 	}	
 	
-	static WindowWin32* dx_window_create(const WindowInfo& info)
+	static Win32::WindowWin32* dx_window_create(const WindowInfo& info)
 	{
 		return nullptr;
 	}
 	
-	static WindowWin32* window_create(const WindowInfo& info, Window* window)
+	static Win32::WindowWin32* window_create(const WindowInfo& info, Window* window)
 	{
 		//output var
-		WindowWin32* out_wnd = nullptr;
+		Win32::WindowWin32* out_wnd = nullptr;
 		//select type of window
 		switch (info.m_context.m_type)
 		{
@@ -940,7 +537,7 @@ namespace Video
 		return out_wnd;
 	}
 
-	static void	window_delete(WindowWin32*& window)
+	static void	window_delete(Win32::WindowWin32*& window)
 	{
 		//search
 		auto it_wnd = s_os_context.m_windows.find(window);
@@ -950,7 +547,7 @@ namespace Video
 			s_os_context.m_windows.erase(it_wnd);
 		}
 		//window input
-		InputWin32*  wnd_input = (InputWin32*)GetProp((HWND)window->narive(), WINDOW_INPUT_NAME_REF);
+		Win32::InputWin32*  wnd_input = (Win32::InputWin32*)GetProp((HWND)window->narive(), WINDOW_INPUT_NAME_REF);
 		//delete input
 		if (wnd_input)
 		{
@@ -977,7 +574,7 @@ namespace Video
 	void* Window::native() const
 	{
 		//cast
-		const auto* window = (const WindowWin32*)m_native;
+		const auto* window = (const Win32::WindowWin32*)m_native;
 		//
 		return window->narive();
 	}
@@ -997,7 +594,7 @@ namespace Video
 		if (m_native)
 		{
 			//cast
-			auto* window = (WindowWin32*)m_native;
+			auto* window = (Win32::WindowWin32*)m_native;
 			window_delete(window);
 			m_native = (void*)window;
 		}
@@ -1011,7 +608,7 @@ namespace Video
 	void Window::swap()
 	{
 		//cast
-		const auto* window = (const WindowWin32*)m_native;
+		const auto* window = (const Win32::WindowWin32*)m_native;
 		//
 		window->swap();
 	}
@@ -1019,7 +616,7 @@ namespace Video
 	void Window::acquire_context()
 	{
 		//cast
-		const auto* window = (const WindowWin32*)m_native;
+		const auto* window = (const Win32::WindowWin32*)m_native;
 		//
 		window->acquire_context();
 	}
@@ -1028,7 +625,7 @@ namespace Video
 	bool   Window::is_fullscreen()
 	{
 		//cast
-		const auto* window = (const WindowWin32*)m_native;
+		const auto* window = (const Win32::WindowWin32*)m_native;
 		//
 		return window->is_fullscreen();
 	}
@@ -1036,7 +633,7 @@ namespace Video
 	bool   Window::is_resizable()
 	{
 		//cast
-		const auto* window = (const WindowWin32*)m_native;
+		const auto* window = (const Win32::WindowWin32*)m_native;
 		//
 		return window->is_resizable();
 	}
@@ -1044,7 +641,7 @@ namespace Video
 	void   Window::get_size(unsigned int& w, unsigned int& h)
 	{
 		//cast
-		const auto* window = (const WindowWin32*)m_native;
+		const auto* window = (const Win32::WindowWin32*)m_native;
 		//
 		unsigned int size[2];
 		window->get_size(size);
@@ -1055,7 +652,7 @@ namespace Video
 	void   Window::get_position(int& x, int& y)
 	{
 		//cast
-		const auto* window = (const WindowWin32*)m_native;
+		const auto* window = (const Win32::WindowWin32*)m_native;
 		//
 		int pos[2];
 		window->get_position(pos);
@@ -1068,7 +665,7 @@ namespace Video
 	void   Window::set_size(unsigned int w, unsigned int h)
 	{
 		//cast
-		auto* window = (WindowWin32*)m_native;
+		auto* window = (Win32::WindowWin32*)m_native;
 		//
 		unsigned int size[2]{ w, h };
 		window->set_size(size);
@@ -1077,7 +674,7 @@ namespace Video
 	void   Window::set_position(int x, int y)
 	{
 		//cast
-		auto* window = (WindowWin32*)m_native;
+		auto* window = (Win32::WindowWin32*)m_native;
 		//
 		int position[2]{ x,y };
 		window->set_position(position);
@@ -1086,7 +683,7 @@ namespace Video
 	void   Window::enable_resize(bool enable)
 	{
 		//cast
-		auto* window = (WindowWin32*)m_native;
+		auto* window = (Win32::WindowWin32*)m_native;
 		//
 		window->enable_resize(enable);
 	}
@@ -1094,17 +691,17 @@ namespace Video
 	void   Window::enable_fullscreen(bool enable)
 	{
 		//cast
-		auto* window = (WindowWin32*)m_native;
+		auto* window = (Win32::WindowWin32*)m_native;
 		//
 		window->enable_fullscreen(enable);
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////
 	//input
-	static InputWin32* input_create(Window* wnd, Input* input)
+	static Win32::InputWin32* input_create(Window* wnd, Input* input)
 	{
 		//input hendler
-		InputWin32* in = new InputWin32();
+		Win32::InputWin32* in = new Win32::InputWin32();
 		//set wnd
 		in->m_window_ref = wnd;
 		//set ref to conteiner
@@ -1117,7 +714,7 @@ namespace Video
 		return in;
 	}
 
-	static void input_delete(InputWin32*& in)
+	static void input_delete(Win32::InputWin32*& in)
 	{
 		//search
 		auto it_in = s_os_context.m_input.find(in);
@@ -1188,7 +785,7 @@ namespace Video
 	LRESULT CALLBACK win32_event_wrapper(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		//window input
-		InputWin32*  wnd_input = (InputWin32*)GetProp(hWnd, WINDOW_INPUT_NAME_REF);
+		Win32::InputWin32*  wnd_input = (Win32::InputWin32*)GetProp(hWnd, WINDOW_INPUT_NAME_REF);
 
 		if (!wnd_input)
 		{
@@ -1196,7 +793,7 @@ namespace Video
 		}
 
 		//ref to window
-		WindowWin32*  wnd_window = (WindowWin32*)wnd_input->m_window_ref->conteiner();
+		Win32::WindowWin32*  wnd_window = (Win32::WindowWin32*)wnd_input->m_window_ref->conteiner();
 
 		//process messages
 		switch (message)
@@ -1402,7 +999,7 @@ namespace Video
 	{
 		if (m_native)
 		{
-			auto* input = (InputWin32*)m_native;
+			auto* input = (Win32::InputWin32*)m_native;
 			input_delete(input);
 			m_native = (void*)input;
 		}
@@ -1423,49 +1020,49 @@ namespace Video
 	//subscrive events
 	void Input::subscrive_keyboard_listener(std::function<void(KeyboardEvent kevent, short mode, ActionEvent action)> listener)
 	{
-		auto* input = (InputWin32*)m_native;
+		auto* input = (Win32::InputWin32*)m_native;
 		input->m_keyboard = listener;
 	}
 	
 	void Input::subscrive_character_listener(std::function<void(int character, short mode, int plain)> listener)
 	{
-		auto* input = (InputWin32*)m_native;
+		auto* input = (Win32::InputWin32*)m_native;
 		input->m_character = listener;
 	}
 
 	void Input::subscrive_mouse_button_listener(std::function<void(MouseButtonEvent mevent, ActionEvent action)> listener)
 	{
-		auto* input = (InputWin32*)m_native;
+		auto* input = (Win32::InputWin32*)m_native;
 		input->m_mouse_button = listener;
 	}
 
 	void Input::subscrive_mouse_move_listener(std::function<void(double x, double y)> listener)
 	{
-		auto* input = (InputWin32*)m_native;
+		auto* input = (Win32::InputWin32*)m_native;
 		input->m_mouse_move = listener;
 	}
 	
 	void Input::subscrive_mouse_scroll_listener(std::function<void(double scroll)> listener)
 	{
-		auto* input = (InputWin32*)m_native;
+		auto* input = (Win32::InputWin32*)m_native;
 		input->m_scroll = listener;
 	}
 
 	void Input::subscrive_touch_listener(std::function<void(FingerEvent fevent, ActionEvent action)> listener) 
 	{
-		auto* input = (InputWin32*)m_native;
+		auto* input = (Win32::InputWin32*)m_native;
 		input->m_touch = listener;
 	}
 
 	void Input::subscrive_window_listener(std::function<void(WindowEvent wevent)> listener)
 	{
-		auto* input = (InputWin32*)m_native;
+		auto* input = (Win32::InputWin32*)m_native;
 		input->m_window = listener;
 	}
 
 	void Input::subscrive_window_move_listener(std::function<void(double x, double y)> listener)
 	{
-		auto* input = (InputWin32*)m_native;
+		auto* input = (Win32::InputWin32*)m_native;
 		input->m_window_move = listener;
 	}
 	////////////////////////////////////////////////////////////////////////////////////

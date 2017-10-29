@@ -307,7 +307,7 @@ namespace Square
                     Scalar mii = ret[i];
                     Scalar mjj = ret[j];
                     Scalar mij = mat[i][j];
-                    Scalar phi = 0.5 * std::atan2(2 * mij, mjj - mii);
+                    Scalar phi = Scalar(0.5) * std::atan2(Scalar(2.0) * mij, mjj - mii);
                     Scalar c = std::cos(phi);
                     Scalar s = std::sin(phi);
                     Scalar mii1 = c * c * mii - 2 * s * c * mij + s * s * mjj;

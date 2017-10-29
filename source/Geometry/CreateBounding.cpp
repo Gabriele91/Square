@@ -106,11 +106,11 @@ namespace Geometry
 			Am += Ai;
 
 			// these bits set the c terms to Am*E[xx], Am*E[xy], Am*E[xz]....
-			cxx += (9.0*mui.x*mui.x + p.x*p.x + q.x*q.x + r.x*r.x)*(Ai / 12.0);
-			cxy += (9.0*mui.x*mui.y + p.x*p.y + q.x*q.y + r.x*r.y)*(Ai / 12.0);
-			cxz += (9.0*mui.x*mui.z + p.x*p.z + q.x*q.z + r.x*r.z)*(Ai / 12.0);
-			cyy += (9.0*mui.y*mui.y + p.y*p.y + q.y*q.y + r.y*r.y)*(Ai / 12.0);
-			cyz += (9.0*mui.y*mui.z + p.y*p.z + q.y*q.z + r.y*r.z)*(Ai / 12.0);
+			cxx += (float)((9.0*mui.x*mui.x + p.x*p.x + q.x*q.x + r.x*r.x)*(Ai / 12.0));
+			cxy += (float)((9.0*mui.x*mui.y + p.x*p.y + q.x*q.y + r.x*r.y)*(Ai / 12.0));
+			cxz += (float)((9.0*mui.x*mui.z + p.x*p.z + q.x*q.z + r.x*r.z)*(Ai / 12.0));
+			cyy += (float)((9.0*mui.y*mui.y + p.y*p.y + q.y*q.y + r.y*r.y)*(Ai / 12.0));
+			cyz += (float)((9.0*mui.y*mui.z + p.y*p.z + q.y*q.z + r.y*r.z)*(Ai / 12.0));
 		}
 		// divide out the Am fraction from the average position and 
 		// covariance terms
@@ -163,11 +163,11 @@ namespace Geometry
 			Am += Ai;
 
 			// these bits set the c terms to Am*E[xx], Am*E[xy], Am*E[xz]....
-			cxx += (9.0*mui.x*mui.x + p.x*p.x + q.x*q.x + r.x*r.x)*(Ai / 12.0);
-			cxy += (9.0*mui.x*mui.y + p.x*p.y + q.x*q.y + r.x*r.y)*(Ai / 12.0);
-			cxz += (9.0*mui.x*mui.z + p.x*p.z + q.x*q.z + r.x*r.z)*(Ai / 12.0);
-			cyy += (9.0*mui.y*mui.y + p.y*p.y + q.y*q.y + r.y*r.y)*(Ai / 12.0);
-			cyz += (9.0*mui.y*mui.z + p.y*p.z + q.y*q.z + r.y*r.z)*(Ai / 12.0);
+			cxx += (float)((9.0*mui.x*mui.x + p.x*p.x + q.x*q.x + r.x*r.x)*(Ai / 12.0));
+			cxy += (float)((9.0*mui.x*mui.y + p.x*p.y + q.x*q.y + r.x*r.y)*(Ai / 12.0));
+			cxz += (float)((9.0*mui.x*mui.z + p.x*p.z + q.x*q.z + r.x*r.z)*(Ai / 12.0));
+			cyy += (float)((9.0*mui.y*mui.y + p.y*p.y + q.y*q.y + r.y*r.y)*(Ai / 12.0));
+			cyz += (float)((9.0*mui.y*mui.z + p.y*p.z + q.y*q.z + r.y*r.z)*(Ai / 12.0));
 		}
 		// divide out the Am fraction from the average position and 
 		// covariance terms
