@@ -64,6 +64,12 @@
     <Filter Include="Source\Driver\Win32">
       <UniqueIdentifier>{6c16c117-6925-4b60-979d-654e20bbdcac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Driver\Xorg">
+      <UniqueIdentifier>{15539301-e609-4a99-8c04-7a711d7d1257}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests">
+      <UniqueIdentifier>{121fe961-165c-47fc-a588-b96a37ebd5dc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Square\Math\Linear.h">
@@ -162,9 +168,20 @@
     <ClInclude Include="source\Driver\Win32\Wrapper_private.h">
       <Filter>Source\Driver\Win32</Filter>
     </ClInclude>
+    <ClInclude Include="source\Driver\Xorg\Input_private.h">
+      <Filter>Source\Driver\Xorg</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Xorg\Screen_private.h">
+      <Filter>Source\Driver\Xorg</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Xorg\Window_private.h">
+      <Filter>Source\Driver\Xorg</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Xorg\Wrapper_private.h">
+      <Filter>Source\Driver\Xorg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="source\Core\Filesystem.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
@@ -219,9 +236,6 @@
     <ClCompile Include="source\Geometry\OBoundingBox.cpp">
       <Filter>Source\Geometry</Filter>
     </ClCompile>
-    <ClCompile Include="source\Driver\Window_xorg.cpp">
-      <Filter>Source\Driver</Filter>
-    </ClCompile>
     <ClCompile Include="source\Driver\Win32\Input_private.cpp">
       <Filter>Source\Driver\Win32</Filter>
     </ClCompile>
@@ -233,6 +247,21 @@
     </ClCompile>
     <ClCompile Include="source\Driver\Win32\Wrapper.cpp">
       <Filter>Source\Driver\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Driver\Xorg\Input_private.cpp">
+      <Filter>Source\Driver\Xorg</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Driver\Xorg\Screen_private.cpp">
+      <Filter>Source\Driver\Xorg</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Driver\Xorg\Window_private.cpp">
+      <Filter>Source\Driver\Xorg</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Driver\Xorg\Wrapper_private.cpp">
+      <Filter>Source\Driver\Xorg</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\main.cpp">
+      <Filter>Tests</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
