@@ -1,7 +1,7 @@
 #Input
 MKDIR_P       ?=mkdir -p
 COMPILER      ?=g++
-AS_LIBARY     ?=false
+TESTS         ?=true
 TOP           ?=$(shell pwd)
 HAVE_TERM     :=$(shell echo $$TERM)
 #undef to none (linux)
@@ -15,35 +15,23 @@ endif
 #program name
 S_DIR  = $(TOP)/source/
 S_INC  = $(TOP)/include/
+S_TEST_DIR  = $(TOP)/tests/
+S_TEST_INC  = $(TOP)/tests/
+
+DEBUG_DIR    = Debug/obj
+RELEASE_DIR  = Release/obj
+DEBUG_PROG   = Debug/Square
+RELEASE_PROG = Release/Square
 
 #global include
 DIPS_INCLUDE = $(TOP)/dips/include/
 
+# Subdirs
+SUB_DIRS := $(wildcard $(S_DIR)/**/.)\
+            $(wildcard $(S_DIR)/**/**/.)
+SUB_DIRS := $(subst $(S_DIR)/,,$(SUB_DIRS))
+
 ####################################################
-# No win32
-FILTER := $(wildcard $(S_DIR)/**/*_win32.cpp)\
-		  $(wildcard $(S_DIR)/**/**/*_win32.cpp)
-
-# No macOS
-FILTER += $(wildcard $(S_DIR)/**/*_macOS.cpp)\
-		  $(wildcard $(S_DIR)/**/**/*_macOS.cpp)
-
-# Libary Source
-SOURCE_FILES := $(wildcard $(S_DIR)/*.cpp)\
-				$(wildcard $(S_DIR)/**/*.cpp)\
-				$(wildcard $(S_DIR)/**/**/*.cpp)	
-
-# Application Source
-ifeq ($(AS_LIBARY),false)		
-SOURCE_FILES += $(TOP)/main.cpp
-endif	
-####################################################
-
-# Object files
-SOURCE_FILES := $(filter-out $(FILTER), $(SOURCE_FILES))
-SOURCE_DEBUG_OBJS = $(addprefix $(O_DEBUG_DIR)/,$(notdir $(SOURCE_FILES:.cpp=.o)))
-SOURCE_RELEASE_OBJS = $(addprefix $(O_RELEASE_DIR)/,$(notdir $(SOURCE_FILES:.cpp=.o)))
-
 # C FLAGS
 C_FLAGS = -fPIC -D_FORCE_INLINES
 # CPP FLAGS
@@ -55,11 +43,52 @@ DEBUG_FLAGS = -g -D_DEBUG -Wall
 # Linker
 LDFLAGS += -lz -lm -lutil -lX11 -lXxf86vm -lGLEW -lGLU -lGL -lxcb
 
-O_DEBUG_DIR    = $(TOP)/Debug/obj
-O_RELEASE_DIR  = $(TOP)/Release/obj
-O_DEBUG_PROG   = $(TOP)/Debug/Square
-O_RELEASE_PROG = $(TOP)/Release/Square
-C_FLAGS		  += -DUSE_FLOAT
+####################################################
+# No win32
+FILTER := $(wildcard $(S_DIR)/**/Win32/*.cpp)
+
+# No macOS
+FILTER += $(wildcard $(S_DIR)/**/MacOS/*.cpp)
+
+# Libary Source
+ALL_SOURCE_FILES := $(wildcard $(S_DIR)/*.cpp)\
+					$(wildcard $(S_DIR)/**/*.cpp)\
+					$(wildcard $(S_DIR)/**/**/*.cpp)	
+
+####################################################
+# Object files
+SOURCE_FILES = $(filter-out $(FILTER), $(ALL_SOURCE_FILES))
+SOURCE_DEBUG_OBJS = $(subst $(S_DIR),$(DEBUG_DIR),$(subst .cpp,.o,$(SOURCE_FILES)))
+SOURCE_RELEASE_OBJS = $(subst $(S_DIR),$(RELEASE_DIR),$(subst .cpp,.o,$(SOURCE_FILES)))
+
+####################################################
+# Test Source
+ifeq ($(TESTS),true)	
+# outdir
+O_TEST_DIR := tests
+# flags
+CC_FLAGS += -I $(S_TEST_INC)
+# source
+TEST_SOURCE_FILES = $(wildcard $(S_TEST_DIR)/**.cpp)
+TEST_SOURCE_DEBUG_OBJS = $(subst $(S_TEST_DIR),$(DEBUG_DIR)/$(O_TEST_DIR),$(subst .cpp,.o,$(TEST_SOURCE_FILES)))
+TEST_SOURCE_RELEASE_OBJS = $(subst $(S_TEST_DIR),$(RELEASE_DIR)/$(O_TEST_DIR),$(subst .cpp,.o,$(TEST_SOURCE_FILES)))
+# fake sub dir
+SUB_DIRS += $(O_TEST_DIR)
+else 
+#void
+TEST_SOURCE_FILES =
+TEST_SOURCE_DEBUG_OBJS = 
+TEST_SOURCE_RELEASE_OBJS = 
+O_TEST_DIR := 
+endif	
+####################################################
+
+# Output dirs
+O_DEBUG_DIR    = $(TOP)/$(DEBUG_DIR)
+O_RELEASE_DIR  = $(TOP)/$(RELEASE_DIR)
+O_DEBUG_PROG   = $(TOP)/$(DEBUG_PROG)
+O_RELEASE_PROG = $(TOP)/$(RELEASE_PROG)
+
 
 
 # Linux flags
@@ -102,7 +131,7 @@ COLOR_WHITE = 7
 
 all: directories show_debug_flags debug release
 
-directories: ${O_DEBUG_DIR} ${O_RELEASE_DIR}
+directories: debug_make_dirs release_make_dirs
 
 rebuild: clean directories debug release
 
@@ -110,21 +139,23 @@ rebuild_debug: clean_debug debug
 
 rebuild_release: clean_release release
 
-debug: directories show_debug_flags $(SOURCE_DEBUG_OBJS)
-	$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(SOURCE_DEBUG_OBJS) $(LDFLAGS) -o $(O_DEBUG_PROG)
+debug: directories show_debug_flags $(SOURCE_DEBUG_OBJS) $(TEST_SOURCE_DEBUG_OBJS)
+	$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(SOURCE_DEBUG_OBJS) $(TEST_SOURCE_DEBUG_OBJS) $(LDFLAGS) -o $(O_DEBUG_PROG)
 	
-release: directories show_release_flags $(SOURCE_RELEASE_OBJS)
-	$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(SOURCE_RELEASE_OBJS) $(LDFLAGS) -o $(O_RELEASE_PROG)
+release: directories show_release_flags $(SOURCE_RELEASE_OBJS) $(TEST_SOURCE_RELEASE_OBJS)
+	$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(SOURCE_RELEASE_OBJS) $(TEST_SOURCE_RELEASE_OBJS) $(LDFLAGS) -o $(O_RELEASE_PROG)
 
 # makedir
-${O_DEBUG_DIR}:
-	$(call colorecho,$(COLOR_CYAN),"[ Create $(O_DEBUG_DIR) directory ]")
-	@${MKDIR_P} ${O_DEBUG_DIR}
+debug_make_dirs:
+	@for dir in $(SUB_DIRS); do \
+		${MKDIR_P} $(DEBUG_DIR)/$$dir; \
+	done
 
 # makedir
-${O_RELEASE_DIR}:
-	$(call colorecho,$(COLOR_CYAN),"[ Create $(O_RELEASE_DIR) directory ]")
-	@${MKDIR_P} ${O_RELEASE_DIR}
+release_make_dirs:
+	@for dir in $(SUB_DIRS); do \
+		${MKDIR_P} $(RELEASE_DIR)/$$dir; \
+	done
 
 show_debug_flags:
 	$(call colorecho,$(COLOR_YELLOW),"[ Debug flags: $(C_FLAGS) $(CC_FLAGS) $(DEBUG_FLAGS) ]")
@@ -132,38 +163,25 @@ show_debug_flags:
 show_release_flags:
 	$(call colorecho,$(COLOR_YELLOW),"[ Release flags: $(C_FLAGS) $(CC_FLAGS) $(RELEASE_FLAGS) ]")
 
+##################################################################################################################
+# DEBUG
+$(SOURCE_DEBUG_OBJS):
+	$(call colorecho,$(COLOR_GREEN),"[ Make debug object: $(subst $(DEBUG_DIR),,$(@:.o=.cpp)) => $(subst $(TOP)/,,$(@)) ]")
+	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(DEBUG_FLAGS) -c $(subst $(DEBUG_DIR),$(S_DIR),$(@:.o=.cpp)) -o $@
 
-$(O_DEBUG_DIR)/main.o: $(TOP)/main.cpp
-	$(call colorecho,$(COLOR_GREEN),"[ Make debug object: $(@) ]")
-	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(DEBUG_FLAGS) -c $< -o $@
+$(TEST_SOURCE_DEBUG_OBJS):
+	$(call colorecho,$(COLOR_GREEN),"[ Make debug object: $(subst $(DEBUG_DIR),,$(@:.o=.cpp)) => $(subst $(TOP)/,,$(@)) ]")
+	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(DEBUG_FLAGS) -c $(subst $(DEBUG_DIR)/$(O_TEST_DIR),$(S_TEST_DIR),$(@:.o=.cpp)) -o $@
 
-$(O_DEBUG_DIR)/%.o: $(S_DIR)/%.cpp
-	$(call colorecho,$(COLOR_GREEN),"[ Make debug object: $(@) ]")
-	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(DEBUG_FLAGS) -c $< -o $@
+##################################################################################################################
+# RELEASE
+$(SOURCE_RELEASE_OBJS):
+	$(call colorecho,$(COLOR_GREEN),"[ Make release object: $(subst $(RELEASE_DIR),,$(@:.o=.cpp)) => $(subst $(TOP)/,,$(@)) ]")
+	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(RELEASE_FLAGS) -c $(subst $(RELEASE_DIR),$(S_DIR),$(@:.o=.cpp)) -o $@
 
-$(O_DEBUG_DIR)/%.o: $(S_DIR)/**/%.cpp
-	$(call colorecho,$(COLOR_GREEN),"[ Make debug object: $(@) ]")
-	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(DEBUG_FLAGS) -c $< -o $@
-
-$(O_DEBUG_DIR)/%.o: $(S_DIR)/**/**/%.cpp
-	$(call colorecho,$(COLOR_GREEN),"[ Make debug object: $(@) ]")
-	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(DEBUG_FLAGS) -c $< -o $@
-
-$(O_RELEASE_DIR)/main.o: $(TOP)/main.cpp
-	$(call colorecho,$(COLOR_GREEN),"[ Make release object: $(@) ]")
-	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(RELEASE_FLAGS) -c $< -o $@
-
-$(O_RELEASE_DIR)/%.o: $(S_DIR)/%.cpp
-	$(call colorecho,$(COLOR_GREEN),"[ Make release object: $(@) ]")
-	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(RELEASE_FLAGS) -c $< -o $@
-
-$(O_RELEASE_DIR)/%.o: $(S_DIR)/**/%.cpp
-	$(call colorecho,$(COLOR_GREEN),"[ Make release object: $(@) ]")
-	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(RELEASE_FLAGS) -c $< -o $@
-
-$(O_RELEASE_DIR)/%.o: $(S_DIR)/**/**/%.cpp
-	$(call colorecho,$(COLOR_GREEN),"[ Make release object: $(@) ]")
-	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(RELEASE_FLAGS) -c $< -o $@
+$(TEST_SOURCE_RELEASE_OBJS):
+	$(call colorecho,$(COLOR_GREEN),"[ Make release object: $(subst $(RELEASE_DIR),,$(@:.o=.cpp)) => $(subst $(TOP)/,,$(@)) ]")
+	@$(COMPILER) $(C_FLAGS) $(CC_FLAGS) $(RELEASE_FLAGS) -c $(subst $(RELEASE_DIR)/$(O_TEST_DIR),$(S_TEST_DIR),$(@:.o=.cpp)) -o $@
 
 # Clean
 clean: clean_debug clean_release
@@ -172,10 +190,10 @@ clean_debug:
 	$(call colorecho,$(COLOR_MAGENTA),"[ Delete debug obj files ]")
 	@rm -f -R $(O_DEBUG_DIR)
 	$(call colorecho,$(COLOR_MAGENTA),"[ Delete debug executable files ]")
-	@rm -f $(O_DEBUG_PROG)
+	@rm -f -R $(O_DEBUG_PROG)
 	
 clean_release:
 	$(call colorecho,$(COLOR_MAGENTA),"[ Delete release obj files ]")
 	@rm -f -R $(O_RELEASE_DIR)
 	$(call colorecho,$(COLOR_MAGENTA),"[ Delete release executable files ]")
-	@rm -f $(O_RELEASE_PROG)
+	@rm -f -R $(O_RELEASE_PROG)

@@ -4,7 +4,6 @@
 //  Created by Gabriele on 14/08/16.
 //  Copyright � 2016 Gabriele. All rights reserved.
 //
-#pragma once
 #include "Square/Config.h"
 #include "Square/Driver/Window.h"
 #include "Square/Driver/Input.h"
