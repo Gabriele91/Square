@@ -42,30 +42,27 @@ RELEASE_FLAGS = -O3
 DEBUG_FLAGS = -g -D_DEBUG -Wall 
 # Linker
 LDFLAGS += -lz -lm -lutil 
+####################################################
+# No win32
+FILTER := $(wildcard $(S_DIR)/**/Win32/*.cpp)
+# No Cocoa
+FILTER += $(wildcard $(S_DIR)/**/MacOS/*.cpp)\
+          $(wildcard $(S_DIR)/**/Cocoa/*.cpp)
 
-# Linux flags
-ifeq ($(shell uname -s),Linux)
+####################################################
+# Flags by OS
+ifeq ($(shell uname -s),Linux) # LINUX
 # threads
 C_FLAGS += -lpthread -pthread 
 # Xorg
 LDFLAGS += -lX11 -lXxf86vm -lGLEW -lGLU -lGL -lxcb
-endif
-
-# MacOS flags
-ifeq ($(shell uname -s),Darwin)
+else ifeq ($(shell uname -s),Darwin) # Mac OS
 # XQuartz
 CC_FLAGS += -I /opt/X11/include/
 LDFLAGS  += -L /opt/X11/lib/ -lX11 -lXxf86vm -lGLU -lGL -lxcb
 endif
 
 ####################################################
-# No win32
-FILTER := $(wildcard $(S_DIR)/**/Win32/*.cpp)
-
-# No macOS
-FILTER += $(wildcard $(S_DIR)/**/MacOS/*.cpp)\
-          $(wildcard $(S_DIR)/**/Cocoa/*.cpp)
-
 # Libary Source
 ALL_SOURCE_FILES := $(wildcard $(S_DIR)/*.cpp)\
 					$(wildcard $(S_DIR)/**/*.cpp)\
@@ -96,16 +93,14 @@ TEST_SOURCE_FILES =
 TEST_SOURCE_DEBUG_OBJS = 
 TEST_SOURCE_RELEASE_OBJS = 
 O_TEST_DIR := 
-endif	
-####################################################
+endif
 
+####################################################
 # Output dirs
 O_DEBUG_DIR    = $(TOP)/$(DEBUG_DIR)
 O_RELEASE_DIR  = $(TOP)/$(RELEASE_DIR)
 O_DEBUG_PROG   = $(TOP)/$(DEBUG_PROG)
 O_RELEASE_PROG = $(TOP)/$(RELEASE_PROG)
-
-
 
 ##
 # Support function for colored output
