@@ -41,7 +41,22 @@ RELEASE_FLAGS = -O3
 # DEBUG_FLAGS
 DEBUG_FLAGS = -g -D_DEBUG -Wall 
 # Linker
-LDFLAGS += -lz -lm -lutil -lX11 -lXxf86vm -lGLEW -lGLU -lGL -lxcb
+LDFLAGS += -lz -lm -lutil 
+
+# Linux flags
+ifeq ($(shell uname -s),Linux)
+# threads
+C_FLAGS += -lpthread -pthread 
+# Xorg
+LDFLAGS += -lX11 -lXxf86vm -lGLEW -lGLU -lGL -lxcb
+endif
+
+# MacOS flags
+ifeq ($(shell uname -s),Darwin)
+# XQuartz
+CC_FLAGS += -I /opt/X11/include/
+LDFLAGS  += -L /opt/X11/lib/ -lX11 -lXxf86vm -lGLU -lGL -lxcb
+endif
 
 ####################################################
 # No win32
@@ -92,17 +107,6 @@ O_RELEASE_PROG = $(TOP)/$(RELEASE_PROG)
 
 
 
-# Linux flags
-ifeq ($(shell uname -s),Linux)
-# too slow -fopenmp 
-C_FLAGS += -lpthread -pthread 
-endif
-
-# MacOS flags
-ifeq ($(shell uname -s),Darwin)
-#No OpenMP 
-RELEASE_FLAGS += -march=native
-endif
 ##
 # Support function for colored output
 # Args:
