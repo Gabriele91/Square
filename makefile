@@ -24,7 +24,7 @@ DEBUG_PROG   = Debug/Square
 RELEASE_PROG = Release/Square
 
 #global include
-DIPS_INCLUDE = $(TOP)/dips/include/
+DIPS_INCLUDE = $(TOP)/dependencies/linux/include/
 
 # Subdirs
 SUB_DIRS := $(wildcard $(S_DIR)/**/.)\
@@ -48,7 +48,8 @@ LDFLAGS += -lz -lm -lutil -lX11 -lXxf86vm -lGLEW -lGLU -lGL -lxcb
 FILTER := $(wildcard $(S_DIR)/**/Win32/*.cpp)
 
 # No macOS
-FILTER += $(wildcard $(S_DIR)/**/MacOS/*.cpp)
+FILTER += $(wildcard $(S_DIR)/**/MacOS/*.cpp)\
+          $(wildcard $(S_DIR)/**/Cocoa/*.cpp)
 
 # Libary Source
 ALL_SOURCE_FILES := $(wildcard $(S_DIR)/*.cpp)\
