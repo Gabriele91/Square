@@ -16,6 +16,8 @@ namespace Square
 {
 namespace Video
 {
+namespace Xorg
+{
 	struct InputXorg
 	{
 		WindowXorg*																	m_window_ref{ nullptr };
@@ -38,5 +40,6 @@ namespace Video
 		void send_window_event(WindowEvent wevent);
 		void send_window_move_event(double x, double y);
 	};
+}
 }
 }

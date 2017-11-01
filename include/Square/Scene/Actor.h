@@ -55,7 +55,7 @@ namespace Scene
 			}
 			return nullptr;
 		}
-		Component::SPtr component(int id);
+		Component::SPtr component(size_t id);
 		Component::SPtr component(const std::string& name);
         
         //message

@@ -12,6 +12,9 @@ namespace Square
 {
 namespace Video
 {
+namespace Xorg
+{
+
     void InputXorg::send_keyboard_event(KeyboardEvent kevent, short mode, ActionEvent action)
     {
         if (m_keyboard) m_keyboard(kevent, mode, action);
@@ -44,5 +47,6 @@ namespace Video
     {
         if (m_window_move) m_window_move(x, y);
     }
+}
 }
 }

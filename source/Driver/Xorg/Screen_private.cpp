@@ -10,10 +10,13 @@ namespace Square
 {
 namespace Video
 {
+namespace Xorg
+{
     ScreenXorg::ScreenXorg(unsigned int screen_id,XScreen* xscreen)
     {
         m_xscreen   = xscreen;
         m_screen_id = screen_id;
     }
+}
 }
 }
