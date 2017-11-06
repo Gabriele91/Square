@@ -13,11 +13,12 @@
 class Sprite : public Square::Scene::Component
 {
 public:
-    
-    Sprite(const std::string& name, size_t id) : Component(name, id)
-    {
-        
-    }
+	SQUARE_OBJECT(Sprite)
+
+	Square::Vec2 m_scale; //scale
+	Square::Vec2 m_pos;   //2D pos
+
+    Sprite(){ }
     
     virtual void on_attach(Square::Scene::Actor& entity) override
     {
@@ -32,7 +33,36 @@ public:
         
     }
 };
-REGISTERED_COMPONENT(Sprite, "Sprite")
+SQUARE_COMPONENT(Sprite)
+
+
+class Square::Data::Serializable
+{
+
+};
+
+class Body : Square::Data::Serializable
+{
+public:
+
+	Square::Vec3 m_gravity;
+	float	     m_mass;
+	int 	     m_nshape;
+
+	void  set_gravity(const Square::Vec3& g){ m_gravity = g; }
+	const Square::Vec3& get_gravity()const  { return m_gravity; }
+
+	void  set_mass(float m)       { m_mass = m; }
+	float get_mass()		const { return m_mass; }
+	
+	static void attributes(Body* body)
+	{
+		auto a_gravity = Square::Data::attribute_method< Body >("gravity", Square::Vec3(0,0,0), &Body::get_gravity, &Body::set_gravity);
+		auto a_mass = Square::Data::attribute_method< Body >("mass", float(0), &Body::get_mass, &Body::set_mass);
+		auto a_nshape = Square::Data::attribute_field< Body >("nshape", int(0), &Body::m_nshape);
+	}
+};
+
 int main()
 {
     using namespace Square;
@@ -46,8 +76,11 @@ int main()
     std::cout << (jout.errors().size() ? jout.errors() : jout.document()) << std::endl;
     //test
     Scene::Actor player;
-    player.add(ComponentFactory::create("Sprite")); 
-	player.component<Sprite>();
+	player.component<Sprite>()->m_scale = { 2,2 };
+	player.component<Sprite>()->m_pos   = { 100,0 };
+	//test attributes
+	Body b;
+	Body::attributes(&b);
 	//test
 	Video::init();
 	{

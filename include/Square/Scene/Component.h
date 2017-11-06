@@ -8,7 +8,9 @@
 #include "Square/Config.h"
 #include "Square/Core/Variant.h"
 #include "Square/Core/Uncopyable.h"
+#include "Square/Core/Object.h"
 #include "Square/Core/SmartPointers.h"
+
 
 namespace Square
 {
@@ -43,36 +45,33 @@ namespace Scene
         }
     };
     
-    class SQUARE_API Component : public SmartPointers< Component >, public Uncopyable
+    class SQUARE_API Component : public Object
+							   , public SmartPointers< Component >
+							   , public Uncopyable
     {
     public:
-        
+
+		//A square object
+		SQUARE_OBJECT(Component)
+
         //Init
-        Component(const std::string& name, size_t id);
+        Component();
         
         //utils
         void remove_from_parent();
         
         //actor
         Actor* actor();
-        
-        //component info
-        const std::string& name() const;
-        const size_t       id()   const;
-        
+                
         //all events
         virtual void on_attach(Actor& entity)      {}
         virtual void on_deattch()                  {}
         virtual void on_transform()                {}
         virtual void on_message(const Message& msg){}
         
-    public:
+    protected:
         //parent
         Actor* m_parent { nullptr };
-        
-        //info about component
-        std::string m_name;
-        size_t m_id;
         
         //internal
         void submit_add(Actor* actor);

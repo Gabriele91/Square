@@ -84,7 +84,7 @@ namespace Scene
 	{
 		for (auto& components : m_components)
 		{
-			if (components->id() == id)
+			if (components->object_id() == id)
 			{
 				return components;
 			}
@@ -95,7 +95,7 @@ namespace Scene
 	{
 		for (auto& components : m_components)
 		{
-			if (components->name() == name)
+			if (components->object_name() == name)
 			{
 				return components;
 			}

@@ -13,28 +13,14 @@ namespace Square
 namespace Scene
 {
     //init
-    Component::Component(const std::string& name, size_t id)
+    Component::Component()
     {
-        m_name = name;
-        m_id   = id;
     }
     
     // utils
     void Component::remove_from_parent()
     {
         if(actor()) actor()->remove(this->shared_from_this());
-    }
-    
-    // name
-    const std::string& Component::name() const
-    {
-        return m_name;
-    }
-    
-    // id
-    const size_t  Component::id()   const
-    {
-        return m_id;
     }
     
     //actor

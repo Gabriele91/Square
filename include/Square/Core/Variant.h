@@ -87,73 +87,73 @@ namespace Square
 	};
 
 	//get type
-	template < class T > inline VariantType static_variant_type() { return VR_NONE; };
+	template < class T > inline VariantType variant_traits() { return VR_NONE; };
 	//template specialization 
-	template <> inline VariantType static_variant_type<bool>() { return VR_BOOL; };
-	template <> inline VariantType static_variant_type<char>() { return VR_CHAR; };
-	template <> inline VariantType static_variant_type<short>() { return VR_SHORT; };
-	template <> inline VariantType static_variant_type<int>() { return VR_INT; };
-	template <> inline VariantType static_variant_type<long>() { return VR_LONG; };
-	template <> inline VariantType static_variant_type<long long>() { return VR_LONGLONG; };
+	template <> inline VariantType variant_traits<bool>() { return VR_BOOL; };
+	template <> inline VariantType variant_traits<char>() { return VR_CHAR; };
+	template <> inline VariantType variant_traits<short>() { return VR_SHORT; };
+	template <> inline VariantType variant_traits<int>() { return VR_INT; };
+	template <> inline VariantType variant_traits<long>() { return VR_LONG; };
+	template <> inline VariantType variant_traits<long long>() { return VR_LONGLONG; };
 
-	template <> inline VariantType static_variant_type<unsigned char>() { return VR_UCHAR; };
-	template <> inline VariantType static_variant_type<unsigned short>() { return VR_USHORT; };
-	template <> inline VariantType static_variant_type<unsigned int>() { return VR_UINT; };
-	template <> inline VariantType static_variant_type<unsigned long>() { return VR_ULONG; };
-	template <> inline VariantType static_variant_type<unsigned long long>() { return VR_ULONGLONG; };
+	template <> inline VariantType variant_traits<unsigned char>() { return VR_UCHAR; };
+	template <> inline VariantType variant_traits<unsigned short>() { return VR_USHORT; };
+	template <> inline VariantType variant_traits<unsigned int>() { return VR_UINT; };
+	template <> inline VariantType variant_traits<unsigned long>() { return VR_ULONG; };
+	template <> inline VariantType variant_traits<unsigned long long>() { return VR_ULONGLONG; };
 
-	template <> inline VariantType static_variant_type<float>() { return VR_FLOAT; };
-	template <> inline VariantType static_variant_type<double>() { return VR_DOUBLE; };
-	template <> inline VariantType static_variant_type<long double>() { return VR_LONG_DOUBLE; };
+	template <> inline VariantType variant_traits<float>() { return VR_FLOAT; };
+	template <> inline VariantType variant_traits<double>() { return VR_DOUBLE; };
+	template <> inline VariantType variant_traits<long double>() { return VR_LONG_DOUBLE; };
 
-	template <> inline VariantType static_variant_type<Vec2>() { return VR_VEC2; };
-	template <> inline VariantType static_variant_type<Vec3>() { return VR_VEC3; };
-	template <> inline VariantType static_variant_type<Vec4>() { return VR_VEC4; };
+	template <> inline VariantType variant_traits<Vec2>() { return VR_VEC2; };
+	template <> inline VariantType variant_traits<Vec3>() { return VR_VEC3; };
+	template <> inline VariantType variant_traits<Vec4>() { return VR_VEC4; };
 
-	template <> inline VariantType static_variant_type<IVec2>() { return VR_IVEC2; };
-	template <> inline VariantType static_variant_type<IVec3>() { return VR_IVEC3; };
-	template <> inline VariantType static_variant_type<IVec4>() { return VR_IVEC4; };
+	template <> inline VariantType variant_traits<IVec2>() { return VR_IVEC2; };
+	template <> inline VariantType variant_traits<IVec3>() { return VR_IVEC3; };
+	template <> inline VariantType variant_traits<IVec4>() { return VR_IVEC4; };
 
-	template <> inline VariantType static_variant_type<DVec2>() { return VR_DVEC2; };
-	template <> inline VariantType static_variant_type<DVec3>() { return VR_DVEC3; };
-	template <> inline VariantType static_variant_type<DVec4>() { return VR_DVEC4; };
+	template <> inline VariantType variant_traits<DVec2>() { return VR_DVEC2; };
+	template <> inline VariantType variant_traits<DVec3>() { return VR_DVEC3; };
+	template <> inline VariantType variant_traits<DVec4>() { return VR_DVEC4; };
 
-	template <> inline VariantType static_variant_type<Mat4>() { return VR_FLOAT_MATRIX; };
-	template <> inline VariantType static_variant_type<DMat4>() { return VR_DOUBLE_MATRIX; };
+	template <> inline VariantType variant_traits<Mat4>() { return VR_FLOAT_MATRIX; };
+	template <> inline VariantType variant_traits<DMat4>() { return VR_DOUBLE_MATRIX; };
 
-	template <> inline VariantType static_variant_type< std::vector< short > >() { return VR_STD_VECTOR_SHORT; };
-	template <> inline VariantType static_variant_type< std::vector< int > >() { return VR_STD_VECTOR_INT; };
-	template <> inline VariantType static_variant_type< std::vector< long > >() { return VR_STD_VECTOR_LONG; };
-	template <> inline VariantType static_variant_type< std::vector< long long > >() { return VR_STD_VECTOR_LONGLONG; };
+	template <> inline VariantType variant_traits< std::vector< short > >() { return VR_STD_VECTOR_SHORT; };
+	template <> inline VariantType variant_traits< std::vector< int > >() { return VR_STD_VECTOR_INT; };
+	template <> inline VariantType variant_traits< std::vector< long > >() { return VR_STD_VECTOR_LONG; };
+	template <> inline VariantType variant_traits< std::vector< long long > >() { return VR_STD_VECTOR_LONGLONG; };
 
-	template <> inline VariantType static_variant_type< std::vector< unsigned short > >() { return VR_STD_VECTOR_USHORT; };
-	template <> inline VariantType static_variant_type< std::vector< unsigned int > >() { return VR_STD_VECTOR_UINT; };
-	template <> inline VariantType static_variant_type< std::vector< unsigned long > >() { return VR_STD_VECTOR_ULONG; };
-	template <> inline VariantType static_variant_type< std::vector< unsigned long long > >() { return VR_STD_VECTOR_ULONGLONG; };
+	template <> inline VariantType variant_traits< std::vector< unsigned short > >() { return VR_STD_VECTOR_USHORT; };
+	template <> inline VariantType variant_traits< std::vector< unsigned int > >() { return VR_STD_VECTOR_UINT; };
+	template <> inline VariantType variant_traits< std::vector< unsigned long > >() { return VR_STD_VECTOR_ULONG; };
+	template <> inline VariantType variant_traits< std::vector< unsigned long long > >() { return VR_STD_VECTOR_ULONGLONG; };
 
-	template <> inline VariantType static_variant_type< std::vector< float > >() { return VR_STD_VECTOR_FLOAT; };
-	template <> inline VariantType static_variant_type< std::vector< double > >() { return VR_STD_VECTOR_DOUBLE; };
-	template <> inline VariantType static_variant_type< std::vector< long double > >() { return VR_STD_VECTOR_LONG_DOUBLE; };
-	template <> inline VariantType static_variant_type< std::vector< Mat4 > >() { return VR_STD_VECTOR_FLOAT_MATRIX; };
-	template <> inline VariantType static_variant_type< std::vector< DMat4 > >() { return VR_STD_VECTOR_DOUBLE_MATRIX; };
+	template <> inline VariantType variant_traits< std::vector< float > >() { return VR_STD_VECTOR_FLOAT; };
+	template <> inline VariantType variant_traits< std::vector< double > >() { return VR_STD_VECTOR_DOUBLE; };
+	template <> inline VariantType variant_traits< std::vector< long double > >() { return VR_STD_VECTOR_LONG_DOUBLE; };
+	template <> inline VariantType variant_traits< std::vector< Mat4 > >() { return VR_STD_VECTOR_FLOAT_MATRIX; };
+	template <> inline VariantType variant_traits< std::vector< DMat4 > >() { return VR_STD_VECTOR_DOUBLE_MATRIX; };
 
-	template <> inline VariantType static_variant_type< std::vector< Vec2 > >() { return VR_STD_VECTOR_VEC2; };
-	template <> inline VariantType static_variant_type< std::vector< Vec3 > >() { return VR_STD_VECTOR_VEC3; };
-	template <> inline VariantType static_variant_type< std::vector< Vec4 > >() { return VR_STD_VECTOR_VEC4; };
+	template <> inline VariantType variant_traits< std::vector< Vec2 > >() { return VR_STD_VECTOR_VEC2; };
+	template <> inline VariantType variant_traits< std::vector< Vec3 > >() { return VR_STD_VECTOR_VEC3; };
+	template <> inline VariantType variant_traits< std::vector< Vec4 > >() { return VR_STD_VECTOR_VEC4; };
 
-	template <> inline VariantType static_variant_type< std::vector< IVec2 > >() { return VR_STD_VECTOR_IVEC2; };
-	template <> inline VariantType static_variant_type< std::vector< IVec3 > >() { return VR_STD_VECTOR_IVEC3; };
-	template <> inline VariantType static_variant_type< std::vector< IVec4 > >() { return VR_STD_VECTOR_IVEC4; };
+	template <> inline VariantType variant_traits< std::vector< IVec2 > >() { return VR_STD_VECTOR_IVEC2; };
+	template <> inline VariantType variant_traits< std::vector< IVec3 > >() { return VR_STD_VECTOR_IVEC3; };
+	template <> inline VariantType variant_traits< std::vector< IVec4 > >() { return VR_STD_VECTOR_IVEC4; };
 
-	template <> inline VariantType static_variant_type< std::vector< DVec2 > >() { return VR_STD_VECTOR_DVEC2; };
-	template <> inline VariantType static_variant_type< std::vector< DVec3 > >() { return VR_STD_VECTOR_DVEC3; };
-	template <> inline VariantType static_variant_type< std::vector< DVec4 > >() { return VR_STD_VECTOR_DVEC4; };
+	template <> inline VariantType variant_traits< std::vector< DVec2 > >() { return VR_STD_VECTOR_DVEC2; };
+	template <> inline VariantType variant_traits< std::vector< DVec3 > >() { return VR_STD_VECTOR_DVEC3; };
+	template <> inline VariantType variant_traits< std::vector< DVec4 > >() { return VR_STD_VECTOR_DVEC4; };
 
-	template <> inline VariantType static_variant_type<const char*>() { return VR_C_STRING; };
-	template <> inline VariantType static_variant_type<std::string>() { return VR_STD_STRING; };
-	template <> inline VariantType static_variant_type< std::vector< std::string > >() { return VR_STD_VECTOR_STRING; };
+	template <> inline VariantType variant_traits<const char*>() { return VR_C_STRING; };
+	template <> inline VariantType variant_traits<std::string>() { return VR_STD_STRING; };
+	template <> inline VariantType variant_traits< std::vector< std::string > >() { return VR_STD_VECTOR_STRING; };
 
-	template <> inline VariantType static_variant_type<void*>() { return VR_PTR; };
+	template <> inline VariantType variant_traits<void*>() { return VR_PTR; };
 
 	class Variant
 	{
@@ -511,14 +511,14 @@ namespace Square
 		template < class T >
 		T& get_alloc()
 		{
-			if (static_variant_type<T>() != m_type)
+			if (variant_traits<T>() != m_type)
 			{
 				if (!is_heap_value())
 				{
 					std::memset(this, 0, sizeof(Variant));
 					m_type = VR_NONE;
 				}
-				set_type(static_variant_type<T>());
+				set_type(variant_traits<T>());
 			}
 			return *((T*)&m_ptr);
 		}

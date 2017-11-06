@@ -133,11 +133,13 @@
   <ItemGroup>
     <ClInclude Include="include\Square\Config.h" />
     <ClInclude Include="include\Square\Core\Filesystem.h" />
+    <ClInclude Include="include\Square\Core\Object.h" />
     <ClInclude Include="include\Square\Core\SmartPointers.h" />
     <ClInclude Include="include\Square\Core\Time.h" />
     <ClInclude Include="include\Square\Core\Uncopyable.h" />
     <ClInclude Include="include\Square\Core\UtfConvert.h" />
     <ClInclude Include="include\Square\Core\Variant.h" />
+    <ClInclude Include="include\Square\Data\Attribute.h" />
     <ClInclude Include="include\Square\Data\Image.h" />
     <ClInclude Include="include\Square\Data\Json.h" />
     <ClInclude Include="include\Square\Driver\Input.h" />
@@ -158,6 +160,30 @@
     <ClInclude Include="include\Square\Scene\Component.h" />
     <ClInclude Include="include\Square\Scene\ComponentFactory.h" />
     <ClInclude Include="include\Square\Square.h" />
+    <ClInclude Include="source\Driver\Cocoa\Input_private.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Cocoa\Screen_private.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Cocoa\Window_private.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Cocoa\Wrapper_private.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="source\Driver\Win32\Input_private.h" />
     <ClInclude Include="source\Driver\Win32\Screen_private.h" />
     <ClInclude Include="source\Driver\Win32\Window_private.h" />
@@ -189,6 +215,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Core\Filesystem.cpp" />
+    <ClCompile Include="source\Core\Object.cpp" />
     <ClCompile Include="source\Core\Time.cpp" />
     <ClCompile Include="source\Core\UtfConvert.cpp" />
     <ClCompile Include="source\Data\Image.cpp" />
@@ -196,7 +223,7 @@
     <ClCompile Include="source\Data\ImageUtils\stb_image.cpp" />
     <ClCompile Include="source\Data\ImageUtils\tga.cpp" />
     <ClCompile Include="source\Data\Json.cpp" />
-    <ClCompile Include="source\Driver\Render.cpp" />
+    <ClCompile Include="source\Driver\RenderGL4.cpp" />
     <ClCompile Include="source\Driver\Win32\Input_private.cpp" />
     <ClCompile Include="source\Driver\Win32\Screen_private.cpp" />
     <ClCompile Include="source\Driver\Win32\Window_private.cpp" />
@@ -237,13 +264,30 @@
     <ClCompile Include="tests\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\Driver\Window_cocoa.mm">
+    <None Include="source\Driver\Cocoa\Input_private.mm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    </None>
+    <None Include="source\Driver\Cocoa\Screen_private.mm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="source\Driver\Cocoa\Window_private.mm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="source\Driver\Cocoa\Wrapper_private.mm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

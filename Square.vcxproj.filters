@@ -70,6 +70,9 @@
     <Filter Include="Tests">
       <UniqueIdentifier>{121fe961-165c-47fc-a588-b96a37ebd5dc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Driver\Cocoa">
+      <UniqueIdentifier>{7cd310e0-fb91-4fe7-b3e6-490930b0aade}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Square\Math\Linear.h">
@@ -153,9 +156,6 @@
     <ClInclude Include="include\Square\Geometry\Sphere.h">
       <Filter>Include\Square\Geometry</Filter>
     </ClInclude>
-    <ClInclude Include="source\Driver\Window_cocoa.mm">
-      <Filter>Source\Driver</Filter>
-    </ClInclude>
     <ClInclude Include="source\Driver\Win32\Input_private.h">
       <Filter>Source\Driver\Win32</Filter>
     </ClInclude>
@@ -179,6 +179,24 @@
     </ClInclude>
     <ClInclude Include="source\Driver\Xorg\Wrapper_private.h">
       <Filter>Source\Driver\Xorg</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Cocoa\Input_private.h">
+      <Filter>Source\Driver\Cocoa</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Cocoa\Screen_private.h">
+      <Filter>Source\Driver\Cocoa</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Cocoa\Window_private.h">
+      <Filter>Source\Driver\Cocoa</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Driver\Cocoa\Wrapper_private.h">
+      <Filter>Source\Driver\Cocoa</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Data\Attribute.h">
+      <Filter>Include\Square\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Core\Object.h">
+      <Filter>Include\Square\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -217,9 +235,6 @@
     </ClCompile>
     <ClCompile Include="source\Resource\Texture.cpp">
       <Filter>Source\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="source\Driver\Render.cpp">
-      <Filter>Source\Driver</Filter>
     </ClCompile>
     <ClCompile Include="source\Geometry\AABoundingBox.cpp">
       <Filter>Source\Geometry</Filter>
@@ -263,5 +278,25 @@
     <ClCompile Include="tests\main.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="source\Driver\RenderGL4.cpp">
+      <Filter>Source\Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Core\Object.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="source\Driver\Cocoa\Input_private.mm">
+      <Filter>Source\Driver\Cocoa</Filter>
+    </None>
+    <None Include="source\Driver\Cocoa\Screen_private.mm">
+      <Filter>Source\Driver\Cocoa</Filter>
+    </None>
+    <None Include="source\Driver\Cocoa\Window_private.mm">
+      <Filter>Source\Driver\Cocoa</Filter>
+    </None>
+    <None Include="source\Driver\Cocoa\Wrapper_private.mm">
+      <Filter>Source\Driver\Cocoa</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -14,55 +14,59 @@ namespace Square
 namespace Scene
 {
 	//static 
-	static ComponentFactory::ComponentList& component_list()
-	{
-		static ComponentFactory::ComponentList component_list;
-		return component_list;
-	};
 	static ComponentFactory::ComponentIdMap& component_id_map()
 	{
 		static ComponentFactory::ComponentIdMap component_list;
 		return component_list;
+	};
+	static ComponentFactory::ComponentNameMap& component_name_map()
+	{
+		static ComponentFactory::ComponentNameMap component_list;
+		return component_list;
 	}
     //public
-    Component::SPtr ComponentFactory::create(size_t id)
+    Component::SPtr ComponentFactory::create(uint64 id)
     {
+		//find
+		auto obj = component_id_map().find(id);
         //test
-		if (id >= component_list().size()) return nullptr;
-		//objs
-		auto& idcc = component_list()[id];
+		if (obj == component_id_map().end()) return nullptr;
         //return
-		return idcc.m_create(idcc.m_name, id);
+		return obj->second.m_create();
     }
     Component::SPtr ComponentFactory::create(const std::string& name)
     {
-        //find
-        auto obj = component_id_map().find(name);
-		//find?
-		if (obj == component_id_map().end()) return nullptr;
-        //return
-        return create(obj->second);
+		//return
+		return create(id(name));
     }
-    void ComponentFactory::append(const std::string& name, ComponentFactory::CreateComponent fun)
+    void ComponentFactory::append(const ObjectInfo& info, ComponentFactory::CreateComponent fun)
     {
 		//failed
-		if (exists(name)) throw std::runtime_error("ComponentFactory: "+name+", already registered");
+		if (exists(info.id())) throw std::runtime_error("ComponentFactory: "+ info.name() +", already registered");
         //add
-		component_id_map().insert({ name, component_list().size() });
-		component_list().push_back({ name, fun });
+		component_id_map().insert({ info.id(), ComponentInfo{ info.name(), fun } });
+		component_name_map().insert({  info.name(), info.id() });
     }
-    size_t ComponentFactory::id(const std::string& name)
+	//find
+	uint64 ComponentFactory::id(const std::string& name)
     {
         //find
-        auto obj = component_id_map().find(name);
+        auto obj = component_name_map().find(name);
         //return
         return (*obj).second;
     }
+	static const std::string& name(size_t id)
+	{
+		//find
+		auto obj = component_id_map().find(id);
+		//return
+		return (*obj).second.m_name;
+	}
     //list of methods
     std::vector< std::string > ComponentFactory::list_of_components()
     {
         std::vector< std::string > list;
-        for (const auto & occid : component_list()) list.push_back(occid.m_name);
+        for (const auto & occid : component_name_map()) list.push_back(occid.first);
         return list;
     }
     std::string  ComponentFactory::names_of_components(const std::string& sep)
@@ -74,9 +78,13 @@ namespace Scene
         return sout.str();
     }
     //info
-    bool ComponentFactory::exists(const std::string& name)
-    {
-        return  component_id_map().find(name) != component_id_map().end();
-    }
+	bool ComponentFactory::exists(const std::string& name)
+	{
+		return  exists(id(name));
+	}
+	bool ComponentFactory::exists(uint64 id)
+	{
+		return  component_id_map().find(id) != component_id_map().end();
+	}
 }
 }
