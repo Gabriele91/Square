@@ -16,6 +16,8 @@ namespace Square
 {
 namespace Video
 {
+namespace Xorg
+{
 	struct WindowXorg
 	{
 		enum WindowType
@@ -78,5 +80,6 @@ namespace Video
 		virtual bool enable_fullscreen(bool enable);
 
 	};
+}
 }
 }

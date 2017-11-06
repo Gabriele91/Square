@@ -16,6 +16,8 @@ namespace Square
 {
 namespace Video
 {
+namespace Xorg
+{
 	struct ScreenXorg
 	{
 		unsigned int m_screen_id{ 0 };
@@ -23,5 +25,6 @@ namespace Video
 		////////////////////////////////////////
 		ScreenXorg(unsigned int screen_id,XScreen* xscreen);
     };
+}
 }
 }

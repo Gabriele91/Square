@@ -92,6 +92,8 @@ namespace Square
 {
 namespace Video
 {
+namespace Xorg
+{
 	//struct declaretion
 	struct ScreenXorg;
 	struct WrapperContext;
@@ -118,5 +120,6 @@ namespace Video
 		InputKeyMap			               m_key_map;
     };    
 	extern WrapperContext s_os_context;
+}
 }
 }

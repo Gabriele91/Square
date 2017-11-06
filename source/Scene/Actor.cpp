@@ -80,7 +80,7 @@ namespace Scene
         return  std::find(m_components.begin(), m_components.end(), component) != m_components.end();
     }
 
-	Component::SPtr Actor::component(int id)
+	Component::SPtr Actor::component(size_t id)
 	{
 		for (auto& components : m_components)
 		{

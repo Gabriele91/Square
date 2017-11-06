@@ -708,9 +708,9 @@ namespace Square
 			IVec3 m_iv3;
 			IVec4 m_iv4;
 
-			IVec2 m_dv2;
-			IVec3 m_dv3;
-			IVec4 m_dv4;
+			DVec2 m_dv2;
+			DVec3 m_dv3;
+			DVec4 m_dv4;
 
 			void* m_ptr;
 		};
@@ -1180,7 +1180,18 @@ namespace Square
 		case VariantType::VR_ULONGLONG:(*this) = ref.get<unsigned long long>(); break;
 		case VariantType::VR_FLOAT:    (*this) = ref.get<float>(); break;
 		case VariantType::VR_DOUBLE:   (*this) = ref.get<double>();  break;
-		case VariantType::VR_LONG_DOUBLE:   (*this) = ref.get<long double>();  break;
+       
+        case VariantType::VR_VEC2:   (*this) = ref.get<Vec2>();  break;
+        case VariantType::VR_VEC3:   (*this) = ref.get<Vec3>();  break;
+        case VariantType::VR_VEC4:   (*this) = ref.get<Vec4>();  break;
+        
+        case VariantType::VR_IVEC2:   (*this) = ref.get<IVec2>();  break;
+        case VariantType::VR_IVEC3:   (*this) = ref.get<IVec3>();  break;
+        case VariantType::VR_IVEC4:   (*this) = ref.get<IVec4>();  break;
+        
+        case VariantType::VR_DVEC2:   (*this) = ref.get<DVec2>();  break;
+        case VariantType::VR_DVEC3:   (*this) = ref.get<DVec3>();  break;
+        case VariantType::VR_DVEC4:   (*this) = ref.get<DVec4>();  break;
 
 		case VariantType::VR_FLOAT_MATRIX:      (*this)  = ref.get<Mat4>(); break;
 		case VariantType::VR_DOUBLE_MATRIX:     (*this)  = ref.get<DMat4>(); break;

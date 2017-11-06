@@ -67,7 +67,7 @@ namespace Scene
 			//return
 			return std::static_pointer_cast<T>(new_component);
 		}
-		Component::SPtr component(int id);
+		Component::SPtr component(size_t id);
 		Component::SPtr component(const std::string& name);
         
         //message

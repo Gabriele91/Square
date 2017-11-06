@@ -13,7 +13,9 @@
 namespace Square
 {
 namespace Video
-{  	
+{
+namespace Xorg
+{
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	static bool x11_create_visual(const WindowInfo& wnd_info, XVisualInfo*& visual)
 	{
@@ -555,5 +557,6 @@ namespace Video
         //end
         return true;
     }
+}
 }
 }
