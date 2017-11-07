@@ -5,21 +5,25 @@
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Scene/Actor.h"
+#include "Square/Scene/Component.h"
 #include <algorithm>
 
 namespace Square
 {
 namespace Scene
 {
+    //Add element to objects
+    SQUARE_OBJECT_REGISTRATION(Actor);
+    
     //add a child
-    void Actor::add(Actor::SPtr child)
+    void Actor::add(Shared<Actor> child)
     {
 		if (!child) return;
         child->remove_from_parent();
         child->m_parent = shared_from_this();
         m_childs.push_back(child);
     }
-    void Actor::add(Component::SPtr component)
+    void Actor::add(Shared<Component> component)
     {
 		if (!component) return;
         //Olready added
@@ -33,7 +37,7 @@ namespace Scene
     }
     
     //remove a child
-    void Actor::remove(Actor::SPtr child)
+    void Actor::remove(Shared<Actor> child)
     {
         if(child->m_parent.get() == this)
         {
@@ -44,7 +48,7 @@ namespace Scene
             if(it != m_childs.end()) m_childs.erase(it);
         }
     }
-    void Actor::remove(Component::SPtr component)
+    void Actor::remove(Shared<Component> component)
     {
         //Is your own
         if(component->actor() != this) return;
@@ -60,13 +64,13 @@ namespace Scene
     }
     
     //get parent
-    Actor::SPtr Actor::parent() const
+    Shared<Actor> Actor::parent() const
     {
         return m_parent;
     }
     
     //contains an actor
-    bool Actor::contains(Actor::SPtr child) const
+    bool Actor::contains(Shared<Actor> child) const
     {
         //local
         if(std::find(m_childs.begin(), m_childs.end(), child) != m_childs.end()) return true;
@@ -75,12 +79,12 @@ namespace Scene
         //fail
         return false;
     }
-    bool Actor::contains(Component::SPtr component) const
+    bool Actor::contains(Shared<Component> component) const
     {
         return  std::find(m_components.begin(), m_components.end(), component) != m_components.end();
     }
 
-	Component::SPtr Actor::component(size_t id)
+	Shared<Component> Actor::component(size_t id)
 	{
 		for (auto& components : m_components)
 		{
@@ -91,7 +95,7 @@ namespace Scene
 		}
 		return nullptr;
 	}
-	Component::SPtr Actor::component(const std::string& name)
+	Shared<Component> Actor::component(const std::string& name)
 	{
 		for (auto& components : m_components)
 		{

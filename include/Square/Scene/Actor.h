@@ -10,8 +10,8 @@
 #include "Square/Core/Uncopyable.h"
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Object.h"
+#include "Square/Core/ObjectFactory.h"
 #include "Square/Scene/Component.h"
-#include "Square/Scene/ComponentFactory.h"
 
 namespace Square
 {
@@ -25,7 +25,7 @@ namespace Scene
     //..................
     
     class SQUARE_API Actor : public Object
-                           , public SmartPointers<Actor>
+                           , public SharedObject<Actor>
                            , public Uncopyable
     {
     public:
@@ -34,24 +34,24 @@ namespace Scene
 		SQUARE_OBJECT(Actor)
 
         //add a child
-        void add(Actor::SPtr child);
-        void add(Component::SPtr component);
+        void add(Shared<Actor> child);
+        void add(Shared<Component> component);
 
         //remove a child
-        void remove(Actor::SPtr child);
-        void remove(Component::SPtr component);
+        void remove(Shared<Actor> child);
+        void remove(Shared<Component> component);
         void remove_from_parent();
         
         //get parent
-        Actor::SPtr parent() const;
+        Shared<Actor> parent() const;
         
         //contains an actor
-        bool contains(Actor::SPtr child) const;
-        bool contains(Component::SPtr component) const;
+        bool contains(Shared<Actor> child) const;
+        bool contains(Shared<Component> component) const;
 		
 		//get by type
 		template< class T >
-		std::shared_ptr< T > component()
+		Shared< T > component()
 		{
 			for (auto& components : m_components)
 			{
@@ -61,14 +61,19 @@ namespace Scene
 				}
 			}
 			//create
-			Component::SPtr new_component = ComponentFactory::create(T::static_object_id());
+			Shared<Component> new_component = std::static_pointer_cast<Component>(ObjectFactory::create(T::static_object_id())) ;
+            //test
+            if(!new_component)
+            {
+                return nullptr;
+            }
 			//add
 			add(new_component);
 			//return
 			return std::static_pointer_cast<T>(new_component);
 		}
-		Component::SPtr component(size_t id);
-		Component::SPtr component(const std::string& name);
+		Shared<Component> component(size_t id);
+		Shared<Component> component(const std::string& name);
         
         //message
         void send_message(const Variant& value, bool brodcast = false);
@@ -112,10 +117,10 @@ namespace Scene
         void    set_dirty();
         void    send_dirty();
         //parent
-        Actor::SPtr m_parent;
+        Shared<Actor> m_parent;
         //child list
-        std::vector< Actor::SPtr > m_childs;
-        std::vector< Component::SPtr > m_components;
+        std::vector< Shared<Actor> > m_childs;
+        std::vector< Shared<Component> > m_components;
     };
 }
 }

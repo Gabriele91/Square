@@ -2,10 +2,11 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 20/10/17.
-//  Copyright © 2017 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2017 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
+#include "Square/Core/SmartPointers.h"
 
 namespace Square
 {
@@ -40,21 +41,21 @@ namespace Square
 			{ return static_object_info().id(); }\
 		static const std::string& static_object_name()\
 			{ return static_object_info().name(); }\
-		::Square::uint64 object_id() override\
+		::Square::uint64 object_id() const override\
 			{ return Class::static_object_id(); }\
-		const std::string& object_name() override\
+		const std::string& object_name() const override\
 			{ return Class::static_object_name(); }\
-		const ::Square::ObjectInfo& object_info() override\
+		const ::Square::ObjectInfo& object_info() const override\
 			{ return Class::static_object_info(); }
 
 	//Define Object
-	class SQUARE_API Object
+    class SQUARE_API Object
 	{
 	public:
 
-		virtual uint64 object_id() = 0;
-		virtual const std::string& object_name() = 0;
-		virtual const ObjectInfo& object_info() = 0;
+		virtual uint64 object_id() const = 0;
+		virtual const std::string& object_name() const = 0;
+		virtual const ObjectInfo& object_info() const = 0;
 
 	};
 }

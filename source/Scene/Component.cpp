@@ -20,7 +20,7 @@ namespace Scene
     // utils
     void Component::remove_from_parent()
     {
-        if(actor()) actor()->remove(this->shared_from_this());
+        if(actor()) actor()->remove(shared_from_this());
     }
     
     //actor

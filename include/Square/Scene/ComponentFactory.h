@@ -14,30 +14,33 @@ namespace Square
 {
 namespace Scene
 {
-    //class factory of scene component
+    //class factory of object
     class SQUARE_API ComponentFactory
     {
 	public:
 
 		//element
-		typedef Component::SPtr(*CreateComponent)();
+        typedef Shared<Component>(*CreateComponent)();
+        typedef void (*AttributesComponent)(SerializeContext& context);
 
 		//element in list
-		struct ComponentInfo
+		struct CreateComponentInfo
 		{
-			std::string     m_name;
+			std::string  m_name;
 			CreateComponent m_create;
+            AttributesComponent m_attributes;
 		};
         
 
 		//types
-		using ComponentIdMap   = std::unordered_map < uint64, ComponentInfo >;
+		using ComponentIdMap   = std::unordered_map < uint64, CreateComponentInfo >;
 		using ComponentNameMap = std::unordered_map < std::string, uint64 >;
 
         //public
-        static Component::SPtr create(uint64 id);
-        static Component::SPtr create(const std::string& name);
-        static void append(const ObjectInfo& info, CreateComponent fun);
+        static Shared<Component> create(uint64 id);
+        static Shared<Component> create(const std::string& name);
+        static void append(const ObjectInfo& info, CreateComponent create, AttributesComponent attrs);
+        static void attributes_registration(SerializeContext& context);
 
 		//get id
 		static uint64 id(const std::string& name);
@@ -57,14 +60,14 @@ namespace Scene
     class SQUARE_API ComponentItem
     {
         
-        static Component::SPtr create()
+        static Shared<Component> create()
         {
             return (std::make_shared< T >())->shared_from_this();
         }
         
         ComponentItem()
         {
-            ComponentFactory::append(T::static_object_info(), ComponentItem<T>::create);
+            ComponentFactory::append(T::static_object_info(), ComponentItem<T>::create, T::attributes);
         }
         
     public:
@@ -77,11 +80,11 @@ namespace Scene
         
     };
     
-    #define SQUARE_COMPONENT(class_)\
+    #define SQUARE_COMPONENT_REGISTRATION(class_)\
     namespace\
     {\
-    static const ::Square::Scene::ComponentItem<class_>& _Square_ ## scene_ ## class_ ## _component_item=\
-                 ::Square::Scene::ComponentItem<class_>::instance();\
+        SQUARE_OBJECT_REGISTRATION(class_)\
+        static const auto& _Square_scene_ ## class_ ## _component_item = ::Square::Scene::ComponentItem<class_>::instance();\
     }
 }
 }

@@ -15,6 +15,8 @@
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Variant.h"
 #include "Square/Core/Object.h"
+#include "Square/Core/ObjectFactory.h"
+#include "Square/Core/Attribute.h"
 //Math
 #include "Square/Math/Linear.h"
 #include "Square/Math/Tangent.h"
@@ -27,7 +29,6 @@
 //Data
 #include "Square/Data/Json.h"
 #include "Square/Data/Image.h"
-#include "Square/Data/Attribute.h"
 //Driver
 #include "Square/Driver/Render.h"
 #include "Square/Driver/Input.h"

@@ -32,18 +32,20 @@ public:
     {
         
     }
+    
+    static void attributes(Square::SerializeContext& context)
+    {
+        context.add<Sprite>(Square::attribute_field< Sprite >("scale", Square::Vec3(0,0,0), &Sprite::m_scale));
+        context.add<Sprite>(Square::attribute_field< Sprite >("pos", Square::Vec3(0,0,0), &Sprite::m_pos));
+    }
 };
-SQUARE_COMPONENT(Sprite)
+SQUARE_COMPONENT_REGISTRATION(Sprite)
 
 
-class Square::Data::Serializable
-{
-
-};
-
-class Body : Square::Data::Serializable
+class Body : public Square::Scene::Component
 {
 public:
+    SQUARE_OBJECT(Body)
 
 	Square::Vec3 m_gravity;
 	float	     m_mass;
@@ -55,13 +57,14 @@ public:
 	void  set_mass(float m)       { m_mass = m; }
 	float get_mass()		const { return m_mass; }
 	
-	static void attributes(Body* body)
+    static void attributes(Square::SerializeContext& context)
 	{
-		auto a_gravity = Square::Data::attribute_method< Body >("gravity", Square::Vec3(0,0,0), &Body::get_gravity, &Body::set_gravity);
-		auto a_mass = Square::Data::attribute_method< Body >("mass", float(0), &Body::get_mass, &Body::set_mass);
-		auto a_nshape = Square::Data::attribute_field< Body >("nshape", int(0), &Body::m_nshape);
+        context.add<Body>(Square::attribute_method< Body >("gravity", Square::Vec3(0,0,0), &Body::get_gravity, &Body::set_gravity));
+        context.add<Body>(Square::attribute_field< Body >("mass", float(0), &Body::m_mass));
+        context.add<Body>(Square::attribute_field< Body >("nshape", int(0), &Body::m_nshape));
 	}
 };
+SQUARE_COMPONENT_REGISTRATION(Body)
 
 int main()
 {
@@ -79,8 +82,8 @@ int main()
 	player.component<Sprite>()->m_scale = { 2,2 };
 	player.component<Sprite>()->m_pos   = { 100,0 };
 	//test attributes
-	Body b;
-	Body::attributes(&b);
+    SerializeContext ctx;
+    ComponentFactory::attributes_registration(ctx);
 	//test
 	Video::init();
 	{

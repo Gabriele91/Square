@@ -9,20 +9,26 @@
 
 namespace Square
 {
+    template < class T >
+    using Shared = std::shared_ptr< T >;
+    
+    template < class T >
+    using Unique = std::unique_ptr< T >;
+    
+    template < class T >
+    using Weak = std::weak_ptr< T >;
+    
 	template < class T >
-	class SmartPointers : public std::enable_shared_from_this< T >
+	class SharedObject : public std::enable_shared_from_this< T >
 	{
 	public:
-
-		using SPtr = std::shared_ptr< T >;
-		using UPtr = std::unique_ptr< T >;
-		using WPtr = std::weak_ptr< T >;
-
+        
 		template < class... Args >
-		static SPtr snew(Args&&... args)
+		static Shared<T> snew(Args&&... args)
 		{
 			return std::make_shared< T >(args...);
 		}
 
 	};
+    
 }

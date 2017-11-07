@@ -12,7 +12,7 @@ namespace Square
 namespace  Data
 {
 
-	Image::SPtr Image::from_rgb565(const unsigned char* buffer,unsigned long width,unsigned long height)
+	Shared<Image> Image::from_rgb565(const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
 		auto o_image = Image::snew();
@@ -39,7 +39,7 @@ namespace  Data
 		return o_image;
 	}
 
-	Image::SPtr Image::from_rgb5a1(const unsigned char* buffer, unsigned long width, unsigned long height)
+	Shared<Image> Image::from_rgb5a1(const unsigned char* buffer, unsigned long width, unsigned long height)
 	{
 		//alloc conteiner
 		auto o_image = Image::snew();
@@ -66,7 +66,7 @@ namespace  Data
 		return o_image;
 	}
 
-	Image::SPtr Image::from_r (const unsigned char* buffer,unsigned long width,unsigned long height)
+	Shared<Image> Image::from_r (const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
 		auto o_image = Image::snew();
@@ -87,7 +87,7 @@ namespace  Data
 		return o_image;
 	}
 
-	Image::SPtr Image::from_rg (const unsigned char* buffer,unsigned long width,unsigned long height)
+	Shared<Image> Image::from_rg (const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
 		auto o_image = Image::snew();
@@ -108,7 +108,7 @@ namespace  Data
 		return o_image;
 	}
 
-	Image::SPtr Image::from_rgb (const unsigned char* buffer,unsigned long width,unsigned long height)
+	Shared<Image> Image::from_rgb (const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
 		auto o_image = Image::snew();
@@ -129,7 +129,7 @@ namespace  Data
 		return o_image;
 	}
 	
-	Image::SPtr Image::from_rgba (const unsigned char* buffer,unsigned long width,unsigned long height)
+	Shared<Image> Image::from_rgba (const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
 		auto o_image = Image::snew();

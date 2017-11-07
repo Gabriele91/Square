@@ -41,7 +41,7 @@ namespace Data
 	);
 
 	//load image
-	Image::SPtr Image::load(const std::string& path)
+	Shared<Image> Image::load(const std::string& path)
 	{
 		//get ext
 		std::string ext = Filesystem::get_extension(path);
@@ -108,7 +108,7 @@ namespace Data
 							data_file.size()))
 				return nullptr;
 			//save
-			Image::SPtr o_image = nullptr;
+			Shared<Image> o_image = nullptr;
 			//types
 			switch (image_format)
 			{

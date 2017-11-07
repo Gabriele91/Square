@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele on 12/07/16.
-//  Copyright © 2016 Gabriele. All rights reserved.
+//  Copyright ï¿½ 2016 Gabriele. All rights reserved.
 //
 #pragma once
 #include <memory>
@@ -17,7 +17,7 @@ namespace Square
 namespace Resource
 {
 	class Manager;
-	class SQUARE_API Interface : public SmartPointers<Interface>, public Uncopyable
+	class SQUARE_API Interface : public SharedObject<Interface>, public Uncopyable
 	{
 	public:
 		virtual bool load(Manager& resources, const std::string& path) = 0;

@@ -63,7 +63,7 @@ LDFLAGS  += -L /opt/X11/lib/ -lX11 -lXxf86vm -lGLU -lGL -lxcb
 endif
 
 ####################################################
-# Libary Source
+# All source files
 ALL_SOURCE_FILES := $(wildcard $(S_DIR)/*.cpp)\
 					$(wildcard $(S_DIR)/**/*.cpp)\
 					$(wildcard $(S_DIR)/**/**/*.cpp)	

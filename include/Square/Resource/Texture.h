@@ -13,7 +13,7 @@ namespace Square
 {
 namespace Resource
 {
-	class SQUARE_API Texture : public SmartPointers<Texture>, public Interface
+	class SQUARE_API Texture : public SharedObject<Texture>, public Interface
 	{
 
 		Render::Texture*      m_ctx_texture{ nullptr };

@@ -1,31 +1,24 @@
-#pragma once
 //
 //  Square
 //
 //  Created by Gabriele on 09/09/16.
-//  Copyright © 2016 Gabriele. All rights reserved.
+//  Copyright ï¿½ 2016 Gabriele. All rights reserved.
 //
 #pragma once
 #include <string>
 #include <functional>
 #include <type_traits>
-#include "../Core/Object.h"
-#include "../Core/Variant.h"
-#include "../Core/SmartPointers.h"
+#include "Square/Core/Object.h"
+#include "Square/Core/Variant.h"
+#include "Square/Core/SmartPointers.h"
 
 namespace Square
 {
-namespace  Data
-{
-	//Class used by all classes with serializable attributes, 
-	class Serializable : public Object
-	{
-	public:
-		SQUARE_OBJECT(Serializable)
-	};
-
+	//Class used by all classes with serializable attributes,
+    class Serializable;
+    
 	//Access to attribute
-	class AttributeAccess : public SmartPointers<AttributeAccess>
+	class AttributeAccess : public SharedObject<AttributeAccess>
 	{
 	public:
 		virtual void Get(const Serializable* serializable, VariantRef& ret) const =0;
@@ -63,7 +56,7 @@ namespace  Data
 		(
 			const std::string& name,
 			VariantType     value_type,
-			const Variant&  default,
+			const Variant&  default_value,
 			size_t          offset,
 			Type			type = DEFAULT
 		)
@@ -71,7 +64,7 @@ namespace  Data
 			m_name = name;
 			m_type = type;
 			m_value_type = value_type;
-			m_default = default;
+			m_default = default_value;
 			m_offset = offset;
 			m_wrapper = nullptr;
 			m_enum_names = nullptr;
@@ -80,17 +73,17 @@ namespace  Data
 		//attribute by wrapper
 		Attribute
 		(
-			const std::string& name,
-			VariantType     value_type,
-			const Variant&  default,
-			AttributeAccess::SPtr access,
-			Type			type = DEFAULT
+			const std::string&      name,
+			VariantType             value_type,
+			const Variant&          default_value,
+			Shared<AttributeAccess> access,
+			Type			        type = DEFAULT
 		)
 		{
 			m_name = name;
 			m_type = type;
 			m_value_type = value_type;
-			m_default = default;
+			m_default = default_value;
 			m_offset = 0;
 			m_wrapper = access;
 			m_enum_names = nullptr;
@@ -99,10 +92,10 @@ namespace  Data
 
 		//attribute is a enum
 		Attribute
-		(   
+		(
 			const std::string& name,
 			VariantType     value_type,
-			const Variant&  default,
+			const Variant&  default_value,
 			const char**    enum_names,
 			Type			type = DEFAULT
 		)
@@ -110,7 +103,7 @@ namespace  Data
 			m_name = name;
 			m_type = type;
 			m_value_type = value_type;
-			m_default = default;
+			m_default = default_value;
 			m_offset = 0;
 			m_wrapper = nullptr;
 			m_enum_names = enum_names;
@@ -122,21 +115,21 @@ namespace  Data
 		std::string m_name;
 		// Type of attribute
 		Type m_type;
-		// Type of value 
+		// Type of value
 		VariantType m_value_type;
 		// Default
 		Variant  m_default;
 		// Offset attribute
 		size_t   m_offset;
 		// or wrapper
-		AttributeAccess::SPtr m_wrapper;
+		Shared<AttributeAccess> m_wrapper;
 		// or enum names.
 		const char** m_enum_names;
 
 	};
 
 	/// Attribute train (default use const reference).
-	template <typename T, class Fundamental = void> 
+	template <typename T, class Fundamental = void>
 	struct AttributeTrain
 	{
 		/// Get function return type.
@@ -148,7 +141,7 @@ namespace  Data
 	/// Attribute train (for fundamental types use copy value).
 	template <class T>
 	struct AttributeTrain<T, std::enable_if_t<std::is_fundamental<T>::value>>
-	{ 
+	{
 		using ReturnType = T;
 		using ParameterType = T;
 	};
@@ -294,5 +287,4 @@ namespace  Data
 			, type
 		);
 	}
-}
 }
