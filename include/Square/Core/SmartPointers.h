@@ -18,6 +18,24 @@ namespace Square
     template < class T >
     using Weak = std::weak_ptr< T >;
     
+    template < class T, class U >
+    static inline Shared<T> StaticPointerCast( const Shared<U>& sptr ) noexcept
+    {
+        return std::static_pointer_cast< T >( sptr );
+    }
+    
+    template < class T, class U >
+    static inline Shared<T> DynamicPointerCast( const Shared<U>& sptr ) noexcept
+    {
+        return std::dynamic_pointer_cast< T >( sptr );
+    }
+    
+    template < class T, class U >
+    static inline Shared<T> ConstPointerCast( const Shared<U>& sptr ) noexcept
+    {
+        return std::const_pointer_cast< T >( sptr );
+    }
+    
 	template < class T >
 	class SharedObject : public std::enable_shared_from_this< T >
 	{
@@ -28,7 +46,6 @@ namespace Square
 		{
 			return std::make_shared< T >(args...);
 		}
-
 	};
     
 }

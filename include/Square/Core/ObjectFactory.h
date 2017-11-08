@@ -78,7 +78,6 @@ namespace Square
     #define SQUARE_OBJECT_REGISTRATION(class_)\
     namespace\
     {\
-    static const ::Square::ObjectItem<class_>& _Square_ ## scene_ ## class_ ## _component_item=\
-                 ::Square::ObjectItem<class_>::instance();\
+        static const auto& _Square_ ## class_ ## _object_item = ::Square::ObjectItem<class_>::instance();\
     }
 }

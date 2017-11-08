@@ -12,6 +12,7 @@
 #include "Square/Core/Object.h"
 #include "Square/Core/ObjectFactory.h"
 #include "Square/Scene/Component.h"
+#include "Square/Scene/ComponentFactory.h"
 
 namespace Square
 {
@@ -57,11 +58,11 @@ namespace Scene
 			{
 				if (dynamic_cast<T*>(components.get()))
 				{
-					return std::static_pointer_cast<T>(components);
+					return StaticPointerCast<T>(components);
 				}
 			}
 			//create
-			Shared<Component> new_component = std::static_pointer_cast<Component>(ObjectFactory::create(T::static_object_id())) ;
+			Shared<Component> new_component = StaticPointerCast<Component>(ComponentFactory::create(T::static_object_id())) ;
             //test
             if(!new_component)
             {
@@ -70,7 +71,7 @@ namespace Scene
 			//add
 			add(new_component);
 			//return
-			return std::static_pointer_cast<T>(new_component);
+			return StaticPointerCast<T>(new_component);
 		}
 		Shared<Component> component(size_t id);
 		Shared<Component> component(const std::string& name);
