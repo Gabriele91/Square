@@ -123,11 +123,13 @@ namespace Xorg
 		//get info
 		XF86VidModeGetAllModeLines(s_os_context.m_xdisplay, screen->m_screen_id, &mode_size, &modes);
 		//look for mode with requested resolution
-		for (size_t i = 0; i < mode_size; i++)
-		if ((modes[i]->hdisplay == info.m_size[0]) && (modes[i]->vdisplay == info.m_size[1]))
+		for (int i = 0; i < mode_size; i++)
 		{
-			res_found = true;
-			break;
+			if ((modes[i]->hdisplay == info.m_size[0]) && (modes[i]->vdisplay == info.m_size[1]))
+			{
+				res_found = true;
+				break;
+			}
 		}
 		XFree(modes);
 		return res_found;
@@ -207,12 +209,14 @@ namespace Xorg
 		// save desktop-resolution before switching modes
 		desktop_mode = *modes[0];
 		//look for mode with requested resolution
-		for (size_t i = 0; i < mode_size; i++)
-		if ((modes[i]->hdisplay == info.m_size[0]) && (modes[i]->vdisplay == info.m_size[1]))
+		for (int i = 0; i < mode_size; i++)
 		{
-			best_mode = i;
-			res_found = true;
-			break;
+			if ((modes[i]->hdisplay == info.m_size[0]) && (modes[i]->vdisplay == info.m_size[1]))
+			{
+				best_mode = i;
+				res_found = true;
+				break;
+			}
 		}
 		//test
 		if (!res_found) 
@@ -308,7 +312,6 @@ namespace Xorg
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	WindowXorg::WindowXorg(const WindowInfo& info)
 	{
-		XSetWindowAttributes win_attributes;
 		//create a window in window mode
 		XVisualInfo* visual_info;
 		x11_create_visual(info,visual_info);
@@ -322,8 +325,7 @@ namespace Xorg
 		XWindow root_xwindow = RootWindow(s_os_context.m_xdisplay, screen->m_screen_id);
 		//window
 		XWindow wnd;		  
-		XF86VidModeModeInfo desktop_info;
-		WindowXorg* wrapper_wnd = nullptr;
+		XF86VidModeModeInfo desktop_info;		
 		//
 		if(info.m_fullscreen)
 		{

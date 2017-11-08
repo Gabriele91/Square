@@ -2,10 +2,12 @@
 //  Square
 //
 //  Created by Gabriele on 18/10/17.
-//  Copyright © 2016 Gabriele. All rights reserved.
+//  Copyright ï¿½ 2016 Gabriele. All rights reserved.
 //
-#include "Square/Core/Object.h"
+#include <memory>
+#include <cstring>
 #include <algorithm>
+#include "Square/Core/Object.h"
 
 namespace Square
 {

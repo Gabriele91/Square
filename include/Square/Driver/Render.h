@@ -537,11 +537,11 @@ namespace Render
 
 	struct BlendState
 	{
-		bool       m_enable;
+		bool      m_enable;
 		BlendType m_src, m_dst;
 		//constructor
-		BlendState() : m_enable(false) {}
-		BlendState(BlendType src, BlendType dst) :m_src(src), m_dst(dst), m_enable(true) {}
+		BlendState() : m_enable(false), m_src(BLEND_ONE), m_dst(BLEND_ONE) {}
+		BlendState(BlendType src, BlendType dst) : m_enable(true), m_src(src), m_dst(dst) {}
 		//operators
 		bool operator==(const BlendState& bs) const
 		{

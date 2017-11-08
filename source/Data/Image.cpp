@@ -146,8 +146,8 @@ namespace  Data
 
 	void Image::apply_kernel(ImageKernel kernel)
 	{
-		for(int y = 0; y != m_height; ++y)
-		for(int x = 0; x != m_width;  ++x)
+		for(unsigned long y = 0; y != m_height; ++y)
+		for(unsigned long x = 0; x != m_width;  ++x)
 		{
 			kernel(*this,m_buffer[x+y*m_width],x,y);
 		}
@@ -158,8 +158,8 @@ namespace  Data
 		//half size
 		size_t half_width = m_width / 2;
 		//..
-		for(int y = 0; y != m_height; ++y)
-		for(int x = 0; x != half_width;  ++x)
+		for(unsigned long y = 0; y != m_height; ++y)
+		for(unsigned long x = 0; x != half_width;  ++x)
 		{
 			std::swap(m_buffer[x+m_width*y], m_buffer[(m_width - x -1)+m_width*y]);
 		}
@@ -168,13 +168,13 @@ namespace  Data
 	void Image::flip_vertical()
 	{
 		//line size
-		size_t line_byte_size = m_width * sizeof(ImagePixel);
+		unsigned long line_byte_size = m_width * sizeof(ImagePixel);
 		//alloc
 		ImagePixel* line = new ImagePixel[m_width];
 		//for size
-		size_t half_height = m_height / 2;
+		unsigned long half_height = m_height / 2;
 		//for all lines
-		for (size_t y = 0; y != half_height; ++y)
+		for (unsigned long y = 0; y != half_height; ++y)
 		{
 			std::memcpy(line,                                  &m_buffer[m_width*y],                  line_byte_size);
 			std::memcpy(&m_buffer[m_width*y],                  &m_buffer[m_width*(m_height - y - 1)], line_byte_size);
@@ -191,8 +191,8 @@ namespace  Data
 		//init
 		output.resize(m_width*m_height*3);
 		//copy
-		for(int y = 0; y != m_height; ++y)
-		for(int x = 0; x != m_width;  ++x)
+		for(unsigned long y = 0; y != m_height; ++y)
+		for(unsigned long x = 0; x != m_width;  ++x)
 		{
 			output[x*3+m_width*3*y+0] = m_buffer[x+m_width*y].m_r;
 			output[x*3+m_width*3*y+1] = m_buffer[x+m_width*y].m_g;
@@ -209,8 +209,8 @@ namespace  Data
 		//init
 		output.resize(m_width*m_height*2);
     
-		for(int y = 0; y != m_height; ++y)
-		for(int x = 0; x != m_width;  ++x)
+		for(unsigned long y = 0; y != m_height; ++y)
+		for(unsigned long x = 0; x != m_width;  ++x)
 		{
 			//normalize
 			unsigned char r = (unsigned char)(float(m_buffer[x+m_width*y].m_r) / 255.0f * 32.0f); // 0 0 0 R R R R R

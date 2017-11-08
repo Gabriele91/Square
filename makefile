@@ -39,7 +39,7 @@ CC_FLAGS = -std=c++14 -I $(DIPS_INCLUDE) -I $(S_INC)
 # RELEASE_FLAGS
 RELEASE_FLAGS = -O3
 # DEBUG_FLAGS
-DEBUG_FLAGS = -g -D_DEBUG -Wall 
+DEBUG_FLAGS = -g -D_DEBUG -Wall -Wno-unknown-pragmas
 # Linker
 LDFLAGS += -lz -lm -lutil 
 ####################################################

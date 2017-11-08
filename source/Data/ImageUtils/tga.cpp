@@ -138,7 +138,7 @@ namespace Data
 	{
 		size_t image_size = width * height;
 		//16 image
-		for (unsigned int i = 0; i != image_size; ++i)
+		for (unsigned long i = 0; i != image_size; ++i)
 		{
 			// R R R R R G G G bytes[i*2+0]
 			// G G G B B B B B bytes[i*2+1]
@@ -159,7 +159,7 @@ namespace Data
 	{
 		size_t image_size = width * height;
 		//24/32 image
-		for (unsigned int i = 0; i != image_size; ++i)
+		for (unsigned long i = 0; i != image_size; ++i)
 		{
 			unsigned char tmp;
 			tmp = bytes[i * image_bytes_pixel + 0];
@@ -180,13 +180,13 @@ namespace Data
 	)
 	{
 		//line size
-		size_t line_len = image_width * image_bytes_pixel * sizeof(unsigned char);
+		unsigned long line_len = image_width * image_bytes_pixel * sizeof(unsigned char);
 		//alloc
 		unsigned char* line = new unsigned char[line_len];
 		//for size
-		size_t half_height = image_height / 2;
+		unsigned long half_height = image_height / 2;
 		//for all lines
-		for (size_t y = 0; y != half_height; ++y)
+		for (unsigned long y = 0; y != half_height; ++y)
 		{
 			std::memcpy(line, &bytes[line_len*y], line_len);
 			std::memcpy(&bytes[line_len*y], &bytes[line_len*(image_height - y - 1)], line_len);
@@ -206,14 +206,14 @@ namespace Data
 	{
 		assert(image_bytes_pixel <= 4);
 		//line size
-		size_t line_width = image_width * image_bytes_pixel;
+		unsigned long line_width = image_width * image_bytes_pixel;
 		//half size
-		size_t half_width = image_width / 2;
+		unsigned long half_width = image_width / 2;
 		//buffer
 		unsigned char temp_pixel[4];
 		//..
-		for (int y = 0; y != image_height; ++y)
-		for (int x = 0; x != half_width; ++x)
+		for (unsigned long y = 0; y != image_height; ++y)
+		for (unsigned long x = 0; x != half_width; ++x)
 		{
 			unsigned char* left_pixel  = &bytes[x + line_width*y];
 			unsigned char* right_pixel = &bytes[(line_width - x - 1) + line_width*y];

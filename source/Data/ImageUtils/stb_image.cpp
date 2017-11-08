@@ -218,6 +218,10 @@
 #ifndef STBI_INCLUDE_STB_IMAGE_H
 #define STBI_INCLUDE_STB_IMAGE_H
 
+//DISABLE WARNINGS
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmisleading-indentation"
+
 #define STB_IMAGE_IMPLEMENTATION
 
 // DOCUMENTATION
@@ -6589,6 +6593,9 @@ STBIDEF int stbi_info_from_callbacks(stbi_io_callbacks const *c, void *user, int
     stbi__start_callbacks(&s, (stbi_io_callbacks *) c, user);
     return stbi__info_main(&s,x,y,comp);
 }
+
+//DISABLE WARNINGS //END
+#pragma GCC diagnostic pop
 
 #endif // STB_IMAGE_IMPLEMENTATION
 

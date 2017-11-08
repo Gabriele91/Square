@@ -1224,7 +1224,7 @@ namespace Xorg
             
             case ConfigureNotify:
             {
-                if (event.xconfigure.width != wnd->m_info.m_size[0] || event.xconfigure.height != wnd->m_info.m_size[1])
+                if ((size_t)(event.xconfigure.width) != wnd->m_info.m_size[0] || (size_t)(event.xconfigure.height) != wnd->m_info.m_size[1])
                 {
                     wnd->m_info.m_size[0]= event.xconfigure.width;
                     wnd->m_info.m_size[1]= event.xconfigure.height;

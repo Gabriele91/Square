@@ -238,7 +238,7 @@ namespace Data
 			{
 				stream << "{";
 				{
-					int i = 0;
+					size_t i = 0;
 					for (auto& k_v : value.object())
 					{ 
 						stream << json_string_dump(k_v.first) << ":" << k_v.second << (++i != value.object().size() ? "," : "");
