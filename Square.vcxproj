@@ -216,6 +216,7 @@
   <ItemGroup>
     <ClCompile Include="source\Core\Filesystem.cpp" />
     <ClCompile Include="source\Core\Object.cpp" />
+    <ClCompile Include="source\Core\ObjectFactory.cpp" />
     <ClCompile Include="source\Core\Time.cpp" />
     <ClCompile Include="source\Core\UtfConvert.cpp" />
     <ClCompile Include="source\Data\Image.cpp" />
