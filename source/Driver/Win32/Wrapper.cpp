@@ -339,10 +339,8 @@ namespace Video
 	void close()
 	{
 		//remove all inputs/windows 
-		for (auto inp_it : s_os_context.m_input)   inp_it.second->m_input_ref->destoy();
-		for (auto wnd_it : s_os_context.m_windows) wnd_it.second->m_window_ref->destoy();
-		s_os_context.m_input.clear();
-		s_os_context.m_windows.clear();
+		while (s_os_context.m_input.size())   s_os_context.m_input.begin()->second->m_input_ref->destoy();
+		while (s_os_context.m_windows.size()) s_os_context.m_windows.begin()->second->m_window_ref->destoy();
 		//remove all screen
 		s_os_context.m_screens.clear();
 		//Delete window class
@@ -480,8 +478,10 @@ namespace Video
 				WGL_CONTEXT_MINOR_VERSION_ARB, info.m_context.m_version[1],
 				NULL
 			};
-
-			HGLRC hRC = wglCreateContextAttribsARB(hDC, 0, attribs);
+			//overload
+			hRC = wglCreateContextAttribsARB(hDC, 0, attribs);
+			//disable
+			wglMakeCurrent(hDC, NULL);
 			//remove default OGL context
 			wglDeleteContext(hRCDefault);
 		}

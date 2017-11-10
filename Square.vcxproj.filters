@@ -198,6 +198,18 @@
     <ClInclude Include="include\Square\Core\Object.h">
       <Filter>Include\Square\Core</Filter>
     </ClInclude>
+    <ClInclude Include="include\Square\Core\Application.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Core\Attribute.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Core\ObjectFactory.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Core\Serialize.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Core\Filesystem.cpp">
@@ -285,6 +297,9 @@
       <Filter>Source\Core</Filter>
     </ClCompile>
     <ClCompile Include="source\Core\ObjectFactory.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Core\Application.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
   </ItemGroup>

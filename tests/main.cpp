@@ -69,6 +69,18 @@ SQUARE_COMPONENT_REGISTRATION(Body)
 class Game01 : public Square::AppInterface
 {
 public:
+
+	void key_event(Square::Video::KeyboardEvent key, short mode, Square::Video::ActionEvent action)
+	{
+		switch (key)
+		{
+		case Square::Video::KEY_Q: m_loop = false; break;
+		case Square::Video::KEY_W: Square::Application::instance()->fullscreen(false); break;
+		case Square::Video::KEY_F: Square::Application::instance()->fullscreen(true); break;
+		default: break;
+		}
+	}
+
     void start()
     {
         
@@ -108,8 +120,8 @@ int main()
 	//test
     Application app;
     app.execute(
-      Square::WindowSizePercentage({ 50.0, 50.0 })
-    , Square::WindowMode::NOT_RESIZABLE
+      WindowSizePixel({ 1280, 768 })
+    , WindowMode::NOT_RESIZABLE
     , 4, 1
     , "test"
     , new Game01()

@@ -4,6 +4,7 @@
 //  Created by Gabriele Di Bari on 10/11/17.
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
+#include <algorithm>
 #include "Square/Core/Application.h"
 #include "Square/Core/Time.h"
 #include "Square/Driver/Render.h"
@@ -183,7 +184,7 @@ namespace Square
         IVec2 window_size = size.get_size(screen);
         //window
         Video::WindowInfo winfo(&screen);
-        winfo.m_context.m_color = 24;
+        winfo.m_context.m_color = 32;
         winfo.m_context.m_version[0] = major_gl_ctx;
         winfo.m_context.m_version[1] = minor_gl_ctx;
         winfo.m_size[0] = window_size.x;
@@ -202,10 +203,10 @@ namespace Square
                                (screen_height - window_size.y) / 2);
         //enable render context and  disable vSync (auto by Video::Window)
         m_window->acquire_context();
+		//init render
+		if (!Render::init()) return false;
         //flush errors
         Render::print_errors();
-        //init render
-        Render::init();
         //show info
         Render::print_info();
         //close event

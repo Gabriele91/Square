@@ -61,7 +61,8 @@ namespace Debug
 		std::stringstream output;
 		GLenum gl_err = GL_NO_ERROR;
 		bool print_file = false;
-		while ((gl_err = glGetError()) != GL_NO_ERROR)
+		GLuint finite = 255; // (watchdog count)
+		while ((gl_err = glGetError()) != GL_NO_ERROR && --finite)
 		{
 			if (!print_file)
 			{

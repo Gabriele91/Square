@@ -132,8 +132,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\Square\Config.h" />
+    <ClInclude Include="include\Square\Core\Application.h" />
+    <ClInclude Include="include\Square\Core\Attribute.h" />
     <ClInclude Include="include\Square\Core\Filesystem.h" />
     <ClInclude Include="include\Square\Core\Object.h" />
+    <ClInclude Include="include\Square\Core\ObjectFactory.h" />
+    <ClInclude Include="include\Square\Core\Serialize.h" />
     <ClInclude Include="include\Square\Core\SmartPointers.h" />
     <ClInclude Include="include\Square\Core\Time.h" />
     <ClInclude Include="include\Square\Core\Uncopyable.h" />
@@ -214,6 +218,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\Core\Application.cpp" />
     <ClCompile Include="source\Core\Filesystem.cpp" />
     <ClCompile Include="source\Core\Object.cpp" />
     <ClCompile Include="source\Core\ObjectFactory.cpp" />

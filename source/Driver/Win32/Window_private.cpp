@@ -149,9 +149,10 @@ namespace Win32
 			fullscreen_settings.dmPelsWidth = m_info.m_size[0];
 			fullscreen_settings.dmPelsHeight = m_info.m_size[1];
 			fullscreen_settings.dmBitsPerPel = m_info.m_context.m_color;
-			fullscreen_settings.dmFields = DM_PELSWIDTH |
-				DM_PELSHEIGHT |
-				DM_BITSPERPEL;
+			fullscreen_settings.dmFields = 
+			  DM_PELSWIDTH
+			| DM_PELSHEIGHT 
+			| DM_BITSPERPEL;
 
 			is_change_successful = ChangeDisplaySettings(&fullscreen_settings, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL;
 			//change only if a success
