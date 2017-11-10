@@ -372,7 +372,7 @@ namespace Video
 		return m_native;
 	}
 
-	void Screen::get_size(unsigned int& width, unsigned int& height)
+	void Screen::get_size(unsigned int& width, unsigned int& height)  const
 	{
 		((Win32::ScreenWin32*)m_native)->get_size(width, height);
 	}	

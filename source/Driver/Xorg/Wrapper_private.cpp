@@ -1346,9 +1346,9 @@ namespace Xorg
 		return m_native;
 	}
 
-	void Screen::get_size(unsigned int& width, unsigned int& height)
+	void Screen::get_size(unsigned int& width, unsigned int& height) const
 	{
-		auto* screen = (Xorg::ScreenXorg*)m_native;;
+		auto* screen = (Xorg::ScreenXorg*)m_native;
 		width = XDisplayWidth(Xorg::s_os_context.m_xdisplay, screen->m_screen_id);
 		height = XDisplayHeight(Xorg::s_os_context.m_xdisplay, screen->m_screen_id);
 	}

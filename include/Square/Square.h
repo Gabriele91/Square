@@ -17,6 +17,7 @@
 #include "Square/Core/Object.h"
 #include "Square/Core/ObjectFactory.h"
 #include "Square/Core/Attribute.h"
+#include "Square/Core/Application.h"
 //Math
 #include "Square/Math/Linear.h"
 #include "Square/Math/Tangent.h"

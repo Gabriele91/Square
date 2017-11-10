@@ -24,7 +24,7 @@ namespace Video
 		//info
 		void*  conteiner() const;
 		//size
-		void get_size(unsigned int& w, unsigned int& h);
+		void get_size(unsigned int& w, unsigned int& h) const;
 		//window
 		~Screen();
 		//end

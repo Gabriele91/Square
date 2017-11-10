@@ -52,7 +52,7 @@ public:
 	int 	     m_nshape;
 
 	void  set_gravity(const Square::Vec3& g){ m_gravity = g; }
-	const Square::Vec3& get_gravity()const  { return m_gravity; }
+	const Square::Vec3& get_gravity() const { return m_gravity; }
 
 	void  set_mass(float m)       { m_mass = m; }
 	float get_mass()		const { return m_mass; }
@@ -65,6 +65,27 @@ public:
 	}
 };
 SQUARE_COMPONENT_REGISTRATION(Body)
+
+class Game01 : public Square::AppInterface
+{
+public:
+    void start()
+    {
+        
+    }
+    bool run(double dt)
+    {
+        return m_loop;
+    }
+    bool end()
+    {
+        return true;
+    }
+private:
+    
+    bool m_loop = true;
+    
+};
 
 int main()
 {
@@ -85,40 +106,14 @@ int main()
     SerializeContext ctx;
     ComponentFactory::attributes_registration(ctx);
 	//test
-	Video::init();
-	{
-		Video::Screen screen = Video::Screen::by_index(0);
-
-		Video::WindowInfo winfo(&screen);
-		winfo.m_context.m_color = 24;
-		winfo.m_size[0] = 1280;
-		winfo.m_size[1] = 720;
-		winfo.m_fullscreen = false;
-
-		Video::Window window(winfo);
-		window.acquire_context();
-
-		Video::Input input(&window);
-		//events
-		bool exit = false;
-		input.subscrive_window_listener([&](Video::WindowEvent e)
-		{
-			if (e == Video::WindowEvent::CLOSE) exit = true;
-		});
-		input.subscrive_keyboard_listener([&](Video::KeyboardEvent e, int mode, Video::ActionEvent action)
-		{
-			if (e == Video::KeyboardEvent::KEY_Q) exit = true;
-			if (e == Video::KeyboardEvent::KEY_F) window.enable_fullscreen(true);
-			if (e == Video::KeyboardEvent::KEY_W) window.enable_fullscreen(false);
-		});
-		//
-		while (!exit)
-		{
-			Video::Input::pull_events();
-			window.swap();
-		}
-	}
-	Video::close();
+    Application app;
+    app.execute(
+      Square::WindowSizePercentage({ 50.0, 50.0 })
+    , Square::WindowMode::NOT_RESIZABLE
+    , 4, 1
+    , "test"
+    , new Game01()
+    );
     //End
     return 0;
 }

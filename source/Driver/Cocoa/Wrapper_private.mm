@@ -233,7 +233,9 @@ namespace Cocoa
             //-----------------------------------------------------------
             if (CGDisplayIsAsleep(displays[i])) continue;
             //-----------------------------------------------------------
-            const CGSize size = CGDisplayScreenSize(displays[i]);
+            CGSize size;
+            size.width = CGDisplayPixelsWide(displays[i]);
+            size.height = CGDisplayPixelsHigh(displays[i]);
             //-----------------------------------------------------------
             s_os_context.m_screens.push_back(ScreenCocoa{ displays[i], unit_number, size });
             //-----------------------------------------------------------
@@ -539,7 +541,7 @@ namespace Cocoa
         return m_native;
     }
     
-    void Screen::get_size(unsigned int& width, unsigned int& height)
+    void Screen::get_size(unsigned int& width, unsigned int& height) const
     {
         width  = (unsigned int)((Cocoa::ScreenCocoa*)m_native)->m_size[0];
         height = (unsigned int)((Cocoa::ScreenCocoa*)m_native)->m_size[1];
