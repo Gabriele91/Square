@@ -204,6 +204,9 @@
     <ClInclude Include="include\Square\Core\Context.h">
       <Filter>Include\Square\Core</Filter>
     </ClInclude>
+    <ClInclude Include="include\Square\Data\Archive.h">
+      <Filter>Include\Square\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Core\Filesystem.cpp">
