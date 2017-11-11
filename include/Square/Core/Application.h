@@ -9,6 +9,7 @@
 #include "Square/Math/Linear.h"
 #include "Square/Driver/Input.h"
 #include "Square/Driver/Window.h"
+#include "Square/Core/Context.h"
 
 namespace Square
 {
@@ -64,8 +65,7 @@ namespace Square
         NOT_RESIZABLE,
         FULLSCREEN
     };
-    
-    
+        
     class SQUARE_API Application
     {
     public:
@@ -110,14 +110,19 @@ namespace Square
         );
         
         //sigleton
-        static Application* instance();
+		static Application* instance();
+		static Context*		context();
         
     private:
-        
+        //info screen
         Video::Window*      m_window{ nullptr };
         Video::Input*       m_input { nullptr };
+		//info instance
         AppInterface*       m_instance{ nullptr };
+		//context (delta of update)
         double              m_last_delta_time{ 0 };
+		//context (application context)
+		Context				m_context;
         //global
         static Application* s_instance;
     };

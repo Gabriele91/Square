@@ -15,8 +15,9 @@
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Variant.h"
 #include "Square/Core/Object.h"
-#include "Square/Core/ObjectFactory.h"
 #include "Square/Core/Attribute.h"
+#include "Square/Core/ClassObjectRegistration.h"
+#include "Square/Core/Context.h"
 #include "Square/Core/Application.h"
 //Math
 #include "Square/Math/Linear.h"
@@ -40,5 +41,4 @@
 //Scene
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"
-#include "Square/Scene/ComponentFactory.h"
 

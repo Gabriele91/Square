@@ -10,9 +10,7 @@
 #include "Square/Core/Uncopyable.h"
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Object.h"
-#include "Square/Core/ObjectFactory.h"
 #include "Square/Scene/Component.h"
-#include "Square/Scene/ComponentFactory.h"
 
 namespace Square
 {
@@ -33,6 +31,8 @@ namespace Scene
         
 		//Init object
 		SQUARE_OBJECT(Actor)
+		//Registration in context
+		static void object_registration(Context& ctx);
 
         //add a child
         void add(Shared<Actor> child);
@@ -54,27 +54,10 @@ namespace Scene
 		template< class T >
 		Shared< T > component()
 		{
-			for (auto& components : m_components)
-			{
-				if (dynamic_cast<T*>(components.get()))
-				{
-					return StaticPointerCast<T>(components);
-				}
-			}
-			//create
-			Shared<Component> new_component = StaticPointerCast<Component>(ComponentFactory::create(T::static_object_id())) ;
-            //test
-            if(!new_component)
-            {
-                return nullptr;
-            }
-			//add
-			add(new_component);
-			//return
-			return StaticPointerCast<T>(new_component);
+			return StaticPointerCast<T>(component(T::static_object_id()));
 		}
-		Shared<Component> component(size_t id);
 		Shared<Component> component(const std::string& name);
+		Shared<Component> component(size_t id);
         
         //message
         void send_message(const Variant& value, bool brodcast = false);

@@ -14,15 +14,12 @@
 
 namespace Square
 {
-	//Class used by all classes with serializable attributes,
-    class Serializable;
-    
 	//Access to attribute
 	class AttributeAccess : public SharedObject<AttributeAccess>
 	{
 	public:
-		virtual void Get(const Serializable* serializable, VariantRef& ret) const =0;
-		virtual void Set(Serializable* serializable, const VariantRef& set) =0;
+		virtual void Get(const Object* serializable, VariantRef& ret) const =0;
+		virtual void Set(Object* serializable, const VariantRef& set) =0;
 	};
 
 	//Attribute of a class
@@ -165,7 +162,7 @@ namespace Square
 		}
 
 		// Invoke getter function.
-		virtual void Get(const Serializable* serializable, VariantRef& ret) const override
+		virtual void Get(const Object* serializable, VariantRef& ret) const override
 		{
 			assert(serializable);
 			const T* self = static_cast<const T*>(serializable);
@@ -173,7 +170,7 @@ namespace Square
 		}
 
 		// Invoke setter function.
-		virtual void Set(Serializable* serializable, const VariantRef& value) override
+		virtual void Set(Object* serializable, const VariantRef& value) override
 		{
 			assert(serializable);
 			T* self = static_cast<T*>(serializable);
@@ -206,19 +203,19 @@ namespace Square
 		}
 
 		// Invoke getter function.
-		virtual void Get(const Serializable* serializable, VariantRef& ret) const override
+		virtual void Get(const Object* serializable, VariantRef& ret) const override
 		{
 			assert(serializable);
 			const T* self = static_cast<const T*>(serializable);
-			ret = (self->*m_get)();
+			ret = (*m_get)(self);
 		}
 
 		// Invoke setter function.
-		virtual void Set(Serializable* serializable, const VariantRef& value) override
+		virtual void Set(Object* serializable, const VariantRef& value) override
 		{
 			assert(serializable);
 			T* self = static_cast<T*>(serializable);
-			(self->*m_set)(value.get<U>());
+			(*m_set)(self, value.get<U>());
 		}
 
 		// Pointer to getter function.
@@ -240,7 +237,7 @@ namespace Square
 	{
 		return Attribute(
 			  attribute_name
-			, variant_traits<T>()
+			, variant_traits<U>()
 			, default_value
 			, std::shared_ptr<AttributeAccess>(
 				(AttributeAccess*)new AttributeAccessMethod< T, U, Trait >(get_method, set_method)
@@ -261,10 +258,10 @@ namespace Square
 	{
 		return Attribute(
 			  attribute_name
-			, variant_traits<T>()
+			, variant_traits<U>()
 			, default_value
 			, std::shared_ptr<AttributeAccess>(
-				(AttributeAccess*)new AttributeAccessMethod< T, U, Trait >(get_function, set_function)
+				(AttributeAccess*)new AttributeAccessFunction< T, U, Trait >(get_function, set_function)
 			)
 			, type
 		);
@@ -281,7 +278,7 @@ namespace Square
 	{
 		return Attribute(
 			  field_name
-			, variant_traits<T>()
+			, variant_traits<U>()
 			, default_value
 			, (char*)&((T*)nullptr->*member) - (char*)nullptr
 			, type

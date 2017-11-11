@@ -114,9 +114,6 @@
     <ClInclude Include="include\Square\Scene\Component.h">
       <Filter>Include\Square\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="include\Square\Scene\ComponentFactory.h">
-      <Filter>Include\Square\Scene</Filter>
-    </ClInclude>
     <ClInclude Include="include\Square\Resource\Texture.h">
       <Filter>Include\Square\Resource</Filter>
     </ClInclude>
@@ -192,9 +189,6 @@
     <ClInclude Include="source\Driver\Cocoa\Wrapper_private.h">
       <Filter>Source\Driver\Cocoa</Filter>
     </ClInclude>
-    <ClInclude Include="include\Square\Data\Attribute.h">
-      <Filter>Include\Square\Data</Filter>
-    </ClInclude>
     <ClInclude Include="include\Square\Core\Object.h">
       <Filter>Include\Square\Core</Filter>
     </ClInclude>
@@ -204,10 +198,10 @@
     <ClInclude Include="include\Square\Core\Attribute.h">
       <Filter>Include\Square\Core</Filter>
     </ClInclude>
-    <ClInclude Include="include\Square\Core\ObjectFactory.h">
+    <ClInclude Include="include\Square\Core\ClassObjectRegistration.h">
       <Filter>Include\Square\Core</Filter>
     </ClInclude>
-    <ClInclude Include="include\Square\Core\Serialize.h">
+    <ClInclude Include="include\Square\Core\Context.h">
       <Filter>Include\Square\Core</Filter>
     </ClInclude>
   </ItemGroup>
@@ -228,9 +222,6 @@
       <Filter>Source\Scene</Filter>
     </ClCompile>
     <ClCompile Include="source\Scene\Component.cpp">
-      <Filter>Source\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="source\Scene\ComponentFactory.cpp">
       <Filter>Source\Scene</Filter>
     </ClCompile>
     <ClCompile Include="source\Data\ImageLoader.cpp">
@@ -296,10 +287,10 @@
     <ClCompile Include="source\Core\Object.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="source\Core\ObjectFactory.cpp">
+    <ClCompile Include="source\Core\Application.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="source\Core\Application.cpp">
+    <ClCompile Include="source\Core\ClassObjectRegistration.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
   </ItemGroup>

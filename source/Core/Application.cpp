@@ -5,8 +5,10 @@
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
 #include <algorithm>
-#include "Square/Core/Application.h"
 #include "Square/Core/Time.h"
+#include "Square/Core/Object.h"
+#include "Square/Core/ClassObjectRegistration.h"
+#include "Square/Core/Application.h"
 #include "Square/Driver/Render.h"
 
 namespace Square
@@ -14,10 +16,14 @@ namespace Square
     ///Global instance
     Application* Application::s_instance = nullptr;
     //singleton
-    Application* Application::instance()
-    {
-        return s_instance;
-    }
+	Application* Application::instance()
+	{
+		return s_instance;
+	}
+	Context* Application::context()
+	{
+		return s_instance ? &s_instance->m_context : (Context*)nullptr;
+	}
     /////
     WindowSizePixel::WindowSizePixel(const IVec2& size)
     {
@@ -54,10 +60,17 @@ namespace Square
         Video::init();
         //registration
         s_instance = this;
+		//Add static object factory
+		for (const auto& item : ClassObjectRegistration::item_list())
+		{
+			item.m_registration(m_context);
+		}
     }
     
     Application::~Application()
     {
+		//unregister items
+		m_context.clear();
         //unregister
         s_instance = nullptr;
         //close

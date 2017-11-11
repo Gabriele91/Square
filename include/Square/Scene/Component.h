@@ -11,7 +11,6 @@
 #include "Square/Core/Object.h"
 #include "Square/Core/Attribute.h"
 #include "Square/Core/SmartPointers.h"
-#include "Square/Core/Serialize.h"
 
 
 namespace Square
@@ -47,9 +46,9 @@ namespace Scene
         }
     };
     
-    class SQUARE_API Component : public Serializable
-                               , public SharedObject<Component>
+    class SQUARE_API Component : public Object
 							   , public Uncopyable
+							   , public SharedObject<Component>
     {
     public:
 

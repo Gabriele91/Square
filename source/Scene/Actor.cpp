@@ -4,8 +4,12 @@
 //  Created by Gabriele Di Bari on 20/10/17.
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
+#include "Square/Core/Application.h"
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"
+#include "Square/Core/Object.h"
+#include "Square/Core/Context.h"
+#include "Square/Core/ClassObjectRegistration.h"
 #include <algorithm>
 
 namespace Square
@@ -13,7 +17,32 @@ namespace Square
 namespace Scene
 {
     //Add element to objects
-    SQUARE_OBJECT_REGISTRATION(Actor);
+	SQUARE_CLASS_OBJECT_REGISTRATION(Actor);
+
+	//Registration in context
+	void Actor::object_registration(Context& ctx)
+	{
+		//factory
+		ctx.add<Actor>();
+		//Attributes
+		ctx.add<Actor>(attribute_function<Actor, Vec3>
+		("position"
+		, Vec3(0)
+		, [](const Actor* actor) -> const Vec3& { return actor->position(); }
+		, [](Actor* actor, const Vec3& pos)     { actor->position(pos);     }));
+
+		ctx.add<Actor>(attribute_function<Actor, Vec3>
+		("scale"
+		, Vec3(0)
+		, [](const Actor* actor) -> const Vec3&{ return actor->scale(); }
+		, [](Actor* actor, const Vec3& sc)     { actor->scale(sc);      }));
+
+		ctx.add<Actor>(attribute_function<Actor, Quat>
+		("rotation"
+		, Quat()
+		, [](const Actor* actor) -> const Quat& { return actor->rotation(); }
+		, [](Actor* actor,const Quat& rot)      { actor->rotation(rot);     }));
+	}
     
     //add a child
     void Actor::add(Shared<Actor> child)
@@ -84,27 +113,32 @@ namespace Scene
         return  std::find(m_components.begin(), m_components.end(), component) != m_components.end();
     }
 
-	Shared<Component> Actor::component(size_t id)
-	{
-		for (auto& components : m_components)
-		{
-			if (components->object_id() == id)
-			{
-				return components;
-			}
-		}
-		return nullptr;
-	}
 	Shared<Component> Actor::component(const std::string& name)
 	{
-		for (auto& components : m_components)
+		return component(ObjectInfo::compute_id(name));
+	}
+	Shared<Component> Actor::component(size_t id)
+	{
+		for (auto& component : m_components)
 		{
-			if (components->object_name() == name)
+			if (component->object_id() == id)
 			{
-				return components;
+				return component;
 			}
 		}
-		return nullptr;
+		//Context?
+		if (!Application::context()) return nullptr;
+		//create
+		Shared<Component> new_component = StaticPointerCast<Component>(Application::context()->create(id));
+		//test
+		if (!new_component)
+		{
+			return nullptr;
+		}
+		//add
+		add(new_component);
+		//return
+		return new_component;
 	}
 
     //message to components

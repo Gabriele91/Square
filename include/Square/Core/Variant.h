@@ -44,6 +44,9 @@ namespace Square
 		VR_DVEC3,
 		VR_DVEC4,
 
+		VR_QUAT,
+		VR_DQUAT,
+
 		//HEAP
 		VR_FLOAT_MATRIX,
 		VR_DOUBLE_MATRIX,
@@ -117,6 +120,9 @@ namespace Square
 	template <> inline VariantType variant_traits<DVec2>() { return VR_DVEC2; };
 	template <> inline VariantType variant_traits<DVec3>() { return VR_DVEC3; };
 	template <> inline VariantType variant_traits<DVec4>() { return VR_DVEC4; };
+
+	template <> inline VariantType variant_traits<Quat>()  { return VR_QUAT; };
+	template <> inline VariantType variant_traits<DQuat>() { return VR_DQUAT; };
 
 	template <> inline VariantType variant_traits<Mat4>() { return VR_FLOAT_MATRIX; };
 	template <> inline VariantType variant_traits<DMat4>() { return VR_DOUBLE_MATRIX; };
@@ -315,6 +321,18 @@ namespace Square
 		{
 			set_type(VR_DVEC4);
 			m_dv4 = dv4;
+		}
+
+		Variant(const Quat& quat)
+		{
+			set_type(VR_QUAT);
+			m_quat = quat;
+		}
+
+		Variant(const DQuat& dquat)
+		{
+			set_type(VR_DQUAT);
+			m_dquat = dquat;
 		}
 
 		Variant(const Mat4& fm)
@@ -712,6 +730,9 @@ namespace Square
 			DVec3 m_dv3;
 			DVec4 m_dv4;
 
+			Quat  m_quat;
+			DQuat m_dquat;
+
 			void* m_ptr;
 		};
 		//save type
@@ -943,6 +964,18 @@ namespace Square
 		{
 			m_ptr = (void*)&dv4;
 			m_type = VR_DVEC4;
+		}
+
+		VariantRef(const Quat& quat)
+		{
+			m_ptr = (void*)&quat;
+			m_type = VR_QUAT;
+		}
+
+		VariantRef(const DQuat& dquat)
+		{
+			m_ptr = (void*)&dquat;
+			m_type = VR_DQUAT;
 		}
 
 		VariantRef(const Mat4& fm)
@@ -1192,6 +1225,9 @@ namespace Square
         case VariantType::VR_DVEC2:   (*this) = ref.get<DVec2>();  break;
         case VariantType::VR_DVEC3:   (*this) = ref.get<DVec3>();  break;
         case VariantType::VR_DVEC4:   (*this) = ref.get<DVec4>();  break;
+
+		case VariantType::VR_QUAT:    (*this) = ref.get<Quat>();  break;
+		case VariantType::VR_DQUAT:   (*this) = ref.get<DQuat>();  break;
 
 		case VariantType::VR_FLOAT_MATRIX:      (*this)  = ref.get<Mat4>(); break;
 		case VariantType::VR_DOUBLE_MATRIX:     (*this)  = ref.get<DMat4>(); break;

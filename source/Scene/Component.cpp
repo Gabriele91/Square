@@ -7,7 +7,6 @@
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"
 
-
 namespace Square
 {
 namespace Scene
