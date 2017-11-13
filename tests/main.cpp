@@ -9,6 +9,7 @@
 #include <Square/Driver/Input.h>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 class Sprite : public Square::Scene::Component
 {
@@ -101,6 +102,26 @@ private:
     
 };
 
+struct Men
+{
+    int m_age{ 0 };
+    std::string m_name;
+    std::vector< std::string > m_friends;
+    
+    void archive(Square::Data::Archive& ar)
+    {
+        ar % m_age % m_name % m_friends;
+    }
+    
+    void print() const
+    {
+        std::cout << "Age: " << m_age << std::endl;
+        std::cout << "Name: " << m_name << std::endl;
+        std::cout << "Friends: " << std::endl;
+        for(auto& afriend: m_friends) std::cout << "\t" << afriend << std::endl;
+    }
+};
+
 int main()
 {
     using namespace Square;
@@ -118,6 +139,27 @@ int main()
     Scene::Actor player;
 	player.component<Sprite>()->m_scale = { 2,2 };
 	player.component<Sprite>()->m_pos   = { 100,0 };
+    //Serialize test
+    {
+        Men mario
+        {
+            15, "Mario", { "Luigi", "Anaconda" }
+        };
+        //serialize
+        std::ofstream ofile("test.bin", std::ios::binary | std::ios::out);
+        ArchiveBinWrite out(ofile);
+        mario.archive(out);
+    }
+    //Deserialize test
+    {
+        
+        Men mario{};
+        //derialize
+        std::ifstream ifile("test.bin", std::ios::binary | std::ios::in);
+        ArchiveBinRead in(ifile);
+        mario.archive(in);
+        mario.print();
+    }
 	//test
     app.execute(
       WindowSizePixel({ 1280, 768 })

@@ -31,6 +31,7 @@
 //Data
 #include "Square/Data/Json.h"
 #include "Square/Data/Image.h"
+#include "Square/Data/Archive.h"
 //Driver
 #include "Square/Driver/Render.h"
 #include "Square/Driver/Input.h"

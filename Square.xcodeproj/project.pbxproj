@@ -35,8 +35,8 @@
 		E0A499811F9A439800FCBEBE /* UtfConvert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0A4997D1F9A439700FCBEBE /* UtfConvert.cpp */; };
 		E0AD6A761F9A6BA900D6E2FE /* Component.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0AD6A751F9A6BA900D6E2FE /* Component.cpp */; };
 		E0B670651FB59B68001E4B1A /* Application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0B670641FB59B68001E4B1A /* Application.cpp */; };
-		E0E019631FB1C40400FAE8CD /* ObjectFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0E019621FB1C40400FAE8CD /* ObjectFactory.cpp */; };
-		E0E019661FB2173A00FAE8CD /* ComponentFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0E019651FB2173A00FAE8CD /* ComponentFactory.cpp */; };
+		E0EFBC681FB992E800E75AEA /* ClassObjectRegistration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0EFBC671FB992E800E75AEA /* ClassObjectRegistration.cpp */; };
+		E0EFBC6D1FB993C500E75AEA /* Archive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0EFBC6C1FB993C500E75AEA /* Archive.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -913,11 +913,11 @@
 		E0CBE3C41FA497ED00FDCA3E /* CreateBounding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CreateBounding.h; sourceTree = "<group>"; };
 		E0D94E0F1F9A4D220028CE79 /* scene.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = scene.json; sourceTree = "<group>"; };
 		E0E019601FB1BEB900FAE8CD /* Attribute.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Attribute.h; sourceTree = "<group>"; };
-		E0E019611FB1C38F00FAE8CD /* ObjectFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectFactory.h; sourceTree = "<group>"; };
-		E0E019621FB1C40400FAE8CD /* ObjectFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectFactory.cpp; sourceTree = "<group>"; };
-		E0E019641FB2168000FAE8CD /* ComponentFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ComponentFactory.h; sourceTree = "<group>"; };
-		E0E019651FB2173A00FAE8CD /* ComponentFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ComponentFactory.cpp; sourceTree = "<group>"; };
-		E0E9CFA31FB23120006276E6 /* Serialize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Serialize.h; sourceTree = "<group>"; };
+		E0EFBC671FB992E800E75AEA /* ClassObjectRegistration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ClassObjectRegistration.cpp; sourceTree = "<group>"; };
+		E0EFBC691FB992F500E75AEA /* ClassObjectRegistration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ClassObjectRegistration.h; sourceTree = "<group>"; };
+		E0EFBC6A1FB992F500E75AEA /* Context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Context.h; sourceTree = "<group>"; };
+		E0EFBC6B1FB9935D00E75AEA /* Archive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Archive.h; sourceTree = "<group>"; };
+		E0EFBC6C1FB993C500E75AEA /* Archive.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Archive.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -939,8 +939,9 @@
 			children = (
 				E007D8B21F9DE4780059D333 /* Image.cpp */,
 				E007D8B11F9DE4780059D333 /* ImageLoader.cpp */,
-				E007D8B31F9DE4780059D333 /* ImageUtils */,
+				E0EFBC6C1FB993C500E75AEA /* Archive.cpp */,
 				E00558581F98AEEF0055DC1F /* Json.cpp */,
+				E007D8B31F9DE4780059D333 /* ImageUtils */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -965,11 +966,11 @@
 		E007D8881F9DE4400059D333 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				E0EFBC691FB992F500E75AEA /* ClassObjectRegistration.h */,
+				E0EFBC6A1FB992F500E75AEA /* Context.h */,
 				E0B670631FB5989B001E4B1A /* Application.h */,
 				E029D6911FB0A93F004E707D /* Object.h */,
-				E0E019611FB1C38F00FAE8CD /* ObjectFactory.h */,
 				E0E019601FB1BEB900FAE8CD /* Attribute.h */,
-				E0E9CFA31FB23120006276E6 /* Serialize.h */,
 				E007D8891F9DE4400059D333 /* Filesystem.h */,
 				E007D88A1F9DE4400059D333 /* SmartPointers.h */,
 				E007D88B1F9DE4400059D333 /* Time.h */,
@@ -983,6 +984,7 @@
 		E007D88F1F9DE4400059D333 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				E0EFBC6B1FB9935D00E75AEA /* Archive.h */,
 				E007D8901F9DE4400059D333 /* Image.h */,
 				E007D8911F9DE4400059D333 /* Json.h */,
 			);
@@ -1038,7 +1040,6 @@
 			children = (
 				E007D8A31F9DE4400059D333 /* Actor.h */,
 				E007D8A41F9DE4400059D333 /* Component.h */,
-				E0E019641FB2168000FAE8CD /* ComponentFactory.h */,
 			);
 			path = Scene;
 			sourceTree = "<group>";
@@ -1127,12 +1128,12 @@
 		E079CF751F96480000E7992F = {
 			isa = PBXGroup;
 			children = (
-				E00E63611FA74944008735C3 /* makefile */,
-				E0D94E0F1F9A4D220028CE79 /* scene.json */,
 				E04FF49E1FA71C56005FA09C /* tests */,
 				E079CF941F964D5C00E7992F /* dependencies */,
 				E079CF911F964BDB00E7992F /* include */,
 				E079CF921F964BDB00E7992F /* source */,
+				E0D94E0F1F9A4D220028CE79 /* scene.json */,
+				E00E63611FA74944008735C3 /* makefile */,
 				E079CF7F1F96480000E7992F /* Products */,
 				E079CF881F964AD300E7992F /* Frameworks */,
 			);
@@ -1169,11 +1170,11 @@
 			isa = PBXGroup;
 			children = (
 				E0A499791F9A439700FCBEBE /* Core */,
+				E00558571F98AEEF0055DC1F /* Data */,
 				E09DFED41FA3FD2D00E93E7C /* Geometry */,
 				E007D8A71F9DE4630059D333 /* Driver */,
 				E007D8AB1F9DE4630059D333 /* Resource */,
 				E0A499731F9A250800FCBEBE /* Scene */,
-				E00558571F98AEEF0055DC1F /* Data */,
 			);
 			path = source;
 			sourceTree = "<group>";
@@ -2180,7 +2181,6 @@
 			children = (
 				E0A499741F9A250800FCBEBE /* Actor.cpp */,
 				E0AD6A751F9A6BA900D6E2FE /* Component.cpp */,
-				E0E019651FB2173A00FAE8CD /* ComponentFactory.cpp */,
 			);
 			path = Scene;
 			sourceTree = "<group>";
@@ -2188,9 +2188,9 @@
 		E0A499791F9A439700FCBEBE /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				E0EFBC671FB992E800E75AEA /* ClassObjectRegistration.cpp */,
 				E0B670641FB59B68001E4B1A /* Application.cpp */,
 				E029D6921FB0A9B9004E707D /* Object.cpp */,
-				E0E019621FB1C40400FAE8CD /* ObjectFactory.cpp */,
 				E0A4997B1F9A439700FCBEBE /* Filesystem.cpp */,
 				E0A4997C1F9A439700FCBEBE /* Time.cpp */,
 				E0A4997D1F9A439700FCBEBE /* UtfConvert.cpp */,
@@ -2266,10 +2266,12 @@
 				E0A499801F9A439800FCBEBE /* Time.cpp in Sources */,
 				E0A499811F9A439800FCBEBE /* UtfConvert.cpp in Sources */,
 				E09DFEDA1FA3FD4200E93E7C /* Intersection.cpp in Sources */,
+				E0EFBC6D1FB993C500E75AEA /* Archive.cpp in Sources */,
 				E0B670651FB59B68001E4B1A /* Application.cpp in Sources */,
 				E09DFEDC1FA3FD4200E93E7C /* CreateBounding.cpp in Sources */,
 				E029D6931FB0A9B9004E707D /* Object.cpp in Sources */,
 				E007D8B01F9DE4630059D333 /* Texture.cpp in Sources */,
+				E0EFBC681FB992E800E75AEA /* ClassObjectRegistration.cpp in Sources */,
 				E00E63621FA74945008735C3 /* makefile in Sources */,
 				E09DFEDD1FA3FD4200E93E7C /* AABoundingBox.cpp in Sources */,
 				E09DFEDE1FA3FD4200E93E7C /* Frustum.cpp in Sources */,
@@ -2277,10 +2279,8 @@
 				E007D8B71F9DE4780059D333 /* Image.cpp in Sources */,
 				E007D8B81F9DE4780059D333 /* stb_image.cpp in Sources */,
 				E00E63581FA7455E008735C3 /* RenderGL4.cpp in Sources */,
-				E0E019661FB2173A00FAE8CD /* ComponentFactory.cpp in Sources */,
 				E097CE8F1FA878BD0082D49B /* Window_private.mm in Sources */,
 				E04FF4A01FA71C56005FA09C /* main.cpp in Sources */,
-				E0E019631FB1C40400FAE8CD /* ObjectFactory.cpp in Sources */,
 				E007D8B61F9DE4780059D333 /* ImageLoader.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
