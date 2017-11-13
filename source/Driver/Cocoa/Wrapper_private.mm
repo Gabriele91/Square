@@ -304,7 +304,18 @@ namespace Cocoa
             attributes[i++]=NSOpenGLPFASamples;
             attributes[i++]=static_cast<NSOpenGLPixelFormatAttribute>(info.m_context.m_anti_aliasing);
         }
-        //
+        //Version
+        if(info.m_context.m_version[0] == 3)
+        {
+            attributes[i++] = NSOpenGLPFAOpenGLProfile;
+            attributes[i++] = static_cast<NSOpenGLPixelFormatAttribute>(NSOpenGLProfileVersion3_2Core);
+        }
+        else if(info.m_context.m_version[0] >= 4)
+        {
+            attributes[i++] = NSOpenGLPFAOpenGLProfile;
+            attributes[i++] = static_cast<NSOpenGLPixelFormatAttribute>(NSOpenGLProfileVersion4_1Core);
+        }
+        //else legacy
         attributes[i] = 0;
         
         NSOpenGLPixelFormat *pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
