@@ -223,6 +223,7 @@
     <ClCompile Include="source\Core\ClassObjectRegistration.cpp" />
     <ClCompile Include="source\Core\Time.cpp" />
     <ClCompile Include="source\Core\UtfConvert.cpp" />
+    <ClCompile Include="source\Data\Archive.cpp" />
     <ClCompile Include="source\Data\Image.cpp" />
     <ClCompile Include="source\Data\ImageLoader.cpp" />
     <ClCompile Include="source\Data\ImageUtils\stb_image.cpp" />
