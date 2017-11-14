@@ -144,6 +144,7 @@
     <ClInclude Include="include\Square\Core\UtfConvert.h" />
     <ClInclude Include="include\Square\Core\Variant.h" />
     <ClInclude Include="include\Square\Data\Archive.h" />
+    <ClInclude Include="include\Square\Data\AttributeSerialize.h" />
     <ClInclude Include="include\Square\Data\Image.h" />
     <ClInclude Include="include\Square\Data\Json.h" />
     <ClInclude Include="include\Square\Driver\Input.h" />
@@ -224,6 +225,7 @@
     <ClCompile Include="source\Core\Time.cpp" />
     <ClCompile Include="source\Core\UtfConvert.cpp" />
     <ClCompile Include="source\Data\Archive.cpp" />
+    <ClCompile Include="source\Data\AttributeSerialize.cpp" />
     <ClCompile Include="source\Data\Image.cpp" />
     <ClCompile Include="source\Data\ImageLoader.cpp" />
     <ClCompile Include="source\Data\ImageUtils\stb_image.cpp" />

@@ -207,6 +207,9 @@
     <ClInclude Include="include\Square\Data\Archive.h">
       <Filter>Include\Square\Data</Filter>
     </ClInclude>
+    <ClInclude Include="include\Square\Data\AttributeSerialize.h">
+      <Filter>Include\Square\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Core\Filesystem.cpp">
@@ -297,6 +300,9 @@
       <Filter>Source\Core</Filter>
     </ClCompile>
     <ClCompile Include="source\Data\Archive.cpp">
+      <Filter>Source\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Data\AttributeSerialize.cpp">
       <Filter>Source\Data</Filter>
     </ClCompile>
   </ItemGroup>
