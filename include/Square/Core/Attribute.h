@@ -18,8 +18,8 @@ namespace Square
 	class AttributeAccess : public SharedObject<AttributeAccess>
 	{
 	public:
-		virtual void Get(const Object* serializable, VariantRef& ret) const =0;
-		virtual void Set(Object* serializable, const VariantRef& set) =0;
+		virtual void get(const Object* serializable, VariantRef& ret) const =0;
+		virtual void set(Object* serializable, const VariantRef& set) =0;
 	};
 
 	//Attribute of a class
@@ -106,6 +106,33 @@ namespace Square
 			m_enum_names = enum_names;
 		}
 
+        const std::string&      name()          const { return m_name; }
+        Type                    type()          const { return m_type; }
+        VariantType             value_type()    const { return m_value_type; }
+        const Variant&          default_value() const { return m_default; }
+        size_t                  offset()        const { return m_offset; }
+        Shared<AttributeAccess> access()        const { return m_wrapper; }
+        const char**            enum_name()     const { return m_enum_names; }
+
+        
+        //helper
+        void get(const Object* serializable, VariantRef& retvalue) const
+        {
+            //wrapper?
+            if(m_wrapper) m_wrapper->get(serializable, retvalue);
+            //is a field
+            retvalue = VariantRef(m_value_type, (void*)((const char*)serializable+m_offset));
+        }
+        void set(Object* serializable, const VariantRef& setvalue) const
+        {
+            //wrapper?
+            if(m_wrapper) m_wrapper->set(serializable, setvalue);
+            //cast to variant
+            VariantRef field_as_variant(m_value_type, (void*)((char*)serializable+m_offset));
+            //value copy
+            field_as_variant = setvalue;
+        }
+        
 	protected:
 
 		// Name of attribute
@@ -162,7 +189,7 @@ namespace Square
 		}
 
 		// Invoke getter function.
-		virtual void Get(const Object* serializable, VariantRef& ret) const override
+		virtual void get(const Object* serializable, VariantRef& ret) const override
 		{
 			assert(serializable);
 			const T* self = static_cast<const T*>(serializable);
@@ -170,7 +197,7 @@ namespace Square
 		}
 
 		// Invoke setter function.
-		virtual void Set(Object* serializable, const VariantRef& value) override
+		virtual void set(Object* serializable, const VariantRef& value) override
 		{
 			assert(serializable);
 			T* self = static_cast<T*>(serializable);
@@ -203,7 +230,7 @@ namespace Square
 		}
 
 		// Invoke getter function.
-		virtual void Get(const Object* serializable, VariantRef& ret) const override
+		virtual void get(const Object* serializable, VariantRef& ret) const override
 		{
 			assert(serializable);
 			const T* self = static_cast<const T*>(serializable);
@@ -211,7 +238,7 @@ namespace Square
 		}
 
 		// Invoke setter function.
-		virtual void Set(Object* serializable, const VariantRef& value) override
+		virtual void set(Object* serializable, const VariantRef& value) override
 		{
 			assert(serializable);
 			T* self = static_cast<T*>(serializable);

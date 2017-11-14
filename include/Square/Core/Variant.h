@@ -524,6 +524,9 @@ namespace Square
 			if (is_heap_value()) return *((T*)m_ptr);
 			else				 return *((T*)&m_ptr);
 		}
+        
+        //to variant ref
+        VariantRef as_variant_ref() const;
 
 		//alloc_cast
 		template < class T >
@@ -823,10 +826,16 @@ namespace Square
 	{
 	public:
 
-		VariantRef()
-		{
-			m_type = VR_NONE;
-		}
+        VariantRef()
+        {
+            m_type = VR_NONE;
+        }
+        
+        VariantRef(VariantType type,  void* ptr)
+        {
+            m_type = type;
+            m_ptr  = ptr;
+        }
 		
 		VariantRef(const bool& b)
 		{
@@ -1194,6 +1203,18 @@ namespace Square
 		VariantType m_type;
 
 	};
+    //to variant ref
+    inline VariantRef Variant::as_variant_ref() const
+    {
+        if(is_heap_value())
+        {
+            return VariantRef(m_type,m_ptr);
+        }
+        else
+        {
+            return VariantRef(m_type,(void*)&m_ptr);
+        }
+    }
 
 	inline Variant::Variant(const VariantRef& ref)
 	{

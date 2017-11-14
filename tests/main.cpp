@@ -102,26 +102,6 @@ private:
     
 };
 
-struct Men
-{
-    int m_age{ 0 };
-    std::string m_name;
-    std::vector< std::string > m_friends;
-    
-    void archive(Square::Data::Archive& ar)
-    {
-        ar % m_age % m_name % m_friends;
-    }
-    
-    void print() const
-    {
-        std::cout << "Age: " << m_age << std::endl;
-        std::cout << "Name: " << m_name << std::endl;
-        std::cout << "Friends: " << std::endl;
-        for(auto& afriend: m_friends) std::cout << "\t" << afriend << std::endl;
-    }
-};
-
 int main()
 {
     using namespace Square;
@@ -138,28 +118,34 @@ int main()
     //test
     Scene::Actor player;
 	player.component<Sprite>()->m_scale = { 2,2 };
-	player.component<Sprite>()->m_pos   = { 100,0 };
-    //Serialize test
+    player.component<Sprite>()->m_pos   = { 100,0 };
+    player.component<Body>()->m_gravity = { 0,10, 0 };
+    //serialize
     {
-        Men mario
-        {
-            15, "Mario", { "Luigi", "Anaconda" }
-        };
-        //serialize
-        std::ofstream ofile("test.bin", std::ios::binary | std::ios::out);
+        //archive
+        std::ofstream ofile("agent.b", std::ios::binary | std::ios::out);
         ArchiveBinWrite out(ofile);
-        mario.archive(out);
+        serialize(out, player.component<Sprite>());
+        serialize(out, player.component<Body>());
     }
-    //Deserialize test
+    //deserialize
     {
-        
-        Men mario{};
-        //derialize
-        std::ifstream ifile("test.bin", std::ios::binary | std::ios::in);
+        //archive
+        std::ifstream ifile("agent.b", std::ios::binary | std::ios::in);
         ArchiveBinRead in(ifile);
-        mario.archive(in);
-        mario.print();
+        deserialize(in, player.component<Sprite>());
+        deserialize(in, player.component<Body>());
     }
+    std::cout << "pos "
+              << player.component<Sprite>()->m_pos.x
+              << ", "
+              << player.component<Sprite>()->m_pos.y;
+    std::cout << std::endl;
+    std::cout << "scale "
+              << player.component<Sprite>()->m_scale.x
+              << ", "
+              << player.component<Sprite>()->m_scale.y;
+    std::cout << std::endl;
 	//test
     app.execute(
       WindowSizePixel({ 1280, 768 })

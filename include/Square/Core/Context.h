@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 20/10/17.
-//  Copyright © 2017 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2017 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -33,29 +33,29 @@ namespace Square
 		}
 
 		//Get attrbutes
-		const std::vector < Attribute >* get_attributes(const std::string& name)
+		const std::vector < Attribute >* attributes(const std::string& name)
 		{
 			auto attributes = m_attributes.find(ObjectInfo::compute_id(name));
 			if (attributes != m_attributes.end()) return &attributes->second;
 			return nullptr;
 		}
-		const std::vector < Attribute >* get_attributes(uint64 object_id)
+		const std::vector < Attribute >* attributes(uint64 object_id)
 		{
 			auto attributes = m_attributes.find(object_id);
 			if (attributes != m_attributes.end()) return &attributes->second;
 			return nullptr;
 		}
-		const std::vector < Attribute >* get_attributes(const Object& object)
+		const std::vector < Attribute >* attributes(const Object& object)
 		{
-			return get_attributes(object.object_id());
+			return attributes(object.object_id());
 		}
-		const std::vector < Attribute >* get_attributes(const ObjectInfo& info)
+		const std::vector < Attribute >* attributes(const ObjectInfo& info)
 		{
-			return get_attributes(info.id());
+			return attributes(info.id());
 		}
-		template< class T >  std::vector < Attribute >* get_attributes()
+		template< class T > const std::vector < Attribute >* attributes()
 		{
-			return get_attributes(T::static_object_id());
+			return attributes(T::static_object_id());
 		}
 
 		//Get variable

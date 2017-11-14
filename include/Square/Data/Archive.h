@@ -15,14 +15,14 @@ namespace Square
 {
 namespace  Data
 {
-	class Archive
+	class SQUARE_API Archive
 	{
 	public:
 		//archivie operator
 		virtual Archive& operator % (VariantRef value) = 0;
 	};
 
-	class ArchiveBinWrite : public Archive
+	class SQUARE_API ArchiveBinWrite : public Archive
 	{
 	public:
 		//Input
@@ -34,7 +34,7 @@ namespace  Data
 		std::ostream& m_stream;
 	};
     
-    class ArchiveBinRead : public Archive
+    class SQUARE_API ArchiveBinRead : public Archive
     {
     public:
         //Input

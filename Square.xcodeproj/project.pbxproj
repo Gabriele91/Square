@@ -21,6 +21,7 @@
 		E00E63621FA74945008735C3 /* makefile in Sources */ = {isa = PBXBuildFile; fileRef = E00E63611FA74944008735C3 /* makefile */; };
 		E029D6931FB0A9B9004E707D /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E029D6921FB0A9B9004E707D /* Object.cpp */; };
 		E04FF4A01FA71C56005FA09C /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E04FF49F1FA71C56005FA09C /* main.cpp */; };
+		E087E6521FBB14560003B8A1 /* AttributeSerialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E087E6511FBB14560003B8A1 /* AttributeSerialize.cpp */; };
 		E097CE8E1FA878BD0082D49B /* Input_private.mm in Sources */ = {isa = PBXBuildFile; fileRef = E097CE8C1FA878BC0082D49B /* Input_private.mm */; };
 		E097CE8F1FA878BD0082D49B /* Window_private.mm in Sources */ = {isa = PBXBuildFile; fileRef = E097CE8D1FA878BC0082D49B /* Window_private.mm */; };
 		E097CE911FA87D270082D49B /* Wrapper_private.mm in Sources */ = {isa = PBXBuildFile; fileRef = E097CE901FA87D270082D49B /* Wrapper_private.mm */; };
@@ -890,6 +891,8 @@
 		E079D2BC1F964D5D00E7992F /* glew32s.lib */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = glew32s.lib; sourceTree = "<group>"; };
 		E079D2BD1F964D5D00E7992F /* libbz2.lib */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libbz2.lib; sourceTree = "<group>"; };
 		E079D2BE1F964D5D00E7992F /* zlibstatic.lib */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = zlibstatic.lib; sourceTree = "<group>"; };
+		E087E6501FBB12820003B8A1 /* AttributeSerialize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AttributeSerialize.h; sourceTree = "<group>"; };
+		E087E6511FBB14560003B8A1 /* AttributeSerialize.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AttributeSerialize.cpp; sourceTree = "<group>"; };
 		E097CE8C1FA878BC0082D49B /* Input_private.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Input_private.mm; sourceTree = "<group>"; };
 		E097CE8D1FA878BC0082D49B /* Window_private.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Window_private.mm; sourceTree = "<group>"; };
 		E097CE901FA87D270082D49B /* Wrapper_private.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Wrapper_private.mm; sourceTree = "<group>"; };
@@ -942,6 +945,7 @@
 				E0EFBC6C1FB993C500E75AEA /* Archive.cpp */,
 				E00558581F98AEEF0055DC1F /* Json.cpp */,
 				E007D8B31F9DE4780059D333 /* ImageUtils */,
+				E087E6511FBB14560003B8A1 /* AttributeSerialize.cpp */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -987,6 +991,7 @@
 				E0EFBC6B1FB9935D00E75AEA /* Archive.h */,
 				E007D8901F9DE4400059D333 /* Image.h */,
 				E007D8911F9DE4400059D333 /* Json.h */,
+				E087E6501FBB12820003B8A1 /* AttributeSerialize.h */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -2258,6 +2263,7 @@
 				E0A4997F1F9A439800FCBEBE /* Filesystem.cpp in Sources */,
 				E097CE911FA87D270082D49B /* Wrapper_private.mm in Sources */,
 				E097CE8E1FA878BD0082D49B /* Input_private.mm in Sources */,
+				E087E6521FBB14560003B8A1 /* AttributeSerialize.cpp in Sources */,
 				E09DFEDB1FA3FD4200E93E7C /* OBoundingBox.cpp in Sources */,
 				E0A499751F9A250800FCBEBE /* Actor.cpp in Sources */,
 				E00E63601FA74865008735C3 /* Screen_private.mm in Sources */,
