@@ -296,6 +296,9 @@
     <ClCompile Include="source\Core\ClassObjectRegistration.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
+    <ClCompile Include="source\Data\Archive.cpp">
+      <Filter>Source\Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="source\Driver\Cocoa\Input_private.mm">
