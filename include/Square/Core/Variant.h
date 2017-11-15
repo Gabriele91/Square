@@ -182,9 +182,7 @@ namespace Square
         
         Variant(Variant&& in)
         {
-            std::memcpy(this, (const void*)&in, sizeof(Variant));
-            in.m_type = VR_NONE;
-            in.m_ptr  = nullptr;
+            move_from(std::move(in));
         }
 
 		~Variant()
@@ -538,6 +536,12 @@ namespace Square
             copy_from(value);
             return *this;
         }
+        //move op
+        Variant& operator = (Variant&& in)
+        {
+            move_from(std::move(in));
+            return *this;
+        }
         
         //to variant ref
         VariantRef as_variant_ref() const;
@@ -617,6 +621,104 @@ namespace Square
 			else				 return (void*)&m_c;
 		}
 
+        //move from other variant
+        void move_from(Variant&& in)
+        {
+            //alloc
+            set_type(in.get_type());
+            //copy
+            switch (m_type)
+            {
+                //copy from heap
+                case VR_FLOAT_MATRIX:    get<Mat4>() = std::move((Mat4&)in); break;
+                case VR_DOUBLE_MATRIX:   get<DMat4>() = std::move((DMat4&)in); break;
+                    
+                case VR_STD_VECTOR_SHORT:
+                    get< std::vector<short> >() =  std::move((std::vector<short>&)in);
+                    break;
+                case VR_STD_VECTOR_INT:
+                    get< std::vector<int> >() = std::move((std::vector<int>&)in);
+                    break;
+                case VR_STD_VECTOR_LONG:
+                    get< std::vector<long> >() = std::move((std::vector<long>&)in);
+                    break;
+                case VR_STD_VECTOR_LONGLONG:
+                    get< std::vector<long long> >() = std::move((std::vector<long long>&)in);
+                    break;
+                case VR_STD_VECTOR_USHORT:
+                    get< std::vector<unsigned short> >() = std::move((std::vector<unsigned short>&)in);
+                    break;
+                case VR_STD_VECTOR_UINT:
+                    get< std::vector<unsigned int> >() = std::move((std::vector<unsigned int>&)in);
+                    break;
+                case VR_STD_VECTOR_ULONG:
+                    get< std::vector<unsigned long> >() = std::move((std::vector<unsigned long>&)in);
+                    break;
+                case VR_STD_VECTOR_ULONGLONG:
+                    get< std::vector<unsigned long long> >() = std::move((std::vector<unsigned long long>&)in);
+                    break;
+                case VR_STD_VECTOR_FLOAT:
+                    get< std::vector<float> >() = std::move((std::vector<float>&)in);
+                    break;
+                case VR_STD_VECTOR_DOUBLE:
+                    get< std::vector<double> >() = std::move((std::vector<double>&)in);
+                    break;
+                case VR_STD_VECTOR_LONG_DOUBLE:
+                    get< std::vector<long double> >() = std::move((std::vector<long double>&)in);
+                    break;
+                case VR_STD_VECTOR_FLOAT_MATRIX:
+                    get< std::vector<Mat4> >() = std::move((std::vector<Mat4>&)in);
+                    break;
+                case VR_STD_VECTOR_DOUBLE_MATRIX:
+                    get< std::vector<DMat4> >() = std::move((std::vector<DMat4>&)in);
+                    break;
+                    
+                case VR_STD_VECTOR_VEC2:
+                    get< std::vector<Vec2> >() = std::move((std::vector<Vec2>&)in);
+                    break;
+                case VR_STD_VECTOR_VEC3:
+                    get< std::vector<Vec3> >() = std::move((std::vector<Vec3>&)in);
+                    break;
+                case VR_STD_VECTOR_VEC4:
+                    get< std::vector<Vec4> >() = std::move((std::vector<Vec4>&)in);
+                    break;
+                    
+                case VR_STD_VECTOR_IVEC2:
+                    get< std::vector<IVec2> >() = std::move((std::vector<IVec2>&)in);
+                    break;
+                case VR_STD_VECTOR_IVEC3:
+                    get< std::vector<IVec3> >() = std::move((std::vector<IVec3>&)in);
+                    break;
+                case VR_STD_VECTOR_IVEC4:
+                    get< std::vector<IVec4> >() = std::move((std::vector<IVec4>&)in);
+                    break;
+                    
+                case VR_STD_VECTOR_DVEC2:
+                    get< std::vector<DVec2> >() = std::move((std::vector<DVec2>&)in);
+                    break;
+                case VR_STD_VECTOR_DVEC3:
+                    get< std::vector<DVec3> >() = std::move((std::vector<DVec3>&)in);
+                    break;
+                case VR_STD_VECTOR_DVEC4:
+                    get< std::vector<DVec4> >() = std::move((std::vector<DVec4>&)in);
+                    break;
+                    
+                case VR_C_STRING:
+                    assert(0);
+                    break;
+                case VR_STD_STRING:
+                    get<std::string>() = std::move((std::string&)in);
+                    break;
+                case VR_STD_VECTOR_STRING:
+                    get< std::vector<std::string> >() = std::move((std::vector<std::string>&)in);
+                    break;
+                    //copy stack
+                default:
+                    std::memcpy(this, &in, sizeof(Variant));
+                    break;
+            }
+        }
+        
 		//copy from other variant
 		void copy_from(const Variant& in)
 		{

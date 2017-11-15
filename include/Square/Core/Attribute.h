@@ -53,15 +53,15 @@ namespace Square
 		(
 			const std::string& name,
 			VariantType     value_type,
-			const Variant&  default_value,
+            Variant&&       default_value,
 			size_t          offset,
 			Type			type = DEFAULT
 		)
+        :m_default(std::move(default_value))
 		{
 			m_name = name;
 			m_type = type;
 			m_value_type = value_type;
-			m_default = default_value;
 			m_offset = offset;
 			m_wrapper = nullptr;
 			m_enum_names = nullptr;
@@ -72,15 +72,15 @@ namespace Square
 		(
 			const std::string&      name,
 			VariantType             value_type,
-			const Variant&          default_value,
+            Variant&&               default_value,
 			Shared<AttributeAccess> access,
 			Type			        type = DEFAULT
 		)
+        :m_default(std::move(default_value))
 		{
 			m_name = name;
 			m_type = type;
 			m_value_type = value_type;
-			m_default = default_value;
 			m_offset = 0;
 			m_wrapper = access;
 			m_enum_names = nullptr;
@@ -92,15 +92,15 @@ namespace Square
 		(
 			const std::string& name,
 			VariantType     value_type,
-			const Variant&  default_value,
+            Variant&&       default_value,
 			const char**    enum_names,
 			Type			type = DEFAULT
 		)
+        :m_default(std::move(default_value))
 		{
 			m_name = name;
 			m_type = type;
 			m_value_type = value_type;
-			m_default = default_value;
 			m_offset = 0;
 			m_wrapper = nullptr;
 			m_enum_names = enum_names;
@@ -160,7 +160,17 @@ namespace Square
 		using ReturnType = const T&;
 		/// Set function parameter type.
 		using ParameterType = const T&;
-	};
+    };
+    
+    /// Attribute train function (use const reference as parameter and copy value as return)
+    template <typename T>
+    struct AttributeFunctionTrain
+    {
+        /// Get function return type.
+        using ReturnType = T;
+        /// Set function parameter type.
+        using ParameterType = const T&;
+    };
 
 	/// Attribute train (for fundamental types use copy value).
 	template <class T>
@@ -212,7 +222,7 @@ namespace Square
 	};
 	
 	// Template implementation of the attribute accessor invoke helper class.
-	template <typename T, typename U, typename Trait = AttributeTrain<U> >
+	template <typename T, typename U, typename Trait = AttributeFunctionTrain<U> >
 	class AttributeAccessFunction : public AttributeAccess
 	{
 	public:
@@ -273,11 +283,11 @@ namespace Square
 		);
 	}
 
-	template<typename T, typename U, typename Trait = AttributeTrain<U> >
+	template<typename T, typename U, typename Trait = AttributeFunctionTrain<U> >
 	static Attribute attribute_function
 	(
 		  const std::string& attribute_name
-		, const Variant& default_value
+		, const U& default_value
 		, typename AttributeAccessFunction< T, U, Trait >::GetFunction get_function
 		, typename AttributeAccessFunction< T, U, Trait >::SetFunction set_function
 		, Attribute::Type type = Attribute::DEFAULT
@@ -298,7 +308,7 @@ namespace Square
 	static Attribute attribute_field
 	(
 		  const std::string& field_name
-		, const Variant& default_value
+		, const U& default_value
 		, U T::*member
 		, Attribute::Type type = Attribute::DEFAULT
 	)

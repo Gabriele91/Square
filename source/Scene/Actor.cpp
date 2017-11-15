@@ -29,20 +29,20 @@ namespace Scene
 		ctx.add<Actor>(attribute_function<Actor, Vec3>
 		("position"
 		, Vec3(0)
-		, [](const Actor* actor) -> const Vec3& { return actor->position(); }
-		, [](Actor* actor, const Vec3& pos)     { actor->position(pos);     }));
+		, [](const Actor* actor) -> Vec3   { return actor->position(); }
+		, [](Actor* actor, const Vec3& pos){ actor->position(pos);     }));
 
 		ctx.add<Actor>(attribute_function<Actor, Vec3>
 		("scale"
 		, Vec3(0)
-		, [](const Actor* actor) -> const Vec3& { return actor->scale(); }
-		, [](Actor* actor, const Vec3& sc)      { actor->scale(sc);      }));
+		, [](const Actor* actor) -> Vec3  { return actor->scale(); }
+		, [](Actor* actor, const Vec3& sc){ actor->scale(sc);      }));
 
 		ctx.add<Actor>(attribute_function<Actor, Quat>
 		("rotation"
 		, Quat()
-		, [](const Actor* actor) -> const Quat& { return actor->rotation(); }
-		, [](Actor* actor,const Quat& rot)      { actor->rotation(rot);     }));
+		, [](const Actor* actor) -> Quat  { return actor->rotation(); }
+		, [](Actor* actor,const Quat& rot){ actor->rotation(rot);     }));
 	}
     
     //serialize

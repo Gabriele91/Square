@@ -37,8 +37,8 @@ public:
     static void object_registration(Square::Context& context)
     {
 		context.add<Sprite>();
-        context.add<Sprite>(Square::attribute_field< Sprite >("scale", Square::Vec3(0,0,0), &Sprite::m_scale));
-        context.add<Sprite>(Square::attribute_field< Sprite >("pos", Square::Vec3(0,0,0), &Sprite::m_pos));
+        context.add<Sprite>(Square::attribute_field< Sprite >("scale", Square::Vec2(0,0), &Sprite::m_scale));
+        context.add<Sprite>(Square::attribute_field< Sprite >("pos", Square::Vec2(0,0), &Sprite::m_pos));
     }
 };
 SQUARE_CLASS_OBJECT_REGISTRATION(Sprite);
