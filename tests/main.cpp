@@ -120,6 +120,11 @@ int main()
 	player.component<Sprite>()->m_scale = { 2,2 };
     player.component<Sprite>()->m_pos   = { 100,0 };
     player.component<Body>()->m_gravity = { 0,10, 0 };
+    {
+        std::ofstream ofile("agent.bin", std::ios::binary | std::ios::out);
+        ArchiveBinWrite out(ofile);
+        player.serialize(out);
+    }
     //serialize
     {
         //archive

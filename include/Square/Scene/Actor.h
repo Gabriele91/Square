@@ -11,6 +11,8 @@
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Object.h"
 #include "Square/Scene/Component.h"
+#include "Square/Data/AttributeSerialize.h"
+#include "Square/Data/Json.h"
 
 namespace Square
 {
@@ -34,6 +36,10 @@ namespace Scene
 		//Registration in context
 		static void object_registration(Context& ctx);
 
+        //constructor
+        Actor() {}
+        Actor(const std::string& name) : m_name(name){}
+        
         //add a child
         void add(Shared<Actor> child);
         void add(Shared<Component> component);
@@ -59,6 +65,11 @@ namespace Scene
 		Shared<Component> component(const std::string& name);
 		Shared<Component> component(size_t id);
         
+        //name        
+        const std::string& name() const;
+        void name(const std::string&);
+
+        
         //message
         void send_message(const Variant& value, bool brodcast = false);
         void send_message(const Message& msg, bool brodcast = false);
@@ -79,6 +90,13 @@ namespace Scene
         Mat4 const& local_model_matrix();
         Mat4 const& global_model_matrix();
         
+        //serialize
+        void serialize(Data::Archive& archivie);
+        void serialize_json(Data::Json& archivie);
+        //deserialize
+        void deserialize(Data::Archive& archivie);
+        void deserialize_json(Data::Json& archivie);
+
     protected:
         //fake const
         Mat4 const& model_matrix() const;
@@ -100,6 +118,8 @@ namespace Scene
         //send dirty
         void    set_dirty();
         void    send_dirty();
+        //node name
+        std::string m_name;
         //parent
         Shared<Actor> m_parent;
         //child list

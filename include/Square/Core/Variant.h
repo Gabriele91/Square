@@ -179,6 +179,13 @@ namespace Square
 		{
 			copy_from(in);
 		}
+        
+        Variant(Variant&& in)
+        {
+            std::memcpy(this, (const void*)&in, sizeof(Variant));
+            in.m_type = VR_NONE;
+            in.m_ptr  = nullptr;
+        }
 
 		~Variant()
 		{
@@ -525,6 +532,13 @@ namespace Square
 			else				 return *((T*)&m_ptr);
 		}
         
+        //assignament op
+        Variant& operator = (const Variant& value)
+        {
+            copy_from(value);
+            return *this;
+        }
+        
         //to variant ref
         VariantRef as_variant_ref() const;
 
@@ -686,6 +700,8 @@ namespace Square
 				break;
 
 			case VR_C_STRING:
+                    assert(0);
+                break;
 			case VR_STD_STRING:
 				get<std::string>() = (const std::string&)in;
 				break;
@@ -775,7 +791,7 @@ namespace Square
 			case VR_STD_VECTOR_DVEC3:   delete (std::vector<DVec3>*)m_ptr;   break;
 			case VR_STD_VECTOR_DVEC4:   delete (std::vector<DVec4>*)m_ptr;   break;
 
-			case VR_C_STRING:          delete (std::string*)m_ptr;			     break;
+            case VR_C_STRING:          assert(0);                                 break;
 			case VR_STD_STRING:        delete (std::string*)m_ptr;			     break;
 			case VR_STD_VECTOR_STRING: delete (std::vector<std::string>*)m_ptr;  break;
 			default: break;
@@ -814,7 +830,7 @@ namespace Square
 			case VR_STD_VECTOR_DVEC3: m_ptr = new std::vector<DVec3>; break;
 			case VR_STD_VECTOR_DVEC4: m_ptr = new std::vector<DVec4>; break;
 
-			case VR_C_STRING:          m_ptr = new std::string;				 break;
+            case VR_C_STRING:          assert(0);                            break;
 			case VR_STD_STRING:        m_ptr = new std::string;				 break;
 			case VR_STD_VECTOR_STRING: m_ptr = new std::vector<std::string>; break;
 			default: break;

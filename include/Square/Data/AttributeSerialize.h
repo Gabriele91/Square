@@ -23,12 +23,21 @@ namespace  Data
     template < class T >
     inline bool serialize(Archive& archivie,const Shared< T > object)
     {
-        return attribute_serialize(archivie, object.get(), Application::context()->attributes(object.get()->object_id()));
+        return attribute_serialize(archivie, object.get(), Application::context()->attributes(object->object_id()));
     }
+    inline bool serialize(Archive& archivie,const Object* object)
+    {
+        return attribute_serialize(archivie, object, Application::context()->attributes(object->object_id()));
+    }
+    
     template < class T >
     inline bool deserialize(Archive& archivie,const Shared< T > object)
     {
-        return attribute_deserialize(archivie, object.get(), Application::context()->attributes(object.get()->object_id()));
+        return attribute_deserialize(archivie, object.get(),  Application::context()->attributes(object->object_id()));
+    }
+    inline bool deserialize(Archive& archivie, Object* object)
+    {
+        return attribute_deserialize(archivie, object,  Application::context()->attributes(object->object_id()));
     }
 }
 }

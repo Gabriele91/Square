@@ -25,6 +25,7 @@ namespace Scene
 		//factory
 		ctx.add<Actor>();
 		//Attributes
+        ctx.add<Actor>(attribute_field("name", std::string(), &Actor::m_name));
 		ctx.add<Actor>(attribute_function<Actor, Vec3>
 		("position"
 		, Vec3(0)
@@ -34,8 +35,8 @@ namespace Scene
 		ctx.add<Actor>(attribute_function<Actor, Vec3>
 		("scale"
 		, Vec3(0)
-		, [](const Actor* actor) -> const Vec3&{ return actor->scale(); }
-		, [](Actor* actor, const Vec3& sc)     { actor->scale(sc);      }));
+		, [](const Actor* actor) -> const Vec3& { return actor->scale(); }
+		, [](Actor* actor, const Vec3& sc)      { actor->scale(sc);      }));
 
 		ctx.add<Actor>(attribute_function<Actor, Quat>
 		("rotation"
@@ -43,6 +44,41 @@ namespace Scene
 		, [](const Actor* actor) -> const Quat& { return actor->rotation(); }
 		, [](Actor* actor,const Quat& rot)      { actor->rotation(rot);     }));
 	}
+    
+    //serialize
+    void Actor::serialize(Data::Archive& archivie)
+    {
+        //serialize this
+        Data::serialize(archivie, this);
+        //serialize components
+        for(auto component : m_components)
+        {
+            //serialize name
+            archivie % component->object_name();
+            //serialize component
+            Data::serialize<Object>(archivie, component);
+        }
+        //serialize childs
+        uint64 size = m_childs.size();
+        archivie % size;
+        for(auto child : m_childs)
+        {
+            child->serialize(archivie);
+        }
+    }
+    void Actor::serialize_json(Data::Json& archivie)
+    {
+        
+    }
+    //deserialize
+    void Actor::deserialize(Data::Archive& archivie)
+    {
+        
+    }
+    void Actor::deserialize_json(Data::Json& archivie)
+    {
+        
+    }
     
     //add a child
     void Actor::add(Shared<Actor> child)
@@ -96,6 +132,16 @@ namespace Scene
     Shared<Actor> Actor::parent() const
     {
         return m_parent;
+    }
+    
+    //name
+    const std::string& Actor::name() const
+    {
+        return m_name;
+    }
+    void Actor::name(const std::string& name)
+    {
+        m_name = name;
     }
     
     //contains an actor
