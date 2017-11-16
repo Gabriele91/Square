@@ -29,6 +29,20 @@ namespace  Data
     {
         return attribute_serialize(archivie, object, Application::context()->attributes(object->object_id()));
     }
+    template < class T >
+    inline bool serialize(Archive& archivie,const std::vector< Shared < T > >& objects)
+    {
+        uint64 size = uint64(objects.size());
+        archivie % size;
+        bool success = true;
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        for(Shared < T >& object : objects)
+        {
+            success &= attribute_serialize(archivie, object, Application::context()->attributes(object->object_id()));
+        }
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        return success;
+    }
     
     template < class T >
     inline bool deserialize(Archive& archivie,const Shared< T > object)

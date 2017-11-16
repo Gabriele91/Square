@@ -130,7 +130,7 @@ namespace Square
             //cast to variant
             VariantRef field_as_variant(m_value_type, (void*)((char*)serializable+m_offset));
             //value copy
-            field_as_variant = setvalue;
+            field_as_variant.copy_from( setvalue );
         }
         
 	protected:

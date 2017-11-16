@@ -65,6 +65,11 @@ namespace Scene
 		Shared<Component> component(const std::string& name);
 		Shared<Component> component(size_t id);
         
+        //get child
+        Shared<Actor> child();
+        Shared<Actor> child(size_t index);
+        Shared<Actor> child(const std::string& name);
+
         //name        
         const std::string& name() const;
         void name(const std::string&);

@@ -51,19 +51,25 @@ namespace Scene
         //serialize this
         Data::serialize(archivie, this);
         //serialize components
-        for(auto component : m_components)
         {
-            //serialize name
-            archivie % component->object_name();
-            //serialize component
-            Data::serialize<Object>(archivie, component);
+            uint64 size = m_components.size();
+            archivie % size;
+            for(auto component : m_components)
+            {
+                //serialize name
+                archivie % component->object_name();
+                //serialize component
+                Data::serialize(archivie, component.get());
+            }
         }
         //serialize childs
-        uint64 size = m_childs.size();
-        archivie % size;
-        for(auto child : m_childs)
         {
-            child->serialize(archivie);
+            uint64 size = m_childs.size();
+            archivie % size;
+            for(auto child : m_childs)
+            {
+                child->serialize(archivie);
+            }
         }
     }
     void Actor::serialize_json(Data::Json& archivie)
@@ -73,7 +79,36 @@ namespace Scene
     //deserialize
     void Actor::deserialize(Data::Archive& archivie)
     {
-        
+        ///clear
+        m_components.clear(); //todo: call events
+        m_childs.clear();     //todo: call events
+        //deserialize this
+        Data::deserialize(archivie, this);
+        //deserialize components
+        {
+            uint64 size = 0;
+            archivie % size;
+            for(uint64 i = 0; i!=size; ++i)
+            {
+                //name of component
+                std::string name;
+                //serialize name
+                archivie % name;
+                //new component
+                Shared<Component> component = this->component(name);
+                //serialize component
+                Data::deserialize(archivie, component);
+            }
+        }
+        //deserialize childs
+        {
+            uint64 size = 0;
+            archivie % size;
+            for(uint64 i = 0; i!=size; ++i)
+            {
+                child()->deserialize(archivie);
+            }
+        }
     }
     void Actor::deserialize_json(Data::Json& archivie)
     {
@@ -186,6 +221,32 @@ namespace Scene
 		//return
 		return new_component;
 	}
+    
+    //get/create child
+    Shared<Actor> Actor::child()
+    {
+        //create
+        auto actor = std::make_shared<Actor>();
+        //add
+        add(actor);
+        //return
+        return actor;
+    }
+    Shared<Actor> Actor::child(size_t index)
+    {
+        return m_childs.size() ? m_childs[index] : nullptr;
+    }
+    Shared<Actor> Actor::child(const std::string& name)
+    {
+        //search
+        for(auto child : m_childs) if(child->name() == name) return child;
+        //create
+        auto actor = std::make_shared<Actor>(name);
+        //add
+        add(actor);
+        //return
+        return actor;
+    }
 
     //message to components
     void Actor::send_message(const Variant& variant, bool brodcast)

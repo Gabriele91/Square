@@ -117,6 +117,7 @@ int main()
     std::cout << (jout.errors().size() ? jout.errors() : jout.document()) << std::endl;
     //test
     Scene::Actor player;
+    player.translation({10,0,0});
 	player.component<Sprite>()->m_scale = { 2,2 };
     player.component<Sprite>()->m_pos   = { 100,0 };
     player.component<Body>()->m_gravity = { 0,10, 0 };
@@ -125,6 +126,12 @@ int main()
         ArchiveBinWrite out(ofile);
         player.serialize(out);
     }
+    {
+        std::ifstream ifile("agent.bin", std::ios::binary | std::ios::in);
+        ArchiveBinRead in(ifile);
+        player.deserialize(in);
+    }
+    /*
     //serialize
     {
         //archive
@@ -141,6 +148,7 @@ int main()
         deserialize(in, player.component<Sprite>());
         deserialize(in, player.component<Body>());
     }
+    */
     std::cout << "pos "
               << player.component<Sprite>()->m_pos.x
               << ", "
