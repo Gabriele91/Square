@@ -161,7 +161,7 @@ namespace Square
 
 	template <> inline VariantType variant_traits<void*>() { return VR_PTR; };
 
-	class Variant
+	class SQUARE_API Variant
 	{
 	public:
 
@@ -179,11 +179,13 @@ namespace Square
 		{
 			copy_from(in);
 		}
-        
+
+#ifndef _WIN32
         Variant(Variant&& in)
         {
             move_from(std::move(in));
         }
+#endif
 
 		~Variant()
 		{
@@ -940,7 +942,7 @@ namespace Square
 		}
 	};
 
-	class VariantRef
+	class SQUARE_API VariantRef
 	{
 	public:
 
@@ -1396,8 +1398,8 @@ namespace Square
 
 	private:
 
-		void*		 m_ptr;
-		VariantType m_type;
+		void*		 m_ptr { nullptr };
+		VariantType  m_type{ VR_NONE };
 
 	};
     //to variant ref

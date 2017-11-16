@@ -48,6 +48,30 @@ namespace Square
 			m_enum_names = nullptr;
 		}
 
+		//Copy
+		Attribute(const Attribute& from)
+		{
+			m_name = from.m_name;
+			m_type = from.m_type;
+			m_value_type = from.m_value_type;
+			m_offset = from.m_offset;
+			m_wrapper = from.m_wrapper;
+			m_default = from.m_default;
+			m_enum_names = from.m_enum_names;
+		}
+
+		//Move
+		Attribute(Attribute&& from)
+		{
+			m_name       = std::move(from.m_name);
+			m_type       = std::move(from.m_type);
+			m_value_type = std::move(from.m_value_type);
+			m_offset     = std::move(from.m_offset);
+			m_wrapper    = std::move(from.m_wrapper);
+			m_default    = std::move(from.m_default);
+			m_enum_names = std::move(from.m_enum_names);
+		}
+
 		//attribute of a field
 		Attribute
 		(
@@ -276,7 +300,7 @@ namespace Square
 			  attribute_name
 			, variant_traits<U>()
 			, default_value
-			, std::shared_ptr<AttributeAccess>(
+			, Shared<AttributeAccess>(
 				(AttributeAccess*)new AttributeAccessMethod< T, U, Trait >(get_method, set_method)
 			)
 			, type
@@ -297,7 +321,7 @@ namespace Square
 			  attribute_name
 			, variant_traits<U>()
 			, default_value
-			, std::shared_ptr<AttributeAccess>(
+			, Shared<AttributeAccess>(
 				(AttributeAccess*)new AttributeAccessFunction< T, U, Trait >(get_function, set_function)
 			)
 			, type
