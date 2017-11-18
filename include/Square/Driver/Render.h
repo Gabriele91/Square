@@ -825,7 +825,7 @@ namespace Render
 	SQUARE_RENDER_API bool print_errors();
 	//Output file name and line
 	SQUARE_RENDER_API bool print_errors(const char* source_file_name, int line);
-	#define HCUBE_RENDER_PRINT_ERRORS ::hcube::render::print_errors(__FILE__,__LINE__);
+	#define SQUARE_RENDER_PRINT_ERRORS ::hcube::render::print_errors(__FILE__,__LINE__);
 
 };
 }

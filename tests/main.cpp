@@ -131,24 +131,7 @@ int main()
         ArchiveBinRead in(ifile);
         player.deserialize(in);
     }
-    /*
-    //serialize
-    {
-        //archive
-        std::ofstream ofile("agent.b", std::ios::binary | std::ios::out);
-        ArchiveBinWrite out(ofile);
-        serialize(out, player.component<Sprite>());
-        serialize(out, player.component<Body>());
-    }
-    //deserialize
-    {
-        //archive
-        std::ifstream ifile("agent.b", std::ios::binary | std::ios::in);
-        ArchiveBinRead in(ifile);
-        deserialize(in, player.component<Sprite>());
-        deserialize(in, player.component<Body>());
-    }
-    */
+
     std::cout << "pos "
               << player.component<Sprite>()->m_pos.x
               << ", "
