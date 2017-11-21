@@ -7,6 +7,7 @@
 #pragma once
 #include "Square/Config.h"
 #include "Square/Core/Object.h"
+#include "Square/Core/Resource.h"
 #include "Square/Core/Attribute.h"
 #include <unordered_map>
 
@@ -58,6 +59,13 @@ namespace Square
 			return attributes(T::static_object_id());
 		}
 
+		//Get resource
+		Shared<ResourceObject> resource(const std::string& name);
+		template< class T >  Shared<T> resource(const std::string& name)
+		{
+			return DynamicPointerCast<T>(resource(name));
+		}
+
 		//Get variable
 		const Variant& variable(const std::string& name)
 		{
@@ -67,14 +75,26 @@ namespace Square
 		}
 
 		//Object fectory
-		void add(ObjectFactory* object_fectory)
+		void add_object(ObjectFactory* object_fectory)
 		{
 			m_object_factories[object_fectory->info().id()] = Unique<ObjectFactory>(object_fectory);
 		}
-		template< class T > void add()
+		template< class T > void add_object()
 		{
 			add(new ObjectFactoryItem<T>());
 		}
+		void add_resource(ObjectFactory* object_fectory,const std::vector< std::string >& exts)
+		{
+			m_object_factories[object_fectory->info().id()] = Unique<ObjectFactory>(object_fectory);
+			for (auto& ext : exts) m_resource_factories[ext] = object_fectory->info().id();
+		}
+		template< class T > void add_resource(const std::vector< std::string >& exts)
+		{
+			add(new ObjectFactoryItem<T>());
+		}
+		
+		//Resource
+		void add_resource_path(const std::string& name, const std::string& path);
 
 		//Add an attrbute
 		void add(const std::string& name, const Attribute& attribute)
@@ -107,10 +127,21 @@ namespace Square
 		
 	protected:
 	
+		//type
+		using VariantMap = std::unordered_map< std::string, Variant >;
+		using AttributeMap = std::unordered_map< uint64, std::vector < Attribute > >;
+		using ObjectFactoryMap = std::unordered_map< uint64, Unique<ObjectFactory> >;
+		using ResouceExtensionMap = std::unordered_map< std::string, uint64 >;
+		using ResouceObjectMap = std::unordered_map< std::string, Shared<ResourceObject> >;
+
 		//context
-		std::unordered_map< std::string, Variant >              m_variables;
-		std::unordered_map< uint64, Unique<ObjectFactory> >     m_object_factories;
-		std::unordered_map< uint64, std::vector < Attribute > > m_attributes;
+		std::unordered_map< std::string, Variant >               m_variables;
+		std::unordered_map< uint64, std::vector < Attribute > >  m_attributes;
+
+		std::unordered_map< uint64, Unique<ObjectFactory> >      m_object_factories;
+
+		std::unordered_map< std::string, uint64 >				 m_resource_factories;
+		std::unordered_map< std::string, Shared<ResourceObject> >m_resources;
 		//friend class
 		friend class Application;
 		//delete all

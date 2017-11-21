@@ -23,7 +23,7 @@ namespace Scene
 	void Actor::object_registration(Context& ctx)
 	{
 		//factory
-		ctx.add<Actor>();
+		ctx.add_object<Actor>();
 		//Attributes
         ctx.add<Actor>(attribute_field("name", std::string(), &Actor::m_name));
 		ctx.add<Actor>(attribute_function<Actor, Vec3>

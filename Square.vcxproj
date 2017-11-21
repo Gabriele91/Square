@@ -138,6 +138,7 @@
     <ClInclude Include="include\Square\Core\Filesystem.h" />
     <ClInclude Include="include\Square\Core\Object.h" />
     <ClInclude Include="include\Square\Core\ClassObjectRegistration.h" />
+    <ClInclude Include="include\Square\Core\Resource.h" />
     <ClInclude Include="include\Square\Core\SmartPointers.h" />
     <ClInclude Include="include\Square\Core\Time.h" />
     <ClInclude Include="include\Square\Core\Uncopyable.h" />

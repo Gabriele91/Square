@@ -210,6 +210,9 @@
     <ClInclude Include="include\Square\Data\AttributeSerialize.h">
       <Filter>Include\Square\Data</Filter>
     </ClInclude>
+    <ClInclude Include="include\Square\Core\Resource.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Core\Filesystem.cpp">
