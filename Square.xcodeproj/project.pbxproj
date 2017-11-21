@@ -21,6 +21,7 @@
 		E00E63621FA74945008735C3 /* makefile in Sources */ = {isa = PBXBuildFile; fileRef = E00E63611FA74944008735C3 /* makefile */; };
 		E029D6931FB0A9B9004E707D /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E029D6921FB0A9B9004E707D /* Object.cpp */; };
 		E04FF4A01FA71C56005FA09C /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E04FF49F1FA71C56005FA09C /* main.cpp */; };
+		E05C7BB01FC43CE60044DF1E /* Context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E05C7BAF1FC43CE60044DF1E /* Context.cpp */; };
 		E087E6521FBB14560003B8A1 /* AttributeSerialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E087E6511FBB14560003B8A1 /* AttributeSerialize.cpp */; };
 		E097CE8E1FA878BD0082D49B /* Input_private.mm in Sources */ = {isa = PBXBuildFile; fileRef = E097CE8C1FA878BC0082D49B /* Input_private.mm */; };
 		E097CE8F1FA878BD0082D49B /* Window_private.mm in Sources */ = {isa = PBXBuildFile; fileRef = E097CE8D1FA878BC0082D49B /* Window_private.mm */; };
@@ -70,7 +71,6 @@
 		E007D8971F9DE4400059D333 /* Window.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Window.h; sourceTree = "<group>"; };
 		E007D8991F9DE4400059D333 /* Linear.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Linear.h; sourceTree = "<group>"; };
 		E007D89A1F9DE4400059D333 /* Tangent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Tangent.h; sourceTree = "<group>"; };
-		E007D8A01F9DE4400059D333 /* Interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Interface.h; sourceTree = "<group>"; };
 		E007D8A11F9DE4400059D333 /* Texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Texture.h; sourceTree = "<group>"; };
 		E007D8A31F9DE4400059D333 /* Actor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Actor.h; sourceTree = "<group>"; };
 		E007D8A41F9DE4400059D333 /* Component.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Component.h; sourceTree = "<group>"; };
@@ -108,6 +108,8 @@
 		E04FF4941FA71BD3005FA09C /* Wrapper_private.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Wrapper_private.cpp; sourceTree = "<group>"; };
 		E04FF4951FA71BD3005FA09C /* Wrapper_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Wrapper_private.h; sourceTree = "<group>"; };
 		E04FF49F1FA71C56005FA09C /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		E05C7BAF1FC43CE60044DF1E /* Context.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Context.cpp; sourceTree = "<group>"; };
+		E05C7BB11FC44D310044DF1E /* Resource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Resource.h; sourceTree = "<group>"; };
 		E079CF7E1F96480000E7992F /* Square */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Square; sourceTree = BUILT_PRODUCTS_DIR; };
 		E079CF891F964AD400E7992F /* libSDL2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libSDL2.a; path = ../../../../usr/local/Cellar/sdl2/2.0.6/lib/libSDL2.a; sourceTree = "<group>"; };
 		E079CF971F964D5C00E7992F /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SDL2.framework; sourceTree = "<group>"; };
@@ -970,6 +972,7 @@
 		E007D8881F9DE4400059D333 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				E05C7BB11FC44D310044DF1E /* Resource.h */,
 				E0EFBC691FB992F500E75AEA /* ClassObjectRegistration.h */,
 				E0EFBC6A1FB992F500E75AEA /* Context.h */,
 				E0B670631FB5989B001E4B1A /* Application.h */,
@@ -1034,7 +1037,6 @@
 		E007D89F1F9DE4400059D333 /* Resource */ = {
 			isa = PBXGroup;
 			children = (
-				E007D8A01F9DE4400059D333 /* Interface.h */,
 				E007D8A11F9DE4400059D333 /* Texture.h */,
 			);
 			path = Resource;
@@ -2199,6 +2201,7 @@
 				E0A4997B1F9A439700FCBEBE /* Filesystem.cpp */,
 				E0A4997C1F9A439700FCBEBE /* Time.cpp */,
 				E0A4997D1F9A439700FCBEBE /* UtfConvert.cpp */,
+				E05C7BAF1FC43CE60044DF1E /* Context.cpp */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -2264,6 +2267,7 @@
 				E097CE911FA87D270082D49B /* Wrapper_private.mm in Sources */,
 				E097CE8E1FA878BD0082D49B /* Input_private.mm in Sources */,
 				E087E6521FBB14560003B8A1 /* AttributeSerialize.cpp in Sources */,
+				E05C7BB01FC43CE60044DF1E /* Context.cpp in Sources */,
 				E09DFEDB1FA3FD4200E93E7C /* OBoundingBox.cpp in Sources */,
 				E0A499751F9A250800FCBEBE /* Actor.cpp in Sources */,
 				E00E63601FA74865008735C3 /* Screen_private.mm in Sources */,

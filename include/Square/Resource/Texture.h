@@ -6,14 +6,15 @@
 //
 #pragma once
 #include "Square/Config.h"
+#include "Square/Core/Resource.h"
 #include "Square/Driver/Render.h"
-#include "Square/Resource/Interface.h"
 
 namespace Square
 {
 namespace Resource
 {
-	class SQUARE_API Texture : public SharedObject<Texture>, public Interface
+	class SQUARE_API Texture : public ResourceObject
+                             , public SharedObject<Texture>
 	{
 
 		Render::Texture*      m_ctx_texture{ nullptr };
@@ -61,6 +62,12 @@ namespace Resource
 			);
 		};
 
+        //Init object
+        SQUARE_OBJECT(Texture)
+        //Registration in context
+        static void object_registration(Context& ctx);
+        
+        //Contructor
 		Texture();
 
 		Texture(const std::string& path);
@@ -90,7 +97,7 @@ namespace Resource
 
 		virtual ~Texture();
 
-		bool load(Manager& resources, const std::string& path);
+		bool load(Context& context, const std::string& path) override;
 
 		bool load(const std::string& path);
 

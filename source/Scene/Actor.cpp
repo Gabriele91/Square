@@ -25,20 +25,20 @@ namespace Scene
 		//factory
 		ctx.add_object<Actor>();
 		//Attributes
-        ctx.add<Actor>(attribute_field("name", std::string(), &Actor::m_name));
-		ctx.add<Actor>(attribute_function<Actor, Vec3>
+        ctx.add_attributes<Actor>(attribute_field("name", std::string(), &Actor::m_name));
+		ctx.add_attributes<Actor>(attribute_function<Actor, Vec3>
 		("position"
 		, Vec3(0)
 		, [](const Actor* actor) -> Vec3   { return actor->position(); }
 		, [](Actor* actor, const Vec3& pos){ actor->position(pos);     }));
 
-		ctx.add<Actor>(attribute_function<Actor, Vec3>
+		ctx.add_attributes<Actor>(attribute_function<Actor, Vec3>
 		("scale"
 		, Vec3(0)
 		, [](const Actor* actor) -> Vec3  { return actor->scale(); }
 		, [](Actor* actor, const Vec3& sc){ actor->scale(sc);      }));
 
-		ctx.add<Actor>(attribute_function<Actor, Quat>
+		ctx.add_attributes<Actor>(attribute_function<Actor, Quat>
 		("rotation"
 		, Quat()
 		, [](const Actor* actor) -> Quat  { return actor->rotation(); }

@@ -18,130 +18,97 @@ namespace Square
 	public:
 
 		//Create
-		Shared<Object> create(const std::string& name)
-		{
-			return create(ObjectInfo::compute_id(name));
-		}
-		Shared<Object> create(uint64 id)
-		{
-			auto factory = m_object_factories.find(id);
-			if (factory != m_object_factories.end()) return factory->second->create();
-			return nullptr;
-		}
-		template< class T > Shared<T> create()
-		{
-			return DynamicPointerCast<T>(create(T::static_object_id()));
-		}
-
+        Shared<Object> create(const std::string& name);
+        Shared<Object> create(uint64 id);
+        
 		//Get attrbutes
-		const std::vector < Attribute >* attributes(const std::string& name)
-		{
-			auto attributes = m_attributes.find(ObjectInfo::compute_id(name));
-			if (attributes != m_attributes.end()) return &attributes->second;
-			return nullptr;
-		}
-		const std::vector < Attribute >* attributes(uint64 object_id)
-		{
-			auto attributes = m_attributes.find(object_id);
-			if (attributes != m_attributes.end()) return &attributes->second;
-			return nullptr;
-		}
-		const std::vector < Attribute >* attributes(const Object& object)
-		{
-			return attributes(object.object_id());
-		}
-		const std::vector < Attribute >* attributes(const ObjectInfo& info)
-		{
-			return attributes(info.id());
-		}
-		template< class T > const std::vector < Attribute >* attributes()
-		{
-			return attributes(T::static_object_id());
-		}
+        const std::vector < Attribute >* attributes(const std::string& name);
+        const std::vector < Attribute >* attributes(uint64 object_id);
+        const std::vector < Attribute >* attributes(const Object& object);
+        const std::vector < Attribute >* attributes(const ObjectInfo& info);
+        template< class T > const std::vector < Attribute >* attributes();
 
 		//Get resource
-		Shared<ResourceObject> resource(const std::string& name);
-		template< class T >  Shared<T> resource(const std::string& name)
-		{
-			return DynamicPointerCast<T>(resource(name));
-		}
+        Shared<ResourceObject> resource(const std::string& name);
 
 		//Get variable
-		const Variant& variable(const std::string& name)
-		{
-			auto variable = m_variables.find(name);
-			if (variable != m_variables.end()) return &variable->second;
-			return Variant();
-		}
-
+        const Variant& variable(const std::string& name);
+        
 		//Object fectory
-		void add_object(ObjectFactory* object_fectory)
-		{
-			m_object_factories[object_fectory->info().id()] = Unique<ObjectFactory>(object_fectory);
-		}
-		template< class T > void add_object()
-		{
-			add(new ObjectFactoryItem<T>());
-		}
-		void add_resource(ObjectFactory* object_fectory,const std::vector< std::string >& exts)
-		{
-			m_object_factories[object_fectory->info().id()] = Unique<ObjectFactory>(object_fectory);
-			for (auto& ext : exts) m_resource_factories[ext] = object_fectory->info().id();
-		}
-		template< class T > void add_resource(const std::vector< std::string >& exts)
-		{
-			add(new ObjectFactoryItem<T>());
-		}
-		
+        void add_object(ObjectFactory* object_fectory);
+        void add_resource(ObjectFactory* object_fectory,const std::vector< std::string >& exts);
+        
 		//Resource
-		void add_resource_path(const std::string& name, const std::string& path);
+        void add_resource_path(const std::string& path, bool recursive = false);
+        void add_resource_file(const std::string& name, const std::string& path);
 
 		//Add an attrbute
-		void add(const std::string& name, const Attribute& attribute)
-		{
-			m_attributes[ObjectInfo::compute_id(name)].push_back(attribute);
-		}
-		void add(uint64 object_id, const Attribute& attribute)
-		{
-			m_attributes[object_id].push_back(attribute);
-		}
-		void add(const Object& object, const Attribute& attribute)
-		{
-			m_attributes[object.object_id()].push_back(attribute);
-		}
-		void add(const ObjectInfo& info, const Attribute& attribute)
-		{
-			m_attributes[info.id()].push_back(attribute);
-		}
-		template < class T >
-		void add(const Attribute& attribute)
-		{
-			m_attributes[T::static_object_id()].push_back(attribute);
-		}
+        void add_attributes(const std::string& name, const Attribute& attribute);
+        void add_attributes(uint64 object_id, const Attribute& attribute);
+        void add_attributes(const Object& object, const Attribute& attribute);
+        void add_attributes(const ObjectInfo& info, const Attribute& attribute);
 
 		//Add variable
-		void add(const std::string& name, const Variant& value)
-		{
-			m_variables[name] = value;
-		}
+        void add_variable(const std::string& name, const Variant& value);
 		
+        //template utils
+        template< class T > Shared<T> create()
+        { return DynamicPointerCast<T>(create(T::static_object_id())); }
+        
+        template< class T > void add_object()
+        { add_object(new ObjectFactoryItem<T>()); }
+        
+        template< class T > void add_resource(const std::vector< std::string >& exts)
+        { add_resource(new ObjectFactoryItem<T>(), exts); }
+        
+        template < class T >
+        void add_attributes(const Attribute& attribute)
+        { add_attributes(T::static_object_id(),attribute); }
+        
+        template< class T >  Shared<T> resource(const std::string& name)
+        { return DynamicPointerCast<T>(resource(name)); }
+        
 	protected:
 	
 		//type
 		using VariantMap = std::unordered_map< std::string, Variant >;
+        using StringMap = std::unordered_map< std::string, std::string >;
+        //Attributes
 		using AttributeMap = std::unordered_map< uint64, std::vector < Attribute > >;
+        //Factory
 		using ObjectFactoryMap = std::unordered_map< uint64, Unique<ObjectFactory> >;
-		using ResouceExtensionMap = std::unordered_map< std::string, uint64 >;
-		using ResouceObjectMap = std::unordered_map< std::string, Shared<ResourceObject> >;
-
+        //Resource
+        struct ResourceFile
+        {
+            uint64      m_resouce_id;
+            std::string m_filepath;
+            //...
+            ResourceFile()
+            {
+            }
+            ResourceFile(const ResourceFile& in)
+            : m_filepath(in.m_filepath)
+            , m_resouce_id(in.m_resouce_id)
+            {
+            }
+            ResourceFile(uint64 id, const std::string filepath)
+            : m_filepath(filepath)
+            , m_resouce_id(id)
+            {
+            }
+        };
+        using ResourceFileMap   = std::unordered_map< std::string, ResourceFile >;
+        using ResourceInfoMap   = std::unordered_map< uint64, std::vector<std::string> >;
+        using ResourceObjectMap = std::unordered_map< std::string, Shared<ResourceObject> >;
 		//context
-		std::unordered_map< std::string, Variant >               m_variables;
-		std::unordered_map< uint64, std::vector < Attribute > >  m_attributes;
-
-		std::unordered_map< uint64, Unique<ObjectFactory> >      m_object_factories;
-
-		std::unordered_map< std::string, uint64 >				 m_resource_factories;
-		std::unordered_map< std::string, Shared<ResourceObject> >m_resources;
+		VariantMap       m_variables;
+		AttributeMap     m_attributes;
+        //Object factory
+		ObjectFactoryMap m_object_factories;
+        //Reousce factory
+        ResourceFileMap   m_resources_file;
+        ResourceInfoMap   m_resources_info;
+		ResourceObjectMap m_resources;
 		//friend class
 		friend class Application;
 		//delete all

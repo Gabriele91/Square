@@ -37,8 +37,8 @@ public:
     static void object_registration(Square::Context& context)
     {
 		context.add_object<Sprite>();
-        context.add<Sprite>(Square::attribute_field< Sprite >("scale", Square::Vec2(0,0), &Sprite::m_scale));
-        context.add<Sprite>(Square::attribute_field< Sprite >("pos", Square::Vec2(0,0), &Sprite::m_pos));
+        context.add_attributes<Sprite>(Square::attribute_field< Sprite >("scale", Square::Vec2(0,0), &Sprite::m_scale));
+        context.add_attributes<Sprite>(Square::attribute_field< Sprite >("pos", Square::Vec2(0,0), &Sprite::m_pos));
     }
 };
 SQUARE_CLASS_OBJECT_REGISTRATION(Sprite);
@@ -62,9 +62,9 @@ public:
 	static void object_registration(Square::Context& context)
 	{
 		context.add_object<Body>();
-        context.add<Body>(Square::attribute_method< Body >("gravity", Square::Vec3(0,0,0), &Body::get_gravity, &Body::set_gravity));
-        context.add<Body>(Square::attribute_field< Body >("mass", float(0), &Body::m_mass));
-        context.add<Body>(Square::attribute_field< Body >("nshape", int(0), &Body::m_nshape));
+        context.add_attributes<Body>(Square::attribute_method< Body >("gravity", Square::Vec3(0,0,0), &Body::get_gravity, &Body::set_gravity));
+        context.add_attributes<Body>(Square::attribute_field< Body >("mass", float(0), &Body::m_mass));
+        context.add_attributes<Body>(Square::attribute_field< Body >("nshape", int(0), &Body::m_nshape));
 	}
 };
 SQUARE_CLASS_OBJECT_REGISTRATION(Body);
@@ -86,7 +86,9 @@ public:
 
     void start()
     {
-        
+        using namespace Square;
+        Application::context()->add_resource_file("example", "example.png");
+        Application::context()->resource("example");
     }
     bool run(double dt)
     {

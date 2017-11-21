@@ -1,18 +1,43 @@
 //  Square
 //
 //  Created by Gabriele on 15/08/16.
-//  Copyright © 2016 Gabriele. All rights reserved.
+//  Copyright ï¿½ 2016 Gabriele. All rights reserved.
 //
 #include "Square/Config.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Data/Image.h"
+#include "Square/Core/Context.h"
 #include "Square/Resource/Texture.h"
-
+#include "Square/Core/ClassObjectRegistration.h"
 
 namespace Square
 {
 namespace Resource
 {
+    //////////////////////////////////////////////////////////////
+    //Add element to objects
+    SQUARE_CLASS_OBJECT_REGISTRATION(Texture);
+    //Registration in context
+    void Texture::object_registration(Context& ctx)
+    {
+        //factory
+        ctx.add_resource<Texture>({ ".png", ".jpg", ".jpeg", ".tga" });
+        //attributes
+        ctx.add_attributes<Texture>(attribute_function<Texture, unsigned long>
+                                  ("width"
+                                   , (unsigned long)(0)
+                                   , [](const Texture* tex) -> unsigned long{ return tex->get_width(); }
+                                   , [](Texture* actor, const unsigned long& ){ /*none*/ }
+                                   ));
+        ctx.add_attributes<Texture>(attribute_function<Texture, unsigned long>
+                                    ("height"
+                                     , (unsigned long)(0)
+                                     , [](const Texture* tex) -> unsigned long { return tex->get_height(); }
+                                     , [](Texture* actor, const unsigned long& ){ /*none*/ }
+                                     ));
+        //end
+    }
+    
 	//////////////////////////////////////////////////////////////
 	// Attributes
 	Texture::Attributes::Attributes(
@@ -135,7 +160,7 @@ namespace Resource
 		build(attr, buffer, width, height, format, type);
 	}
 
-	bool Texture::load(Manager& resources, const std::string& path)
+	bool Texture::load(Context& context, const std::string& path)
 	{
 		return load(path);
 	}

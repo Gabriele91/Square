@@ -41,6 +41,11 @@ namespace Filesystem
     {
         bool m_success;
         std::vector < std::string > m_fields;
+        //iterator
+        std::vector < std::string >::iterator begin(){ return m_fields.begin(); }
+        std::vector < std::string >::iterator end()  { return m_fields.end(); }
+        std::vector < std::string >::const_iterator begin() const { return m_fields.begin(); }
+        std::vector < std::string >::const_iterator end()   const { return m_fields.end(); }
     };
     using FilesList       = FolderList;
     using DirectoriesList = FolderList;

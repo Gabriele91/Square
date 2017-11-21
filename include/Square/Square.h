@@ -15,6 +15,7 @@
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Variant.h"
 #include "Square/Core/Object.h"
+#include "Square/Core/Resource.h"
 #include "Square/Core/Attribute.h"
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/Core/Context.h"
@@ -38,7 +39,6 @@
 #include "Square/Driver/Input.h"
 #include "Square/Driver/Window.h"
 //Resource
-#include "Square/Resource/Interface.h"
 #include "Square/Resource/Texture.h"
 //Scene
 #include "Square/Scene/Actor.h"

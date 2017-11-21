@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 //
 //  Square
 //
@@ -23,6 +23,7 @@ namespace Square
 	//type
 	enum class ResourceType
 	{
+        UNKNOWN,
 		NETOWRK,
 		USERDATA,
 		FILE
@@ -37,6 +38,6 @@ namespace Square
 	public:
 		SQUARE_OBJECT(ResourceObject)
 		virtual bool         load(Context& context, const std::string& path) = 0;
-		virtual ResourceType resource_type() = 0;
+        virtual ResourceType resource_type() { return ResourceType::UNKNOWN; }
 	};
 }
