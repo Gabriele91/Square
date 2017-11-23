@@ -40,7 +40,8 @@ namespace Square
         
 		//Resource
         void add_resource_path(const std::string& path, bool recursive = false);
-        void add_resource_file(const std::string& name, const std::string& path);
+		void add_resource_file(const std::string& filepath);
+		void add_resource_file(const std::string& name, const std::string& path);
 
 		//Add an attrbute
         void add_attributes(const std::string& name, const Attribute& attribute);
@@ -66,7 +67,7 @@ namespace Square
         { add_attributes(T::static_object_id(),attribute); }
         
         template< class T >  Shared<T> resource(const std::string& name)
-        { return DynamicPointerCast<T>(resource(name)); }
+        { return DynamicPointerCast<T>(resource(T::static_object_name() + ":" + name)); }
         
 	protected:
 	

@@ -87,8 +87,8 @@ public:
     void start()
     {
         using namespace Square;
-        Application::context()->add_resource_file("example", "example.png");
-        Application::context()->resource("example");
+        Application::context()->add_resource_file("example.png");
+		Application::context()->resource<Resource::Texture>("example");
     }
     bool run(double dt)
     {

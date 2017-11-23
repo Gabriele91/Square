@@ -308,6 +308,9 @@
     <ClCompile Include="source\Data\AttributeSerialize.cpp">
       <Filter>Source\Data</Filter>
     </ClCompile>
+    <ClCompile Include="source\Core\Context.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="source\Driver\Cocoa\Input_private.mm">

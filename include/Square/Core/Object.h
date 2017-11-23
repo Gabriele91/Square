@@ -97,6 +97,11 @@ namespace Square
 			return StaticPointerCast<Object>(std::make_shared<T>());
 		}
 
+		const ObjectInfo& info()
+		{
+			return *m_info;
+		}
+
 	protected:
 
 		const ObjectInfo* m_info;

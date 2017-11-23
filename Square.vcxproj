@@ -220,6 +220,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Core\Application.cpp" />
+    <ClCompile Include="source\Core\Context.cpp" />
     <ClCompile Include="source\Core\Filesystem.cpp" />
     <ClCompile Include="source\Core\Object.cpp" />
     <ClCompile Include="source\Core\ClassObjectRegistration.cpp" />

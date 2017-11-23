@@ -109,7 +109,9 @@ namespace Square
             {
                 if(r_ext == f_ext)
                 {
-                    auto name = Filesystem::get_basename(filepath);
+					auto class_name = m_object_factories[ r_info.first ]->info().name();
+                    auto file_name  = Filesystem::get_basename(filepath);
+					auto name       = class_name + ":" + file_name;
                     m_resources_file[name] = ResourceFile( r_info.first, filepath );
                     return;
                 }
@@ -117,21 +119,41 @@ namespace Square
         }
         //end
     }
-    void Context::add_resource_file(const std::string& name, const std::string& filepath)
-    {
-        //get extension
-        auto    f_ext = Filesystem::get_extension(filepath);
-        //if is supported
-        for(auto r_info : m_resources_info)
-        for(auto r_ext  : r_info.second)
-        {
-            if(r_ext == f_ext)
-            {
-                m_resources_file[name] = ResourceFile( r_info.first, filepath );
-                return;
-            }
-        }
-    }
+	void Context::add_resource_file(const std::string& filepath)
+	{
+		//get extension
+		auto    f_ext = Filesystem::get_extension(filepath);
+		//if is supported
+		for (auto r_info : m_resources_info)
+		for (auto r_ext : r_info.second)
+		{
+			if (r_ext == f_ext)
+			{
+				auto class_name = m_object_factories[r_info.first]->info().name();
+				auto file_name = Filesystem::get_basename(filepath);
+				auto name = class_name + ":" + file_name;
+				m_resources_file[name] = ResourceFile(r_info.first, filepath);
+				return;
+			}
+		}
+	}
+	void Context::add_resource_file(const std::string& resource_name, const std::string& filepath)
+	{
+		//get extension
+		auto    f_ext = Filesystem::get_extension(filepath);
+		//if is supported
+		for (auto r_info : m_resources_info)
+		for (auto r_ext : r_info.second)
+		{
+			if (r_ext == f_ext)
+			{
+				auto class_name = m_object_factories[r_info.first]->info().name();
+				auto name = class_name + ":" + resource_name;
+				m_resources_file[name] = ResourceFile(r_info.first, filepath);
+				return;
+			}
+		}
+	}
 
     
     //Add an attrbute
