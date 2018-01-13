@@ -143,6 +143,10 @@ namespace Data
 		case Type::IS_ARRAY:  m_array = std::move(v.m_array); break;
 		case Type::IS_OBJECT: m_object = std::move(v.m_object); break;
 		}
+		//leave ref
+		v.m_type = Type::IS_NULL;
+		v.m_ptr = nullptr;
+		//return this
 		return *this;
 	}
     JsonValue& JsonValue::operator= (const JsonValue& v)
@@ -614,7 +618,7 @@ namespace Data
 				////////////////////////////////////////////////////////////////////////////////////
 				// number
                 case '-':
-                if (!json_is_digit_or_point(*source))
+                if (!json_is_digit_or_point(*(source+1)))
                 {
                     m_list_errors.push_back({line,"JSON_BAD_NUMBER"});
                     return false;
@@ -695,8 +699,8 @@ namespace Data
                     ++source;
                 continue;
                 case '}':
-                    if(separator || !in_object())
-                    {
+					if (!in_object())
+					{
                         m_list_errors.push_back({line,"JSON_MISMATCH_BRACKET"});
                         return false;
                     }
@@ -711,8 +715,8 @@ namespace Data
                     ++source;
                 continue;
                 case ']':
-                    if(separator || !in_array())
-                    {
+					if (!in_array())
+					{
                         m_list_errors.push_back({line,"JSON_MISMATCH_BRACKET"});
                         return false;
                     }
