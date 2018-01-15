@@ -117,9 +117,6 @@
     <ClInclude Include="include\Square\Resource\Texture.h">
       <Filter>Include\Square\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="include\Square\Resource\Interface.h">
-      <Filter>Include\Square\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="include\Square\Data\Image.h">
       <Filter>Include\Square\Data</Filter>
     </ClInclude>

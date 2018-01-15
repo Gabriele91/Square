@@ -5,6 +5,7 @@
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Data/Archive.h"
+#include "Square/Core/Application.h"
 
 namespace Square
 {
@@ -68,7 +69,7 @@ namespace Data
         //vector
         uint64 len = value.size();
         ostream < len;
-        for (size_t i = 0; i != len; ++i) ostream < value[i];
+        for (uint64 i = 0; i != len; ++i) ostream < value[(size_t)i];
         //ok
         return ostream;
     }
@@ -149,8 +150,21 @@ namespace Data
             case Square::VR_STD_STRING:
                 m_stream < value.get<std::string>();
             break;
-            case Square::VR_STD_VECTOR_STRING: m_stream < value.get<std::vector<std::string>>(); break;
-            case Square::VR_PTR:
+			case Square::VR_STD_VECTOR_STRING: m_stream < value.get<std::vector<std::string>>(); break;
+			////////////////////////////////////////////////////////////////////////////////////////////
+			case Square::VR_RESOURCE: 
+				if (value.get< Shared<ResourceObject> >())
+				{
+					m_stream < true;
+					m_stream < std::string(value.get< Shared<ResourceObject> >()->resource_name());
+				}
+				else
+				{
+					m_stream < false;
+				}
+			break;
+			////////////////////////////////////////////////////////////////////////////////////////////
+			case Square::VR_PTR:
                 throw std::runtime_error("ArchiveBinWrite, can't write a C pointer");
             break;
             ////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,10 +185,10 @@ namespace Data
     std::istream& operator > (std::istream& istream, std::string& value)
     {
         //read size
-        int64 size = 0;
-        istream.read((char*)&size, sizeof(int64));
+		uint64 size = 0;
+        istream.read((char*)&size, sizeof(uint64));
         //read value
-        value.resize(size);
+        value.resize((size_t)size);
         istream.read((char*)value.c_str(), value.size());
         //ok
         return istream;
@@ -223,9 +237,9 @@ namespace Data
         uint64 len = 0;
         istream > len;
         //alloc
-        value.resize(len);
+        value.resize((size_t)len);
         //read
-        for (size_t i = 0; i != len; ++i) istream > value[i];
+        for (uint64 i = 0; i != len; ++i) istream > value[(size_t)i];
         //ok
         return istream;
     }
@@ -310,6 +324,27 @@ namespace Data
                 m_stream > value.get<std::string>();
                 break;
             case Square::VR_STD_VECTOR_STRING: m_stream > value.get<std::vector<std::string>>(); break;
+			////////////////////////////////////////////////////////////////////////////////////////////
+			case Square::VR_RESOURCE:
+			{
+				//test
+				bool exists = false;
+				m_stream > exists;
+				if (!exists) break;
+				//get name
+				std::string resource_name;
+				m_stream > resource_name;
+				//load
+				Shared<ResourceObject>  resource_object;
+				if(!Application::context() ) 
+					throw std::runtime_error("ArchiveBinWrite, can't load resource: " + resource_name + ", no global context");
+				if(!(resource_object = Application::context()->resource(resource_name)))
+					throw std::runtime_error("ArchiveBinWrite, can't load resource: " + resource_name + ", not exists");
+				//save
+				value.get<Shared<ResourceObject>>() = resource_object;
+			}
+			break;
+			////////////////////////////////////////////////////////////////////////////////////////////
             case Square::VR_PTR:
                 throw std::runtime_error("ArchiveBinWrite, can't write a C pointer");
                 break;

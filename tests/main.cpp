@@ -16,8 +16,13 @@ class Sprite : public Square::Scene::Component
 public:
 	SQUARE_OBJECT(Sprite)
 
-	Square::Vec2 m_scale; //scale
-	Square::Vec2 m_pos;   //2D pos
+	using Vec2     = Square::Vec2;
+	using SRObject = Square::Shared < Square::ResourceObject >;
+	using STexture = Square::Shared < Square::Resource::Texture >;
+	
+	Vec2    m_scale; //scale
+	Vec2    m_pos;   //2D pos
+	STexture m_texture;
 
     Sprite(){ }
     
@@ -38,7 +43,9 @@ public:
     {
 		context.add_object<Sprite>();
         context.add_attributes<Sprite>(Square::attribute_field< Sprite >("scale", Square::Vec2(0,0), &Sprite::m_scale));
-        context.add_attributes<Sprite>(Square::attribute_field< Sprite >("pos", Square::Vec2(0,0), &Sprite::m_pos));
+		context.add_attributes<Sprite>(Square::attribute_field< Sprite >("pos", Square::Vec2(0, 0), &Sprite::m_pos));
+		context.add_attributes<Sprite>(Square::attribute_field< Sprite >("texture", STexture(nullptr), &Sprite::m_texture));
+		//std::cout << Square::variant_traits<STexture>() << std::endl;
     }
 };
 SQUARE_CLASS_OBJECT_REGISTRATION(Sprite);
@@ -86,9 +93,44 @@ public:
 
     void start()
     {
-        using namespace Square;
+		using namespace Square;
+		using namespace Square::Data;
+		using namespace Square::Scene;
+		//rs file
         Application::context()->add_resource_file("example.png");
-		Application::context()->resource<Resource::Texture>("example");
+		
+		//test
+		Scene::Actor player;
+		player.translation({ 10,0,0 });
+		player.component<Sprite>()->m_scale = { 2,2 };
+		player.component<Sprite>()->m_pos = { 100,0 };
+		player.component<Sprite>()->m_texture = Application::context()->resource<Resource::Texture>("example");
+		player.component<Body>()->m_gravity = { 0,10, 0 };
+		{
+			std::ofstream ofile("agent.bin", std::ios::binary | std::ios::out);
+			ArchiveBinWrite out(ofile);
+			player.serialize(out);
+		}
+		{
+			std::ifstream ifile("agent.bin", std::ios::binary | std::ios::in);
+			ArchiveBinRead in(ifile);
+			player.deserialize(in);
+		}
+		std::cout << "pos "
+				  << player.component<Sprite>()->m_pos.x
+				  << ", "
+				  << player.component<Sprite>()->m_pos.y;
+		std::cout << std::endl;
+		std::cout << "scale "
+				  << player.component<Sprite>()->m_scale.x
+				  << ", "
+				  << player.component<Sprite>()->m_scale.y;
+		std::cout << std::endl;
+		std::cout << "texture "
+				  << player.component<Sprite>()->m_texture->get_width()
+				  << ", "
+				  << player.component<Sprite>()->m_texture->get_height();
+		std::cout << std::endl;
     }
     bool run(double dt)
     {
@@ -117,33 +159,6 @@ int main()
 	Json jout(((std::stringstream&)(std::stringstream() << jin)).str());
     //serialize again 
     std::cout << (jout.errors().size() ? jout.errors() : jout.document()) << std::endl;
-    //test
-    Scene::Actor player;
-    player.translation({10,0,0});
-	player.component<Sprite>()->m_scale = { 2,2 };
-    player.component<Sprite>()->m_pos   = { 100,0 };
-    player.component<Body>()->m_gravity = { 0,10, 0 };
-    {
-        std::ofstream ofile("agent.bin", std::ios::binary | std::ios::out);
-        ArchiveBinWrite out(ofile);
-        player.serialize(out);
-    }
-    {
-        std::ifstream ifile("agent.bin", std::ios::binary | std::ios::in);
-        ArchiveBinRead in(ifile);
-        player.deserialize(in);
-    }
-
-    std::cout << "pos "
-              << player.component<Sprite>()->m_pos.x
-              << ", "
-              << player.component<Sprite>()->m_pos.y;
-    std::cout << std::endl;
-    std::cout << "scale "
-              << player.component<Sprite>()->m_scale.x
-              << ", "
-              << player.component<Sprite>()->m_scale.y;
-    std::cout << std::endl;
 	//test
     app.execute(
       WindowSizePixel({ 1280, 768 })

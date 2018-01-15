@@ -80,7 +80,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(ProjectDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;xsc_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -93,7 +93,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(ProjectDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;xsc_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -110,7 +110,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;xsc_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -127,7 +127,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;xsc_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -160,7 +160,6 @@
     <ClInclude Include="include\Square\Geometry\Sphere.h" />
     <ClInclude Include="include\Square\Math\Linear.h" />
     <ClInclude Include="include\Square\Math\Tangent.h" />
-    <ClInclude Include="include\Square\Resource\Interface.h" />
     <ClInclude Include="include\Square\Resource\Texture.h" />
     <ClInclude Include="include\Square\Scene\Actor.h" />
     <ClInclude Include="include\Square\Scene\Component.h" />

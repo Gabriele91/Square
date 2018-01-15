@@ -341,7 +341,8 @@ namespace Square
 			  field_name
 			, variant_traits<U>()
 			, default_value
-			, (char*)&((T*)nullptr->*member) - (char*)nullptr
+			, //(char*)&((T*)nullptr->*member) - (char*)nullptr
+			 (size_t)((char*)&(((T*)nullptr)->*member) - (char*)nullptr)
 			, type
 		);
 	}

@@ -58,3 +58,37 @@ namespace Square
 	using uint16 = unsigned short;
 	using uint8  = unsigned char;
 }
+
+namespace Square 
+{
+	namespace TemplateHelp
+	{
+		template<typename T>
+		struct is_shared_ptr : std::false_type {};
+
+		template<typename T>
+		struct is_unique_ptr : std::false_type {};
+
+		template<typename T>
+		struct is_weak_ptr : std::false_type {};
+
+		template<typename T>
+		struct is_shared_ptr<std::shared_ptr<T>> : std::true_type {};
+
+		template<typename T>
+		struct is_unique_ptr<std::unique_ptr<T>> : std::true_type {};
+
+		template<typename T>
+		struct is_weak_ptr<std::weak_ptr<T>> : std::true_type {};
+	}
+
+	template <typename T>
+	using is_shared_ptr = typename TemplateHelp::is_shared_ptr<typename std::decay<T>::type>::type;
+
+	template <typename T>
+	using is_unique_ptr = typename TemplateHelp::is_unique_ptr<typename std::decay<T>::type>::type;
+
+	template <typename T>
+	using is_weak_ptr = typename TemplateHelp::is_weak_ptr<typename std::decay<T>::type>::type;
+
+}

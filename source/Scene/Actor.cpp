@@ -198,7 +198,7 @@ namespace Scene
 	{
 		return component(ObjectInfo::compute_id(name));
 	}
-	Shared<Component> Actor::component(size_t id)
+	Shared<Component> Actor::component(uint64 id)
 	{
 		for (auto& component : m_components)
 		{

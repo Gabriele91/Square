@@ -63,7 +63,7 @@ namespace Scene
 			return StaticPointerCast<T>(component(T::static_object_id()));
 		}
 		Shared<Component> component(const std::string& name);
-		Shared<Component> component(size_t id);
+		Shared<Component> component(uint64 id);
         
         //get child
         Shared<Actor> child();

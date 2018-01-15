@@ -6,6 +6,7 @@
 //
 #pragma once
 #include "Square/Config.h"
+#include "Square/Core/Resource.h"
 #include "Square/Math/Linear.h"
 
 namespace Square
@@ -51,7 +52,6 @@ namespace Square
 		VR_FLOAT_MATRIX,
 		VR_DOUBLE_MATRIX,
 
-
 		VR_STD_VECTOR_SHORT,
 		VR_STD_VECTOR_INT,
 		VR_STD_VECTOR_LONG,
@@ -85,12 +85,24 @@ namespace Square
 		VR_STD_STRING,
 		VR_STD_VECTOR_STRING,
 
+		//Square type
+		VR_RESOURCE,
+
 		//PTR
 		VR_PTR
 	};
 
 	//get type
-	template < class T > inline VariantType variant_traits() { return VR_NONE; };
+	template < class T, typename Enable = void > 
+	inline typename std::enable_if< !std::is_convertible< T, std::shared_ptr<ResourceObject> >::value, VariantType >::type variant_traits()
+	{
+		return VR_NONE;
+	};
+	template < class T >
+	inline typename std::enable_if< std::is_convertible< T, std::shared_ptr<ResourceObject> >::value, VariantType >::type variant_traits()
+	{
+		return VR_RESOURCE;
+	};
 	//template specialization 
 	template <> inline VariantType variant_traits<bool>() { return VR_BOOL; };
 	template <> inline VariantType variant_traits<char>() { return VR_CHAR; };
@@ -160,6 +172,7 @@ namespace Square
 	template <> inline VariantType variant_traits< std::vector< std::string > >() { return VR_STD_VECTOR_STRING; };
 
 	template <> inline VariantType variant_traits<void*>() { return VR_PTR; };
+	//
 
 	class SQUARE_API Variant
 	{
@@ -504,6 +517,19 @@ namespace Square
 			*((std::vector< std::string >*)(m_ptr)) = v_str;
 		}
 
+		Variant(const Shared< ResourceObject >& resouce)
+		{
+			set_type(VR_RESOURCE);
+			*((Shared< ResourceObject >*)(m_ptr)) = resouce;
+		}
+
+		template < typename T >
+		Variant(const Shared< T >& resouce)
+		{
+			set_type(VR_RESOURCE);
+			*((Shared< ResourceObject >*)(m_ptr)) = DynamicPointerCast<ResourceObject>(resouce);
+		}
+
 		Variant(void* ptr)
 		{
 			set_type(VR_PTR);
@@ -587,6 +613,7 @@ namespace Square
 			{
 			case VR_FLOAT_MATRIX:
 			case VR_DOUBLE_MATRIX:
+			case VR_RESOURCE:
 			case VR_C_STRING:
 			case VR_STD_STRING:
 			case VR_STD_VECTOR_SHORT:
@@ -714,6 +741,9 @@ namespace Square
                 case VR_STD_VECTOR_STRING:
                     get< std::vector<std::string> >() = std::move((std::vector<std::string>&)in);
                     break;
+				case VR_RESOURCE:
+					get< Shared<ResourceObject> >() = std::move((Shared<ResourceObject>&)in);
+					break;					
                     //copy stack
                 default:
                     std::memcpy(this, &in, sizeof(Variant));
@@ -812,6 +842,10 @@ namespace Square
 			case VR_STD_VECTOR_STRING:
 				get< std::vector<std::string> >() = (const std::vector<std::string>&)in;
 				break;
+
+			case VR_RESOURCE:
+				get< Shared<ResourceObject> >() = (const Shared<ResourceObject>&)in;
+				break;
 				//copy stack
 			default:
 				std::memcpy(this, &in, sizeof(Variant));
@@ -898,6 +932,7 @@ namespace Square
             case VR_C_STRING:          assert(0);                                 break;
 			case VR_STD_STRING:        delete (std::string*)m_ptr;			     break;
 			case VR_STD_VECTOR_STRING: delete (std::vector<std::string>*)m_ptr;  break;
+			case VR_RESOURCE:          delete (Shared<ResourceObject>*)m_ptr;  break;
 			default: break;
 			}
 			//change type
@@ -937,6 +972,7 @@ namespace Square
             case VR_C_STRING:          assert(0);                            break;
 			case VR_STD_STRING:        m_ptr = new std::string;				 break;
 			case VR_STD_VECTOR_STRING: m_ptr = new std::vector<std::string>; break;
+			case VR_RESOURCE:          m_ptr = new Shared<ResourceObject>(); break;
 			default: break;
 			}
 		}
@@ -1268,6 +1304,13 @@ namespace Square
 			m_ptr = (void*)&v_str;
 			m_type = VR_STD_VECTOR_STRING;
 		}
+		
+		template < typename T >
+		VariantRef(Shared< T >& resouce)
+		{
+			m_ptr = &DynamicPointerCast<ResourceObject>(resouce);
+			m_type = VR_RESOURCE;
+		}
 
 		VariantRef(const void* ptr)
 		{
@@ -1390,7 +1433,9 @@ namespace Square
                 case VariantType::VR_C_STRING:
                 case VariantType::VR_STD_STRING:           ((std::string&)(*this))  = ref.get< std::string >(); break;
                 case VariantType::VR_STD_VECTOR_STRING:    ((std::vector<std::string>&)(*this))  = ref.get< std::vector<std::string> >(); break;
-                    
+				
+				case VariantType::VR_RESOURCE: ((Shared<ResourceObject>&)(*this)) = ref.get< Shared<ResourceObject> >(); break;
+
                 case VariantType::VR_PTR:                   m_ptr = (void*)ref.get_ptr<void>(); break;
                 default: break;
             }
@@ -1481,8 +1526,10 @@ namespace Square
 		case VariantType::VR_C_STRING:
 		case VariantType::VR_STD_STRING:           (*this) = ref.get< std::string >(); break;
 		case VariantType::VR_STD_VECTOR_STRING:    (*this) = ref.get< std::vector<std::string> >(); break;
+		
+		case VariantType::VR_RESOURCE: (*this).get< Shared<ResourceObject> >() = ref.get< Shared<ResourceObject> >(); break;
 
-		case VariantType::VR_PTR:				   (*this) = (void*)ref.get_ptr<void>(); break;
+		case VariantType::VR_PTR: (*this) = (void*)ref.get_ptr<void>(); break;
 		default: break;
 		}
 	}

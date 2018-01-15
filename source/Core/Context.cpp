@@ -58,12 +58,17 @@ namespace Square
         //create resource
         auto resource = DynamicPointerCast<ResourceObject>(create(resource_file_it->second.m_resouce_id));
         if(!resource) return nullptr;
+		//insert 
+		m_resources.insert({ name, resource });
+		//iterator
+		resource_it = m_resources.find(name);
+		//set resource name
+		resource->resource_name(resource_it->first.c_str());
         //load
-        if(resource->load(*this, resource_file_it->second.m_filepath))
-        {
-            m_resources[name] = resource;
-            return resource;
-        }
+        if(resource->load(*this, resource_file_it->second.m_filepath)) return resource;
+		//fail
+		m_resources.erase(resource_it);
+		//end
         return nullptr;
     }
     
