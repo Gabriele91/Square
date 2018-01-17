@@ -86,7 +86,7 @@ namespace Render
 		static const char* glsl_default_header;
 		static const char* glsl_header_by_type[ST_N_SHADER];
 		static const char* glsl_shader_names[ST_N_SHADER];
-		static GLenum      glsl_type_from_hcube_type[ST_N_SHADER];
+		static GLenum      glsl_type_from_square_type[ST_N_SHADER];
 		/////////////////////////////////////////////////////////////////////////
 		//delete
 		~Shader()
@@ -217,7 +217,7 @@ namespace Render
 		"COMPUTE_SHADER"
 	};
 
-	GLenum Shader::glsl_type_from_hcube_type[ST_N_SHADER] =
+	GLenum Shader::glsl_type_from_square_type[ST_N_SHADER] =
 	{
 		GL_VERTEX_SHADER,
 		GL_FRAGMENT_SHADER,
@@ -1692,7 +1692,7 @@ namespace Render
 				//get shader
 				auto& source_shader = out_shader->m_shaders[info.m_type];
 				//create 
-				source_shader = glCreateShader(Shader::glsl_type_from_hcube_type[info.m_type]);
+				source_shader = glCreateShader(Shader::glsl_type_from_square_type[info.m_type]);
 				//start line
 				std::string start_line = "#line " + std::to_string(info.m_line) + "\n";
 				//source

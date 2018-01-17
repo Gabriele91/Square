@@ -89,7 +89,7 @@ namespace Video
 				, size_in[0] // right = Width
 				, size_in[1] // bottom = Height
 			};
-			AdjustWindowRectEx(&window_rect, HCUBE_WINDOW_STYLE, true, 0);
+			AdjustWindowRectEx(&window_rect, SQUARE_WINDOW_STYLE, true, 0);
 			//calc size window
 			size_out[0] = window_rect.right - window_rect.left;
 			size_out[1] = window_rect.bottom - window_rect.top - WINDOW_ERROR_BAD_LENGTH;
@@ -406,7 +406,9 @@ namespace Video
 		(
 			WINDOW_CLASS_NAME,
 			info.m_title.c_str(),
-			HCUBE_WINDOW_STYLE,
+			info.m_resize
+			? SQUARE_WINDOW_STYLE
+			: SQUARE_WINDOW_NORESIZE_STYLE,
 			left,  //x
 			top,   //y
 			last_window_real_size[0], //width
