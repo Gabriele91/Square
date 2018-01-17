@@ -742,7 +742,7 @@ namespace Square
                     get< std::vector<std::string> >() = std::move((std::vector<std::string>&)in);
                     break;
 				case VR_RESOURCE:
-					get< Shared<ResourceObject> >() = std::move((Shared<ResourceObject>&)in);
+					get< Shared<ResourceObject> >() = std::move(in.get< Shared<ResourceObject> >());
 					break;					
                     //copy stack
                 default:
@@ -844,7 +844,7 @@ namespace Square
 				break;
 
 			case VR_RESOURCE:
-				get< Shared<ResourceObject> >() = (const Shared<ResourceObject>&)in;
+				get< Shared<ResourceObject> >() = in.get< Shared<ResourceObject> >();
 				break;
 				//copy stack
 			default:
