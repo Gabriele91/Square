@@ -24,7 +24,7 @@ namespace Win32
 		m_hWnd = hWnd;
 		m_info = info;
 		//set
-		enable_resize(info.m_fullscreen);
+		enable_resize(info.m_resize);
 		//get info
 		update_last_window_attributes();
 		//set full screen
@@ -122,11 +122,17 @@ namespace Win32
 	{
 		m_info.m_resize = enable;
 		LONG style = GetWindowLong(m_hWnd, GWL_STYLE);
-		return SetWindowLong(
-			m_hWnd
-			, GWL_STYLE
-			, enable ? (style | WS_SIZEBOX) : (style & ~WS_SIZEBOX)
-		);
+		//change style
+		if (enable)
+		{
+			style |= WS_SIZEBOX;
+		}
+		else
+		{
+			style &= ~WS_SIZEBOX;
+		}
+		//set
+		return SetWindowLong(m_hWnd, GWL_STYLE, style);
 	}
 
 	bool WindowGL::enable_fullscreen(bool enable)
