@@ -96,15 +96,16 @@ public:
 		using namespace Square;
 		using namespace Square::Data;
 		using namespace Square::Scene;
+		using namespace Square::Resource;
 		//rs file
-        Application::context()->add_resource_file("example.png");
+        context().add_resource_file("example.png");
 		
 		//test
 		Scene::Actor player;
 		player.translation({ 10,0,0 });
 		player.component<Sprite>()->m_scale = { 2,2 };
 		player.component<Sprite>()->m_pos = { 100,0 };
-		player.component<Sprite>()->m_texture = Application::context()->resource<Resource::Texture>("example");
+		player.component<Sprite>()->m_texture = context().resource<Texture>("example");
 		player.component<Body>()->m_gravity = { 0,10, 0 };
 		{
 			std::ofstream ofile("agent.bin", std::ios::binary | std::ios::out);

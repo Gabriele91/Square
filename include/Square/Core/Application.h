@@ -57,6 +57,12 @@ namespace Square
         virtual bool end() = 0;
         
         virtual ~AppInterface() {}
+
+		//help
+		static Application&    application();
+		static Context&		   context();
+		static Video::Window&  window();
+		static Video::Input&   input();
     };
     
     enum class WindowMode

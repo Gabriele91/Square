@@ -52,6 +52,12 @@ namespace Square
         };
     }
     
+	//help
+	Application&    AppInterface::application() { return *Application::instance(); }
+	Context&		AppInterface::context()     { return *Application::context(); }
+	Video::Window&  AppInterface::window()      { return *application().window(); }
+	Video::Input&   AppInterface::input()       { return *application().input(); }
+
     Application::Application()
     {
         //test
