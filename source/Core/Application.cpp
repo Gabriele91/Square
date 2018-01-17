@@ -215,8 +215,7 @@ namespace Square
         m_input = new Video::Input(m_window);
         //save instance
         m_instance = app;
-        ////////////////////////////////////////////////////////////////////////
-        
+        ////////////////////////////////////////////////////////////////////////        
         //center
         m_window->set_position((screen_width - window_size.x) / 2,
                                (screen_height - window_size.y) / 2);
