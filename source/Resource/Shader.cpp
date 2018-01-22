@@ -1,4 +1,4 @@
-﻿//  Square
+//  Square
 //
 //  Created by Gabriele on 15/08/16.
 //  Copyright � 2016 Gabriele. All rights reserved.
@@ -23,12 +23,14 @@ namespace Resource
         //factory
         ctx.add_resource<Shader>({ ".glsl", ".hlsl" });
 		//attributes
+        #if 0
 		ctx.add_attributes<Shader>(attribute_function<Shader, void*>
 		("constant_buffer"
 		, (void*)(nullptr)
 		, [](const Shader* shader) -> void* { return (void*)shader->constant_buffer(name); }
 		, [](Shader* shader, const void*&) { /*none*/ }
 		));
+        #endif
         //end
     }
 }

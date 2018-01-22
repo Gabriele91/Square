@@ -77,8 +77,9 @@ public:
 SQUARE_CLASS_OBJECT_REGISTRATION(Body);
 
 #include <Xsc/Xsc.h>
-#include <fstream> 
-#include <sstream> 
+#include <fstream>
+#include <sstream>
+#include <list>
 
 class CompilerLog : public Xsc::Log
 {
