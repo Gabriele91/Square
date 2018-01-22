@@ -11,6 +11,7 @@
 		E007D8BD1F9DF1C50059D333 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E007D8BC1F9DF1C40059D333 /* CoreVideo.framework */; };
 		E007D8BF1F9DF1C90059D333 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E007D8BE1F9DF1C90059D333 /* Cocoa.framework */; };
 		E00E63621FA74945008735C3 /* makefile in Sources */ = {isa = PBXBuildFile; fileRef = E00E63611FA74944008735C3 /* makefile */; };
+		E03753652016446F0096BBA7 /* Shader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E03753642016446F0096BBA7 /* Shader.cpp */; };
 		E04FF4A01FA71C56005FA09C /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E04FF49F1FA71C56005FA09C /* main.cpp */; };
 		E095BAF8200F6C540066256E /* libxsc_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E095BAF7200F6C540066256E /* libxsc_core.a */; };
 		E095BB70200F6C930066256E /* Application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E095BB38200F6C920066256E /* Application.cpp */; };
@@ -59,6 +60,8 @@
 		E007D8BC1F9DF1C40059D333 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		E007D8BE1F9DF1C90059D333 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		E00E63611FA74944008735C3 /* makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = makefile; sourceTree = "<group>"; };
+		E03753632016444A0096BBA7 /* Shader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Shader.h; sourceTree = "<group>"; };
+		E03753642016446F0096BBA7 /* Shader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Shader.cpp; sourceTree = "<group>"; };
 		E04FF49F1FA71C56005FA09C /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		E079CF7E1F96480000E7992F /* Square */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Square; sourceTree = BUILT_PRODUCTS_DIR; };
 		E079CF9A1F964D5C00E7992F /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
@@ -2098,6 +2101,7 @@
 		E095BB30200F6C920066256E /* Resource */ = {
 			isa = PBXGroup;
 			children = (
+				E03753632016444A0096BBA7 /* Shader.h */,
 				E095BB31200F6C920066256E /* Texture.h */,
 			);
 			path = Resource;
@@ -2232,6 +2236,7 @@
 		E095BB6B200F6C920066256E /* Resource */ = {
 			isa = PBXGroup;
 			children = (
+				E03753642016446F0096BBA7 /* Shader.cpp */,
 				E095BB6C200F6C920066256E /* Texture.cpp */,
 			);
 			path = Resource;
@@ -2307,6 +2312,7 @@
 				E095BB73200F6C930066256E /* Filesystem.cpp in Sources */,
 				E095BB82200F6C930066256E /* RenderGL4.cpp in Sources */,
 				E095BB71200F6C930066256E /* ClassObjectRegistration.cpp in Sources */,
+				E03753652016446F0096BBA7 /* Shader.cpp in Sources */,
 				E095BB7D200F6C930066256E /* Json.cpp in Sources */,
 				E095BB7C200F6C930066256E /* tga.cpp in Sources */,
 				E095BB78200F6C930066256E /* AttributeSerialize.cpp in Sources */,
