@@ -160,6 +160,7 @@
     <ClInclude Include="include\Square\Geometry\Sphere.h" />
     <ClInclude Include="include\Square\Math\Linear.h" />
     <ClInclude Include="include\Square\Math\Tangent.h" />
+    <ClInclude Include="include\Square\Resource\Shader.h" />
     <ClInclude Include="include\Square\Resource\Texture.h" />
     <ClInclude Include="include\Square\Scene\Actor.h" />
     <ClInclude Include="include\Square\Scene\Component.h" />
@@ -266,6 +267,7 @@
     <ClCompile Include="source\Geometry\Frustum.cpp" />
     <ClCompile Include="source\Geometry\Intersection.cpp" />
     <ClCompile Include="source\Geometry\OBoundingBox.cpp" />
+    <ClCompile Include="source\Resource\Shader.cpp" />
     <ClCompile Include="source\Resource\Texture.cpp" />
     <ClCompile Include="source\Scene\Actor.cpp" />
     <ClCompile Include="source\Scene\Component.cpp" />

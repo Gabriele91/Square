@@ -210,6 +210,9 @@
     <ClInclude Include="include\Square\Core\Resource.h">
       <Filter>Include\Square\Core</Filter>
     </ClInclude>
+    <ClInclude Include="include\Square\Resource\Shader.h">
+      <Filter>Include\Square\Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Core\Filesystem.cpp">
@@ -307,6 +310,9 @@
     </ClCompile>
     <ClCompile Include="source\Core\Context.cpp">
       <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Resource\Shader.cpp">
+      <Filter>Source\Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
