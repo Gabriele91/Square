@@ -27,7 +27,7 @@ namespace Resource
                                   ("width"
                                    , (unsigned long)(0)
                                    , [](const Texture* tex) -> unsigned long{ return tex->get_width(); }
-                                   , [](Texture* actor, const unsigned long& ){ /*none*/ }
+                                   , [](Texture* tex, const unsigned long& ){ /*none*/ }
                                    ));
         ctx.add_attributes<Texture>(attribute_function<Texture, unsigned long>
                                     ("height"
