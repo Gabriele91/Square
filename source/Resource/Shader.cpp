@@ -211,24 +211,10 @@ namespace Resource
                     std::string sourcefile_path;
                     //jmp space
                     Parser::skip_line_space(line, c_effect_line);
-                    //type, include or import
-                    enum include_state
-                    {
-                        IS_INCLUDE,
-                        IS_IMPORT,
-                        IS_UNKWNON
-                    };
-                    include_state parser_state =
-                    (*c_effect_line == '\"'
-                     ? IS_INCLUDE
-                     : (*c_effect_line == '<'
-                        ? IS_IMPORT
-                        : IS_UNKWNON
-                    ));
 					//get path
-                    switch(parser_state)
+                    switch(*c_effect_line)
                     {
-                        case IS_INCLUDE:
+                        case '\"': //include
                             if (Parser::parse_string(line, c_effect_line, sourcefile_name))
                             {
                                 sourcefile_path = source_dir.size()
@@ -240,7 +226,7 @@ namespace Resource
                                 throw std::runtime_error ( "shader, include path is invalid: " + source_path );
                             }
                         break;
-                        case IS_IMPORT:
+                        case '<': //import
                             if (Parser::parse_string(line, c_effect_line, sourcefile_name, '<', '>'))
                             {
                                 sourcefile_path = context.resource_path<Shader>(sourcefile_name);
