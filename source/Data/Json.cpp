@@ -5,12 +5,21 @@
 //  Copyright � 2016 Gabriele. All rights reserved.
 //
 #include "Square/Data/Json.h"
+#include "Square/Data/ParseUtils.h"
 #include <cstring>
 #include <sstream>
 #include <stack>
 
 namespace Square
 {
+//parser
+namespace Parser
+{
+	static inline bool is_delim(char c)
+	{
+		return c == ',' || c == ':' || c == ']' || c == '}' || isspace(c) || !c;
+	}
+}
 namespace Data
 {
 
@@ -260,260 +269,6 @@ namespace Data
 	Json::Json(const JsonValue& document) :m_document(document) {}
 	Json::Json(const std::string& source){ parser(source); }
     
-    //parser
-	#pragma	region parser
-    static inline bool json_is_space(char c)
-    {
-        return c == ' ' || (c >= '\t' && c <= '\r');
-    }
-    
-    static inline bool json_is_delim(char c)
-    {
-        return c == ',' || c == ':' || c == ']' || c == '}' || isspace(c) || !c;
-    }
-    
-    static inline bool json_is_digit(char c)
-    {
-        return c >= '0' && c <= '9';
-    }
-    
-    static inline bool json_is_digit_or_point(char c)
-    {
-        return c == '.'  || (c >= '0' && c <= '9');
-    }
-        
-    static inline bool json_is_xdigit(char c)
-    {
-        return (c >= '0' && c <= '9') || ((c & ~' ') >= 'A' && (c & ~' ') <= 'F');
-    }
-    
-    static inline int json_char_to_int(char c)
-    {
-        return (c <= '9') ?  c - '0' : (c & ~' ') - 'A' + 10;
-    }
-    
-    static double json_string_to_double(const char*& source)
-    {
-        //+/-
-        char ch = *source;
-        if (ch == '-') ++source;
-        //integer part
-        double result = 0;
-        while (json_is_digit(*source)) result = (result * 10) + (*source++ - '0');
-        //fraction
-        if (*source == '.')
-        {
-            ++source;
-            double fraction = 1;
-            while (json_is_digit(*source))
-            {
-                fraction *= 0.1;
-                result += (*source++ - '0') * fraction;
-            }
-        }
-        //exponent
-        if (*source == 'e' || *source == 'E')
-        {
-            ++source;
-            //base of exp
-            double base = 10;
-            //+/- exp
-            if (*source == '+')
-            {
-                ++source;
-            }
-            else if (*source == '-')
-            {
-                ++source;
-                base = 0.1;
-            }
-            //parsing exponent
-            unsigned int exponent = 0;
-            while (json_is_digit(*source)) exponent = (exponent * 10) + (*source++ - '0');
-            //compute exponent
-            double power = 1;
-            for (; exponent; exponent >>= 1, base *= base) if (exponent & 1) power *= base;
-            //save result
-            result *= power;
-        }
-        //result
-        return ch == '-' ? -result : result;
-    }
-
-	struct json_string_out { std::string m_str; bool m_success; };
-    static json_string_out json_string(size_t& line,  const char*& source)
-    {
-        //init
-        std::string out;
-        //start parse
-        if ((*source) == '\"')  //["...."]
-        {
-            ++source;  //[...."]
-            while ((*source) != '\"' && (*source) != '\n')
-            {
-                if ((*source) == '\\') //[\.]
-                {
-                    ++source;  //[.]
-                    switch (*source)
-                    {
-                        case 'n':
-                            out += '\n';
-                            break;
-                        case 't':
-                            out += '\t';
-                            break;
-                        case 'b':
-                            out += '\b';
-                            break;
-                        case 'r':
-                            out += '\r';
-                            break;
-                        case 'f':
-                            out += '\f';
-                            break;
-                        case 'a':
-                            out += '\a';
-                            break;
-                        case '\\':
-                            out += '\\';
-                            break;
-                        case '?':
-                            out += '\?';
-                            break;
-                        case '\'':
-                            out += '\'';
-                            break;
-                        case '\"':
-                            out += '\"';
-                            break;
-                        case 'u':
-                        {
-                            int c = 0;
-                            //comput u
-                            for (int i = 0; i < 4; ++i)
-                            {
-                                if (json_is_xdigit(*++source))
-                                {
-                                    c = c * 16 + json_char_to_int(*source);
-                                }
-                                else
-                                {
-                                    return { out, false };
-                                }
-                            }
-                            //ascii
-                            if (c < 0x80)
-                            {
-                                out += c;
-                            }
-                            //utf 2 byte
-                            else if (c < 0x800)
-                            {
-                                out += 0xC0 | (c >> 6);
-                                out += 0x80 | (c & 0x3F);
-                            }
-                            //utf 3 byte
-                            else
-                            {
-                                out += 0xE0 | (c >> 12);
-                                out += 0x80 | ((c >> 6) & 0x3F);
-                                out += 0x80 | (c & 0x3F);
-                            }
-                        }
-                        break;
-                        case '\n': /* jump unix */
-                            ++line;
-                            break;
-                        case '\r': /* jump mac */
-                            ++line;
-                            if ((*(source + 1)) == '\n') ++source; /* jump window (\r\n)*/
-                            break;
-                        default:
-                            return { out, false };
-                            break;
-                    }
-                }
-                else
-                {
-                    if ((*source) != '\0') out += (*source);
-                    else return { out, false };
-                }
-                ++source;//next char
-            }
-            //exit cases
-            if ((*source) == '\n')
-            {
-                return { out, false };
-            }
-            else if ((*source) == '\"')
-            {
-                ++source;
-                return { out, true };
-            }
-        }
-        return { out, false };
-    }
-
-	static bool json_skip_line_comment(size_t& line, const char*& inout)
-	{
-		//not a line comment
-		if ((*inout) != '/' || *(inout+1) != '/') return false;
-		//skeep
-		while (*(inout) != EOF && *(inout) != '\0'&& *(inout) != '\n') ++(inout);
-		//jump endline
-		if ((*(inout)) == '\n')
-		{
-			++line;  ++inout;
-		}
-		//ok
-		return true;
-	}
-
-	static bool json_skip_multilines_comment(size_t& line, const char*& inout)
-	{
-		//not a multilines comment
-		if ((*inout) != '/' || *(inout + 1) != '*') return false;
-		//jump
-		while 
-		(
-			*(inout) != EOF &&
-			*(inout) != '\0' && 
-				((*inout) != '*' || *(inout + 1) != '/')
-		)
-		{
-			line += (*(inout)) == '\n';
-			++inout;
-		}
-		//jmp last one
-		if ((*inout) == '*' && *(inout + 1) == '/') inout += 2;
-		//ok
-		return true;
-	}
-
-	static bool json_skip_space(size_t& line, const char*& source)
-	{
-		bool a_space_is_skipped = false;
-		while (json_is_space(*source))
-		{
-			//to true
-			a_space_is_skipped = true;
-			//count line
-			if (*source == '\n') ++line;
-			//jump
-			++source;
-			//exit
-			if (!*source) break;
-		}
-		return a_space_is_skipped;
-	}
-
-	static void json_skip_space_and_comments(size_t& line, const char*& source)
-	{
-		while (json_skip_space(line, source)
-			|| json_skip_line_comment(line, source)
-			|| json_skip_multilines_comment(line, source));
-	}
-	#pragma endregion
 	
 	bool Json::parser(const std::string& cppsource)
     {
@@ -610,15 +365,17 @@ namespace Data
         //parsing
         while(*source)
         {
+			//parse
+			using namespace Square::Parser;
             //skip
-			json_skip_space_and_comments(line,source);
+			skip_space_and_comments(line, source);
             //switch
             switch (*source)
             {
 				////////////////////////////////////////////////////////////////////////////////////
 				// number
                 case '-':
-                if (!json_is_digit_or_point(*(source+1)))
+                if (!is_float_digit(*(source+1)))
                 {
                     m_list_errors.push_back({line,"JSON_BAD_NUMBER"});
                     return false;
@@ -633,8 +390,12 @@ namespace Data
                 case '7':
                 case '8':
                 case '9':
-                push(json_string_to_double(source));
-                if (!json_is_delim(*source))
+				{
+					double value = 0.0;
+					parse_double2(source, value);
+					push(value);
+				}
+                if (!is_delim(*source))
                 {
                     m_list_errors.push_back({line,"JSON_BAD_NUMBER"});
                     return false;
@@ -644,21 +405,20 @@ namespace Data
                 // string
                 case '"':
                 {
-                    auto jstr_pret = json_string(line, source);
-                    if (!jstr_pret.m_success)
+                    std::string str_out;
+                    if (!parse_string(line, source, str_out))
                     {
                         m_list_errors.push_back({line,"JSON_BAD_STRING"});
                         return false;
                     }
-                    push(JsonValue{ jstr_pret.m_str });
+                    push(JsonValue{ str_out });
                 }
                 break;
 				////////////////////////////////////////////////////////////////////////////////////
                 // null/true/false
                 case 'n':
-                    if(std::strncmp(source, "null", 4) == 0)
+                    if(cstr_cmp_skip(source, "null"))
                     {
-                        source += 4;
                         push({});
                     }
                     else
@@ -668,9 +428,8 @@ namespace Data
                     }
                 break;
                 case 't':
-                    if(std::strncmp(source, "true", 4) == 0)
+                    if(cstr_cmp_skip(source, "true"))
                     {
-                        source += 4;
                         push({true});
                     }
                     else
@@ -680,9 +439,8 @@ namespace Data
                     }
                 break;
                 case 'f':
-                    if(std::strncmp(source, "false", 5) == 0)
+                    if(cstr_cmp_skip(source, "false"))
                     {
-                        source += 5;
                         push({false});
                     }
                     else

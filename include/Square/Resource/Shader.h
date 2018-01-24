@@ -13,16 +13,21 @@ namespace Resource
                             , public SharedObject<Shader>
 	{
 
-		Render::Shader*       m_shader{ nullptr };
-
 	public:
+		//Types
+		using PreprocessElement = std::tuple< std::string, std::string >;
+		using PreprocessMap     = std::vector< PreprocessElement >;
+		using FilepathMap       = std::unordered_map< int, std::string >;
+
         //Init object
         SQUARE_OBJECT(Shader)
         //Registration in context
         static void object_registration(Context& ctx);
         
         //Contructor
+		Shader();
 		Shader(const std::string& path);
+		Shader(Context& context, const std::string& path);
 
 		//Destructor
 		virtual ~Shader();
@@ -32,8 +37,19 @@ namespace Resource
 
 		bool load(const std::string& path);
 
+		//compile from source
+		bool compile
+		(
+			const std::string& source,
+			const PreprocessMap& defines
+		);
+
 		//get buffer
-		Render::ConstBuffer* constant_buffer(const char *name) const;
+		Render::Uniform*     uniform(const std::string& name);
+		Render::ConstBuffer* constant_buffer(const std::string& name) const;
+
+		//RAW Shader
+		Render::Shader* base_shader() const;
 
 		//bind shader
 		virtual void bind();
@@ -43,6 +59,12 @@ namespace Resource
 
 		//destoy shader
 		void destoy();
+
+	protected:
+
+		//Values
+		Render::Shader* m_shader{ nullptr };
+		FilepathMap	    m_filepath_map;
 
 	};
 }
