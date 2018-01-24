@@ -941,7 +941,6 @@
 		E095BB6C200F6C920066256E /* Texture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Texture.cpp; sourceTree = "<group>"; };
 		E095BB6E200F6C920066256E /* Actor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Actor.cpp; sourceTree = "<group>"; };
 		E095BB6F200F6C920066256E /* Component.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Component.cpp; sourceTree = "<group>"; };
-		E0D94E0F1F9A4D220028CE79 /* scene.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = scene.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -974,7 +973,6 @@
 				E095BB36200F6C920066256E /* source */,
 				E04FF49E1FA71C56005FA09C /* tests */,
 				E079CF941F964D5C00E7992F /* dependencies */,
-				E0D94E0F1F9A4D220028CE79 /* scene.json */,
 				E00E63611FA74944008735C3 /* makefile */,
 				E079CF7F1F96480000E7992F /* Products */,
 				E079CF881F964AD300E7992F /* Frameworks */,

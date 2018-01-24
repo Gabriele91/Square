@@ -147,12 +147,14 @@ release: directories show_release_flags $(SOURCE_RELEASE_OBJS) $(TEST_SOURCE_REL
 
 # makedir
 debug_make_dirs:
+	${MKDIR_P} $(DEBUG_DIR);
 	@for dir in $(SUB_DIRS); do \
 		${MKDIR_P} $(DEBUG_DIR)/$$dir; \
 	done
 
 # makedir
 release_make_dirs:
+	${MKDIR_P} $(RELEASE_DIR);
 	@for dir in $(SUB_DIRS); do \
 		${MKDIR_P} $(RELEASE_DIR)/$$dir; \
 	done
