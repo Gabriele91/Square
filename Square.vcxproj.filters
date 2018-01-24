@@ -213,6 +213,9 @@
     <ClInclude Include="include\Square\Resource\Shader.h">
       <Filter>Include\Square\Resource</Filter>
     </ClInclude>
+    <ClInclude Include="include\Square\Data\ParseUtils.h">
+      <Filter>Include\Square\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Core\Filesystem.cpp">

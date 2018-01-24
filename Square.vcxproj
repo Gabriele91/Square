@@ -148,6 +148,7 @@
     <ClInclude Include="include\Square\Data\AttributeSerialize.h" />
     <ClInclude Include="include\Square\Data\Image.h" />
     <ClInclude Include="include\Square\Data\Json.h" />
+    <ClInclude Include="include\Square\Data\ParseUtils.h" />
     <ClInclude Include="include\Square\Driver\Input.h" />
     <ClInclude Include="include\Square\Driver\OpenGL\OpenGL4.h" />
     <ClInclude Include="include\Square\Driver\Render.h" />
