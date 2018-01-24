@@ -12,6 +12,16 @@ endif
 ifeq ($(HAVE_TERM),dumb)
 	HAVE_TERM = none
 endif
+#os name
+ifeq ($(shell uname -s),Linux) # linux
+    OS_NAME := linux
+else ifeq ($(shell uname -s),Darwin) # macOS
+    OS_NAME := macOS
+else
+    OS_NAME := unknown
+endif
+
+
 #program name
 S_DIR  = $(TOP)/source/
 S_INC  = $(TOP)/include/
@@ -23,8 +33,9 @@ RELEASE_DIR  = Release/obj
 DEBUG_PROG   = Debug/Square
 RELEASE_PROG = Release/Square
 
-#global include
-DIPS_INCLUDE = $(TOP)/dependencies/linux/include/
+DIPS_INCLUDE = $(TOP)/dependencies/$(OS_NAME)/include/
+DIPS_LIBPATH = $(TOP)/dependencies/$(OS_NAME)/lib/
+DIPS_LIB = -lxsc_core
 
 # Subdirs
 SUB_DIRS := $(wildcard $(S_DIR)/**/.)\
@@ -41,7 +52,7 @@ RELEASE_FLAGS = -O3
 # DEBUG_FLAGS
 DEBUG_FLAGS = -g -D_DEBUG -Wall -Wno-unknown-pragmas
 # Linker
-LDFLAGS += -lz -lm -lutil 
+LDFLAGS += -lz -lm -lutil -L$(DIPS_LIBPATH) $(DIPS_LIB)
 ####################################################
 # No win32
 FILTER := $(wildcard $(S_DIR)/**/Win32/*.cpp)

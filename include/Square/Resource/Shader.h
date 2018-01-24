@@ -17,7 +17,7 @@ namespace Resource
 		//Types
 		using PreprocessElement = std::tuple< std::string, std::string >;
 		using PreprocessMap     = std::vector< PreprocessElement >;
-		using FilepathMap       = std::unordered_map< int, std::string >;
+		using FilepathMap       = std::unordered_map< size_t, std::string >;
 
         //Init object
         SQUARE_OBJECT(Shader)

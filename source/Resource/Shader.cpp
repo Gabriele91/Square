@@ -179,7 +179,7 @@ namespace Resource
 			{
 				throw std::runtime_error
 				(
-					"effect shader, header inclusion depth limit reached: "
+					"shader, header inclusion depth limit reached: "
 					"might be caused by cyclic header inclusion"
 				);
 			}
@@ -205,18 +205,66 @@ namespace Resource
 				Parser::skip_line_space(line, c_effect_line);
 				//is pragma?
 				if (Parser::cstr_cmp_skip(c_effect_line, "#include"))
-				{
-				
-					//path
-					std::string sourcefile_name;
-					std::string sourcefile_path;
+                {
+                    //name/path/info
+                    std::string sourcefile_name;
+                    std::string sourcefile_path;
+                    //jmp space
+                    Parser::skip_line_space(line, c_effect_line);
+                    //type, include or import
+                    enum include_state
+                    {
+                        IS_INCLUDE,
+                        IS_IMPORT,
+                        IS_UNKWNON
+                    };
+                    include_state parser_state =
+                    (*c_effect_line == '\"'
+                     ? IS_INCLUDE
+                     : (*c_effect_line == '<'
+                        ? IS_IMPORT
+                        : IS_UNKWNON
+                    ));
 					//get path
-					if (Parser::parse_string(line, c_effect_line, sourcefile_name))
-					{
-						sourcefile_path = source_dir + "/" + sourcefile_name;
-					}
-					//input stream
-					std::stringstream source_stream(Filesystem::text_file_read_all(sourcefile_path));
+                    switch(parser_state)
+                    {
+                        case IS_INCLUDE:
+                            if (Parser::parse_string(line, c_effect_line, sourcefile_name))
+                            {
+                                sourcefile_path = source_dir.size()
+                                                ? source_dir + "/" + sourcefile_name
+                                                : sourcefile_name;
+                            }
+                            else
+                            {
+                                throw std::runtime_error ( "shader, include path is invalid: " + source_path );
+                            }
+                        break;
+                        case IS_IMPORT:
+                            if (Parser::parse_string(line, c_effect_line, sourcefile_name, '<', '>'))
+                            {
+                                sourcefile_path = context.resource_path<Shader>(sourcefile_name);
+                                //test path
+                                if(!sourcefile_path.size())
+                                {
+                                    throw std::runtime_error
+                                    (
+                                         "shader, include path is invalid: " + source_path + ", " + sourcefile_name + " not exists"
+                                    );
+                                }
+                            }
+                            else
+                            {
+                                throw std::runtime_error ( "shader, include path is invalid: " + source_path );
+                            }
+                        break;
+                        default:
+                            //error 3
+                            throw std::runtime_error ( "shader, include path is invalid: " + source_path );
+                        break;
+                    };
+                    //source
+                    std::stringstream source_stream(Filesystem::text_file_read_all(sourcefile_path));
 					//ok
 					out = load
 					(
@@ -309,9 +357,27 @@ namespace Resource
 		const PreprocessMap& defines
 	)
 	{
-		bool success_to_compile = true;
 		//delete last shader
 		if (m_shader) Render::delete_shader(m_shader);
+        //commondo header
+        const static std::string shader_commond_header
+        (
+        "#define IVec2 int2\n"
+        "#define IVec3 int3\n"
+        "#define IVec4 int4\n"
+        "#define IMat3 int3x3\n"
+        "#define IMat4 int4x4\n"
+        "#define Vec2 float2\n"
+        "#define Vec3 float3\n"
+        "#define Vec4 float4\n"
+        "#define Mat3 float3x3\n"
+        "#define Mat4 float4x4\n"
+        "#define DVec2 double2\n"
+        "#define DVec3 double3\n"
+        "#define DVec4 double4\n"
+        "#define DMat3 double3x3\n"
+        "#define DMat4 double4x4\n"
+        );
 		//int shader version
 		int shader_version = 410;
 		//list define
@@ -329,7 +395,7 @@ namespace Resource
 			header_string += "#" + std::get<0>(p) + " " + std::get<1>(p) + "\n";
 		}
 		//end source
-		std::string source = header_string + raw_source;
+		std::string source = shader_commond_header + header_string + raw_source;
 		////////////////////////////////////////////////////////////////////////////////
 		//shaders
 		Xsc::ShaderInput shader_input_info[Render::ST_N_SHADER];
@@ -356,7 +422,8 @@ namespace Resource
 			, "tass_control"
 			, "tass_eval"
 			, "compute"
-		};		
+		};
+
 		//init all inputs
 		for (unsigned short type = 0; type != Render::ST_N_SHADER; ++type)
 		{	
@@ -385,10 +452,10 @@ namespace Resource
 					shader_info.push_back
 					(Render::ShaderSourceInformation
 					{
-						 (Render::ShaderType)type  //shader type
-					   , shader_headers[type]      //no header
-					   , shader_sources[type]      //source output ref
-					   , 0						   //line 0
+						 (Render::ShaderType)type   //shader type
+					   , shader_headers[type]       //header
+					   , shader_sources[type]       //source output ref
+					   , 0						    //line 0
 					});
 				}
 				else

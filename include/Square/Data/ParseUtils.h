@@ -355,16 +355,16 @@ namespace Parser
 		return true;
 	}
 
-	static bool parse_string(size_t& line,  const char*& inout, std::string& out)
+	static bool parse_string(size_t& line,  const char*& inout, std::string& out, const char open_string = '\"', const char close_string = '\"')
 	{
 		//temp ptr
 		const char *tmp = inout;
 		out = "";
 		//start parse
-		if ((*tmp) == '\"')  //["...."]
+		if ((*tmp) == open_string)  //["...."]
 		{
 			++tmp;  //[...."]
-			while ((*tmp) != '\"' && (*tmp) != '\n')
+			while ((*tmp) != close_string && (*tmp) != '\n')
 			{
 				if ((*tmp) == '\\') //[\.]
 				{

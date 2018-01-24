@@ -72,6 +72,16 @@ namespace Square
         return nullptr;
     }
     
+    const std::string& Context::resource_path(const std::string& name)
+    {
+        //find resource from file
+        auto resource_file_it = m_resources_file.find(name);
+        //fail
+        if (resource_file_it  == m_resources_file.end()) return "";
+        //ok
+        return resource_file_it->second.m_filepath;
+        
+    }
     //Get variable
     const Variant& Context::variable(const std::string& name)
     {
