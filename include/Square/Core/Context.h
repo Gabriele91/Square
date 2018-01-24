@@ -30,6 +30,7 @@ namespace Square
 
 		//Get resource
         Shared<ResourceObject> resource(const std::string& name);
+        const std::string& resource_path(const std::string& name);
 
 		//Get variable
         const Variant& variable(const std::string& name);
@@ -68,6 +69,9 @@ namespace Square
         
         template< class T >  Shared<T> resource(const std::string& name)
         { return DynamicPointerCast<T>(resource(T::static_object_name() + ":" + name)); }
+        
+        template< class T >  const std::string& resource_path(const std::string& name)
+        { return resource_path(T::static_object_name() + ":" + name); }
         
 	protected:
 	

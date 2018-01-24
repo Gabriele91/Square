@@ -99,8 +99,9 @@ public:
 		using namespace Square::Resource;
 		//rs file
 		context().add_resource_file("example.png");
-		context().add_resource_file("effect.hlsl");
-		
+        context().add_resource_file("effect.hlsl");
+        context().add_resource_file("header.hlsl");
+
 		//shader
 		auto shader = context().resource<Shader>("effect");
 
