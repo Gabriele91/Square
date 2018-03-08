@@ -483,8 +483,9 @@ namespace Resource
 		//compile
 		m_shader = Render::create_shader(shader_info);
 		//tests
-		if (m_shader && !Render::shader_compiled_with_errors(m_shader) && !Render::shader_linked_with_error(m_shader))
+		if (!m_shader || Render::shader_compiled_with_errors(m_shader) || Render::shader_linked_with_error(m_shader))
 		{
+            //fail
 			if (auto context = Application::context())
 			{
 				context->add_wrong("Error to shader compile");
@@ -493,7 +494,7 @@ namespace Resource
 			}
 			return false;
 		}
-		//return success
+		//success
 		return true;
 	}
 
