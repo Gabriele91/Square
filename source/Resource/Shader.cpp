@@ -18,7 +18,6 @@
 #include <sstream>
 #include <list>
 
-
 namespace Square
 {
 namespace Resource
@@ -141,13 +140,14 @@ namespace Resource
 	};
 	
 	// Help parser
-	struct ShaderLoader
+	struct ShaderImportLoader
 	{
 		//lines and files
 		size_t  m_n_files{ 0 };
 		bool    m_files_as_name{ true };
+		bool	m_fail{ false };
 		//load
-		ShaderLoader
+		ShaderImportLoader
 		(
 			Context& context,
 			std::stringstream& source,
@@ -160,6 +160,16 @@ namespace Resource
 			m_n_files = 0;
 			m_files_as_name = files_as_name;
 			out = load(context, source, source_path, filepath_map, 0, 0);
+		}
+
+		bool fail() const
+		{
+			return m_fail;
+		}
+
+		bool success() const
+		{
+			return !m_fail;
 		}
 
 	protected:
@@ -223,7 +233,9 @@ namespace Resource
                             }
                             else
                             {
-                                throw std::runtime_error ( "shader, include path is invalid: " + source_path );
+								context.add_wrong("shader, include path is invalid: " + source_path);
+								m_fail = true;
+								return out;
                             }
                         break;
                         case '<': //import
@@ -233,20 +245,23 @@ namespace Resource
                                 //test path
                                 if(!sourcefile_path.size())
                                 {
-                                    throw std::runtime_error
-                                    (
-                                         "shader, include path is invalid: " + source_path + ", " + sourcefile_name + " not exists"
-                                    );
+									context.add_wrong("shader, include path is invalid: " + source_path + ", " + sourcefile_name + " not exists");
+									m_fail = true;
+									return out;
                                 }
                             }
                             else
                             {
-                                throw std::runtime_error ( "shader, include path is invalid: " + source_path );
+								context.add_wrong("shader, include path is invalid: " + source_path);
+								m_fail = true;
+								return out;
                             }
                         break;
                         default:
                             //error 3
-                            throw std::runtime_error ( "shader, include path is invalid: " + source_path );
+							context.add_wrong("shader, include path is invalid: " + source_path);
+							m_fail = true;
+							return out;
                         break;
                     };
                     //source
@@ -313,22 +328,12 @@ namespace Resource
 		size_t  this_file = 0;
 		//buffers
 		std::string source;
-		//process
-		try
-		{
-			//input stream
-			std::stringstream source_stream(Filesystem::text_file_read_all(path));
-			//load
-			ShaderLoader(context, source_stream, path, m_filepath_map, source);
-			//ok
-			return compile(source, PreprocessMap());
-		}
-		catch (std::exception e)
-		{
-			std::cerr << e.what() << std::endl;
-		}
-		//fail
-		return false;
+		//input stream
+		std::stringstream source_stream(Filesystem::text_file_read_all(path));
+		//process include/import
+		ShaderImportLoader preprocess(context, source_stream, path, m_filepath_map, source);
+		//compile
+		return  preprocess.success() && compile(source, PreprocessMap());
 	}
 
 	bool Shader::load(const std::string& path)
@@ -344,7 +349,7 @@ namespace Resource
 	)
 	{
 		//delete last shader
-		if (m_shader) Render::delete_shader(m_shader);
+		if (m_shader) destoy();
         //commondo header
         const static std::string shader_commond_header
         (
@@ -386,6 +391,8 @@ namespace Resource
 		//shaders
 		Xsc::ShaderInput shader_input_info[Render::ST_N_SHADER];
 		Xsc::ShaderOutput shader_output_info[Render::ST_N_SHADER];
+		Xsc::Reflection::ReflectionData reflection_data[Render::ST_N_SHADER];
+
 		std::stringstream  shader_output[Render::ST_N_SHADER];
 		std::string shader_headers[Render::ST_N_SHADER];
 		std::string shader_sources[Render::ST_N_SHADER];
@@ -412,7 +419,7 @@ namespace Resource
 
 		//init all inputs
 		for (unsigned short type = 0; type != Render::ST_N_SHADER; ++type)
-		{	
+		{
 			//supported?
 			if (shader_target_map[type] == Xsc::ShaderTarget::Undefined) continue;
 			//input
@@ -423,12 +430,20 @@ namespace Resource
 			//output
 			shader_output_info[type].sourceCode    = &shader_output[type];
 			shader_output_info[type].shaderVersion = (Xsc::OutputShaderVersion)shader_version;
+			shader_output_info[type].formatting.lineMarks = true;
+			shader_output_info[type].formatting.alwaysBracedScopes = true;
+			shader_output_info[type].options.separateShaders = true;
+			shader_output_info[type].options.separateSamplers = true;
+			shader_output_info[type].nameMangling.inputPrefix = "sq_";
+			shader_output_info[type].nameMangling.outputPrefix = "sq_";
+			shader_output_info[type].nameMangling.useAlwaysSemantics = true;
+			shader_output_info[type].nameMangling.renameBufferFields = true;
 			//compile
 			{
 				//output errors
 				CompilerLog logs;
 				//pass to compile
-				if (Xsc::CompileShader(shader_input_info[type], shader_output_info[type], &logs))
+				if (Xsc::CompileShader(shader_input_info[type], shader_output_info[type], &logs, &reflection_data[type]))
 				{
 					//save source
 					shader_sources[type] = shader_output[type].str();
@@ -446,13 +461,19 @@ namespace Resource
 				}
 				else
 				{
-					if (!logs.entry_point_not_found())
+					for (auto& entry : reflection_data[type].functions)
 					{
-						throw std::runtime_error
-						(
-							 "Error to compile \"" + shader_target_name[type] + "\": \n"
-							+ logs.get_errors()
-						);
+						if (entry.ident == shader_target_name[type] || type <= Render::ST_FRAGMENT_SHADER)
+						{
+							if (auto context = Application::context())
+							{
+								context->add_wrong
+								(
+									"Error to compile \"" + shader_target_name[type] + "\": \n" + logs.get_errors()
+								);
+							}
+							return false;
+						}
 					}
 				}
 			}
@@ -461,11 +482,21 @@ namespace Resource
 		// load shaders from files
 		//compile
 		m_shader = Render::create_shader(shader_info);
+		//tests
+		if (m_shader && !Render::shader_compiled_with_errors(m_shader) && !Render::shader_linked_with_error(m_shader))
+		{
+			if (auto context = Application::context())
+			{
+				context->add_wrong("Error to shader compile");
+				context->add_wrongs(Render::get_shader_compiler_errors(m_shader));
+				context->add_wrong(Render::get_shader_liker_error(m_shader));
+			}
+			return false;
+		}
 		//return success
-		return m_shader
-			&& !Render::shader_compiled_with_errors(m_shader)
-			&& !Render::shader_linked_with_error(m_shader);
+		return true;
 	}
+
 
 	//get buffer
 	Render::Uniform* Shader::uniform(const std::string& name)
@@ -502,6 +533,10 @@ namespace Resource
 		//delete last shader
 		if (m_shader) Render::delete_shader(m_shader);
 		m_shader = nullptr;
+		//clear info
+		m_filepath_map.clear();
+		m_uniform_map.clear();
+		m_cbuffer_map.clear();
 	}
 }
 }
