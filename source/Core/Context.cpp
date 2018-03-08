@@ -6,6 +6,7 @@
 //
 #include "Square/Core/Context.h"
 #include "Square/Core/Filesystem.h"
+#include <iostream>
 
 namespace Square
 {
@@ -194,4 +195,38 @@ namespace Square
     {
         m_variables[name] = value;
     }
+
+
+
+	//context errors/wrongs
+	void Context::add_wrong(const std::string& wrong)
+	{
+		m_wrongs.push_back(wrong);
+	}
+
+	void Context::add_wrongs(const Context::StringList& wrongs)
+	{
+		for (const std::string& wrong : wrongs)
+		{
+			m_wrongs.push_back(wrong);
+		}
+	}
+
+	const Context::StringList& Context::wrongs() const
+	{
+		return m_wrongs;
+	}
+
+	void Context::show_wrongs() const
+	{
+		show_wrongs(std::cerr);
+	}
+
+	void Context::show_wrongs(std::ostream& output) const
+	{
+		for (const std::string& wrong : wrongs())
+		{
+			output << wrong << std::endl;
+		}
+	}
 }

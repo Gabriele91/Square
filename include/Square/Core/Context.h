@@ -10,11 +10,23 @@
 #include "Square/Core/Resource.h"
 #include "Square/Core/Attribute.h"
 #include <unordered_map>
+#include <ostream>
 
 namespace Square
 {
 	class Context
 	{
+	protected:
+
+		//type
+		using VariantMap = std::unordered_map< std::string, Variant >;
+		using StringMap = std::unordered_map< std::string, std::string >;
+		using StringList = std::vector< std::string >;
+		//Attributes
+		using AttributeMap = std::unordered_map< uint64, std::vector < Attribute > >;
+		//Factory
+		using ObjectFactoryMap = std::unordered_map< uint64, Unique<ObjectFactory> >;
+
 	public:
 
 		//Create
@@ -72,16 +84,20 @@ namespace Square
         
         template< class T >  const std::string& resource_path(const std::string& name)
         { return resource_path(T::static_object_name() + ":" + name); }
+
+		//context errors/wrongs
+		void add_wrong(const std::string& wrong);
+
+		void add_wrongs(const StringList& wrongs);
+
+		const StringList& wrongs() const;
+
+		void show_wrongs() const;
+
+		void show_wrongs(std::ostream& output) const;
         
 	protected:
 	
-		//type
-		using VariantMap = std::unordered_map< std::string, Variant >;
-        using StringMap = std::unordered_map< std::string, std::string >;
-        //Attributes
-		using AttributeMap = std::unordered_map< uint64, std::vector < Attribute > >;
-        //Factory
-		using ObjectFactoryMap = std::unordered_map< uint64, Unique<ObjectFactory> >;
         //Resource
         struct ResourceFile
         {
@@ -108,6 +124,8 @@ namespace Square
 		//context
 		VariantMap       m_variables;
 		AttributeMap     m_attributes;
+		//pool of errors
+		StringList		 m_wrongs;
         //Object factory
 		ObjectFactoryMap m_object_factories;
         //Reousce factory

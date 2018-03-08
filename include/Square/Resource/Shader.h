@@ -18,6 +18,8 @@ namespace Resource
 		using PreprocessElement = std::tuple< std::string, std::string >;
 		using PreprocessMap     = std::vector< PreprocessElement >;
 		using FilepathMap       = std::unordered_map< size_t, std::string >;
+		using UnifomMap         = std::unordered_map< std::string, std::string >;
+		using CBufferMap        = std::unordered_map< std::string, std::string >;
 
         //Init object
         SQUARE_OBJECT(Shader)
@@ -65,6 +67,8 @@ namespace Resource
 		//Values
 		Render::Shader* m_shader{ nullptr };
 		FilepathMap	    m_filepath_map;
+		UnifomMap	    m_uniform_map;
+		CBufferMap	    m_cbuffer_map;
 
 	};
 }
