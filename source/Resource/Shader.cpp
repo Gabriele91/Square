@@ -405,7 +405,7 @@ namespace Resource
 			, Xsc::ShaderTarget::GeometryShader
 			, Xsc::ShaderTarget::TessellationControlShader
 			, Xsc::ShaderTarget::TessellationEvaluationShader
-			, Xsc::ShaderTarget::Undefined //compute shader
+            , Xsc::ShaderTarget::ComputeShader
 		};
 		std::string shader_target_name[Render::ST_N_SHADER] 
 		{
