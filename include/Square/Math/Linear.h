@@ -7,6 +7,9 @@
 #pragma once
 #include <cmath>
 
+//DEPTH [0,1] Vulakn / DirectX like//
+#define GLM_DEPTH_ZERO_TO_ONE
+
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
