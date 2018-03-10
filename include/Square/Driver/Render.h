@@ -23,6 +23,13 @@ namespace Render
 	class InputLayout;
 	class Uniform;
 	class Shader;
+	// POINTERS
+	using TextureSPtr	   = Shared< Texture >;
+	using TargetSPtr	   = Shared< Target >;
+	using VertexBufferSPtr = Shared< VertexBuffer >;
+	using IndexBufferSPtr  = Shared< IndexBuffer >;
+	using InputLayoutSPtr  = Shared< InputLayout >;
+	using ShaderSPtr       = Shared< Shader >;
 	////////////////////////////////////////////////
 	// SHADER
 	//uniform
@@ -124,14 +131,6 @@ namespace Render
 		{
 		}
 	};   
-	////////////////////////////////////////////////
-	// POINTERS
-	using TextureSPtr = std::shared_ptr< Texture >;
-	using TargetSPtr = std::shared_ptr< Target >;
-	using VertexBufferSPtr = std::shared_ptr< VertexBuffer >;
-	using IndexBufferSPtr = std::shared_ptr< IndexBuffer >;
-	using InputLayoutSPtr = std::shared_ptr< InputLayout >;
-	using ShaderSPtr = std::shared_ptr< Shader >;
 	////////////////////////////////////////////////
 	// Types
 	enum CullfaceType
@@ -790,6 +789,7 @@ namespace Render
 	SQUARE_RENDER_API void unbind_texture(Texture*);
     SQUARE_RENDER_API void unbind_texture(int n);
 	SQUARE_RENDER_API void delete_texture(Texture*&);
+	SQUARE_RENDER_API void delete_texture_(Texture*);
 
 	//shader
 	SQUARE_RENDER_API Shader* create_shader(const std::vector< ShaderSourceInformation >& infos);
@@ -820,12 +820,11 @@ namespace Render
 		Target* to,
 		TargetType	mask
 	);
-
+	
 	//debug
 	SQUARE_RENDER_API bool print_errors();
 	//Output file name and line
 	SQUARE_RENDER_API bool print_errors(const char* source_file_name, int line);
 	#define SQUARE_RENDER_PRINT_ERRORS ::hcube::render::print_errors(__FILE__,__LINE__);
-
 };
 }

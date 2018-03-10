@@ -81,7 +81,7 @@ namespace Render
 	{
 	public:
 		/////////////////////////////////////////////////////////////////////////
-		using uniform_map = std::unordered_map< std::string, Uniform >;
+		using UniformMap = std::unordered_map< std::string, Uniform >;
 		/////////////////////////////////////////////////////////////////////////
 		static const char* glsl_default_header;
 		static const char* glsl_header_by_type[ST_N_SHADER];
@@ -114,7 +114,7 @@ namespace Render
 		}
 
 		//uniforms
-		uniform_map m_uniform_map;
+		UniformMap m_uniform_map;
 		long m_uniform_ntexture{ -1 }; //n texture bind
 
 		//context
@@ -122,20 +122,20 @@ namespace Render
 		unsigned int m_shaders[ST_N_SHADER];//< shaders
 
 		//shader compile errors
-		struct shader_compile_error
+		struct ShaderCompileError
 		{
 			ShaderType m_type;
 			std::string m_log;
 		};
 
 		//shaders compiler errors
-		std::vector < shader_compile_error > m_errors;
+		std::vector < ShaderCompileError > m_errors;
 
 		//linking error
 		std::string m_liker_log;
 
 		//add error log
-		void push_compiler_error(const shader_compile_error& error_log)
+		void push_compiler_error(const ShaderCompileError& error_log)
 		{
 			m_errors.push_back(std::move(error_log));
 		}
@@ -343,19 +343,20 @@ namespace Render
 	,m_data(data)
 	{
 	}
+	
 	Uniform::~Uniform()
 	{
 
 	}
 
 	//BUFFER
-	class context_buffer
+	class ContextBuffer
 	{
 	public:
 
 		GLuint m_id_buffer;
 
-		context_buffer(GLuint id = 0) :m_id_buffer(id) {}
+		ContextBuffer(GLuint id = 0) :m_id_buffer(id) {}
 
 		inline operator GLuint() const
 		{
@@ -373,22 +374,22 @@ namespace Render
 		}
 	};
 
-	class ConstBuffer : public context_buffer
+	class ConstBuffer : public ContextBuffer
 	{
 	public:
-		ConstBuffer(GLuint id = 0) :context_buffer(id) {}
+		ConstBuffer(GLuint id = 0) :ContextBuffer(id) {}
 	};
 
-	class VertexBuffer : public context_buffer
+	class VertexBuffer : public ContextBuffer
 	{
 	public:
-		VertexBuffer(GLuint id = 0) :context_buffer(id) {}
+		VertexBuffer(GLuint id = 0) :ContextBuffer(id) {}
 	};
 
-	class IndexBuffer : public context_buffer
+	class IndexBuffer : public ContextBuffer
 	{
 	public:
-		IndexBuffer(GLuint id = 0) :context_buffer(id) {}
+		IndexBuffer(GLuint id = 0) :ContextBuffer(id) {}
 	};
 
 	//INPUT LAYOUT
@@ -427,15 +428,15 @@ namespace Render
 		}
     };
     ////////////////////
-    struct bind_context
+    struct BindContext
     {
         Texture*       m_textures[32]  { nullptr };
 		Texture*	   m_texture_buffer{ nullptr };
-		ConstBuffer*  m_const_buffer  { nullptr };
-        VertexBuffer* m_vertex_buffer { nullptr };
-        IndexBuffer*  m_index_buffer  { nullptr };
-        InputLayout*  m_input_layout  { nullptr };
-        Target* m_render_target { nullptr };
+		ConstBuffer*   m_const_buffer  { nullptr };
+        VertexBuffer*  m_vertex_buffer { nullptr };
+        IndexBuffer*   m_index_buffer  { nullptr };
+        InputLayout*   m_input_layout  { nullptr };
+        Target*		   m_render_target { nullptr };
 		Shader*		   m_shader		   { nullptr };
     };
     
@@ -511,10 +512,10 @@ namespace Render
 
 	///////////////////////
 	//globals
-    bind_context       s_bind_context;
-	State       s_render_state;
+    BindContext        s_bind_context;
+	State			   s_render_state;
 	GLuint             s_vao_attributes;
-    RenderDriverInfo s_render_driver_info;
+    RenderDriverInfo   s_render_driver_info;
 	///////////////////////
         
     static void compute_render_driver_info()
@@ -1129,7 +1130,7 @@ namespace Render
 	}
 	/*
 		Draw
-		*/
+	*/
 	inline static GLuint get_draw_type(DrawType type)
 	{
 		switch (type)
@@ -1312,7 +1313,7 @@ namespace Render
 	}
 	/*
 		Textures
-		*/
+	*/
 	inline const GLenum get_texture_format(TextureFormat type)
 	{
 		switch (type)
