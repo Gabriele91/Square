@@ -140,6 +140,7 @@
     <ClInclude Include="include\Square\Core\ClassObjectRegistration.h" />
     <ClInclude Include="include\Square\Core\Resource.h" />
     <ClInclude Include="include\Square\Core\SmartPointers.h" />
+    <ClInclude Include="include\Square\Core\StringUtilities.h" />
     <ClInclude Include="include\Square\Core\Time.h" />
     <ClInclude Include="include\Square\Core\Uncopyable.h" />
     <ClInclude Include="include\Square\Core\UtfConvert.h" />
@@ -165,6 +166,7 @@
     <ClInclude Include="include\Square\Resource\Texture.h" />
     <ClInclude Include="include\Square\Scene\Actor.h" />
     <ClInclude Include="include\Square\Scene\Component.h" />
+    <ClInclude Include="include\Square\Scene\Level.h" />
     <ClInclude Include="include\Square\Square.h" />
     <ClInclude Include="source\Driver\Cocoa\Input_private.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -272,6 +274,7 @@
     <ClCompile Include="source\Resource\Texture.cpp" />
     <ClCompile Include="source\Scene\Actor.cpp" />
     <ClCompile Include="source\Scene\Component.cpp" />
+    <ClCompile Include="source\Scene\Level.cpp" />
     <ClCompile Include="tests\main.cpp" />
   </ItemGroup>
   <ItemGroup>

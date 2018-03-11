@@ -20,11 +20,10 @@ namespace Scene
 {
     //..................
     //declaretion
-    class Actor;
-    class Component;
-    struct Message;
-    //..................
-    
+	class Actor;
+	class Level;
+	using ActorList = std::vector< Shared<Actor> >;
+	//..................
     class SQUARE_API Actor : public Object
                            , public SharedObject<Actor>
                            , public Uncopyable
@@ -63,18 +62,19 @@ namespace Scene
 			return StaticPointerCast<T>(component(T::static_object_id()));
 		}
 		Shared<Component> component(const std::string& name);
-		Shared<Component> component(uint64 id);
+		Shared<Component> component(uint64 id);		
+		const ComponentList& components() const;
         
         //get child
         Shared<Actor> child();
         Shared<Actor> child(size_t index);
-        Shared<Actor> child(const std::string& name);
+        Shared<Actor> child(const std::string& name);        
+		const ActorList& childs() const;
 
         //name        
         const std::string& name() const;
         void name(const std::string&);
 
-        
         //message
         void send_message(const Variant& value, bool brodcast = false);
         void send_message(const Message& msg, bool brodcast = false);
@@ -94,6 +94,9 @@ namespace Scene
         
         Mat4 const& local_model_matrix();
         Mat4 const& global_model_matrix();
+
+		//force to recompute all matrix
+		void dirty();
         
         //serialize
         void serialize(Data::Archive& archivie);
@@ -102,7 +105,18 @@ namespace Scene
         void deserialize(Data::Archive& archivie);
         void deserialize_json(Data::Json& archivie);
 
+		//get level
+		Level* level() const;
+		bool   is_root_of_level() const;
+		bool   remove_from_level();
+
     protected:
+		//friend class
+		friend class Level;
+		//set a level
+		void level(Level* level);
+		//level events
+		Level* m_level;
         //fake const
         Mat4 const& model_matrix() const;
         //local
@@ -128,8 +142,8 @@ namespace Scene
         //parent
         Shared<Actor> m_parent;
         //child list
-        std::vector< Shared<Actor> > m_childs;
-        std::vector< Shared<Component> > m_components;
+        ActorList     m_childs;
+		ComponentList m_components;
     };
 }
 }

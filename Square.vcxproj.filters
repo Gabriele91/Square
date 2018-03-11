@@ -216,6 +216,12 @@
     <ClInclude Include="include\Square\Data\ParseUtils.h">
       <Filter>Include\Square\Data</Filter>
     </ClInclude>
+    <ClInclude Include="include\Square\Scene\Level.h">
+      <Filter>Include\Square\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Square\Core\StringUtilities.h">
+      <Filter>Include\Square\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Core\Filesystem.cpp">
@@ -316,6 +322,9 @@
     </ClCompile>
     <ClCompile Include="source\Resource\Shader.cpp">
       <Filter>Source\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Scene\Level.cpp">
+      <Filter>Source\Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
