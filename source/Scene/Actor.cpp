@@ -5,8 +5,9 @@
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Core/Application.h"
-#include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"
+#include "Square/Scene/Actor.h"
+#include "Square/Scene/Level.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/ClassObjectRegistration.h"
@@ -122,6 +123,7 @@ namespace Scene
         child->remove_from_parent();
         child->m_parent = shared_from_this();
         m_childs.push_back(child);
+		child->dirty();
     }
     void Actor::add(Shared<Component> component)
     {
@@ -221,7 +223,11 @@ namespace Scene
 		//return
 		return new_component;
 	}
-    
+	const ComponentList& Actor::components() const
+	{
+		return m_components;
+	}
+
     //get/create child
     Shared<Actor> Actor::child()
     {
@@ -247,6 +253,10 @@ namespace Scene
         //return
         return actor;
     }
+	const ActorList& Actor::childs() const
+	{
+		return m_childs;
+	}
 
     //message to components
     void Actor::send_message(const Variant& variant, bool brodcast)
@@ -269,9 +279,41 @@ namespace Scene
             child->send_message(msg, brodcast);
         }
     }
-    
 
-    
+	//level
+	Level* Actor::level() const
+	{
+		     if (m_level) return m_level;
+		else if (parent()) return parent()->level();
+		else return nullptr;
+	}	
+
+	bool Actor::is_root_of_level() const
+	{
+		return !parent() && m_level;
+	}
+
+	bool Actor::remove_from_level()
+	{
+		if (m_level)
+		{
+			m_level->remove(shared_from_this());
+			m_level = nullptr;
+			dirty();
+			return true;
+		}
+		return false;
+	}
+	
+	void Actor::level(Level* level)
+	{
+		if (m_level != level)
+		{
+			m_level = level;
+			dirty();
+		}
+	}
+
     //matrix op
     void Actor::translation(const Vec3& vector)
     {
@@ -366,8 +408,13 @@ namespace Scene
         compute_matrix();
         return m_model_global;
     }
-    
-    
+
+	//force to recompute all matrix
+	void Actor::dirty()
+	{
+		set_dirty();
+	}
+
     void Actor::set_dirty()
     {
         if (!m_tranform.m_dirty)

@@ -22,6 +22,8 @@ namespace Scene
     class  Actor;
     class  Component;
 	struct Message;
+	//Alias
+	using ComponentList = std::vector< Shared<Component> >;
     //..................
     struct SQUARE_API Message
     {

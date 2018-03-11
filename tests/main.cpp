@@ -106,39 +106,28 @@ public:
 		auto shader = context().resource<Shader>("effect");
 
 		//test
-		Scene::Actor player;
-		player.translation({ 10,0,0 });
-		player.component<Sprite>()->m_scale = { 2,2 };
-		player.component<Sprite>()->m_pos = { 100,0 };
-		player.component<Sprite>()->m_texture = context().resource<Texture>("example");
-		player.component<Body>()->m_gravity = { 0,10, 0 };
-		{
-			std::ofstream ofile("agent.bin", std::ios::binary | std::ios::out);
-			ArchiveBinWrite out(ofile);
-			player.serialize(out);
-		}
-		{
-			std::ifstream ifile("agent.bin", std::ios::binary | std::ios::in);
-			ArchiveBinRead in(ifile);
-			player.deserialize(in);
-		}
-		std::cout << "pos "
-				  << player.component<Sprite>()->m_pos.x
-				  << ", "
-				  << player.component<Sprite>()->m_pos.y;
-		std::cout << std::endl;
-		std::cout << "scale "
-				  << player.component<Sprite>()->m_scale.x
-				  << ", "
-				  << player.component<Sprite>()->m_scale.y;
-		std::cout << std::endl;
-		std::cout << "texture "
-				  << player.component<Sprite>()->m_texture->get_width()
-				  << ", "
-				  << player.component<Sprite>()->m_texture->get_height();
-		std::cout << std::endl;
-	
-			
+		auto player = m_level.actor("player");
+		player->translation({ 10,0,0 });
+		player->component<Sprite>()->m_scale = { 2,2 };
+		player->component<Sprite>()->m_pos = { 100,0 };
+		player->component<Sprite>()->m_texture = context().resource<Texture>("example");
+		player->component<Body>()->m_gravity = { 0,10, 0 };
+
+		//chils 
+		player->child("left")->child("a.child.");
+		player->child("right")->child("the.child");
+
+		//serialize
+		serialize("level.sq");
+		deserialize("level.sq");
+
+		//find
+		auto p_l_s = m_level.find("player.left.a\\.child\\.");
+		auto p_r_s = m_level.find("player.right.the\\.child");
+
+		//test
+		std::cout << "child1: " << p_l_s->name() << std::endl;
+		std::cout << "child2: " << p_r_s->name() << std::endl;
     }
     bool run(double dt)
     {
@@ -148,10 +137,30 @@ public:
     {
         return true;
     }
+
+	//level serialize
+	void serialize(const std::string& path)
+	{
+		using namespace Square;
+		using namespace Square::Data;
+		std::ofstream ofile(path, std::ios::binary | std::ios::out);
+		ArchiveBinWrite out(ofile);
+		m_level.serialize(out);
+	}
+	//level deserialize
+	void deserialize(const std::string& path)
+	{
+		using namespace Square;
+		using namespace Square::Data;
+		std::ifstream ifile(path, std::ios::binary | std::ios::in);
+		ArchiveBinRead in(ifile);
+		m_level.deserialize(in);
+	}
+
 private:
     
     bool m_loop = true;
-    
+	Square::Scene::Level m_level;
 };
 
 int main()
