@@ -480,29 +480,35 @@ namespace Resource
 		}
 		////////////////////////////////////////////////////////////////////////////////
 		// load shaders from files
-		//compile
-		m_shader = Render::create_shader(shader_info);
-		//tests
-		if (!m_shader || Render::shader_compiled_with_errors(m_shader) || Render::shader_linked_with_error(m_shader))
+		if (auto render = Application::render())
 		{
-            //fail
-			if (auto context = Application::context())
+			//compile
+			m_shader = render->create_shader(shader_info);
+			//tests
+			if (!m_shader || render->shader_compiled_with_errors(m_shader) || render->shader_linked_with_error(m_shader))
 			{
-				context->add_wrong("Error to shader compile");
-				context->add_wrongs(Render::get_shader_compiler_errors(m_shader));
-				context->add_wrong(Render::get_shader_liker_error(m_shader));
+				//fail
+				if (auto context = Application::context())
+				{
+					context->add_wrong("Error to shader compile");
+					context->add_wrongs(render->get_shader_compiler_errors(m_shader));
+					context->add_wrong(render->get_shader_liker_error(m_shader));
+				}
+				return false;
 			}
-			return false;
+			//success
+			return true;
 		}
-		//success
-		return true;
+		return false;
 	}
 
 
 	//get buffer
 	Render::Uniform* Shader::uniform(const std::string& name)
 	{
-		return Render::get_uniform(m_shader, std::string(name));
+		if (auto render = Application::render())
+			return render->get_uniform(m_shader, std::string(name));
+		return nullptr;
 	}
 
 	Render::ConstBuffer* Shader::constant_buffer(const std::string& name) const
@@ -519,20 +525,24 @@ namespace Resource
 	//bind shader
 	void Shader::bind()
 	{
-		Render::bind_shader(m_shader);
+		if (auto render = Application::render())
+			render->bind_shader(m_shader);
 	}
 
 	//unbind shader
 	void Shader::unbind()
 	{
-		Render::unbind_shader(m_shader);
+		if (auto render = Application::render())
+			render->unbind_shader(m_shader);
 	}
 
 	//destoy shader
 	void Shader::destoy()
 	{
 		//delete last shader
-		if (m_shader) Render::delete_shader(m_shader);
+		if (m_shader)
+			if (auto render = Application::render())
+				render->delete_shader(m_shader);
 		m_shader = nullptr;
 		//clear info
 		m_filepath_map.clear();

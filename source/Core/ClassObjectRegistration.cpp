@@ -11,6 +11,18 @@
 
 namespace Square
 {
+	//item
+
+	ClassObjectRegistration::RegistrationItem::RegistrationItem
+	(
+		const ObjectInfo& info, 
+		const RegistrationFunction registration
+	)
+	: m_info(info)
+	, m_registration(registration)
+	{
+
+	}
 	//static 
 	static ClassObjectRegistration::RegistrationList& global_item_list()
 	{

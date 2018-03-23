@@ -7,6 +7,7 @@
 #include "Square/Core/Filesystem.h"
 #include "Square/Data/Image.h"
 #include "Square/Core/Context.h"
+#include "Square/Core/Application.h"
 #include "Square/Resource/Texture.h"
 #include "Square/Core/ClassObjectRegistration.h"
 
@@ -227,23 +228,27 @@ namespace Resource
 		m_format = format;
 		m_type = type;
 		//create texture
-		m_ctx_texture =
-		Render::create_texture
-		({
-			format,
-			(unsigned int)m_width,
-			(unsigned int)m_height,
-			buffer,
-			type,
-			Render::TTF_UNSIGNED_BYTE
-		},
+		if (auto render = Application::render())
 		{
-			attr.m_min_filter,
-			attr.m_mag_filter,
-			attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
-			attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
-			attr.m_build_mipmap
-		});
+			m_ctx_texture =
+			render->create_texture
+			({
+				format,
+				(unsigned int)m_width,
+				(unsigned int)m_height,
+				buffer,
+				type,
+				Render::TTF_UNSIGNED_BYTE
+			},
+			{
+				attr.m_min_filter,
+				attr.m_mag_filter,
+				attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
+				attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
+				attr.m_build_mipmap
+			});
+		}
+
 		//ok
 		return m_ctx_texture != nullptr;
 	}
@@ -275,7 +280,10 @@ namespace Resource
 
 	void Texture::destoy()
 	{
-		if (m_ctx_texture) Render::delete_texture(m_ctx_texture);
+		if (m_ctx_texture)
+			if (auto render = Application::render())
+				render->delete_texture(m_ctx_texture);
+		m_ctx_texture = nullptr;
 	}
 }
 }

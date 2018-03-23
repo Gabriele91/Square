@@ -4,9 +4,7 @@
 //  Created by Gabriele on 15/08/16.
 //  Copyright © 2016 Gabriele. All rights reserved.
 //
-#include "Square/Config.h"
-#include "Square/Driver/Render.h"
-#include "Square/Driver/OpenGL/OpenGL4.h"
+#include "RenderGL4.h"
 //--------------------------------------------------
 #include <iostream>
 #include <unordered_map>
@@ -37,117 +35,6 @@ namespace Square
 {
 namespace Render
 {
-	//TEXTURE
-	class Texture
-	{
-	public:
-		GLenum       m_type_texture{ GL_TEXTURE_2D };
-		int          m_last_bind{ -1 };
-		unsigned int m_tbo{ 0 };
-
-		Texture()  {}
-
-		virtual ~Texture()
-		{
-			if (m_tbo) glDeleteTextures(1, &m_tbo);
-		}
-
-		inline void create_TBO()
-		{
-			glGenTextures(1, &m_tbo);
-		}
-
-		inline void enable_TBO(int n)
-		{
-			m_last_bind = n;
-			glActiveTexture((GLenum)(GL_TEXTURE0 + m_last_bind));
-			glBindTexture(m_type_texture, m_tbo);
-		}
-
-		inline void disable_TBO()
-		{
-			if (m_last_bind >= 0)
-			{
-				glActiveTexture((GLenum)(GL_TEXTURE0 + m_last_bind));
-				glBindTexture(m_type_texture, (GLuint)0);
-				m_last_bind = -1;
-			}
-		}
-
-	};
-
-	//shader
-	class  Shader
-	{
-	public:
-		/////////////////////////////////////////////////////////////////////////
-		using UniformMap = std::unordered_map< std::string, Uniform >;
-		/////////////////////////////////////////////////////////////////////////
-		static const char* glsl_default_header;
-		static const char* glsl_header_by_type[ST_N_SHADER];
-		static const char* glsl_shader_names[ST_N_SHADER];
-		static GLenum      glsl_type_from_square_type[ST_N_SHADER];
-		/////////////////////////////////////////////////////////////////////////
-		//delete
-		~Shader()
-		{
-			//detach and delete all shader
-			if (m_shader_id)
-			{
-				for (unsigned int& shader : m_shaders)
-				{
-					if (shader)
-					{
-						//detach
-						glDetachShader(m_shader_id, shader);
-						//delete
-						glDeleteShader(shader);
-						//to null
-						shader = 0;
-					}
-				}
-				//delete shader program
-				glDeleteProgram(m_shader_id);
-				//to null
-				m_shader_id = 0;
-			}
-		}
-
-		//uniforms
-		UniformMap m_uniform_map;
-		long m_uniform_ntexture{ -1 }; //n texture bind
-
-		//context
-		unsigned int m_shader_id{ 0 }; //< shader program
-		unsigned int m_shaders[ST_N_SHADER];//< shaders
-
-		//shader compile errors
-		struct ShaderCompileError
-		{
-			ShaderType m_type;
-			std::string m_log;
-		};
-
-		//shaders compiler errors
-		std::vector < ShaderCompileError > m_errors;
-
-		//linking error
-		std::string m_liker_log;
-
-		//add error log
-		void push_compiler_error(const ShaderCompileError& error_log)
-		{
-			m_errors.push_back(std::move(error_log));
-		}
-
-		void push_liker_error(const std::string& error_log)
-		{
-			m_liker_log += error_log;
-			m_liker_log += "\n";
-		}
-
-	};
-
 	const char* Shader::glsl_default_header=
 	R"GLSL(
 	//POSITION TRANSFORM
@@ -227,219 +114,140 @@ namespace Render
 		GL_COMPUTE_SHADER
 	};
 
-	//util_define
-	#define uniform_id(shader) (*((GLint*)(&m_data)))
 	//uniform
-	void Uniform::set_value(Texture* in_texture)
+	void UniformGL4::set_value(Texture* in_texture)
 	{
 		long n_texture = ++m_shader->m_uniform_ntexture;
 		//bind texture
-		bind_texture(in_texture, (int)n_texture);
+		m_context->bind_texture(in_texture, (int)n_texture);
 		//bind id
-		glUniform1i(uniform_id(m_shader), (int)n_texture);
+		glUniform1i(m_id, (int)n_texture);
 	}
 
-	void Uniform::set_value(int i)
+	void UniformGL4::set_value(int i)
 	{
-		glUniform1i(uniform_id(m_shader), i);
+		glUniform1i(m_id, i);
 	}
-	void Uniform::set_value(float f)
+	void UniformGL4::set_value(float f)
 	{
-		glUniform1f(uniform_id(m_shader), f);
+		glUniform1f(m_id, f);
 	}
-	void Uniform::set_value(const Vec2& v2)
+	void UniformGL4::set_value(const Vec2& v2)
 	{
-		glUniform2fv(uniform_id(m_shader), 1, value_ptr(v2));
+		glUniform2fv(m_id, 1, value_ptr(v2));
 	}
-	void Uniform::set_value(const Vec3& v3)
+	void UniformGL4::set_value(const Vec3& v3)
 	{
-		glUniform3fv(uniform_id(m_shader), 1, value_ptr(v3));
+		glUniform3fv(m_id, 1, value_ptr(v3));
 	}
-	void Uniform::set_value(const Vec4& v4)
+	void UniformGL4::set_value(const Vec4& v4)
 	{
-		glUniform4fv(uniform_id(m_shader), 1, value_ptr(v4));
+		glUniform4fv(m_id, 1, value_ptr(v4));
 	}
-	void Uniform::set_value(const Mat3& m3)
+	void UniformGL4::set_value(const Mat3& m3)
 	{
-		glUniformMatrix3fv(uniform_id(m_shader), 1, GL_FALSE, value_ptr(m3));
+		glUniformMatrix3fv(m_id, 1, GL_FALSE, value_ptr(m3));
 	}
-	void Uniform::set_value(const Mat4& m4)
+	void UniformGL4::set_value(const Mat4& m4)
 	{
-		glUniformMatrix4fv(uniform_id(m_shader), 1, GL_FALSE, value_ptr(m4));
-	}
-
-	void Uniform::set_value(const int* i, size_t n)
-	{
-		glUniform1iv(uniform_id(m_shader), (GLsizei)n, i);
-	}
-	void Uniform::set_value(const float* f, size_t n)
-	{
-		glUniform1fv(uniform_id(m_shader), (GLsizei)n, f);
-	}
-	void Uniform::set_value(const Vec2* v2, size_t n)
-	{
-		glUniform2fv(uniform_id(m_shader), (GLsizei)n, value_ptr(*v2));
-	}
-	void Uniform::set_value(const Vec3* v3, size_t n)
-	{
-		glUniform3fv(uniform_id(m_shader), (GLsizei)n, value_ptr(*v3));
-	}
-	void Uniform::set_value(const Vec4* v4, size_t n)
-	{
-		glUniform4fv(uniform_id(m_shader), (GLsizei)n, value_ptr(*v4));
-	}
-	void Uniform::set_value(const Mat3* m3, size_t n)
-	{
-		glUniformMatrix3fv(uniform_id(m_shader), (GLsizei)n, GL_FALSE, value_ptr(*m3));
-	}
-	void Uniform::set_value(const Mat4* m4, size_t n)
-	{
-		glUniformMatrix4fv(uniform_id(m_shader), (GLsizei)n, GL_FALSE, value_ptr(*m4));
+		glUniformMatrix4fv(m_id, 1, GL_FALSE, value_ptr(m4));
 	}
 
-	void Uniform::set_value(const std::vector < int >& i)
+	void UniformGL4::set_value(const int* i, size_t n)
+	{
+		glUniform1iv(m_id, (GLsizei)n, i);
+	}
+	void UniformGL4::set_value(const float* f, size_t n)
+	{
+		glUniform1fv(m_id, (GLsizei)n, f);
+	}
+	void UniformGL4::set_value(const Vec2* v2, size_t n)
+	{
+		glUniform2fv(m_id, (GLsizei)n, value_ptr(*v2));
+	}
+	void UniformGL4::set_value(const Vec3* v3, size_t n)
+	{
+		glUniform3fv(m_id, (GLsizei)n, value_ptr(*v3));
+	}
+	void UniformGL4::set_value(const Vec4* v4, size_t n)
+	{
+		glUniform4fv(m_id, (GLsizei)n, value_ptr(*v4));
+	}
+	void UniformGL4::set_value(const Mat3* m3, size_t n)
+	{
+		glUniformMatrix3fv(m_id, (GLsizei)n, GL_FALSE, value_ptr(*m3));
+	}
+	void UniformGL4::set_value(const Mat4* m4, size_t n)
+	{
+		glUniformMatrix4fv(m_id, (GLsizei)n, GL_FALSE, value_ptr(*m4));
+	}
+
+	void UniformGL4::set_value(const std::vector < int >& i)
 	{
 		set_value(i.data(), i.size());
 	}
-	void Uniform::set_value(const std::vector < float >& f)
+	void UniformGL4::set_value(const std::vector < float >& f)
 	{
 		set_value(f.data(), f.size());
 	}
-	void Uniform::set_value(const std::vector < Vec2 >& v2)
+	void UniformGL4::set_value(const std::vector < Vec2 >& v2)
 	{
 		set_value(v2.data(), v2.size());
 	}
-	void Uniform::set_value(const std::vector < Vec3 >& v3)
+	void UniformGL4::set_value(const std::vector < Vec3 >& v3)
 	{
 		set_value(v3.data(), v3.size());
 	}
-	void Uniform::set_value(const std::vector < Vec4 >& v4)
+	void UniformGL4::set_value(const std::vector < Vec4 >& v4)
 	{
 		set_value(v4.data(), v4.size());
 	}
-	void Uniform::set_value(const std::vector < Mat3 >& m3)
+	void UniformGL4::set_value(const std::vector < Mat3 >& m3)
 	{
 		set_value(m3.data(), m3.size());
 	}
-	void Uniform::set_value(const std::vector < Mat4 >& m4)
+	void UniformGL4::set_value(const std::vector < Mat4 >& m4)
 	{
 		set_value(m4.data(), m4.size());
 	}
 
-	void Uniform::set_value(const ConstBuffer* buffer)
+	void UniformGL4::set_value(const ConstBuffer* buffer)
 	{
-		glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_shader->m_shader_id, get_native_CB(buffer).get<GLuint>());
+		glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_shader->m_shader_id, m_context->get_native_CB(buffer).get<GLuint>());
 	}
 
-	bool Uniform::is_valid(){ return m_shader && uniform_id(m_shader) != -1; }
+	bool UniformGL4::is_valid(){ return m_context && m_shader && m_id != -1; }
 	
-	Shader* Uniform::get_shader()
+	Shader* UniformGL4::get_shader()
 	{
 		return m_shader;
 	}
 
-	Uniform::Uniform(Shader* shader, void* data)
-	:m_shader(shader)
-	,m_data(data)
+	UniformGL4::UniformGL4(ContextGL4* context, Shader* shader, GLint id)
+	:m_context(context)
+	,m_shader(shader)
+	,m_id(id)
+	{
+	}
+
+	UniformGL4::UniformGL4()
+	:m_context(nullptr)
+	,m_shader(nullptr)
+	,m_id(-1)
 	{
 	}
 	
-	Uniform::~Uniform()
+	UniformGL4::~UniformGL4()
 	{
-
+		//none
 	}
-
-	//BUFFER
-	class ContextBuffer
-	{
-	public:
-
-		GLuint m_id_buffer;
-
-		ContextBuffer(GLuint id = 0) :m_id_buffer(id) {}
-
-		inline operator GLuint() const
-		{
-			return m_id_buffer;
-		}
-
-		inline operator GLuint*()
-		{
-			return &m_id_buffer;
-		}
-
-		void gen_buffer()
-		{
-			glGenBuffers(1, &m_id_buffer);
-		}
-	};
-
-	class ConstBuffer : public ContextBuffer
-	{
-	public:
-		ConstBuffer(GLuint id = 0) :ContextBuffer(id) {}
-	};
-
-	class VertexBuffer : public ContextBuffer
-	{
-	public:
-		VertexBuffer(GLuint id = 0) :ContextBuffer(id) {}
-	};
-
-	class IndexBuffer : public ContextBuffer
-	{
-	public:
-		IndexBuffer(GLuint id = 0) :ContextBuffer(id) {}
-	};
-
-	//INPUT LAYOUT
-	class InputLayout
-	{
-	public:
-		AttributeList m_list;
-	};
-
-	//FRAMES TARGET
-	class Target
-	{
-	public:
-
-		GLuint m_fbo{ 0 };
-
-		virtual ~Target()
-		{
-			if (m_fbo) glDeleteFramebuffers(1, &m_fbo);
-		}
-		//fbo
-		void gen_FBO()
-		{
-			//vbo
-			glGenFramebuffers(1, &m_fbo);
-		}
-
-		void enable_FBO()
-		{
-			glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-		}
-
-		void disable_FBO()
-		{
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		}
-    };
-    ////////////////////
-    struct BindContext
-    {
-        Texture*       m_textures[32]  { nullptr };
-		Texture*	   m_texture_buffer{ nullptr };
-		ConstBuffer*   m_const_buffer  { nullptr };
-        VertexBuffer*  m_vertex_buffer { nullptr };
-        IndexBuffer*   m_index_buffer  { nullptr };
-        InputLayout*   m_input_layout  { nullptr };
-        Target*		   m_render_target { nullptr };
-		Shader*		   m_shader		   { nullptr };
-    };
     
+    ////////////////////
+	//     RENDER     //
+	////////////////////
+
+    ////////////////////
+	// Get Shader Version
     static int make_test_to_get_shader_version()
     {
         struct shader_test
@@ -505,36 +313,24 @@ namespace Render
         //output
         return tests[supported].m_version;
     }
-    
-    ////////////////////
-	//     RENDER     //
-	////////////////////
 
-	///////////////////////
-	//globals
-    BindContext        s_bind_context;
-	State			   s_render_state;
-	GLuint             s_vao_attributes;
-    RenderDriverInfo   s_render_driver_info;
-	///////////////////////
-        
-    static void compute_render_driver_info()
+    static void compute_render_driver_info(ContextGL4* context)
     {
         RenderDriverInfo m_info;
         //type
-        s_render_driver_info.m_render_driver = DR_OPENGL;
+		context->s_render_driver_info.m_render_driver = DR_OPENGL;
         //Get driver vendor
-        s_render_driver_info.m_name = (const char*)glGetString(GL_VENDOR);
+		context->s_render_driver_info.m_name = (const char*)glGetString(GL_VENDOR);
         //get version
-        glGetIntegerv(GL_MAJOR_VERSION, &s_render_driver_info.m_major_version);
-        glGetIntegerv(GL_MINOR_VERSION, &s_render_driver_info.m_minor_version);
+        glGetIntegerv(GL_MAJOR_VERSION, &context->s_render_driver_info.m_major_version);
+        glGetIntegerv(GL_MINOR_VERSION, &context->s_render_driver_info.m_minor_version);
         //shader type
-        s_render_driver_info.m_shader_language = "GLSL";
+		context->s_render_driver_info.m_shader_language = "GLSL";
         //shader version
-        s_render_driver_info.m_shader_version  = make_test_to_get_shader_version();
+		context->s_render_driver_info.m_shader_version  = make_test_to_get_shader_version();
     }
         
-	bool init()
+	bool ContextGL4::init()
 	{
 
 #ifdef _WIN32
@@ -561,7 +357,7 @@ namespace Render
 		//clean
 		print_errors();
         //get info
-        compute_render_driver_info();
+        compute_render_driver_info(this);
         //clean
         print_errors();
 		//attributes vao
@@ -595,7 +391,7 @@ namespace Render
 		return true;
 	}
 
-	void print_info()
+	void ContextGL4::print_info()
 	{
 		std::string renderer = (const char*)glGetString(GL_RENDERER);
 		std::string version = (const char*)glGetString(GL_VERSION);
@@ -603,27 +399,27 @@ namespace Render
 		std::cout << "OpenGL version supported: " << version << std::endl;
 	}
 
-	void close()
+	void ContextGL4::close()
 	{
 		if (s_vao_attributes) glDeleteVertexArrays(1, &s_vao_attributes);
 	}
 
-	RenderDriver get_render_driver()
+	RenderDriver ContextGL4::get_render_driver()
 	{
 		return s_render_driver_info.m_render_driver;
 	}
         
-    RenderDriverInfo get_render_driver_info()
+    RenderDriverInfo ContextGL4::get_render_driver_info()
     {
         return s_render_driver_info;
     }
 
-	const ClearColorState& get_clear_color_state()
+	const ClearColorState& ContextGL4::get_clear_color_state()
 	{
 		return s_render_state.m_clear_color;
 	}
         
-	void set_clear_color_state(const ClearColorState& clear_color)
+	void ContextGL4::set_clear_color_state(const ClearColorState& clear_color)
 	{
 		if (s_render_state.m_clear_color != clear_color)
 		{
@@ -632,7 +428,7 @@ namespace Render
 		}
 	}
 
-	void clear(int type)
+	void ContextGL4::clear(int type)
 	{
         GLbitfield clear_type_gl = 0;
         if(type & CLEAR_COLOR) clear_type_gl |= GL_COLOR_BUFFER_BIT;
@@ -640,7 +436,7 @@ namespace Render
 		if(clear_type_gl) glClear(clear_type_gl);
 	}
 
-	const DepthBufferState& get_depth_buffer_state()
+	const DepthBufferState& ContextGL4::get_depth_buffer_state()
 	{
 		return s_render_state.m_depth;
 	}
@@ -661,7 +457,7 @@ namespace Render
 		}
 	}
 
-	void set_depth_buffer_state(const DepthBufferState& depth)
+	void ContextGL4::set_depth_buffer_state(const DepthBufferState& depth)
 	{
 
 		if (s_render_state.m_depth != depth)
@@ -686,12 +482,12 @@ namespace Render
 		}
 	}
 
-	const CullfaceState& get_cullface_state()
+	const CullfaceState& ContextGL4::get_cullface_state()
 	{
 		return s_render_state.m_cullface;
 	}
 
-	void set_cullface_state(const CullfaceState& cfs)
+	void ContextGL4::set_cullface_state(const CullfaceState& cfs)
 	{
 
 		if (s_render_state.m_cullface != cfs)
@@ -716,13 +512,13 @@ namespace Render
 		}
 	}
 
-	const ViewportState& get_viewport_state()
+	const ViewportState& ContextGL4::get_viewport_state()
 	{
 		//return
 		return s_render_state.m_viewport;
 	}
 
-	void  set_viewport_state(const ViewportState& vs)
+	void  ContextGL4::set_viewport_state(const ViewportState& vs)
 	{
 		if (s_render_state.m_viewport != vs)
 		{
@@ -736,7 +532,7 @@ namespace Render
 		}
 	}
 
-	const BlendState& get_blend_state()
+	const BlendState& ContextGL4::get_blend_state()
 	{
 		return s_render_state.m_blend;
 	}
@@ -763,7 +559,7 @@ namespace Render
 		}
 	}
 
-	void  set_blend_state(const BlendState& bs)
+	void  ContextGL4::set_blend_state(const BlendState& bs)
 	{
 		if (s_render_state.m_blend != bs)
 		{
@@ -787,12 +583,12 @@ namespace Render
 		}
 	}
 
-	const State& get_render_state()
+	const State& ContextGL4::get_render_state()
 	{
 		return s_render_state;
 	}
 
-	void set_render_state(const State& rs)
+	void ContextGL4::set_render_state(const State& rs)
 	{
 		set_clear_color_state(rs.m_clear_color);
 		set_cullface_state(rs.m_cullface);
@@ -805,7 +601,7 @@ namespace Render
 	/*
 	VBO & IBO
 	*/
-	ConstBuffer* create_stream_CB(const unsigned char* data, size_t size)
+	ConstBuffer* ContextGL4::create_stream_CB(const unsigned char* data, size_t size)
 	{
 		auto ptr = new ConstBuffer();
 		ptr->gen_buffer();
@@ -814,7 +610,7 @@ namespace Render
 		return ptr;
 	}
 
-	VertexBuffer* create_stream_VBO(const unsigned char* vbo, size_t stride, size_t n)
+	VertexBuffer* ContextGL4::create_stream_VBO(const unsigned char* vbo, size_t stride, size_t n)
 	{
 		auto ptr = new VertexBuffer();
 		ptr->gen_buffer();
@@ -823,7 +619,7 @@ namespace Render
 		return ptr;
 	}
 
-	IndexBuffer* create_stream_IBO(const unsigned int* ibo, size_t size)
+	IndexBuffer* ContextGL4::create_stream_IBO(const unsigned int* ibo, size_t size)
 	{
 		auto ptr = new IndexBuffer();
 		ptr->gen_buffer();
@@ -832,7 +628,7 @@ namespace Render
 		return ptr;
 	}
 		
-	ConstBuffer* create_CB(const unsigned char* data, size_t size)
+	ConstBuffer* ContextGL4::create_CB(const unsigned char* data, size_t size)
 	{
 		auto ptr = new ConstBuffer();
 		ptr->gen_buffer();
@@ -841,7 +637,7 @@ namespace Render
 		return ptr;
 	}
 
-	VertexBuffer* create_VBO(const unsigned char* vbo, size_t stride, size_t n)
+	VertexBuffer* ContextGL4::create_VBO(const unsigned char* vbo, size_t stride, size_t n)
 	{
 		auto ptr = new VertexBuffer();
 		ptr->gen_buffer();
@@ -850,7 +646,7 @@ namespace Render
 		return ptr;
 	}
 
-	IndexBuffer* create_IBO(const unsigned int* ibo, size_t size)
+	IndexBuffer* ContextGL4::create_IBO(const unsigned int* ibo, size_t size)
 	{
 		auto ptr = new IndexBuffer();
 		ptr->gen_buffer();
@@ -859,22 +655,22 @@ namespace Render
 		return ptr;
 	}
 
-	Variant get_native_CB(const ConstBuffer* cb)
+	Variant ContextGL4::get_native_CB(const ConstBuffer* cb)
 	{
 		return{ cb->m_id_buffer };
 	}
 
-	Variant get_native_VBO(const VertexBuffer* vb)
+	Variant ContextGL4::get_native_VBO(const VertexBuffer* vb)
 	{
 		return{ vb->m_id_buffer };
 	}
 
-	Variant get_native_IBO(const IndexBuffer* ib)
+	Variant ContextGL4::get_native_IBO(const IndexBuffer* ib)
 	{
 		return{ ib->m_id_buffer };
 	}
 
-	void update_steam_CB(ConstBuffer* cb, const unsigned char* data, size_t size)
+	void ContextGL4::update_steam_CB(ConstBuffer* cb, const unsigned char* data, size_t size)
 	{
 		//get state
 		GLint lastbind = 0;
@@ -886,7 +682,7 @@ namespace Render
 		glBindBuffer(GL_UNIFORM_BUFFER, lastbind);
 	}
 
-	void update_steam_VBO(VertexBuffer* vbo, const unsigned char* data, size_t size)
+	void ContextGL4::update_steam_VBO(VertexBuffer* vbo, const unsigned char* data, size_t size)
 	{
 		//get state
 		GLint lastbind = 0;
@@ -898,7 +694,7 @@ namespace Render
 		glBindBuffer(GL_ARRAY_BUFFER, lastbind);
 	}
 
-	void update_steam_IBO(IndexBuffer* ibo, const unsigned int* data, size_t size) {
+	void ContextGL4::update_steam_IBO(IndexBuffer* ibo, const unsigned int* data, size_t size) {
 		//get state
 		GLint lastbind;
 		glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER, &lastbind);
@@ -909,7 +705,7 @@ namespace Render
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastbind);
 	}
 		 
-	void bind_CB(ConstBuffer* cb)
+	void ContextGL4::bind_CB(ConstBuffer* cb)
 	{
 		if (cb && s_bind_context.m_const_buffer != cb)
 		{
@@ -925,7 +721,7 @@ namespace Render
 		}
 	}
 
-	void bind_VBO(VertexBuffer* vbo)
+	void ContextGL4::bind_VBO(VertexBuffer* vbo)
 	{
         if(vbo && s_bind_context.m_vertex_buffer != vbo)
         {
@@ -941,7 +737,7 @@ namespace Render
         }
 	}
 
-	void bind_IBO(IndexBuffer* ibo)
+	void ContextGL4::bind_IBO(IndexBuffer* ibo)
     {
         if(ibo && s_bind_context.m_index_buffer != ibo)
         {
@@ -957,7 +753,7 @@ namespace Render
         }
 	}
 
-	void unbind_CB(ConstBuffer* cb)
+	void ContextGL4::unbind_CB(ConstBuffer* cb)
 	{
 		if (cb)
 		{
@@ -967,7 +763,7 @@ namespace Render
 		}
 	}
 
-	void unbind_VBO(VertexBuffer* vbo)
+	void ContextGL4::unbind_VBO(VertexBuffer* vbo)
 	{
         if(vbo)
         {
@@ -977,7 +773,7 @@ namespace Render
         }
 	}
 
-	void unbind_IBO(IndexBuffer* ibo)
+	void ContextGL4::unbind_IBO(IndexBuffer* ibo)
     {
         if(ibo)
         {
@@ -986,8 +782,7 @@ namespace Render
             s_bind_context.m_index_buffer = nullptr;
         }
 	}
-
-
+	
 	GLbitfield get_mapping_type_map_buff_range(MappingType type)
 	{
 		/*
@@ -1016,46 +811,46 @@ namespace Render
 		}
 	}
 
-	unsigned char* map_CB(ConstBuffer* cb, size_t start, size_t n, MappingType type)
+	unsigned char* ContextGL4::map_CB(ConstBuffer* cb, size_t start, size_t n, MappingType type)
 	{
 		bind_CB(cb);
 		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 		return (unsigned char*)glMapBufferRange(GL_UNIFORM_BUFFER, start, n, get_mapping_type_map_buff_range(type));
 	}
 
-	void unmap_CB(ConstBuffer* cb)
+	void ContextGL4::unmap_CB(ConstBuffer* cb)
 	{
 		glUnmapBuffer(GL_UNIFORM_BUFFER);
 		unbind_CB(cb);
 	}
 		
-	unsigned char* map_VBO(VertexBuffer* vbo, size_t start, size_t n, MappingType type)
+	unsigned char* ContextGL4::map_VBO(VertexBuffer* vbo, size_t start, size_t n, MappingType type)
 	{
 		bind_VBO(vbo);
 		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 		return (unsigned char*)glMapBufferRange(GL_ARRAY_BUFFER, start, n, get_mapping_type_map_buff_range(type));
 	}
 
-	void unmap_VBO(VertexBuffer* vbo)
+	void ContextGL4::unmap_VBO(VertexBuffer* vbo)
 	{
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 		unbind_VBO(vbo);
 	}
 
-	unsigned int*  map_IBO(IndexBuffer* ibo, size_t start, size_t n, MappingType type)
+	unsigned int*  ContextGL4::map_IBO(IndexBuffer* ibo, size_t start, size_t n, MappingType type)
 	{
 		bind_IBO(ibo);
 		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 		return (unsigned int*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, start * sizeof(unsigned int), n * sizeof(unsigned int), get_mapping_type_map_buff_range(type));
 	}
 
-	void unmap_IBO(IndexBuffer* ibo)
+	void ContextGL4::unmap_IBO(IndexBuffer* ibo)
 	{
 		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 		unbind_IBO(ibo);
 	}
 
-	unsigned char* map_TBO(Texture* tbo, MappingType type)
+	unsigned char* ContextGL4::map_TBO(Texture* tbo, MappingType type)
 	{
 		if (tbo && s_bind_context.m_texture_buffer != tbo)
 		{
@@ -1076,7 +871,7 @@ namespace Render
         return nullptr;
 	}
 
-	void unmap_TBO(Texture* tbo)
+	void ContextGL4::unmap_TBO(Texture* tbo)
 	{
 		if (tbo)
 		{
@@ -1090,7 +885,7 @@ namespace Render
 		}
 	}
 
-	void delete_CB(ConstBuffer*& cb)
+	void ContextGL4::delete_CB(ConstBuffer*& cb)
 	{
 		//test
 		if (s_bind_context.m_const_buffer == cb)
@@ -1103,7 +898,7 @@ namespace Render
 		cb = nullptr;
 	}
 
-	void delete_VBO(VertexBuffer*& vbo)
+	void ContextGL4::delete_VBO(VertexBuffer*& vbo)
 	{
         //test
         if(s_bind_context.m_vertex_buffer == vbo)
@@ -1116,7 +911,7 @@ namespace Render
 		vbo = nullptr;
 	}
 
-	void delete_IBO(IndexBuffer*& ibo)
+	void ContextGL4::delete_IBO(IndexBuffer*& ibo)
     {
         //test
         if(s_bind_context.m_index_buffer == ibo)
@@ -1144,17 +939,17 @@ namespace Render
 		}
 	}
 
-	void draw_arrays(DrawType type, unsigned int n)
+	void ContextGL4::draw_arrays(DrawType type, unsigned int n)
 	{
 		glDrawArrays(get_draw_type(type), 0, n);
 	}
 
-	void draw_arrays(DrawType type, unsigned int start, unsigned int size)
+	void ContextGL4::draw_arrays(DrawType type, unsigned int start, unsigned int size)
 	{
 		glDrawArrays(get_draw_type(type), start, size);
 	}
 
-	void draw_elements(DrawType type, unsigned int n)
+	void ContextGL4::draw_elements(DrawType type, unsigned int n)
 	{
 		glDrawElements(get_draw_type(type), n, GL_UNSIGNED_INT, (void*)NULL);
 	}
@@ -1162,18 +957,17 @@ namespace Render
 	/*
 		InputLayout
 	*/
-
-	InputLayout* create_IL(const AttributeList& atl)
+	InputLayout* ContextGL4::create_IL(const AttributeList& atl)
 	{
 		return new InputLayout{ atl };
 	}
 
-	size_t size_IL(const InputLayout* layout)
+	size_t ContextGL4::size_IL(const InputLayout* layout)
 	{
 		return layout->m_list.size();
 	}
 
-	bool has_a_position_IL(const InputLayout* layout)
+	bool ContextGL4::has_a_position_IL(const InputLayout* layout)
 	{
 
 		for (auto& in : layout->m_list)
@@ -1182,7 +976,7 @@ namespace Render
 		return false;
 	}
 
-	size_t position_offset_IL(const InputLayout* layout)
+	size_t ContextGL4::position_offset_IL(const InputLayout* layout)
 	{
 		for (auto& in : layout->m_list)
 			if (in.is_position_transform())
@@ -1238,7 +1032,7 @@ namespace Render
 		}
 	}
 
-	void bind_IL(InputLayout* layout)
+	void ContextGL4::bind_IL(InputLayout* layout)
 	{
         if(layout && s_bind_context.m_input_layout != layout)
         {
@@ -1274,7 +1068,7 @@ namespace Render
         }
 	}
 
-	void unbind_IL(InputLayout* layout)
+	void ContextGL4::unbind_IL(InputLayout* layout)
 	{
         if(layout)
         {
@@ -1290,14 +1084,14 @@ namespace Render
         }
 	}
 
-	void delete_IL(InputLayout*& il)
+	void ContextGL4::delete_IL(InputLayout*& il)
 	{
 		delete  il;
 		il = nullptr;
 	}
 
 	//DEPTH
-	float get_depth(const Vec2& pixel)
+	float ContextGL4::get_depth(const Vec2& pixel)
 	{
 		float depth;
 		glReadPixels(GLint(pixel.x), GLint(pixel.y), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
@@ -1305,7 +1099,7 @@ namespace Render
 	}
 
 	//RGBA
-	Vec4 get_color(const Vec2& pixel)
+	Vec4 ContextGL4::get_color(const Vec2& pixel)
 	{
 		Vec4 rgba;
 		glReadPixels(GLint(pixel.x), GLint(pixel.y), 1, 1, GL_RGBA, GL_FLOAT, &rgba);
@@ -1445,7 +1239,7 @@ namespace Render
 		}
 	}
 
-	Texture* create_texture
+	Texture* ContextGL4::create_texture
 	(
 		const TextureRawDataInformation& data,
 		const TextureGpuDataInformation& info
@@ -1490,7 +1284,7 @@ namespace Render
 		return ctx_texture;
 	}
 
-	Texture* create_cube_texture
+	Texture* ContextGL4::create_cube_texture
 	(
 		const TextureRawDataInformation data[6],
 		const TextureGpuDataInformation& info
@@ -1542,7 +1336,7 @@ namespace Render
 		return ctx_texture;
 	}
         
-	std::vector< unsigned char > get_texture(Texture* tex, int level)
+	std::vector< unsigned char > ContextGL4::get_texture(Texture* tex, int level)
 	{
 		// get last bind
 		auto last_texture = s_bind_context.m_textures[0];
@@ -1579,7 +1373,7 @@ namespace Render
 		return output;
 	}
 
-	void bind_texture(Texture* ctx_texture, int n)
+	void ContextGL4::bind_texture(Texture* ctx_texture, int n)
 	{
         if (ctx_texture && ctx_texture != s_bind_context.m_textures[n])
         {
@@ -1593,7 +1387,7 @@ namespace Render
         }
 	}
 
-	void unbind_texture(Texture* ctx_texture)
+	void ContextGL4::unbind_texture(Texture* ctx_texture)
 	{
         if (ctx_texture)
         {
@@ -1604,12 +1398,12 @@ namespace Render
         }
 	}
         
-    void unbind_texture(int n)
+    void ContextGL4::unbind_texture(int n)
     {
         unbind_texture(s_bind_context.m_textures[n]);
     }
         
-	void delete_texture(Texture*& ctx_texture)
+	void ContextGL4::delete_texture(Texture*& ctx_texture)
     {
         //bind?
         if(ctx_texture->m_last_bind)
@@ -1679,7 +1473,7 @@ namespace Render
 	}
 #endif
     
-	Shader* create_shader(const std::vector< ShaderSourceInformation >& infos)
+	Shader* ContextGL4::create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
 		Shader* out_shader = new Shader();
@@ -1749,15 +1543,15 @@ namespace Render
 		return out_shader;
 	}
 
-	bool shader_compiled_with_errors(Shader* shader)
+	bool ContextGL4::shader_compiled_with_errors(Shader* shader)
 	{
 		return shader->m_errors.size() != 0;
 	}
-	bool shader_linked_with_error(Shader* shader)
+	bool ContextGL4::shader_linked_with_error(Shader* shader)
 	{
 		return shader->m_liker_log.size() != 0;
 	}
-	std::vector< std::string > get_shader_compiler_errors(Shader* shader)
+	std::vector< std::string > ContextGL4::get_shader_compiler_errors(Shader* shader)
 	{
 		std::vector< std::string > output;
 		//state
@@ -1774,12 +1568,12 @@ namespace Render
 		}
 		return output;
 	}
-	std::string get_shader_liker_error(Shader* shader)
+	std::string ContextGL4::get_shader_liker_error(Shader* shader)
 	{
 		return shader->m_liker_log;
 	}
 
-	void bind_shader(Shader* shader)
+	void ContextGL4::bind_shader(Shader* shader)
 	{
 		if (s_bind_context.m_shader)
 		{
@@ -1792,7 +1586,7 @@ namespace Render
 		//uniform parogram shaders
 		glUseProgram(shader->m_shader_id);
 	}
-	void unbind_shader(Shader* shader)
+	void ContextGL4::unbind_shader(Shader* shader)
 	{
 		if (shader)
 		{
@@ -1809,7 +1603,7 @@ namespace Render
 			s_bind_context.m_shader = nullptr;
 		}
 	}
-	void delete_shader(Shader*& shader)
+	void ContextGL4::delete_shader(Shader*& shader)
 	{
 		if (s_bind_context.m_shader == shader)
 		{
@@ -1819,20 +1613,20 @@ namespace Render
 		shader = nullptr;
 	}
 
-	Shader* get_bind_shader()
+	Shader* ContextGL4::get_bind_shader()
 	{
 		return s_bind_context.m_shader;
 	}
-	Uniform* get_uniform(Shader* shader,const std::string& uname)
+	Uniform* ContextGL4::get_uniform(Shader* shader,const std::string& uname)
 	{
 		auto uit = shader->m_uniform_map.find(uname);
 		//if find
 		if (uit != shader->m_uniform_map.end()) return &uit->second;
 		//else
-		long long uid = glGetUniformLocation(shader->m_shader_id,uname.c_str());
+		GLint uid = glGetUniformLocation(shader->m_shader_id,uname.c_str());
 		if (uid < 0) return nullptr;
 		//add and return
-		return &(shader->m_uniform_map[uname] = Uniform(shader, (void*)uid));
+		return &(shader->m_uniform_map[uname] = UniformGL4(this, shader, uid));
 	}
 
 	/*
@@ -1852,7 +1646,7 @@ namespace Render
 		}
 	}
 
-	Target* create_render_target(const std::vector< TargetField >& textures)
+	Target* ContextGL4::create_render_target(const std::vector< TargetField >& textures)
 	{
 		bool   depth_attach = false;
 		size_t color_count = 0;
@@ -1911,7 +1705,7 @@ namespace Render
 		return fbo;
 	}
 
-	void enable_render_target(Target* r_target)
+	void ContextGL4::enable_render_target(Target* r_target)
 	{
         if(r_target && s_bind_context.m_render_target != r_target)
         {
@@ -1920,7 +1714,7 @@ namespace Render
         }
 	}
 
-	void disable_render_target(Target* r_target)
+	void ContextGL4::disable_render_target(Target* r_target)
 	{
         if(r_target)
         {
@@ -1930,7 +1724,7 @@ namespace Render
         }
 	}
 
-	void delete_render_target(Target*& r_target)
+	void ContextGL4::delete_render_target(Target*& r_target)
     {
         //bind?
         if(s_bind_context.m_render_target == r_target)
@@ -1942,7 +1736,7 @@ namespace Render
 		r_target = nullptr;
 	}
 
-	GLenum get_copy_render_target_type(TargetType type)
+	inline static GLenum get_copy_render_target_type(TargetType type)
 	{
 		switch (type)
 		{
@@ -1957,7 +1751,7 @@ namespace Render
 		}
 	}
 
-	void copy_target_to_target(
+	void ContextGL4::copy_target_to_target(
 		const IVec4& from_area,
 		Target* from,
 		const IVec4& to_area,
@@ -2010,7 +1804,7 @@ namespace Render
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	bool print_errors()
+	bool ContextGL4::print_errors()
 	{
 		//get all gl errors
 		std::string gl_errors = debug_gl_errors_to_string();
@@ -2024,7 +1818,7 @@ namespace Render
 	}
 
 	//Output file name and line
-	bool print_errors(const char* source_file_name, int line)
+	bool ContextGL4::print_errors(const char* source_file_name, int line)
 	{
 		//get all gl errors
 		std::string gl_errors = debug_gl_errors_to_string_args(source_file_name,line);

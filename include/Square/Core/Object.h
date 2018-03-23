@@ -71,9 +71,13 @@ namespace Square
 	{
 	public:
 
-		ObjectFactory(const ObjectInfo& info) : m_info(info) { }
+		ObjectFactory(const ObjectFactory&);
 
-		const ObjectInfo& info() { return m_info; }
+		ObjectFactory(ObjectFactory&&);
+
+		ObjectFactory(const ObjectInfo& info);
+
+		const ObjectInfo& info();
 
 		virtual Shared<Object> create() = 0;
 
@@ -85,7 +89,7 @@ namespace Square
 
 	template< typename T >
 	//Implementation of a factory
-	class SQUARE_API ObjectFactoryItem : public ObjectFactory
+	class ObjectFactoryItem : public ObjectFactory
 	{
 	public:
 

@@ -23,6 +23,7 @@ namespace Render
 	class InputLayout;
 	class Uniform;
 	class Shader;
+	class Context;
 	// POINTERS
 	using TextureSPtr	   = Shared< Texture >;
 	using TargetSPtr	   = Shared< Target >;
@@ -31,52 +32,6 @@ namespace Render
 	using InputLayoutSPtr  = Shared< InputLayout >;
 	using ShaderSPtr       = Shared< Shader >;
 	////////////////////////////////////////////////
-	// SHADER
-	//uniform
-	class SQUARE_RENDER_API Uniform
-	{
-	public:
-		void set_value(Texture* in_texture);
-		void set_value(int i);
-		void set_value(float f);
-		void set_value(const Vec2& v2);
-		void set_value(const Vec3& v3);
-		void set_value(const Vec4& v4);
-		void set_value(const Mat3& m3);
-		void set_value(const Mat4& m4);
-
-		void set_value(const int* i, size_t n);
-		void set_value(const float* f, size_t n);
-		void set_value(const Vec2* v2, size_t n);
-		void set_value(const Vec3* v3, size_t n);
-		void set_value(const Vec4* v4, size_t n);
-		void set_value(const Mat3* m3, size_t n);
-		void set_value(const Mat4* m4, size_t n);
-
-		void set_value(const std::vector < int >& i);
-		void set_value(const std::vector < float >& f);
-		void set_value(const std::vector < Vec2 >& v2);
-		void set_value(const std::vector < Vec3 >& v3);
-		void set_value(const std::vector < Vec4 >& v4);
-		void set_value(const std::vector < Mat3 >& m3);
-		void set_value(const std::vector < Mat4 >& m4);
-
-		void set_value(const ConstBuffer*);
-		
-		bool is_valid();
-
-		Shader* get_shader();
-
-		Uniform(Shader* shader = nullptr, void* data = nullptr);
-
-		virtual ~Uniform();
-
-	protected:
-
-		void*	m_data;
-		Shader* m_shader;
-
-	};
 	//shader type
 	enum ShaderType
 	{
@@ -687,144 +642,192 @@ namespace Render
         int           m_shader_version;
     };
 	/////////////////////////////////
-	// Draw call
-    SQUARE_RENDER_API RenderDriver get_render_driver();
-    SQUARE_RENDER_API RenderDriverInfo get_render_driver_info();
-    SQUARE_RENDER_API void print_info();
+	//uniform
+	class Uniform
+	{
+	public:
+		virtual void set_value(Texture* in_texture) = 0;
+		virtual void set_value(int i) = 0;
+		virtual void set_value(float f) = 0;
+		virtual void set_value(const Vec2& v2) = 0;
+		virtual void set_value(const Vec3& v3) = 0;
+		virtual void set_value(const Vec4& v4) = 0;
+		virtual void set_value(const Mat3& m3) = 0;
+		virtual void set_value(const Mat4& m4) = 0;
 
-	SQUARE_RENDER_API bool init();
-	SQUARE_RENDER_API void close();
+		virtual void set_value(const int* i, size_t n) = 0;
+		virtual void set_value(const float* f, size_t n) = 0;
+		virtual void set_value(const Vec2* v2, size_t n) = 0;
+		virtual void set_value(const Vec3* v3, size_t n) = 0;
+		virtual void set_value(const Vec4* v4, size_t n) = 0;
+		virtual void set_value(const Mat3* m3, size_t n) = 0;
+		virtual void set_value(const Mat4* m4, size_t n) = 0;
 
-	SQUARE_RENDER_API const ClearColorState& get_clear_color_state();
-    SQUARE_RENDER_API void set_clear_color_state(const ClearColorState& cf);
-    SQUARE_RENDER_API void clear(int type = CLEAR_COLOR_DEPTH);
+		virtual void set_value(const std::vector < int >& i) = 0;
+		virtual void set_value(const std::vector < float >& f) = 0;
+		virtual void set_value(const std::vector < Vec2 >& v2) = 0;
+		virtual void set_value(const std::vector < Vec3 >& v3) = 0;
+		virtual void set_value(const std::vector < Vec4 >& v4) = 0;
+		virtual void set_value(const std::vector < Mat3 >& m3) = 0;
+		virtual void set_value(const std::vector < Mat4 >& m4) = 0;
 
-	SQUARE_RENDER_API const DepthBufferState& get_depth_buffer_state();
-	SQUARE_RENDER_API void set_depth_buffer_state(const DepthBufferState& cf);
+		virtual void set_value(const ConstBuffer*) = 0;
 
-	SQUARE_RENDER_API const CullfaceState& get_cullface_state();
-	SQUARE_RENDER_API void set_cullface_state(const CullfaceState& cf);
+		virtual bool is_valid() = 0;
 
-	SQUARE_RENDER_API const ViewportState& get_viewport_state();
-	SQUARE_RENDER_API void set_viewport_state(const ViewportState& vs);
+		virtual Shader* get_shader() = 0;
 
-	SQUARE_RENDER_API const BlendState& get_blend_state();
-	SQUARE_RENDER_API void set_blend_state(const BlendState& bs);
+		virtual ~Uniform() {};
+	};
+	/////////////////////////////////
+	// Draw context
+	class Context
+	{
+	public:
 
-	SQUARE_RENDER_API const State& get_render_state();
-	SQUARE_RENDER_API void set_render_state(const State& rs);
+		virtual RenderDriver get_render_driver() = 0;
+		virtual RenderDriverInfo get_render_driver_info() = 0;
+		virtual void print_info() = 0;
 
-	//BO
-	SQUARE_RENDER_API ConstBuffer* create_stream_CB(const unsigned char* data, size_t size);
-	SQUARE_RENDER_API VertexBuffer* create_stream_VBO(const unsigned char* vbo, size_t stride, size_t n);
-	SQUARE_RENDER_API IndexBuffer* create_stream_IBO(const unsigned int* ibo, size_t size);
+		virtual bool init() = 0;
+		virtual void close() = 0;
 
-	SQUARE_RENDER_API ConstBuffer* create_CB(const unsigned char* data, size_t size);
-	SQUARE_RENDER_API VertexBuffer* create_VBO(const unsigned char* vbo, size_t stride, size_t n);
-	SQUARE_RENDER_API IndexBuffer* create_IBO(const unsigned int* ibo, size_t size);
+		virtual const ClearColorState& get_clear_color_state() = 0;
+		virtual void set_clear_color_state(const ClearColorState& cf) = 0;
+		virtual void clear(int type = CLEAR_COLOR_DEPTH) = 0;
 
-	SQUARE_RENDER_API Variant get_native_CB(const ConstBuffer*);
-	SQUARE_RENDER_API Variant get_native_VBO(const VertexBuffer*);
-	SQUARE_RENDER_API Variant get_native_IBO(const IndexBuffer*);
+		virtual const DepthBufferState& get_depth_buffer_state() = 0;
+		virtual void set_depth_buffer_state(const DepthBufferState& cf) = 0;
 
-	SQUARE_RENDER_API void update_steam_CB(ConstBuffer* cb, const unsigned char* vb, size_t n);
-	SQUARE_RENDER_API void update_steam_VBO(VertexBuffer* vbo, const unsigned char* vb, size_t n);
-	SQUARE_RENDER_API void update_steam_IBO(IndexBuffer* vbo, const unsigned int* ib, size_t n);
+		virtual const CullfaceState& get_cullface_state() = 0;
+		virtual void set_cullface_state(const CullfaceState& cf) = 0;
 
-	SQUARE_RENDER_API void bind_CB(ConstBuffer*);
-	SQUARE_RENDER_API void bind_VBO(VertexBuffer*);
-	SQUARE_RENDER_API void bind_IBO(IndexBuffer*);
+		virtual const ViewportState& get_viewport_state() = 0;
+		virtual void set_viewport_state(const ViewportState& vs) = 0;
 
-	SQUARE_RENDER_API void unbind_CB(ConstBuffer*);
-	SQUARE_RENDER_API void unbind_VBO(VertexBuffer*);
-	SQUARE_RENDER_API void unbind_IBO(IndexBuffer*);
+		virtual const BlendState& get_blend_state() = 0;
+		virtual void set_blend_state(const BlendState& bs) = 0;
 
-	SQUARE_RENDER_API unsigned char* map_CB(ConstBuffer*, size_t start, size_t n, MappingType type);
-	SQUARE_RENDER_API void unmap_CB(ConstBuffer*);
+		virtual const State& get_render_state() = 0;
+		virtual void set_render_state(const State& rs) = 0;
 
-	SQUARE_RENDER_API unsigned char* map_VBO(VertexBuffer*, size_t start, size_t n, MappingType type);
-	SQUARE_RENDER_API void unmap_VBO(VertexBuffer*);
+		//BO
+		virtual ConstBuffer* create_stream_CB(const unsigned char* data, size_t size) = 0;
+		virtual VertexBuffer* create_stream_VBO(const unsigned char* vbo, size_t stride, size_t n) = 0;
+		virtual IndexBuffer* create_stream_IBO(const unsigned int* ibo, size_t size) = 0;
 
-	SQUARE_RENDER_API unsigned int*  map_IBO(IndexBuffer*, size_t start, size_t n, MappingType type);
-	SQUARE_RENDER_API void unmap_IBO(IndexBuffer*);
+		virtual ConstBuffer* create_CB(const unsigned char* data, size_t size) = 0;
+		virtual VertexBuffer* create_VBO(const unsigned char* vbo, size_t stride, size_t n) = 0;
+		virtual IndexBuffer* create_IBO(const unsigned int* ibo, size_t size) = 0;
 
-	SQUARE_RENDER_API unsigned char* map_TBO(Texture*, MappingType type);
-	SQUARE_RENDER_API void unmap_TBO(Texture*);
+		virtual Variant get_native_CB(const ConstBuffer*) = 0;
+		virtual Variant get_native_VBO(const VertexBuffer*) = 0;
+		virtual Variant get_native_IBO(const IndexBuffer*) = 0;
 
-	SQUARE_RENDER_API void delete_CB(ConstBuffer*&);
-	SQUARE_RENDER_API void delete_VBO(VertexBuffer*&);
-	SQUARE_RENDER_API void delete_IBO(IndexBuffer*&);
-	//draw
-	SQUARE_RENDER_API void draw_arrays(DrawType type, unsigned int n);
-	SQUARE_RENDER_API void draw_arrays(DrawType type, unsigned int start, unsigned int size);
-	SQUARE_RENDER_API void draw_elements(DrawType type, unsigned int n);
+		virtual void update_steam_CB(ConstBuffer* cb, const unsigned char* vb, size_t n) = 0;
+		virtual void update_steam_VBO(VertexBuffer* vbo, const unsigned char* vb, size_t n) = 0;
+		virtual void update_steam_IBO(IndexBuffer* vbo, const unsigned int* ib, size_t n) = 0;
 
-	//IL=Input Layaut
-	SQUARE_RENDER_API InputLayout* create_IL(const AttributeList& atl);
-	SQUARE_RENDER_API size_t size_IL(const InputLayout* layout);
-	SQUARE_RENDER_API bool   has_a_position_IL(const InputLayout* layout);
-	SQUARE_RENDER_API size_t position_offset_IL(const InputLayout* layout);
-	SQUARE_RENDER_API void delete_IL(InputLayout*&);
-	SQUARE_RENDER_API void bind_IL(InputLayout*);
-	SQUARE_RENDER_API void unbind_IL(InputLayout* il);
+		virtual void bind_CB(ConstBuffer*) = 0;
+		virtual void bind_VBO(VertexBuffer*) = 0;
+		virtual void bind_IBO(IndexBuffer*) = 0;
 
-	//depth
-	SQUARE_RENDER_API float get_depth(const Vec2& pixel);
-	//color
-	SQUARE_RENDER_API Vec4 get_color(const Vec2& pixel);
+		virtual void unbind_CB(ConstBuffer*) = 0;
+		virtual void unbind_VBO(VertexBuffer*) = 0;
+		virtual void unbind_IBO(IndexBuffer*) = 0;
 
-	//texture
-	SQUARE_RENDER_API Texture* create_texture
-	(
-		const TextureRawDataInformation& data,
-		const TextureGpuDataInformation& info
-	);
-	SQUARE_RENDER_API Texture* create_cube_texture
-	(
-		const TextureRawDataInformation  data[6],
-		const TextureGpuDataInformation& info
-	);
-	SQUARE_RENDER_API std::vector< unsigned char > get_texture(Texture*, int level = 0);
-	SQUARE_RENDER_API void bind_texture(Texture*, int n);
-	SQUARE_RENDER_API void unbind_texture(Texture*);
-    SQUARE_RENDER_API void unbind_texture(int n);
-	SQUARE_RENDER_API void delete_texture(Texture*&);
-	SQUARE_RENDER_API void delete_texture_(Texture*);
+		virtual unsigned char* map_CB(ConstBuffer*, size_t start, size_t n, MappingType type) = 0;
+		virtual void unmap_CB(ConstBuffer*) = 0;
 
-	//shader
-	SQUARE_RENDER_API Shader* create_shader(const std::vector< ShaderSourceInformation >& infos);
+		virtual unsigned char* map_VBO(VertexBuffer*, size_t start, size_t n, MappingType type) = 0;
+		virtual void unmap_VBO(VertexBuffer*) = 0;
 
-	SQUARE_RENDER_API bool shader_compiled_with_errors(Shader* shader);
-	SQUARE_RENDER_API bool shader_linked_with_error(Shader* shader);
-	SQUARE_RENDER_API std::vector< std::string > get_shader_compiler_errors(Shader* shader);
-	SQUARE_RENDER_API std::string get_shader_liker_error(Shader* shader);
+		virtual unsigned int*  map_IBO(IndexBuffer*, size_t start, size_t n, MappingType type) = 0;
+		virtual void unmap_IBO(IndexBuffer*) = 0;
 
-	SQUARE_RENDER_API void bind_shader(Shader* shader);
-	SQUARE_RENDER_API void unbind_shader(Shader* shader);
+		virtual unsigned char* map_TBO(Texture*, MappingType type) = 0;
+		virtual void unmap_TBO(Texture*) = 0;
 
-	SQUARE_RENDER_API void delete_shader(Shader*&);
+		virtual void delete_CB(ConstBuffer*&) = 0;
+		virtual void delete_VBO(VertexBuffer*&) = 0;
+		virtual void delete_IBO(IndexBuffer*&) = 0;
+		//draw
+		virtual void draw_arrays(DrawType type, unsigned int n) = 0;
+		virtual void draw_arrays(DrawType type, unsigned int start, unsigned int size) = 0;
+		virtual void draw_elements(DrawType type, unsigned int n) = 0;
 
-	SQUARE_RENDER_API Shader*  get_bind_shader();
-	SQUARE_RENDER_API Uniform* get_uniform(Shader*,const std::string& uname);
+		//IL=Input Layaut
+		virtual InputLayout* create_IL(const AttributeList& atl) = 0;
+		virtual size_t size_IL(const InputLayout* layout) = 0;
+		virtual bool   has_a_position_IL(const InputLayout* layout) = 0;
+		virtual size_t position_offset_IL(const InputLayout* layout) = 0;
+		virtual void delete_IL(InputLayout*&) = 0;
+		virtual void bind_IL(InputLayout*) = 0;
+		virtual void unbind_IL(InputLayout* il) = 0;
 
-	//target
-	SQUARE_RENDER_API Target* create_render_target(const std::vector< TargetField >& textures);
-	SQUARE_RENDER_API void enable_render_target(Target*);
-	SQUARE_RENDER_API void disable_render_target(Target*);
-	SQUARE_RENDER_API void delete_render_target(Target*&);
-	//copy target
-	SQUARE_RENDER_API void copy_target_to_target(
-		const IVec4& from_area,
-		Target* from,
-		const IVec4& to_area,
-		Target* to,
-		TargetType	mask
-	);
+		//depth
+		virtual float get_depth(const Vec2& pixel) = 0;
+
+		//color
+		virtual Vec4 get_color(const Vec2& pixel) = 0;
+
+		//texture
+		virtual Texture* create_texture
+		(
+			const TextureRawDataInformation& data,
+			const TextureGpuDataInformation& info
+		) = 0;
+		virtual Texture* create_cube_texture
+		(
+			const TextureRawDataInformation  data[6],
+			const TextureGpuDataInformation& info
+		) = 0;
+		virtual  std::vector< unsigned char > get_texture(Texture*, int level = 0) = 0;
+		virtual void bind_texture(Texture*, int n) = 0;
+		virtual void unbind_texture(Texture*) = 0;
+		virtual void unbind_texture(int n) = 0;
+		virtual void delete_texture(Texture*&) = 0;
+
+		//shader
+		virtual Shader* create_shader(const std::vector< ShaderSourceInformation >& infos) = 0;
+
+		virtual bool shader_compiled_with_errors(Shader* shader) = 0;
+		virtual bool shader_linked_with_error(Shader* shader) = 0;
+		virtual std::vector< std::string > get_shader_compiler_errors(Shader* shader) = 0;
+		virtual std::string get_shader_liker_error(Shader* shader) = 0;
+
+		virtual void bind_shader(Shader* shader) = 0;
+		virtual void unbind_shader(Shader* shader) = 0;
+
+		virtual void delete_shader(Shader*&) = 0;
+
+		virtual Shader*  get_bind_shader() = 0;
+		virtual Uniform* get_uniform(Shader*,const std::string& uname) = 0;
+
+		//target
+		virtual Target* create_render_target(const std::vector< TargetField >& textures) = 0;
+		virtual void enable_render_target(Target*) = 0;
+		virtual void disable_render_target(Target*) = 0;
+		virtual void delete_render_target(Target*&) = 0;
+		//copy target
+		virtual void copy_target_to_target(
+			const IVec4& from_area,
+			Target* from,
+			const IVec4& to_area,
+			Target* to,
+			TargetType	mask
+		) = 0;
 	
-	//debug
-	SQUARE_RENDER_API bool print_errors();
-	//Output file name and line
-	SQUARE_RENDER_API bool print_errors(const char* source_file_name, int line);
-	#define SQUARE_RENDER_PRINT_ERRORS ::hcube::render::print_errors(__FILE__,__LINE__);
+		//debug
+		virtual bool print_errors() = 0;
+		//Output file name and line
+		virtual bool print_errors(const char* source_file_name, int line) = 0;
+
+	};
+	/////////////////////////////////
+	// Shared wrapper
+	std::vector<RenderDriver> list_of_render_driver();
+	Context* create_render_driver(RenderDriver);
+	void delete_render_driver(Context*&);
 };
 }

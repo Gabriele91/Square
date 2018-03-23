@@ -10,45 +10,46 @@
 
 namespace Square
 {
+	//disable public allocation
+	BaseContext::BaseContext()
+	{
+		//none
+	}
     //Create
-    Shared<Object> Context::create(const std::string& name)
+    Shared<Object> BaseContext::create(const std::string& name)
     {
         return create(ObjectInfo::compute_id(name));
     }
-    Shared<Object> Context::create(uint64 id)
+    Shared<Object> BaseContext::create(uint64 id)
     {
         auto factory = m_object_factories.find(id);
         if (factory != m_object_factories.end()) return factory->second->create();
         return nullptr;
     }
     //Get attrbutes
-    const std::vector < Attribute >* Context::attributes(const std::string& name)
+    const std::vector < Attribute >* BaseContext::attributes(const std::string& name)
     {
         auto attributes = m_attributes.find(ObjectInfo::compute_id(name));
         if (attributes != m_attributes.end()) return &attributes->second;
         return nullptr;
     }
-    const std::vector < Attribute >* Context::attributes(uint64 object_id)
+    const std::vector < Attribute >* BaseContext::attributes(uint64 object_id)
     {
         auto attributes = m_attributes.find(object_id);
         if (attributes != m_attributes.end()) return &attributes->second;
         return nullptr;
     }
-    const std::vector < Attribute >* Context::attributes(const Object& object)
+    const std::vector < Attribute >* BaseContext::attributes(const Object& object)
     {
         return attributes(object.object_id());
     }
-    const std::vector < Attribute >* Context::attributes(const ObjectInfo& info)
+    const std::vector < Attribute >* BaseContext::attributes(const ObjectInfo& info)
     {
         return attributes(info.id());
     }
-    template< class T > const std::vector < Attribute >* Context::attributes()
-    {
-        return attributes(T::static_object_id());
-    }
     
     //Get resource
-    Shared<ResourceObject> Context::resource(const std::string& name)
+    Shared<ResourceObject> BaseContext::resource(const std::string& name)
     {
         //olready loaded
         auto resource_it = m_resources.find(name);
@@ -66,14 +67,14 @@ namespace Square
 		//set resource name
 		resource->resource_name(resource_it->first.c_str());
         //load
-        if(resource->load(*this, resource_file_it->second.m_filepath)) return resource;
+        if(resource->load(*((Context*)this), resource_file_it->second.m_filepath)) return resource;
 		//fail
 		m_resources.erase(resource_it);
 		//end
         return nullptr;
     }
     
-    const std::string& Context::resource_path(const std::string& name)
+    const std::string& BaseContext::resource_path(const std::string& name)
     {
         //find resource from file
         auto resource_file_it = m_resources_file.find(name);
@@ -84,7 +85,7 @@ namespace Square
         
     }
     //Get variable
-    const Variant& Context::variable(const std::string& name)
+    const Variant& BaseContext::variable(const std::string& name)
     {
         //get var
         auto variable = m_variables.find(name);
@@ -95,18 +96,18 @@ namespace Square
     }
     
     //Object fectory
-    void Context::add_object(ObjectFactory* object_fectory)
+    void BaseContext::add_object(ObjectFactory* object_fectory)
     {
         m_object_factories[object_fectory->info().id()] = Unique<ObjectFactory>(object_fectory);
     }
-    void Context::add_resource(ObjectFactory* object_fectory,const std::vector< std::string >& exts)
+    void BaseContext::add_resource(ObjectFactory* object_fectory,const std::vector< std::string >& exts)
     {
         add_object(object_fectory);
         m_resources_info[object_fectory->info().id()] = exts;
     }
     
     //Resource
-    void Context::add_resource_path(const std::string& path, bool recursive)
+    void BaseContext::add_resource_path(const std::string& path, bool recursive)
     {
         //for all sub path
         if(recursive)
@@ -135,7 +136,7 @@ namespace Square
         }
         //end
     }
-	void Context::add_resource_file(const std::string& filepath)
+	void BaseContext::add_resource_file(const std::string& filepath)
 	{
 		//get extension
 		auto    f_ext = Filesystem::get_extension(filepath);
@@ -153,7 +154,7 @@ namespace Square
 			}
 		}
 	}
-	void Context::add_resource_file(const std::string& resource_name, const std::string& filepath)
+	void BaseContext::add_resource_file(const std::string& resource_name, const std::string& filepath)
 	{
 		//get extension
 		auto    f_ext = Filesystem::get_extension(filepath);
@@ -173,38 +174,52 @@ namespace Square
 
     
     //Add an attrbute
-    void Context::add_attributes(const std::string& name, const Attribute& attribute)
+    void BaseContext::add_attributes(const std::string& name, const Attribute& attribute)
     {
         m_attributes[ObjectInfo::compute_id(name)].push_back(attribute);
     }
-    void Context::add_attributes(uint64 object_id, const Attribute& attribute)
+    void BaseContext::add_attributes(uint64 object_id, const Attribute& attribute)
     {
         m_attributes[object_id].push_back(attribute);
     }
-    void Context::add_attributes(const Object& object, const Attribute& attribute)
+    void BaseContext::add_attributes(const Object& object, const Attribute& attribute)
     {
         m_attributes[object.object_id()].push_back(attribute);
     }
-    void Context::add_attributes(const ObjectInfo& info, const Attribute& attribute)
+    void BaseContext::add_attributes(const ObjectInfo& info, const Attribute& attribute)
     {
         m_attributes[info.id()].push_back(attribute);
     }
     
     //Add variable
-    void Context::add_variable(const std::string& name, const Variant& value)
+    void BaseContext::add_variable(const std::string& name, const Variant& value)
     {
         m_variables[name] = value;
     }
 
+	//Resource info
+	BaseContext::ResourceFile::ResourceFile()
+	{
+	}
+	BaseContext::ResourceFile::ResourceFile(const ResourceFile& in)
+	: m_filepath(in.m_filepath)
+	, m_resouce_id(in.m_resouce_id)
+	{
+	}
+	BaseContext::ResourceFile::ResourceFile(uint64 id, const std::string filepath)
+	: m_filepath(filepath)
+	, m_resouce_id(id)
+	{
+	}
 
 
 	//context errors/wrongs
-	void Context::add_wrong(const std::string& wrong)
+	void BaseContext::add_wrong(const std::string& wrong)
 	{
 		m_wrongs.push_back(wrong);
 	}
 
-	void Context::add_wrongs(const Context::StringList& wrongs)
+	void BaseContext::add_wrongs(const BaseContext::StringList& wrongs)
 	{
 		for (const std::string& wrong : wrongs)
 		{
@@ -212,21 +227,28 @@ namespace Square
 		}
 	}
 
-	const Context::StringList& Context::wrongs() const
+	const BaseContext::StringList& BaseContext::wrongs() const
 	{
 		return m_wrongs;
 	}
 
-	void Context::show_wrongs() const
+	void BaseContext::show_wrongs() const
 	{
 		show_wrongs(std::cerr);
 	}
 
-	void Context::show_wrongs(std::ostream& output) const
+	void BaseContext::show_wrongs(std::ostream& output) const
 	{
 		for (const std::string& wrong : wrongs())
 		{
 			output << wrong << std::endl;
 		}
+	}
+	
+	void BaseContext::clear()
+	{
+		m_variables.clear();
+		m_attributes.clear();
+		m_object_factories.clear();
 	}
 }

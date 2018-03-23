@@ -48,5 +48,6 @@ namespace Square
 		void resource_name(const char* name) { m_resource_name = name; }
 		//friend
 		friend class Context;
+		friend class BaseContext;
 	};
 }

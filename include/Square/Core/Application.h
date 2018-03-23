@@ -10,6 +10,7 @@
 #include "Square/Driver/Input.h"
 #include "Square/Driver/Window.h"
 #include "Square/Core/Context.h"
+#include "Square/Driver/Render.h"
 
 namespace Square
 {
@@ -59,10 +60,11 @@ namespace Square
         virtual ~AppInterface() {}
 
 		//help
-		static Application&    application();
-		static Context&		   context();
-		static Video::Window&  window();
-		static Video::Input&   input();
+		static Application&     application();
+		static Context&		    context();
+		static Render::Context& render();
+		static Video::Window&   window();
+		static Video::Input&    input();
     };
     
     enum class WindowMode
@@ -102,8 +104,8 @@ namespace Square
         //get attr (const)
         const AppInterface*   app_instance() const;
         const Video::Window*  window() const;
-        const Video::Input*   input() const;
-        //execute a instance
+		const Video::Input*   input() const;
+		//execute a instance
         bool execute
         (
             const WindowSize& size,
@@ -116,9 +118,10 @@ namespace Square
         );
         
         //sigleton
-		static Application* instance();
-		static Context*		context();
-        
+		static Application*     instance();
+		static Context*		    context();
+		static Render::Context* render();
+
     private:
         //info screen
         Video::Window*      m_window{ nullptr };
@@ -129,6 +132,7 @@ namespace Square
         double              m_last_delta_time{ 0 };
 		//context (application context)
 		Context				m_context;
+		Render::Context*	m_render;
         //global
         static Application* s_instance;
     };
