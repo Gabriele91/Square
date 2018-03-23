@@ -45,7 +45,10 @@ namespace Scene
 		, [](const Actor* actor) -> Quat  { return actor->rotation(); }
 		, [](Actor* actor,const Quat& rot){ actor->rotation(rot);     }));
 	}
-    
+
+	Actor::Actor() {}
+	Actor::Actor(const std::string& name) : m_name(name) {}
+
     //serialize
     void Actor::serialize(Data::Archive& archivie)
     {

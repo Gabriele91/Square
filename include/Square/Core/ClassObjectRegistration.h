@@ -20,17 +20,12 @@ namespace Square
 		typedef void(*RegistrationFunction)(Context& context);
 
 		//element in list
-		struct RegistrationItem
+		struct SQUARE_API RegistrationItem
 		{
 			const ObjectInfo&          m_info;
 			const RegistrationFunction m_registration;
 			//init
-			RegistrationItem(const ObjectInfo& info, const RegistrationFunction registration)
-			:m_info(info)
-			,m_registration(registration)
-			{
-
-			}
+			RegistrationItem(const ObjectInfo& info, const RegistrationFunction registration);
 		};
 
 		//type
@@ -51,7 +46,7 @@ namespace Square
     
     //class used for static registration of a object class
     template<class T>
-    class SQUARE_API ClassObjectRegistrationItem
+    class ClassObjectRegistrationItem
     {
 		ClassObjectRegistrationItem()
         {

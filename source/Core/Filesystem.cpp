@@ -1,16 +1,9 @@
-//
-//  Square
-//
-//  Created by Gabriele on 18/10/17.
-//  Copyright © 2016 Gabriele. All rights reserved.
-//
 #include "Square/Core/Filesystem.h"
-//others default libs
 #include <sstream>
 #include <cstdlib>
 #include <cstring>
 #include <assert.h>
-//os libs
+
 #ifdef _WIN32
 	#include <windows.h>
 	#include <direct.h>
@@ -26,12 +19,55 @@
     #include <sys/stat.h>
     #include <dirent.h>
 	#include <unistd.h>
+	#if defined(__APPLE__)
+	#include <mach-o/dyld.h>
+	#include <libgen.h>
+	#endif
+#endif
+
+#if defined(_DEBUG) || defined(DEBUG)
+#define square_assert(x) assert(x)
+#else 
+#define square_assert(x) x
 #endif
 
 namespace Square
 {
 namespace Filesystem
 {
+
+	std::string program_dir()
+	{
+		#ifdef _WIN32
+			char buffer[MAX_PATH];
+			int bytes = GetModuleFileName(NULL, buffer, MAX_PATH);
+			if (bytes) return get_directory(buffer);
+		#elif defined(__linux)
+			//path
+			char buffer[PATH_MAX]{ '\0' };
+			//print id
+			char size[PATH_MAX];
+			sprintf(size, "/proc/%d/exe", getpid());
+			//get
+			int bytes = std::min(readlink(szTmp, buffer, PATH_MAX), PATH_MAX - 1);
+			//test
+			if (bytes >= 0)
+			{
+				buffer[bytes] = '\0';
+				return get_directory(buffer);
+			}
+		#elif defined(__APPLE__)
+			char path[1024];
+			uint32_t size = sizeof(path);
+			if (_NSGetExecutablePath(path, &size) == 0)
+				return path;
+		#else
+			#error "os not supported"
+		#endif
+		//return
+		return "";
+	}
+
 
     std::string working_dir()
     {
@@ -139,7 +175,7 @@ namespace Filesystem
         if(!size) std::fclose(file);
         /////////////////////////////////////////////////////////////////////
         out.resize(size, 0);
-        assert(std::fread(&out[0], size, 1, file));
+		square_assert(std::fread(&out[0], size, 1, file));
         /////////////////////////////////////////////////////////////////////
         std::fclose(file);
         //return
@@ -161,7 +197,7 @@ namespace Filesystem
         if(!size) std::fclose(file);
         /////////////////////////////////////////////////////////////////////
         out.resize(size);
-        assert(std::fread(&out[0], size, 1, file));
+		square_assert(std::fread(&out[0], size, 1, file));
         /////////////////////////////////////////////////////////////////////
         std::fclose(file);
         //return

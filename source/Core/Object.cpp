@@ -16,7 +16,7 @@ namespace Square
 	{
 		return (x << n) | (x >> (sizeof(T) - n));
 	}
-	
+
 	//compute id
 	uint64 ObjectInfo::compute_id(const std::string& name)
 	{
@@ -55,4 +55,15 @@ namespace Square
 	{
 		return m_name;
 	}
+
+	//object factory
+	ObjectFactory::ObjectFactory(const ObjectFactory&) = default;
+
+	ObjectFactory::ObjectFactory(ObjectFactory&&) = default;
+
+	ObjectFactory::ObjectFactory(const ObjectInfo& info) : m_info(info) { }
+
+	const ObjectInfo& ObjectFactory::info() { return m_info; }
+
+
 }

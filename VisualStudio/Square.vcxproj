@@ -26,26 +26,26 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -69,18 +69,31 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;xsc_core_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;xsc_core_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -88,12 +101,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;xsc_core_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;xsc_core_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -103,14 +116,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;xsc_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;xsc_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -120,101 +133,101 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;OpenGL32.lib;GLU32.lib;glew32s.lib;zlibstatic.lib;libbz2.lib;xsc_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;xsc_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\Square\Config.h" />
-    <ClInclude Include="include\Square\Core\Application.h" />
-    <ClInclude Include="include\Square\Core\Attribute.h" />
-    <ClInclude Include="include\Square\Core\Context.h" />
-    <ClInclude Include="include\Square\Core\Filesystem.h" />
-    <ClInclude Include="include\Square\Core\Object.h" />
-    <ClInclude Include="include\Square\Core\ClassObjectRegistration.h" />
-    <ClInclude Include="include\Square\Core\Resource.h" />
-    <ClInclude Include="include\Square\Core\SmartPointers.h" />
-    <ClInclude Include="include\Square\Core\StringUtilities.h" />
-    <ClInclude Include="include\Square\Core\Time.h" />
-    <ClInclude Include="include\Square\Core\Uncopyable.h" />
-    <ClInclude Include="include\Square\Core\UtfConvert.h" />
-    <ClInclude Include="include\Square\Core\Variant.h" />
-    <ClInclude Include="include\Square\Data\Archive.h" />
-    <ClInclude Include="include\Square\Data\AttributeSerialize.h" />
-    <ClInclude Include="include\Square\Data\Image.h" />
-    <ClInclude Include="include\Square\Data\Json.h" />
-    <ClInclude Include="include\Square\Data\ParseUtils.h" />
-    <ClInclude Include="include\Square\Driver\Input.h" />
-    <ClInclude Include="include\Square\Driver\OpenGL\OpenGL4.h" />
-    <ClInclude Include="include\Square\Driver\Render.h" />
-    <ClInclude Include="include\Square\Driver\Window.h" />
-    <ClInclude Include="include\Square\Geometry\AABoundingBox.h" />
-    <ClInclude Include="include\Square\Geometry\CreateBounding.h" />
-    <ClInclude Include="include\Square\Geometry\Frustum.h" />
-    <ClInclude Include="include\Square\Geometry\Intersection.h" />
-    <ClInclude Include="include\Square\Geometry\OBoundingBox.h" />
-    <ClInclude Include="include\Square\Geometry\Sphere.h" />
-    <ClInclude Include="include\Square\Math\Linear.h" />
-    <ClInclude Include="include\Square\Math\Tangent.h" />
-    <ClInclude Include="include\Square\Resource\Shader.h" />
-    <ClInclude Include="include\Square\Resource\Texture.h" />
-    <ClInclude Include="include\Square\Scene\Actor.h" />
-    <ClInclude Include="include\Square\Scene\Component.h" />
-    <ClInclude Include="include\Square\Scene\Level.h" />
-    <ClInclude Include="include\Square\Square.h" />
-    <ClInclude Include="source\Driver\Cocoa\Input_private.h">
+    <ClInclude Include="..\include\Square\Config.h" />
+    <ClInclude Include="..\include\Square\Core\Application.h" />
+    <ClInclude Include="..\include\Square\Core\Attribute.h" />
+    <ClInclude Include="..\include\Square\Core\Context.h" />
+    <ClInclude Include="..\include\Square\Core\Filesystem.h" />
+    <ClInclude Include="..\include\Square\Core\Object.h" />
+    <ClInclude Include="..\include\Square\Core\ClassObjectRegistration.h" />
+    <ClInclude Include="..\include\Square\Core\Resource.h" />
+    <ClInclude Include="..\include\Square\Core\SharedLibrary.h" />
+    <ClInclude Include="..\include\Square\Core\SmartPointers.h" />
+    <ClInclude Include="..\include\Square\Core\StringUtilities.h" />
+    <ClInclude Include="..\include\Square\Core\Time.h" />
+    <ClInclude Include="..\include\Square\Core\Uncopyable.h" />
+    <ClInclude Include="..\include\Square\Core\UtfConvert.h" />
+    <ClInclude Include="..\include\Square\Core\Variant.h" />
+    <ClInclude Include="..\include\Square\Data\Archive.h" />
+    <ClInclude Include="..\include\Square\Data\AttributeSerialize.h" />
+    <ClInclude Include="..\include\Square\Data\Image.h" />
+    <ClInclude Include="..\include\Square\Data\Json.h" />
+    <ClInclude Include="..\include\Square\Data\ParseUtils.h" />
+    <ClInclude Include="..\include\Square\Driver\Input.h" />
+    <ClInclude Include="..\include\Square\Driver\Render.h" />
+    <ClInclude Include="..\include\Square\Driver\Window.h" />
+    <ClInclude Include="..\include\Square\Geometry\AABoundingBox.h" />
+    <ClInclude Include="..\include\Square\Geometry\CreateBounding.h" />
+    <ClInclude Include="..\include\Square\Geometry\Frustum.h" />
+    <ClInclude Include="..\include\Square\Geometry\Intersection.h" />
+    <ClInclude Include="..\include\Square\Geometry\OBoundingBox.h" />
+    <ClInclude Include="..\include\Square\Geometry\Sphere.h" />
+    <ClInclude Include="..\include\Square\Math\Linear.h" />
+    <ClInclude Include="..\include\Square\Math\Tangent.h" />
+    <ClInclude Include="..\include\Square\Resource\Shader.h" />
+    <ClInclude Include="..\include\Square\Resource\Texture.h" />
+    <ClInclude Include="..\include\Square\Scene\Actor.h" />
+    <ClInclude Include="..\include\Square\Scene\Component.h" />
+    <ClInclude Include="..\include\Square\Scene\Level.h" />
+    <ClInclude Include="..\include\Square\Square.h" />
+    <ClInclude Include="..\source\Driver\Cocoa\Input_private.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="source\Driver\Cocoa\Screen_private.h">
+    <ClInclude Include="..\source\Driver\Cocoa\Screen_private.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="source\Driver\Cocoa\Window_private.h">
+    <ClInclude Include="..\source\Driver\Cocoa\Window_private.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="source\Driver\Cocoa\Wrapper_private.h">
+    <ClInclude Include="..\source\Driver\Cocoa\Wrapper_private.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="source\Driver\Win32\Input_private.h" />
-    <ClInclude Include="source\Driver\Win32\Screen_private.h" />
-    <ClInclude Include="source\Driver\Win32\Window_private.h" />
-    <ClInclude Include="source\Driver\Win32\Wrapper_private.h" />
-    <ClInclude Include="source\Driver\Xorg\Input_private.h">
+    <ClInclude Include="..\source\Driver\Win32\Input_private.h" />
+    <ClInclude Include="..\source\Driver\Win32\Screen_private.h" />
+    <ClInclude Include="..\source\Driver\Win32\Window_private.h" />
+    <ClInclude Include="..\source\Driver\Win32\Wrapper_private.h" />
+    <ClInclude Include="..\source\Driver\Xorg\Input_private.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="source\Driver\Xorg\Screen_private.h">
+    <ClInclude Include="..\source\Driver\Xorg\Screen_private.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="source\Driver\Xorg\Window_private.h">
+    <ClInclude Include="..\source\Driver\Xorg\Window_private.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="source\Driver\Xorg\Wrapper_private.h">
+    <ClInclude Include="..\source\Driver\Xorg\Wrapper_private.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -222,81 +235,81 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\Core\Application.cpp" />
-    <ClCompile Include="source\Core\Context.cpp" />
-    <ClCompile Include="source\Core\Filesystem.cpp" />
-    <ClCompile Include="source\Core\Object.cpp" />
-    <ClCompile Include="source\Core\ClassObjectRegistration.cpp" />
-    <ClCompile Include="source\Core\Time.cpp" />
-    <ClCompile Include="source\Core\UtfConvert.cpp" />
-    <ClCompile Include="source\Data\Archive.cpp" />
-    <ClCompile Include="source\Data\AttributeSerialize.cpp" />
-    <ClCompile Include="source\Data\Image.cpp" />
-    <ClCompile Include="source\Data\ImageLoader.cpp" />
-    <ClCompile Include="source\Data\ImageUtils\stb_image.cpp" />
-    <ClCompile Include="source\Data\ImageUtils\tga.cpp" />
-    <ClCompile Include="source\Data\Json.cpp" />
-    <ClCompile Include="source\Driver\RenderGL4.cpp" />
-    <ClCompile Include="source\Driver\Win32\Input_private.cpp" />
-    <ClCompile Include="source\Driver\Win32\Screen_private.cpp" />
-    <ClCompile Include="source\Driver\Win32\Window_private.cpp" />
-    <ClCompile Include="source\Driver\Win32\Wrapper.cpp" />
-    <ClCompile Include="source\Driver\Xorg\Input_private.cpp">
+    <ClCompile Include="..\source\Core\Application.cpp" />
+    <ClCompile Include="..\source\Core\Context.cpp" />
+    <ClCompile Include="..\source\Core\Filesystem.cpp" />
+    <ClCompile Include="..\source\Core\Object.cpp" />
+    <ClCompile Include="..\source\Core\ClassObjectRegistration.cpp" />
+    <ClCompile Include="..\source\Core\SharedLibrary.cpp" />
+    <ClCompile Include="..\source\Core\Time.cpp" />
+    <ClCompile Include="..\source\Core\UtfConvert.cpp" />
+    <ClCompile Include="..\source\Data\Archive.cpp" />
+    <ClCompile Include="..\source\Data\AttributeSerialize.cpp" />
+    <ClCompile Include="..\source\Data\Image.cpp" />
+    <ClCompile Include="..\source\Data\ImageLoader.cpp" />
+    <ClCompile Include="..\source\Data\ImageUtils\stb_image.cpp" />
+    <ClCompile Include="..\source\Data\ImageUtils\tga.cpp" />
+    <ClCompile Include="..\source\Data\Json.cpp" />
+    <ClCompile Include="..\source\Driver\Render.cpp" />
+    <ClCompile Include="..\source\Driver\Win32\Input_private.cpp" />
+    <ClCompile Include="..\source\Driver\Win32\Screen_private.cpp" />
+    <ClCompile Include="..\source\Driver\Win32\Window_private.cpp" />
+    <ClCompile Include="..\source\Driver\Win32\Wrapper.cpp" />
+    <ClCompile Include="..\source\Driver\Xorg\Input_private.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="source\Driver\Xorg\Screen_private.cpp">
+    <ClCompile Include="..\source\Driver\Xorg\Screen_private.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="source\Driver\Xorg\Window_private.cpp">
+    <ClCompile Include="..\source\Driver\Xorg\Window_private.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="source\Driver\Xorg\Wrapper_private.cpp">
+    <ClCompile Include="..\source\Driver\Xorg\Wrapper_private.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="source\Geometry\AABoundingBox.cpp" />
-    <ClCompile Include="source\Geometry\CreateBounding.cpp" />
-    <ClCompile Include="source\Geometry\Frustum.cpp" />
-    <ClCompile Include="source\Geometry\Intersection.cpp" />
-    <ClCompile Include="source\Geometry\OBoundingBox.cpp" />
-    <ClCompile Include="source\Resource\Shader.cpp" />
-    <ClCompile Include="source\Resource\Texture.cpp" />
-    <ClCompile Include="source\Scene\Actor.cpp" />
-    <ClCompile Include="source\Scene\Component.cpp" />
-    <ClCompile Include="source\Scene\Level.cpp" />
-    <ClCompile Include="tests\main.cpp" />
+    <ClCompile Include="..\source\Geometry\AABoundingBox.cpp" />
+    <ClCompile Include="..\source\Geometry\CreateBounding.cpp" />
+    <ClCompile Include="..\source\Geometry\Frustum.cpp" />
+    <ClCompile Include="..\source\Geometry\Intersection.cpp" />
+    <ClCompile Include="..\source\Geometry\OBoundingBox.cpp" />
+    <ClCompile Include="..\source\Resource\Shader.cpp" />
+    <ClCompile Include="..\source\Resource\Texture.cpp" />
+    <ClCompile Include="..\source\Scene\Actor.cpp" />
+    <ClCompile Include="..\source\Scene\Component.cpp" />
+    <ClCompile Include="..\source\Scene\Level.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="source\Driver\Cocoa\Input_private.mm">
+    <None Include="..\source\Driver\Cocoa\Input_private.mm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="source\Driver\Cocoa\Screen_private.mm">
+    <None Include="..\source\Driver\Cocoa\Screen_private.mm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="source\Driver\Cocoa\Window_private.mm">
+    <None Include="..\source\Driver\Cocoa\Window_private.mm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="source\Driver\Cocoa\Wrapper_private.mm">
+    <None Include="..\source\Driver\Cocoa\Wrapper_private.mm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

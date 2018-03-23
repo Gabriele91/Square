@@ -14,7 +14,8 @@
 
 namespace Square
 {
-	class Context
+	//Context without template (dll)
+	class SQUARE_API BaseContext
 	{
 	protected:
 
@@ -25,7 +26,7 @@ namespace Square
 		//Attributes
 		using AttributeMap = std::unordered_map< uint64, std::vector < Attribute > >;
 		//Factory
-		using ObjectFactoryMap = std::unordered_map< uint64, Unique<ObjectFactory> >;
+		using ObjectFactoryMap = std::unordered_map< uint64, Shared<ObjectFactory> >;
 
 	public:
 
@@ -38,7 +39,6 @@ namespace Square
         const std::vector < Attribute >* attributes(uint64 object_id);
         const std::vector < Attribute >* attributes(const Object& object);
         const std::vector < Attribute >* attributes(const ObjectInfo& info);
-        template< class T > const std::vector < Attribute >* attributes();
 
 		//Get resource
         Shared<ResourceObject> resource(const std::string& name);
@@ -65,26 +65,6 @@ namespace Square
 		//Add variable
         void add_variable(const std::string& name, const Variant& value);
 		
-        //template utils
-        template< class T > Shared<T> create()
-        { return DynamicPointerCast<T>(create(T::static_object_id())); }
-        
-        template< class T > void add_object()
-        { add_object(new ObjectFactoryItem<T>()); }
-        
-        template< class T > void add_resource(const std::vector< std::string >& exts)
-        { add_resource(new ObjectFactoryItem<T>(), exts); }
-        
-        template < class T >
-        void add_attributes(const Attribute& attribute)
-        { add_attributes(T::static_object_id(),attribute); }
-        
-        template< class T >  Shared<T> resource(const std::string& name)
-        { return DynamicPointerCast<T>(resource(T::static_object_name() + ":" + name)); }
-        
-        template< class T >  const std::string& resource_path(const std::string& name)
-        { return resource_path(T::static_object_name() + ":" + name); }
-
 		//context errors/wrongs
 		void add_wrong(const std::string& wrong);
 
@@ -97,26 +77,17 @@ namespace Square
 		void show_wrongs(std::ostream& output) const;
         
 	protected:
-	
+		//Can't alloc a BaseContext
+		BaseContext();
         //Resource
-        struct ResourceFile
+        struct SQUARE_API ResourceFile
         {
             uint64      m_resouce_id;
             std::string m_filepath;
             //...
-            ResourceFile()
-            {
-            }
-            ResourceFile(const ResourceFile& in)
-            : m_filepath(in.m_filepath)
-            , m_resouce_id(in.m_resouce_id)
-            {
-            }
-            ResourceFile(uint64 id, const std::string filepath)
-            : m_filepath(filepath)
-            , m_resouce_id(id)
-            {
-            }
+			ResourceFile();
+			ResourceFile(const ResourceFile& in);
+			ResourceFile(uint64 id, const std::string filepath);
         };
         using ResourceFileMap   = std::unordered_map< std::string, ResourceFile >;
         using ResourceInfoMap   = std::unordered_map< uint64, std::vector<std::string> >;
@@ -135,11 +106,66 @@ namespace Square
 		//friend class
 		friend class Application;
 		//delete all
-		void clear()
+		void clear();
+	};
+	
+	//Template help context
+	class Context : public BaseContext
+	{
+	public:
+		//using
+		using BaseContext::create;
+		using BaseContext::attributes;
+		using BaseContext::resource;
+		using BaseContext::resource_path;
+		using BaseContext::variable;
+		
+		using BaseContext::add_object;
+		using BaseContext::add_attributes;
+		using BaseContext::add_resource;
+		using BaseContext::add_resource_path;
+		using BaseContext::add_resource_file;
+		using BaseContext::add_variable;
+
+		using BaseContext::add_wrong;
+		using BaseContext::add_wrongs;
+		using BaseContext::wrongs;
+		using BaseContext::show_wrongs;
+		
+		//template utils
+		template< class T > inline Shared<T> create()
 		{
-			m_variables.clear();
-			m_attributes.clear();
-			m_object_factories.clear();
+			return DynamicPointerCast<T>(BaseContext::create(T::static_object_id()));
+		}
+
+		template< class T > inline const std::vector < Attribute >* attributes()
+		{
+			return attributes(T::static_object_id());
+		}
+
+		template< class T > inline void add_object()
+		{
+			BaseContext::add_object(new ObjectFactoryItem<T>());
+		}
+
+		template< class T > inline void add_resource(const std::vector< std::string >& exts)
+		{
+			BaseContext::add_resource(new ObjectFactoryItem<T>(), exts);
+		}
+
+		template < class T > inline void add_attributes(const Attribute& attribute)
+		{
+			BaseContext::add_attributes(T::static_object_id(), attribute);
+		}
+
+		template< class T >  inline Shared<T> resource(const std::string& name)
+		{
+			return DynamicPointerCast<T>(BaseContext::resource(T::static_object_name() + ":" + name));
+		}
+
+		template< class T >  inline const std::string& resource_path(const std::string& name)
+		{
+			return BaseContext::resource_path(T::static_object_name() + ":" + name);
 		}
 	};
 }

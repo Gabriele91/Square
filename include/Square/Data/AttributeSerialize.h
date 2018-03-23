@@ -27,6 +27,7 @@ namespace  Data
     }
     inline bool serialize(Archive& archivie,const Object* object)
     {
+		
         return attribute_serialize(archivie, object, Application::context()->attributes(object->object_id()));
     }
     template < class T >

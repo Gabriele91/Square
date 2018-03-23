@@ -30,21 +30,25 @@
 
 /////////////////////////////////////////////////////////////////////////////
 // EXPORT/IMPOT
+#ifdef _WIN32
+	#define DLL_EXPORT __declspec(dllexport)
+	#define DLL_IMPORT __declspec(dllimport)
+#else 
+	#define DLL_EXPORT 
+	#define DLL_IMPORT 
+#endif
+/////////////////////////////////////////////////////////////////////////////
+// TYPE OF LIB
 #if defined(SQUARE_LIBRARY_EXPORT)
 	// inside DLL
-	#define SQUARE_API   __declspec(dllexport)
-	#define SQUARE_RENDER_API   __declspec(dllexport)
+	#define SQUARE_API   DLL_EXPORT
 #elif defined(SQUARE_LIBRARY_IMPORT)
 	// outside DLL
-	#define SQUARE_API   __declspec(dllimport)
-	#define SQUARE_RENDER_API   __declspec(dllimport)
+	#define SQUARE_API   DLL_IMPORT
 #else 
 	// static
 	#define SQUARE_API
-	#define SQUARE_RENDER_API
 #endif
-
-
 /////////////////////////////////////////////////////////////////////////////
 // TYPES
 namespace Square

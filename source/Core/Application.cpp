@@ -24,6 +24,10 @@ namespace Square
 	{
 		return s_instance ? &s_instance->m_context : (Context*)nullptr;
 	}
+	Render::Context* Application::render()
+	{
+		return s_instance ? s_instance->m_render : (Render::Context*)nullptr;
+	}
     /////
     WindowSizePixel::WindowSizePixel(const IVec2& size)
     {
@@ -53,10 +57,11 @@ namespace Square
     }
     
 	//help
-	Application&    AppInterface::application() { return *Application::instance(); }
-	Context&		AppInterface::context()     { return *Application::context(); }
-	Video::Window&  AppInterface::window()      { return *application().window(); }
-	Video::Input&   AppInterface::input()       { return *application().input(); }
+	Application&     AppInterface::application() { return *Application::instance(); }
+	Context&		 AppInterface::context()     { return *Application::context(); }
+	Render::Context& AppInterface::render()      { return *Application::render(); }
+	Video::Window&   AppInterface::window()      { return *application().window(); }
+	Video::Input&    AppInterface::input()       { return *application().input(); }
 
     Application::Application()
     {
@@ -178,11 +183,11 @@ namespace Square
         return m_window;
     }
     
-    const Video::Input* Application::input() const
-    {
-        return m_input;
-    }
-
+	const Video::Input* Application::input() const
+	{
+		return m_input;
+	}
+	
     bool Application::execute
     (
          const WindowSize& size,
@@ -221,12 +226,17 @@ namespace Square
                                (screen_height - window_size.y) / 2);
         //enable render context and  disable vSync (auto by Video::Window)
         m_window->acquire_context();
+		//Get render
+		m_render = Render::create_render_driver(Render::DR_OPENGL);
 		//init render
-		if (!Render::init()) return false;
+		if (!m_render || !m_render->init())
+		{
+			return false;
+		}
         //flush errors
-        Render::print_errors();
+		m_render->print_errors();
         //show info
-        Render::print_info();
+		m_render->print_info();
         //close event
         bool close_event = false;
         //set events
@@ -258,7 +268,7 @@ namespace Square
         });
         //start
         m_instance->start();
-        Render::print_errors();
+		m_render->print_errors();
         //time
         double old_time = 0;
         double last_time = Time::get_time();
@@ -269,13 +279,13 @@ namespace Square
             old_time = last_time;
             last_time = Time::get_time();
             //print
-            Render::print_errors();
+			m_render->print_errors();
             //update delta time
             m_last_delta_time = std::max(last_time - old_time, 0.0001);
             //update
             if (!m_instance->run(m_last_delta_time)) break;
             //print
-            Render::print_errors();
+			m_render->print_errors();
             //update window
             Video::Input::pull_events();
             //swap
@@ -292,8 +302,9 @@ namespace Square
         delete m_instance;
         m_instance = nullptr;
         
-        //delete context
-        Render::close();
+        //delete render context
+		m_render->close();
+		Render::delete_render_driver(m_render);
         
         //dealloc window
         delete m_window;
