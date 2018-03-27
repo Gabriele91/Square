@@ -216,6 +216,12 @@
     <ClInclude Include="..\include\Square\Core\SharedLibrary.h">
       <Filter>include\Square\Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Resource\Geometry.h">
+      <Filter>include\Square\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Resource\Model.h">
+      <Filter>include\Square\Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">

@@ -6,6 +6,7 @@
 //
 #include "Square/Core/Context.h"
 #include "Square/Core/Filesystem.h"
+#include "Square/Core/Application.h"
 #include <iostream>
 
 namespace Square
@@ -67,7 +68,7 @@ namespace Square
 		//set resource name
 		resource->resource_name(resource_it->first.c_str());
         //load
-        if(resource->load(*((Context*)this), resource_file_it->second.m_filepath)) return resource;
+        if(resource->load(resource_file_it->second.m_filepath)) return resource;
 		//fail
 		m_resources.erase(resource_it);
 		//end
@@ -244,7 +245,28 @@ namespace Square
 			output << wrong << std::endl;
 		}
 	}
-	
+
+	//get application
+	Application* BaseContext::application()
+	{
+		return m_application;
+	}
+	//get render
+	Render::Context* BaseContext::render()
+	{
+		return application() ? application()->render() : nullptr;
+	}
+	//get window
+	Video::Window* BaseContext::window()
+	{
+		return application() ? application()->window() : nullptr;
+	}
+	//get window
+	Video::Input* BaseContext::input()
+	{
+		return application() ? application()->input() : nullptr;
+	}
+
 	void BaseContext::clear()
 	{
 		m_variables.clear();

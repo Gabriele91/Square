@@ -27,17 +27,14 @@ namespace Resource
         static void object_registration(Context& ctx);
         
         //Contructor
-		Shader();
-		Shader(const std::string& path);
+		Shader(Context& context);
 		Shader(Context& context, const std::string& path);
 
 		//Destructor
 		virtual ~Shader();
 
 		//load shader
-		bool load(Context& context, const std::string& path) override;
-
-		bool load(const std::string& path);
+		bool load(const std::string& path) override;
 
 		//compile from source
 		bool compile

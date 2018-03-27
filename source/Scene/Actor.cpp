@@ -46,8 +46,8 @@ namespace Scene
 		, [](Actor* actor,const Quat& rot){ actor->rotation(rot);     }));
 	}
 
-	Actor::Actor() {}
-	Actor::Actor(const std::string& name) : m_name(name) {}
+	Actor::Actor(Context& context) : Object(context) {}
+	Actor::Actor(Context& context, const std::string& name) : Object(context), m_name(name) {}
 
     //serialize
     void Actor::serialize(Data::Archive& archivie)
@@ -212,10 +212,8 @@ namespace Scene
 				return component;
 			}
 		}
-		//Context?
-		if (!Application::context()) return nullptr;
 		//create
-		Shared<Component> new_component = StaticPointerCast<Component>(Application::context()->create(id));
+		Shared<Component> new_component = StaticPointerCast<Component>(context().create(id));
 		//test
 		if (!new_component)
 		{
@@ -235,7 +233,7 @@ namespace Scene
     Shared<Actor> Actor::child()
     {
         //create
-        auto actor = std::make_shared<Actor>();
+        auto actor = std::make_shared<Actor>(context());
         //add
         add(actor);
         //return
@@ -250,7 +248,7 @@ namespace Scene
         //search
         for(auto child : m_childs) if(child->name() == name) return child;
         //create
-        auto actor = std::make_shared<Actor>(name);
+        auto actor = std::make_shared<Actor>(context(), name);
         //add
         add(actor);
         //return

@@ -36,8 +36,8 @@ namespace Scene
 		static void object_registration(Context& ctx);
 
         //constructor
-		Actor();
-		Actor(const std::string& name);
+		Actor(Context& context);
+		Actor(Context& context, const std::string& name);
         
         //add a child
         void add(Shared<Actor> child);

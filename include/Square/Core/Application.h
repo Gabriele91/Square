@@ -98,13 +98,19 @@ namespace Square
         IVec2  window_position() const;
         void   window_position(const IVec2& size) const;
         //get attr
-        AppInterface*  app_instance();
-        Video::Window* window();
-        Video::Input*  input();
+        AppInterface*    app_instance();
+        Video::Window*   window();
+        Video::Input*    input();
+		//ctx info
+		Context*	     context();
+		Render::Context* render();
         //get attr (const)
         const AppInterface*   app_instance() const;
         const Video::Window*  window() const;
 		const Video::Input*   input() const;
+		//ctx info (const)
+		const Context*	     context() const;
+		const Render::Context* render() const;
 		//execute a instance
         bool execute
         (
@@ -119,8 +125,6 @@ namespace Square
         
         //sigleton
 		static Application*     instance();
-		static Context*		    context();
-		static Render::Context* render();
 
     private:
         //info screen

@@ -14,6 +14,19 @@
 
 namespace Square
 {
+	//Application
+	class Application;
+	//Render context
+	namespace Render
+	{
+		class Context;
+	}
+	//Window and input
+	namespace Video
+	{
+		class Window;
+		class Input;
+	}
 	//Context without template (dll)
 	class SQUARE_API BaseContext
 	{
@@ -27,7 +40,7 @@ namespace Square
 		using AttributeMap = std::unordered_map< uint64, std::vector < Attribute > >;
 		//Factory
 		using ObjectFactoryMap = std::unordered_map< uint64, Shared<ObjectFactory> >;
-
+		
 	public:
 
 		//Create
@@ -75,7 +88,16 @@ namespace Square
 		void show_wrongs() const;
 
 		void show_wrongs(std::ostream& output) const;
-        
+
+		//get application
+		Application*  application();
+		//get render
+		Render::Context* render();
+		//get window
+		Video::Window* window();
+		//get window
+		Video::Input* input();
+
 	protected:
 		//Can't alloc a BaseContext
 		BaseContext();
@@ -99,6 +121,8 @@ namespace Square
 		StringList		 m_wrongs;
         //Object factory
 		ObjectFactoryMap m_object_factories;
+		//Context refs
+		Application*     m_application{ nullptr };
         //Reousce factory
         ResourceFileMap   m_resources_file;
         ResourceInfoMap   m_resources_info;
@@ -112,6 +136,10 @@ namespace Square
 	//Template help context
 	class Context : public BaseContext
 	{
+	protected:
+
+		friend class Application;
+
 	public:
 		//using
 		using BaseContext::create;
@@ -131,6 +159,9 @@ namespace Square
 		using BaseContext::add_wrongs;
 		using BaseContext::wrongs;
 		using BaseContext::show_wrongs;
+
+		using BaseContext::application;
+		using BaseContext::render;
 		
 		//template utils
 		template< class T > inline Shared<T> create()
@@ -145,12 +176,12 @@ namespace Square
 
 		template< class T > inline void add_object()
 		{
-			BaseContext::add_object(new ObjectFactoryItem<T>());
+			BaseContext::add_object(new ObjectFactoryItem<T>(*this));
 		}
 
 		template< class T > inline void add_resource(const std::vector< std::string >& exts)
 		{
-			BaseContext::add_resource(new ObjectFactoryItem<T>(), exts);
+			BaseContext::add_resource(new ObjectFactoryItem<T>(*this), exts);
 		}
 
 		template < class T > inline void add_attributes(const Attribute& attribute)

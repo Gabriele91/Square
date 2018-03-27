@@ -58,7 +58,7 @@ namespace Scene
 		SQUARE_OBJECT(Component)
 
         //Init
-        Component();
+        Component(Context& context);
         
         //utils
         void remove_from_parent();

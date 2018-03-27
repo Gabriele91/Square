@@ -59,11 +59,17 @@ namespace Square
     class SQUARE_API Object
 	{
 	public:
-
+		//Resource
+		Object(Context& context) : m_context(context) {}
+		Context& context() { return m_context; }
+		//info
 		virtual uint64 object_id() const = 0;
 		virtual const std::string& object_name() const = 0;
 		virtual const ObjectInfo& object_info() const = 0;
 
+	protected:
+		//Context
+		Context& m_context;
 	};
 
 	//Factory of a object
@@ -87,6 +93,7 @@ namespace Square
 
 	};
 
+	//Factory Resource
 	template< typename T >
 	//Implementation of a factory
 	class ObjectFactoryItem : public ObjectFactory
@@ -94,11 +101,12 @@ namespace Square
 	public:
 
 		//Object factory
-		ObjectFactoryItem() : ObjectFactory(T::static_object_info()) { }
+		ObjectFactoryItem(Context& context) : ObjectFactory(T::static_object_info()), m_context(context) { }
+
 		//Create
 		virtual Shared<Object> create()
 		{
-			return StaticPointerCast<Object>(std::make_shared<T>());
+			return StaticPointerCast<Object>(std::make_shared<T>(m_context));
 		}
 
 		const ObjectInfo& info()
@@ -107,7 +115,9 @@ namespace Square
 		}
 
 	protected:
-
+		//Context
+		Context & m_context;
+		//Info
 		const ObjectInfo* m_info;
 
 	};

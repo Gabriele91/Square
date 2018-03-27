@@ -37,7 +37,10 @@ namespace Square
 	{
 	public:
 		SQUARE_OBJECT(ResourceObject)
-		virtual bool         load(Context& context, const std::string& path) = 0;
+		//Resource
+		ResourceObject(Context& context) : Object(context) {}
+		//load from file
+		virtual bool         load(const std::string& path) = 0;
         virtual ResourceType resource_type()       { return ResourceType::UNKNOWN;                  }
 		virtual const char*  resource_name() const { return m_resource_name ? m_resource_name : ""; }
 
@@ -50,4 +53,5 @@ namespace Square
 		friend class Context;
 		friend class BaseContext;
 	};
+
 }
