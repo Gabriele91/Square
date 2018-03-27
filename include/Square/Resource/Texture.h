@@ -68,15 +68,17 @@ namespace Resource
         static void object_registration(Context& ctx);
         
         //Contructor
-		Texture();
+		Texture(Context& context);
 
-		Texture(const std::string& path);
+		Texture(Context& context, const std::string& path);
 
-		Texture(const Attributes& attr,
+		Texture(Context& context, 
+			    const Attributes& attr,
 			    const std::string& path);
 
 		Texture
 		(
+			Context& context,
 			const Attributes& attr,
 			const unsigned char* buffer,
 			unsigned long  width,
@@ -87,6 +89,7 @@ namespace Resource
 
 		Texture
 		(
+			Context& context,
 			const Attributes& attr,
 			const std::vector< unsigned char >& buffer,
 			unsigned long width,
@@ -97,13 +100,10 @@ namespace Resource
 
 		virtual ~Texture();
 
-		bool load(Context& context, const std::string& path) override;
-
-		bool load(const std::string& path);
+		bool load(const std::string& path) override;
 
 		bool load(const Attributes& attr, const std::string& path);
-
-
+		
 		bool build
 		(
 			const Attributes& attr,

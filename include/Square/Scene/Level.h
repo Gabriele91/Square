@@ -29,6 +29,9 @@ namespace Scene
 		//Registration in context
 		static void object_registration(Context& ctx);
 
+		//constructor
+		Level(Context& context);
+
 		//add an actor
 		void add(Shared<Actor> child);
 

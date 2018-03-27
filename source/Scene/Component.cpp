@@ -12,7 +12,7 @@ namespace Square
 namespace Scene
 {
     //init
-    Component::Component()
+    Component::Component(Context& context) : Object(context)
     {
     }
     

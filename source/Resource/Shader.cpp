@@ -43,17 +43,13 @@ namespace Resource
     }
 
 	//Contructor
-	Shader::Shader()
+	Shader::Shader(Context& context) : ResourceObject(context)
 	{
 
 	}
-	Shader::Shader(const std::string& path)
+	Shader::Shader(Context& context, const std::string& path) : ResourceObject(context)
 	{
 		load(path);
-	}
-	Shader::Shader(Context& context, const std::string& path)
-	{
-		load(context, path);
 	}
 	
 	//Destructor
@@ -322,7 +318,7 @@ namespace Resource
 	}
 
 	//load shader
-	bool Shader::load(Context& context, const std::string& path) 
+	bool Shader::load(const std::string& path) 
 	{
 		//id file
 		size_t  this_file = 0;
@@ -331,14 +327,9 @@ namespace Resource
 		//input stream
 		std::stringstream source_stream(Filesystem::text_file_read_all(path));
 		//process include/import
-		ShaderImportLoader preprocess(context, source_stream, path, m_filepath_map, source);
+		ShaderImportLoader preprocess(context(), source_stream, path, m_filepath_map, source);
 		//compile
 		return  preprocess.success() && compile(source, PreprocessMap());
-	}
-
-	bool Shader::load(const std::string& path)
-	{
-		return load(*Application::context(), path);
 	}
 
 	//compile from source
@@ -465,13 +456,10 @@ namespace Resource
 					{
 						if (entry.ident == shader_target_name[type] || type <= Render::ST_FRAGMENT_SHADER)
 						{
-							if (auto context = Application::context())
-							{
-								context->add_wrong
-								(
-									"Error to compile \"" + shader_target_name[type] + "\": \n" + logs.get_errors()
-								);
-							}
+							context().add_wrong
+							(
+								"Error to compile \"" + shader_target_name[type] + "\": \n" + logs.get_errors()
+							);
 							return false;
 						}
 					}
@@ -480,7 +468,7 @@ namespace Resource
 		}
 		////////////////////////////////////////////////////////////////////////////////
 		// load shaders from files
-		if (auto render = Application::render())
+		if (auto render = context().render())
 		{
 			//compile
 			m_shader = render->create_shader(shader_info);
@@ -488,12 +476,9 @@ namespace Resource
 			if (!m_shader || render->shader_compiled_with_errors(m_shader) || render->shader_linked_with_error(m_shader))
 			{
 				//fail
-				if (auto context = Application::context())
-				{
-					context->add_wrong("Error to shader compile");
-					context->add_wrongs(render->get_shader_compiler_errors(m_shader));
-					context->add_wrong(render->get_shader_liker_error(m_shader));
-				}
+				context().add_wrong("Error to shader compile");
+				context().add_wrongs(render->get_shader_compiler_errors(m_shader));
+				context().add_wrong(render->get_shader_liker_error(m_shader));
 				return false;
 			}
 			//success
@@ -506,7 +491,7 @@ namespace Resource
 	//get buffer
 	Render::Uniform* Shader::uniform(const std::string& name)
 	{
-		if (auto render = Application::render())
+		if (auto render = context().render())
 			return render->get_uniform(m_shader, std::string(name));
 		return nullptr;
 	}
@@ -525,14 +510,14 @@ namespace Resource
 	//bind shader
 	void Shader::bind()
 	{
-		if (auto render = Application::render())
+		if (auto render = context().render())
 			render->bind_shader(m_shader);
 	}
 
 	//unbind shader
 	void Shader::unbind()
 	{
-		if (auto render = Application::render())
+		if (auto render = context().render())
 			render->unbind_shader(m_shader);
 	}
 
@@ -541,7 +526,7 @@ namespace Resource
 	{
 		//delete last shader
 		if (m_shader)
-			if (auto render = Application::render())
+			if (auto render = context().render())
 				render->delete_shader(m_shader);
 		m_shader = nullptr;
 		//clear info

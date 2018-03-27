@@ -175,7 +175,9 @@
     <ClInclude Include="..\include\Square\Geometry\Sphere.h" />
     <ClInclude Include="..\include\Square\Math\Linear.h" />
     <ClInclude Include="..\include\Square\Math\Tangent.h" />
+    <ClInclude Include="..\include\Square\Resource\Model.h" />
     <ClInclude Include="..\include\Square\Resource\Shader.h" />
+    <ClInclude Include="..\include\Square\Resource\Geometry.h" />
     <ClInclude Include="..\include\Square\Resource\Texture.h" />
     <ClInclude Include="..\include\Square\Scene\Actor.h" />
     <ClInclude Include="..\include\Square\Scene\Component.h" />

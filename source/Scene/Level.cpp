@@ -29,6 +29,11 @@ namespace Scene
 		ctx.add_attributes<Level>(attribute_field("name", std::string(), &Level::m_name));
 	}
 
+	//constructor
+	Level::Level(Context& context) : Object(context)
+	{
+	}
+
 	//serialize
 	void Level::serialize(Data::Archive& archivie)
 	{
@@ -94,7 +99,7 @@ namespace Scene
 	Shared<Actor> Level::actor()
 	{
 		//create
-		auto actor = std::make_shared<Actor>();
+		auto actor = std::make_shared<Actor>(context());
 		//add
 		add(actor);
 		//return
@@ -109,7 +114,7 @@ namespace Scene
 		//search
 		for (auto actor : m_actors) if (actor->name() == name) return actor;
 		//create
-		auto actor = std::make_shared<Actor>(name);
+		auto actor = std::make_shared<Actor>(context(), name);
 		//add
 		add(actor);
 		//return

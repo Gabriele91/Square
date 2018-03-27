@@ -114,7 +114,7 @@ namespace Resource
 	}
 	//////////////////////////////////////////////////////////////
 	// Texture
-	Texture::Texture()
+	Texture::Texture(Context& context) : ResourceObject(context)
 	{
 	}
 
@@ -123,49 +123,50 @@ namespace Resource
 		destoy();
 	}
 
-	Texture::Texture(const std::string& path)
+	Texture::Texture(Context& context, const std::string& path) : ResourceObject(context)
 
 	{
 		load(path);
 	}
 
-	Texture::Texture(
+	Texture::Texture
+	(
+		Context& context,
 		const Attributes& attr,
 		const std::string& path
-	)
+	) : ResourceObject(context)
 	{
 		load(attr, path);
 	}
 
-	Texture::Texture(
+	Texture::Texture
+	(
+		Context& context,
 		const Attributes& attr,
 		const unsigned char* buffer,
 		unsigned long width,
 		unsigned long height,
 		Render::TextureFormat format,
 		Render::TextureType   type
-	)
+	) : ResourceObject(context)
 	{
 		build(attr, buffer, width, height, format, type);
 	}
 
-	Texture::Texture(
+	Texture::Texture
+	(   
+		Context& context,
 		const Attributes& attr,
 		const std::vector< unsigned char >& buffer,
 		unsigned long width,
 		unsigned long height,
 		Render::TextureFormat format,
 		Render::TextureType   type
-	)
+	) : ResourceObject(context)
 	{
 		build(attr, buffer, width, height, format, type);
 	}
-
-	bool Texture::load(Context& context, const std::string& path)
-	{
-		return load(path);
-	}
-
+	
 	bool Texture::load(const std::string& path)
 	{
 		return load(Attributes::rgba_linear_mipmap_linear(), path);
@@ -201,7 +202,8 @@ namespace Resource
 		return build(modattr, image.data(), image_width, image_height, image_format, image_type);
 	}
 
-	bool Texture::build(
+	bool Texture::build
+	(
 		const Attributes& attr,
 		const std::vector< unsigned char >& buffer,
 		unsigned long width,
@@ -213,7 +215,8 @@ namespace Resource
 		return build(attr, buffer.data(), width, height, format, type);
 	}
 
-	bool Texture::build(
+	bool Texture::build
+	(
 		const Attributes& attr,
 		const unsigned char* buffer,
 		unsigned long width,
@@ -228,7 +231,7 @@ namespace Resource
 		m_format = format;
 		m_type = type;
 		//create texture
-		if (auto render = Application::render())
+		if (auto render = context().render())
 		{
 			m_ctx_texture =
 			render->create_texture
@@ -281,7 +284,7 @@ namespace Resource
 	void Texture::destoy()
 	{
 		if (m_ctx_texture)
-			if (auto render = Application::render())
+			if (auto render = context().render())
 				render->delete_texture(m_ctx_texture);
 		m_ctx_texture = nullptr;
 	}

@@ -20,14 +20,6 @@ namespace Square
 	{
 		return s_instance;
 	}
-	Context* Application::context()
-	{
-		return s_instance ? &s_instance->m_context : (Context*)nullptr;
-	}
-	Render::Context* Application::render()
-	{
-		return s_instance ? s_instance->m_render : (Render::Context*)nullptr;
-	}
     /////
     WindowSizePixel::WindowSizePixel(const IVec2& size)
     {
@@ -58,8 +50,8 @@ namespace Square
     
 	//help
 	Application&     AppInterface::application() { return *Application::instance(); }
-	Context&		 AppInterface::context()     { return *Application::context(); }
-	Render::Context& AppInterface::render()      { return *Application::render(); }
+	Context&		 AppInterface::context()     { return *application().context(); }
+	Render::Context& AppInterface::render()      { return *application().render(); }
 	Video::Window&   AppInterface::window()      { return *application().window(); }
 	Video::Input&    AppInterface::input()       { return *application().input(); }
 
@@ -76,10 +68,14 @@ namespace Square
 		{
 			item.m_registration(m_context);
 		}
+		//Self reg
+		m_context.m_application = this;
     }
     
     Application::~Application()
     {
+		//Self unregister
+		m_context.m_application = nullptr;
 		//unregister items
 		m_context.clear();
         //unregister
@@ -172,7 +168,17 @@ namespace Square
     {
         return m_input;
     }
-    
+
+	Context* Application::context()
+	{
+		return  &m_context;
+	}
+	
+	Render::Context* Application::render()
+	{
+		return  m_render;
+	}
+
     const AppInterface* Application::app_instance() const
     {
         return m_instance;
@@ -186,6 +192,16 @@ namespace Square
 	const Video::Input* Application::input() const
 	{
 		return m_input;
+	}
+
+	const Context* Application::context() const
+	{
+		return  &m_context;
+	}
+
+	const Render::Context* Application::render() const
+	{
+		return  m_render;
 	}
 	
     bool Application::execute

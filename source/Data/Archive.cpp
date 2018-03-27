@@ -75,7 +75,7 @@ namespace Data
     }
     
 
-    ArchiveBinWrite::ArchiveBinWrite(std::ostream& stream) : m_stream(stream) {}
+    ArchiveBinWrite::ArchiveBinWrite(Context& context, std::ostream& stream) : Archive(context), m_stream(stream) {}
     Archive& ArchiveBinWrite::operator % (VariantRef value)
     {
         //type
@@ -244,7 +244,7 @@ namespace Data
         return istream;
     }
     
-    ArchiveBinRead::ArchiveBinRead(std::istream& stream) : m_stream(stream) {}
+    ArchiveBinRead::ArchiveBinRead(Context& context, std::istream& stream) : Archive(context), m_stream(stream) {}
     Archive& ArchiveBinRead::operator % (VariantRef value)
     {
         //Type
@@ -336,9 +336,8 @@ namespace Data
 				m_stream > resource_name;
 				//load
 				Shared<ResourceObject>  resource_object;
-				if(!Application::context() ) 
-					throw std::runtime_error("ArchiveBinWrite, can't load resource: " + resource_name + ", no global context");
-				if(!(resource_object = Application::context()->resource(resource_name)))
+				//load resource
+				if(!(resource_object = context().resource(resource_name)))
 					throw std::runtime_error("ArchiveBinWrite, can't load resource: " + resource_name + ", not exists");
 				//save
 				value.get<Shared<ResourceObject>>() = resource_object;

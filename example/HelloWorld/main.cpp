@@ -24,7 +24,7 @@ public:
 	Vec2    m_pos;   //2D pos
 	STexture m_texture;
 
-    Sprite(){ }
+	Sprite(Square::Context& context) : Component(context) { }
     
     virtual void on_attach(Square::Scene::Actor& entity) override
     {
@@ -60,6 +60,8 @@ public:
 	float	     m_mass;
 	int 	     m_nshape;
 
+	Body(Square::Context& context) : Component(context) { }
+
 	void  set_gravity(const Square::Vec3& g){ m_gravity = g; }
 	const Square::Vec3& get_gravity() const { return m_gravity; }
 
@@ -80,10 +82,12 @@ class Game01 : public Square::AppInterface
 {
 public:
 
+	
 	void key_event(Square::Video::KeyboardEvent key, short mode, Square::Video::ActionEvent action)
 	{
 		switch (key)
 		{
+		case Square::Video::KEY_ESCAPE:
 		case Square::Video::KEY_Q: m_loop = false; break;
 		case Square::Video::KEY_W: Square::Application::instance()->fullscreen(false); break;
 		case Square::Video::KEY_F: Square::Application::instance()->fullscreen(true); break;
@@ -97,6 +101,9 @@ public:
 		using namespace Square::Data;
 		using namespace Square::Scene;
 		using namespace Square::Resource;
+		//level
+		m_level = context().create<Level>();
+
 		//rs file
 		context().add_resource_file("example.png");
         context().add_resource_file("effect.hlsl");
@@ -104,9 +111,9 @@ public:
 
 		//shader
 		auto shader = context().resource<Shader>("effect");
-
+		
 		//test
-		auto player = m_level.actor("player");
+		auto player = m_level->actor("player");
 		player->translation({ 10,0,0 });
 		player->component<Sprite>()->m_scale = { 2,2 };
 		player->component<Sprite>()->m_pos = { 100,0 };
@@ -122,8 +129,8 @@ public:
 		deserialize("level.sq");
 
 		//find
-		auto p_l_s = m_level.find("player.left.a\\.child\\.");
-		auto p_r_s = m_level.find("player.right.the\\.child");
+		auto p_l_s = m_level->find("player.left.a\\.child\\.");
+		auto p_r_s = m_level->find("player.right.the\\.child");
 
 		//test
 		std::cout << "child1: " << p_l_s->name() << std::endl;
@@ -144,8 +151,8 @@ public:
 		using namespace Square;
 		using namespace Square::Data;
 		std::ofstream ofile(path, std::ios::binary | std::ios::out);
-		ArchiveBinWrite out(ofile);
-		m_level.serialize(out);
+		ArchiveBinWrite out(context(), ofile);
+		m_level->serialize(out);
 	}
 	//level deserialize
 	void deserialize(const std::string& path)
@@ -153,14 +160,14 @@ public:
 		using namespace Square;
 		using namespace Square::Data;
 		std::ifstream ifile(path, std::ios::binary | std::ios::in);
-		ArchiveBinRead in(ifile);
-		m_level.deserialize(in);
+		ArchiveBinRead in(context(), ifile);
+		m_level->deserialize(in);
 	}
 
 private:
     
     bool m_loop = true;
-	Square::Scene::Level m_level;
+	Square::Shared<Square::Scene::Level> m_level;
 };
 
 int main()

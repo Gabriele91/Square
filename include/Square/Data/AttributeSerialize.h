@@ -23,12 +23,11 @@ namespace  Data
     template < class T >
     inline bool serialize(Archive& archivie,const Shared< T > object)
     {
-        return attribute_serialize(archivie, object.get(), Application::context()->attributes(object->object_id()));
+        return attribute_serialize(archivie, object.get(), archivie.context().attributes(object->object_id()));
     }
     inline bool serialize(Archive& archivie,const Object* object)
     {
-		
-        return attribute_serialize(archivie, object, Application::context()->attributes(object->object_id()));
+        return attribute_serialize(archivie, object, archivie.context().attributes(object->object_id()));
     }
     template < class T >
     inline bool serialize(Archive& archivie,const std::vector< Shared < T > >& objects)
@@ -39,7 +38,7 @@ namespace  Data
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         for(Shared < T >& object : objects)
         {
-            success &= attribute_serialize(archivie, object, Application::context()->attributes(object->object_id()));
+            success &= attribute_serialize(archivie, object, archivie.context().attributes(object->object_id()));
         }
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         return success;
@@ -48,11 +47,11 @@ namespace  Data
     template < class T >
     inline bool deserialize(Archive& archivie,const Shared< T > object)
     {
-        return attribute_deserialize(archivie, object.get(),  Application::context()->attributes(object->object_id()));
+        return attribute_deserialize(archivie, object.get(), archivie.context().attributes(object->object_id()));
     }
     inline bool deserialize(Archive& archivie, Object* object)
     {
-        return attribute_deserialize(archivie, object,  Application::context()->attributes(object->object_id()));
+        return attribute_deserialize(archivie, object, archivie.context().attributes(object->object_id()));
     }
 }
 }
