@@ -20,6 +20,7 @@
     #include <dirent.h>
 	#include <unistd.h>
 	#if defined(__APPLE__)
+    #include <CoreFoundation/CoreFoundation.h>
 	#include <mach-o/dyld.h>
 	#include <libgen.h>
 	#endif
@@ -60,7 +61,7 @@ namespace Filesystem
 			char path[1024];
 			uint32_t size = sizeof(path);
 			if (_NSGetExecutablePath(path, &size) == 0)
-				return path;
+				return get_directory(path);
 		#else
 			#error "os not supported"
 		#endif
@@ -82,6 +83,41 @@ namespace Filesystem
         const char *home_dir = std::getenv("HOME");
         if (home_dir) return home_dir;
         else         return "";
+    }
+    
+    std::string resource_dir()
+    {
+        #if defined(__APPLE__)
+            char path[PATH_MAX];
+            std::string bundle_path;
+            std::string resources_path;
+            //bundle
+            CFBundleRef bundle = CFBundleGetMainBundle();
+            //dir bundle
+            CFURLRef bundleURL = CFBundleCopyBundleURL(bundle);
+            CFStringRef bundleURLSTRING = CFURLCopyFileSystemPath( bundleURL, kCFURLPOSIXPathStyle );
+            CFStringGetCString( bundleURLSTRING, path, FILENAME_MAX, kCFStringEncodingASCII );
+            bundle_path = path;
+            //dir rsourcea
+            CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(bundle);
+            CFStringRef resourcesURLSTRING = CFURLCopyFileSystemPath( resourcesURL, kCFURLPOSIXPathStyle );
+            CFStringGetCString( resourcesURLSTRING, path, FILENAME_MAX, kCFStringEncodingASCII );
+            resources_path = path;
+            //Dealloc
+            CFRelease(resourcesURLSTRING);
+            CFRelease(bundleURLSTRING);
+            CFRelease(bundleURL);
+            CFRelease(resourcesURL);
+            // Packaged into app bundle
+            if (bundle_path != resources_path && bundle_path.size() && resources_path.size())
+            {
+                return bundle_path + "/" + resources_path + "/";
+            }
+            //or return executable path
+            return  program_dir();
+        #else
+            return program_dir();
+        #endif
     }
 
     bool is_file(const std::string& filepath)

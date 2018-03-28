@@ -25,6 +25,7 @@ namespace Render
 		{
 			program_dir(),
 			working_dir(),
+            resource_dir(),
 			home_dir(),
 		};
 		//output
@@ -68,6 +69,7 @@ namespace Render
 		{
 			program_dir(),
 			working_dir(),
+            resource_dir(),
 			home_dir(),
 		};
 		//context
