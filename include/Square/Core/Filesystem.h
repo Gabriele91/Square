@@ -15,6 +15,8 @@ namespace Filesystem
 	SQUARE_API std::string program_dir();
     SQUARE_API std::string working_dir();
     SQUARE_API std::string home_dir();
+    SQUARE_API std::string resource_dir();
+
 
     SQUARE_API bool is_directory(const std::string& directorypath);
     SQUARE_API bool is_file(const std::string& filepath);

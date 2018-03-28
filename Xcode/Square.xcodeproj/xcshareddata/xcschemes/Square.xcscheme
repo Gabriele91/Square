@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "0900"
+   LastUpgradeVersion = "0920"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,8 +14,22 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "E079CF7D1F96480000E7992F"
-               BuildableName = "Square"
+               BlueprintIdentifier = "E044C494206AA0EE003D4406"
+               BuildableName = "libSqOpenGL4.dylib"
+               BlueprintName = "SqOpenGL4"
+               ReferencedContainer = "container:Driver/SqOpenGL4.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "E044BCDD206A9939003D4406"
+               BuildableName = "libSquare.dylib"
                BlueprintName = "Square"
                ReferencedContainer = "container:Square.xcodeproj">
             </BuildableReference>
@@ -33,8 +47,8 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "E079CF7D1F96480000E7992F"
-            BuildableName = "Square"
+            BlueprintIdentifier = "E044BCDD206A9939003D4406"
+            BuildableName = "libSquare.dylib"
             BlueprintName = "Square"
             ReferencedContainer = "container:Square.xcodeproj">
          </BuildableReference>
@@ -48,22 +62,20 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       language = ""
       launchStyle = "0"
-      useCustomWorkingDirectory = "YES"
-      customWorkingDirectory = "$(SRCROOT)/tests"
+      useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "E079CF7D1F96480000E7992F"
-            BuildableName = "Square"
+            BlueprintIdentifier = "E044BCDD206A9939003D4406"
+            BuildableName = "libSquare.dylib"
             BlueprintName = "Square"
             ReferencedContainer = "container:Square.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </MacroExpansion>
       <AdditionalOptions>
       </AdditionalOptions>
    </LaunchAction>
@@ -73,16 +85,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "E079CF7D1F96480000E7992F"
-            BuildableName = "Square"
+            BlueprintIdentifier = "E044BCDD206A9939003D4406"
+            BuildableName = "libSquare.dylib"
             BlueprintName = "Square"
             ReferencedContainer = "container:Square.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">
