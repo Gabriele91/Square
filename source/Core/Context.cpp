@@ -266,6 +266,26 @@ namespace Square
 	{
 		return application() ? application()->input() : nullptr;
 	}
+    //get application
+    const Application* BaseContext::application() const
+    {
+        return m_application;
+    }
+    //get render
+    const Render::Context* BaseContext::render() const
+    {
+        return application() ? application()->render() : nullptr;
+    }
+    //get window
+    const Video::Window* BaseContext::window() const
+    {
+        return application() ? application()->window() : nullptr;
+    }
+    //get window
+    const Video::Input* BaseContext::input() const
+    {
+        return application() ? application()->input() : nullptr;
+    }
 
 	void BaseContext::clear()
 	{

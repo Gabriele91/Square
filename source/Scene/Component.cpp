@@ -28,6 +28,11 @@ namespace Scene
         return m_parent;
     }
     
+    const Actor* Component::actor() const
+    {
+        return m_parent;
+    }
+    
     //internal
     void Component::submit_add(Actor* actor)
     {

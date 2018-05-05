@@ -21,9 +21,11 @@ namespace Render
 	class VertexBuffer;
 	class IndexBuffer;
 	class InputLayout;
-	class Uniform;
 	class Shader;
-	class Context;
+    class Context;
+    class Uniform;
+    class UniformConstBuffer;
+    class MapConstBuffer;
 	// POINTERS
 	using TextureSPtr	   = Shared< Texture >;
 	using TargetSPtr	   = Shared< Target >;
@@ -642,43 +644,168 @@ namespace Render
         int           m_shader_version;
     };
 	/////////////////////////////////
-	//uniform
+	//Uniform global //legacy
 	class Uniform
 	{
 	public:
-		virtual void set_value(Texture* in_texture) = 0;
-		virtual void set_value(int i) = 0;
-		virtual void set_value(float f) = 0;
-		virtual void set_value(const Vec2& v2) = 0;
-		virtual void set_value(const Vec3& v3) = 0;
-		virtual void set_value(const Vec4& v4) = 0;
-		virtual void set_value(const Mat3& m3) = 0;
-		virtual void set_value(const Mat4& m4) = 0;
+		virtual void set(Texture* in_texture) = 0;
+		virtual void set(int i) = 0;
+        virtual void set(float f) = 0;
+        virtual void set(double d) = 0;
+        
+        virtual void set(const IVec2& v2) = 0;
+        virtual void set(const IVec3& v3) = 0;
+        virtual void set(const IVec4& v4) = 0;
+        
+        virtual void set(const Vec2& v2) = 0;
+        virtual void set(const Vec3& v3) = 0;
+        virtual void set(const Vec4& v4) = 0;
+        virtual void set(const Mat3& m3) = 0;
+        virtual void set(const Mat4& m4) = 0;
+        
+        virtual void set(const DVec2& v2) = 0;
+        virtual void set(const DVec3& v3) = 0;
+        virtual void set(const DVec4& v4) = 0;
+        virtual void set(const DMat3& m3) = 0;
+        virtual void set(const DMat4& m4) = 0;
 
-		virtual void set_value(const int* i, size_t n) = 0;
-		virtual void set_value(const float* f, size_t n) = 0;
-		virtual void set_value(const Vec2* v2, size_t n) = 0;
-		virtual void set_value(const Vec3* v3, size_t n) = 0;
-		virtual void set_value(const Vec4* v4, size_t n) = 0;
-		virtual void set_value(const Mat3* m3, size_t n) = 0;
-		virtual void set_value(const Mat4* m4, size_t n) = 0;
+        virtual void set(Texture* t, size_t n) = 0;
+        virtual void set(const int* i, size_t n) = 0;
+        virtual void set(const float* f, size_t n) = 0;
+        virtual void set(const double* d, size_t n) = 0;
+        
+        virtual void set(const IVec2* v2, size_t n) = 0;
+        virtual void set(const IVec3* v3, size_t n) = 0;
+        virtual void set(const IVec4* v4, size_t n) = 0;
+        
+        virtual void set(const Vec2* v2, size_t n) = 0;
+        virtual void set(const Vec3* v3, size_t n) = 0;
+        virtual void set(const Vec4* v4, size_t n) = 0;
+        virtual void set(const Mat3* m3, size_t n) = 0;
+        virtual void set(const Mat4* m4, size_t n) = 0;
+        
+        virtual void set(const DVec2* v2, size_t n) = 0;
+        virtual void set(const DVec3* v3, size_t n) = 0;
+        virtual void set(const DVec4* v4, size_t n) = 0;
+        virtual void set(const DMat3* m3, size_t n) = 0;
+        virtual void set(const DMat4* m4, size_t n) = 0;
 
-		virtual void set_value(const std::vector < int >& i) = 0;
-		virtual void set_value(const std::vector < float >& f) = 0;
-		virtual void set_value(const std::vector < Vec2 >& v2) = 0;
-		virtual void set_value(const std::vector < Vec3 >& v3) = 0;
-		virtual void set_value(const std::vector < Vec4 >& v4) = 0;
-		virtual void set_value(const std::vector < Mat3 >& m3) = 0;
-		virtual void set_value(const std::vector < Mat4 >& m4) = 0;
-
-		virtual void set_value(const ConstBuffer*) = 0;
+        virtual void set(const std::vector < Texture* >& i) = 0;
+        virtual void set(const std::vector < int >& i) = 0;
+        virtual void set(const std::vector < float >& f) = 0;
+        virtual void set(const std::vector < double >& d) = 0;
+        
+        virtual void set(const std::vector < IVec2 >& v2) = 0;
+        virtual void set(const std::vector < IVec3 >& v3) = 0;
+        virtual void set(const std::vector < IVec4 >& v4) = 0;
+        
+        virtual void set(const std::vector < Vec2 >& v2) = 0;
+        virtual void set(const std::vector < Vec3 >& v3) = 0;
+        virtual void set(const std::vector < Vec4 >& v4) = 0;
+        virtual void set(const std::vector < Mat3 >& m3) = 0;
+        virtual void set(const std::vector < Mat4 >& m4) = 0;
+        
+        virtual void set(const std::vector < DVec2 >& v2) = 0;
+        virtual void set(const std::vector < DVec3 >& v3) = 0;
+        virtual void set(const std::vector < DVec4 >& v4) = 0;
+        virtual void set(const std::vector < DMat3 >& m3) = 0;
+        virtual void set(const std::vector < DMat4 >& m4) = 0;
 
 		virtual bool is_valid() = 0;
-
 		virtual Shader* get_shader() = 0;
-
 		virtual ~Uniform() {};
 	};
+    //buffer
+    class UniformConstBuffer
+    {
+    public:
+        //bind
+        virtual void bind(const ConstBuffer*) = 0;
+        virtual void unbind() = 0;
+        //buffer info
+        virtual bool is_valid() = 0;
+        virtual Shader* get_shader() = 0;
+        virtual ~UniformConstBuffer() {};
+    };
+    //ConstBuffer wrapper
+    class MapConstBuffer
+    {
+    public:
+        //Map Helper
+        MapConstBuffer();
+        //Add Value
+        virtual void begin(Context* context, ConstBuffer* buffer);
+        virtual void end();
+        
+        virtual void add(int i);
+        virtual void add(float f);
+        virtual void add(double d);
+        
+        virtual void add(const IVec2& v2);
+        virtual void add(const IVec3& v3);
+        virtual void add(const IVec4& v4);
+        
+        virtual void add(const Vec2& v2);
+        virtual void add(const Vec3& v3);
+        virtual void add(const Vec4& v4);
+        virtual void add(const Mat3& m3);
+        virtual void add(const Mat4& m4);
+        
+        virtual void add(const DVec2& v2);
+        virtual void add(const DVec3& v3);
+        virtual void add(const DVec4& v4);
+        virtual void add(const DMat3& m3);
+        virtual void add(const DMat4& m4);
+        
+        virtual void add(const int* i, size_t n);
+        virtual void add(const float* f, size_t n);
+        virtual void add(const double* d, size_t n);
+        
+        virtual void add(const IVec2* v2, size_t n);
+        virtual void add(const IVec3* v3, size_t n);
+        virtual void add(const IVec4* v4, size_t n);
+        
+        virtual void add(const Vec2* v2, size_t n);
+        virtual void add(const Vec3* v3, size_t n);
+        virtual void add(const Vec4* v4, size_t n);
+        virtual void add(const Mat3* m3, size_t n);
+        virtual void add(const Mat4* m4, size_t n);
+        
+        virtual void add(const DVec2* v2, size_t n);
+        virtual void add(const DVec3* v3, size_t n);
+        virtual void add(const DVec4* v4, size_t n);
+        virtual void add(const DMat3* m3, size_t n);
+        virtual void add(const DMat4* m4, size_t n);
+        
+        virtual void add(const std::vector < int >& i);
+        virtual void add(const std::vector < float >& f);
+        virtual void add(const std::vector < double >& d);
+        
+        virtual void add(const std::vector < IVec2 >& v2);
+        virtual void add(const std::vector < IVec3 >& v3);
+        virtual void add(const std::vector < IVec4 >& v4);
+        
+        virtual void add(const std::vector < Vec2 >& v2);
+        virtual void add(const std::vector < Vec3 >& v3);
+        virtual void add(const std::vector < Vec4 >& v4);
+        virtual void add(const std::vector < Mat3 >& m3);
+        virtual void add(const std::vector < Mat4 >& m4);
+        
+        virtual void add(const std::vector < DVec2 >& v2);
+        virtual void add(const std::vector < DVec3 >& v3);
+        virtual void add(const std::vector < DVec4 >& v4);
+        virtual void add(const std::vector < DMat3 >& m3);
+        virtual void add(const std::vector < DMat4 >& m4);
+        
+        virtual ~MapConstBuffer();
+        
+    protected:
+        Context*     m_context;
+        ConstBuffer* m_const_buffer;
+        void*        m_buffer_value;
+        size_t       m_offset;
+    };
+    
 	/////////////////////////////////
 	// Draw context
 	class Context
@@ -720,9 +847,13 @@ namespace Render
 		virtual VertexBuffer* create_VBO(const unsigned char* vbo, size_t stride, size_t n) = 0;
 		virtual IndexBuffer* create_IBO(const unsigned int* ibo, size_t size) = 0;
 
-		virtual Variant get_native_CB(const ConstBuffer*) = 0;
-		virtual Variant get_native_VBO(const VertexBuffer*) = 0;
-		virtual Variant get_native_IBO(const IndexBuffer*) = 0;
+		virtual Variant get_native_CB(const ConstBuffer*) const = 0;
+		virtual Variant get_native_VBO(const VertexBuffer*) const = 0;
+		virtual Variant get_native_IBO(const IndexBuffer*) const = 0;
+        
+        virtual size_t get_size_CB(const ConstBuffer*) const = 0;
+        virtual size_t get_size_VBO(const VertexBuffer*) const = 0;
+        virtual size_t get_size_IBO(const IndexBuffer*) const = 0;
 
 		virtual void update_steam_CB(ConstBuffer* cb, const unsigned char* vb, size_t n) = 0;
 		virtual void update_steam_VBO(VertexBuffer* vbo, const unsigned char* vb, size_t n) = 0;
@@ -766,10 +897,10 @@ namespace Render
 		virtual void unbind_IL(InputLayout* il) = 0;
 
 		//depth
-		virtual float get_depth(const Vec2& pixel) = 0;
+		virtual float get_depth(const Vec2& pixel) const = 0;
 
 		//color
-		virtual Vec4 get_color(const Vec2& pixel) = 0;
+		virtual Vec4 get_color(const Vec2& pixel) const = 0;
 
 		//texture
 		virtual Texture* create_texture
@@ -798,11 +929,15 @@ namespace Render
 
 		virtual void bind_shader(Shader* shader) = 0;
 		virtual void unbind_shader(Shader* shader) = 0;
+        
+        virtual void bind_uniform_CB(const ConstBuffer*, Shader*, const std::string& uname) = 0;
+        virtual void unbind_uniform_CB(Shader*, const std::string& uname) = 0;
 
 		virtual void delete_shader(Shader*&) = 0;
 
-		virtual Shader*  get_bind_shader() = 0;
-		virtual Uniform* get_uniform(Shader*,const std::string& uname) = 0;
+		virtual Shader*  get_bind_shader() const = 0;
+        virtual Uniform* get_uniform(Shader*,const std::string& uname) const = 0;
+        virtual UniformConstBuffer* get_uniform_const_buffer(Shader*,const std::string& uname) const = 0;
 
 		//target
 		virtual Target* create_render_target(const std::vector< TargetField >& textures) = 0;
@@ -819,10 +954,9 @@ namespace Render
 		) = 0;
 	
 		//debug
-		virtual bool print_errors() = 0;
+		virtual bool print_errors() const = 0;
 		//Output file name and line
-		virtual bool print_errors(const char* source_file_name, int line) = 0;
-
+        virtual bool print_errors(const char* source_file_name, int line) const = 0;
 	};
 	/////////////////////////////////
 	// Shared wrapper

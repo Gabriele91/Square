@@ -47,6 +47,28 @@ public:
 		context.add_attributes<Sprite>(Square::attribute_field< Sprite >("texture", STexture(nullptr), &Sprite::m_texture));
 		//std::cout << Square::variant_traits<STexture>() << std::endl;
     }
+    
+    
+    //serialize
+    virtual void serialize(Square::Data::Archive& archivie)  override
+    {
+        //serialize this
+        Square::Data::serialize(archivie, this);
+    }
+    virtual void serialize_json(Square::Data::Json& archivie) override
+    {
+        //none
+    }
+    //deserialize
+    virtual void deserialize(Square::Data::Archive& archivie) override
+    {
+        //serialize this
+        Square::Data::deserialize(archivie, this);
+    }
+    virtual void deserialize_json(Square::Data::Json& archivie) override
+    {
+        //none
+    }
 };
 SQUARE_CLASS_OBJECT_REGISTRATION(Sprite);
 
@@ -75,6 +97,27 @@ public:
         context.add_attributes<Body>(Square::attribute_field< Body >("mass", float(0), &Body::m_mass));
         context.add_attributes<Body>(Square::attribute_field< Body >("nshape", int(0), &Body::m_nshape));
 	}
+    
+    //serialize
+    virtual void serialize(Square::Data::Archive& archivie)  override
+    {
+        //serialize this
+        Square::Data::serialize(archivie, this);
+    }
+    virtual void serialize_json(Square::Data::Json& archivie) override
+    {
+        //none
+    }
+    //deserialize
+    virtual void deserialize(Square::Data::Archive& archivie) override
+    {
+        //serialize this
+        Square::Data::deserialize(archivie, this);
+    }
+    virtual void deserialize_json(Square::Data::Json& archivie) override
+    {
+        //none
+    }
 };
 SQUARE_CLASS_OBJECT_REGISTRATION(Body);
 

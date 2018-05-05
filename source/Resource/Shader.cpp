@@ -8,7 +8,7 @@
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/Attribute.h"
-#include "Square/Data/ParseUtils.h"
+#include "Square/Data/ParserUtils.h"
 #include "Square/Resource/Shader.h"
 #include "Square/Core/ClassObjectRegistration.h"
 //compiler Xsc
@@ -150,12 +150,13 @@ namespace Resource
 			const std::string& source_path,
 			Shader::FilepathMap& filepath_map,
 			std::string& out,
-			bool files_as_name = true
+			bool files_as_name = true,
+            const size_t line = 0
 		)
 		{
 			m_n_files = 0;
 			m_files_as_name = files_as_name;
-			out = load(context, source, source_path, filepath_map, 0, 0);
+			out = load(context, source, source_path, filepath_map, line, 0);
 		}
 
 		bool fail() const
@@ -320,8 +321,6 @@ namespace Resource
 	//load shader
 	bool Shader::load(const std::string& path) 
 	{
-		//id file
-		size_t  this_file = 0;
 		//buffers
 		std::string source;
 		//input stream
@@ -331,6 +330,21 @@ namespace Resource
 		//compile
 		return  preprocess.success() && compile(source, PreprocessMap());
 	}
+    
+    bool Shader::load(const std::string& path,
+                      const std::string& insource,
+                      const PreprocessMap& defines,
+                      const size_t line)
+    {
+        //buffers
+        std::string source(insource);
+        //input stream
+        std::stringstream source_stream(source);
+        //process include/import
+        ShaderImportLoader preprocess(context(), source_stream, path, m_filepath_map, source, line);
+        //compile
+        return  preprocess.success() && compile(source, defines);
+    }
 
 	//compile from source
 	bool Shader::compile
@@ -488,19 +502,20 @@ namespace Resource
 	}
 
 
-	//get buffer
-	Render::Uniform* Shader::uniform(const std::string& name)
-	{
-		if (auto render = context().render())
-			return render->get_uniform(m_shader, std::string(name));
-		return nullptr;
-	}
-
-	Render::ConstBuffer* Shader::constant_buffer(const std::string& name) const
-	{
-		return nullptr;
-	}
-
+    //get buffer
+    Render::Uniform* Shader::uniform(const std::string& name) const
+    {
+        if (auto render = context().render())
+            return render->get_uniform(m_shader, std::string(name));
+        return nullptr;
+    }
+    
+    Render::UniformConstBuffer* Shader::constant_buffer(const std::string& name) const
+    {
+        if (auto render = context().render())
+            return render->get_uniform_const_buffer(m_shader, name);
+        return nullptr;
+    }
 	//program
 	Render::Shader* Shader::base_shader() const
 	{
