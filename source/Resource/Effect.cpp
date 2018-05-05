@@ -87,45 +87,51 @@ namespace Resource
     bool Effect::Parameter::is_valid() { return m_id >= 0; }
     ParameterType Effect::Parameter::get_type() { return m_type; }
     
+    template< class T >
+    inline static const T& none_const_t_return()
+    {
+        const static T none;
+        return none;
+    }
     
     Shared<Texture> Effect::Parameter::get_texture()  const { return Shared<Texture>(nullptr); }
     int             Effect::Parameter::get_int()      const { return 0;    }
     float           Effect::Parameter::get_float()    const { return 0.0f; }
     double          Effect::Parameter::get_double()   const { return 0.0; }
-    const IVec2&    Effect::Parameter::get_ivec2()    const { return IVec2();  }
-    const IVec3&    Effect::Parameter::get_ivec3()    const { return IVec3();  }
-    const IVec4&    Effect::Parameter::get_ivec4()    const { return IVec4();  }
-    const Vec2&     Effect::Parameter::get_vec2()     const { return Vec2();  }
-    const Vec3&     Effect::Parameter::get_vec3()     const { return Vec3();  }
-    const Vec4&     Effect::Parameter::get_vec4()     const { return Vec4();  }
-    const Mat3&     Effect::Parameter::get_mat3()     const { return Mat3();  }
-    const Mat4&     Effect::Parameter::get_mat4()     const { return Mat4();  }
-    const DVec2&    Effect::Parameter::get_dvec2()    const { return DVec2();  }
-    const DVec3&    Effect::Parameter::get_dvec3()    const { return DVec3();  }
-    const DVec4&    Effect::Parameter::get_dvec4()    const { return DVec4();  }
-    const DMat3&    Effect::Parameter::get_dmat3()    const { return DMat3();  }
-    const DMat4&    Effect::Parameter::get_dmat4()    const { return DMat4();  }
+    const IVec2&    Effect::Parameter::get_ivec2()    const { return none_const_t_return<IVec2>();  }
+    const IVec3&    Effect::Parameter::get_ivec3()    const { return none_const_t_return<IVec3>();  }
+    const IVec4&    Effect::Parameter::get_ivec4()    const { return none_const_t_return<IVec4>();  }
+    const Vec2&     Effect::Parameter::get_vec2()     const { return none_const_t_return<Vec2>();  }
+    const Vec3&     Effect::Parameter::get_vec3()     const { return none_const_t_return<Vec3>();  }
+    const Vec4&     Effect::Parameter::get_vec4()     const { return none_const_t_return<Vec4>();  }
+    const Mat3&     Effect::Parameter::get_mat3()     const { return none_const_t_return<Mat3>();  }
+    const Mat4&     Effect::Parameter::get_mat4()     const { return none_const_t_return<Mat4>();  }
+    const DVec2&    Effect::Parameter::get_dvec2()    const { return none_const_t_return<DVec2>();  }
+    const DVec3&    Effect::Parameter::get_dvec3()    const { return none_const_t_return<DVec3>();  }
+    const DVec4&    Effect::Parameter::get_dvec4()    const { return none_const_t_return<DVec4>();  }
+    const DMat3&    Effect::Parameter::get_dmat3()    const { return none_const_t_return<DMat3>();  }
+    const DMat4&    Effect::Parameter::get_dmat4()    const { return none_const_t_return<DMat4>();  }
     
-    const std::vector< Shared<Texture> >&  Effect::Parameter::get_vector_texture()  const { return{}; }
-    const std::vector<int>&    Effect::Parameter::get_vector_int()    const { return{}; }
-    const std::vector<float>&  Effect::Parameter::get_vector_float()  const { return{}; }
-    const std::vector<double>& Effect::Parameter::get_vector_double() const { return{}; }
+    const std::vector< Shared<Texture> >&  Effect::Parameter::get_vector_texture()  const { return none_const_t_return< std::vector< Shared<Texture> > >(); }
+    const std::vector<int>&    Effect::Parameter::get_vector_int()    const { return none_const_t_return< std::vector<int> >(); }
+    const std::vector<float>&  Effect::Parameter::get_vector_float()  const { return none_const_t_return< std::vector<float> >(); }
+    const std::vector<double>& Effect::Parameter::get_vector_double() const { return none_const_t_return< std::vector<double> >(); }
     
-    const std::vector<IVec2>&  Effect::Parameter::get_vector_ivec2()  const { return{}; }
-    const std::vector<IVec3>&  Effect::Parameter::get_vector_ivec3()  const { return{}; }
-    const std::vector<IVec4>&  Effect::Parameter::get_vector_ivec4()  const { return{}; }
+    const std::vector<IVec2>&  Effect::Parameter::get_vector_ivec2()  const { return none_const_t_return< std::vector<IVec2> >(); }
+    const std::vector<IVec3>&  Effect::Parameter::get_vector_ivec3()  const { return none_const_t_return< std::vector<IVec3> >(); }
+    const std::vector<IVec4>&  Effect::Parameter::get_vector_ivec4()  const { return none_const_t_return< std::vector<IVec4> >(); }
     
-    const std::vector<Vec2>&   Effect::Parameter::get_vector_vec2()   const { return{}; }
-    const std::vector<Vec3>&   Effect::Parameter::get_vector_vec3()   const { return{}; }
-    const std::vector<Vec4>&   Effect::Parameter::get_vector_vec4()   const { return{}; }
-    const std::vector<Mat3>&   Effect::Parameter::get_vector_mat3()   const { return{}; }
-    const std::vector<Mat4>&   Effect::Parameter::get_vector_mat4()   const { return{}; }
+    const std::vector<Vec2>&   Effect::Parameter::get_vector_vec2()   const { return none_const_t_return< std::vector<Vec2> >(); }
+    const std::vector<Vec3>&   Effect::Parameter::get_vector_vec3()   const { return none_const_t_return< std::vector<Vec3> >(); }
+    const std::vector<Vec4>&   Effect::Parameter::get_vector_vec4()   const { return none_const_t_return< std::vector<Vec4> >(); }
+    const std::vector<Mat3>&   Effect::Parameter::get_vector_mat3()   const { return none_const_t_return< std::vector<Mat3> >(); }
+    const std::vector<Mat4>&   Effect::Parameter::get_vector_mat4()   const { return none_const_t_return< std::vector<Mat4> >(); }
     
-    const std::vector<DVec2>&  Effect::Parameter::get_vector_dvec2()  const { return{}; }
-    const std::vector<DVec3>&  Effect::Parameter::get_vector_dvec3()  const { return{}; }
-    const std::vector<DVec4>&  Effect::Parameter::get_vector_dvec4()  const { return{}; }
-    const std::vector<DMat3>&  Effect::Parameter::get_vector_dmat3()  const { return{}; }
-    const std::vector<DMat4>&  Effect::Parameter::get_vector_dmat4()  const { return{}; }
+    const std::vector<DVec2>&  Effect::Parameter::get_vector_dvec2()  const { return none_const_t_return< std::vector<DVec2> >(); }
+    const std::vector<DVec3>&  Effect::Parameter::get_vector_dvec3()  const { return none_const_t_return< std::vector<DVec3> >(); }
+    const std::vector<DVec4>&  Effect::Parameter::get_vector_dvec4()  const { return none_const_t_return< std::vector<DVec4> >(); }
+    const std::vector<DMat3>&  Effect::Parameter::get_vector_dmat3()  const { return none_const_t_return< std::vector<DMat3> >(); }
+    const std::vector<DMat4>&  Effect::Parameter::get_vector_dmat4()  const { return none_const_t_return< std::vector<DMat4> >(); }
 
     //struct by type
     struct ParameterTexture : public Parameter
