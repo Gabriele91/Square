@@ -61,7 +61,8 @@ namespace Square
 	public:
 		//Resource
 		Object(Context& context) : m_context(context) {}
-		Context& context() { return m_context; }
+        Context& context() { return m_context; }
+        const Context& context() const { return m_context; }
 		//info
 		virtual uint64 object_id() const = 0;
 		virtual const std::string& object_name() const = 0;

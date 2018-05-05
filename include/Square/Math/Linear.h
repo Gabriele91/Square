@@ -192,38 +192,6 @@ namespace Square
 		return glm::column(a, i);
 	}
     
-    template < class T, class V >
-    inline T translate(const T& mat,const V& v)
-    {
-        return glm::translate(mat,v);
-    }
-    
-    template < class T, class V >
-    inline T scale(const T& mat,const V& v)
-    {
-        return glm::scale(mat,v);
-    }
-    
-    template < class T, class A, class V >
-    inline T rotate(const T& q,const A& angle,const V& v)
-    {
-        return glm::rotate(q, angle, v);
-    }
-    
-    //template < class T >
-    //inline auto perspective(const T& fovy,const T& aspect,const T& near,const T& far) -> decltype( glm::perspective<T>(fovy, aspect, near, far) )
-    //{
-    //    return glm::perspective<T>(fovy, aspect, near, far);
-    //}
-    
-    template < class T >
-    inline auto look_at(const T& eye,const T& center, const T& up) -> decltype( glm::lookAt(eye, center, up) )
-    {
-        return glm::lookAt(eye, center, up);
-    }
-    
-    
-    
     template < class T >
     inline auto value_ptr(const T& q_m_v) -> decltype( glm::value_ptr(q_m_v) )
     {

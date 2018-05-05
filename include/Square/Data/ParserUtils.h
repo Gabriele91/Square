@@ -26,98 +26,98 @@ namespace Parser
 
 	//////////////////////////////////////////////////////
 	// WHO IS UTILS
-	static bool is_line_space(char c)
+	static inline bool is_line_space(char c)
 	{
 		return 	 c == ' ' || c == '\t';
 	}
 
-	static bool is_space(char c)
+	static inline bool is_space(char c)
 	{
 		return 	 c == ' ' || c == '\t' || c == '\r' || c == '\n';
 	}
 
-	static bool is_start_name(char c)
+	static inline bool is_start_name(char c)
 	{
 		return 	 (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 	}
 
-	static bool is_char_name(char c)
+	static inline bool is_char_name(char c)
 	{
 		return 	 (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
 	}
 
-	static bool is_digit(char c)
+	static inline bool is_digit(char c)
 	{
 		return 	 (c >= '0' && c <= '9');
 	}
 
-	static bool is_xdigit(char c)
+	static inline bool is_xdigit(char c)
 	{
 		return (c >= '0' && c <= '9') || ((c & ~' ') >= 'A' && (c & ~' ') <= 'F');
 	}
 
-	static bool is_int_digit(char c)
+	static inline bool is_int_digit(char c)
 	{
 		return 	 (c >= '0' && c <= '9') || c == '-';
 	}
 
-	static bool is_float_digit(char c)
+	static inline bool is_float_digit(char c)
 	{
 		return 	 (c >= '0' && c <= '9') || c == '-' || c == '.';
 	}
 
-	static bool is_start_string(char c)
+	static inline bool is_start_string(char c)
 	{
 		return c == '\"';
 	}
 
-	static bool is_start_table(char c)
+	static inline bool is_start_table(char c)
 	{
 		return (c == '{');
 	}
 
-	static bool is_end_table(char c)
+	static inline bool is_end_table(char c)
 	{
 		return (c == '}');
 	}
 
-	static bool is_start_arg(char c)
+	static inline bool is_start_arg(char c)
 	{
 		return (c == '(');
 	}
 
-	static bool is_comm_arg(char c)
+	static inline bool is_comm_arg(char c)
 	{
 		return (c == ',');
 	}
 
-	static bool is_end_arg(char c)
+	static inline bool is_end_arg(char c)
 	{
 		return (c == ')');
 	}
 
-	static bool is_start_obj_list(char c)
+	static inline bool is_start_obj_list(char c)
 	{
 		return (c == '|');
 	}
 
-	static bool is_line_comment(const char* c)
+	static inline bool is_line_comment(const char* c)
 	{
 		return (*c) == '/' && (*(c + 1)) == '/';
 	}
 
-	static bool is_start_multy_line_comment(const char* c)
+	static inline bool is_start_multy_line_comment(const char* c)
 	{
 		return (*c) == '/' && (*(c + 1)) == '*';
 	}
 
-	static bool is_end_multy_line_comment(const char* c)
+	static inline bool is_end_multy_line_comment(const char* c)
 	{
 		return (*c) == '*' && (*(c + 1)) == '/';
 	}
 	//////////////////////////////////////////////////////
 	// COMMENTS UTILS
-	static bool skip_line_comment(size_t& line, const char*& inout)
+	static inline bool skip_line_comment(size_t& line, const char*& inout)
 	{
 		//not a line comment
 		if ((*inout) != '/' || *(inout + 1) != '/') return false;
@@ -132,7 +132,7 @@ namespace Parser
 		return true;
 	}
 
-	static bool skip_multy_lines_comment(size_t& line,const char*& inout)
+	static inline bool skip_multy_lines_comment(size_t& line,const char*& inout)
 	{
 		//not a multilines comment
 		if (is_start_multy_line_comment(inout)) return false;
@@ -153,7 +153,7 @@ namespace Parser
 		return true;
 	}
 	
-	static bool skip_line_space(size_t& line, const char*& source)
+	static inline bool skip_line_space(size_t& line, const char*& source)
 	{
 		bool a_space_is_skipped = false;
 		while (is_line_space(*source))
@@ -168,7 +168,7 @@ namespace Parser
 		return a_space_is_skipped;
 	}
 
-	static bool skip_space(size_t& line, const char*& source)
+	static inline bool skip_space(size_t& line, const char*& source)
 	{
 		bool a_space_is_skipped = false;
 		while (is_space(*source))
@@ -185,7 +185,7 @@ namespace Parser
 		return a_space_is_skipped;
 	}
 
-	static void skip_space_and_comments(size_t& line, const char*& source)
+	static inline void skip_space_and_comments(size_t& line, const char*& source)
 	{
 		while (skip_space(line, source)
 			|| skip_line_comment(line, source)
@@ -193,14 +193,14 @@ namespace Parser
 	}
 	//////////////////////////////////////////////////////
 	// TYPE UTILS
-	static bool parse_bool(const char*& inout, bool& out)
+	static inline bool parse_bool(const char*& inout, bool& out)
 	{
 		if (cstr_cmp_skip(inout, "true")) { out = true;  return true; }
 		if (cstr_cmp_skip(inout, "false")){ out = false; return true; };
 		return false;
 	}
 
-	static bool parse_short(const char*& inout, short& out)
+	static inline bool parse_short(const char*& inout, short& out)
 	{
 		const char*  strin  = inout;
 		const char** strout = &inout;
@@ -208,7 +208,7 @@ namespace Parser
 		return strin != (*strout);
 	}
 
-	static bool parse_int(const char*& inout, int& out)
+	static inline bool parse_int(const char*& inout, int& out)
 	{
 		const char*  strin = inout;
 		const char** strout = &inout;
@@ -216,7 +216,7 @@ namespace Parser
 		return strin != (*strout);
 	}
 
-	static bool parse_long(const char*& inout, long& out)
+	static inline bool parse_long(const char*& inout, long& out)
 	{
 		const char*  strin = inout;
 		const char** strout = &inout;
@@ -224,7 +224,7 @@ namespace Parser
 		return strin != (*strout);
 	}
 
-	static bool parse_long_long(const char*& inout, long long& out)
+	static inline bool parse_long_long(const char*& inout, long long& out)
 	{
 		const char*  strin = inout;
 		const char** strout = &inout;
@@ -232,7 +232,7 @@ namespace Parser
 		return strin != (*strout);
 	}
 
-	static bool parse_unsigned_short(const char*& inout, unsigned short& out)
+	static inline bool parse_unsigned_short(const char*& inout, unsigned short& out)
 	{
 		const char*  strin = inout;
 		const char** strout = &inout;
@@ -240,7 +240,7 @@ namespace Parser
 		return strin != (*strout);
 	}
 
-	static bool parse_unsigned_int(const char*& inout, unsigned int& out)
+	static inline bool parse_unsigned_int(const char*& inout, unsigned int& out)
 	{
 		const char*  strin = inout;
 		const char** strout = &inout;
@@ -248,7 +248,7 @@ namespace Parser
 		return strin != (*strout);
 	}
 
-	static bool parse_unsigned_long(const char*& inout, unsigned long& out)
+	static inline bool parse_unsigned_long(const char*& inout, unsigned long& out)
 	{
 		const char*  strin = inout;
 		const char** strout = &inout;
@@ -256,7 +256,7 @@ namespace Parser
 		return strin != (*strout);
 	}
 
-	static bool parse_unsigned_long_long(const char*& inout, unsigned long long& out)
+	static inline bool parse_unsigned_long_long(const char*& inout, unsigned long long& out)
 	{
 		const char*  strin = inout;
 		const char** strout = &inout;
@@ -264,7 +264,7 @@ namespace Parser
 		return strin != (*strout);
 	}
 
-	static bool parse_float(const char*& inout, float& out)
+	static inline bool parse_float(const char*& inout, float& out)
 	{
 		const char*  strin = inout;
 		const char** strout = &inout;
@@ -272,7 +272,7 @@ namespace Parser
 		return strin != (*strout);
 	}
 
-	static bool parse_double(const char*& inout, double& out)
+	static inline bool parse_double(const char*& inout, double& out)
 	{
 		const char*  strin = inout;
 		const char** strout = &inout;
@@ -280,7 +280,7 @@ namespace Parser
 		return strin != (*strout);
 	}
 	
-	static bool parse_double2(const char*& inout, double& out)
+	static inline bool parse_double2(const char*& inout, double& out)
 	{ 
 		//+/-
 		char ch = *inout;
@@ -330,12 +330,12 @@ namespace Parser
 		return true;
 	}
 
-	static bool parse_char_as_int(const char*& inout, int& out)
+	static inline bool parse_char_as_int(const char*& inout, int& out)
 	{
 		return out = (((*inout) <= '9') ? (*inout) - '0' : ((*inout) & ~' ') - 'A' + 10), true;
 	}
 
-	static bool parse_name(const char*& inout, std::string& out)
+	static inline bool parse_name(const char*& inout, std::string& out)
 	{
 		const char*  strin = inout;
 		//test first
@@ -355,7 +355,7 @@ namespace Parser
 		return true;
 	}
 
-	static bool parse_string(size_t& line,  const char*& inout, std::string& out, const char open_string = '\"', const char close_string = '\"')
+	static inline bool parse_string(size_t& line,  const char*& inout, std::string& out, const char open_string = '\"', const char close_string = '\"')
 	{
 		//temp ptr
 		const char *tmp = inout;

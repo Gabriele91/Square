@@ -5,7 +5,7 @@
 //  Copyright � 2016 Gabriele. All rights reserved.
 //
 #include "Square/Data/Json.h"
-#include "Square/Data/ParseUtils.h"
+#include "Square/Data/ParserUtils.h"
 #include <cstring>
 #include <sstream>
 #include <stack>

@@ -4,14 +4,16 @@
 //  Created by Gabriele Di Bari on 20/10/17.
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
+#include "Square/Core/Object.h"
+#include "Square/Core/Context.h"
+#include "Square/Core/ClassObjectRegistration.h"
+#include "Square/Math/Transformation.h"
 #include "Square/Core/Application.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Level.h"
-#include "Square/Core/Object.h"
-#include "Square/Core/Context.h"
-#include "Square/Core/ClassObjectRegistration.h"
 #include <algorithm>
+
 
 namespace Square
 {
@@ -63,7 +65,7 @@ namespace Scene
                 //serialize name
                 archivie % component->object_name();
                 //serialize component
-                Data::serialize(archivie, component.get());
+                component->serialize(archivie);
             }
         }
         //serialize childs
@@ -100,8 +102,8 @@ namespace Scene
                 archivie % name;
                 //new component
                 Shared<Component> component = this->component(name);
-                //serialize component
-                Data::deserialize(archivie, component);
+                //deserialize component
+                component->deserialize(archivie);
             }
         }
         //deserialize childs
@@ -392,13 +394,13 @@ namespace Scene
         return m_tranform.m_scale;
     }
     
-    Mat4 const& Actor::local_model_matrix()
+    Mat4 const& Actor::local_model_matrix() const
     {
         compute_matrix();
         return m_model_local;
     }
     
-    Mat4 const& Actor::global_model_matrix()
+    Mat4 const& Actor::global_model_matrix() const
     {
         compute_matrix();
         return m_model_global;
@@ -452,6 +454,15 @@ namespace Scene
             }
             m_tranform.m_dirty = false;
         }
+    }
+    
+    //set uniform buffer
+    void Actor::set(UniformBufferTransform* gpubuffer) const
+    {
+        gpubuffer->m_position = position(true);
+        gpubuffer->m_rotation = mat3_cast(rotation(true));
+        gpubuffer->m_scale    = scale(true);
+        gpubuffer->m_model    = global_model_matrix();
     }
 }
 }

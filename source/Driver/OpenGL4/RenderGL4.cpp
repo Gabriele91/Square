@@ -114,8 +114,10 @@ namespace Render
 		GL_COMPUTE_SHADER
 	};
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	//uniform
-	void UniformGL4::set_value(Texture* in_texture)
+	void UniformGL4::set(Texture* in_texture)
 	{
 		long n_texture = ++m_shader->m_uniform_ntexture;
 		//bind texture
@@ -124,98 +126,230 @@ namespace Render
 		glUniform1i(m_id, (int)n_texture);
 	}
 
-	void UniformGL4::set_value(int i)
+	void UniformGL4::set(int i)
 	{
 		glUniform1i(m_id, i);
 	}
-	void UniformGL4::set_value(float f)
-	{
-		glUniform1f(m_id, f);
-	}
-	void UniformGL4::set_value(const Vec2& v2)
+    void UniformGL4::set(float f)
+    {
+        glUniform1f(m_id, f);
+    }
+    void UniformGL4::set(double d)
+    {
+        glUniform1d(m_id, d);
+    }
+    
+    
+    void UniformGL4::set(const IVec2& v2)
+    {
+        glUniform2iv(m_id, 1, value_ptr(v2));
+    }
+    void UniformGL4::set(const IVec3& v3)
+    {
+        glUniform3iv(m_id, 1, value_ptr(v3));
+    }
+    void UniformGL4::set(const IVec4& v4)
+    {
+        glUniform4iv(m_id, 1, value_ptr(v4));
+    }
+    
+	void UniformGL4::set(const Vec2& v2)
 	{
 		glUniform2fv(m_id, 1, value_ptr(v2));
 	}
-	void UniformGL4::set_value(const Vec3& v3)
+	void UniformGL4::set(const Vec3& v3)
 	{
 		glUniform3fv(m_id, 1, value_ptr(v3));
 	}
-	void UniformGL4::set_value(const Vec4& v4)
+	void UniformGL4::set(const Vec4& v4)
 	{
 		glUniform4fv(m_id, 1, value_ptr(v4));
 	}
-	void UniformGL4::set_value(const Mat3& m3)
+	void UniformGL4::set(const Mat3& m3)
 	{
 		glUniformMatrix3fv(m_id, 1, GL_FALSE, value_ptr(m3));
 	}
-	void UniformGL4::set_value(const Mat4& m4)
+	void UniformGL4::set(const Mat4& m4)
 	{
 		glUniformMatrix4fv(m_id, 1, GL_FALSE, value_ptr(m4));
 	}
+    
+    void UniformGL4::set(const DVec2& v2)
+    {
+        glUniform2dv(m_id, 1, value_ptr(v2));
+    }
+    void UniformGL4::set(const DVec3& v3)
+    {
+        glUniform3dv(m_id, 1, value_ptr(v3));
+    }
+    void UniformGL4::set(const DVec4& v4)
+    {
+        glUniform4dv(m_id, 1, value_ptr(v4));
+    }
+    void UniformGL4::set(const DMat3& m3)
+    {
+        glUniformMatrix3dv(m_id, 1, GL_FALSE, value_ptr(m3));
+    }
+    void UniformGL4::set(const DMat4& m4)
+    {
+        glUniformMatrix4dv(m_id, 1, GL_FALSE, value_ptr(m4));
+    }
 
-	void UniformGL4::set_value(const int* i, size_t n)
+    void UniformGL4::set(Texture* tvector, size_t n)
+    {
+        /* 3D texture? */
+        //id array
+        auto id = m_id;
+        //for all
+        while(n--)
+        {
+            //bind
+            long n_texture = ++m_shader->m_uniform_ntexture;
+            //bind texture
+            m_context->bind_texture(tvector++, (int)n_texture);
+            //bind ids
+            glUniform1i(id++, (int)n_texture);
+        }
+    }
+	void UniformGL4::set(const int* i, size_t n)
 	{
 		glUniform1iv(m_id, (GLsizei)n, i);
 	}
-	void UniformGL4::set_value(const float* f, size_t n)
-	{
-		glUniform1fv(m_id, (GLsizei)n, f);
-	}
-	void UniformGL4::set_value(const Vec2* v2, size_t n)
+    void UniformGL4::set(const float* f, size_t n)
+    {
+        glUniform1fv(m_id, (GLsizei)n, f);
+    }
+    void UniformGL4::set(const double* f, size_t n)
+    {
+        glUniform1dv(m_id, (GLsizei)n, f);
+    }
+    
+    void UniformGL4::set(const IVec2* v2, size_t n)
+    {
+        glUniform2iv(m_id, (GLsizei)n, value_ptr(*v2));
+    }
+    void UniformGL4::set(const IVec3* v3, size_t n)
+    {
+        glUniform3iv(m_id, (GLsizei)n, value_ptr(*v3));
+    }
+    void UniformGL4::set(const IVec4* v4, size_t n)
+    {
+        glUniform4iv(m_id, (GLsizei)n, value_ptr(*v4));
+    }
+    
+	void UniformGL4::set(const Vec2* v2, size_t n)
 	{
 		glUniform2fv(m_id, (GLsizei)n, value_ptr(*v2));
 	}
-	void UniformGL4::set_value(const Vec3* v3, size_t n)
+	void UniformGL4::set(const Vec3* v3, size_t n)
 	{
 		glUniform3fv(m_id, (GLsizei)n, value_ptr(*v3));
 	}
-	void UniformGL4::set_value(const Vec4* v4, size_t n)
+	void UniformGL4::set(const Vec4* v4, size_t n)
 	{
 		glUniform4fv(m_id, (GLsizei)n, value_ptr(*v4));
 	}
-	void UniformGL4::set_value(const Mat3* m3, size_t n)
+	void UniformGL4::set(const Mat3* m3, size_t n)
 	{
 		glUniformMatrix3fv(m_id, (GLsizei)n, GL_FALSE, value_ptr(*m3));
 	}
-	void UniformGL4::set_value(const Mat4* m4, size_t n)
+	void UniformGL4::set(const Mat4* m4, size_t n)
 	{
 		glUniformMatrix4fv(m_id, (GLsizei)n, GL_FALSE, value_ptr(*m4));
 	}
+    
+    void UniformGL4::set(const DVec2* v2, size_t n)
+    {
+        glUniform2dv(m_id, (GLsizei)n, value_ptr(*v2));
+    }
+    void UniformGL4::set(const DVec3* v3, size_t n)
+    {
+        glUniform3dv(m_id, (GLsizei)n, value_ptr(*v3));
+    }
+    void UniformGL4::set(const DVec4* v4, size_t n)
+    {
+        glUniform4dv(m_id, (GLsizei)n, value_ptr(*v4));
+    }
+    void UniformGL4::set(const DMat3* m3, size_t n)
+    {
+        glUniformMatrix3dv(m_id, (GLsizei)n, GL_FALSE, value_ptr(*m3));
+    }
+    void UniformGL4::set(const DMat4* m4, size_t n)
+    {
+        glUniformMatrix4dv(m_id, (GLsizei)n, GL_FALSE, value_ptr(*m4));
+    }
 
-	void UniformGL4::set_value(const std::vector < int >& i)
+    void UniformGL4::set(const std::vector < Texture* >& t)
+    {
+        set((Texture*)t.data(), t.size());
+    }
+	void UniformGL4::set(const std::vector < int >& i)
 	{
-		set_value(i.data(), i.size());
+		set(i.data(), i.size());
 	}
-	void UniformGL4::set_value(const std::vector < float >& f)
+    void UniformGL4::set(const std::vector < float >& f)
+    {
+        set(f.data(), f.size());
+    }
+    void UniformGL4::set(const std::vector < double >& d)
+    {
+        set(d.data(), d.size());
+    }
+    
+    void UniformGL4::set(const std::vector < IVec2 >& v2)
+    {
+        set(v2.data(), v2.size());
+    }
+    void UniformGL4::set(const std::vector < IVec3 >& v3)
+    {
+        set(v3.data(), v3.size());
+    }
+    void UniformGL4::set(const std::vector < IVec4 >& v4)
+    {
+        set(v4.data(), v4.size());
+    }
+    
+	void UniformGL4::set(const std::vector < Vec2 >& v2)
 	{
-		set_value(f.data(), f.size());
+		set(v2.data(), v2.size());
 	}
-	void UniformGL4::set_value(const std::vector < Vec2 >& v2)
+	void UniformGL4::set(const std::vector < Vec3 >& v3)
 	{
-		set_value(v2.data(), v2.size());
+		set(v3.data(), v3.size());
 	}
-	void UniformGL4::set_value(const std::vector < Vec3 >& v3)
+	void UniformGL4::set(const std::vector < Vec4 >& v4)
 	{
-		set_value(v3.data(), v3.size());
+		set(v4.data(), v4.size());
 	}
-	void UniformGL4::set_value(const std::vector < Vec4 >& v4)
+	void UniformGL4::set(const std::vector < Mat3 >& m3)
 	{
-		set_value(v4.data(), v4.size());
+		set(m3.data(), m3.size());
 	}
-	void UniformGL4::set_value(const std::vector < Mat3 >& m3)
+	void UniformGL4::set(const std::vector < Mat4 >& m4)
 	{
-		set_value(m3.data(), m3.size());
+		set(m4.data(), m4.size());
 	}
-	void UniformGL4::set_value(const std::vector < Mat4 >& m4)
-	{
-		set_value(m4.data(), m4.size());
-	}
-
-	void UniformGL4::set_value(const ConstBuffer* buffer)
-	{
-		glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_shader->m_shader_id, m_context->get_native_CB(buffer).get<GLuint>());
-	}
-
+    
+    void UniformGL4::set(const std::vector < DVec2 >& v2)
+    {
+        set(v2.data(), v2.size());
+    }
+    void UniformGL4::set(const std::vector < DVec3 >& v3)
+    {
+        set(v3.data(), v3.size());
+    }
+    void UniformGL4::set(const std::vector < DVec4 >& v4)
+    {
+        set(v4.data(), v4.size());
+    }
+    void UniformGL4::set(const std::vector < DMat3 >& m3)
+    {
+        set(m3.data(), m3.size());
+    }
+    void UniformGL4::set(const std::vector < DMat4 >& m4)
+    {
+        set(m4.data(), m4.size());
+    }
 	bool UniformGL4::is_valid(){ return m_context && m_shader && m_id != -1; }
 	
 	Shader* UniformGL4::get_shader()
@@ -241,6 +375,42 @@ namespace Render
 	{
 		//none
 	}
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    UniformConstBufferGL4::UniformConstBufferGL4(ContextGL4* context, Shader* shader, GLint id)
+    :m_context(context)
+    ,m_shader(shader)
+    ,m_id(id)
+    {
+    }
+    UniformConstBufferGL4::UniformConstBufferGL4()
+    :m_context(nullptr)
+    ,m_shader(nullptr)
+    ,m_id(-1)
+    {
+    }
+    UniformConstBufferGL4::~UniformConstBufferGL4()
+    {
+        //none
+    }
+    //bind
+    void UniformConstBufferGL4::bind(const ConstBuffer* buffer)
+    {
+        glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_id, m_context->get_native_CB(buffer).get<GLuint>());
+    }
+    void UniformConstBufferGL4::unbind()
+    {
+        glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_id, (GLuint)0);
+    }
+    //buffer info
+    bool UniformConstBufferGL4::is_valid()
+    {
+        return m_context && m_shader && m_id != -1;
+    }
+    Shader* UniformConstBufferGL4::get_shader()
+    {
+        return m_shader;
+    }
     
     ////////////////////
 	//     RENDER     //
@@ -605,6 +775,7 @@ namespace Render
 	{
 		auto ptr = new ConstBuffer();
 		ptr->gen_buffer();
+        ptr->set_size(size);
 		glBindBuffer(GL_UNIFORM_BUFFER, *ptr);
 		glBufferData(GL_UNIFORM_BUFFER, size, data, GL_STREAM_DRAW);
 		return ptr;
@@ -614,6 +785,7 @@ namespace Render
 	{
 		auto ptr = new VertexBuffer();
 		ptr->gen_buffer();
+        ptr->set_size(stride*n);
 		glBindBuffer(GL_ARRAY_BUFFER, *ptr);
 		glBufferData(GL_ARRAY_BUFFER, stride*n, vbo, GL_STREAM_DRAW);
 		return ptr;
@@ -623,6 +795,7 @@ namespace Render
 	{
 		auto ptr = new IndexBuffer();
 		ptr->gen_buffer();
+        ptr->set_size(size);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ptr);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*size, ibo, GL_STREAM_DRAW);
 		return ptr;
@@ -655,20 +828,36 @@ namespace Render
 		return ptr;
 	}
 
-	Variant ContextGL4::get_native_CB(const ConstBuffer* cb)
+	Variant ContextGL4::get_native_CB(const ConstBuffer* cb) const
 	{
 		return{ cb->m_id_buffer };
 	}
 
-	Variant ContextGL4::get_native_VBO(const VertexBuffer* vb)
+	Variant ContextGL4::get_native_VBO(const VertexBuffer* vb) const
 	{
 		return{ vb->m_id_buffer };
 	}
 
-	Variant ContextGL4::get_native_IBO(const IndexBuffer* ib)
+	Variant ContextGL4::get_native_IBO(const IndexBuffer* ib) const
 	{
 		return{ ib->m_id_buffer };
 	}
+    
+    
+    size_t ContextGL4::get_size_CB(const ConstBuffer* cb) const
+    {
+        return cb->get_size();
+    }
+    
+    size_t ContextGL4::get_size_VBO(const VertexBuffer* vb) const
+    {
+        return vb->get_size();
+    }
+    
+    size_t ContextGL4::get_size_IBO(const IndexBuffer* ib) const
+    {
+        return ib->get_size();
+    }
 
 	void ContextGL4::update_steam_CB(ConstBuffer* cb, const unsigned char* data, size_t size)
 	{
@@ -1091,7 +1280,7 @@ namespace Render
 	}
 
 	//DEPTH
-	float ContextGL4::get_depth(const Vec2& pixel)
+	float ContextGL4::get_depth(const Vec2& pixel) const
 	{
 		float depth;
 		glReadPixels(GLint(pixel.x), GLint(pixel.y), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
@@ -1099,7 +1288,7 @@ namespace Render
 	}
 
 	//RGBA
-	Vec4 ContextGL4::get_color(const Vec2& pixel)
+	Vec4 ContextGL4::get_color(const Vec2& pixel) const
 	{
 		Vec4 rgba;
 		glReadPixels(GLint(pixel.x), GLint(pixel.y), 1, 1, GL_RGBA, GL_FLOAT, &rgba);
@@ -1603,6 +1792,23 @@ namespace Render
 			s_bind_context.m_shader = nullptr;
 		}
 	}
+    
+    void ContextGL4::bind_uniform_CB(const ConstBuffer* buffer, Shader* shader, const std::string& uname)
+    {
+        //get
+        auto* ucb = get_uniform_const_buffer(shader,uname);
+        //bind
+        if(ucb) ucb->bind(buffer);
+    }
+    
+    void ContextGL4::unbind_uniform_CB(Shader* shader, const std::string& uname)
+    {
+        //get
+        auto* ucb = get_uniform_const_buffer(shader,uname);
+        //bind
+        if(ucb) ucb->unbind();
+    }
+    
 	void ContextGL4::delete_shader(Shader*& shader)
 	{
 		if (s_bind_context.m_shader == shader)
@@ -1613,21 +1819,34 @@ namespace Render
 		shader = nullptr;
 	}
 
-	Shader* ContextGL4::get_bind_shader()
+	Shader* ContextGL4::get_bind_shader() const
 	{
 		return s_bind_context.m_shader;
 	}
-	Uniform* ContextGL4::get_uniform(Shader* shader,const std::string& uname)
-	{
-		auto uit = shader->m_uniform_map.find(uname);
-		//if find
-		if (uit != shader->m_uniform_map.end()) return &uit->second;
-		//else
-		GLint uid = glGetUniformLocation(shader->m_shader_id,uname.c_str());
-		if (uid < 0) return nullptr;
-		//add and return
-		return &(shader->m_uniform_map[uname] = UniformGL4(this, shader, uid));
-	}
+    
+    Uniform* ContextGL4::get_uniform(Shader* shader,const std::string& uname) const
+    {
+        auto uit = shader->m_uniform_map.find(uname);
+        //if find
+        if (uit != shader->m_uniform_map.end()) return &uit->second;
+        //else
+        GLint uid = glGetUniformLocation(shader->m_shader_id,uname.c_str());
+        if (uid < 0) return nullptr;
+        //add and return
+        return &shader->add_uniform(uname, UniformGL4(((ContextGL4*)this), shader, uid));
+    }
+    
+    UniformConstBuffer* ContextGL4::get_uniform_const_buffer(Square::Render::Shader* shader, const std::string& uname) const
+    {
+        auto uit = shader->m_uniform_const_buffer_map.find(uname);
+        //if find
+        if (uit != shader->m_uniform_const_buffer_map.end()) return &uit->second;
+        //else
+        GLint uid =  glGetUniformBlockIndex(shader->m_shader_id,uname.c_str());
+        if (uid < 0) return nullptr;
+        //add and return
+        return &shader->add_uniform_const_buffer(uname, UniformConstBufferGL4(((ContextGL4*)this), shader, uid));
+    }
 
 	/*
 		FBO
@@ -1804,7 +2023,7 @@ namespace Render
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	bool ContextGL4::print_errors()
+	bool ContextGL4::print_errors() const
 	{
 		//get all gl errors
 		std::string gl_errors = debug_gl_errors_to_string();
@@ -1818,7 +2037,7 @@ namespace Render
 	}
 
 	//Output file name and line
-	bool ContextGL4::print_errors(const char* source_file_name, int line)
+	bool ContextGL4::print_errors(const char* source_file_name, int line) const
 	{
 		//get all gl errors
 		std::string gl_errors = debug_gl_errors_to_string_args(source_file_name,line);

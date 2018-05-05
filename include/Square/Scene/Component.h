@@ -11,6 +11,8 @@
 #include "Square/Core/Object.h"
 #include "Square/Core/Attribute.h"
 #include "Square/Core/SmartPointers.h"
+#include "Square/Data/AttributeSerialize.h"
+#include "Square/Data/Json.h"
 
 
 namespace Square
@@ -65,12 +67,21 @@ namespace Scene
         
         //actor
         Actor* actor();
+        const Actor* actor() const;
                 
         //all events
         virtual void on_attach(Actor& entity)      {}
         virtual void on_deattch()                  {}
         virtual void on_transform()                {}
         virtual void on_message(const Message& msg){}
+        
+        //virtual
+        virtual void serialize(Data::Archive& archivie) = 0;
+        virtual void serialize_json(Data::Json& archivie) = 0;
+        //deserialize
+        virtual void deserialize(Data::Archive& archivie) = 0;
+        virtual void deserialize_json(Data::Json& archivie) = 0;
+        
         
     protected:
         //parent

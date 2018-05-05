@@ -123,5 +123,262 @@ namespace Render
 			get_lib_map().erase(lib_iterator);
 		}
 	}
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //help const buffer
+    MapConstBuffer::MapConstBuffer()
+    {
+        m_context      = nullptr;
+        m_const_buffer = nullptr;
+        m_buffer_value = nullptr;
+        m_offset = 0;
+    }
+    //buffer
+    void MapConstBuffer::begin(Context* ctx,ConstBuffer* buffer)
+    {
+        m_context = ctx;
+        m_const_buffer = buffer;
+        m_buffer_value = m_context->map_CB(buffer,0, m_context->get_size_CB(buffer),MappingType::MAP_WRITE_AND_READ);
+        m_offset = 0;
+    }
+    void MapConstBuffer::end()
+    {
+        m_context->unmap_CB(m_const_buffer);
+        m_const_buffer = nullptr;
+        m_buffer_value = nullptr;
+        m_offset = 0;
+    }
+
+    #define CBUFFERPTR (((char*)m_buffer_value)+m_offset)
+    #define COMPUTEOFFEST(type) (sizeof(type) % 16 > 0 ? 16 * (sizeof(type) / 16 + 1) : sizeof(type))
+    
+    void MapConstBuffer::add(int i)
+    {
+        *((int*)CBUFFERPTR) = i;
+        m_offset += COMPUTEOFFEST(int);
+    }
+    void MapConstBuffer::add(float f)
+    {
+        *((float*)CBUFFERPTR) = f;
+        m_offset += COMPUTEOFFEST(float);
+    }
+    void MapConstBuffer::add(double d)
+    {
+        *((double*)CBUFFERPTR) = d;
+        m_offset += COMPUTEOFFEST(double);
+    }
+        
+    void MapConstBuffer::add(const IVec2& v2)
+    {
+        *((IVec2*)CBUFFERPTR) = v2;
+        m_offset += COMPUTEOFFEST(IVec2);
+    }
+    void MapConstBuffer::add(const IVec3& v3)
+    {
+        *((IVec3*)CBUFFERPTR) = v3;
+        m_offset += COMPUTEOFFEST(IVec3);
+    }
+    void MapConstBuffer::add(const IVec4& v4)
+    {
+        *((IVec4*)CBUFFERPTR) = v4;
+        m_offset += COMPUTEOFFEST(IVec4);
+    }
+        
+    void MapConstBuffer::add(const Vec2& v2)
+    {
+        *((Vec2*)CBUFFERPTR) = v2;
+        m_offset += COMPUTEOFFEST(IVec2);
+    }
+    void MapConstBuffer::add(const Vec3& v3)
+    {
+        *((Vec3*)CBUFFERPTR) = v3;
+        m_offset += COMPUTEOFFEST(Vec3);
+    }
+    void MapConstBuffer::add(const Vec4& v4)
+    {
+        *((Vec4*)CBUFFERPTR) = v4;
+        m_offset += COMPUTEOFFEST(Vec4);
+    }
+    void MapConstBuffer::add(const Mat3& m3)
+    {
+        *((Mat3*)CBUFFERPTR) = m3;
+        m_offset += COMPUTEOFFEST(Mat3);
+    }
+    void MapConstBuffer::add(const Mat4& m4)
+    {
+        *((Mat4*)CBUFFERPTR) = m4;
+        m_offset += COMPUTEOFFEST(Mat4);
+    }
+        
+    void MapConstBuffer::add(const DVec2& v2)
+    {
+        *((DVec2*)CBUFFERPTR) = v2;
+        m_offset += COMPUTEOFFEST(DVec2);
+    }
+    void MapConstBuffer::add(const DVec3& v3)
+    {
+        *((DVec3*)CBUFFERPTR) = v3;
+        m_offset += COMPUTEOFFEST(DVec3);
+    }
+    void MapConstBuffer::add(const DVec4& v4)
+    {
+        *((DVec4*)CBUFFERPTR) = v4;
+        m_offset += COMPUTEOFFEST(DVec4);
+    }
+    void MapConstBuffer::add(const DMat3& m3)
+    {
+        *((DMat3*)CBUFFERPTR) = m3;
+        m_offset += COMPUTEOFFEST(DMat3);
+    }
+    void MapConstBuffer::add(const DMat4& m4)
+    {
+        *((DMat4*)CBUFFERPTR) = m4;
+        m_offset += COMPUTEOFFEST(DMat4);
+    }
+        
+    void MapConstBuffer::add(const int* i, size_t n)
+    {
+        while(n--){ add(*i); i++; }
+    }
+    void MapConstBuffer::add(const float* f, size_t n)
+    {
+        while(n--){ add(*f); f++; }
+    }
+    void MapConstBuffer::add(const double* d, size_t n)
+    {
+        while(n--){ add(*d); d++; }
+    }
+    
+    void MapConstBuffer::add(const IVec2* v2, size_t n)
+    {
+        while(n--){ add(*v2); v2++; }
+    }
+    void MapConstBuffer::add(const IVec3* v3, size_t n)
+    {
+        while(n--){ add(*v3); v3++; }
+    }
+    void MapConstBuffer::add(const IVec4* v4, size_t n)
+    {
+        while(n--){ add(*v4); v4++; }
+    }
+    
+    void MapConstBuffer::add(const Vec2* v2, size_t n)
+    {
+        while(n--){ add(*v2); v2++; }
+    }
+    void MapConstBuffer::add(const Vec3* v3, size_t n)
+    {
+        while(n--){ add(*v3); v3++; }
+    }
+    void MapConstBuffer::add(const Vec4* v4, size_t n)
+    {
+        while(n--){ add(*v4); v4++; }
+    }
+    void MapConstBuffer::add(const Mat3* m3, size_t n)
+    {
+        while(n--){ add(*m3); m3++; }
+    }
+    void MapConstBuffer::add(const Mat4* m4, size_t n)
+    {
+        while(n--){ add(*m4); m4++; }
+    }
+    
+    void MapConstBuffer::add(const DVec2* v2, size_t n)
+    {
+        while(n--){ add(*v2); v2++; }
+    }
+    void MapConstBuffer::add(const DVec3* v3, size_t n)
+    {
+        while(n--){ add(*v3); v3++; }
+    }
+    void MapConstBuffer::add(const DVec4* v4, size_t n)
+    {
+        while(n--){ add(*v4); v4++; }
+    }
+    void MapConstBuffer::add(const DMat3* m3, size_t n)
+    {
+        while(n--){ add(*m3); m3++; }
+    }
+    void MapConstBuffer::add(const DMat4* m4, size_t n)
+    {
+        while(n--){ add(*m4); m4++; }
+    }
+    
+    void MapConstBuffer::add(const std::vector < int >& i)
+    {
+        add(i.data(),i.size());
+    }
+    void MapConstBuffer::add(const std::vector < float >& f)
+    {
+        add(f.data(),f.size());
+    }
+    void MapConstBuffer::add(const std::vector < double >& d)
+    {
+        add(d.data(),d.size());
+    }
+    
+    void MapConstBuffer::add(const std::vector < IVec2 >& v2)
+    {
+        add(v2.data(),v2.size());
+    }
+    void MapConstBuffer::add(const std::vector < IVec3 >& v3)
+    {
+        add(v3.data(),v3.size());
+    }
+    void MapConstBuffer::add(const std::vector < IVec4 >& v4)
+    {
+        add(v4.data(),v4.size());
+    }
+    
+    void MapConstBuffer::add(const std::vector < Vec2 >& v2)
+    {
+        add(v2.data(),v2.size());
+    }
+    void MapConstBuffer::add(const std::vector < Vec3 >& v3)
+    {
+        add(v3.data(),v3.size());
+    }
+    void MapConstBuffer::add(const std::vector < Vec4 >& v4)
+    {
+        add(v4.data(),v4.size());
+    }
+    void MapConstBuffer::add(const std::vector < Mat3 >& m3)
+    {
+        add(m3.data(),m3.size());
+    }
+    void MapConstBuffer::add(const std::vector < Mat4 >& m4)
+    {
+        add(m4.data(),m4.size());
+    }
+    
+    void MapConstBuffer::add(const std::vector < DVec2 >& v2)
+    {
+        add(v2.data(),v2.size());
+    }
+    void MapConstBuffer::add(const std::vector < DVec3 >& v3)
+    {
+        add(v3.data(),v3.size());
+    }
+    void MapConstBuffer::add(const std::vector < DVec4 >& v4)
+    {
+        add(v4.data(),v4.size());
+    }
+    void MapConstBuffer::add(const std::vector < DMat3 >& m3)
+    {
+        add(m3.data(),m3.size());
+    }
+    void MapConstBuffer::add(const std::vector < DMat4 >& m4)
+    {
+        add(m4.data(),m4.size());
+    }
+        
+    MapConstBuffer::~MapConstBuffer()
+    {
+        if(m_const_buffer) end();
+    }
+    #undef CBUFFERPTR
+    #undef COMPUTEOFFEST
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 }
 }

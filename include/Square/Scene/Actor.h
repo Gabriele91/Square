@@ -23,6 +23,14 @@ namespace Scene
 	class Actor;
 	class Level;
 	using ActorList = std::vector< Shared<Actor> >;
+    //Transform uniform buffer
+    ConstantBufferStruct UniformBufferTransform
+    {
+        Vec3 m_position;
+        Vec3 m_scale;
+        Mat3 m_rotation;
+        Mat4 m_model;
+    };
 	//..................
     class SQUARE_API Actor : public Object
                            , public SharedObject<Actor>
@@ -92,8 +100,8 @@ namespace Scene
         Quat rotation(bool global = false) const;
         Vec3 scale(bool global = false) const;
         
-        Mat4 const& local_model_matrix();
-        Mat4 const& global_model_matrix();
+        Mat4 const& local_model_matrix() const;
+        Mat4 const& global_model_matrix() const;
 
 		//force to recompute all matrix
 		void dirty();
@@ -109,6 +117,9 @@ namespace Scene
 		Level* level() const;
 		bool   is_root_of_level() const;
 		bool   remove_from_level();
+        
+        //set
+        void set(UniformBufferTransform* gpubuffer) const;
 
     protected:
 		//friend class

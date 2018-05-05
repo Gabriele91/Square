@@ -91,12 +91,20 @@ namespace Square
 
 		//get application
 		Application*  application();
-		//get render
-		Render::Context* render();
-		//get window
-		Video::Window* window();
-		//get window
-		Video::Input* input();
+        //get render
+        Render::Context* render();
+        //get window
+        Video::Window* window();
+        //get window
+        Video::Input* input();
+        //get application
+        const Application* application() const;
+        //get render
+        const Render::Context* render() const;
+        //get window
+        const Video::Window* window() const;
+        //get window
+        const Video::Input* input() const;
 
 	protected:
 		//Can't alloc a BaseContext

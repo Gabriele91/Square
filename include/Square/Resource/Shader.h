@@ -1,6 +1,6 @@
 #pragma once
-
-#pragma once
+#include <string>
+#include <unordered_map>
 #include "Square/Config.h"
 #include "Square/Core/Resource.h"
 #include "Square/Driver/Render.h"
@@ -34,8 +34,14 @@ namespace Resource
 		virtual ~Shader();
 
 		//load shader
-		bool load(const std::string& path) override;
-
+        bool load(const std::string& path) override;
+        
+        //load from effect
+        bool load(const std::string& path,
+                  const std::string& source,
+                  const PreprocessMap& defines,
+                  const size_t line = 0);
+        
 		//compile from source
 		bool compile
 		(
@@ -44,12 +50,12 @@ namespace Resource
 		);
 
 		//get buffer
-		Render::Uniform*     uniform(const std::string& name);
-		Render::ConstBuffer* constant_buffer(const std::string& name) const;
+		Render::Uniform*            uniform(const std::string& name) const;
+		Render::UniformConstBuffer* constant_buffer(const std::string& name) const;
 
 		//RAW Shader
 		Render::Shader* base_shader() const;
-
+        
 		//bind shader
 		virtual void bind();
 
