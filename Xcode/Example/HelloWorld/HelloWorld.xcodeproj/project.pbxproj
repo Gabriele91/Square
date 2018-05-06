@@ -14,6 +14,7 @@
 		E044C4C1206AA8B8003D4406 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E044C4C0206AA8B8003D4406 /* Assets.xcassets */; };
 		E044C4C4206AA8B8003D4406 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = E044C4C2206AA8B8003D4406 /* MainMenu.xib */; };
 		E044C4D4206AA948003D4406 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044C4D3206AA947003D4406 /* main.cpp */; };
+		E0DB04F9209FC915001ADF39 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = E0DB04F8209FC915001ADF39 /* assets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,6 +26,7 @@
 		E044C4C5206AA8B8003D4406 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E044C4C8206AA8B8003D4406 /* HelloWorld.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HelloWorld.entitlements; sourceTree = "<group>"; };
 		E044C4D3206AA947003D4406 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../../example/HelloWorld/main.cpp; sourceTree = "<group>"; };
+		E0DB04F8209FC915001ADF39 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../../../../example/HelloWorld/assets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +62,7 @@
 		E044C4BC206AA8B8003D4406 /* HelloWorld */ = {
 			isa = PBXGroup;
 			children = (
+				E0DB04F8209FC915001ADF39 /* assets */,
 				E044C4D3206AA947003D4406 /* main.cpp */,
 				E044C4C0206AA8B8003D4406 /* Assets.xcassets */,
 				E044C4C2206AA8B8003D4406 /* MainMenu.xib */,
@@ -136,6 +139,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E0DB04F9209FC915001ADF39 /* assets in Resources */,
 				E02600D8206B0D46000328DB /* libSqOpenGL4.dylib in Resources */,
 				E02600D9206B0D46000328DB /* libSquare.dylib in Resources */,
 				E044C4C1206AA8B8003D4406 /* Assets.xcassets in Resources */,
