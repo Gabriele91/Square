@@ -180,6 +180,12 @@ public:
 		//test
 		std::cout << "child1: " << p_l_s->name() << std::endl;
 		std::cout << "child2: " << p_r_s->name() << std::endl;
+
+		//wrongs
+		for (const std::string& wrong : Square::reverse( context().wrongs() ))
+		{
+			std::cout << wrong << std::endl;
+		}
     }
     bool run(double dt)
     {
