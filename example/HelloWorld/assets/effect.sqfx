@@ -1,7 +1,7 @@
 parameters
 {
     mask float(-1.0)
-	color vec4(1.0,1.0,1.0,1.0)
+	color Vec4(1.0,1.0,1.0,1.0)
 }
 
 sub_effect
