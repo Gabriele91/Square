@@ -79,8 +79,13 @@ namespace Parser
                 //else
                 return true;
             }
-            //dealloc
-            ~ParameterField();
+			//default
+			ParameterField();
+			//copy / move
+			ParameterField(ParameterField&& value);
+			ParameterField(const ParameterField& value);
+			//dealloc
+            virtual ~ParameterField();
 		};
 
 		struct ShaderField

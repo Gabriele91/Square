@@ -162,7 +162,38 @@ namespace Parser
         //else
         return true;
     }
-    Effect::ParameterField::~ParameterField()
+    
+	//default
+	Effect::ParameterField::ParameterField(){}
+	//copy / move
+	Effect::ParameterField::ParameterField(ParameterField&& value)
+	{
+		//move (std)
+		m_name     = std::move(value.m_name);
+		m_resource = std::move(value.m_resource);
+		//move value type
+		m_type = value.m_type;
+		value.m_type = ParameterType::PT_NONE;
+		//move paramter
+		if (value.m_paramter)
+		{
+			//move
+			m_paramter = value.m_paramter;
+			value.m_paramter = nullptr;
+		}
+	}
+	Effect::ParameterField::ParameterField(const ParameterField& value)
+	{
+		m_type     = value.m_type;
+		m_name     = value.m_name;
+		m_resource = value.m_resource;
+		//copy paramter
+		if (value.m_paramter)
+		{
+			m_paramter = value.m_paramter->copy();
+		}
+	}
+	Effect::ParameterField::~ParameterField()
     {
         if ( m_paramter ) delete m_paramter;
     }
@@ -241,7 +272,7 @@ namespace Parser
                     return false;
                 }
                 //push
-                m_context->m_parameters.push_back(field);
+                m_context->m_parameters.push_back(std::move(field));
                 //skeep spaces
                 skip_space_and_comments(m_context->m_line, ptr);
             }
@@ -779,6 +810,20 @@ namespace Parser
     //////////////////////////////////////////////////////
     bool Effect::parse_pass_block(const char*& ptr, PassField& pass)
     {
+		//field alias		
+		using PKey = const char*;
+		using PKeys = std::vector<PKey>;
+		using PFunction = bool (Effect::*)(const char*&, PassField&);
+		//table
+		struct { PKeys m_keys; PFunction m_funtion; } keys_function_table[]
+		{
+			{ { "blend" },            &Effect::parse_blend },
+			{ { "depth", "zbuffer" }, &Effect::parse_depth },
+			{ { "cullface" },         &Effect::parse_cullface },
+			{ { "lights" },           &Effect::parse_lights },
+			{ { "shader" },           &Effect::parse_shader },
+		};
+
         //parse table
         if (is_start_table(*ptr))
         {
@@ -789,53 +834,23 @@ namespace Parser
             //read all values
             while (!is_end_table(*ptr) && *ptr != EOF && *ptr != '\0')
             {
-                //all casses
-                if (cstr_cmp(ptr, "blend"))
-                {
-                    //skeep spaces
-                    skip_space_and_comments(m_context->m_line, ptr);
-                    //parse textures
-                    if (!parse_blend(ptr, pass)) return false;
-                    //skeep spaces
-                    skip_space_and_comments(m_context->m_line, ptr);
-                }
-                else if (cstr_cmp(ptr, "depth") || cstr_cmp(ptr, "zbuffer"))
-                {
-                    //skeep spaces
-                    skip_space_and_comments(m_context->m_line, ptr);
-                    //parse textures
-                    if (!parse_depth(ptr, pass)) return false;
-                    //skeep spaces
-                    skip_space_and_comments(m_context->m_line, ptr);
-                }
-                else if (cstr_cmp(ptr, "cullface"))
-                {
-                    //skeep spaces
-                    skip_space_and_comments(m_context->m_line, ptr);
-                    //parse textures
-                    if (!parse_cullface(ptr, pass)) return false;
-                    //skeep spaces
-                    skip_space_and_comments(m_context->m_line, ptr);
-                }
-                else if (cstr_cmp(ptr, "lights"))
-                {
-                    //skeep spaces
-                    skip_space_and_comments(m_context->m_line, ptr);
-                    //parse textures
-                    if (!parse_lights(ptr, pass)) return false;
-                    //skeep spaces
-                    skip_space_and_comments(m_context->m_line, ptr);
-                }
-                else if (cstr_cmp(ptr, "shader"))
-                {
-                    //skeep spaces
-                    skip_space_and_comments(m_context->m_line, ptr);
-                    //parse textures
-                    if (!parse_shader(ptr, pass)) return false;
-                    //skeep spaces
-                    skip_space_and_comments(m_context->m_line, ptr);
-                }
-                else
+				//success
+				bool success = false;
+				//ok
+				for (auto& keys_function : keys_function_table)
+				for (auto& key : keys_function.m_keys)
+				{
+					if (!success && cstr_cmp_skip(ptr, key))
+					{
+						//parse textures
+						if (!(this->*keys_function.m_funtion)(ptr, pass)) return false;
+						//skeep spaces
+						skip_space_and_comments(m_context->m_line, ptr);
+						//success
+						success = true;
+					}
+				}
+                if(!success)
                 {
                     push_error("Keyword not valid");
                     return false;
@@ -915,12 +930,6 @@ namespace Parser
     //////////////////////////////////////////////////////
     bool Effect::parse_blend(const char*& ptr, PassField& pass)
     {
-        //search source attribute
-        if (!cstr_cmp_skip(ptr, "blend"))
-        {
-            push_error("Blend not found");
-            return false;
-        }
         //skeep "line" space
         skip_line_space(m_context->m_line, ptr);
         //string
@@ -953,12 +962,6 @@ namespace Parser
     }
     bool Effect::parse_depth(const char*& ptr, PassField& pass)
     {
-        //search source attribute
-        if (!(cstr_cmp_skip(ptr, "depth") || cstr_cmp_skip(ptr, "zbuffer")))
-        {
-            push_error("Depth not found");
-            return false;
-        }
         //skeep "line" space
         skip_line_space(m_context->m_line, ptr);
         //string
@@ -982,12 +985,6 @@ namespace Parser
     }
     bool Effect::parse_cullface(const char*& ptr, PassField& pass)
     {
-        //search source attribute
-        if (!(cstr_cmp_skip(ptr, "cullface")))
-        {
-            push_error("Cullface not found");
-            return false;
-        }
         //skeep "line" space
         skip_line_space(m_context->m_line, ptr);
         //string
@@ -1010,12 +1007,6 @@ namespace Parser
     }
     bool Effect::parse_lights(const char*& ptr, PassField& pass)
     {
-        //search source attribute
-        if (!(cstr_cmp_skip(ptr, "lights")))
-        {
-            push_error("Lights not found");
-            return false;
-        }
         //skeep "line" space
         skip_line_space(m_context->m_line, ptr);
         //is off?
@@ -1079,12 +1070,6 @@ namespace Parser
     }
     bool Effect::parse_shader(const char*& ptr, PassField& pass)
     {
-        //search shader attribute
-        if (!cstr_cmp_skip(ptr, "shader"))
-        {
-            push_error("Shader not found");
-            return false;
-        }
         //skeep spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //is a shader name?
