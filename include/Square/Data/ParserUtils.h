@@ -135,7 +135,7 @@ namespace Parser
 	static inline bool skip_multy_lines_comment(size_t& line,const char*& inout)
 	{
 		//not a multilines comment
-		if (is_start_multy_line_comment(inout)) return false;
+		if (!is_start_multy_line_comment(inout)) return false;
 		//jump
 		while
 		(
