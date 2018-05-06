@@ -1,0 +1,81 @@
+parameters
+{
+    mask float(-1.0)
+	color vec4(1.0,1.0,1.0,1.0)
+}
+
+sub_effect
+{
+    requirement
+    {
+        driver  OpenGL(4,1)
+        shader  GLSL(410)
+    }
+    
+    technique "forward"
+    {
+        pass 
+        {
+            zbuffer less
+            blend off
+            cullface back
+            lights none
+            shader source 
+            {
+                struct VertexShaderInput
+                {
+                    Vec3 vertex_position : POSITION;
+                    Vec3 vertex_color    : COLOR0;
+                };
+
+                struct VertexShaderOutput
+                {
+                    Vec4 vertex_position : SV_POSITION;  // interpolated vertex position (system value)
+                    Vec4 vertex_color    : COLOR0;       // interpolated diffuse color
+                };
+
+                cbuffer Camera : register(b0)
+                {
+                    Vec4 camera_viewport;
+                    Mat4 camera_projection;
+                    Mat4 camera_view;
+                    Mat4 camera_model;
+                    Vec3 camera_position;
+                };
+
+                cbuffer Transform : register(b1)
+                {
+                    Vec3 model_position;
+                    Vec3 model_scale;
+                    Mat3 model_rotation;
+                    Mat4 model_model;
+                };
+
+                //global uniform
+                Vec4 diffure_color;
+                float mask;
+
+                VertexShaderOutput vertex(VertexShaderInput input) 
+                {    
+
+                    Vec4 position = output.vertex_position;
+                    position = mul(position, model_model);
+                    position = mul(position, camera_view);
+                    position = mul(position, camera_projection);
+
+                    VertexShaderOutput output;
+                    output.vertex_position = position;
+                    output.vertex_color = float4(input.vertex_color, 1.0f);
+
+                    return output;
+                }
+
+                Vec4 fragment(VertexShaderOutput input) : SV_Target
+                {   
+                    if (input.vertex_color.a <= mask) discard;
+                    return input.vertex_color;
+                }
+            }
+        }
+    }
+}
