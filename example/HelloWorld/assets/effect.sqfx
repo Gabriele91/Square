@@ -19,7 +19,7 @@ sub_effect
             zbuffer less
             blend off
             cullface back
-            lights none
+            lights off
             shader source 
             {
                 struct VertexShaderInput
@@ -58,7 +58,7 @@ sub_effect
                 VertexShaderOutput vertex(VertexShaderInput input) 
                 {    
 
-                    Vec4 position = output.vertex_position;
+                    Vec4 position = Vec4(input.vertex_position, 1.0f);
                     position = mul(position, model_model);
                     position = mul(position, camera_view);
                     position = mul(position, camera_projection);
