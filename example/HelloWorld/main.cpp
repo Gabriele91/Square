@@ -148,10 +148,10 @@ public:
 		m_level = context().create<Level>();
 
 		//rs file
-		context().add_resource_file("assets/example.png");
-        context().add_resource_file("assets/effect.hlsl");
-        context().add_resource_file("assets/effect.sqfx");
-        context().add_resource_file("assets/header.hlsl");
+		context().add_resource_file(Filesystem::resource_dir() + "/assets/example.png");
+        context().add_resource_file(Filesystem::resource_dir() + "/assets/effect.hlsl");
+        context().add_resource_file(Filesystem::resource_dir() + "/assets/effect.sqfx");
+        context().add_resource_file(Filesystem::resource_dir() + "/assets/header.hlsl");
 
 		//shader
         auto shader = context().resource<Shader>("effect");
