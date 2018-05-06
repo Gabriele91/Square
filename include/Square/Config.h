@@ -100,4 +100,19 @@ namespace Square
 	template <typename T>
 	using is_weak_ptr = typename TemplateHelp::is_weak_ptr<typename std::decay<T>::type>::type;
 
+	template <class T>
+	class const_reverse_wrapper
+	{
+		const T& m_ref;
+	public:
+		const_reverse_wrapper(const T& ref) : m_ref(ref) {}
+		auto begin() const -> decltype(this->m_ref.rbegin()){ return m_ref.rbegin(); }
+		auto end()   const -> decltype(this->m_ref.rend())  { return m_ref.rend();   }
+	};
+	  
+	template <class T>
+	const_reverse_wrapper<T> reverse(const T &x)
+	{
+		return const_reverse_wrapper<T>(x);
+	}
 }
