@@ -163,7 +163,8 @@
     <ClInclude Include="..\include\Square\Data\AttributeSerialize.h" />
     <ClInclude Include="..\include\Square\Data\Image.h" />
     <ClInclude Include="..\include\Square\Data\Json.h" />
-    <ClInclude Include="..\include\Square\Data\ParseUtils.h" />
+    <ClInclude Include="..\include\Square\Data\ParserEffect.h" />
+    <ClInclude Include="..\include\Square\Data\ParserUtils.h" />
     <ClInclude Include="..\include\Square\Driver\Input.h" />
     <ClInclude Include="..\include\Square\Driver\Render.h" />
     <ClInclude Include="..\include\Square\Driver\Window.h" />
@@ -175,6 +176,10 @@
     <ClInclude Include="..\include\Square\Geometry\Sphere.h" />
     <ClInclude Include="..\include\Square\Math\Linear.h" />
     <ClInclude Include="..\include\Square\Math\Tangent.h" />
+    <ClInclude Include="..\include\Square\Render\Collection.h" />
+    <ClInclude Include="..\include\Square\Render\Light.h" />
+    <ClInclude Include="..\include\Square\Render\Queue.h" />
+    <ClInclude Include="..\include\Square\Render\Viewport.h" />
     <ClInclude Include="..\include\Square\Resource\Model.h" />
     <ClInclude Include="..\include\Square\Resource\Shader.h" />
     <ClInclude Include="..\include\Square\Resource\Geometry.h" />
@@ -252,6 +257,7 @@
     <ClCompile Include="..\source\Data\ImageUtils\stb_image.cpp" />
     <ClCompile Include="..\source\Data\ImageUtils\tga.cpp" />
     <ClCompile Include="..\source\Data\Json.cpp" />
+    <ClCompile Include="..\source\Data\ParserEffect.cpp" />
     <ClCompile Include="..\source\Driver\Render.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Input_private.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Screen_private.cpp" />
@@ -286,6 +292,10 @@
     <ClCompile Include="..\source\Geometry\Frustum.cpp" />
     <ClCompile Include="..\source\Geometry\Intersection.cpp" />
     <ClCompile Include="..\source\Geometry\OBoundingBox.cpp" />
+    <ClCompile Include="..\source\Render\Collection.cpp" />
+    <ClCompile Include="..\source\Render\Queue.cpp" />
+    <ClCompile Include="..\source\Render\Viewport.cpp" />
+    <ClCompile Include="..\source\Resource\Effect.cpp" />
     <ClCompile Include="..\source\Resource\Shader.cpp" />
     <ClCompile Include="..\source\Resource\Texture.cpp" />
     <ClCompile Include="..\source\Scene\Actor.cpp" />

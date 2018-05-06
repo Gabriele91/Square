@@ -23,7 +23,7 @@ namespace Resource
     void Effect::object_registration(Context& ctx)
     {
         //factory
-        ctx.add_resource<Effect>({ ".shfx", ".fx" });
+        ctx.add_resource<Effect>({ ".sqfx", ".shfx", ".fx" });
     }
     //////////////////////////////////////////////////////////////
 
