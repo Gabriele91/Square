@@ -10,12 +10,23 @@
 #include "Square/Core/Filesystem.h"
 #include "Square/Resource/Effect.h"
 #include "Square/Data/ParserEffect.h"
+#include "Square/Core/ClassObjectRegistration.h"
 
 namespace Square
 {
 namespace Resource
 {
-    
+    //////////////////////////////////////////////////////////////
+    //Add element to objects
+    SQUARE_CLASS_OBJECT_REGISTRATION(Effect);
+    //Registration in context
+    void Effect::object_registration(Context& ctx)
+    {
+        //factory
+        ctx.add_resource<Effect>({ ".shfx", ".fx" });
+    }
+    //////////////////////////////////////////////////////////////
+
     using  ParametersMap  = Effect::ParametersMap;
     using  TechniquesMap  = Effect::TechniquesMap;
     using  Technique      = Effect::Technique;
@@ -480,11 +491,13 @@ namespace Resource
         "RENDERING_SPOT_LIGHT"
     };
     
+    //constructor
+    Effect::Effect(Context& context):ResourceObject(context) {}
+    Effect::Effect(Context& context, const std::string& path):ResourceObject(context){ load(path); }
+    
     //load effect
-    bool Effect::load()
+    bool Effect::load(const std::string& path)
     {
-        //path
-        auto path = context().resource_path(resource_name());
         //parser
         Parser::Effect          e_parser;
         Parser::Effect::Context e_context;

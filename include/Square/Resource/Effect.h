@@ -8,6 +8,7 @@
 #pragma once
 
 #include "Square/Config.h"
+#include "Square/Core/Uncopyable.h"
 #include "Square/Core/Resource.h"
 #include "Square/Driver/Render.h"
 #include "Square/Resource/Shader.h"
@@ -20,6 +21,7 @@ namespace Resource
 {
     class SQUARE_API Effect : public ResourceObject
                             , public SharedObject<Effect>
+                            , public Uncopyable
     {
         
     public:
@@ -304,14 +306,17 @@ namespace Resource
         using ParametersMap = std::unordered_map< std::string, int >;
         using TechniquesMap = std::unordered_map< std::string, Technique >;
         
+        //Init object
+        SQUARE_OBJECT(Effect)
+        //Registration in context
+        static void object_registration(Context& ctx);
+        
         //constructor
         Effect(Context& context);
         Effect(Context& context, const std::string& path);
-        Effect(const Effect&) = delete;
-        Effect& operator=(const Effect&) = delete;
         
-        //load effect
-        bool load();
+        //load shader
+        bool load(const std::string& path) override;
         
         //set queue
         void set_queue(const ParameterQueue& queue){ m_queue = queue; }

@@ -150,11 +150,13 @@ public:
 		//rs file
 		context().add_resource_file("example.png");
         context().add_resource_file("effect.hlsl");
+        context().add_resource_file("effect.shfx");
         context().add_resource_file("header.hlsl");
 
 		//shader
-		auto shader = context().resource<Shader>("effect");
-		
+        auto shader = context().resource<Shader>("effect");
+        auto effect = context().resource<Effect>("effect");
+
 		//test
 		auto player = m_level->actor("player");
 		player->translation({ 10,0,0 });
