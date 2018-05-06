@@ -477,6 +477,14 @@ namespace Resource
 							return false;
 						}
 					}
+					if (!reflection_data[type].functions.size() && type <= Render::ST_FRAGMENT_SHADER)
+					{
+						context().add_wrong
+						(
+							"Error to compile \"" + shader_target_name[type] + "\": \n" + logs.get_errors()
+						);
+						return false;
+					}
 				}
 			}
 		}
