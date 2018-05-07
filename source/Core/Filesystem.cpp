@@ -68,8 +68,7 @@ namespace Filesystem
 		//return
 		return "";
 	}
-
-
+	
     std::string working_dir()
     {
         char buffer[255];
@@ -116,7 +115,7 @@ namespace Filesystem
             //or return executable path
             return  program_dir();
         #else
-            return program_dir();
+            return working_dir();
         #endif
     }
 
