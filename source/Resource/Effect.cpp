@@ -428,7 +428,7 @@ namespace Resource
     }
     
     //disable pass effect
-    void Effect::Pass::unbind()
+    void Effect::Pass::unbind() const 
     {
         m_shader->unbind();
     }

@@ -243,6 +243,9 @@
     <ClInclude Include="..\include\Square\Render\Viewport.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Scene\Camera.h">
+      <Filter>include\Square\Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -361,6 +364,9 @@
     </ClCompile>
     <ClCompile Include="..\source\Render\Viewport.cpp">
       <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Scene\Camera.cpp">
+      <Filter>source\Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

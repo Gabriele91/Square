@@ -222,7 +222,7 @@ namespace Resource
             
             void bind(Parameters* params = nullptr) const;
             
-            void unbind();
+            void unbind() const;
             //safe
             Render::State safe_bind(Render::ConstBuffer* camera, Render::ConstBuffer* transform, Parameters* params = nullptr) const;
             

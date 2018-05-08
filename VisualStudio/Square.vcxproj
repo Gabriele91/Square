@@ -185,6 +185,7 @@
     <ClInclude Include="..\include\Square\Resource\Geometry.h" />
     <ClInclude Include="..\include\Square\Resource\Texture.h" />
     <ClInclude Include="..\include\Square\Scene\Actor.h" />
+    <ClInclude Include="..\include\Square\Scene\Camera.h" />
     <ClInclude Include="..\include\Square\Scene\Component.h" />
     <ClInclude Include="..\include\Square\Scene\Level.h" />
     <ClInclude Include="..\include\Square\Square.h" />
@@ -299,6 +300,7 @@
     <ClCompile Include="..\source\Resource\Shader.cpp" />
     <ClCompile Include="..\source\Resource\Texture.cpp" />
     <ClCompile Include="..\source\Scene\Actor.cpp" />
+    <ClCompile Include="..\source\Scene\Camera.cpp" />
     <ClCompile Include="..\source\Scene\Component.cpp" />
     <ClCompile Include="..\source\Scene\Level.cpp" />
   </ItemGroup>
