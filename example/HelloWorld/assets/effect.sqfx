@@ -52,7 +52,7 @@ sub_effect
                 };
 
                 //global uniform
-                Vec4 diffure_color;
+                Vec4 color;
                 float mask;
 
                 VertexShaderOutput vertex(VertexShaderInput input) 
@@ -73,7 +73,7 @@ sub_effect
                 Vec4 fragment(VertexShaderOutput input) : SV_Target
                 {   
                     if (input.vertex_color.a <= mask) discard;
-                    return input.vertex_color;
+                    return mul(input.vertex_color,color);
                 }
             }
         }
