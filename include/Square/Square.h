@@ -46,4 +46,5 @@
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/Level.h"
+#include "Square/Scene/Camera.h"
 

@@ -396,11 +396,13 @@ namespace Render
     //bind
     void UniformConstBufferGL4::bind(const ConstBuffer* buffer)
     {
-        glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_id, m_context->get_native_CB(buffer).get<GLuint>());
-    }
+		//glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_id, m_context->get_native_CB(buffer).get<GLuint>());
+		glUniformBlockBinding(m_shader->m_shader_id, (GLuint)m_id, m_context->get_native_CB(buffer).get<GLuint>());
+	}
     void UniformConstBufferGL4::unbind()
     {
-        glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_id, (GLuint)0);
+		//glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_id, (GLuint)0);
+		glUniformBlockBinding(m_shader->m_shader_id, (GLuint)m_id, 0);
     }
     //buffer info
     bool UniformConstBufferGL4::is_valid()
