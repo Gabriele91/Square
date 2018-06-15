@@ -140,7 +140,7 @@ public:
 
     void start()
     {
-		using namespace Square;
+		using namespace Square;		
 		using namespace Square::Data;
 		using namespace Square::Scene;
 		using namespace Square::Resource;
@@ -151,11 +151,13 @@ public:
 		context().add_resource_file(Filesystem::resource_dir() + "/assets/example.png");
         context().add_resource_file(Filesystem::resource_dir() + "/assets/effect.hlsl");
         context().add_resource_file(Filesystem::resource_dir() + "/assets/effect.sqfx");
-        context().add_resource_file(Filesystem::resource_dir() + "/assets/header.hlsl");
+		context().add_resource_file(Filesystem::resource_dir() + "/assets/header.hlsl");
+		context().add_resource_file(Filesystem::resource_dir() + "/assets/effect.mat");
 
 		//shader
-        auto shader = context().resource<Shader>("effect");
-        auto effect = context().resource<Effect>("effect");
+        m_shader = context().resource<Shader>("effect");
+		m_effect = context().resource<Effect>("effect");
+		m_material = context().resource<Material>("effect");
 
 		//test
 		auto player = m_level->actor("player");
@@ -174,13 +176,13 @@ public:
 		deserialize("level.sq");
 
 		//find
-		auto p_l_s = m_level->find("player.left.a\\.child\\.");
-		auto p_r_s = m_level->find("player.right.the\\.child");
+		auto p_l_s = m_level->find_actor("player.left.a\\.child\\.");
+		auto p_r_s = m_level->find_actor("player.right.the\\.child");
 
 		//test
 		std::cout << "child1: " << p_l_s->name() << std::endl;
 		std::cout << "child2: " << p_r_s->name() << std::endl;
-
+		
 		//wrongs
 		for (const std::string& wrong : Square::reverse( context().wrongs() ))
 		{
@@ -188,7 +190,44 @@ public:
 		}
     }
     bool run(double dt)
-    {
+    {		
+		//test effect
+		if(m_material && m_effect)
+		{
+			using namespace Square;
+			using namespace Square::Data;
+			using namespace Square::Scene;
+			using namespace Square::Resource;
+			//cb buffers
+			auto cbtransform = Render::constant_buffer<UniformBufferTransform>(context().render());
+			auto cbcamera = Render::constant_buffer<UniformBufferCamera>(context().render()); 
+			//errors?
+			render().print_errors();
+			//map
+			auto utransform = (UniformBufferTransform*)context().render()->map_CB(cbtransform.get(), 0, sizeof(UniformBufferTransform), Render::MAP_WRITE);
+			utransform->m_position = { 0,0,0 };
+			utransform->m_scale = { 0,0,0 };
+			utransform->m_rotation = Mat3(1);
+			utransform->m_model = Mat4(1);
+			context().render()->unmap_CB(cbtransform.get());
+
+			auto ucamera = (UniformBufferCamera*)context().render()->map_CB(cbcamera.get(), 0, sizeof(UniformBufferCamera), Render::MAP_WRITE);
+			ucamera->m_viewport = { 0, 1920, 0, 1080 };
+			ucamera->m_position = { 0,0,0 };
+			ucamera->m_model = Mat4(1);
+			ucamera->m_projection = Mat4(1);
+			ucamera->m_view = Mat4(1);
+			context().render()->unmap_CB(cbcamera.get());
+			//errors?
+			render().print_errors();
+			//bind
+			auto& pass = m_effect->techniques().begin()->second.operator[](0);
+			pass.bind(&render(), cbcamera.get(), cbtransform.get(), m_material->parameters());
+			//
+			pass.unbind();
+			//errors?
+			render().print_errors();
+		}
         return m_loop;
     }
     bool end()
@@ -218,7 +257,10 @@ public:
 private:
     
     bool m_loop = true;
-	Square::Shared<Square::Scene::Level> m_level;
+	Square::Shared<Square::Resource::Shader>   m_shader;
+	Square::Shared<Square::Resource::Effect>   m_effect;
+	Square::Shared<Square::Resource::Material> m_material;
+	Square::Shared<Square::Scene::Level>	   m_level;
 };
 
 int main()
