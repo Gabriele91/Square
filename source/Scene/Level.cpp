@@ -1,5 +1,3 @@
-
-
 //
 //  Square
 //
@@ -10,7 +8,11 @@
 #include "Square/Core/Application.h"
 #include "Square/Core/StringUtilities.h"
 #include "Square/Core/ClassObjectRegistration.h"
+#include "Square/Scene/Actor.h"
+#include "Square/Scene/Component.h"
 #include "Square/Scene/Level.h"
+#include "Square/Render/Light.h"
+#include "Square/Render/Renderable.h"
 #include <algorithm>
 
 namespace Square
@@ -33,6 +35,10 @@ namespace Scene
 	Level::Level(Context& context) : Object(context)
 	{
 	}
+	Level::Level(Context& context, const std::string& name) : Object(context), m_name(name)
+	{
+	}
+
 
 	//serialize
 	void Level::serialize(Data::Archive& archivie)
@@ -81,25 +87,26 @@ namespace Scene
 		if (!actor) return;
 		actor->remove_from_parent();
 		m_actors.push_back(actor);
-		actor->level(this);
+		actor->level(this->shared_from_this());
 	}
 	
 	//remove an actor
-	void Level::remove(Shared<Actor> actor)
+	bool Level::remove(Shared<Actor> actor)
 	{
 		if (!actor->parent())
 		{
 			//remove child from list
 			auto it = std::find(m_actors.begin(), m_actors.end(), actor);
-			if (it != m_actors.end()) m_actors.erase(it);
+			if (it != m_actors.end()) { m_actors.erase(it); return true; }
 		}
+		return false;
 	}
 
 	//get/create actor
 	Shared<Actor> Level::actor()
 	{
 		//create
-		auto actor = std::make_shared<Actor>(context());
+		auto actor = MakeShared<Actor>(context());
 		//add
 		add(actor);
 		//return
@@ -114,7 +121,7 @@ namespace Scene
 		//search
 		for (auto actor : m_actors) if (actor->name() == name) return actor;
 		//create
-		auto actor = std::make_shared<Actor>(context(), name);
+		auto actor = MakeShared<Actor>(context(), name);
 		//add
 		add(actor);
 		//return
@@ -126,7 +133,7 @@ namespace Scene
 	}
 
 	//search
-	Shared<Actor> Level::find(const std::string& path_names)
+	Shared<Actor> Level::find_actor(const std::string& path_names)
 	{
 		//fail
 		if (!path_names.size()) return nullptr;
@@ -219,6 +226,71 @@ namespace Scene
 			actor->send_message(msg, brodcast);
 		}
 	}
+	//get randerable collection
+	const Render::Collection& Level::randerable_collection() const
+	{
+		return m_rander_collection;
+	}
 
+	//added an actor
+	void Level::on_add_a_actor(Shared<Actor> actor)
+	{
+		for (auto component : actor->components())
+		{
+			on_add_a_component(actor, component);
+		}
+	}
+	//remove an actor
+	void Level::on_remove_a_actor(Shared<Actor> actor)
+	{
+		for (auto component : actor->components())
+		{
+			on_remove_a_component(actor, component);
+		}
+	}
+
+	//added a component
+	void Level::on_add_a_component(Shared<Actor> actor, Shared<Component> component)
+	{
+		auto renderable = DynamicPointerCast<Render::Renderable, Component>(component);
+		if (renderable) { m_rander_collection.m_renderables.push_back(renderable); return; }
+
+		auto light = DynamicPointerCast<Render::Light, Component>(component);
+		if(light) { m_rander_collection.m_lights.push_back(light); return; }
+	}
+	//remove a component
+	void Level::on_remove_a_component(Shared<Actor> actor, Shared<Component> component)
+	{
+		auto& renderables = m_rander_collection.m_renderables;
+		auto renderable = DynamicPointerCast<Render::Renderable, Component>(component);
+		if (renderable)
+		{
+			renderables.erase(
+				std::remove_if( renderables.begin(), renderables.end(), 
+								[&](Weak<Render::Renderable> n_renderable)
+								{ 
+									return renderable == n_renderable.lock();
+								}),
+				renderables.end()
+			);
+			return;
+		}
+
+		auto& lights = m_rander_collection.m_lights;
+		auto light = DynamicPointerCast<Render::Light, Component>(component);
+		if (light)
+		{
+			lights.erase(
+				std::remove_if( lights.begin(), lights.end(),
+								[&](Weak<Render::Light> n_light)
+								{ 
+									return light == n_light.lock();
+								}),
+				lights.end()
+			); 
+			return;
+		}
+
+	}
 }
 }

@@ -8,6 +8,23 @@ namespace Square
 namespace Parser 
 {
 	//////////////////////////////////////////////////////
+	// Error hendler
+	struct ErrorField
+	{
+		size_t m_line{ 0 };
+		std::string m_error;
+
+		ErrorField()
+		{
+		}
+
+		ErrorField(size_t line, const std::string& error)
+		: m_line(line)
+		, m_error(error)
+		{
+		}
+	};
+	//////////////////////////////////////////////////////
 	// KEYWORD UTILS
 	static inline bool cstr_cmp(const char* x, const char key[])
 	{

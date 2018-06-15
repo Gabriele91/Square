@@ -56,17 +56,23 @@ namespace Square
 			{ return Class::static_object_info(); }
 
 	//Define Object
-    class SQUARE_API Object
+	class SQUARE_API BaseObject
+	{
+	public:
+		//info
+		virtual uint64 object_id() const = 0;
+		virtual const std::string& object_name() const = 0;
+		virtual const ObjectInfo& object_info() const = 0;
+	};
+
+	//Define Object
+    class SQUARE_API Object : public BaseObject
 	{
 	public:
 		//Resource
 		Object(Context& context) : m_context(context) {}
         Context& context() { return m_context; }
         const Context& context() const { return m_context; }
-		//info
-		virtual uint64 object_id() const = 0;
-		virtual const std::string& object_name() const = 0;
-		virtual const ObjectInfo& object_info() const = 0;
 
 	protected:
 		//Context

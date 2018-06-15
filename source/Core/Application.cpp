@@ -54,6 +54,7 @@ namespace Square
 	Render::Context& AppInterface::render()      { return *application().render(); }
 	Video::Window&   AppInterface::window()      { return *application().window(); }
 	Video::Input&    AppInterface::input()       { return *application().input(); }
+	Scene::World&    AppInterface::world()       { return *application().world(); }
 
     Application::Application()
     {
@@ -163,11 +164,16 @@ namespace Square
     {
         return m_window;
     }
-    
-    Video::Input* Application::input()
-    {
-        return m_input;
-    }
+
+	Video::Input* Application::input()
+	{
+		return m_input;
+	}
+
+	Scene::World* Application::world()
+	{
+		return m_world;
+	}
 
 	Context* Application::context()
 	{
@@ -192,6 +198,11 @@ namespace Square
 	const Video::Input* Application::input() const
 	{
 		return m_input;
+	}
+
+	const Scene::World* Application::world() const
+	{
+		return m_world;
 	}
 
 	const Context* Application::context() const

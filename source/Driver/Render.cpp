@@ -13,6 +13,23 @@ namespace Render
 	using square_render_create_context = Square::Render::Context* (*)();
 	using square_render_delete_context = void(*)(Square::Render::Context*&);
 
+	//help
+	Shared<ConstBuffer>  constant_buffer(Context* ctx, size_t size)
+	{
+		ConstBuffer* buffer = ctx->create_CB(nullptr, size);
+		return std::shared_ptr<ConstBuffer>(buffer, [=](ConstBuffer* ptr) { ctx->delete_CB(ptr); });
+	}
+	Shared<VertexBuffer> vertex_buffer(Context* ctx, size_t stride, size_t n)
+	{
+		VertexBuffer* buffer = ctx->create_VBO(nullptr, stride, n);
+		return std::shared_ptr<VertexBuffer>(buffer, [=](VertexBuffer* ptr) { ctx->delete_VBO(ptr); });
+	}
+	Shared<IndexBuffer> index_buffer(Context* ctx, size_t n)
+	{
+		IndexBuffer* buffer = ctx->create_IBO(nullptr, n);
+		return std::shared_ptr<IndexBuffer>(buffer, [=](IndexBuffer* ptr) { ctx->delete_IBO(ptr); });
+	}
+
 	//list
 	std::vector<RenderDriver> list_of_render_driver()
 	{

@@ -19,31 +19,32 @@ namespace Scene
     // utils
     void Component::remove_from_parent()
     {
-        if(actor()) actor()->remove(shared_from_this());
+        if(auto shared_actor = actor().lock()) 
+			shared_actor->remove(shared_from_this());
     }
     
     //actor
-    Actor* Component::actor()
+    Weak<Actor> Component::actor()
     {
         return m_parent;
     }
     
-    const Actor* Component::actor() const
+    const Weak<Actor> Component::actor() const
     {
         return m_parent;
     }
     
     //internal
-    void Component::submit_add(Actor* actor)
+    void Component::submit_add(Weak<Actor> actor)
     {
-        on_attach(*actor);
+        on_attach(*actor.lock());
         m_parent = actor;
     }
     
     void Component::submit_remove()
     {
         on_deattch();
-        m_parent = nullptr;
+		m_parent = Weak<Actor>();
     }
     
     void Component::submit_message(const Message& msg)

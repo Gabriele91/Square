@@ -10,9 +10,11 @@
 #include "Square/Core/Uncopyable.h"
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Object.h"
+#include "Square/Core/Context.h"
 #include "Square/Scene/Component.h"
 #include "Square/Data/AttributeSerialize.h"
 #include "Square/Data/Json.h"
+#include "Square/Render/Transform.h"
 
 namespace Square
 {
@@ -22,8 +24,10 @@ namespace Scene
     //declaretion
 	class Actor;
 	class Level;
+	class World;
 	using ActorList = std::vector< Shared<Actor> >;
-    //Transform uniform buffer
+	using LevelList = std::vector< Shared<Level> >;
+	//Transform uniform buffer
     ConstantBufferStruct UniformBufferTransform
     {
         Vec3 m_position;
@@ -35,6 +39,7 @@ namespace Scene
     class SQUARE_API Actor : public Object
                            , public SharedObject<Actor>
                            , public Uncopyable
+						   , public Render::Transform
     {
     public:
         
@@ -114,7 +119,7 @@ namespace Scene
         void deserialize_json(Data::Json& archivie);
 
 		//get level
-		Level* level() const;
+		Weak<Level> level() const;
 		bool   is_root_of_level() const;
 		bool   remove_from_level();
         
@@ -125,9 +130,9 @@ namespace Scene
 		//friend class
 		friend class Level;
 		//set a level
-		void level(Level* level);
+		void level(Weak<Level> level);
 		//level events
-		Level* m_level;
+		Weak<Level> m_level;
         //fake const
         Mat4 const& model_matrix() const;
         //local

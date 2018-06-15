@@ -15,7 +15,7 @@ namespace  Data
 	Shared<Image> Image::from_rgb565(const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = Image::snew();
+		auto o_image = MakeShared<Image>();
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size
@@ -42,7 +42,7 @@ namespace  Data
 	Shared<Image> Image::from_rgb5a1(const unsigned char* buffer, unsigned long width, unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = Image::snew();
+		auto o_image = MakeShared<Image>();
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size
@@ -69,7 +69,7 @@ namespace  Data
 	Shared<Image> Image::from_r (const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = Image::snew();
+		auto o_image = MakeShared<Image>();
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size
@@ -90,7 +90,7 @@ namespace  Data
 	Shared<Image> Image::from_rg (const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = Image::snew();
+		auto o_image = MakeShared<Image>();
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size
@@ -111,7 +111,7 @@ namespace  Data
 	Shared<Image> Image::from_rgb (const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = Image::snew();
+		auto o_image = MakeShared<Image>();
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size
@@ -132,7 +132,7 @@ namespace  Data
 	Shared<Image> Image::from_rgba (const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = Image::snew();
+		auto o_image = MakeShared<Image>();
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size

@@ -66,8 +66,8 @@ namespace Scene
         void remove_from_parent();
         
         //actor
-        Actor* actor();
-        const Actor* actor() const;
+		Weak<Actor> actor();
+        const Weak<Actor> actor() const;
                 
         //all events
         virtual void on_attach(Actor& entity)      {}
@@ -85,10 +85,10 @@ namespace Scene
         
     protected:
         //parent
-        Actor* m_parent { nullptr };
+        Weak<Actor> m_parent;
         
         //internal
-        void submit_add(Actor* actor);
+        void submit_add(Weak<Actor> actor);
         
         void submit_remove();
         

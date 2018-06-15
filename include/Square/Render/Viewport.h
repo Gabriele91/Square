@@ -6,16 +6,20 @@
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
+#include "Square/Config.h"
 #include "Square/Math/Linear.h"
-#include "Square/Geometry/Frustum.h"
+#include "Square/Core/Object.h"
 
 namespace Square
 {
 namespace Render
 {
-    class SQUARE_API Viewport
+    class SQUARE_API Viewport : public BaseObject
     {
     public:
+		//Viewport
+		SQUARE_OBJECT(Viewport)
+
         //update
         void viewport(const IVec4& viewport);
         void projection(const Mat4& projection);

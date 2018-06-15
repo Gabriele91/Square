@@ -27,6 +27,11 @@ namespace Square
 		class Window;
 		class Input;
 	}
+	//World
+	namespace Scene
+	{
+		class World;
+	}
 	//Context without template (dll)
 	class SQUARE_API BaseContext
 	{
@@ -97,6 +102,8 @@ namespace Square
         Video::Window* window();
         //get window
         Video::Input* input();
+		//get world
+		Scene::World* world();
         //get application
         const Application* application() const;
         //get render
@@ -105,6 +112,8 @@ namespace Square
         const Video::Window* window() const;
         //get window
         const Video::Input* input() const;
+		//get world
+		const Scene::World* world() const;
 
 	protected:
 		//Can't alloc a BaseContext
@@ -131,6 +140,7 @@ namespace Square
 		ObjectFactoryMap m_object_factories;
 		//Context refs
 		Application*     m_application{ nullptr };
+		Application*     m_world{ nullptr };
         //Reousce factory
         ResourceFileMap   m_resources_file;
         ResourceInfoMap   m_resources_info;
@@ -170,7 +180,10 @@ namespace Square
 
 		using BaseContext::application;
 		using BaseContext::render;
-		
+		using BaseContext::window;
+		using BaseContext::input;
+		using BaseContext::world;
+
 		//template utils
 		template< class T > inline Shared<T> create()
 		{

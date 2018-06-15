@@ -7,9 +7,9 @@
 #pragma once
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
+#include "Square/Core/Context.h"
 #include "Square/Driver/Input.h"
 #include "Square/Driver/Window.h"
-#include "Square/Core/Context.h"
 #include "Square/Driver/Render.h"
 
 namespace Square
@@ -65,6 +65,7 @@ namespace Square
 		static Render::Context& render();
 		static Video::Window&   window();
 		static Video::Input&    input();
+		static Scene::World&    world();
     };
     
     enum class WindowMode
@@ -100,7 +101,8 @@ namespace Square
         //get attr
         AppInterface*    app_instance();
         Video::Window*   window();
-        Video::Input*    input();
+		Video::Input*    input();
+		Scene::World*    world();
 		//ctx info
 		Context*	     context();
 		Render::Context* render();
@@ -108,6 +110,7 @@ namespace Square
         const AppInterface*   app_instance() const;
         const Video::Window*  window() const;
 		const Video::Input*   input() const;
+		const Scene::World*   world() const;
 		//ctx info (const)
 		const Context*	     context() const;
 		const Render::Context* render() const;
@@ -129,7 +132,8 @@ namespace Square
     private:
         //info screen
         Video::Window*      m_window{ nullptr };
-        Video::Input*       m_input { nullptr };
+		Video::Input*       m_input{ nullptr };
+		Scene::World*       m_world{ nullptr };
 		//info instance
         AppInterface*       m_instance{ nullptr };
 		//context (delta of update)

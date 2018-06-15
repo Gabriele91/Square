@@ -12,17 +12,17 @@ namespace Render
 {
     /////////////////////////////////////////////////////////////////////
     QueueElement::QueueElement() {};
-    QueueElement::QueueElement(Weak<Object> ref) : m_ref(ref) {};
-    Shared<Object> QueueElement::lock() { return m_ref.lock(); }
+    QueueElement::QueueElement(Weak<BaseObject> ref) : m_ref(ref) {};
+    Shared<BaseObject> QueueElement::lock() { return m_ref.lock(); }
     /////////////////////////////////////////////////////////////////////
     //iterator
     QueueIterator::QueueIterator(QueueElement* queue) { m_ref = queue; }
-    Shared<Object> QueueIterator::lock() const { return m_ref->lock();  }
+    Shared<BaseObject> QueueIterator::lock() const { return m_ref->lock();  }
     //iterator ops
     QueueIterator QueueIterator::operator++() { return QueueIterator(m_ref->m_next); }
     bool QueueIterator::operator == (const QueueIterator& other){ return m_ref == other.m_ref; }
     bool QueueIterator::operator!=(const QueueIterator& other){ return m_ref != other.m_ref; }
-    Shared<Object> QueueIterator::operator*(){ return m_ref ? m_ref->lock() : nullptr; }
+    Shared<BaseObject> QueueIterator::operator*(){ return m_ref ? m_ref->lock() : nullptr; }
     /////////////////////////////////////////////////////////////////////
     Queue::Queue(size_t capacity)
     {
@@ -64,7 +64,7 @@ namespace Render
         m_size = 0;
     }
     //add
-    void Queue::push_front_to_back(Weak<Object> entity, float depth)
+    void Queue::push_front_to_back(Weak<BaseObject> entity, float depth)
     {
         //element get
         QueueElement *e = get_new_element();
@@ -96,7 +96,7 @@ namespace Render
         }
     }
     
-    void Queue::push_back_to_front(Weak<Object> entity, float depth)
+    void Queue::push_back_to_front(Weak<BaseObject> entity, float depth)
     {
         //element get
         QueueElement *e = get_new_element();

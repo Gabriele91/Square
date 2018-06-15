@@ -107,7 +107,7 @@ namespace Scene
     {
         if(m_is_dirty)
         {
-            if(const Actor* actor = Component::actor())
+            if(auto actor = Component::actor().lock())
             {
                 Mat4 const& model_matrix = actor->global_model_matrix();
                 m_view = Square::inverse(model_matrix);
@@ -133,7 +133,7 @@ namespace Scene
         gpubuffer->m_projection = viewport().projection();
         gpubuffer->m_view = view();
         //invo camera in world space
-        if(const Actor* actor = Component::actor())
+        if(auto actor = Component::actor().lock())
         {
             gpubuffer->m_model = actor->global_model_matrix();
             gpubuffer->m_position = actor->position();

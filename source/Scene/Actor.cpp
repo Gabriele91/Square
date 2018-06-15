@@ -128,19 +128,23 @@ namespace Scene
         child->remove_from_parent();
         child->m_parent = shared_from_this();
         m_childs.push_back(child);
+		child->level(level());
 		child->dirty();
     }
     void Actor::add(Shared<Component> component)
     {
 		if (!component) return;
         //Olready added
-        if(component->actor() == this) return;
+        if(component->actor().lock().get() == this) return;
         //Remove
         component->remove_from_parent();
         //Add
         m_components.push_back(component);
         //submit
-        component->submit_add(this);
+        component->submit_add(shared_from_this());
+		//send event to level
+		if (auto shared_level = level().lock())
+			shared_level->on_add_a_component(shared_from_this(),component);
     }
     
     //remove a child
@@ -152,18 +156,32 @@ namespace Scene
             child->m_parent = nullptr;
             //remove child from list
             auto it = std::find(m_childs.begin(), m_childs.end(), child);
-            if(it != m_childs.end()) m_childs.erase(it);
+			if (it != m_childs.end())
+			{
+				//remove from level
+				child->level(Weak<Level>());
+				//ok
+				m_childs.erase(it);
+			}
         }
     }
     void Actor::remove(Shared<Component> component)
     {
         //Is your own
-        if(component->actor() != this) return;
-        //event
-        component->submit_remove();
-        //find and remove
-        auto it = std::find(m_components.begin(), m_components.end(), component);
-        if(it != m_components.end()) m_components.erase(it);
+        if(component->actor().lock().get() != this) return;
+		//find 
+		auto it = std::find(m_components.begin(), m_components.end(), component);
+        //remove
+		if (it != m_components.end())
+		{
+			//event
+			component->submit_remove();
+			//send event to level
+			if (auto shared_level = level().lock())
+				shared_level->on_add_a_component(shared_from_this(), component);
+			//remove
+			m_components.erase(it);
+		}
     }
     void Actor::remove_from_parent()
     {
@@ -235,7 +253,7 @@ namespace Scene
     Shared<Actor> Actor::child()
     {
         //create
-        auto actor = std::make_shared<Actor>(context());
+        auto actor = MakeShared<Actor>(context());
         //add
         add(actor);
         //return
@@ -250,7 +268,7 @@ namespace Scene
         //search
         for(auto child : m_childs) if(child->name() == name) return child;
         //create
-        auto actor = std::make_shared<Actor>(context(), name);
+        auto actor = MakeShared<Actor>(context(), name);
         //add
         add(actor);
         //return
@@ -284,37 +302,50 @@ namespace Scene
     }
 
 	//level
-	Level* Actor::level() const
+	Weak<Level> Actor::level() const
 	{
-		     if (m_level) return m_level;
-		else if (parent()) return parent()->level();
-		else return nullptr;
+		     if (m_level.lock()) return m_level;
+		else return Weak<Level>();
 	}	
 
 	bool Actor::is_root_of_level() const
 	{
-		return !parent() && m_level;
+		return !parent() && m_level.lock();
 	}
 
 	bool Actor::remove_from_level()
 	{
-		if (m_level)
+		if (auto current_level = m_level.lock())
 		{
-			m_level->remove(shared_from_this());
-			m_level = nullptr;
+			current_level->remove(shared_from_this());
+			level(Weak<Level>());
 			dirty();
 			return true;
 		}
 		return false;
 	}
-	
-	void Actor::level(Level* level)
+
+
+	void Actor::level(Weak<Level> level)
 	{
-		if (m_level != level)
-		{
-			m_level = level;
-			dirty();
-		}
+		auto current_level = m_level.lock();
+		auto new_level = level.lock();
+		//cases
+		if (current_level == new_level) return;
+		//ref to level
+		//..
+		if (current_level)
+			current_level->on_remove_a_actor(this->shared_from_this());
+		//..
+		m_level = level;
+		//..
+		if (new_level)
+			new_level->on_add_a_actor(this->shared_from_this());
+		//event
+		dirty();
+		//same for each chils
+		for (Shared<Actor> actor : m_childs)
+			actor->level(level);
 	}
 
     //matrix op
