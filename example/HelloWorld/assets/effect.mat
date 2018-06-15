@@ -1,0 +1,5 @@
+effect "effect"
+{
+    mask float(-1.0)
+	color Vec4(1.0,1.0,1.0,1.0)
+}
