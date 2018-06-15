@@ -15,7 +15,7 @@
 namespace Square
 {
 	//Access to attribute
-	class AttributeAccess : public SharedObject<AttributeAccess>
+	class SQUARE_API AttributeAccess : public SharedObject<AttributeAccess>
 	{
 	public:
 		virtual void get(const Object* serializable, VariantRef& ret) const =0;
@@ -23,7 +23,7 @@ namespace Square
 	};
 
 	//Attribute of a class
-	class Attribute
+	class SQUARE_API Attribute
 	{
 	public:
 
@@ -129,6 +129,10 @@ namespace Square
 			m_wrapper = nullptr;
 			m_enum_names = enum_names;
 		}
+        
+        virtual ~Attribute()
+        {
+        }
 
         const std::string&      name()          const { return m_name; }
         Type                    type()          const { return m_type; }

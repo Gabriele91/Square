@@ -7,6 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E001EC5820D3B5C600241C6D /* Transform.h in Headers */ = {isa = PBXBuildFile; fileRef = E001EC5420D3B5C500241C6D /* Transform.h */; };
+		E001EC5920D3B5C600241C6D /* Renderable.h in Headers */ = {isa = PBXBuildFile; fileRef = E001EC5520D3B5C600241C6D /* Renderable.h */; };
+		E001EC5A20D3B5C600241C6D /* Effect.h in Headers */ = {isa = PBXBuildFile; fileRef = E001EC5620D3B5C600241C6D /* Effect.h */; };
+		E001EC5B20D3B5C600241C6D /* Material.h in Headers */ = {isa = PBXBuildFile; fileRef = E001EC5720D3B5C600241C6D /* Material.h */; };
+		E001EC5D20D3B5CE00241C6D /* Material.h in Headers */ = {isa = PBXBuildFile; fileRef = E001EC5C20D3B5CE00241C6D /* Material.h */; };
+		E001EC5F20D3B5D800241C6D /* World.h in Headers */ = {isa = PBXBuildFile; fileRef = E001EC5E20D3B5D800241C6D /* World.h */; };
+		E001EC6220D3B5E100241C6D /* ParserMaterial.h in Headers */ = {isa = PBXBuildFile; fileRef = E001EC6020D3B5E100241C6D /* ParserMaterial.h */; };
+		E001EC6320D3B5E100241C6D /* ParserParameters.h in Headers */ = {isa = PBXBuildFile; fileRef = E001EC6120D3B5E100241C6D /* ParserParameters.h */; };
+		E001EC6520D3B5EA00241C6D /* Material.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E001EC6420D3B5EA00241C6D /* Material.cpp */; };
+		E001EC6720D3B5F100241C6D /* World.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E001EC6620D3B5F100241C6D /* World.cpp */; };
+		E001EC6A20D3B5FB00241C6D /* Material.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E001EC6820D3B5FA00241C6D /* Material.cpp */; };
+		E001EC6B20D3B5FB00241C6D /* Effect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E001EC6920D3B5FB00241C6D /* Effect.cpp */; };
+		E001EC6E20D3B61800241C6D /* ParserParameters.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E001EC6C20D3B61800241C6D /* ParserParameters.cpp */; };
+		E001EC6F20D3B61800241C6D /* ParserMaterial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E001EC6D20D3B61800241C6D /* ParserMaterial.cpp */; };
+		E001EC7320D3B6F800241C6D /* Tangent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E001EC7220D3B6F700241C6D /* Tangent.cpp */; };
 		E010CF5B207B652700D7A6FA /* Effect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E010CF5A207B652700D7A6FA /* Effect.cpp */; };
 		E044BCE9206A9974003D4406 /* Application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044BC6C206A98B7003D4406 /* Application.cpp */; };
 		E044BCEA206A9974003D4406 /* ClassObjectRegistration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044BC6D206A98B7003D4406 /* ClassObjectRegistration.cpp */; };
@@ -54,6 +69,21 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E001EC5420D3B5C500241C6D /* Transform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Transform.h; sourceTree = "<group>"; };
+		E001EC5520D3B5C600241C6D /* Renderable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Renderable.h; sourceTree = "<group>"; };
+		E001EC5620D3B5C600241C6D /* Effect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Effect.h; sourceTree = "<group>"; };
+		E001EC5720D3B5C600241C6D /* Material.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Material.h; sourceTree = "<group>"; };
+		E001EC5C20D3B5CE00241C6D /* Material.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Material.h; sourceTree = "<group>"; };
+		E001EC5E20D3B5D800241C6D /* World.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = World.h; sourceTree = "<group>"; };
+		E001EC6020D3B5E100241C6D /* ParserMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParserMaterial.h; sourceTree = "<group>"; };
+		E001EC6120D3B5E100241C6D /* ParserParameters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParserParameters.h; sourceTree = "<group>"; };
+		E001EC6420D3B5EA00241C6D /* Material.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Material.cpp; sourceTree = "<group>"; };
+		E001EC6620D3B5F100241C6D /* World.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = World.cpp; sourceTree = "<group>"; };
+		E001EC6820D3B5FA00241C6D /* Material.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Material.cpp; sourceTree = "<group>"; };
+		E001EC6920D3B5FB00241C6D /* Effect.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Effect.cpp; sourceTree = "<group>"; };
+		E001EC6C20D3B61800241C6D /* ParserParameters.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ParserParameters.cpp; sourceTree = "<group>"; };
+		E001EC6D20D3B61800241C6D /* ParserMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ParserMaterial.cpp; sourceTree = "<group>"; };
+		E001EC7220D3B6F700241C6D /* Tangent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Tangent.cpp; sourceTree = "<group>"; };
 		E005585A1F98AFD10055DC1F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		E007D8BC1F9DF1C40059D333 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		E007D8BE1F9DF1C90059D333 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -183,6 +213,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		E001EC7120D3B6F700241C6D /* Math */ = {
+			isa = PBXGroup;
+			children = (
+				E001EC7220D3B6F700241C6D /* Tangent.cpp */,
+			);
+			path = Math;
+			sourceTree = "<group>";
+		};
 		E044BC38206A97E6003D4406 /* include */ = {
 			isa = PBXGroup;
 			children = (
@@ -233,6 +271,8 @@
 		E044BC4A206A97E7003D4406 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				E001EC6020D3B5E100241C6D /* ParserMaterial.h */,
+				E001EC6120D3B5E100241C6D /* ParserParameters.h */,
 				E044BC4B206A97E7003D4406 /* Archive.h */,
 				E044BC4C206A97E7003D4406 /* AttributeSerialize.h */,
 				E044BC4D206A97E7003D4406 /* Image.h */,
@@ -279,6 +319,7 @@
 		E044BC5E206A97E7003D4406 /* Resource */ = {
 			isa = PBXGroup;
 			children = (
+				E001EC5C20D3B5CE00241C6D /* Material.h */,
 				E044BC5F206A97E7003D4406 /* Geometry.h */,
 				E044BC60206A97E7003D4406 /* Model.h */,
 				E044BC61206A97E7003D4406 /* Shader.h */,
@@ -291,6 +332,7 @@
 		E044BC65206A97E7003D4406 /* Scene */ = {
 			isa = PBXGroup;
 			children = (
+				E001EC5E20D3B5D800241C6D /* World.h */,
 				E044BC68206A97E7003D4406 /* Level.h */,
 				E044BC66206A97E7003D4406 /* Actor.h */,
 				E044BC67206A97E7003D4406 /* Component.h */,
@@ -303,6 +345,7 @@
 			isa = PBXGroup;
 			children = (
 				E044BC6B206A98B7003D4406 /* Core */,
+				E001EC7120D3B6F700241C6D /* Math */,
 				E044BC74206A98B7003D4406 /* Data */,
 				E044BC7D206A98B7003D4406 /* Driver */,
 				E044BCA0206A98B7003D4406 /* Geometry */,
@@ -332,13 +375,15 @@
 		E044BC74206A98B7003D4406 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				E0AF07EE209B1D2600276401 /* ParserEffect.cpp */,
+				E001EC6D20D3B61800241C6D /* ParserMaterial.cpp */,
+				E001EC6C20D3B61800241C6D /* ParserParameters.cpp */,
 				E044BC75206A98B7003D4406 /* Archive.cpp */,
 				E044BC76206A98B7003D4406 /* AttributeSerialize.cpp */,
 				E044BC77206A98B7003D4406 /* Image.cpp */,
 				E044BC78206A98B7003D4406 /* ImageLoader.cpp */,
 				E044BC79206A98B7003D4406 /* ImageUtils */,
 				E044BC7C206A98B7003D4406 /* Json.cpp */,
-				E0AF07EE209B1D2600276401 /* ParserEffect.cpp */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -436,6 +481,7 @@
 		E044BCA6206A98B7003D4406 /* Resource */ = {
 			isa = PBXGroup;
 			children = (
+				E001EC6420D3B5EA00241C6D /* Material.cpp */,
 				E044BCA7206A98B7003D4406 /* Shader.cpp */,
 				E044BCAA206A98B7003D4406 /* Texture.cpp */,
 				E010CF5A207B652700D7A6FA /* Effect.cpp */,
@@ -446,6 +492,7 @@
 		E044BCAB206A98B7003D4406 /* Scene */ = {
 			isa = PBXGroup;
 			children = (
+				E001EC6620D3B5F100241C6D /* World.cpp */,
 				E044BCAE206A98B7003D4406 /* Level.cpp */,
 				E044BCAC206A98B7003D4406 /* Actor.cpp */,
 				E044BCAD206A98B7003D4406 /* Component.cpp */,
@@ -457,6 +504,10 @@
 		E073F2B6207CE62F0054CE10 /* Render */ = {
 			isa = PBXGroup;
 			children = (
+				E001EC5620D3B5C600241C6D /* Effect.h */,
+				E001EC5720D3B5C600241C6D /* Material.h */,
+				E001EC5520D3B5C600241C6D /* Renderable.h */,
+				E001EC5420D3B5C500241C6D /* Transform.h */,
 				E073F2BC207CF8E70054CE10 /* Queue.h */,
 				E073F2B7207CE67C0054CE10 /* Collection.h */,
 				E073F2BB207CF8870054CE10 /* Light.h */,
@@ -468,6 +519,8 @@
 		E073F2B8207CE7410054CE10 /* Render */ = {
 			isa = PBXGroup;
 			children = (
+				E001EC6920D3B5FB00241C6D /* Effect.cpp */,
+				E001EC6820D3B5FA00241C6D /* Material.cpp */,
 				E073F2BD207CF94C0054CE10 /* Queue.cpp */,
 				E073F2B9207CE7410054CE10 /* Collection.cpp */,
 				E08C38F72093753500DB2936 /* Viewport.cpp */,
@@ -512,10 +565,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				E044BD0C206A9ACE003D4406 /* Screen_private.h in Headers */,
+				E001EC6320D3B5E100241C6D /* ParserParameters.h in Headers */,
+				E001EC5920D3B5C600241C6D /* Renderable.h in Headers */,
+				E001EC5B20D3B5C600241C6D /* Material.h in Headers */,
 				E044BD0A206A9ACE003D4406 /* Input_private.h in Headers */,
+				E001EC5A20D3B5C600241C6D /* Effect.h in Headers */,
 				E0AF07ED209B19FB00276401 /* ParserEffect.h in Headers */,
+				E001EC6220D3B5E100241C6D /* ParserMaterial.h in Headers */,
+				E001EC5820D3B5C600241C6D /* Transform.h in Headers */,
 				E044BD10206A9ACE003D4406 /* Wrapper_private.h in Headers */,
+				E001EC5F20D3B5D800241C6D /* World.h in Headers */,
 				E044BD0E206A9ACE003D4406 /* Window_private.h in Headers */,
+				E001EC5D20D3B5CE00241C6D /* Material.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -576,10 +637,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E001EC6B20D3B5FB00241C6D /* Effect.cpp in Sources */,
+				E001EC6F20D3B61800241C6D /* ParserMaterial.cpp in Sources */,
 				E08C38F82093753500DB2936 /* Viewport.cpp in Sources */,
 				E044BCEF206A9974003D4406 /* Time.cpp in Sources */,
 				E044BD0B206A9ACE003D4406 /* Input_private.mm in Sources */,
 				E0AF07EF209B1D2600276401 /* ParserEffect.cpp in Sources */,
+				E001EC6720D3B5F100241C6D /* World.cpp in Sources */,
 				E044BCF5206A9982003D4406 /* Json.cpp in Sources */,
 				E073F2BE207CF94C0054CE10 /* Queue.cpp in Sources */,
 				E044BCEA206A9974003D4406 /* ClassObjectRegistration.cpp in Sources */,
@@ -589,12 +653,15 @@
 				E044BCFC206A9998003D4406 /* OBoundingBox.cpp in Sources */,
 				E073F2BA207CE7410054CE10 /* Collection.cpp in Sources */,
 				E044BCF9206A9998003D4406 /* CreateBounding.cpp in Sources */,
+				E001EC6A20D3B5FB00241C6D /* Material.cpp in Sources */,
 				E044BCF2206A997F003D4406 /* AttributeSerialize.cpp in Sources */,
+				E001EC6520D3B5EA00241C6D /* Material.cpp in Sources */,
 				E08C38F6209372DD00DB2936 /* Camera.cpp in Sources */,
 				E044BD03206A99A5003D4406 /* Level.cpp in Sources */,
 				E044BD02206A99A5003D4406 /* Component.cpp in Sources */,
 				E044BCED206A9974003D4406 /* Object.cpp in Sources */,
 				E044BCFB206A9998003D4406 /* Intersection.cpp in Sources */,
+				E001EC6E20D3B61800241C6D /* ParserParameters.cpp in Sources */,
 				E044BD0F206A9ACE003D4406 /* Window_private.mm in Sources */,
 				E044BCE9206A9974003D4406 /* Application.cpp in Sources */,
 				E044BD01206A99A5003D4406 /* Actor.cpp in Sources */,
@@ -611,6 +678,7 @@
 				E044BCFA206A9998003D4406 /* Frustum.cpp in Sources */,
 				E044BCF8206A9998003D4406 /* AABoundingBox.cpp in Sources */,
 				E044BCF4206A997F003D4406 /* ImageLoader.cpp in Sources */,
+				E001EC7320D3B6F800241C6D /* Tangent.cpp in Sources */,
 				E044BD09206A9AC8003D4406 /* Render.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

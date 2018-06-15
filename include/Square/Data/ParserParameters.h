@@ -31,12 +31,12 @@ namespace Parser
             template < class T >
             bool alloc()
             {
-                return alloc(::Square::Resource::parameter_type_traits<T>());
+                return alloc(::Square::Render::parameter_type_traits<T>());
             }
             template < class T >
             bool alloc(const std::string& name)
             {
-                return alloc(name,::Square::Resource::parameter_type_traits<T>());
+                return alloc(name,::Square::Render::parameter_type_traits<T>());
             }
             //alloc
             template < class T >
