@@ -47,10 +47,10 @@ namespace Filesystem
 			//path
 			char buffer[PATH_MAX]{ '\0' };
 			//print id
-			char size[PATH_MAX];
-			sprintf(size, "/proc/%d/exe", getpid());
+			char link[PATH_MAX];
+			sprintf(link, "/proc/%d/exe", getpid());
 			//get
-			int bytes = std::min(readlink(szTmp, buffer, PATH_MAX), PATH_MAX - 1);
+			int bytes = std::min<int>(readlink(link, buffer, PATH_MAX), PATH_MAX - 1);
 			//test
 			if (bytes >= 0)
 			{

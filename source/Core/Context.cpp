@@ -266,6 +266,11 @@ namespace Square
 	{
 		return application() ? application()->input() : nullptr;
 	}
+	//get world
+	Scene::World* BaseContext::world()
+	{
+		return application() ? application()->world() : nullptr;
+	}
     //get application
     const Application* BaseContext::application() const
     {
@@ -281,11 +286,16 @@ namespace Square
     {
         return application() ? application()->window() : nullptr;
     }
-    //get window
-    const Video::Input* BaseContext::input() const
-    {
-        return application() ? application()->input() : nullptr;
-    }
+	//get window
+	const Video::Input* BaseContext::input() const
+	{
+		return application() ? application()->input() : nullptr;
+	}
+	//get world
+	const Scene::World* BaseContext::world() const
+	{
+		return application() ? application()->world() : nullptr;
+	}
 
 	void BaseContext::clear()
 	{

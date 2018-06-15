@@ -3,7 +3,8 @@
 #include "Square/Math/Linear.h"
 #include "Square/Data/ParserUtils.h"
 #include "Square/Driver/Render.h"
-#include "Square/Resource/Effect.h"
+#include "Square/Render/Effect.h"
+#include "Square/Data/ParserParameters.h"
 
 namespace Square
 {
@@ -12,14 +13,14 @@ namespace Parser
 	class SQUARE_API Effect
 	{
 
-        using  ParametersMap  = ::Square::Resource::Effect::ParametersMap;
-        using  TechniquesMap  = ::Square::Resource::Effect::TechniquesMap;
-        using  Technique      = ::Square::Resource::Effect::Technique;
-        using  Parameter      = ::Square::Resource::Effect::Parameter;
-        using  Parameters     = ::Square::Resource::Effect::Parameters;
-        using  ParameterType  = ::Square::Resource::Effect::ParameterType;
-        using  ParameterQueue = ::Square::Resource::Effect::ParameterQueue;
-
+        using  ParametersMap   = ::Square::Render::EffectParametersMap;
+        using  TechniquesMap   = ::Square::Render::EffectTechniquesMap;
+        using  Technique       = ::Square::Render::EffectTechnique;
+        using  Parameter       = ::Square::Render::EffectParameter;
+        using  Parameters      = ::Square::Render::EffectParameters;
+        using  ParameterType   = ::Square::Render::EffectParameterType;
+        using  EffectQueueType = ::Square::Render::EffectQueueType;
+		using  ParameterField  = Parser::Parameters::ParameterField;
 
 	public:
 
@@ -44,48 +45,6 @@ namespace Parser
 			int         m_shader_version;
 
             bool test(Render::Context* render) const;
-		};
-
-		struct ParameterField
-		{
-            //info
-			std::string     m_name;
-            ParameterType   m_type;
-            Parameter*      m_paramter{ nullptr };
-            //resource
-            std::vector< std::string > m_resource;
-            //by type
-            bool alloc(ParameterType type);
-            bool alloc(const std::string& name, ParameterType type);
-            //alloc
-            template < class T >
-            bool alloc()
-            {
-                return alloc(::Square::Resource::parameter_type_traits<T>());
-            }
-            template < class T >
-            bool alloc(const std::string& name)
-            {
-                return alloc(name,::Square::Resource::parameter_type_traits<T>());
-            }
-            //alloc
-            template < class T >
-            bool set(const std::string& name, const T& value)
-            {
-                //if
-                if(!m_paramter && !alloc<T>(name)) return false;
-                //save
-                m_paramter->set(value);
-                //else
-                return true;
-            }
-			//default
-			ParameterField();
-			//copy / move
-			ParameterField(ParameterField&& value);
-			ParameterField(const ParameterField& value);
-			//dealloc
-            virtual ~ParameterField();
 		};
 
 		struct ShaderField
@@ -127,24 +86,8 @@ namespace Parser
 		struct SubEffectField
 		{
 			RequirementField m_requirement;
-			ParameterQueue   m_queue;
+			EffectQueueType   m_queue;
 			std::vector< TechniqueField > m_techniques;
-		};
-
-		struct ErrorField
-		{
-			size_t m_line{ 0 };
-			std::string m_error;
-
-			ErrorField()
-			{
-			}
-
-			ErrorField(size_t line, const std::string& error)
-            : m_line(line)
-            , m_error(error)
-			{
-			}
 		};
 
 		struct Context
@@ -152,7 +95,7 @@ namespace Parser
 			std::vector< SubEffectField >   m_sub_effect;
 			std::vector< ParameterField >   m_parameters;
 			std::list< ErrorField >	        m_errors;
-			size_t						    m_line{ 0 };
+			size_t						    m_line{ 1 };
 
             std::string errors_to_string() const;
 		};
@@ -161,20 +104,12 @@ namespace Parser
 
         bool parse(Context& default_context, const char*& ptr);
 
+
 	protected:
         //////////////////////////////////////////////////////
 		Context* m_context{ nullptr };
 		//////////////////////////////////////////////////////
-        bool parse_parameters_block(const char*& ptr);
-        bool parse_value(const char*& ptr, ParameterField& field);
-        bool parse_int_values(const char*& ptr, int* values, size_t n);
-        bool parse_float_values(const char*& ptr, float* values, size_t n);
-        bool parse_double_values(const char*& ptr, double* values, size_t n);
-        bool parse_texture(const char*& ptr, ParameterField& field);
-        bool parse_mat3(const char*& ptr, Mat3& field);
-        bool parse_mat4(const char*& ptr, Mat4& field);
-        bool parse_dmat3(const char*& ptr, DMat3& field);
-        bool parse_dmat4(const char*& ptr, DMat4& field);
+		bool parse_parameters_block(const char*& ptr);
         //////////////////////////////////////////////////////
         bool parse_driver_type(const char*& ptr, RequirementField& field);
         bool parse_shader_type(const char*& ptr, RequirementField& field);
@@ -186,7 +121,7 @@ namespace Parser
         bool parse_techniques_block(const char*& ptr, SubEffectField& subeffect);
 		//////////////////////////////////////////////////////
         bool parse_pass_block(const char*& ptr, PassField& pass);
-        bool parse_queue_block(const char*& ptr, ParameterQueue& p_queue);
+        bool parse_queue_block(const char*& ptr, EffectQueueType& p_queue);
 		//////////////////////////////////////////////////////
         bool parse_blend(const char*& ptr, PassField& pass);
         bool parse_depth(const char*& ptr, PassField& pass);
@@ -194,7 +129,6 @@ namespace Parser
         bool parse_lights(const char*& ptr, PassField& pass);
         bool parse_shader(const char*& ptr, PassField& pass);
 		//////////////////////////////////////////////////////
-        bool parse_type(const char*& inout, ParameterType& type);
         bool parse_queue_type(const char*& inout, Render::QueueType& type);
 		//////////////////////////////////////////////////////
         void push_error(const std::string& error);

@@ -39,7 +39,7 @@ namespace Square
 		return true;
 	}
 
-	std::vector<std::string> str_split(const std::string& input, const  std::string& regex_str)
+	inline std::vector<std::string> str_split(const std::string& input, const  std::string& regex_str)
 	{
 		std::regex regex(regex_str);
 		std::sregex_token_iterator first{ input.begin(), input.end(), regex, -1 };

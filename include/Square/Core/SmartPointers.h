@@ -35,17 +35,15 @@ namespace Square
     {
         return std::const_pointer_cast< T >( sptr );
     }
-    
+
+	template< class T, class... Args >
+	static inline Shared<T> MakeShared(Args&&... args) { return std::make_shared<T>(args...); }
+
+	template< class T, class... Args >
+	static inline Unique<T> MakeUnique(Args&&... args) { return std::move(std::make_unique<T>(args...)); }
+
 	template < class T >
-	class SharedObject : public std::enable_shared_from_this< T >
-	{
-	public:
-        
-		template < class... Args >
-		static Shared<T> snew(Args&&... args)
-		{
-			return std::make_shared< T >(args...);
-		}
-	};
-    
+	class SharedObject : public std::enable_shared_from_this< T >{ };
+
+
 }

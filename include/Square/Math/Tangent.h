@@ -156,4 +156,48 @@ namespace Square
             }
         }
     }
+	//compute tangent per index
+	namespace TangentUtils
+	{
+		struct Proxy
+		{
+			virtual unsigned int triangles() = 0;
+			virtual IVec3 indices(const unsigned int index) = 0;
+
+			virtual unsigned int index(const unsigned int index) = 0;
+			virtual Vec3 position(const unsigned int index) = 0;
+			virtual Vec2 uv(const unsigned int index) = 0;
+
+			virtual void  normal(const unsigned int index, const Vec3& n) = 0;
+			virtual void  bitangent(const unsigned int index, const Vec3& b) = 0;
+			virtual void  tangent(const unsigned int index, const Vec3& t) = 0;
+		};
+		template< typename T >
+		struct TProxy : public Proxy
+		{
+			std::vector< T >& m_vertices;
+			const std::vector<unsigned int>& m_indexes;
+
+			TProxy(const std::vector<unsigned int>& indexes, std::vector< T >& vertices)
+			: m_indexes(indexes), m_vertices(vertices) {}
+
+			virtual unsigned int triangles() { return m_indexes.size() / 3; }
+			virtual IVec3 indices(const unsigned int index) { return { m_index[index * 3], m_index[index * 3 + 1], m_index[index * 3 + 2] }; }
+
+			virtual unsigned int index(const unsigned int index) { return m_index[index]; }
+			virtual Vec3  position(const unsigned int index) { return { m_vertices[index].m_position } }
+			virtual Vec3  uv(const unsigned int index) { return { m_vertices[index].m_position } }
+
+			virtual void  normal(const unsigned int index, const Vec3& n) { m_vertices[index].m_normal = n; }
+			virtual void  bitangent(const unsigned int index, const Vec3& b) { m_vertices[index].m_bitangent = b; }
+			virtual void  tangent(const unsigned int index, const Vec3& t) { m_vertices[index].m_tangent = t; }
+		};
+		void tangent_model_slow(Proxy& model, bool replace_normal=false);
+	}
+	template < class T, typename Scalar = float >
+	void tangent_model_slow(const std::vector<unsigned int>& indexes, std::vector< T >& vertices)
+	{
+		TangentUtils::TProxy< T > proxy(indexes, vertices);
+		tangent_model_slow(proxy);
+	}
 }

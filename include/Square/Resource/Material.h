@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 09/04/18.
-//  Copyright Â© 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 
@@ -11,35 +11,34 @@
 #include "Square/Core/Uncopyable.h"
 #include "Square/Core/Resource.h"
 #include "Square/Render/Queue.h"
-#include "Square/Render/Effect.h"
+#include "Square/Render/Material.h"
 
 namespace Square
 {
 namespace Resource
 {
-    class SQUARE_API Effect : public ResourceObject
-                            , public SharedObject<Effect>
-                            , public Uncopyable
-						    , public Render::Effect
-    {
+    class SQUARE_API Material :   public ResourceObject
+								, public SharedObject<Material>
+								, public Uncopyable
+								, public Render::Material
+		{
         
     public:
         
         //Init object
-        SQUARE_OBJECT(Effect)
+        SQUARE_OBJECT(Material)
 
         //Registration in context
         static void object_registration(Context& ctx);
         
         //constructor
-        Effect(Context& context);
-        Effect(Context& context, const std::string& path);
+		Material(Context& context);
+		Material(Context& context, const std::string& path);
         
         //load shader
         bool load(const std::string& path) override;    
         
     };
-    
-}
-}
 
+}
+}

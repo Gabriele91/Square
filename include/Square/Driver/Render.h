@@ -959,9 +959,23 @@ namespace Render
         virtual bool print_errors(const char* source_file_name, int line) const = 0;
 	};
 	/////////////////////////////////
+	// Buffer smart pointer
+	DLL_EXPORT Shared<ConstBuffer>  constant_buffer(Context* ctx, size_t size);
+	DLL_EXPORT Shared<VertexBuffer> vertex_buffer(Context* ctx, size_t stride, size_t n);
+	DLL_EXPORT Shared<IndexBuffer> index_buffer(Context* ctx, size_t n);
+	/////////////////////////////////
+	template<class T> static inline Shared<ConstBuffer> constant_buffer(Context* ctx)
+	{
+		return constant_buffer(ctx, sizeof(T));
+	}
+	template<class T> static inline Shared<VertexBuffer> vertex_buffer(Context* ctx, size_t n)
+	{
+		return vertex_buffer(ctx, sizeof(T), n);
+	}
+	/////////////////////////////////
 	// Shared wrapper
-	std::vector<RenderDriver> list_of_render_driver();
-	Context* create_render_driver(RenderDriver);
-	void delete_render_driver(Context*&);
-};
+	DLL_EXPORT std::vector<RenderDriver> list_of_render_driver();
+	DLL_EXPORT Context* create_render_driver(RenderDriver);
+	DLL_EXPORT void delete_render_driver(Context*&);
+}
 }

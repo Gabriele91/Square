@@ -10,12 +10,13 @@
 // DEFAULT INCLUDE
 #include <string>
 #include <sstream>
+#include <map>
 #include <list>
 #include <vector>
 #include <memory>
 #include <limits>
 #include <stdexcept> 
-
+#include <unordered_map>
 /////////////////////////////////////////////////////////////////////////////
 // MACRO
 #if defined( _MSC_VER )

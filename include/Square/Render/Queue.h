@@ -5,14 +5,7 @@
 //  Created by Gabriele Di Bari on 10/04/18.
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
-
-//
-//  RenderCore.h
-//  Square
-//
-//  Created by Gabriele Di Bari on 10/04/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
-//
+#pragma once
 #include "Square/Config.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/SmartPointers.h"
@@ -26,28 +19,27 @@ namespace Render
     public:
         //Element of queue
         QueueElement();
-        QueueElement(Weak<Object> ref);
+        QueueElement(Weak<BaseObject> ref);
         //ref to object
-        Weak<Object> m_ref;
+        Weak<BaseObject> m_ref;
         //list
         QueueElement* m_next{ nullptr };
         float         m_depth{ ~0 };
         //fake lock
-        Shared<Object> lock();
+        Shared<BaseObject> lock();
     };
-    
     
     class SQUARE_API QueueIterator
     {
     public:
         //queue
         QueueIterator(QueueElement* queue = nullptr);
-        Shared<Object> lock() const;
+        Shared<BaseObject> lock() const;
         //iterator ops
         QueueIterator operator++();
         bool operator == (const QueueIterator& other);
         bool operator!=(const QueueIterator& other);
-        Shared<Object> operator*();
+        Shared<BaseObject> operator*();
     protected:
         //element
         QueueElement* m_ref{ nullptr };
@@ -63,8 +55,8 @@ namespace Render
         Queue& operator=(const Queue&) = delete;
         
         //add element
-        void push_front_to_back(Weak<Object> entity, float depth);
-        void push_back_to_front(Weak<Object> entity, float depth);
+        void push_front_to_back(Weak<BaseObject> entity, float depth);
+        void push_back_to_front(Weak<BaseObject> entity, float depth);
         
         //info
         QueueElement* get_first() const;

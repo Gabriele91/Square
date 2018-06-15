@@ -42,9 +42,11 @@
 #include "Square/Resource/Texture.h"
 #include "Square/Resource/Shader.h"
 #include "Square/Resource/Effect.h"
+#include "Square/Resource/Material.h"
 //Scene
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/Level.h"
 #include "Square/Scene/Camera.h"
+#include "Square/Scene/World.h"
 

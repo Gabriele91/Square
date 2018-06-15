@@ -30,6 +30,9 @@ namespace Resource
 
 		//draw
 		void draw();
+
+		//get surfaces
+		std::vector< Shared< Geometry > >& surfaces();
 	};
 }
 }

@@ -12,7 +12,6 @@
 #include "Square/Core/Object.h"
 #include "Square/Data/AttributeSerialize.h"
 #include "Square/Data/Json.h"
-#include "Square/Render/Collection.h"
 
 namespace Square
 {
@@ -26,41 +25,42 @@ namespace Scene
 	using ActorList = std::vector< Shared<Actor> >;
 	using LevelList = std::vector< Shared<Level> >;
 	//..................
-    class SQUARE_API Level : public Object
-                           , public SharedObject<Level>
-                           , public Uncopyable
-    {
-    public:
+	class SQUARE_API World :  public Object
+							, public SharedObject<World>
+							, public Uncopyable
+	{
+	public:
 		//Init object
-		SQUARE_OBJECT(Level)
+		SQUARE_OBJECT(World)
 
 		//Registration in context
 		static void object_registration(Context& ctx);
 
 		//constructor
-		Level(Context& context);
-		Level(Context& context, const std::string& name);
-
-		//add an actor
-		void add(Shared<Actor> child);
-
-		//query
-		Shared<Actor> actor();
-		Shared<Actor> actor(size_t index);
-		Shared<Actor> actor(const std::string& name);
-		const ActorList& actors() const;
-		Shared<Actor> find_actor(const std::string& name);
-
-		//contains an actor
-		bool contains(Shared<Actor> child) const;
-
-		//remove an actor
-		bool remove(Shared<Actor> child);
+		World(Context& context);
 
 		//name        
 		const std::string& name() const;
 		void name(const std::string&);
 
+		//add an level	
+		Shared<Level> level();
+		void add(Shared<Level> level);
+
+		//query
+		Shared<Level> level(size_t index);
+		Shared<Level> level(const std::string& name);
+		const LevelList& levels() const;
+		Shared<Actor> find_actor(const std::string& name);
+
+		//contains an actor
+		bool contains(Shared<Actor> child) const;
+		bool contains(Shared<Level> child) const;
+
+		//remove an actor
+		bool remove(Shared<Actor> child);
+		bool remove(Shared<Level> child);
+			
 		//message
 		void send_message(const Variant& value, bool brodcast = false);
 		void send_message(const Message& msg, bool brodcast = false);
@@ -72,30 +72,12 @@ namespace Scene
 		void deserialize(Data::Archive& archivie);
 		void deserialize_json(Data::Json& archivie);
 
-		//get randerable collection
-		const Render::Collection& randerable_collection() const;
 
 	protected:
-		
 		//name
 		std::string m_name;
-
 		//actor list
-		ActorList m_actors;
-
-		//Call by an actor when is add into level 
-		void on_add_a_actor(Shared<Actor> actor);
-		void on_remove_a_actor(Shared<Actor> actor);
-
-		//Call by component add into level / actor
-		void on_add_a_component(Shared<Actor> actor, Shared<Component> component);
-		void on_remove_a_component(Shared<Actor> actor, Shared<Component> component);
-
-		//Collection
-		Render::Collection m_rander_collection;
-
-		//firend class
-		friend class Actor;
+		LevelList m_levels;
 	};
 }
 }
