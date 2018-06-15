@@ -30,8 +30,8 @@ S_TEST_INC  = $(TOP)/tests/
 
 DEBUG_DIR    = Debug/obj
 RELEASE_DIR  = Release/obj
-DEBUG_PROG   = Debug/Square
-RELEASE_PROG = Release/Square
+DEBUG_PROG   = Debug/Square.so
+RELEASE_PROG = Release/Square.so
 
 DIPS_INCLUDE = $(TOP)/dependencies/$(OS_NAME)/include/
 DIPS_LIBPATH = $(TOP)/dependencies/$(OS_NAME)/lib/
@@ -46,7 +46,7 @@ SUB_DIRS := $(subst $(S_DIR)/,,$(SUB_DIRS))
 # C FLAGS
 C_FLAGS = -fPIC -D_FORCE_INLINES
 # CPP FLAGS
-CC_FLAGS = -std=c++14 -I $(DIPS_INCLUDE) -I $(S_INC)
+CC_FLAGS = -std=c++17 -I $(DIPS_INCLUDE) -I $(S_INC)
 # RELEASE_FLAGS
 RELEASE_FLAGS = -O3
 # DEBUG_FLAGS
@@ -63,11 +63,13 @@ FILTER += $(wildcard $(S_DIR)/**/MacOS/*.cpp)\
 ####################################################
 # Flags by OS
 ifeq ($(shell uname -s),Linux) # LINUX
-# threads
-C_FLAGS += -lpthread -pthread 
+# threads and shared
+C_FLAGS += -lpthread -pthread -fPIC -shared
 # Xorg
-LDFLAGS += -lX11 -lXxf86vm -lGLEW -lGLU -lGL -lxcb
+LDFLAGS += -lX11 -lXxf86vm -lGLEW -lGLU -lGL -lxcb -ldl
 else ifeq ($(shell uname -s),Darwin) # Mac OS
+# shared lib/dinamic
+C_FLAGS += -dynamiclib
 # XQuartz
 CC_FLAGS += -I /opt/X11/include/
 LDFLAGS  += -L /opt/X11/lib/ -lX11 -lXxf86vm -lGLU -lGL -lxcb
