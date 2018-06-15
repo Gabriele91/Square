@@ -182,11 +182,11 @@ namespace Square
 			: m_indexes(indexes), m_vertices(vertices) {}
 
 			virtual unsigned int triangles() { return m_indexes.size() / 3; }
-			virtual IVec3 indices(const unsigned int index) { return { m_index[index * 3], m_index[index * 3 + 1], m_index[index * 3 + 2] }; }
+			virtual IVec3 indices(const unsigned int index) { return { m_indexes[index * 3], m_indexes[index * 3 + 1], m_indexes[index * 3 + 2] }; }
 
-			virtual unsigned int index(const unsigned int index) { return m_index[index]; }
-			virtual Vec3  position(const unsigned int index) { return { m_vertices[index].m_position } }
-			virtual Vec3  uv(const unsigned int index) { return { m_vertices[index].m_position } }
+			virtual unsigned int index(const unsigned int index) { return m_indexes[index]; }
+            virtual Vec3  position(const unsigned int index) { return { m_vertices[index].m_position }; }
+            virtual Vec2  uv(const unsigned int index) { return { m_vertices[index].m_position }; }
 
 			virtual void  normal(const unsigned int index, const Vec3& n) { m_vertices[index].m_normal = n; }
 			virtual void  bitangent(const unsigned int index, const Vec3& b) { m_vertices[index].m_bitangent = b; }

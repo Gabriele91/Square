@@ -30,9 +30,6 @@
 //  - 04/24/2008: MM updated copyright - this file should be usable for everyone
 //
 //////////////////////////////////////////////////////////////////////
-
-#pragma once
-
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
 #include "Square/Math/Tangent.h"
@@ -300,7 +297,7 @@ namespace Square
 
 				float div	=(fDeltaU1*fDeltaV2-fDeltaU2*fDeltaV1);
 
-				if(_isnan(div))
+                if(std::isnan(div))
 				{
 					bTextureCoordinatesBroken=true;div=0.0f;
 				}
