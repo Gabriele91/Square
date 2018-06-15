@@ -71,17 +71,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -90,6 +92,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
@@ -103,6 +106,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
@@ -118,6 +122,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -135,6 +140,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -164,6 +170,8 @@
     <ClInclude Include="..\include\Square\Data\Image.h" />
     <ClInclude Include="..\include\Square\Data\Json.h" />
     <ClInclude Include="..\include\Square\Data\ParserEffect.h" />
+    <ClInclude Include="..\include\Square\Data\ParserMaterial.h" />
+    <ClInclude Include="..\include\Square\Data\ParserParameters.h" />
     <ClInclude Include="..\include\Square\Data\ParserUtils.h" />
     <ClInclude Include="..\include\Square\Driver\Input.h" />
     <ClInclude Include="..\include\Square\Driver\Render.h" />
@@ -177,9 +185,15 @@
     <ClInclude Include="..\include\Square\Math\Linear.h" />
     <ClInclude Include="..\include\Square\Math\Tangent.h" />
     <ClInclude Include="..\include\Square\Render\Collection.h" />
+    <ClInclude Include="..\include\Square\Render\Effect.h" />
     <ClInclude Include="..\include\Square\Render\Light.h" />
+    <ClInclude Include="..\include\Square\Render\Material.h" />
     <ClInclude Include="..\include\Square\Render\Queue.h" />
+    <ClInclude Include="..\include\Square\Render\Renderable.h" />
+    <ClInclude Include="..\include\Square\Render\Transform.h" />
     <ClInclude Include="..\include\Square\Render\Viewport.h" />
+    <ClInclude Include="..\include\Square\Resource\Effect.h" />
+    <ClInclude Include="..\include\Square\Resource\Material.h" />
     <ClInclude Include="..\include\Square\Resource\Model.h" />
     <ClInclude Include="..\include\Square\Resource\Shader.h" />
     <ClInclude Include="..\include\Square\Resource\Geometry.h" />
@@ -188,6 +202,7 @@
     <ClInclude Include="..\include\Square\Scene\Camera.h" />
     <ClInclude Include="..\include\Square\Scene\Component.h" />
     <ClInclude Include="..\include\Square\Scene\Level.h" />
+    <ClInclude Include="..\include\Square\Scene\World.h" />
     <ClInclude Include="..\include\Square\Square.h" />
     <ClInclude Include="..\source\Driver\Cocoa\Input_private.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -259,6 +274,8 @@
     <ClCompile Include="..\source\Data\ImageUtils\tga.cpp" />
     <ClCompile Include="..\source\Data\Json.cpp" />
     <ClCompile Include="..\source\Data\ParserEffect.cpp" />
+    <ClCompile Include="..\source\Data\ParserMaterial.cpp" />
+    <ClCompile Include="..\source\Data\ParserParameters.cpp" />
     <ClCompile Include="..\source\Driver\Render.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Input_private.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Screen_private.cpp" />
@@ -293,16 +310,21 @@
     <ClCompile Include="..\source\Geometry\Frustum.cpp" />
     <ClCompile Include="..\source\Geometry\Intersection.cpp" />
     <ClCompile Include="..\source\Geometry\OBoundingBox.cpp" />
+    <ClCompile Include="..\source\Math\Tangent.cpp" />
     <ClCompile Include="..\source\Render\Collection.cpp" />
+    <ClCompile Include="..\source\Render\Effect.cpp" />
+    <ClCompile Include="..\source\Render\Material.cpp" />
     <ClCompile Include="..\source\Render\Queue.cpp" />
     <ClCompile Include="..\source\Render\Viewport.cpp" />
     <ClCompile Include="..\source\Resource\Effect.cpp" />
+    <ClCompile Include="..\source\Resource\Material.cpp" />
     <ClCompile Include="..\source\Resource\Shader.cpp" />
     <ClCompile Include="..\source\Resource\Texture.cpp" />
     <ClCompile Include="..\source\Scene\Actor.cpp" />
     <ClCompile Include="..\source\Scene\Camera.cpp" />
     <ClCompile Include="..\source\Scene\Component.cpp" />
     <ClCompile Include="..\source\Scene\Level.cpp" />
+    <ClCompile Include="..\source\Scene\World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\source\Driver\Cocoa\Input_private.mm">

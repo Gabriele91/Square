@@ -246,6 +246,33 @@
     <ClInclude Include="..\include\Square\Scene\Camera.h">
       <Filter>include\Square\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Resource\Effect.h">
+      <Filter>include\Square\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Scene\World.h">
+      <Filter>include\Square\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Render\Renderable.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Render\Transform.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Render\Material.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Render\Effect.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Resource\Material.h">
+      <Filter>include\Square\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Data\ParserMaterial.h">
+      <Filter>include\Square\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Data\ParserParameters.h">
+      <Filter>include\Square\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -367,6 +394,24 @@
     </ClCompile>
     <ClCompile Include="..\source\Scene\Camera.cpp">
       <Filter>source\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Scene\World.cpp">
+      <Filter>source\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Render\Effect.cpp">
+      <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Render\Material.cpp">
+      <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Resource\Material.cpp">
+      <Filter>source\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Data\ParserParameters.cpp">
+      <Filter>source\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Data\ParserMaterial.cpp">
+      <Filter>source\Data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
