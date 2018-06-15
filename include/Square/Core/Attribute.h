@@ -20,6 +20,7 @@ namespace Square
 	public:
 		virtual void get(const Object* serializable, VariantRef& ret) const =0;
 		virtual void set(Object* serializable, const VariantRef& set) =0;
+        virtual ~AttributeAccess()  { /* none */ }
 	};
 
 	//Attribute of a class
@@ -130,9 +131,7 @@ namespace Square
 			m_enum_names = enum_names;
 		}
         
-        virtual ~Attribute()
-        {
-        }
+        virtual ~Attribute()  { /* none */ }
 
         const std::string&      name()          const { return m_name; }
         Type                    type()          const { return m_type; }
@@ -300,13 +299,16 @@ namespace Square
 		, Attribute::Type type = Attribute::DEFAULT
 	)
 	{
+        //alias
+        using AAMethod = AttributeAccessMethod< T, U, Trait >;
+        //ok
 		return Attribute(
 			  attribute_name
 			, variant_traits<U>()
 			, default_value
-			, Shared<AttributeAccess>(
-				(AttributeAccess*)new AttributeAccessMethod< T, U, Trait >(get_method, set_method)
-			)
+			, StaticPointerCast<AttributeAccess>(
+                Shared<AAMethod>(new AAMethod(get_method, set_method))
+              )
 			, type
 		);
 	}
@@ -321,13 +323,16 @@ namespace Square
 		, Attribute::Type type = Attribute::DEFAULT
 	)
 	{
+        //alias
+        using AAFunction = AttributeAccessFunction< T, U, Trait >;
+        //ok
 		return Attribute(
 			  attribute_name
 			, variant_traits<U>()
 			, default_value
-			, Shared<AttributeAccess>(
-				(AttributeAccess*)new AttributeAccessFunction< T, U, Trait >(get_function, set_function)
-			)
+            , StaticPointerCast<AttributeAccess>(
+                Shared<AAFunction>(new AAFunction(get_function, set_function))
+              )
 			, type
 		);
 	}
