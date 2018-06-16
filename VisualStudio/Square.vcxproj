@@ -186,6 +186,7 @@
     <ClInclude Include="..\include\Square\Math\Tangent.h" />
     <ClInclude Include="..\include\Square\Render\Collection.h" />
     <ClInclude Include="..\include\Square\Render\Effect.h" />
+    <ClInclude Include="..\include\Square\Render\GBuffer.h" />
     <ClInclude Include="..\include\Square\Render\Light.h" />
     <ClInclude Include="..\include\Square\Render\Material.h" />
     <ClInclude Include="..\include\Square\Render\Queue.h" />
@@ -313,6 +314,7 @@
     <ClCompile Include="..\source\Math\Tangent.cpp" />
     <ClCompile Include="..\source\Render\Collection.cpp" />
     <ClCompile Include="..\source\Render\Effect.cpp" />
+    <ClCompile Include="..\source\Render\GBuffer.cpp" />
     <ClCompile Include="..\source\Render\Material.cpp" />
     <ClCompile Include="..\source\Render\Queue.cpp" />
     <ClCompile Include="..\source\Render\Viewport.cpp" />
