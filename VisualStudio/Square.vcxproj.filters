@@ -273,6 +273,9 @@
     <ClInclude Include="..\include\Square\Data\ParserParameters.h">
       <Filter>include\Square\Data</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Render\GBuffer.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -412,6 +415,12 @@
     </ClCompile>
     <ClCompile Include="..\source\Data\ParserMaterial.cpp">
       <Filter>source\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Math\Tangent.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Render\GBuffer.cpp">
+      <Filter>Source\Render</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
