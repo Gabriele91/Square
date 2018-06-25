@@ -357,6 +357,14 @@ namespace Render
 			return m_shader_binaries[type];
 		}
 
+		void global_buffer_bind()
+		{
+			m_global_buffer_should_be_bind = true;
+		}
+
+		void bind_global_buffer(ContextDX11* context);
+		void unbind_global_buffer(ContextDX11* context);
+
     protected:
         //friends
         friend class ContextDX11;
@@ -372,6 +380,7 @@ namespace Render
 		mutable UniformConstBufferSlots m_uniform_const_buffer_slot_map;
 		mutable long m_uniform_ntexture{ -1 }; //n texture bind
 		//global uniforms
+		bool						 m_global_buffer_should_be_bind{ true };
 		GlobalBufferInfo			 m_global_buffer_info;
 		ConstBuffer*				 m_global_buffer_gpu{ nullptr };
 		std::vector< unsigned char > m_global_buffer_cpu;
