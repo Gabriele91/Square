@@ -584,6 +584,11 @@ namespace Cocoa
         return m_native;
     }
     
+	DeviceResources*  Window::device() const
+	{
+		return nullptr;
+	}
+
     bool Window::valid() const
     {
         return m_native != nullptr;

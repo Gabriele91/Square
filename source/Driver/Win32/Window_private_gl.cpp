@@ -15,6 +15,44 @@ namespace Video
 {
 namespace Win32
 {
+	struct SQUARE_API DeviceResourcesGL : public DeviceResources
+	{
+	public:
+
+		DeviceResourcesGL(const HWND& hWnd, const HGLRC& hRC): m_hWnd(hWnd), m_hRC(hRC) {}
+		virtual ~DeviceResourcesGL() {}
+		//implement
+		virtual unsigned int width() override 
+		{
+			RECT window_box{ 0, 0, 0, 0 };
+			GetClientRect(m_hWnd, &window_box);
+			return window_box.right - window_box.left;
+		}
+		virtual unsigned int height() override 
+		{
+			RECT window_box{ 0, 0, 0, 0 };
+			GetClientRect(m_hWnd, &window_box);
+			return window_box.bottom - window_box.top;
+		}
+
+		virtual void* get_device()					   override { return (void*)m_hRC; }
+		virtual void* get_device_context(size_t i = 0) override { return (void*)nullptr; }
+		virtual void* get_swap_chain()				   override { return (void*)nullptr; }
+
+		virtual void* get_render_target()        override { return (void*)nullptr; }
+		virtual void* get_depth_stencil_target() override { return (void*)nullptr; }
+
+		virtual void* get_render_resource()        override { return (void*)nullptr; }
+		virtual void* get_depth_stencil_resource() override { return (void*)nullptr; }
+
+		virtual size_t number_of_device_context()  override { return 0; }
+
+	protected:
+
+		const HWND&  m_hWnd;
+		const HGLRC& m_hRC;
+	};
+
 	// OpenGL Window
 	WindowGL::WindowGL(HDC hDC, HGLRC hRC, HWND  hWnd, const WindowInfo& info)
 	{
@@ -23,6 +61,8 @@ namespace Win32
 		m_hRC = hRC;
 		m_hWnd = hWnd;
 		m_info = info;
+		//alloc wrapper device
+		m_device = new DeviceResourcesGL(m_hWnd, m_hRC);
 		//set
 		enable_resize(info.m_resize);
 		//get info
@@ -224,8 +264,14 @@ namespace Win32
 		m_last_window_style = GetWindowLong(m_hWnd, GWL_STYLE);
 	}
 
+	DeviceResources* WindowGL::device() const
+	{
+		return m_device;
+	}
+
 	WindowGL::~WindowGL()
 	{
+		if (m_device) delete m_device;
 		//dattach RC 
 		wglMakeCurrent(NULL, NULL);
 		//release RC
@@ -239,7 +285,7 @@ namespace Win32
 		m_hDC = nullptr;
 		m_hWnd = nullptr;
 	}
-	///////////////////////////////////////////////////////////////////////////////////
+
 }
 }
 }

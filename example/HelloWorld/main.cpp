@@ -199,8 +199,8 @@ public:
 			using namespace Square::Scene;
 			using namespace Square::Resource;
 			//cb buffers
-			auto cbtransform = Render::constant_buffer<UniformBufferTransform>(context().render());
-			auto cbcamera = Render::constant_buffer<UniformBufferCamera>(context().render()); 
+			auto cbtransform = Render::stream_constant_buffer<UniformBufferTransform>(context().render());
+			auto cbcamera = Render::stream_constant_buffer<UniformBufferCamera>(context().render());
 			//errors?
 			render().print_errors();
 			//map
@@ -274,7 +274,18 @@ int main()
     app.execute(
       WindowSizePixel({ 1280, 768 })
     , WindowMode::NOT_RESIZABLE
-    , 4, 1
+	, 
+#if defined(_WIN32)
+	  WindowRenderDriver
+	  {
+		 Render::RenderDriver::DR_DIRECTX, 11, 0
+	  }
+#else
+	  WindowRenderDriver
+	  {
+		 Render::RenderDriver::DR_OPENGL, 4, 1
+	  }
+#endif
     , "test"
     , new Game01()
     );

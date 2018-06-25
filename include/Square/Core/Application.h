@@ -74,6 +74,13 @@ namespace Square
         NOT_RESIZABLE,
         FULLSCREEN
     };
+
+	struct SQUARE_API WindowRenderDriver
+	{
+		Render::RenderDriver m_type{ Render::DR_OPENGL };
+		int m_major_ctx{ 4 };
+		int m_minor_ctx{ 1 };
+	};
         
     class SQUARE_API Application
     {
@@ -119,8 +126,7 @@ namespace Square
         (
             const WindowSize& size,
             WindowMode mode,
-            int major_gl_ctx,
-            int minor_gl_ctx,
+			WindowRenderDriver driver,
             const std::string& app_name,
             AppInterface* app,
             size_t n_workers = 4

@@ -30,6 +30,22 @@ namespace Render
 		return std::shared_ptr<IndexBuffer>(buffer, [=](IndexBuffer* ptr) { ctx->delete_IBO(ptr); });
 	}
 
+	Shared<ConstBuffer>  stream_constant_buffer(Context* ctx, size_t size)
+	{
+		ConstBuffer* buffer = ctx->create_stream_CB(nullptr, size);
+		return std::shared_ptr<ConstBuffer>(buffer, [=](ConstBuffer* ptr) { ctx->delete_CB(ptr); });
+	}
+	Shared<VertexBuffer> stream_vertex_buffer(Context* ctx, size_t stride, size_t n)
+	{
+		VertexBuffer* buffer = ctx->create_stream_VBO(nullptr, stride, n);
+		return std::shared_ptr<VertexBuffer>(buffer, [=](VertexBuffer* ptr) { ctx->delete_VBO(ptr); });
+	}
+	Shared<IndexBuffer> stream_index_buffer(Context* ctx, size_t n)
+	{
+		IndexBuffer* buffer = ctx->create_stream_IBO(nullptr, n);
+		return std::shared_ptr<IndexBuffer>(buffer, [=](IndexBuffer* ptr) { ctx->delete_IBO(ptr); });
+	}
+
 	//list
 	std::vector<RenderDriver> list_of_render_driver()
 	{

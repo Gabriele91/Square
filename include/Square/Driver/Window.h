@@ -62,6 +62,7 @@ namespace Video
 		unsigned int  m_color     { 24   };
 		unsigned int  m_stencil   { 8    };
 		anti_aliasing m_anti_aliasing{ NOAA };
+		bool		  m_debug{ false };
 		//add default constructor
 		ContextInfo() {}
 	};
@@ -80,6 +81,25 @@ namespace Video
 		WindowInfo(Screen* screen) :m_screen(screen) {}
 	};
 
+	struct SQUARE_API DeviceResources
+	{
+	public:
+		virtual unsigned int width() = 0;
+		virtual unsigned int height() = 0;
+
+		virtual void* get_device() = 0;
+		virtual void* get_device_context(size_t i=0) = 0;
+		virtual void* get_swap_chain() = 0;
+
+		virtual void* get_render_target()  = 0;
+		virtual void* get_depth_stencil_target() = 0;
+
+		virtual void* get_render_resource() = 0;
+		virtual void* get_depth_stencil_resource() = 0;
+		//number of device_context
+		virtual size_t number_of_device_context() = 0;
+	};
+
 	class SQUARE_API Window
 	{
 	public:
@@ -88,8 +108,9 @@ namespace Video
 		//window
 		~Window();
 		//native window
-		void*  native() const;
-		void*  conteiner() const;
+		void*			  native() const;
+		void*			  conteiner() const;
+		DeviceResources*  device() const;
 		bool   valid() const;
 		void   destoy();
 		//window actions

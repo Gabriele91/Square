@@ -11,21 +11,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\source\Driver\OpenGL4\RenderGL4.cpp">
+    <ClCompile Include="..\..\source\Driver\DirectX11\RenderDX11.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\Driver\OpenGL4\InterfaceGL4.cpp">
+    <ClCompile Include="..\..\source\Driver\DirectX11\InterfaceDX11.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\source\Driver\OpenGL4\Interface.h">
+    <ClInclude Include="..\..\source\Driver\DirectX11\Interface.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\Driver\OpenGL4\OpenGL4.h">
+    <ClInclude Include="..\..\source\Driver\DirectX11\DirectX11.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\Driver\OpenGL4\RenderGL4.h">
+    <ClInclude Include="..\..\source\Driver\DirectX11\RenderDX11.h">
       <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
