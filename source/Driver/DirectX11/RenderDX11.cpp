@@ -58,20 +58,24 @@ namespace Render
 
 	void UniformDX11::set(int i)
 	{
+		m_shader->global_buffer_bind();
 		primitive_write(i);
 	}
     void UniformDX11::set(float f)
     {
+		m_shader->global_buffer_bind();
 		primitive_write(f);
     }
     void UniformDX11::set(double d)
     {
+		m_shader->global_buffer_bind();
 		primitive_write(d);
     }
     
     
     void UniformDX11::set(const IVec2& v2)
     {
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(v2), 2);
     }
     void UniformDX11::set(const IVec3& v3)
@@ -80,48 +84,59 @@ namespace Render
     }
     void UniformDX11::set(const IVec4& v4)
     {
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(v4), 4);
     }
     
 	void UniformDX11::set(const Vec2& v2)
 	{
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(v2), 2);
 	}
 	void UniformDX11::set(const Vec3& v3)
 	{
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(v3), 3);
 	}
 	void UniformDX11::set(const Vec4& v4)
 	{
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(v4), 4);
 	}
 	void UniformDX11::set(const Mat3& m3)
 	{
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(m3), 3 * 3);
 	}
 	void UniformDX11::set(const Mat4& m4)
 	{
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(m4), 4 * 4);
 	}
     
     void UniformDX11::set(const DVec2& v2)
     {
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(v2), 2);
     }
     void UniformDX11::set(const DVec3& v3)
     {
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(v3), 3);
     }
     void UniformDX11::set(const DVec4& v4)
     {
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(v4), 4);
     }
     void UniformDX11::set(const DMat3& m3)
     {
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(m3), 3 * 3);
     }
     void UniformDX11::set(const DMat4& m4)
     {
+		m_shader->global_buffer_bind();
 		array_write(value_ptr(m4), 4 * 4);
     }
 
@@ -140,69 +155,85 @@ namespace Render
 
 	void UniformDX11::set(const int* i, size_t n)
 	{
+		m_shader->global_buffer_bind();
 		array_write(i, n);
 	}
     void UniformDX11::set(const float* f, size_t n)
     {
+		m_shader->global_buffer_bind();
 		array_write(f, n);
     }
     void UniformDX11::set(const double* d, size_t n)
     {
+		m_shader->global_buffer_bind();
 		array_write(d, n);
     }
     
     void UniformDX11::set(const IVec2* v2, size_t n)
     {
+		m_shader->global_buffer_bind();
 		array_write(v2, n);
     }
     void UniformDX11::set(const IVec3* v3, size_t n)
     {
+		m_shader->global_buffer_bind();
 		array_write(v3, n);
     }
     void UniformDX11::set(const IVec4* v4, size_t n)
     {
+		m_shader->global_buffer_bind();
 		array_write(v4, n);
     }
     
 	void UniformDX11::set(const Vec2* v2, size_t n)
 	{
+		m_shader->global_buffer_bind();
 		array_write(v2, n);
 	}
 	void UniformDX11::set(const Vec3* v3, size_t n)
 	{
+		m_shader->global_buffer_bind();
 		array_write(v3, n);
 	}
 	void UniformDX11::set(const Vec4* v4, size_t n)
 	{
+		m_shader->global_buffer_bind();
 		array_write(v4, n);
 	}
 	void UniformDX11::set(const Mat3* m3, size_t n)
 	{
+		m_shader->global_buffer_bind();
 		array_write(m3, n);
 	}
 	void UniformDX11::set(const Mat4* m4, size_t n)
 	{
+		m_shader->global_buffer_bind();
 		array_write(m4, n);
 	}
     
     void UniformDX11::set(const DVec2* v2, size_t n)
     {
+		m_shader->global_buffer_bind();
 		array_write(v2, n);
     }
     void UniformDX11::set(const DVec3* v3, size_t n)
     {
+		m_shader->global_buffer_bind();
 		array_write(v3, n);
     }
     void UniformDX11::set(const DVec4* v4, size_t n)
     {
+		m_shader->global_buffer_bind();
 		array_write(v4, n);
     }
     void UniformDX11::set(const DMat3* m3, size_t n)
     {
+		m_shader->global_buffer_bind();
 		array_write(m3, n);
     }
     void UniformDX11::set(const DMat4* m4, size_t n)
     {
+		m_shader->global_buffer_bind();
 		array_write(m4, n);
     }
 
@@ -1345,18 +1376,25 @@ namespace Render
 
 	void ContextDX11::draw_arrays(DrawType type, unsigned int n)
 	{
+		//shader unbind
+		if(s_bind_context.m_shader)
+			s_bind_context.m_shader->bind_global_buffer(this);
 		device_context()->IASetPrimitiveTopology(get_draw_type(type));
 		device_context()->Draw(n, 0);
 	}
 
 	void ContextDX11::draw_arrays(DrawType type, unsigned int start, unsigned int size)
 	{
+		if (s_bind_context.m_shader)
+			s_bind_context.m_shader->bind_global_buffer(this);
 		device_context()->IASetPrimitiveTopology(get_draw_type(type));
 		device_context()->Draw(size, start);
 	}
 
 	void ContextDX11::draw_elements(DrawType type, unsigned int n)
 	{
+		if (s_bind_context.m_shader)
+			s_bind_context.m_shader->bind_global_buffer(this);
 		device_context()->IASetPrimitiveTopology(get_draw_type(type));
 		device_context()->DrawIndexed(n, 0, 0);
 	}
@@ -2172,6 +2210,51 @@ namespace Render
 		if (m_compute)  m_compute->Release();
 	}
 
+	void Shader::bind_global_buffer(ContextDX11* context)
+	{
+		if (m_global_buffer_gpu && m_global_buffer_should_be_bind)
+		{
+			context->update_steam_CB(
+				m_global_buffer_gpu
+				, m_global_buffer_cpu.data()
+				, m_global_buffer_cpu.size()
+			);
+		}		
+		#define CBBIND(name_field, type, type_slot)\
+			if (name_field)\
+			{\
+				if (m_global_buffer_gpu && m_global_buffer_info.m_slot[type_slot] >= 0)\
+					context->device_context()->type##SetConstantBuffers(m_global_buffer_info.m_slot[type_slot]\
+																	    , 1, &m_global_buffer_gpu->m_buffer);\
+			}
+		CBBIND(m_vertex, VS, ST_VERTEX_SHADER)
+		CBBIND(m_pixel, PS, ST_FRAGMENT_SHADER)
+		CBBIND(m_geometry, GS, ST_GEOMETRY_SHADER)
+		CBBIND(m_hull, HS, ST_TASSELLATION_CONTROL_SHADER)
+		CBBIND(m_domain, DS, ST_TASSELLATION_EVALUATION_SHADER)
+		CBBIND(m_compute, CS, ST_COMPUTE_SHADER)
+		#undef CBBIND
+		m_global_buffer_should_be_bind = false;
+	}
+	void Shader::unbind_global_buffer(ContextDX11* context)
+	{
+		#define CBUNBIND(name_field, type, type_slot)\
+			if (name_field)\
+			{\
+				if (m_global_buffer_gpu && m_global_buffer_info.m_slot[type_slot] >= 0)\
+					context->device_context()->type##SetConstantBuffers(m_global_buffer_info.m_slot[type_slot]\
+																	    , 0, nullptr);\
+			}
+		CBUNBIND(m_vertex, VS, ST_VERTEX_SHADER)
+		CBUNBIND(m_pixel, PS, ST_FRAGMENT_SHADER)
+		CBUNBIND(m_geometry, GS, ST_GEOMETRY_SHADER)
+		CBUNBIND(m_hull, HS, ST_TASSELLATION_CONTROL_SHADER)
+		CBUNBIND(m_domain, DS, ST_TASSELLATION_EVALUATION_SHADER)
+		CBUNBIND(m_compute, CS, ST_COMPUTE_SHADER)
+		#undef CBUNBIND
+		m_global_buffer_should_be_bind = true;
+	}
+
 	static bool get_global_costant_buffers(
 		  ID3DBlob* shader_blob
 		, ShaderType type
@@ -2370,23 +2453,11 @@ namespace Render
 		s_bind_context.m_shader = shader;
 		//start texture uniform
 		shader->m_uniform_ntexture = -1;
-		//update shader
-		if (shader->m_global_buffer_gpu)
-		{
-			update_steam_CB(
-				  shader->m_global_buffer_gpu
-				, shader->m_global_buffer_cpu.data()
-				, shader->m_global_buffer_cpu.size()
-			);
-		}
 		//util define
 		#define BIND(shader, name_field, type, type_slot)\
 			if (shader->name_field)\
 			{\
 				device_context()->type##SetShader(shader->name_field, nullptr, 0);\
-				if (shader->m_global_buffer_gpu && shader->m_global_buffer_info.m_slot[type_slot] >= 0)\
-					device_context()->type##SetConstantBuffers(shader->m_global_buffer_info.m_slot[type_slot]\
-															  , 1, &shader->m_global_buffer_gpu->m_buffer);\
 			}
 		//bind all
 		BIND(shader, m_vertex, VS, ST_VERTEX_SHADER)
@@ -2414,9 +2485,6 @@ namespace Render
 			if (shader->name_field)\
 			{\
 				device_context()->type##SetShader(nullptr, nullptr, 0);\
-				if (shader->m_global_buffer_gpu && shader->m_global_buffer_info.m_slot[type_slot] >= 0)\
-					device_context()->type##SetConstantBuffers(shader->m_global_buffer_info.m_slot[type_slot]\
-															  , 0, nullptr);\
 			}
 			//disable program
 			UNBIND(shader, m_vertex, VS, ST_VERTEX_SHADER)
@@ -2425,6 +2493,8 @@ namespace Render
 			UNBIND(shader, m_hull, HS, ST_TASSELLATION_CONTROL_SHADER)
 			UNBIND(shader, m_domain, DS, ST_TASSELLATION_EVALUATION_SHADER)
 			UNBIND(shader, m_compute, CS, ST_COMPUTE_SHADER)
+			//shader unbind
+			shader->unbind_global_buffer(this);
 			//undef bind util
 			#undef UNBIND
 			//to null
