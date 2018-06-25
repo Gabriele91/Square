@@ -124,13 +124,15 @@ namespace Parser
     {
         //get info
         Render::RenderDriverInfo info = render->get_render_driver_info();
-        //test name
-        if (m_driver_name != Render::render_driver_str[info.m_render_driver]) return false;
-        if (m_shader_name != info.m_shader_language)                          return false;
+		//all cases?
+		bool all_drivers = m_driver_name == "ALL";
+		bool all_shader  = m_shader_name == "ALL";
+		//test name
+        if (!all_drivers && m_driver_name != Render::render_driver_str[info.m_render_driver]) return false;
+        if (!all_shader  && m_shader_name != info.m_shader_language)                          return false;
         //test version
-        if (m_driver_major_version <= info.m_major_version &&
-            m_driver_minor_version <= info.m_minor_version &&
-            m_shader_version <= info.m_shader_version)
+        if (all_drivers || (m_driver_major_version <= info.m_major_version && m_driver_minor_version <= info.m_minor_version))
+		if (all_shader || (m_shader_version <= info.m_shader_version))
         {
             return true;
         }
@@ -191,6 +193,8 @@ namespace Parser
 			for (auto& error : params.m_errors)
 				m_context->m_errors.push_back(error);
 		}
+		//copy all parameters
+		m_context->m_parameters = std::move(params.m_parameters);
 		//update line
 		m_context->m_line = params.m_line;
         //results
@@ -298,12 +302,6 @@ namespace Parser
                 }
                 if (cstr_cmp_skip(ptr, "queue"))
                 {
-                    //test
-                    if (state == NOT_READ_REQUIREMENT)
-                    {
-                        push_error("Requirement must to be declared before");
-                        return false;
-                    }
                     //..
                     EffectQueueType p_queue;
                     //skeep spaces
@@ -315,12 +313,6 @@ namespace Parser
                 }
                 else if (cstr_cmp_skip(ptr, "technique"))
                 {
-                    //test
-                    if (state == NOT_READ_REQUIREMENT)
-                    {
-                        push_error("Requirement must to be declared before");
-                        return false;
-                    }
                     //skeep spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //techniques

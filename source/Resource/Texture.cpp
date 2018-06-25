@@ -215,6 +215,68 @@ namespace Resource
 		return build(attr, buffer.data(), width, height, format, type);
 	}
 
+	static size_t get_pixel_size_from_format(Render::TextureFormat format)
+	{
+		switch (format)
+		{
+		case Square::Render::TF_RGBA8:     return 4;
+
+		case Square::Render::TF_RGBA16F:
+		case Square::Render::TF_RGBA16I:
+		case Square::Render::TF_RGBA16UI:  return 4 * 2;
+
+		case Square::Render::TF_RGBA32F:
+		case Square::Render::TF_RGBA32I:
+		case Square::Render::TF_RGBA32UI:  return 4 * 4;
+
+		case Square::Render::TF_RGB8:      return 3;
+
+		case Square::Render::TF_RGB16F:
+		case Square::Render::TF_RGB16I:
+		case Square::Render::TF_RGB16UI:   return 3 * 2;
+
+		case Square::Render::TF_RGB32F:
+		case Square::Render::TF_RGB32I:
+		case Square::Render::TF_RGB32UI:   return 3 * 4;
+
+		case Square::Render::TF_RG8:	   return 2;
+
+
+		case Square::Render::TF_RG16F:
+		case Square::Render::TF_RG16I:
+		case Square::Render::TF_RG16UI:	   return 2 * 2;
+
+		case Square::Render::TF_RG32F:
+		case Square::Render::TF_RG32I:
+		case Square::Render::TF_RG32UI:	   return 2 * 4;
+
+		case Square::Render::TF_R8:		   return 1;
+
+		case Square::Render::TF_R16F:
+		case Square::Render::TF_R16I:
+		case Square::Render::TF_R16UI:	   return 1 * 2;
+
+		case Square::Render::TF_R32F:
+		case Square::Render::TF_R32I:
+		case Square::Render::TF_R32UI:	   return 1 * 4;
+
+		case Square::Render::TF_RGBA4:
+		case Square::Render::TF_RGB5A1:
+		case Square::Render::TF_RGB565:	   return 2;
+
+
+		case Square::Render::TF_DEPTH16_STENCIL8:  return 3;
+		case Square::Render::TF_DEPTH24_STENCIL8:  return 4;
+		case Square::Render::TF_DEPTH32_STENCIL8:  return 5;
+
+		case Square::Render::TF_DEPTH_COMPONENT16:  return 2;
+		case Square::Render::TF_DEPTH_COMPONENT24:  return 3;
+		case Square::Render::TF_DEPTH_COMPONENT32:  return 4;
+
+		default: return 0;
+		}
+	}
+
 	bool Texture::build
 	(
 		const Attributes& attr,
@@ -246,6 +308,7 @@ namespace Resource
 			{
 				attr.m_min_filter,
 				attr.m_mag_filter,
+				attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
 				attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
 				attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
 				attr.m_build_mipmap

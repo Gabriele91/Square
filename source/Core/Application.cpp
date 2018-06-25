@@ -215,12 +215,29 @@ namespace Square
 		return  m_render;
 	}
 	
+	static inline Video::ContextInfo::context_type get_context_type(Render::RenderDriver type)
+	{
+		switch (type)
+		{
+		case Square::Render::DR_VULKAN:
+		case Square::Render::DR_OPENGL:
+			return Video::ContextInfo::CTX_OPENGL;
+		break;
+		case Square::Render::DR_OPENGL_ES:
+			return Video::ContextInfo::CTX_OPENGL_ES;
+		break;
+		case Square::Render::DR_DIRECTX:
+			return Video::ContextInfo::CTX_DIRECTX;
+		break;
+		default: break;
+		}
+	}
+
     bool Application::execute
     (
          const WindowSize& size,
          WindowMode mode,
-         int major_gl_ctx,
-         int minor_gl_ctx,
+		 WindowRenderDriver driver,
          const std::string& app_name,
          AppInterface* app,
          size_t n_workers
@@ -235,9 +252,10 @@ namespace Square
         IVec2 window_size = size.get_size(screen);
         //window
         Video::WindowInfo winfo(&screen);
-        winfo.m_context.m_color = 32;
-        winfo.m_context.m_version[0] = major_gl_ctx;
-        winfo.m_context.m_version[1] = minor_gl_ctx;
+		winfo.m_context.m_type = get_context_type(driver.m_type);
+		winfo.m_context.m_color = 32; 
+        winfo.m_context.m_version[0] = driver.m_major_ctx;
+        winfo.m_context.m_version[1] = driver.m_minor_ctx;
         winfo.m_size[0] = window_size.x;
         winfo.m_size[1] = window_size.y;
         winfo.m_fullscreen = mode == WindowMode::FULLSCREEN;
@@ -254,9 +272,9 @@ namespace Square
         //enable render context and  disable vSync (auto by Video::Window)
         m_window->acquire_context();
 		//Get render
-		m_render = Render::create_render_driver(Render::DR_OPENGL);
+		m_render = Render::create_render_driver(driver.m_type);
 		//init render
-		if (!m_render || !m_render->init())
+		if (!m_render || !m_render->init(m_window->device()))
 		{
 			return false;
 		}

@@ -121,7 +121,7 @@ namespace Render
 	{
 		long n_texture = ++m_shader->m_uniform_ntexture;
 		//bind texture
-		m_context->bind_texture(in_texture, (int)n_texture);
+		m_context->bind_texture(in_texture, (int)n_texture, 0);
 		//bind id
 		glUniform1i(m_id, (int)n_texture);
 	}
@@ -206,7 +206,7 @@ namespace Render
             //bind
             long n_texture = ++m_shader->m_uniform_ntexture;
             //bind texture
-            m_context->bind_texture(tvector++, (int)n_texture);
+            m_context->bind_texture(tvector++, (int)n_texture, 0);
             //bind ids
             glUniform1i(id++, (int)n_texture);
         }
@@ -502,7 +502,7 @@ namespace Render
 		context->s_render_driver_info.m_shader_version  = make_test_to_get_shader_version();
     }
         
-	bool ContextGL4::init()
+	bool ContextGL4::init(Video::DeviceResources* resource)
 	{
 
 #ifdef _WIN32
@@ -797,7 +797,7 @@ namespace Render
 	{
 		auto ptr = new IndexBuffer();
 		ptr->gen_buffer();
-        ptr->set_size(size);
+        ptr->set_size(sizeof(unsigned int)*size);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ptr);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*size, ibo, GL_STREAM_DRAW);
 		return ptr;
@@ -1148,7 +1148,7 @@ namespace Render
 	/*
 		InputLayout
 	*/
-	InputLayout* ContextGL4::create_IL(const AttributeList& atl)
+	InputLayout* ContextGL4::create_IL(Shader* shader, const AttributeList& atl)
 	{
 		return new InputLayout{ atl };
 	}
@@ -1465,8 +1465,15 @@ namespace Render
 		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAG_FILTER, get_texture_mag_filter(info.m_mag_type));
 		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_WRAP_S, get_texture_edge_type(info.m_edge_s));
 		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_WRAP_T, get_texture_edge_type(info.m_edge_t));
-		// Generate mipmaps, by the way.
-		if (info.m_build_mipmap) glGenerateMipmap(ctx_texture->m_type_texture);
+		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_WRAP_R, get_texture_edge_type(info.m_edge_r));
+		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_ANISOTROPY_EXT, info.m_anisotropy);
+		// Generate mipmaps, by the way
+		if (info.m_build_mipmap)
+		{
+			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_BASE_LEVEL, info.m_mipmap_min);
+			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_LEVEL, info.m_mipmap_max);
+			glGenerateMipmap(ctx_texture->m_type_texture);
+		}
 		//disable texture
 		glBindTexture(ctx_texture->m_type_texture, 0);
 		//test
@@ -1526,7 +1533,7 @@ namespace Render
 		//return texture
 		return ctx_texture;
 	}
-        
+
 	std::vector< unsigned char > ContextGL4::get_texture(Texture* tex, int level)
 	{
 		// get last bind
@@ -1534,7 +1541,7 @@ namespace Render
 		//unbind
 		unbind_texture(last_texture);
 		// bind texture
-		bind_texture(tex, 0);
+		bind_texture(tex, 0, 0);
 		// format
 		GLint format, components, width, height;
 		// get internal format type of GL texture
@@ -1559,12 +1566,49 @@ namespace Render
 		// unbind
 		unbind_texture(tex);
 		// bind last 
-		bind_texture(last_texture, 0);
+		bind_texture(last_texture, 0, 0);
 		//return
 		return output;
 	}
 
-	void ContextGL4::bind_texture(Texture* ctx_texture, int n)
+	std::vector< unsigned char > ContextGL4::get_texture(Texture* tex, int cube, int level)
+	{
+		// get last bind
+		auto last_texture = s_bind_context.m_textures[0];
+		//unbind
+		unbind_texture(last_texture);
+		// bind texture
+		bind_texture(tex, 0, 0);
+		// format
+		GLint format, components, width, height;
+		// get internal format type of GL texture
+		glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X + cube, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
+		glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X + cube, 0, GL_TEXTURE_COMPONENTS, &components);
+		glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X + cube, 0, GL_TEXTURE_WIDTH, &width);
+		glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X + cube, 0, GL_TEXTURE_HEIGHT, &height);
+		// return
+		std::vector< unsigned char > output;
+		GLint image_ret_format;
+		// cases
+		switch (components)
+		{
+		case GL_R8:   output.resize(width*height * 1); image_ret_format = GL_R;     break;
+		case GL_RG8:  output.resize(width*height * 2); image_ret_format = GL_RG;    break;
+		case GL_RGB8: output.resize(width*height * 3); image_ret_format = GL_RGB;   break;
+		case GL_RGBA8:output.resize(width*height * 4); image_ret_format = GL_RGBA;  break;
+		default: return output; break;
+		}
+		// get
+		glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + cube, 0, image_ret_format, GL_UNSIGNED_BYTE, (GLbyte*)output.data());
+		// unbind
+		unbind_texture(tex);
+		// bind last 
+		bind_texture(last_texture, 0, 0);
+		//return
+		return output;
+	}
+
+	void ContextGL4::bind_texture(Texture* ctx_texture, int n, int sempler_id)
 	{
         if (ctx_texture && ctx_texture != s_bind_context.m_textures[n])
         {
@@ -1583,7 +1627,8 @@ namespace Render
         if (ctx_texture)
         {
             //to null
-            s_bind_context.m_textures[ctx_texture->m_last_bind] = nullptr;
+			if(ctx_texture->m_last_bind >= 0)
+				s_bind_context.m_textures[ctx_texture->m_last_bind] = nullptr;
             //disable
             ctx_texture->disable_TBO();
         }

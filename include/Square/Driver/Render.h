@@ -9,6 +9,18 @@
 #include "Square/Math/Linear.h"
 #include "Square/Core/Variant.h"
 
+
+//declare
+namespace Square
+{
+namespace Video
+{
+	class Input;
+	class Window;
+	struct DeviceResources;
+}
+}
+
 namespace Square
 {
 namespace Render
@@ -49,6 +61,7 @@ namespace Render
 	struct ShaderSourceInformation
 	{
 		const ShaderType  m_type;
+		const std::string  m_entry_point{ "main" };
 		const std::string  m_shader_header;
 		const std::string& m_shader_source;
 		const size_t m_line;
@@ -57,6 +70,7 @@ namespace Render
 		: m_type(info.m_type)
 		, m_shader_header(info.m_shader_header)
 		, m_shader_source(info.m_shader_source)
+		, m_entry_point(info.m_entry_point)
 		, m_line(info.m_line)
 		{
 
@@ -84,6 +98,21 @@ namespace Render
 		: m_type(type)
 		, m_shader_header(shader_header)
 		, m_shader_source(shader_source)
+		, m_line(line)
+		{
+		}
+		ShaderSourceInformation
+		(
+			ShaderType type,
+			const std::string& shader_header,
+			const std::string& shader_source,
+			const std::string& entry_point,
+			const size_t line = 0
+		)
+		: m_type(type)
+		, m_shader_header(shader_header)
+		, m_shader_source(shader_source)
+		, m_entry_point(entry_point)
 		, m_line(line)
 		{
 		}
@@ -278,19 +307,27 @@ namespace Render
 	{
 		TextureMinFilterType		 m_min_type;
 		TextureMagFilterType		 m_mag_type;
-		TextureEdgeType			 m_edge_s;
-		TextureEdgeType			 m_edge_t;
-		TextureEdgeType			 m_edge_r;
+		TextureEdgeType				 m_edge_s;
+		TextureEdgeType				 m_edge_t;
+		TextureEdgeType				 m_edge_r;
+		int							 m_mipmap_min;
+		int							 m_mipmap_max;
 		bool						 m_build_mipmap;
-		//cube texture
+		float						 m_anisotropy;
+		bool						 m_read_from_cpu;
+		//2d/cude texture
 		TextureGpuDataInformation
 		(
 			TextureMinFilterType		 min_type,
 			TextureMagFilterType		 mag_type,
-			TextureEdgeType			 edge_s,
-			TextureEdgeType			 edge_t,
-			TextureEdgeType			 edge_r,
-			bool						 build_mipmap
+			TextureEdgeType				 edge_s,
+			TextureEdgeType				 edge_t,
+			TextureEdgeType				 edge_r = TEDGE_REPEAT,
+			bool				         build_mipmap = false,
+			int						     mipmap_min = 0,
+			int							 mipmap_max = 10,
+			float						 anisotropy = 1.0f,
+			bool						 read_from_cpu = false
 		)
 		{
 			m_min_type = min_type;
@@ -299,22 +336,10 @@ namespace Render
 			m_edge_t = edge_t;
 			m_edge_r = edge_r;
 			m_build_mipmap = build_mipmap;
-		}
-		//2D texture
-		TextureGpuDataInformation
-		(
-			TextureMinFilterType		 min_type,
-			TextureMagFilterType		 mag_type,
-			TextureEdgeType			 edge_s,
-			TextureEdgeType			 edge_t,
-			bool						 build_mipmap
-		)
-		{
-			m_min_type = min_type;
-			m_mag_type = mag_type;
-			m_edge_s = edge_s;
-			m_edge_t = edge_t;
-			m_build_mipmap = build_mipmap;
+			m_mipmap_min = mipmap_min;
+			m_mipmap_max = mipmap_max;
+			m_anisotropy = anisotropy;
+			m_read_from_cpu = read_from_cpu;
 		}
 	};
 	////////////////////////////////////////////////
@@ -507,6 +532,13 @@ namespace Render
 		{
 			return m_src != bs.m_src || m_dst != bs.m_dst || m_enable != bs.m_enable;
 		}
+		//for mapping
+		bool operator<(const BlendState& bs)const
+		{
+			int ithis = m_enable << 30    | (m_src & 0x00007FFF) << 15    | (m_dst & 0x00007FFF);
+			int iobs  = bs.m_enable << 30 | (bs.m_src & 0x00007FFF) << 15 | (bs.m_dst & 0x00007FFF);
+			return ithis < iobs;
+		}
 	};
 
 	struct CullfaceState
@@ -539,7 +571,7 @@ namespace Render
 	struct DepthBufferState
 	{
 		//value
-		DepthMode      m_mode;
+		DepthMode     m_mode;
 		DepthFuncType m_type;
 		//zbuffer
 		DepthBufferState(DepthFuncType type, DepthMode mode = DM_ENABLE_AND_WRITE) : m_mode(mode), m_type(type) {}
@@ -558,7 +590,13 @@ namespace Render
 		{
 			return m_mode;
 		}
-
+		//for mapping
+		bool operator<(const DepthBufferState& dbs)const
+		{
+			int ithis = m_mode << 16 | (m_type & 0x0000FFFF);
+			int iodbs = dbs.m_mode << 16 | (dbs.m_type & 0x0000FFFF);
+			return ithis < iodbs;
+		}
 	};
 
 	struct ClearColorState
@@ -591,10 +629,10 @@ namespace Render
 	
 	struct State
 	{
-		ClearColorState  m_clear_color;
+		ClearColorState   m_clear_color;
 		ViewportState     m_viewport;
 		CullfaceState     m_cullface;
-		DepthBufferState m_depth;
+		DepthBufferState  m_depth;
 		BlendState        m_blend;
 
 		bool operator == (const State& rs) const
@@ -636,7 +674,7 @@ namespace Render
 
     struct RenderDriverInfo
     {
-        RenderDriver m_render_driver;
+        RenderDriver  m_render_driver;
         std::string   m_name;
         int           m_major_version;
         int           m_minor_version;
@@ -816,7 +854,7 @@ namespace Render
 		virtual RenderDriverInfo get_render_driver_info() = 0;
 		virtual void print_info() = 0;
 
-		virtual bool init() = 0;
+		virtual bool init(Video::DeviceResources* resource) = 0;
 		virtual void close() = 0;
 
 		virtual const ClearColorState& get_clear_color_state() = 0;
@@ -888,7 +926,7 @@ namespace Render
 		virtual void draw_elements(DrawType type, unsigned int n) = 0;
 
 		//IL=Input Layaut
-		virtual InputLayout* create_IL(const AttributeList& atl) = 0;
+		virtual InputLayout* create_IL(Shader* shader,const AttributeList& atl) = 0;
 		virtual size_t size_IL(const InputLayout* layout) = 0;
 		virtual bool   has_a_position_IL(const InputLayout* layout) = 0;
 		virtual size_t position_offset_IL(const InputLayout* layout) = 0;
@@ -914,7 +952,8 @@ namespace Render
 			const TextureGpuDataInformation& info
 		) = 0;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int level = 0) = 0;
-		virtual void bind_texture(Texture*, int n) = 0;
+		virtual  std::vector< unsigned char > get_texture(Texture*, int face = 0, int level = 0) = 0;
+		virtual void bind_texture(Texture*, int texture_id, int sample_id) = 0;
 		virtual void unbind_texture(Texture*) = 0;
 		virtual void unbind_texture(int n) = 0;
 		virtual void delete_texture(Texture*&) = 0;
@@ -963,6 +1002,9 @@ namespace Render
 	DLL_EXPORT Shared<ConstBuffer>  constant_buffer(Context* ctx, size_t size);
 	DLL_EXPORT Shared<VertexBuffer> vertex_buffer(Context* ctx, size_t stride, size_t n);
 	DLL_EXPORT Shared<IndexBuffer> index_buffer(Context* ctx, size_t n);
+	DLL_EXPORT Shared<ConstBuffer>  stream_constant_buffer(Context* ctx, size_t size);
+	DLL_EXPORT Shared<VertexBuffer> stream_vertex_buffer(Context* ctx, size_t stride, size_t n);
+	DLL_EXPORT Shared<IndexBuffer> stream_index_buffer(Context* ctx, size_t n);
 	/////////////////////////////////
 	template<class T> static inline Shared<ConstBuffer> constant_buffer(Context* ctx)
 	{
@@ -971,6 +1013,14 @@ namespace Render
 	template<class T> static inline Shared<VertexBuffer> vertex_buffer(Context* ctx, size_t n)
 	{
 		return vertex_buffer(ctx, sizeof(T), n);
+	}	
+	template<class T> static inline Shared<ConstBuffer> stream_constant_buffer(Context* ctx)
+	{
+		return stream_constant_buffer(ctx, sizeof(T));
+	}
+	template<class T> static inline Shared<VertexBuffer> stream_vertex_buffer(Context* ctx, size_t n)
+	{
+		return stream_vertex_buffer(ctx, sizeof(T), n);
 	}
 	/////////////////////////////////
 	// Shared wrapper

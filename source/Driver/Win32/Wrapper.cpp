@@ -502,8 +502,49 @@ namespace Video
 	}	
 	
 	static Win32::WindowWin32* dx_window_create(const WindowInfo& info)
-	{
-		return nullptr;
+	{		
+		//////////////////////////////////////////////////////////////////////
+		unsigned int last_window_real_size[2] = { 0,0 };
+		Win32::compute_window_size(info.m_size, last_window_real_size);
+		//screen position
+		int sc_position[2]{ 0,0 };
+		//screen size
+		unsigned int sc_size[2]{ 0,0 };
+		//to screen position
+		if (info.m_screen)
+		{
+			((Win32::ScreenWin32*)info.m_screen->conteiner())->get_position(sc_position[0], sc_position[1]);
+			((Win32::ScreenWin32*)info.m_screen->conteiner())->get_monitor_size(sc_size[0], sc_size[1]);
+		}
+		else
+		{
+			sc_size[0] = GetSystemMetrics(SM_CXSCREEN);
+			sc_size[1] = GetSystemMetrics(SM_CYSCREEN);
+		}
+		//calc center
+		int left = (sc_size[0] - last_window_real_size[0]) / 2 + sc_position[0];
+		int top = (sc_size[1] - last_window_real_size[1]) / 2 + sc_position[1];
+		//////////////////////////////////////////////////////////////////////
+		HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(NULL);
+		//////////////////////////////////////////////////////////////////////
+		HWND hWnd = CreateWindow
+		(
+			WINDOW_CLASS_NAME,
+			info.m_title.c_str(),
+			info.m_resize
+			? SQUARE_WINDOW_STYLE
+			: SQUARE_WINDOW_NORESIZE_STYLE,
+			left,  //x
+			top,   //y
+			last_window_real_size[0], //width
+			last_window_real_size[1],//height
+			NULL,
+			NULL,
+			hInstance,
+			NULL
+		);
+		//return new instance
+		return (Win32::WindowWin32*)new Win32::WindowDX(GetDC(hWnd), hWnd, info);
 	}
 	
 	static Win32::WindowWin32* window_create(const WindowInfo& info, Window* window)
@@ -583,6 +624,14 @@ namespace Video
 	void* Window::conteiner() const
 	{
 		return m_native;
+	}
+
+	DeviceResources*  Window::device() const
+	{
+		//cast
+		const auto* window = (const Win32::WindowWin32*)m_native;
+		//get
+		return window->device();
 	}
 
 	bool Window::valid() const

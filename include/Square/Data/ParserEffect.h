@@ -38,10 +38,10 @@ namespace Parser
         
 		struct RequirementField
 		{
-			std::string m_driver_name;
+			std::string m_driver_name{ "ALL" };
 			int         m_driver_major_version;
 			int         m_driver_minor_version;
-			std::string m_shader_name;
+			std::string m_shader_name{ "ALL" };
 			int         m_shader_version;
 
             bool test(Render::Context* render) const;

@@ -83,6 +83,8 @@ namespace Parser
 			for (auto& error : params.m_errors)
 				m_context->m_errors.push_back(error);
 		}
+		//copy all parameters		
+		m_context->m_parameters = std::move(params.m_parameters);
 		//update line
 		m_context->m_line = params.m_line;
 		//results

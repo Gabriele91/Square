@@ -6,12 +6,14 @@ parameters
 
 sub_effect
 {
+	/* ALL
     requirement
     {
         driver  OpenGL(4,1)
         shader  GLSL(410)
     }
-    
+    */
+	
     technique "forward"
     {
         pass 

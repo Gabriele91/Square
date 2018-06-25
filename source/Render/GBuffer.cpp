@@ -48,9 +48,10 @@ namespace Render
                  },
                  {
                      TMIN_NEAREST,
-                     TMAG_NEAREST,
+					 TMAG_NEAREST,
                      TEDGE_CLAMP,
-                     TEDGE_CLAMP,
+					 TEDGE_CLAMP,
+					 TEDGE_CLAMP,
                      false
                  }
                  ));

@@ -332,9 +332,6 @@
     <ClCompile Include="..\source\Driver\Win32\Screen_private.cpp">
       <Filter>Source\Driver\Win32</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\Driver\Win32\Window_private.cpp">
-      <Filter>Source\Driver\Win32</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\Driver\Win32\Wrapper.cpp">
       <Filter>Source\Driver\Win32</Filter>
     </ClCompile>
@@ -421,6 +418,12 @@
     </ClCompile>
     <ClCompile Include="..\source\Render\GBuffer.cpp">
       <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Driver\Win32\Window_private_gl.cpp">
+      <Filter>Source\Driver\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Driver\Win32\Window_private_dx.cpp">
+      <Filter>source\Driver\Win32</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

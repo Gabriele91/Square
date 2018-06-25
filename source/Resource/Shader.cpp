@@ -341,7 +341,7 @@ namespace Resource
         //input stream
         std::stringstream source_stream(source);
         //process include/import
-        ShaderImportLoader preprocess(context(), source_stream, path, m_filepath_map, source, line);
+        ShaderImportLoader preprocess(context(), source_stream, path, m_filepath_map, source, true, line);
         //compile
         return  preprocess.success() && compile(source, defines);
     }
@@ -384,14 +384,16 @@ namespace Resource
 			//get version
 			if (std::get<0>(p) == "version")
 			{
-				shader_version = std::atoi(std::get<1>(p).c_str());
+				int version = std::atoi(std::get<1>(p).c_str());
+				if (version > 0) shader_version = version;
 				continue;
 			}
 			//add
 			header_string += "#" + std::get<0>(p) + " " + std::get<1>(p) + "\n";
 		}
 		//end source
-		std::string source = shader_commond_header + header_string + raw_source;
+		std::string source_header = shader_commond_header + header_string;
+		std::string source = source_header + raw_source;
 		////////////////////////////////////////////////////////////////////////////////
 		//shaders
 		Xsc::ShaderInput shader_input_info[Render::ST_N_SHADER];
@@ -421,7 +423,12 @@ namespace Resource
 			, "tass_eval"
 			, "compute"
 		};
-
+		//output
+		bool is_hlsl = false;
+		if (auto render = context().render())
+		{
+			is_hlsl = render->get_render_driver_info().m_shader_language == "HLSL";
+		}
 		//init all inputs
 		for (unsigned short type = 0; type != Render::ST_N_SHADER; ++type)
 		{
@@ -454,15 +461,31 @@ namespace Resource
 					shader_sources[type] = shader_output[type].str();
 					//source split
 					extract_version_line(shader_sources[type], shader_headers[type]);
-					//add inf
-					shader_info.push_back
-					(Render::ShaderSourceInformation
+					//if directX get original source code
+					if (is_hlsl)
 					{
-						 (Render::ShaderType)type   //shader type
-					   , shader_headers[type]       //header
-					   , shader_sources[type]       //source output ref
-					   , 0						    //line 0
-					});
+						shader_info.push_back
+						(Render::ShaderSourceInformation
+						{
+							 (Render::ShaderType)type //shader type
+							, source_header			  //header
+							, raw_source			  //source output ref
+							, shader_target_name[type]//source output ref
+							, 0						  //line 0
+						});
+					}
+					else
+					{
+						//add inf
+						shader_info.push_back
+						(Render::ShaderSourceInformation
+						{
+							(Render::ShaderType)type   //shader type
+							, shader_headers[type]     //header
+							, shader_sources[type]     //source output ref
+							, 0						   //line 0
+						});
+					}
 				}
 				else
 				{
