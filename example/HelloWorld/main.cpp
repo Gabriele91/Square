@@ -198,32 +198,57 @@ public:
 			using namespace Square::Data;
 			using namespace Square::Scene;
 			using namespace Square::Resource;
-			//cb buffers
-			auto cbtransform = Render::stream_constant_buffer<UniformBufferTransform>(context().render());
-			auto cbcamera = Render::stream_constant_buffer<UniformBufferCamera>(context().render());
-			//errors?
-			render().print_errors();
-			//map
-			auto utransform = (UniformBufferTransform*)context().render()->map_CB(cbtransform.get(), 0, sizeof(UniformBufferTransform), Render::MAP_WRITE);
+			//bind
+			auto& pass = m_effect->techniques().begin()->second.operator[](0);
+			//struct vertex
+			ConstantBufferStruct Vertex
+			{
+				Vec3 m_position;
+				Vec3 m_color;
+			};
+			//input layout
+			auto input_layout = Render::input_layout(&render(), pass.m_shader->base_shader(), Render::AttributeList{
+				{ Render::ATT_POSITIONT, Render::AST_FLOAT3, 0 },
+				{ Render::ATT_COLOR0, Render::AST_FLOAT3,    offsetof(Vertex,m_color) }
+			});
+			//model
+			auto model = Render::stream_vertex_buffer<Vertex>(&render(), 3);
+			auto umodel = Render::map_buffer<Vertex>(&render(), model.get());
+			umodel[0].m_position = { 0,0,0 };
+			umodel[1].m_position = { 0,1,0 };
+			umodel[2].m_position = { 1,1,0 };
+			umodel[0].m_color = { 1,1,1 };
+			umodel[1].m_color = { 1,1,1 };
+			umodel[2].m_color = { 1,1,1 };
+			Render::unmap_buffer(&render(), model.get());
+
+			//transform
+			auto cbtransform = Render::stream_constant_buffer<UniformBufferTransform>(&render());
+			auto utransform = Render::map_buffer<UniformBufferTransform>(&render(), cbtransform.get());
 			utransform->m_position = { 0,0,0 };
 			utransform->m_scale = { 0,0,0 };
 			utransform->m_rotation = Mat3(1);
 			utransform->m_model = Mat4(1);
-			context().render()->unmap_CB(cbtransform.get());
+			Render::unmap_buffer(&render(), cbtransform.get());
 
-			auto ucamera = (UniformBufferCamera*)context().render()->map_CB(cbcamera.get(), 0, sizeof(UniformBufferCamera), Render::MAP_WRITE);
-			ucamera->m_viewport = { 0, 1920, 0, 1080 };
+			//camera
+			auto cbcamera = Render::stream_constant_buffer<UniformBufferCamera>(&render());
+			auto ucamera = Render::map_buffer<UniformBufferCamera>(&render(),cbcamera.get());
+			ucamera->m_viewport = { 0, 1280, 0, 768 };
 			ucamera->m_position = { 0,0,0 };
 			ucamera->m_model = Mat4(1);
-			ucamera->m_projection = Mat4(1);
+			ucamera->m_projection = Square::perspective<float>(90.0f, ucamera->m_viewport.y / ucamera->m_viewport.w,0.1,100.0f);
 			ucamera->m_view = Mat4(1);
-			context().render()->unmap_CB(cbcamera.get());
+			Render::unmap_buffer(&render(),cbcamera.get());
 			//errors?
 			render().print_errors();
-			//bind
-			auto& pass = m_effect->techniques().begin()->second.operator[](0);
+			//bin
 			pass.bind(&render(), cbcamera.get(), cbtransform.get(), m_material->parameters());
-			//
+			//draw
+			render().bind_IL(input_layout.get());
+			render().bind_VBO(model.get());
+			render().draw_arrays(Render::DRAW_TRIANGLES, 1);
+			//unbind
 			pass.unbind();
 			//errors?
 			render().print_errors();

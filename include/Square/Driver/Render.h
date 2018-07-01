@@ -415,12 +415,12 @@ namespace Render
 	struct Attribute
 	{
 		AttributeType       m_attribute;
-		AttributeStripType m_strip;
-		size_t               m_offset;
+		AttributeStripType  m_strip;
+		size_t              m_offset;
 
 		Attribute(AttributeType       attribute,
-			AttributeStripType strip,
-			size_t               offset)
+				  AttributeStripType strip,
+				  size_t               offset)
 		{
 			m_attribute = attribute;
 			m_strip = strip;
@@ -998,7 +998,8 @@ namespace Render
         virtual bool print_errors(const char* source_file_name, int line) const = 0;
 	};
 	/////////////////////////////////
-	// Buffer smart pointer
+	// Buffer smart pointer	
+	DLL_EXPORT Shared<InputLayout>  input_layout(Context* ctx, Shader* shader, const AttributeList& attrs);
 	DLL_EXPORT Shared<ConstBuffer>  constant_buffer(Context* ctx, size_t size);
 	DLL_EXPORT Shared<VertexBuffer> vertex_buffer(Context* ctx, size_t stride, size_t n);
 	DLL_EXPORT Shared<IndexBuffer> index_buffer(Context* ctx, size_t n);
@@ -1021,6 +1022,31 @@ namespace Render
 	template<class T> static inline Shared<VertexBuffer> stream_vertex_buffer(Context* ctx, size_t n)
 	{
 		return stream_vertex_buffer(ctx, sizeof(T), n);
+	}
+	/////////////////////////////////
+	template<class T> static inline  T* map_buffer(Context* ctx, ConstBuffer* buffer)
+	{
+		return (T*)ctx->map_CB(buffer, 0, sizeof(T), Render::MAP_WRITE);
+	}
+	template<class T> static inline  T* map_buffer(Context* ctx, VertexBuffer* buffer)
+	{
+		return (T*)ctx->map_VBO(buffer, 0, sizeof(T), Render::MAP_WRITE);
+	}
+	template<class T> static inline  T* map_buffer(Context* ctx, IndexBuffer* buffer)
+	{
+		return (T*)ctx->map_IBO(buffer, 0, sizeof(T), Render::MAP_WRITE);
+	}
+	static inline void unmap_buffer(Context* ctx, ConstBuffer* buffer)
+	{
+		ctx->unmap_CB(buffer);
+	}
+	static inline void unmap_buffer(Context* ctx, VertexBuffer* buffer)
+	{
+		ctx->unmap_VBO(buffer);
+	}
+	static inline void unmap_buffer(Context* ctx, IndexBuffer* buffer)
+	{
+		ctx->unmap_IBO(buffer);
 	}
 	/////////////////////////////////
 	// Shared wrapper

@@ -275,7 +275,7 @@ namespace Render
 		}
 		template < typename T > void array_write(const T* value, size_t n)
 		{
-			std::memcpy(m_buffer + m_offset, &value, sizeof(T)*n);
+			std::memcpy(m_buffer + m_offset, value, sizeof(T)*n);
 		}
     };
     
