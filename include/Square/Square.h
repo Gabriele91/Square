@@ -23,6 +23,7 @@
 //Math
 #include "Square/Math/Linear.h"
 #include "Square/Math/Tangent.h"
+#include "Square/Math/Transformation.h"
 //Geometry
 #include "Square/Geometry/Sphere.h"
 #include "Square/Geometry/Frustum.h"

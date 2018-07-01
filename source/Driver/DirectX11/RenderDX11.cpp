@@ -76,16 +76,16 @@ namespace Render
     void UniformDX11::set(const IVec2& v2)
     {
 		m_shader->global_buffer_bind();
-		array_write(value_ptr(v2), 2);
+		array_write<int>(value_ptr(v2), 2);
     }
     void UniformDX11::set(const IVec3& v3)
     {
-		array_write(value_ptr(v3), 3);
+		array_write<int>(value_ptr(v3), 3);
     }
     void UniformDX11::set(const IVec4& v4)
     {
 		m_shader->global_buffer_bind();
-		array_write(value_ptr(v4), 4);
+		array_write<int>(value_ptr(v4), 4);
     }
     
 	void UniformDX11::set(const Vec2& v2)
@@ -101,43 +101,43 @@ namespace Render
 	void UniformDX11::set(const Vec4& v4)
 	{
 		m_shader->global_buffer_bind();
-		array_write(value_ptr(v4), 4);
+		array_write<float>(value_ptr(v4), 4);
 	}
 	void UniformDX11::set(const Mat3& m3)
 	{
 		m_shader->global_buffer_bind();
-		array_write(value_ptr(m3), 3 * 3);
+		array_write<float>(value_ptr(m3), 3 * 3);
 	}
 	void UniformDX11::set(const Mat4& m4)
 	{
 		m_shader->global_buffer_bind();
-		array_write(value_ptr(m4), 4 * 4);
+		array_write<float>(value_ptr(m4), 4 * 4);
 	}
     
     void UniformDX11::set(const DVec2& v2)
     {
 		m_shader->global_buffer_bind();
-		array_write(value_ptr(v2), 2);
+		array_write<double>(value_ptr(v2), 2);
     }
     void UniformDX11::set(const DVec3& v3)
     {
 		m_shader->global_buffer_bind();
-		array_write(value_ptr(v3), 3);
+		array_write<double>(value_ptr(v3), 3);
     }
     void UniformDX11::set(const DVec4& v4)
     {
 		m_shader->global_buffer_bind();
-		array_write(value_ptr(v4), 4);
+		array_write<double>(value_ptr(v4), 4);
     }
     void UniformDX11::set(const DMat3& m3)
     {
 		m_shader->global_buffer_bind();
-		array_write(value_ptr(m3), 3 * 3);
+		array_write<double>(value_ptr(m3), 3 * 3);
     }
     void UniformDX11::set(const DMat4& m4)
     {
 		m_shader->global_buffer_bind();
-		array_write(value_ptr(m4), 4 * 4);
+		array_write<double>(value_ptr(m4), 4 * 4);
     }
 
     void UniformDX11::set(Texture* tvector, size_t n)

@@ -276,6 +276,9 @@
     <ClInclude Include="..\include\Square\Render\GBuffer.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Math\Transformation.h">
+      <Filter>include\Square\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
