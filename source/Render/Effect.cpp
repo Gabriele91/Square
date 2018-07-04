@@ -74,7 +74,7 @@ namespace Render
 	template< class T >
 	inline static const T& none_const_t_return()
 	{
-		const static T none;
+		const static T none(0.0f);
 		return none;
 	}
 
