@@ -67,6 +67,7 @@
 		E08C38F82093753500DB2936 /* Viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E08C38F72093753500DB2936 /* Viewport.cpp */; };
 		E0AF07ED209B19FB00276401 /* ParserEffect.h in Headers */ = {isa = PBXBuildFile; fileRef = E0AF07EC209B19FB00276401 /* ParserEffect.h */; };
 		E0AF07EF209B1D2600276401 /* ParserEffect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0AF07EE209B1D2600276401 /* ParserEffect.cpp */; };
+		E0FF89B820ED0E520028A1C5 /* StringUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = E0FF89B720ED0E520028A1C5 /* StringUtils.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -154,7 +155,6 @@
 		E044BC84206A98B7003D4406 /* Window_private.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Window_private.mm; sourceTree = "<group>"; };
 		E044BC85206A98B7003D4406 /* Wrapper_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Wrapper_private.h; sourceTree = "<group>"; };
 		E044BC86206A98B7003D4406 /* Wrapper_private.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Wrapper_private.mm; sourceTree = "<group>"; };
-		E044BC88206A98B7003D4406 /* Interface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Interface.cpp; sourceTree = "<group>"; };
 		E044BC89206A98B7003D4406 /* Interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Interface.h; sourceTree = "<group>"; };
 		E044BC8A206A98B7003D4406 /* OpenGL4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenGL4.h; sourceTree = "<group>"; };
 		E044BC8B206A98B7003D4406 /* RenderGL4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RenderGL4.cpp; sourceTree = "<group>"; };
@@ -164,7 +164,6 @@
 		E044BC90206A98B7003D4406 /* Input_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Input_private.h; sourceTree = "<group>"; };
 		E044BC91206A98B7003D4406 /* Screen_private.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Screen_private.cpp; sourceTree = "<group>"; };
 		E044BC92206A98B7003D4406 /* Screen_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Screen_private.h; sourceTree = "<group>"; };
-		E044BC93206A98B7003D4406 /* Window_private.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Window_private.cpp; sourceTree = "<group>"; };
 		E044BC94206A98B7003D4406 /* Window_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Window_private.h; sourceTree = "<group>"; };
 		E044BC95206A98B7003D4406 /* Wrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Wrapper.cpp; sourceTree = "<group>"; };
 		E044BC96206A98B7003D4406 /* Wrapper_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Wrapper_private.h; sourceTree = "<group>"; };
@@ -200,6 +199,10 @@
 		E08C38F92093775100DB2936 /* Transformation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Transformation.h; sourceTree = "<group>"; };
 		E0AF07EC209B19FB00276401 /* ParserEffect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParserEffect.h; sourceTree = "<group>"; };
 		E0AF07EE209B1D2600276401 /* ParserEffect.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParserEffect.cpp; sourceTree = "<group>"; };
+		E0FF89B720ED0E520028A1C5 /* StringUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StringUtils.h; sourceTree = "<group>"; };
+		E0FF89B920ED0E880028A1C5 /* Window_private_dx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Window_private_dx.cpp; sourceTree = "<group>"; };
+		E0FF89BA20ED0E880028A1C5 /* Window_private_gl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Window_private_gl.cpp; sourceTree = "<group>"; };
+		E0FF89BD20ED0EA50028A1C5 /* InterfaceGL4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InterfaceGL4.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -253,6 +256,7 @@
 		E044BC3B206A97E6003D4406 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				E0FF89B720ED0E520028A1C5 /* StringUtils.h */,
 				E044BC3C206A97E6003D4406 /* Application.h */,
 				E044BC3D206A97E6003D4406 /* Attribute.h */,
 				E044BC3E206A97E6003D4406 /* ClassObjectRegistration.h */,
@@ -430,8 +434,8 @@
 		E044BC87206A98B7003D4406 /* OpenGL4 */ = {
 			isa = PBXGroup;
 			children = (
-				E044BC88206A98B7003D4406 /* Interface.cpp */,
 				E044BC89206A98B7003D4406 /* Interface.h */,
+				E0FF89BD20ED0EA50028A1C5 /* InterfaceGL4.cpp */,
 				E044BC8A206A98B7003D4406 /* OpenGL4.h */,
 				E044BC8B206A98B7003D4406 /* RenderGL4.cpp */,
 				E044BC8C206A98B7003D4406 /* RenderGL4.h */,
@@ -442,11 +446,12 @@
 		E044BC8E206A98B7003D4406 /* Win32 */ = {
 			isa = PBXGroup;
 			children = (
+				E0FF89B920ED0E880028A1C5 /* Window_private_dx.cpp */,
+				E0FF89BA20ED0E880028A1C5 /* Window_private_gl.cpp */,
 				E044BC8F206A98B7003D4406 /* Input_private.cpp */,
 				E044BC90206A98B7003D4406 /* Input_private.h */,
 				E044BC91206A98B7003D4406 /* Screen_private.cpp */,
 				E044BC92206A98B7003D4406 /* Screen_private.h */,
-				E044BC93206A98B7003D4406 /* Window_private.cpp */,
 				E044BC94206A98B7003D4406 /* Window_private.h */,
 				E044BC95206A98B7003D4406 /* Wrapper.cpp */,
 				E044BC96206A98B7003D4406 /* Wrapper_private.h */,
@@ -582,6 +587,7 @@
 				E001EC5F20D3B5D800241C6D /* World.h in Headers */,
 				E044BD0E206A9ACE003D4406 /* Window_private.h in Headers */,
 				E001EC5D20D3B5CE00241C6D /* Material.h in Headers */,
+				E0FF89B820ED0E520028A1C5 /* StringUtils.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

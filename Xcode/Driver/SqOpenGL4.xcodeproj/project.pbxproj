@@ -7,22 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E044C4A9206AA114003D4406 /* Interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044C4A4206AA114003D4406 /* Interface.cpp */; };
 		E044C4AA206AA114003D4406 /* Interface.h in Headers */ = {isa = PBXBuildFile; fileRef = E044C4A5206AA114003D4406 /* Interface.h */; };
 		E044C4AB206AA114003D4406 /* OpenGL4.h in Headers */ = {isa = PBXBuildFile; fileRef = E044C4A6206AA114003D4406 /* OpenGL4.h */; };
 		E044C4AC206AA114003D4406 /* RenderGL4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044C4A7206AA114003D4406 /* RenderGL4.cpp */; };
 		E044C4AD206AA114003D4406 /* RenderGL4.h in Headers */ = {isa = PBXBuildFile; fileRef = E044C4A8206AA114003D4406 /* RenderGL4.h */; };
 		E044C4B0206AA16C003D4406 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E044C4AF206AA16C003D4406 /* OpenGL.framework */; };
+		E0FF89C020ED0EE00028A1C5 /* InterfaceGL4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0FF89BF20ED0EE00028A1C5 /* InterfaceGL4.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		E044C495206AA0EE003D4406 /* libSqOpenGL4.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libSqOpenGL4.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		E044C4A4206AA114003D4406 /* Interface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Interface.cpp; sourceTree = "<group>"; };
 		E044C4A5206AA114003D4406 /* Interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Interface.h; sourceTree = "<group>"; };
 		E044C4A6206AA114003D4406 /* OpenGL4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenGL4.h; sourceTree = "<group>"; };
 		E044C4A7206AA114003D4406 /* RenderGL4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RenderGL4.cpp; sourceTree = "<group>"; };
 		E044C4A8206AA114003D4406 /* RenderGL4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenderGL4.h; sourceTree = "<group>"; };
 		E044C4AF206AA16C003D4406 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		E0FF89BF20ED0EE00028A1C5 /* InterfaceGL4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InterfaceGL4.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,7 +57,7 @@
 		E044C4A3206AA114003D4406 /* OpenGL4 */ = {
 			isa = PBXGroup;
 			children = (
-				E044C4A4206AA114003D4406 /* Interface.cpp */,
+				E0FF89BF20ED0EE00028A1C5 /* InterfaceGL4.cpp */,
 				E044C4A5206AA114003D4406 /* Interface.h */,
 				E044C4A6206AA114003D4406 /* OpenGL4.h */,
 				E044C4A7206AA114003D4406 /* RenderGL4.cpp */,
@@ -145,8 +145,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E044C4A9206AA114003D4406 /* Interface.cpp in Sources */,
 				E044C4AC206AA114003D4406 /* RenderGL4.cpp in Sources */,
+				E0FF89C020ED0EE00028A1C5 /* InterfaceGL4.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

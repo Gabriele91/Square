@@ -522,7 +522,7 @@ namespace Render
 		//Front face
 		glFrontFace(GL_CW);
 		//Coords like direcX
-		glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE),
+		//glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE),
 		//glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE),
 #endif
 		//clean
