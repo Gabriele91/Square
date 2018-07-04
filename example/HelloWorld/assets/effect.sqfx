@@ -18,22 +18,22 @@ sub_effect
     {
         pass 
         {
-            zbuffer less
+            zbuffer less //always
             blend off
-            cullface back
+            cullface off
             lights off
             shader source 
             {
                 struct VertexShaderInput
                 {
-                    Vec3 vertex_position : POSITION;
-                    Vec3 vertex_color    : COLOR0;
+                    Vec3 m_position : POSITION;
+                    Vec3 m_color    : COLOR0;
                 };
 
                 struct VertexShaderOutput
                 {
-                    Vec4 vertex_position : SV_POSITION;  // interpolated vertex position (system value)
-                    Vec4 vertex_color    : COLOR0;       // interpolated diffuse color
+                    Vec4 m_position : SV_POSITION;  // interpolated vertex position (system value)
+                    Vec4 m_color    : COLOR0;       // interpolated diffuse color
                 };
 
                 cbuffer Camera : register(b0)
@@ -47,35 +47,36 @@ sub_effect
 
                 cbuffer Transform : register(b1)
                 {
+                    Mat4 model_model;
                     Vec3 model_position;
                     Vec3 model_scale;
                     Mat3 model_rotation;
-                    Mat4 model_model;
                 };
 
                 //global uniform
-                Vec4 color;
                 float mask;
+                Vec4 color;
 
                 VertexShaderOutput vertex(VertexShaderInput input) 
                 {    
 
-                    Vec4 position = Vec4(input.vertex_position, 1.0f);
+                    Vec4 position = Vec4(input.m_position, 1.0f);
+
                     position = mul(position, model_model);
                     position = mul(position, camera_view);
                     position = mul(position, camera_projection);
 
                     VertexShaderOutput output;
-                    output.vertex_position = position;
-                    output.vertex_color = float4(input.vertex_color, 1.0f);
+                    output.m_position = position;
+                    output.m_color = Vec4(input.m_color.rgb, 1.0f);
 
                     return output;
                 }
 
-                Vec4 fragment(VertexShaderOutput input) : SV_Target
+                Vec4 fragment(VertexShaderOutput input) : SV_TARGET 
                 {   
-                    if (input.vertex_color.a <= mask) discard;
-                    return mul(input.vertex_color,color);
+                    if (input.m_color.a <= mask) discard;
+                    return mul(input.m_color,color);
                 }
             }
         }

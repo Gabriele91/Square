@@ -188,7 +188,101 @@ public:
 		{
 			std::cout << wrong << std::endl;
 		}
+
+		//int 
+		build_buffers();
     }
+	//struct vertex
+	ConstantBufferStruct Vertex
+	{
+		Square::Vec3 m_position;
+		Square::Vec3 m_color;
+	};
+
+	Square::Shared< Square::Render::ConstBuffer >  m_cbtransform;
+	Square::Shared< Square::Render::ConstBuffer >  m_cbcamera;
+	Square::Shared< Square::Render::VertexBuffer > m_model;
+	Square::Shared< Square::Render::IndexBuffer >  m_index_model;
+	Square::Shared< Square::Render::InputLayout >  m_input_layout;
+	
+	void build_buffers()
+	{
+		//test effect
+		if(m_material && m_effect)
+		{
+			using namespace Square;
+			using namespace Square::Data;
+			using namespace Square::Scene;
+			using namespace Square::Resource;
+			//bind
+			auto& pass = m_effect->techniques().begin()->second.operator[](0);
+
+			//input layout
+			m_input_layout = Render::input_layout(&render(), pass.m_shader->base_shader(), Render::AttributeList{
+				{ Render::ATT_POSITION,  Render::AST_FLOAT3, 0                        },
+				{ Render::ATT_COLOR0,    Render::AST_FLOAT3, offsetof(Vertex,m_color) }
+			});
+			//model
+			m_model = Render::stream_vertex_buffer< Vertex >(&render(), 8);
+			auto umodel = Render::map_buffer < Vertex > (&render(), m_model.get(), 8);
+			umodel[0].m_position = { -1.0, -1.0,  1.0 }; umodel[0].m_color = { 1,0,0 };
+			umodel[1].m_position = {  1.0, -1.0,  1.0 }; umodel[1].m_color = { 0,1,0 };
+			umodel[2].m_position = {  1.0,  1.0,  1.0 }; umodel[2].m_color = { 0,0,1 };
+			umodel[3].m_position = { -1.0,  1.0,  1.0 }; umodel[3].m_color = { 1,1,1 };
+
+			umodel[4].m_position = { -1.0, -1.0, -1.0 }; umodel[4].m_color = { 1,0,0 };
+			umodel[5].m_position = {  1.0, -1.0, -1.0 }; umodel[5].m_color = { 0,1,0 };
+			umodel[6].m_position = {  1.0,  1.0, -1.0 }; umodel[6].m_color = { 0,0,1 };
+			umodel[7].m_position = { -1.0,  1.0, -1.0 }; umodel[7].m_color = { 1,1,1 };
+			Render::unmap_buffer(&render(), m_model.get());
+
+			m_index_model = Render::stream_index_buffer(&render(), 6 * 6);
+			auto uimodel = Render::map_buffer(&render(), m_index_model.get(), 6 * 6);
+			unsigned int ids[]
+			{
+				// front
+				0, 1, 2,
+				2, 3, 0,
+				// right
+				1, 5, 6,
+				6, 2, 1,
+				// back
+				7, 6, 5,
+				5, 4, 7,
+				// left
+				4, 0, 3,
+				3, 7, 4,
+				// bottom
+				4, 5, 1,
+				1, 0, 4,
+				// top
+				3, 2, 6,
+				6, 7, 3,
+			};
+			std::memcpy(uimodel, ids, sizeof(unsigned int)*6*6);
+			Render::unmap_buffer(&render(), m_index_model.get());
+			//transform
+			m_cbtransform = Render::stream_constant_buffer<UniformBufferTransform>(&render());
+			auto utransform = Render::map_buffer<UniformBufferTransform>(&render(), m_cbtransform.get());
+			utransform->m_position = { 0,0,-10.0 };
+			utransform->m_scale = { 1,1,1 };
+			utransform->m_rotation = Mat3(1);
+			utransform->m_model = translate(Mat4(1.0f), { utransform->m_position });
+			Render::unmap_buffer(&render(), m_cbtransform.get());
+
+			//camera
+			m_cbcamera = Render::stream_constant_buffer<UniformBufferCamera>(&render());
+			auto ucamera = Render::map_buffer<UniformBufferCamera>(&render(), m_cbcamera.get());
+			ucamera->m_viewport = { 0, 0, 1280, 768 };
+			ucamera->m_position = { 0, 2.0,0 };
+			ucamera->m_projection = perspective<float>(radians(90.0f), ucamera->m_viewport.z / ucamera->m_viewport.w, 0.1f,100.0f);
+			ucamera->m_view = look_at(ucamera->m_position, Vec3(0.0, 0.0, -10.0), Vec3(0.0, 1.0, 0.0));
+			ucamera->m_model = inverse(ucamera->m_view);
+			Render::unmap_buffer(&render(), m_cbcamera.get());
+			
+		}
+	}
+
     bool run(double dt)
     {		
 		//test effect
@@ -200,54 +294,21 @@ public:
 			using namespace Square::Resource;
 			//bind
 			auto& pass = m_effect->techniques().begin()->second.operator[](0);
-			//struct vertex
-			ConstantBufferStruct Vertex
-			{
-				Vec3 m_position;
-				Vec3 m_color;
-			};
-			//input layout
-			auto input_layout = Render::input_layout(&render(), pass.m_shader->base_shader(), Render::AttributeList{
-				{ Render::ATT_POSITIONT, Render::AST_FLOAT3, 0 },
-				{ Render::ATT_COLOR0, Render::AST_FLOAT3,    offsetof(Vertex,m_color) }
-			});
-			//model
-			auto model = Render::stream_vertex_buffer<Vertex>(&render(), 3);
-			auto umodel = Render::map_buffer<Vertex>(&render(), model.get());
-			umodel[0].m_position = { 0,0,0 };
-			umodel[1].m_position = { 0,1,0 };
-			umodel[2].m_position = { 1,1,0 };
-			umodel[0].m_color = { 1,1,1 };
-			umodel[1].m_color = { 1,1,1 };
-			umodel[2].m_color = { 1,1,1 };
-			Render::unmap_buffer(&render(), model.get());
-
-			//transform
-			auto cbtransform = Render::stream_constant_buffer<UniformBufferTransform>(&render());
-			auto utransform = Render::map_buffer<UniformBufferTransform>(&render(), cbtransform.get());
-			utransform->m_position = { 0,0,0 };
-			utransform->m_scale = { 0,0,0 };
-			utransform->m_rotation = Mat3(1);
-			utransform->m_model = Mat4(1);
-			Render::unmap_buffer(&render(), cbtransform.get());
-
-			//camera
-			auto cbcamera = Render::stream_constant_buffer<UniformBufferCamera>(&render());
-			auto ucamera = Render::map_buffer<UniformBufferCamera>(&render(),cbcamera.get());
-			ucamera->m_viewport = { 0, 1280, 0, 768 };
-			ucamera->m_position = { 0,0,0 };
-			ucamera->m_model = Mat4(1);
-			ucamera->m_projection = Square::perspective<float>(90.0f, ucamera->m_viewport.y / ucamera->m_viewport.w,0.1,100.0f);
-			ucamera->m_view = Mat4(1);
-			Render::unmap_buffer(&render(),cbcamera.get());
+			//start
+			render().set_viewport_state(Render::ViewportState({ 0, 0, 1280, 768 }));
+			render().clear();
 			//errors?
 			render().print_errors();
 			//bin
-			pass.bind(&render(), cbcamera.get(), cbtransform.get(), m_material->parameters());
+			pass.bind(&render(), m_cbcamera.get(), m_cbtransform.get(), m_material->parameters());
 			//draw
-			render().bind_IL(input_layout.get());
-			render().bind_VBO(model.get());
-			render().draw_arrays(Render::DRAW_TRIANGLES, 1);
+			render().bind_VBO(m_model.get());
+			render().bind_IBO(m_index_model.get());
+			render().bind_IL(m_input_layout.get());
+			render().draw_elements(Render::DRAW_TRIANGLES, 6 * 6);
+			render().bind_IL(m_input_layout.get());
+			render().unbind_IBO(m_index_model.get());
+			render().unbind_VBO(m_model.get());
 			//unbind
 			pass.unbind();
 			//errors?
@@ -300,15 +361,15 @@ int main()
       WindowSizePixel({ 1280, 768 })
     , WindowMode::NOT_RESIZABLE
 	, 
-#if defined(_WIN32)
+#if defined(_WIN32) & 1
 	  WindowRenderDriver
 	  {
-		 Render::RenderDriver::DR_DIRECTX, 11, 0
+		 Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, false
 	  }
 #else
 	  WindowRenderDriver
 	  {
-		 Render::RenderDriver::DR_OPENGL, 4, 1
+		 Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, true
 	  }
 #endif
     , "test"

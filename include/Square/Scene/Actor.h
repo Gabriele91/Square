@@ -28,13 +28,13 @@ namespace Scene
 	using ActorList = std::vector< Shared<Actor> >;
 	using LevelList = std::vector< Shared<Level> >;
 	//Transform uniform buffer
-    ConstantBufferStruct UniformBufferTransform
+	PACKED(ConstantBufferStruct UniformBufferTransform
     {
-        Vec3 m_position;
-        Vec3 m_scale;
-        Mat3 m_rotation;
-        Mat4 m_model;
-    };
+		Mat4 m_model;
+	    Vec3 m_position; float __PADDING0__; //alignas(16) 
+		Vec3 m_scale;    float __PADDING1__; //alignas(16) 
+		Mat4 m_rotation;
+    });
 	//..................
     class SQUARE_API Actor : public Object
                            , public SharedObject<Actor>

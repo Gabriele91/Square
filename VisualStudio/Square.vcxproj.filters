@@ -279,6 +279,9 @@
     <ClInclude Include="..\include\Square\Math\Transformation.h">
       <Filter>include\Square\Math</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Core\StringUtils.h">
+      <Filter>include\Square\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">

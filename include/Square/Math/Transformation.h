@@ -5,8 +5,8 @@
 //  Created by Gabriele Di Bari on 27/04/18.
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
-#include <glm/gtc/matrix_transform.hpp>
 #include "Square/Math/Linear.h"
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace Square
 {
