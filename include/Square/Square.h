@@ -10,6 +10,7 @@
 #include "Square/Config.h"
 //Core
 #include "Square/Core/Time.h"
+#include "Square/Core/StringUtils.h"
 #include "Square/Core/UtfConvert.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/SmartPointers.h"

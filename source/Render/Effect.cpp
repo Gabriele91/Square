@@ -414,6 +414,7 @@ namespace Render
 			case EffectParameterType::PT_STD_VECTOR_DMAT4: m_uniform[i]->set(param->get_vector_dmat4()); break;
 			}
 		}
+	
 	}
 
 	//disable pass effect

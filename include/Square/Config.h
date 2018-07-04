@@ -16,6 +16,7 @@
 #include <memory>
 #include <limits>
 #include <stdexcept> 
+#include <functional>
 #include <unordered_map>
 /////////////////////////////////////////////////////////////////////////////
 // MACRO

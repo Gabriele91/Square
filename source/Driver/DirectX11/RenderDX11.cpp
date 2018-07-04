@@ -25,7 +25,7 @@ namespace Render
 	const char* Shader::hlsl_header_by_type[ST_N_SHADER] =
 	{
 		//VERTEX
-		"#define saturate(x) clamp( x, 0.0, 1.0 )       \n"
+		"#define saturate(x) clamp( x, 0.0, 1.0 )       \n",
 		//FRAGMENT
 		"#define saturate(x) clamp( x, 0.0, 1.0 )       \n",
 		//GEOMETRY
@@ -358,8 +358,12 @@ namespace Render
 				reflector->GetConstantBufferByIndex(ic)->GetDesc(&desc);
 				//compare
 				if (std::strcmp(desc.Name, cname.data()) == 0)
-				{
-					m_slots[s_type] = ic;
+				{   
+					//bind
+					D3D11_SHADER_INPUT_BIND_DESC bind_desc;
+					reflector->GetResourceBindingDesc(ic, &bind_desc);
+					//slot
+					m_slots[s_type] = bind_desc.BindPoint;
 					m_found_the_cbuffer = true;
 				}
 			}
@@ -473,6 +477,8 @@ namespace Render
 
 	bool ContextDX11::get_view_target(Video::DeviceResources* resource)
 	{
+		//delete last view target
+		if (m_view_target) delete m_view_target;
 		//target
 		m_view_target = new Target(false);
 
@@ -563,14 +569,24 @@ namespace Render
 
 	bool ContextDX11::init(Video::DeviceResources* resource)
 	{
+		//save ref to device resouces
+		m_device_resouces = resource;
 		//window
 		if (!get_devices(resource)) { close(); return false; }
         //get info
 		compute_render_driver_info(this);
+		//view target update
+		auto set_view_target = [this](Video::DeviceResources* resource)
+		{
+			//target
+			if (!get_view_target(resource)) { close(); return false; }
+			//set view target
+			enable_render_target(m_view_target);
+		};
 		//target
-		if (!get_view_target(resource)) { close(); return false; }
-		//set view target
-		enable_render_target(m_view_target);
+		set_view_target(resource);
+		//hander callback
+		resource->callback_target_changed(set_view_target);
 		//build cullface states
 		if (!build_cullface_states()) { m_errors.push_back({ "can't build cullfaces" }); close(); return false; }
 		//query
@@ -655,6 +671,12 @@ namespace Render
 		m_device_context = nullptr;
 		m_swap = nullptr;
 		m_device = nullptr;
+
+		if (m_device_resouces)
+		{
+			m_device_resouces->callback_target_changed(nullptr);
+			m_device_resouces = nullptr;
+		}
 	}
 
 	RenderDriver ContextDX11::get_render_driver()
@@ -685,7 +707,7 @@ namespace Render
 		if (type & CLEAR_COLOR) 
 			device_context()->ClearRenderTargetView(m_view_target->m_views[0], value_ptr(s_render_state.m_clear_color.m_color));
         if(type & CLEAR_DEPTH)
-			device_context()->ClearDepthStencilView(m_view_target->m_depth, D3D11_CLEAR_DEPTH, 1.0f, 0);
+			device_context()->ClearDepthStencilView(m_view_target->m_depth, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1175,7 +1197,7 @@ namespace Render
                 unbind_IBO(s_bind_context.m_index_buffer);
             }
 			//set into dx context
-			device_context()->IASetIndexBuffer(*ibo, DXGI_FORMAT_R32_UINT, 0);
+			device_context()->IASetIndexBuffer(ibo->m_buffer, DXGI_FORMAT_R32_UINT, 0);
             //update
             s_bind_context.m_index_buffer = ibo;
         }
@@ -1402,28 +1424,30 @@ namespace Render
 	/*
 		InputLayout
 	*/
-	const char* attribute_type_to_semantic_name(AttributeType type)
+	const char* attribute_type_to_semantic_name(AttributeType type, int& semantic_index)
 	{
 		switch (type)
 		{
-		case ATT_POSITIONT:   return "POSITION";
-		case ATT_NORMAL0:     return "NORMAL0";
-		case ATT_TEXCOORD0:   return "TEXCOORD0";
-		case ATT_TANGENT0:    return "TANGENT0";
-		case ATT_BINORMAL0:   return "BINORMAL0";
-		case ATT_COLOR0:      return "COLOR0";
-		case ATT_POSITION0:   return "POSITION0";
-		case ATT_NORMAL1:     return "NORMAL1";
-		case ATT_TEXCOORD1:   return "TEXCOORD1";
-		case ATT_TANGENT1:    return "TANGENT1";
-		case ATT_BINORMAL1:   return "BINORMAL1";
-		case ATT_COLOR1:      return "COLOR1";
-		case ATT_POSITION1:   return "POSITION1";
-		case ATT_NORMAL2:     return "NORMAL2";
-		case ATT_TEXCOORD2:   return "TEXCOORD2";
-		case ATT_TANGENT2:    return "TANGENT2";
-		case ATT_BINORMAL2:   return "BINORMAL2";
-		case ATT_COLOR2:      return "COLOR2";
+		//case ATT_POSITION:  semantic_index = 0;  return "POSITION";
+		case ATT_POSITION0: semantic_index = 0;  return "POSITION";
+		case ATT_NORMAL0:   semantic_index = 0;  return "NORMAL";
+		case ATT_TEXCOORD0: semantic_index = 0;  return "TEXCOORD";
+		case ATT_TANGENT0:  semantic_index = 0;  return "TANGENT";
+		case ATT_BINORMAL0: semantic_index = 0;  return "BINORMAL";
+		case ATT_COLOR0:    semantic_index = 0;  return "COLOR";
+
+		case ATT_POSITION1: semantic_index = 1;  return "POSITION";
+		case ATT_NORMAL1:   semantic_index = 1;  return "NORMAL";
+		case ATT_TEXCOORD1: semantic_index = 1;  return "TEXCOORD";
+		case ATT_TANGENT1:  semantic_index = 1;  return "TANGENT";
+		case ATT_BINORMAL1: semantic_index = 1;  return "BINORMAL";
+		case ATT_COLOR1:    semantic_index = 1;  return "COLOR";
+
+		case ATT_NORMAL2:   semantic_index = 2;  return "NORMAL";
+		case ATT_TEXCOORD2: semantic_index = 2;  return "TEXCOORD";
+		case ATT_TANGENT2:  semantic_index = 2;  return "TANGENT";
+		case ATT_BINORMAL2: semantic_index = 2;  return "BINORMAL";
+		case ATT_COLOR2:    semantic_index = 2;  return "COLOR";
 		default: return "";
 		}
 
@@ -1471,7 +1495,7 @@ namespace Render
 		//input layout d3d11
 		ID3D11InputLayout* vertex_layout{ nullptr };
 		//SUCCEEDED
-		if (SUCCEEDED(context11->device()->CreateInputLayout(
+		if (context11->dx_op_success(context11->device()->CreateInputLayout(
 			  m_description.data()
 			, m_description.size()
 			, shader->GetBufferPointer()
@@ -1499,9 +1523,10 @@ namespace Render
 		for (const auto& at : atl)
 		{
 			D3D11_INPUT_ELEMENT_DESC layout;
-			layout.SemanticName         = attribute_type_to_semantic_name(at.m_attribute);
-			layout.SemanticIndex        = 0;
-			layout.Format		       = attribute_strip_type_to_input_element(at.m_strip);
+			int semantic_index = 0;
+			layout.SemanticName         = attribute_type_to_semantic_name(at.m_attribute, semantic_index);
+			layout.SemanticIndex        = semantic_index;
+			layout.Format		        = attribute_strip_type_to_input_element(at.m_strip);
 			layout.InputSlot            = 0;
 			layout.AlignedByteOffset    = at.m_offset;
 			layout.InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
@@ -2215,7 +2240,7 @@ namespace Render
 		if (m_global_buffer_gpu && m_global_buffer_should_be_bind)
 		{
 			context->update_steam_CB(
-				m_global_buffer_gpu
+				  m_global_buffer_gpu
 				, m_global_buffer_cpu.data()
 				, m_global_buffer_cpu.size()
 			);
@@ -2276,8 +2301,10 @@ namespace Render
 			//info
 			if (name.find("$Global") != std::string::npos)
 			{
+				D3D11_SHADER_INPUT_BIND_DESC bind_desc;
+				reflector->GetResourceBindingDesc(i, &bind_desc);
 				//save slot/name/size
-				info.m_slot[type] = i;
+				info.m_slot[type] = bind_desc.BindPoint;
 				//test
 				if (!info.m_found)
 				{

@@ -490,10 +490,10 @@ namespace Scene
     //set uniform buffer
     void Actor::set(UniformBufferTransform* gpubuffer) const
     {
+		gpubuffer->m_model    = global_model_matrix();
         gpubuffer->m_position = position(true);
-        gpubuffer->m_rotation = mat3_cast(rotation(true));
         gpubuffer->m_scale    = scale(true);
-        gpubuffer->m_model    = global_model_matrix();
+		gpubuffer->m_rotation = mat4_cast(rotation(true));
     }
 }
 }

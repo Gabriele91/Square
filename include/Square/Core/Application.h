@@ -80,6 +80,9 @@ namespace Square
 		Render::RenderDriver m_type{ Render::DR_OPENGL };
 		int m_major_ctx{ 4 };
 		int m_minor_ctx{ 1 };
+		int m_depth_ctx  { 24 };
+		int m_stencil_ctx{ 8  };
+		bool m_debug{ false };
 	};
         
     class SQUARE_API Application

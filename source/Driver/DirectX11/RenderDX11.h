@@ -15,6 +15,10 @@
 
 namespace Square
 {
+namespace Video
+{
+	struct DeviceResources;
+}
 namespace Render
 {
 	//Class dec
@@ -589,6 +593,8 @@ namespace Render
 		mutable IDXGISwapChain* m_swap{ nullptr };
 		//Context
 		mutable ID3D11DeviceContext* m_device_context{ nullptr };
+		//Ref to device resouces 
+		mutable Video::DeviceResources* m_device_resouces{ nullptr };
 		//Init device, swap and context
 		bool get_devices(Video::DeviceResources* resource);
 		///////////////////////////////////////////////////////////////////////////////////

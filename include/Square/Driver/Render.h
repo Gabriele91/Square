@@ -362,31 +362,28 @@ namespace Render
 	enum AttributeType
 	{
 		//POSITION TRANSFORM
-		ATT_POSITIONT = 0,
-
+		ATT_POSITION = 0,
+		ATT_POSITION0 = 0,
 		ATT_NORMAL0 = 1,
 		ATT_TEXCOORD0 = 2,
 		ATT_TANGENT0 = 3,
 		ATT_BINORMAL0 = 4,
 		ATT_COLOR0 = 5,
 
-		//POSITION 0
-		ATT_POSITION0 = 6,
-
+		//POSITION 1
+		ATT_POSITION1 = 6,
 		ATT_NORMAL1 = 7,
 		ATT_TEXCOORD1 = 8,
 		ATT_TANGENT1 = 9,
 		ATT_BINORMAL1 = 10,
 		ATT_COLOR1 = 11,
 
-		//POSITION 1
-		ATT_POSITION1 = 12,
-
-		ATT_NORMAL2 = 13,
-		ATT_TEXCOORD2 = 14,
-		ATT_TANGENT2 = 15,
-		ATT_BINORMAL2 = 16,
-		ATT_COLOR2 = 17
+		//POSITION 2
+		ATT_NORMAL2 = 12,
+		ATT_TEXCOORD2 = 13,
+		ATT_TANGENT2 = 14,
+		ATT_BINORMAL2 = 15,
+		ATT_COLOR2 = 16
 	};
 
 	enum AttributeStripType
@@ -429,7 +426,7 @@ namespace Render
 
 		bool is_position_transform() const
 		{
-			return m_attribute == ATT_POSITIONT;
+			return m_attribute == ATT_POSITION;
 		}
 
 		size_t components() const
@@ -521,7 +518,7 @@ namespace Render
 		bool      m_enable;
 		BlendType m_src, m_dst;
 		//constructor
-		BlendState() : m_enable(false), m_src(BLEND_ONE), m_dst(BLEND_ONE) {}
+		BlendState() : m_enable(false), m_src(BLEND_ONE), m_dst(BLEND_ZERO) {}
 		BlendState(BlendType src, BlendType dst) : m_enable(true), m_src(src), m_dst(dst) {}
 		//operators
 		bool operator==(const BlendState& bs) const
@@ -1024,17 +1021,17 @@ namespace Render
 		return stream_vertex_buffer(ctx, sizeof(T), n);
 	}
 	/////////////////////////////////
-	template<class T> static inline  T* map_buffer(Context* ctx, ConstBuffer* buffer)
+	template<class T> static inline  T* map_buffer(Context* ctx, ConstBuffer* buffer, size_t n = 1)
 	{
-		return (T*)ctx->map_CB(buffer, 0, sizeof(T), Render::MAP_WRITE);
+		return (T*)ctx->map_CB(buffer, 0, sizeof(T) * n, Render::MAP_WRITE);
 	}
-	template<class T> static inline  T* map_buffer(Context* ctx, VertexBuffer* buffer)
+	template<class T> static inline  T* map_buffer(Context* ctx, VertexBuffer* buffer, size_t n = 1)
 	{
-		return (T*)ctx->map_VBO(buffer, 0, sizeof(T), Render::MAP_WRITE);
+		return (T*)ctx->map_VBO(buffer, 0, sizeof(T) * n, Render::MAP_WRITE);
 	}
-	template<class T> static inline  T* map_buffer(Context* ctx, IndexBuffer* buffer)
+	static inline  unsigned int* map_buffer(Context* ctx, IndexBuffer* buffer, size_t n = 1)
 	{
-		return (T*)ctx->map_IBO(buffer, 0, sizeof(T), Render::MAP_WRITE);
+		return (unsigned int*)ctx->map_IBO(buffer, 0, n, Render::MAP_WRITE);
 	}
 	static inline void unmap_buffer(Context* ctx, ConstBuffer* buffer)
 	{

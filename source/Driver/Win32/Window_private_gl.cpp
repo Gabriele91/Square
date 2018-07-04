@@ -35,6 +35,12 @@ namespace Win32
 			return window_box.bottom - window_box.top;
 		}
 
+
+		virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
+		{
+			//none
+		}
+
 		virtual void* get_device()					   override { return (void*)m_hRC; }
 		virtual void* get_device_context(size_t i = 0) override { return (void*)nullptr; }
 		virtual void* get_swap_chain()				   override { return (void*)nullptr; }

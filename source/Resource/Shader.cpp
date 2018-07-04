@@ -6,6 +6,7 @@
 #include "Square/Config.h"
 #include "Square/Core/Application.h"
 #include "Square/Core/Filesystem.h"
+#include "Square/Core/StringUtils.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/Attribute.h"
 #include "Square/Data/ParserUtils.h"
@@ -17,6 +18,8 @@
 #include <fstream>
 #include <sstream>
 #include <list>
+//#define FORCE_COLUMN_MAJOR
+#define FORCE_ROW_MAJOR
 
 namespace Square
 {
@@ -358,6 +361,9 @@ namespace Resource
         //commondo header
         const static std::string shader_commond_header
         (
+		#ifdef FORCE_COLUMN_MAJOR
+		"#pragma pack_matrix( row_major )\n"
+		#endif
         "#define IVec2 int2\n"
         "#define IVec3 int3\n"
         "#define IVec4 int4\n"
@@ -429,6 +435,26 @@ namespace Resource
 		{
 			is_hlsl = render->get_render_driver_info().m_shader_language == "HLSL";
 		}
+		////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (is_hlsl)
+		{
+		#ifdef FORCE_COLUMN_MAJOR
+			source = "#pragma pack_matrix( column_major )\n" + source;
+		#endif
+		#ifdef FORCE_ROW_MAJOR
+			source = "#pragma pack_matrix( row_major )\n" + source;
+		#endif
+		}
+		else
+		{
+		#ifdef FORCE_COLUMN_MAJOR
+			source = "#pragma pack_matrix( row_major )\n" + source;
+		#endif
+		#ifdef FORCE_ROW_MAJOR
+			source = "#pragma pack_matrix( column_major )\n" + source;
+		#endif
+		}
+		////////////////////////////////////////////////////////////////////////////////////////////////////
 		//init all inputs
 		for (unsigned short type = 0; type != Render::ST_N_SHADER; ++type)
 		{
@@ -446,6 +472,8 @@ namespace Resource
 			shader_output_info[type].formatting.alwaysBracedScopes = true;
 			shader_output_info[type].options.separateShaders = true;
 			shader_output_info[type].options.separateSamplers = true;
+			#ifdef FORCE_COLUMN_MAJOR
+			#endif
 			shader_output_info[type].nameMangling.inputPrefix = "sq_";
 			shader_output_info[type].nameMangling.outputPrefix = "sq_";
 			shader_output_info[type].nameMangling.useAlwaysSemantics = true;
@@ -469,13 +497,17 @@ namespace Resource
 						{
 							 (Render::ShaderType)type //shader type
 							, source_header			  //header
-							, raw_source			  //source output ref
+							, source			      //source output ref
 							, shader_target_name[type]//source output ref
 							, 0						  //line 0
 						});
 					}
 					else
 					{
+						#ifdef FORCE_COLUMN_MAJOR
+						//brutal replace
+						replace_all(shader_sources[type], "layout(std140, row_major)", "layout(std140, column_major)");
+						#endif
 						//add inf
 						shader_info.push_back
 						(Render::ShaderSourceInformation

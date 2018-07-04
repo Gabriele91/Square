@@ -38,38 +38,38 @@ namespace Render
 	const char* Shader::glsl_default_header=
 	R"GLSL(
 	//POSITION TRANSFORM
-	#define ATT_POSITIONT 0
+	#define ATT_POSITION 0
+
+	//POSITION 0
+	#define ATT_POSITION0 0
 	#define ATT_NORMAL0   1
 	#define ATT_TEXCOORD0 2
 	#define ATT_TANGENT0  3
 	#define ATT_BINORMAL0 4
 	#define ATT_COLOR0    5
 
-	//POSITION 0
-	#define ATT_POSITION0 6
+	//POSITION 1
+	#define ATT_POSITION1 6
 	#define ATT_NORMAL1   7
 	#define ATT_TEXCOORD1 8
 	#define ATT_TANGENT1  9
 	#define ATT_BINORMAL1 10
 	#define ATT_COLOR1    11
 
-	//POSITION 1
-	#define ATT_POSITION1 12
-	#define ATT_NORMAL2   13
-	#define ATT_TEXCOORD2 14
-	#define ATT_TANGENT2  15
-	#define ATT_BINORMAL2 16
-	#define ATT_COLOR2    17
+	//POSITION 2
+	#define ATT_NORMAL2   12
+	#define ATT_TEXCOORD2 13
+	#define ATT_TANGENT2  14
+	#define ATT_BINORMAL2 15
+	#define ATT_COLOR2    16
 	)GLSL";
 
 	const char* Shader::glsl_header_by_type[ST_N_SHADER] =
 	{
 		//VERTEX
-		"#define cbuffer     layout(std140) uniform     \n"
 		"#define saturate(x) clamp( x, 0.0, 1.0 )       \n"
 		"#define lerp        mix                        \n",
 		//FRAGMENT
-		"#define cbuffer     layout(std140) uniform     \n"
 		"#define saturate(x) clamp( x, 0.0, 1.0 )       \n"
 		"#define lerp        mix                        \n"
 		"#define bestp                                  \n"
@@ -77,19 +77,15 @@ namespace Render
 		"#define mediump                                \n"
 		"#define lowp                                   \n",
 		//GEOMETRY
-		"#define cbuffer     layout(std140) uniform     \n"
 		"#define saturate(x) clamp( x, 0.0, 1.0 )       \n"
 		"#define lerp        mix                        \n",
 		//TASSELLATION_CONTROL
-		"#define cbuffer     layout(std140) uniform     \n"
 		"#define saturate(x) clamp( x, 0.0, 1.0 )       \n"
 		"#define lerp        mix                        \n",
 		//TASSELLATION_EVALUATION
-		"#define cbuffer     layout(std140) uniform     \n"
 		"#define saturate(x) clamp( x, 0.0, 1.0 )       \n"
 		"#define lerp        mix                        \n",
 		//COMPUTE
-		"#define cbuffer     layout(std140) uniform     \n"
 		"#define saturate(x) clamp( x, 0.0, 1.0 )       \n"
 		"#define lerp        mix                        \n"
 	};
@@ -525,6 +521,9 @@ namespace Render
 		glDepthRange(0.0f, 1.0f);
 		//Front face
 		glFrontFace(GL_CW);
+		//Coords like direcX
+		glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE),
+		//glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE),
 #endif
 		//clean
 		print_errors();
@@ -1275,10 +1274,16 @@ namespace Render
         }
 	}
 
-	void ContextGL4::delete_IL(InputLayout*& il)
+	void ContextGL4::delete_IL(InputLayout*& layout)
 	{
-		delete  il;
-		il = nullptr;
+		//is bind?
+		if (s_bind_context.m_input_layout == layout)
+		{
+			unbind_IL(layout);
+		}
+		//delete
+		delete  layout;
+		layout = nullptr;
 	}
 
 	//DEPTH

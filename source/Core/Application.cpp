@@ -253,9 +253,12 @@ namespace Square
         //window
         Video::WindowInfo winfo(&screen);
 		winfo.m_context.m_type = get_context_type(driver.m_type);
-		winfo.m_context.m_color = 32; 
-        winfo.m_context.m_version[0] = driver.m_major_ctx;
-        winfo.m_context.m_version[1] = driver.m_minor_ctx;
+		winfo.m_context.m_color = 32;
+		winfo.m_context.m_depth = driver.m_depth_ctx;
+		winfo.m_context.m_stencil = driver.m_stencil_ctx;
+		winfo.m_context.m_version[0] = driver.m_major_ctx;
+		winfo.m_context.m_version[1] = driver.m_minor_ctx;
+		winfo.m_context.m_debug = driver.m_debug;
         winfo.m_size[0] = window_size.x;
         winfo.m_size[1] = window_size.y;
         winfo.m_fullscreen = mode == WindowMode::FULLSCREEN;

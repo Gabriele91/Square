@@ -84,6 +84,8 @@ namespace Video
 	struct SQUARE_API DeviceResources
 	{
 	public:
+		virtual void callback_target_changed(std::function<void(DeviceResources*)>) = 0;
+
 		virtual unsigned int width() = 0;
 		virtual unsigned int height() = 0;
 

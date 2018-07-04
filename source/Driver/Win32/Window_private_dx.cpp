@@ -34,6 +34,12 @@ namespace Win32
 		HRESULT go_fullscreen(UINT width = 0, UINT height = 0);
 		HRESULT go_windowed(UINT width = 0, UINT height = 0);
 
+		//on change
+		virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
+		{
+			m_callback = callback;
+		}
+
 		//implement
 		virtual unsigned int width() override { return m_bb_desc.Width; }
 		virtual unsigned int height() override { return m_bb_desc.Height; }
@@ -51,6 +57,9 @@ namespace Win32
 		virtual size_t number_of_device_context()  override { return 1; }
 
 		virtual ~DeviceResourcesDX();
+
+		//help function
+		void callback_target_changed() { if(m_callback) m_callback(this); }
 
 	protected:
 		//-----------------------------------------------------------------------------
@@ -82,6 +91,12 @@ namespace Win32
 		D3D11_TEXTURE2D_DESC    m_bb_desc;
 		D3D11_VIEWPORT          m_viewport;
 		const WindowInfo&		m_info;
+
+
+		//-----------------------------------------------------------------------------
+		// Callback
+		//-----------------------------------------------------------------------------
+		std::function<void(DeviceResources*)> m_callback{ nullptr };
 	};
 
 	DeviceResourcesDX::DeviceResourcesDX(const WindowInfo& info)
@@ -157,10 +172,14 @@ namespace Win32
 		desc.BufferDesc.Width   = m_info.m_size[0];
 		desc.BufferDesc.Height  = m_info.m_size[1];
 		desc.BufferDesc.Format  = format;
+		desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+		desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 		desc.BufferUsage        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		desc.SampleDesc.Count   = 1;    //multisampling setting
 		desc.SampleDesc.Quality = 0;    //vendor-specific flag
-		desc.SwapEffect         = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+		desc.SwapEffect         = DXGI_SWAP_EFFECT_DISCARD;
+								// DXGI_SWAP_EFFECT_FLIP_DISCARD; 
+								// DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 		desc.OutputWindow       = hWnd;
 
 		//build		
@@ -199,7 +218,7 @@ namespace Win32
 	{
 		if (m_DXGI_swap_chain)
 		{
-			m_DXGI_swap_chain->Present(1, 0);
+			m_DXGI_swap_chain->Present(0, 0);
 		}
 	}
 
@@ -223,26 +242,30 @@ namespace Win32
 			depth_stencil_type = DXGI_FORMAT_D16_UNORM;
 
 		// Create a depth-stencil view for use with 3D rendering if needed.
-		CD3D11_TEXTURE2D_DESC depth_stencil_desc
-		(
-			depth_stencil_type,
-			static_cast<UINT> (m_bb_desc.Width),
-			static_cast<UINT> (m_bb_desc.Height),
-			1, // This depth stencil view has only one texture.
-			1, // Use a single mipmap level.
-			D3D11_BIND_DEPTH_STENCIL
-		);
+		D3D11_TEXTURE2D_DESC depth_stencil_desc;
+		ZeroMemory(&depth_stencil_desc, sizeof(D3D11_VIEWPORT));
+		depth_stencil_desc.Width = m_bb_desc.Width;
+		depth_stencil_desc.Height = m_bb_desc.Height;
+		depth_stencil_desc.MipLevels = 1;
+		depth_stencil_desc.ArraySize = 1;
+		depth_stencil_desc.Format = depth_stencil_type;
+		depth_stencil_desc.SampleDesc.Count = 1;
+		depth_stencil_desc.SampleDesc.Quality = 0;
+		depth_stencil_desc.Usage = D3D11_USAGE_DEFAULT;
+		depth_stencil_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+		depth_stencil_desc.CPUAccessFlags = 0;
+		depth_stencil_desc.MiscFlags = 0;
 		m_d3d_device->CreateTexture2D( &depth_stencil_desc, nullptr, &m_depth_stencil);
 
 		//View target
-		CD3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc(D3D11_DSV_DIMENSION_TEXTURE2D);
+		//CD3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc(D3D11_DSV_DIMENSION_TEXTURE2D);
 		//D3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc;
 		//depth_stencil_view_desc.Format			 = depth_stencil_type;
 		//depth_stencil_view_desc.ViewDimension	     = D3D11_DSV_DIMENSION_TEXTURE2D;
 		//depth_stencil_view_desc.Texture2D.MipSlice = 1;
-		m_d3d_device->CreateDepthStencilView(m_depth_stencil, &depth_stencil_view_desc,&m_depth_stencil_view);
+		m_d3d_device->CreateDepthStencilView(m_depth_stencil, nullptr/*&depth_stencil_view_desc*/,&m_depth_stencil_view);
 
-		//
+		//viewport
 		ZeroMemory(&m_viewport, sizeof(D3D11_VIEWPORT));
 		m_viewport.Height   = (float)m_bb_desc.Height;
 		m_viewport.Width    = (float)m_bb_desc.Width;
@@ -295,6 +318,9 @@ namespace Win32
 		// Then we can recreate the back buffer, depth buffer, and so on.
 		hr = configure_backbuffer();
 
+		// callback
+		callback_target_changed();
+
 		//return state
 		return hr;
 	}
@@ -320,6 +346,9 @@ namespace Win32
 
 		// Then we can recreate the back buffer, depth buffer, and so on.
 		hr = configure_backbuffer();
+
+		// callback
+		callback_target_changed();
 
 		//return state
 		return hr;

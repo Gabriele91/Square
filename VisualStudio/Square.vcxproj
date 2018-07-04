@@ -161,6 +161,7 @@
     <ClInclude Include="..\include\Square\Core\SharedLibrary.h" />
     <ClInclude Include="..\include\Square\Core\SmartPointers.h" />
     <ClInclude Include="..\include\Square\Core\StringUtilities.h" />
+    <ClInclude Include="..\include\Square\Core\StringUtils.h" />
     <ClInclude Include="..\include\Square\Core\Time.h" />
     <ClInclude Include="..\include\Square\Core\Uncopyable.h" />
     <ClInclude Include="..\include\Square\Core\UtfConvert.h" />
