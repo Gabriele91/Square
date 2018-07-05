@@ -373,16 +373,18 @@ namespace Render
 	}
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    UniformConstBufferGL4::UniformConstBufferGL4(ContextGL4* context, Shader* shader, GLint id)
+    UniformConstBufferGL4::UniformConstBufferGL4(ContextGL4* context, Shader* shader, GLint id, GLuint  bind)
     :m_context(context)
     ,m_shader(shader)
     ,m_id(id)
+	,m_bind(bind)
     {
     }
     UniformConstBufferGL4::UniformConstBufferGL4()
     :m_context(nullptr)
     ,m_shader(nullptr)
     ,m_id(-1)
+	,m_bind(0)
     {
     }
     UniformConstBufferGL4::~UniformConstBufferGL4()
@@ -392,13 +394,13 @@ namespace Render
     //bind
     void UniformConstBufferGL4::bind(const ConstBuffer* buffer)
     {
-		//glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_id, m_context->get_native_CB(buffer).get<GLuint>());
-		glUniformBlockBinding(m_shader->m_shader_id, (GLuint)m_id, m_context->get_native_CB(buffer).get<GLuint>());
+		m_const_buffer = buffer;
+		glBindBufferRange(GL_UNIFORM_BUFFER, m_bind, m_context->get_native_CB(m_const_buffer).get<GLuint>(), 0, m_const_buffer->get_size());
 	}
     void UniformConstBufferGL4::unbind()
     {
-		//glUniformBlockBinding(GL_UNIFORM_BUFFER, (GLuint)m_id, (GLuint)0);
-		glUniformBlockBinding(m_shader->m_shader_id, (GLuint)m_id, 0);
+		m_const_buffer = nullptr;
+		glBindBufferRange(GL_UNIFORM_BUFFER, m_bind, 0, 0, 0);
     }
     //buffer info
     bool UniformConstBufferGL4::is_valid()
@@ -522,7 +524,7 @@ namespace Render
 		//Front face
 		glFrontFace(GL_CW);
 		//Coords like direcX
-		//glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE),
+		glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE),
 		//glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE),
 #endif
 		//clean
@@ -777,8 +779,15 @@ namespace Render
 		auto ptr = new ConstBuffer();
 		ptr->gen_buffer();
         ptr->set_size(size);
+		//save
+		auto last_bind = s_bind_context.m_const_buffer;
+		unbind_CB(last_bind);
+		//set size
 		glBindBuffer(GL_UNIFORM_BUFFER, *ptr);
 		glBufferData(GL_UNIFORM_BUFFER, size, data, GL_STREAM_DRAW);
+		//bind last
+		unbind_CB(last_bind);
+		//return
 		return ptr;
 	}
 
@@ -787,8 +796,15 @@ namespace Render
 		auto ptr = new VertexBuffer();
 		ptr->gen_buffer();
         ptr->set_size(stride*n);
+		//save
+		auto last_bind = s_bind_context.m_vertex_buffer;
+		unbind_VBO(last_bind);
+		//set size
 		glBindBuffer(GL_ARRAY_BUFFER, *ptr);
 		glBufferData(GL_ARRAY_BUFFER, stride*n, vbo, GL_STREAM_DRAW);
+		//bind last
+		bind_VBO(last_bind);
+		//return
 		return ptr;
 	}
 
@@ -797,8 +813,15 @@ namespace Render
 		auto ptr = new IndexBuffer();
 		ptr->gen_buffer();
         ptr->set_size(sizeof(unsigned int)*size);
+		//save
+		auto last_bind = s_bind_context.m_index_buffer;
+		unbind_IBO(last_bind);
+		//set size
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ptr);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*size, ibo, GL_STREAM_DRAW);
+		//bind last
+		bind_IBO(last_bind);
+		//return
 		return ptr;
 	}
 		
@@ -806,8 +829,16 @@ namespace Render
 	{
 		auto ptr = new ConstBuffer();
 		ptr->gen_buffer();
+		ptr->set_size(size);
+		//save
+		auto last_bind = s_bind_context.m_const_buffer;
+		unbind_CB(last_bind);
+		//set size
 		glBindBuffer(GL_UNIFORM_BUFFER, *ptr);
 		glBufferData(GL_UNIFORM_BUFFER, size, data, GL_STATIC_DRAW);
+		//bind last
+		unbind_CB(last_bind);
+		//return
 		return ptr;
 	}
 
@@ -815,8 +846,16 @@ namespace Render
 	{
 		auto ptr = new VertexBuffer();
 		ptr->gen_buffer();
+		ptr->set_size(stride*n);
+		//save
+		auto last_bind = s_bind_context.m_vertex_buffer;
+		unbind_VBO(last_bind);
+		//set size
 		glBindBuffer(GL_ARRAY_BUFFER, *ptr);
 		glBufferData(GL_ARRAY_BUFFER, stride*n, vbo, GL_STATIC_DRAW);
+		//bind last
+		bind_VBO(last_bind);
+		//return
 		return ptr;
 	}
 
@@ -824,8 +863,16 @@ namespace Render
 	{
 		auto ptr = new IndexBuffer();
 		ptr->gen_buffer();
+		ptr->set_size(sizeof(unsigned int)*size);
+		//save
+		auto last_bind = s_bind_context.m_index_buffer;
+		unbind_IBO(last_bind);
+		//set size
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ptr);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*size, ibo, GL_STATIC_DRAW);
+		//bind last
+		bind_IBO(last_bind);
+		//return
 		return ptr;
 	}
 
@@ -1896,8 +1943,12 @@ namespace Render
         //else
         GLint uid =  glGetUniformBlockIndex(shader->m_shader_id,uname.c_str());
         if (uid < 0) return nullptr;
+		//new index
+		GLuint bind = shader->get_new_constat_buffer_bind_index();
+		//buind index
+		glUniformBlockBinding(shader->m_shader_id, uid, bind);
         //add and return
-        return &shader->add_uniform_const_buffer(uname, UniformConstBufferGL4(((ContextGL4*)this), shader, uid));
+        return &shader->add_uniform_const_buffer(uname, UniformConstBufferGL4(((ContextGL4*)this), shader, uid, bind));
     }
 
 	/*
