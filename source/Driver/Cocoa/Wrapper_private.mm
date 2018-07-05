@@ -420,6 +420,8 @@ namespace Cocoa
         cocoa_create_window(*window_cocoa, info);
         //opengl
         window_cocoa->m_context = cocoa_create_context(info);
+        //set view
+        [window_cocoa->m_context setView: window_cocoa->m_view];
         //ref to conteiner
         window_cocoa->m_window_ref = window;
         //search
@@ -573,10 +575,14 @@ namespace Cocoa
     //native
     void* Window::native() const
     {
-        //cast
-        const auto* window = (const Cocoa::WindowCocoa*)m_native;
-        //
-        return (__bridge void*)window->narive();
+        //get window native from window
+        if(m_native)
+        {
+            const auto* window = (const Cocoa::WindowCocoa*)m_native;
+            return (__bridge void*)window->narive();
+        }
+        //fail
+        return nullptr;
     }
     
     void* Window::conteiner() const
@@ -586,7 +592,14 @@ namespace Cocoa
     
 	DeviceResources*  Window::device() const
 	{
-		return nullptr;
+        //get device from window
+        if(m_native)
+        {
+            const auto* window = (const Cocoa::WindowCocoa*)m_native;
+            return window->device();
+        }
+        //fail
+        return nullptr;
 	}
 
     bool Window::valid() const
