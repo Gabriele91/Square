@@ -433,12 +433,7 @@ namespace Resource
 		////////////////////////////////////////////////////////////////////////////////////////////////////
 		if (is_hlsl)
 		{
-		#ifdef FORCE_COLUMN_MAJOR
-			source = "#pragma pack_matrix( column_major )\n" + source;
-		#endif
-		#ifdef FORCE_ROW_MAJOR
 			source = "#pragma pack_matrix( row_major )\n" + source;
-		#endif
 		}
 		else
 		{

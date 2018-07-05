@@ -192,11 +192,10 @@ public:
 		//int 
 		build_buffers();
     }
-	//struct vertex
-	ConstantBufferStruct Vertex
+	struct Vertex
 	{
 		Square::Vec3 m_position;
-		Square::Vec3 m_color;
+		Square::Vec3 m_color;   
 	};
 
 	Square::Shared< Square::Render::ConstBuffer >  m_cbtransform;
@@ -264,7 +263,7 @@ public:
 			//transform
 			m_cbtransform = Render::stream_constant_buffer<UniformBufferTransform>(&render());
 			auto utransform = Render::map_buffer<UniformBufferTransform>(&render(), m_cbtransform.get());
-			utransform->m_position = { 0,0,-4.0 };
+			utransform->m_position = { 0,0,-5.0 };
 			utransform->m_scale = { 1,1,1 };
 			utransform->m_rotation = Mat3(1);
 			utransform->m_model = translate(Mat4(1.0f), { utransform->m_position });
@@ -276,7 +275,7 @@ public:
 			ucamera->m_viewport = { 0, 0, 1280, 768 };
 			ucamera->m_position = { 0, 2.0,0 };
 			ucamera->m_projection = perspective<float>(radians(90.0f), ucamera->m_viewport.z / ucamera->m_viewport.w, 0.1f,100.0f);
-			ucamera->m_view = look_at(ucamera->m_position, Vec3(0.0, 0.0, -4.0), Vec3(0.0, 1.0, 0.0));
+			ucamera->m_view = look_at(ucamera->m_position, Vec3(0.0, 0.0, -5.0), Vec3(0.0, 1.0, 0.0));
 			ucamera->m_model = inverse(ucamera->m_view);
 			Render::unmap_buffer(&render(), m_cbcamera.get());
 			
