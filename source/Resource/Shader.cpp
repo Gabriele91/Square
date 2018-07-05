@@ -18,8 +18,6 @@
 #include <fstream>
 #include <sstream>
 #include <list>
-//#define FORCE_COLUMN_MAJOR
-#define FORCE_ROW_MAJOR
 
 namespace Square
 {
@@ -361,9 +359,6 @@ namespace Resource
         //commondo header
         const static std::string shader_commond_header
         (
-		#ifdef FORCE_COLUMN_MAJOR
-		"#pragma pack_matrix( row_major )\n"
-		#endif
         "#define IVec2 int2\n"
         "#define IVec3 int3\n"
         "#define IVec4 int4\n"
@@ -447,12 +442,8 @@ namespace Resource
 		}
 		else
 		{
-		#ifdef FORCE_COLUMN_MAJOR
-			source = "#pragma pack_matrix( row_major )\n" + source;
-		#endif
-		#ifdef FORCE_ROW_MAJOR
 			source = "#pragma pack_matrix( column_major )\n" + source;
-		#endif
+			source = "#define mul(x,y) mul(y,x)\n" + source; //trick mul
 		}
 		////////////////////////////////////////////////////////////////////////////////////////////////////
 		//init all inputs
@@ -472,8 +463,6 @@ namespace Resource
 			shader_output_info[type].formatting.alwaysBracedScopes = true;
 			shader_output_info[type].options.separateShaders = true;
 			shader_output_info[type].options.separateSamplers = true;
-			#ifdef FORCE_COLUMN_MAJOR
-			#endif
 			shader_output_info[type].nameMangling.inputPrefix = "sq_";
 			shader_output_info[type].nameMangling.outputPrefix = "sq_";
 			shader_output_info[type].nameMangling.useAlwaysSemantics = true;
@@ -504,10 +493,6 @@ namespace Resource
 					}
 					else
 					{
-						#ifdef FORCE_COLUMN_MAJOR
-						//brutal replace
-						replace_all(shader_sources[type], "layout(std140, row_major)", "layout(std140, column_major)");
-						#endif
 						//add inf
 						shader_info.push_back
 						(Render::ShaderSourceInformation

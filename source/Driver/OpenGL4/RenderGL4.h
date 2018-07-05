@@ -239,7 +239,7 @@ namespace Render
     {
     public:
         //create buffer ref
-        UniformConstBufferGL4(ContextGL4* context, Shader* shader, GLint id);
+        UniformConstBufferGL4(ContextGL4* context, Shader* shader, GLint id, GLuint  bind);
         UniformConstBufferGL4();
         //bind
         virtual void bind(const ConstBuffer*);
@@ -253,7 +253,8 @@ namespace Render
         const ConstBuffer* m_const_buffer;
         ContextGL4*        m_context;
         Shader*            m_shader;
-        GLint              m_id;
+		GLint              m_id;
+		GLuint             m_bind;
     };
 	//SHADER
 	class Shader
@@ -300,7 +301,11 @@ namespace Render
 				m_shader_id = 0;
 			}
 		}
-
+		//new bind index
+		unsigned int get_new_constat_buffer_bind_index()
+		{
+			return m_bind_cb_index++;
+		}
         //add error log
         void push_compiler_error(const ShaderCompileError& error_log)
         {
@@ -337,6 +342,7 @@ namespace Render
         }
         
 		//context
+		unsigned int m_bind_cb_index{ 0 };
 		unsigned int m_shader_id{ 0 };      // shader program
 		unsigned int m_shaders[ST_N_SHADER];// shaders
 

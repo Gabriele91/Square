@@ -18,7 +18,7 @@ sub_effect
     {
         pass 
         {
-            zbuffer less //always
+            zbuffer less
             blend off
             cullface off
             lights off
@@ -61,11 +61,9 @@ sub_effect
                 {    
 
                     Vec4 position = Vec4(input.m_position, 1.0f);
-
                     position = mul(position, model_model);
                     position = mul(position, camera_view);
                     position = mul(position, camera_projection);
-
                     VertexShaderOutput output;
                     output.m_position = position;
                     output.m_color = Vec4(input.m_color.rgb, 1.0f);
