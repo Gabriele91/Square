@@ -192,6 +192,7 @@ public:
 		//int 
 		build_buffers();
     }
+    
 	struct Vertex
 	{
 		Square::Vec3 m_position;
