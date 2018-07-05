@@ -431,8 +431,30 @@ namespace Render
 
 		size_t components() const
 		{
-			int i_strip = (int)m_strip;
-			return (size_t)((i_strip % 4) + 1);
+			switch (m_strip)
+			{
+			case AST_FLOAT:
+			case AST_INT:
+			case AST_UINT:
+			case AST_TLESS: return 1;
+
+			case AST_FLOAT2:
+			case AST_INT2:
+			case AST_UINT2:
+			case AST_TLESS2: return 2;
+
+			case AST_FLOAT3:
+			case AST_INT3:
+			case AST_UINT3:
+			case AST_TLESS3: return 3;
+
+			case AST_FLOAT4:
+			case AST_INT4:
+			case AST_UINT4:
+			case AST_TLESS4: return 4;
+
+			default: return 0; break;
+			}
 		}
 
 		size_t size() const
@@ -447,6 +469,10 @@ namespace Render
 	public:
 
 		using raw_attribute_list = std::vector<Attribute>;
+
+		AttributeList() :m_size(0)
+		{
+		}
 
 		AttributeList(const std::initializer_list<Attribute>& atts) :m_size(0)
 		{
@@ -468,6 +494,11 @@ namespace Render
 		{
 			m_list.push_back(attr);
 			m_size += attr.size();
+		}
+
+		void size(size_t s)
+		{
+			m_size = s;
 		}
 
 		size_t size() const
