@@ -6,7 +6,6 @@
 //
 #include "Window_private.h"
 
-
 //VIEW ENABLE RIGHT CLICK
 @implementation NSSquareView
 - (void)rightMouseDown:(NSEvent *)theEvent
@@ -129,7 +128,6 @@ namespace Cocoa
     
     void WindowCocoa::swap() const
     {
-        //glSwapAPPLE();
         [m_context flushBuffer];
     }
     

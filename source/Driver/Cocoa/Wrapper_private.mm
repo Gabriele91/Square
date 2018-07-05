@@ -279,8 +279,9 @@ namespace Cocoa
         //type context
         int i=0;
         NSOpenGLPixelFormatAttribute attributes[32];
-        attributes[i++]   = NSOpenGLPFANoRecovery;
-        //attributes[i++]   = NSOpenGLPFAAccelerated;
+        attributes[i++]   = NSOpenGLPFANoRecovery;  
+        attributes[i++]   = NSOpenGLPFAAccelerated;
+        
         attributes[i++]   = NSOpenGLPFADoubleBuffer;
         attributes[i++]   = NSOpenGLPFAColorSize;
         attributes[i++]   = info.m_context.m_color;
@@ -320,8 +321,9 @@ namespace Cocoa
         
         NSOpenGLPixelFormat *pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
         NSOpenGLContext* open_gl_context = [[NSOpenGLContext alloc]  initWithFormat:pixelFormat shareContext:nil];
+        
         //swap interval
-        GLint value = 1;
+        GLint value = 0;
         [open_gl_context setValues:&value forParameter:NSOpenGLCPSwapInterval];
         /////////////////////////
         return open_gl_context;
