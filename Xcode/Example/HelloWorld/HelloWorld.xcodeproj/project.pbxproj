@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E02600D6206B0D3D000328DB /* libSqOpenGL4.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E02600D2206B0B56000328DB /* libSqOpenGL4.dylib */; };
-		E02600D7206B0D3D000328DB /* libSquare.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E02600D3206B0B56000328DB /* libSquare.dylib */; };
 		E02600D8206B0D46000328DB /* libSqOpenGL4.dylib in Resources */ = {isa = PBXBuildFile; fileRef = E02600D2206B0B56000328DB /* libSqOpenGL4.dylib */; };
 		E02600D9206B0D46000328DB /* libSquare.dylib in Resources */ = {isa = PBXBuildFile; fileRef = E02600D3206B0B56000328DB /* libSquare.dylib */; };
 		E044C4C1206AA8B8003D4406 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E044C4C0206AA8B8003D4406 /* Assets.xcassets */; };
@@ -34,8 +32,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E02600D6206B0D3D000328DB /* libSqOpenGL4.dylib in Frameworks */,
-				E02600D7206B0D3D000328DB /* libSquare.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -204,6 +200,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -264,7 +261,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -281,6 +278,7 @@
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../build/Release/";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -293,7 +291,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = HelloWorld/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/Resources @executable_path/../Resources";
+				OTHER_LDFLAGS = "-lSquare";
 				PRODUCT_BUNDLE_IDENTIFIER = unipg.HelloWorld;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -307,7 +306,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = HelloWorld/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/Resources @executable_path/../Resources";
+				OTHER_LDFLAGS = "-lSquare";
 				PRODUCT_BUNDLE_IDENTIFIER = unipg.HelloWorld;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

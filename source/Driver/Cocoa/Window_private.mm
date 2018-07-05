@@ -96,6 +96,9 @@ namespace Cocoa
     
     WindowCocoa::WindowCocoa()
     {
+        m_window = nullptr;
+        m_view   = nullptr;
+        m_context= nullptr;
         m_device = new DeviceResourcesGL();
     }
     
