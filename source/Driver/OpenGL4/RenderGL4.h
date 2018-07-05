@@ -80,7 +80,9 @@ namespace Render
 	class InputLayout
 	{
 	public:
-		AttributeList m_list;
+
+		std::vector<GLint> m_locations;
+		AttributeList      m_list;
 	};
 
 	//TEXTURE

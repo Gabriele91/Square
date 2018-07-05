@@ -1194,9 +1194,53 @@ namespace Render
 	/*
 		InputLayout
 	*/
+	static inline const char* attribute_to_string(AttributeType type)
+	{
+		switch (type)
+		{ 
+		case Square::Render::ATT_POSITION0: return "POSITION0";
+		case Square::Render::ATT_NORMAL0:   return "NORMAL0";
+		case Square::Render::ATT_TEXCOORD0: return "TEXCOORD0";
+		case Square::Render::ATT_TANGENT0:  return "TANGENT0";
+		case Square::Render::ATT_BINORMAL0: return "BINORMAL0";
+		case Square::Render::ATT_COLOR0:	return "COLOR0";
+
+		case Square::Render::ATT_POSITION1: return "POSITION1";
+		case Square::Render::ATT_NORMAL1:   return "NORMAL1";
+		case Square::Render::ATT_TEXCOORD1: return "TEXCOORD1";
+		case Square::Render::ATT_TANGENT1:  return "TANGENT1";
+		case Square::Render::ATT_BINORMAL1: return "BINORMAL1";
+		case Square::Render::ATT_COLOR1:	return "COLOR1";
+
+		case Square::Render::ATT_NORMAL2:   return "NORMAL2";
+		case Square::Render::ATT_TEXCOORD2: return "TEXCOORD2";
+		case Square::Render::ATT_TANGENT2:  return "TANGENT2";
+		case Square::Render::ATT_BINORMAL2: return "BINORMAL2";
+		case Square::Render::ATT_COLOR2:	return "COLOR2";
+
+		default: return "";
+		}
+	}
+
 	InputLayout* ContextGL4::create_IL(Shader* shader, const AttributeList& atl)
 	{
-		return new InputLayout{ atl };
+		//alloc
+		InputLayout* output = new InputLayout();
+		//add fiels
+		for (auto& attr : atl)
+		{
+			GLint location = glGetAttribLocation(shader->m_shader_id, attribute_to_string(attr.m_attribute));
+			//add
+			if (location > -1)
+			{
+				output->m_locations.push_back(location);
+				output->m_list.push(attr);
+			}
+		}
+		//size is the same of input
+		output->m_list.size(atl.size());
+		//
+		return output;
 	}
 
 	size_t ContextGL4::size_IL(const InputLayout* layout)
@@ -1278,21 +1322,26 @@ namespace Render
             {
                 unbind_IL(s_bind_context.m_input_layout);
             }
+			//id counte
+			int location_id = 0;
             //bind
             for (const Attribute& data : layout->m_list)
             {
-                glEnableVertexAttribArray(data.m_attribute);
+				//get location
+				GLint location = layout->m_locations[location_id++];
+				//bind attribute
+                glEnableVertexAttribArray(location);
 				//types
 				if (type_component_is_integer(data.m_strip))
 					glVertexAttribIPointer(
-						data.m_attribute,
+						location,
 						(GLint)data.components(),
 						type_component(data.m_strip),
 						(GLuint)layout->m_list.size(),
 						((char *)NULL + (data.m_offset))
 					);
 				else glVertexAttribPointer(
-					data.m_attribute,
+					location,
 					(GLint)data.components(),
 					type_component(data.m_strip),
 					GL_FALSE,
