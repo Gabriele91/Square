@@ -16,6 +16,8 @@ namespace Video
 {
 namespace Cocoa
 {
+    struct SQUARE_API DeviceResourcesGL;
+    
     class SQUARE_API WindowCocoa
     {
     public:
@@ -24,6 +26,7 @@ namespace Cocoa
         NSSquareView*    m_view      { nullptr };   /* view */
         NSOpenGLContext* m_context   { nullptr };   /* OpenGL context */
         Window*          m_window_ref{ nullptr };
+        DeviceResources* m_device    { nullptr };
         
         WindowCocoa();
         
@@ -58,6 +61,8 @@ namespace Cocoa
         virtual bool enable_fullscreen(bool enable);
         
         virtual NSSquareView* narive() const;
+        
+        virtual DeviceResources* device() const;
     };
 }
 }
