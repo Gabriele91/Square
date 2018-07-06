@@ -29,8 +29,8 @@ REM include dir build
 @mkdir "%TOP%dependencies\x64\include\spirv_cross\"
 REM copy
 @move /y "%SOURCE_DIR%Release\*.lib" "%TOP%dependencies\x64\lib"
-@move /y "%SOURCE_DIR%include\spirv_cross\*.h" "%TOP%dependencies\x64\include\spirv_cross\"
-@move /y "%SOURCE_DIR%include\spirv_cross\*.hpp" "%TOP%dependencies\x64\include\spirv_cross\"
+@move /y "%SOURCE_DIR%*.h" "%TOP%dependencies\x64\include\spirv_cross\"
+@move /y "%SOURCE_DIR%*.hpp" "%TOP%dependencies\x64\include\spirv_cross\"
 REM delete
 @del /s /q  "%SOURCE_DIR%*"
 @rmdir  /s /q  "%SOURCE_DIR%"
