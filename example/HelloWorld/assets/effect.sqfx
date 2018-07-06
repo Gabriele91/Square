@@ -20,7 +20,7 @@ sub_effect
         {
             zbuffer less
             blend off
-            cullface off
+            cullface back
             lights off
             shader source 
             {
