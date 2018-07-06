@@ -27,9 +27,24 @@ namespace Geometry
     SQUARE_API OBoundingBox obounding_box_from_points(const std::vector< Vec3 >& points);
 
     SQUARE_API OBoundingBox obounding_box_from_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points);
+    
+    SQUARE_API AABoundingBox aabounding_from_points(const std::vector< Vec3 >& points);
+    
+    SQUARE_API AABoundingBox aabounding_from_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points);
 
     SQUARE_API Sphere sphere_from_points(const std::vector< Vec3 >& points);
 
     SQUARE_API Sphere sphere_from_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points);
+    
+    //cast
+    SQUARE_API OBoundingBox to_obounding(const AABoundingBox& aabb);
+    SQUARE_API OBoundingBox to_obounding(const Sphere& sphere);
+    
+    SQUARE_API AABoundingBox to_aabounding(const OBoundingBox& obb);
+    SQUARE_API AABoundingBox to_aabounding(const Sphere& sphere);
+    
+    SQUARE_API Sphere to_sphere(const OBoundingBox& obb);
+    SQUARE_API Sphere to_sphere(const AABoundingBox& aabb);
+
 }
 }

@@ -24,20 +24,30 @@ namespace Geometry
 			m_radius   = in_radius;
 		}
 
-		void position(const Vec3& in_position)
-		{
-			m_position = in_position;
-		}
+        void position(const Vec3& in_position)
+        {
+            m_position = in_position;
+        }
+        
+        void center(const Vec3& in_center)
+        {
+            m_position = in_center;
+        }
 
 		void radius(float in_radius)
 		{
 			m_radius = in_radius;
 		}
 
-		const Vec3& get_position() const
-		{
-			return m_position;
-		}
+        const Vec3& get_position() const
+        {
+            return m_position;
+        }
+        
+        const Vec3& get_center() const
+        {
+            return m_position;
+        }
 
 		float get_radius() const
 		{

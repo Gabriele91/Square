@@ -237,6 +237,36 @@ namespace Geometry
 		return obounding_box_from_covariance_matrix(C, points, pos_offset, vertex_size, n_points);
 	}
 	
+    
+    SQUARE_API AABoundingBox aabounding_from_points(const std::vector< Vec3 >& points)
+    {
+        return aabounding_from_points((const unsigned char*)points.data(), 0, sizeof(Vec3), points.size());
+    }
+    
+    SQUARE_API AABoundingBox aabounding_from_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points)
+    {
+        //none
+        if(!n_points) return AABoundingBox();
+#define att_vertex(i) (*(const Vec3*)(points+vertex_size*(i)+pos_offset))
+        //min max for aabb
+        Vec3  vertex_min = att_vertex(0);
+        Vec3  vertex_max = att_vertex(0);
+        //compute min/max
+        for (size_t i = 1; i < (int)n_points; i++)
+        {
+            vertex_min.x = std::min(vertex_min.x, att_vertex(i).x);
+            vertex_min.y = std::min(vertex_min.y, att_vertex(i).y);
+            vertex_min.z = std::min(vertex_min.z, att_vertex(i).z);
+            
+            vertex_max.x = std::min(vertex_max.x, att_vertex(i).x);
+            vertex_max.y = std::min(vertex_max.y, att_vertex(i).y);
+            vertex_max.z = std::min(vertex_max.z, att_vertex(i).z);
+        }
+#undef att_vertex
+        return AABoundingBox(vertex_min, vertex_max);
+        
+    }
+    
 	Sphere sphere_from_points(const std::vector< Vec3 >& points)
 	{
 		return sphere_from_points((const unsigned char*)points.data(), 0, sizeof(Vec3), points.size());
@@ -260,5 +290,36 @@ namespace Geometry
 		return Sphere(sphere_position, sphere_radius);
 	}
 
+    //cast
+    SQUARE_API OBoundingBox to_obounding(const AABoundingBox& aabb)
+    {
+        return OBoundingBox(Mat3(1), aabb.get_center(), aabb.get_extension());
+    }
+    SQUARE_API OBoundingBox to_obounding(const Sphere& sphere)
+    {
+        return OBoundingBox(Mat3(1), sphere.get_position(), Vec3(sphere.get_radius()));
+    }
+    
+    SQUARE_API AABoundingBox to_aabounding(const OBoundingBox& obb)
+    {
+        return aabounding_from_points(obb.get_bounding_box()); //too slow
+    }
+    SQUARE_API AABoundingBox to_aabounding(const Sphere& sphere)
+    {
+        return AABoundingBox(sphere.get_position() - Vec3(sphere.get_radius()),
+                             sphere.get_position() + Vec3(sphere.get_radius()));
+    }
+    
+    SQUARE_API Sphere to_sphere(const OBoundingBox& obb)
+    {
+        return sphere_from_points(obb.get_bounding_box()); //too slow
+    }
+    SQUARE_API Sphere to_sphere(const AABoundingBox& aabb)
+    {
+        auto extension = aabb.get_extension();
+        auto radius    = std::max(std::max(extension.x,extension.y), extension.z);
+        return Sphere(aabb.get_center(), radius);
+    }
+    
 }
 }
