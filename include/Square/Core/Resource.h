@@ -46,7 +46,7 @@ namespace Square
 
 	protected:
 		//info resource
-		const char* m_resource_name;
+		const char* m_resource_name{nullptr};
 		//set values
 		void resource_name(const char* name) { m_resource_name = name; }
 		//friend
