@@ -4,6 +4,7 @@
 //  Created by Gabriele on 18/10/17.
 //  Copyright © 2016 Gabriele. All rights reserved.
 //
+#include  <algorithm>
 #include "Square/Config.h"
 #include "Square/Geometry/CreateBounding.h"
 
@@ -238,12 +239,12 @@ namespace Geometry
 	}
 	
     
-    SQUARE_API AABoundingBox aabounding_from_points(const std::vector< Vec3 >& points)
+    AABoundingBox aabounding_from_points(const std::vector< Vec3 >& points)
     {
         return aabounding_from_points((const unsigned char*)points.data(), 0, sizeof(Vec3), points.size());
     }
     
-    SQUARE_API AABoundingBox aabounding_from_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points)
+    AABoundingBox aabounding_from_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points)
     {
         //none
         if(!n_points) return AABoundingBox();
@@ -291,30 +292,30 @@ namespace Geometry
 	}
 
     //cast
-    SQUARE_API OBoundingBox to_obounding(const AABoundingBox& aabb)
+    OBoundingBox to_obounding(const AABoundingBox& aabb)
     {
         return OBoundingBox(Mat3(1), aabb.get_center(), aabb.get_extension());
     }
-    SQUARE_API OBoundingBox to_obounding(const Sphere& sphere)
+    OBoundingBox to_obounding(const Sphere& sphere)
     {
         return OBoundingBox(Mat3(1), sphere.get_position(), Vec3(sphere.get_radius()));
     }
     
-    SQUARE_API AABoundingBox to_aabounding(const OBoundingBox& obb)
+    AABoundingBox to_aabounding(const OBoundingBox& obb)
     {
         return aabounding_from_points(obb.get_bounding_box()); //too slow
     }
-    SQUARE_API AABoundingBox to_aabounding(const Sphere& sphere)
+    AABoundingBox to_aabounding(const Sphere& sphere)
     {
         return AABoundingBox(sphere.get_position() - Vec3(sphere.get_radius()),
                              sphere.get_position() + Vec3(sphere.get_radius()));
     }
     
-    SQUARE_API Sphere to_sphere(const OBoundingBox& obb)
+    Sphere to_sphere(const OBoundingBox& obb)
     {
         return sphere_from_points(obb.get_bounding_box()); //too slow
     }
-    SQUARE_API Sphere to_sphere(const AABoundingBox& aabb)
+    Sphere to_sphere(const AABoundingBox& aabb)
     {
         auto extension = aabb.get_extension();
         auto radius    = std::max(std::max(extension.x,extension.y), extension.z);
