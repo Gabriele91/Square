@@ -19,11 +19,14 @@ cd $TOP
 #copy all to diplib
 if [[ "$OSTYPE" == "linux-gnu" ]] ; then
 OS=linux
-elif [[ "$OSTYPE" == "darwin"* ]] ; then
+elif [[ "$OSTYPE" == "darwin" ]] ; then
 OS=macOS
 fi
+#mkdir 
+mkdir -p $TOP/dependencies/$OS/include/spirv_cross/
 #copy
 cp $INSTALL_DIR/lib/*.a $TOP/dependencies/$OS/lib/ 
-cp -r $INSTALL_DIR/include/ $TOP/dependencies/$OS/include/
+cp -r $INSTALL_DIR/include/spirv_cross/*.h $TOP/dependencies/$OS/include/spirv_cross/
+cp -r $INSTALL_DIR/include/spirv_cross/*.hpp $TOP/dependencies/$OS/include/spirv_cross/
 #delete all
 yes | rm -R $SOURCE_DIR

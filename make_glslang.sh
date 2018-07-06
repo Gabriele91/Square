@@ -19,11 +19,11 @@ cd $TOP
 #copy all to diplib
 if [[ "$OSTYPE" == "linux-gnu" ]] ; then
 OS=linux
-elif [[ "$OSTYPE" == "darwin"* ]] ; then
+elif [[ "$OSTYPE" == "darwin" ]] ; then
 OS=macOS
 fi
 #copy
 cp $INSTALL_DIR/lib/*.a $TOP/dependencies/$OS/lib/ 
-cp -r $INSTALL_DIR/include/ $TOP/dependencies/$OS/include/
+cp -rf $INSTALL_DIR/include/ $TOP/dependencies/$OS/
 #delete all
 yes | rm -R $SOURCE_DIR
