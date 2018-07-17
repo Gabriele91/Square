@@ -569,6 +569,8 @@ namespace Render
 
 	bool ContextDX11::init(Video::DeviceResources* resource)
 	{
+		//disable vsync
+		resource->set_vsync(false);
 		//save ref to device resouces
 		m_device_resouces = resource;
 		//window

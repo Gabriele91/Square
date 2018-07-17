@@ -77,6 +77,14 @@ namespace Cocoa
             //none
         }
         
+		virtual bool get_vsync() { return m_vsync; }
+		virtual void set_vsync(bool vsync)
+		{ 
+			GLint interval = (GLint)vsync;
+			[m_glcontext setValue: &interval forParameter: NSOpenGLCPSwapInterval];
+			m_vsync = vsync;
+		}
+
         virtual void* get_device()                       override { return (__bridge void*)m_glcontext; }
         virtual void* get_device_context(size_t i = 0) override { return (void*)nullptr; }
         virtual void* get_swap_chain()                   override { return (void*)nullptr; }
@@ -91,6 +99,7 @@ namespace Cocoa
         
         const NSOpenGLContext* m_glcontext;
         const NSSquareView*  m_view;
+		bool  m_vsync{ true };
     };
     
     WindowCocoa::WindowCocoa()

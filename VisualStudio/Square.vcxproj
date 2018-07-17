@@ -91,12 +91,12 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;xsc_core_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;HLSL2ALLd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -105,12 +105,12 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;xsc_core_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;HLSL2ALLd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -121,14 +121,14 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;xsc_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;HLSL2ALL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -139,14 +139,14 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;xsc_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;GDI32.lib;Opengl32.lib;zlibstatic.lib;libbz2.lib;HLSL2ALL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
