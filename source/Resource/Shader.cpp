@@ -14,7 +14,7 @@
 #include "Square/Core/ClassObjectRegistration.h"
 //compiler HLSL2ALL
 #include <HLSL2ALL/HLSL2ALL.h>
-
+#include <iostream>
 namespace Square
 {
 namespace Resource
@@ -394,10 +394,16 @@ namespace Resource
 			else
 			{
 				HLSL2ALL::GLSLConfig glsl_config;
-				glsl_config.m_rename_input_with_semantic = type == HLSL2ALL::ST_VERTEX_SHADER;
+                glsl_config.m_rename_input_with_semantic = type == HLSL2ALL::ST_VERTEX_SHADER;
+                #ifdef __APPLE__
+                glsl_config.m_rename_output_with_locations = type == HLSL2ALL::ST_VERTEX_SHADER;
+                glsl_config.m_rename_input_with_locations = type == HLSL2ALL::ST_FRAGMENT_SHADER;
+                #endif
 				glsl_config.m_rename_position_in_position0 = true;
 				glsl_config.m_fixup_clipspace = true;
 				glsl_config.m_flip_vert_y = false;
+                glsl_config.m_version = 410;
+                glsl_config.m_enable_420pack_extension = false;
 				//compile
 				if (!HLSL2ALL::spirv_to_glsl(shader_spirv_out, shader_sources[type], shader_spirv_errors, glsl_config))
 				{
@@ -416,6 +422,7 @@ namespace Resource
 					, shader_sources[type]   //source output ref
 					, 0						 //line 0
 				});
+                std::cout << "shader: \n" << shader_sources[type] << "\n";
 			}
 		}
 		////////////////////////////////////////////////////////////////////////////////
