@@ -59,7 +59,11 @@ namespace Cocoa
     {
     public:
         
-        DeviceResourcesGL(const NSSquareView* view = nullptr,const NSOpenGLContext* glcontext = nullptr): m_view(view), m_glcontext(glcontext){}
+        DeviceResourcesGL(NSSquareView* view = nullptr, NSOpenGLContext* glcontext = nullptr)
+        : m_view(view)
+        , m_glcontext(glcontext)
+        {
+        }
         virtual ~DeviceResourcesGL() {}
         //implement
         virtual unsigned int width() override
@@ -77,11 +81,14 @@ namespace Cocoa
             //none
         }
         
-		virtual bool get_vsync() { return m_vsync; }
-		virtual void set_vsync(bool vsync)
+		virtual bool get_vsync() override
+        {
+            return m_vsync;
+        }
+		virtual void set_vsync(bool vsync) override
 		{ 
 			GLint interval = (GLint)vsync;
-			[m_glcontext setValue: &interval forParameter: NSOpenGLCPSwapInterval];
+            [m_glcontext setValues: (const GLint * _Nonnull)&interval forParameter: NSOpenGLCPSwapInterval];
 			m_vsync = vsync;
 		}
 
@@ -97,8 +104,8 @@ namespace Cocoa
         
         virtual size_t number_of_device_context()  override { return 0; }
         
-        const NSOpenGLContext* m_glcontext;
-        const NSSquareView*  m_view;
+        NSOpenGLContext* m_glcontext;
+        NSSquareView*  m_view;
 		bool  m_vsync{ true };
     };
     
