@@ -152,7 +152,8 @@ namespace Render
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 	};
-    //UNIFORM
+   
+	//UNIFORM
     class UniformGL4 : public Uniform
     {
     public:
@@ -236,6 +237,99 @@ namespace Render
         
     };
     
+	//UNIFORM Global UBO
+	class UniformGLGUBO : public Uniform
+	{
+	public:
+		virtual void set(Texture* in_texture) override;
+		virtual void set(int i) override;
+		virtual void set(float f) override;
+		virtual void set(double d) override;
+
+		virtual void set(const IVec2& v2) override;
+		virtual void set(const IVec3& v3) override;
+		virtual void set(const IVec4& v4) override;
+
+		virtual void set(const Vec2& v2) override;
+		virtual void set(const Vec3& v3) override;
+		virtual void set(const Vec4& v4) override;
+		virtual void set(const Mat3& m3) override;
+		virtual void set(const Mat4& m4) override;
+
+		virtual void set(const DVec2& v2) override;
+		virtual void set(const DVec3& v3) override;
+		virtual void set(const DVec4& v4) override;
+		virtual void set(const DMat3& m3) override;
+		virtual void set(const DMat4& m4) override;
+
+		virtual void set(Texture* t, size_t n) override;
+		virtual void set(const int* i, size_t n) override;
+		virtual void set(const float* f, size_t n) override;
+		virtual void set(const double* d, size_t n) override;
+
+		virtual void set(const IVec2* v2, size_t n) override;
+		virtual void set(const IVec3* v3, size_t n) override;
+		virtual void set(const IVec4* v4, size_t n) override;
+
+		virtual void set(const Vec2* v2, size_t n) override;
+		virtual void set(const Vec3* v3, size_t n) override;
+		virtual void set(const Vec4* v4, size_t n) override;
+		virtual void set(const Mat3* m3, size_t n) override;
+		virtual void set(const Mat4* m4, size_t n) override;
+
+		virtual void set(const DVec2* v2, size_t n) override;
+		virtual void set(const DVec3* v3, size_t n) override;
+		virtual void set(const DVec4* v4, size_t n) override;
+		virtual void set(const DMat3* m3, size_t n) override;
+		virtual void set(const DMat4* m4, size_t n) override;
+
+		virtual void set(const std::vector < Texture* >& t) override;
+		virtual void set(const std::vector < int >& i)      override;
+		virtual void set(const std::vector < float >& f)    override;
+		virtual void set(const std::vector < double >& d)   override;
+
+		virtual void set(const std::vector < IVec2 >& v2) override;
+		virtual void set(const std::vector < IVec3 >& v3) override;
+		virtual void set(const std::vector < IVec4 >& v4) override;
+
+		virtual void set(const std::vector < Vec2 >& v2) override;
+		virtual void set(const std::vector < Vec3 >& v3) override;
+		virtual void set(const std::vector < Vec4 >& v4) override;
+		virtual void set(const std::vector < Mat3 >& m3) override;
+		virtual void set(const std::vector < Mat4 >& m4) override;
+
+		virtual void set(const std::vector < DVec2 >& v2) override;
+		virtual void set(const std::vector < DVec3 >& v3) override;
+		virtual void set(const std::vector < DVec4 >& v4) override;
+		virtual void set(const std::vector < DMat3 >& m3) override;
+		virtual void set(const std::vector < DMat4 >& m4) override;
+
+		virtual bool is_valid() override;
+
+		virtual Shader* get_shader() override;
+
+		UniformGLGUBO(ContextGL4* context, Shader* shader, unsigned char* buffer, size_t offset);
+
+		UniformGLGUBO();
+
+		virtual ~UniformGLGUBO();
+
+	protected:
+		ContextGL4 *   m_context{ nullptr };
+		Shader*        m_shader{ nullptr };
+		size_t         m_offset{ 0 };
+		unsigned char* m_buffer{ nullptr };
+		//write
+		template < typename T > void primitive_write(const T& value)
+		{
+			std::memcpy(m_buffer + m_offset, &value, sizeof(T));
+		}
+		template < typename T > void array_write(const T* value, size_t n)
+		{
+			std::memcpy(m_buffer + m_offset, value, sizeof(T)*n);
+		}
+	};
+
     //buffer
     class UniformConstBufferGL4 : public UniformConstBuffer
     {
@@ -252,6 +346,7 @@ namespace Render
         virtual ~UniformConstBufferGL4();
         
     protected:
+		friend class Shader;
         const ConstBuffer* m_const_buffer;
         ContextGL4*        m_context;
         Shader*            m_shader;
@@ -263,8 +358,8 @@ namespace Render
 	{
 	public:
 		/////////////////////////////////////////////////////////////////////////
-        using UniformMap             = std::unordered_map< std::string, UniformGL4 >;
-        using UniformPair            = std::pair< std::string, UniformGL4 >;
+        using UniformMap             = std::unordered_map< std::string, Unique<Uniform> >;
+        using UniformPair            = std::pair< std::string, Unique<Uniform> >;
         using UniformConstBufferMap  = std::unordered_map< std::string, UniformConstBufferGL4 >;
         using UniformConstBufferPair = std::pair< std::string, UniformConstBufferGL4 >;
         //shader compile errors
@@ -279,52 +374,49 @@ namespace Render
 		static const char* glsl_shader_names[ST_N_SHADER];
 		static GLenum      glsl_type_from_square_type[ST_N_SHADER];
 		/////////////////////////////////////////////////////////////////////////
+		Shader(ContextGL4& context) : m_context(context) { }
+		
 		//delete
-		~Shader()
-		{
-			//detach and delete all shader
-			if (m_shader_id)
-			{
-				for (unsigned int& shader : m_shaders)
-				{
-					if (shader)
-					{
-						//detach
-						glDetachShader(m_shader_id, shader);
-						//delete
-						glDeleteShader(shader);
-						//to null
-						shader = 0;
-					}
-				}
-				//delete shader program
-				glDeleteProgram(m_shader_id);
-				//to null
-				m_shader_id = 0;
-			}
-		}
+		~Shader();
+
+		//bind / unbind
+		void bind();
+		void unbind();
+
 		//new bind index
-		unsigned int get_new_constat_buffer_bind_index()
-		{
-			return m_bind_cb_index++;
-		}
+		unsigned int get_new_constat_buffer_bind_index();
+
+		//update global buffer
+		void global_buffer_bind();
+
+		//get uniform
+		Uniform* uniform(const std::string& name);
+
+		//get uniform const buffer
+		UniformConstBuffer* uniform_const_buffer(const std::string& name);
+
         //add error log
-        void push_compiler_error(const ShaderCompileError& error_log)
-        {
-            m_errors.push_back(std::move(error_log));
-        }
+		void push_compiler_error(const ShaderCompileError& error_log);
         
-        void push_liker_error(const std::string& error_log)
-        {
-            m_liker_log += error_log;
-            m_liker_log += "\n";
-        }
+		void push_liker_error(const std::string& error_log);
         
     protected:
         //friends
         friend class ContextGL4;
-        friend class UniformGL4;
+		friend class UniformGL4;
+		friend class UniformGLGUBO;
         friend class UniformConstBufferGL4;
+
+		//Context
+		ContextGL4& m_context;
+
+		//global uniforms
+		bool						 m_global_buffer_update{ true };
+		UniformConstBufferGL4*		 m_global_buffer_ref{ nullptr };
+		ConstBuffer*				 m_global_buffer_gpu{ nullptr };
+		std::vector< unsigned char > m_global_buffer_cpu;
+		void build_global_UBO();
+		void destroy_global_ubo();
 
 		//uniforms
 		mutable UniformMap m_uniform_map;
@@ -332,16 +424,8 @@ namespace Render
 		mutable long m_uniform_ntexture{ -1 }; //n texture bind
         
         //help
-        UniformGL4& add_uniform(const std::string& name, const UniformGL4& u) const
-        {
-            auto& uref = (m_uniform_map[name] = u);
-            return uref;
-        }
-        UniformConstBufferGL4& add_uniform_const_buffer(const std::string& name, const UniformConstBufferGL4& ucb) const
-        {
-            auto& ucbref = (m_uniform_const_buffer_map[name] = ucb);
-            return ucbref;
-        }
+		Uniform& add_uniform(const std::string& name, Unique<Uniform>&& u) const;
+		UniformConstBufferGL4& add_uniform_const_buffer(const std::string& name, const UniformConstBufferGL4& ucb) const;
         
 		//context
 		unsigned int m_bind_cb_index{ 0 };

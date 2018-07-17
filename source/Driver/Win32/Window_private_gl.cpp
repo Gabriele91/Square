@@ -34,11 +34,25 @@ namespace Win32
 			GetClientRect(m_hWnd, &window_box);
 			return window_box.bottom - window_box.top;
 		}
-
-
+		
 		virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
 		{
 			//none
+		}
+
+		virtual bool get_vsync() { return m_vsync; }
+		virtual void set_vsync(bool vsync) 
+		{  
+			typedef BOOL(APIENTRY *PFNWGLSWAPINTERVALPROC)(int);
+			PFNWGLSWAPINTERVALPROC wglSwapIntervalEXT = nullptr;
+			//get ptr
+			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress("wglSwapIntervalEXT");
+			//test
+			if (wglSwapIntervalEXT)
+			{
+				m_vsync = vsync;
+				wglSwapIntervalEXT(m_vsync);
+			}
 		}
 
 		virtual void* get_device()					   override { return (void*)m_hRC; }
@@ -57,6 +71,7 @@ namespace Win32
 
 		const HWND&  m_hWnd;
 		const HGLRC& m_hRC;
+		bool  m_vsync{ true };
 	};
 
 	// OpenGL Window

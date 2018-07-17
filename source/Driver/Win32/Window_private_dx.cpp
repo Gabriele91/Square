@@ -40,6 +40,9 @@ namespace Win32
 			m_callback = callback;
 		}
 
+		virtual bool get_vsync() { return m_vsync; }
+		virtual void set_vsync(bool vsync) { m_vsync = vsync; }
+
 		//implement
 		virtual unsigned int width() override { return m_bb_desc.Width; }
 		virtual unsigned int height() override { return m_bb_desc.Height; }
@@ -92,6 +95,8 @@ namespace Win32
 		D3D11_VIEWPORT          m_viewport;
 		const WindowInfo&		m_info;
 
+		//enable/disable vsync
+		bool m_vsync;
 
 		//-----------------------------------------------------------------------------
 		// Callback
@@ -111,6 +116,8 @@ namespace Win32
 
 		m_depth_stencil = nullptr;
 		m_depth_stencil_view = nullptr;
+
+		m_vsync = false;
 	}
 	
 	DeviceResourcesDX::~DeviceResourcesDX()
@@ -218,7 +225,7 @@ namespace Win32
 	{
 		if (m_DXGI_swap_chain)
 		{
-			m_DXGI_swap_chain->Present(0, 0);
+			m_DXGI_swap_chain->Present(get_vsync(), 0);
 		}
 	}
 

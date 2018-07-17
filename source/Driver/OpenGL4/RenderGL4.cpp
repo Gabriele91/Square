@@ -5,6 +5,7 @@
 //  Copyright © 2016 Gabriele. All rights reserved.
 //
 #include "RenderGL4.h"
+#include "Square/Driver/Window.h"
 //--------------------------------------------------
 #include <iostream>
 #include <unordered_map>
@@ -111,7 +112,6 @@ namespace Render
 	};
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	//uniform
 	void UniformGL4::set(Texture* in_texture)
 	{
@@ -371,8 +371,293 @@ namespace Render
 	{
 		//none
 	}
-    
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	//uniform
+	void UniformGLGUBO::set(Texture* in_texture)
+	{
+		long n_texture = ++m_shader->m_uniform_ntexture;
+		//bind texture
+		m_context->bind_texture(in_texture, (int)n_texture, 0);
+		//bind id
+		set((int)n_texture);
+	}
+
+	void UniformGLGUBO::set(int i)
+	{
+		m_shader->global_buffer_bind();
+		primitive_write(i);
+	}
+	void UniformGLGUBO::set(float f)
+	{
+		m_shader->global_buffer_bind();
+		primitive_write(f);
+	}
+	void UniformGLGUBO::set(double d)
+	{
+		m_shader->global_buffer_bind();
+		primitive_write(d);
+	}
+
+
+	void UniformGLGUBO::set(const IVec2& v2)
+	{
+		m_shader->global_buffer_bind();
+		array_write<int>(value_ptr(v2), 2);
+	}
+	void UniformGLGUBO::set(const IVec3& v3)
+	{
+		array_write<int>(value_ptr(v3), 3);
+	}
+	void UniformGLGUBO::set(const IVec4& v4)
+	{
+		m_shader->global_buffer_bind();
+		array_write<int>(value_ptr(v4), 4);
+	}
+
+	void UniformGLGUBO::set(const Vec2& v2)
+	{
+		m_shader->global_buffer_bind();
+		array_write(value_ptr(v2), 2);
+	}
+	void UniformGLGUBO::set(const Vec3& v3)
+	{
+		m_shader->global_buffer_bind();
+		array_write(value_ptr(v3), 3);
+	}
+	void UniformGLGUBO::set(const Vec4& v4)
+	{
+		m_shader->global_buffer_bind();
+		array_write<float>(value_ptr(v4), 4);
+	}
+	void UniformGLGUBO::set(const Mat3& m3)
+	{
+		m_shader->global_buffer_bind();
+		array_write<float>(value_ptr(m3), 3 * 3);
+	}
+	void UniformGLGUBO::set(const Mat4& m4)
+	{
+		m_shader->global_buffer_bind();
+		array_write<float>(value_ptr(m4), 4 * 4);
+	}
+
+	void UniformGLGUBO::set(const DVec2& v2)
+	{
+		m_shader->global_buffer_bind();
+		array_write<double>(value_ptr(v2), 2);
+	}
+	void UniformGLGUBO::set(const DVec3& v3)
+	{
+		m_shader->global_buffer_bind();
+		array_write<double>(value_ptr(v3), 3);
+	}
+	void UniformGLGUBO::set(const DVec4& v4)
+	{
+		m_shader->global_buffer_bind();
+		array_write<double>(value_ptr(v4), 4);
+	}
+	void UniformGLGUBO::set(const DMat3& m3)
+	{
+		m_shader->global_buffer_bind();
+		array_write<double>(value_ptr(m3), 3 * 3);
+	}
+	void UniformGLGUBO::set(const DMat4& m4)
+	{
+		m_shader->global_buffer_bind();
+		array_write<double>(value_ptr(m4), 4 * 4);
+	}
+
+	void UniformGLGUBO::set(Texture* tvector, size_t n)
+	{
+		/* 3D texture? */
+		//for all
+		while (n--)
+		{
+			//bind
+			long n_texture = ++m_shader->m_uniform_ntexture;
+			//bind texture
+			m_context->bind_texture(tvector++, (int)n_texture, (int)n_texture);
+		}
+	}
+
+	void UniformGLGUBO::set(const int* i, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(i, n);
+	}
+	void UniformGLGUBO::set(const float* f, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(f, n);
+	}
+	void UniformGLGUBO::set(const double* d, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(d, n);
+	}
+
+	void UniformGLGUBO::set(const IVec2* v2, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(v2, n);
+	}
+	void UniformGLGUBO::set(const IVec3* v3, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(v3, n);
+	}
+	void UniformGLGUBO::set(const IVec4* v4, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(v4, n);
+	}
+
+	void UniformGLGUBO::set(const Vec2* v2, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(v2, n);
+	}
+	void UniformGLGUBO::set(const Vec3* v3, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(v3, n);
+	}
+	void UniformGLGUBO::set(const Vec4* v4, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(v4, n);
+	}
+	void UniformGLGUBO::set(const Mat3* m3, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(m3, n);
+	}
+	void UniformGLGUBO::set(const Mat4* m4, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(m4, n);
+	}
+
+	void UniformGLGUBO::set(const DVec2* v2, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(v2, n);
+	}
+	void UniformGLGUBO::set(const DVec3* v3, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(v3, n);
+	}
+	void UniformGLGUBO::set(const DVec4* v4, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(v4, n);
+	}
+	void UniformGLGUBO::set(const DMat3* m3, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(m3, n);
+	}
+	void UniformGLGUBO::set(const DMat4* m4, size_t n)
+	{
+		m_shader->global_buffer_bind();
+		array_write(m4, n);
+	}
+
+	void UniformGLGUBO::set(const std::vector < Texture* >& t)
+	{
+		set((Texture*)t.data(), t.size());
+	}
+	void UniformGLGUBO::set(const std::vector < int >& i)
+	{
+		set(i.data(), i.size());
+	}
+	void UniformGLGUBO::set(const std::vector < float >& f)
+	{
+		set(f.data(), f.size());
+	}
+	void UniformGLGUBO::set(const std::vector < double >& d)
+	{
+		set(d.data(), d.size());
+	}
+
+	void UniformGLGUBO::set(const std::vector < IVec2 >& v2)
+	{
+		set(v2.data(), v2.size());
+	}
+	void UniformGLGUBO::set(const std::vector < IVec3 >& v3)
+	{
+		set(v3.data(), v3.size());
+	}
+	void UniformGLGUBO::set(const std::vector < IVec4 >& v4)
+	{
+		set(v4.data(), v4.size());
+	}
+
+	void UniformGLGUBO::set(const std::vector < Vec2 >& v2)
+	{
+		set(v2.data(), v2.size());
+	}
+	void UniformGLGUBO::set(const std::vector < Vec3 >& v3)
+	{
+		set(v3.data(), v3.size());
+	}
+	void UniformGLGUBO::set(const std::vector < Vec4 >& v4)
+	{
+		set(v4.data(), v4.size());
+	}
+	void UniformGLGUBO::set(const std::vector < Mat3 >& m3)
+	{
+		set(m3.data(), m3.size());
+	}
+	void UniformGLGUBO::set(const std::vector < Mat4 >& m4)
+	{
+		set(m4.data(), m4.size());
+	}
+
+	void UniformGLGUBO::set(const std::vector < DVec2 >& v2)
+	{
+		set(v2.data(), v2.size());
+	}
+	void UniformGLGUBO::set(const std::vector < DVec3 >& v3)
+	{
+		set(v3.data(), v3.size());
+	}
+	void UniformGLGUBO::set(const std::vector < DVec4 >& v4)
+	{
+		set(v4.data(), v4.size());
+	}
+	void UniformGLGUBO::set(const std::vector < DMat3 >& m3)
+	{
+		set(m3.data(), m3.size());
+	}
+	void UniformGLGUBO::set(const std::vector < DMat4 >& m4)
+	{
+		set(m4.data(), m4.size());
+	}
+	bool UniformGLGUBO::is_valid() { return m_context && m_shader && m_buffer; }
+
+	Shader* UniformGLGUBO::get_shader()
+	{
+		return m_shader;
+	}
+
+	UniformGLGUBO::UniformGLGUBO(ContextGL4* context, Shader* shader, unsigned char* buffer, size_t offset)
+	: m_context(context)
+	, m_shader(shader)
+	, m_buffer(buffer)
+	, m_offset(offset)
+	{
+	}
+
+	UniformGLGUBO::UniformGLGUBO()
+	{
+	}
+
+	UniformGLGUBO::~UniformGLGUBO()
+	{
+		//none
+	}
+	  ////////////////////////////////////////////////////////////////////////////////////////////////////
     UniformConstBufferGL4::UniformConstBufferGL4(ContextGL4* context, Shader* shader, GLint id, GLuint  bind)
     :m_context(context)
     ,m_shader(shader)
@@ -502,7 +787,9 @@ namespace Render
         
 	bool ContextGL4::init(Video::DeviceResources* resource)
 	{
-
+		//disable vsync
+		resource->set_vsync(false);
+		//init glew
 #ifdef _WIN32
 		//enable glew experimental (OpenGL3/4)
 		glewExperimental = GL_TRUE;
@@ -522,7 +809,7 @@ namespace Render
 		//DirectX like z buffer
 		glDepthRange(0.0f, 1.0f);
 		//Front face
-		glFrontFace(GL_CW);
+		//glFrontFace(GL_CW);
 		//Coords like direcX
 		//glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE),
 		//glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE),
@@ -911,7 +1198,7 @@ namespace Render
 	{
 		//get state
 		GLint lastbind = 0;
-		glGetIntegerv(GL_UNIFORM_BUFFER, &lastbind);
+		glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &lastbind);
 		//change
 		glBindBuffer(GL_UNIFORM_BUFFER, *cb);
 		glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
@@ -923,7 +1210,7 @@ namespace Render
 	{
 		//get state
 		GLint lastbind = 0;
-		glGetIntegerv(GL_ARRAY_BUFFER, &lastbind);
+		glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &lastbind);
 		//change
 		glBindBuffer(GL_ARRAY_BUFFER, *vbo);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
@@ -934,7 +1221,7 @@ namespace Render
 	void ContextGL4::update_steam_IBO(IndexBuffer* ibo, const unsigned int* data, size_t size) {
 		//get state
 		GLint lastbind;
-		glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER, &lastbind);
+		glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &lastbind);
 		//change
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ibo);
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, size * sizeof(unsigned int), data);
@@ -1229,7 +1516,15 @@ namespace Render
 		//add fiels
 		for (auto& attr : atl)
 		{
-			GLint location = glGetAttribLocation(shader->m_shader_id, attribute_to_string(attr.m_attribute));
+			//get location name
+			std::string  location_name = attribute_to_string(attr.m_attribute);
+			GLint location = glGetAttribLocation(shader->m_shader_id, location_name.c_str());
+			//re-try (HLSLcc)
+			if (location < 0)
+			{
+				location_name = std::string("in_") + location_name;
+				location = glGetAttribLocation(shader->m_shader_id, location_name.c_str());
+			}
 			//add
 			if (location > -1)
 			{
@@ -1753,6 +2048,178 @@ namespace Render
 	}
 
 	/*
+	CLASS Shader OpenGL
+	*/
+	Shader::~Shader()
+	{
+		//detach and delete all shader
+		if (m_shader_id)
+		{
+			//dealloc global ubo
+			destroy_global_ubo();
+			//dealloc shaders
+			for (unsigned int& shader : m_shaders)
+			{
+				if (shader)
+				{
+					//detach
+					glDetachShader(m_shader_id, shader);
+					//delete
+					glDeleteShader(shader);
+					//to null
+					shader = 0;
+				}
+			}
+			//delete shader program
+			glDeleteProgram(m_shader_id);
+			//to null
+			m_shader_id = 0;
+		}
+	}
+
+	void Shader::build_global_UBO()
+	{
+		//get
+		m_global_buffer_ref = (UniformConstBufferGL4*)uniform_const_buffer("_Global");
+		//init
+		if (m_global_buffer_ref)
+		{
+			//get size
+			GLint global_size{ 0 };
+			glGetActiveUniformBlockiv(m_shader_id, m_global_buffer_ref->m_id, GL_UNIFORM_BLOCK_DATA_SIZE, &global_size);
+			//alloc CPU
+			m_global_buffer_cpu.resize(global_size);
+			//alloc GPU
+			m_global_buffer_gpu = m_context.create_stream_CB(nullptr, global_size);
+		}
+	}
+
+	void Shader::destroy_global_ubo()
+	{
+		m_global_buffer_ref = nullptr;
+		m_global_buffer_cpu.clear();
+		if (m_global_buffer_gpu) m_context.delete_CB(m_global_buffer_gpu);
+	}
+
+	void Shader::bind()
+	{
+		//update global buffer
+		if (m_global_buffer_ref && m_global_buffer_update)
+		{
+			m_context.update_steam_CB(
+				  m_global_buffer_gpu
+				, m_global_buffer_cpu.data()
+				, m_global_buffer_cpu.size()
+			);
+			m_global_buffer_update = false;
+		}
+		//start texture uniform
+		m_uniform_ntexture = -1;
+		//uniform parogram shaders
+		glUseProgram(m_shader_id);
+		//bind constant global buffer
+		if (m_global_buffer_ref) m_global_buffer_ref->bind(m_global_buffer_gpu);
+	}
+	void Shader::unbind()
+	{
+		//disable textures
+		while (m_uniform_ntexture >= 0)
+		{
+			m_context.unbind_texture((int)m_uniform_ntexture);
+			--m_uniform_ntexture;
+		}
+		//unbind constant global buffer
+		if (m_global_buffer_ref)
+		{
+			m_global_buffer_ref->unbind();
+		}
+		//disable parogram
+		glUseProgram(0);
+	}
+
+
+	//get uniform
+	Uniform* Shader::uniform(const std::string& uname)
+	{
+		if (m_global_buffer_ref)
+		{
+			std::string real_name = "_Global." + uname;
+			const char* ufiled_name[1] = { real_name.data() };
+			GLuint field_index[1] = { 0 };
+			GLint  offset[1] = { 0 };
+			glGetUniformIndices(m_shader_id, 1, ufiled_name, field_index);
+			glGetActiveUniformsiv(m_shader_id, 1, field_index, GL_UNIFORM_OFFSET, offset);
+			//build
+			UniformGLGUBO* uglobal = new UniformGLGUBO(&m_context, this, m_global_buffer_cpu.data(), offset[0]);
+			//add and return
+			return &add_uniform(uname, std::move(Unique<Uniform>(uglobal)));
+		}
+		else
+		{
+			//legacy
+			auto uit = m_uniform_map.find(uname);
+			//if find
+			if (uit != m_uniform_map.end()) return uit->second.get();
+			//else
+			GLint uid = glGetUniformLocation(m_shader_id, uname.c_str());
+			if (uid < 0) return nullptr;
+			//add and return
+			return &add_uniform(uname, MakeUnique< UniformGL4 >(&m_context, this, uid));
+		}
+	}
+
+	//get uniform const buffer
+	UniformConstBuffer* Shader::uniform_const_buffer(const std::string& uname)
+	{
+		auto uit = m_uniform_const_buffer_map.find(uname);
+		//if find
+		if (uit != m_uniform_const_buffer_map.end()) return &uit->second;
+		//else
+		GLuint uid = glGetUniformBlockIndex(m_shader_id, uname.c_str());
+		if (uid == GL_INVALID_INDEX) return nullptr;
+		//new index
+		GLuint bind = get_new_constat_buffer_bind_index();
+		//buind index
+		glUniformBlockBinding(m_shader_id, uid, bind);
+		//add and return
+		return &add_uniform_const_buffer(uname, UniformConstBufferGL4(&m_context, this, uid, bind));
+
+	}
+
+	//new bind index
+	unsigned int Shader::get_new_constat_buffer_bind_index()
+	{
+		return m_bind_cb_index++;
+	}
+
+	//update global buffer
+	void Shader::global_buffer_bind() { m_global_buffer_update = true; }
+
+	//add error log
+	void Shader::push_compiler_error(const ShaderCompileError& error_log)
+	{
+		m_errors.push_back(std::move(error_log));
+	}
+
+	void Shader::push_liker_error(const std::string& error_log)
+	{
+		m_liker_log += error_log;
+		m_liker_log += "\n";
+	}
+
+	//help
+	Uniform& Shader::add_uniform(const std::string& name, Unique<Uniform>&& u) const
+	{
+		auto& uref = (m_uniform_map[name] = std::move(u));
+		return *uref.get();
+	}
+	UniformConstBufferGL4& Shader::add_uniform_const_buffer(const std::string& name, const UniformConstBufferGL4& ucb) const
+	{
+		auto& ucbref = (m_uniform_const_buffer_map[name] = ucb);
+		return ucbref;
+	}
+	
+	/*
 	Shader
 	*/
 	static std::string compiler_shader_error_log(unsigned int shader)
@@ -1785,35 +2252,11 @@ namespace Render
 		}
 		return info_log;
 	}
-    
-#if 0
-	static const char* glsl_type_to_string(GLenum type)
-	{
-		switch (type)
-		{
-		case GL_BOOL: return "bool";
-		case GL_INT: return "int";
-		case GL_FLOAT: return "float";
-		case GL_FLOAT_VEC2: return "vec2";
-		case GL_FLOAT_VEC3: return "vec3";
-		case GL_FLOAT_VEC4: return "vec4";
-		case GL_FLOAT_MAT2: return "mat2";
-		case GL_FLOAT_MAT3: return "mat3";
-		case GL_FLOAT_MAT4: return "mat4";
-		case GL_SAMPLER_2D: return "sampler2D";
-		case GL_SAMPLER_3D: return "sampler3D";
-		case GL_SAMPLER_CUBE: return "samplerCube";
-		case GL_SAMPLER_2D_SHADOW: return "sampler2DShadow";
-		default: break;
-		}
-		return "other";
-	}
-#endif
-    
+	
 	Shader* ContextGL4::create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
-		Shader* out_shader = new Shader();
+		Shader* out_shader = new Shader(*this);
 		//shader program
 		out_shader->m_shader_id = glCreateProgram();
 		//compile
@@ -1876,6 +2319,8 @@ namespace Render
 				out_shader->push_liker_error(liker_shader_error_log(out_shader->m_shader_id));
 			}
 		}
+		//try to find _Global;
+		out_shader->build_global_UBO();
 		//return shader
 		return out_shader;
 	}
@@ -1884,10 +2329,12 @@ namespace Render
 	{
 		return shader->m_errors.size() != 0;
 	}
+	
 	bool ContextGL4::shader_linked_with_error(Shader* shader)
 	{
 		return shader->m_liker_log.size() != 0;
 	}
+	
 	std::vector< std::string > ContextGL4::get_shader_compiler_errors(Shader* shader)
 	{
 		std::vector< std::string > output;
@@ -1905,6 +2352,7 @@ namespace Render
 		}
 		return output;
 	}
+	
 	std::string ContextGL4::get_shader_liker_error(Shader* shader)
 	{
 		return shader->m_liker_log;
@@ -1918,24 +2366,17 @@ namespace Render
 		}
 		//save
 		s_bind_context.m_shader = shader;
-		//start texture uniform
-		shader->m_uniform_ntexture = -1;
 		//uniform parogram shaders
-		glUseProgram(shader->m_shader_id);
+		shader->bind();
 	}
+	
 	void ContextGL4::unbind_shader(Shader* shader)
 	{
 		if (shader)
 		{
 			assert(s_bind_context.m_shader == shader);
-			//disable textures
-			while (shader->m_uniform_ntexture >= 0)
-			{
-				unbind_texture((int)shader->m_uniform_ntexture);
-				--shader->m_uniform_ntexture;
-			}
 			//disable program
-			glUseProgram(0);
+			shader->unbind();
 			//to null
 			s_bind_context.m_shader = nullptr;
 		}
@@ -1974,30 +2415,12 @@ namespace Render
     
     Uniform* ContextGL4::get_uniform(Shader* shader,const std::string& uname) const
     {
-        auto uit = shader->m_uniform_map.find(uname);
-        //if find
-        if (uit != shader->m_uniform_map.end()) return &uit->second;
-        //else
-        GLint uid = glGetUniformLocation(shader->m_shader_id,uname.c_str());
-        if (uid < 0) return nullptr;
-        //add and return
-        return &shader->add_uniform(uname, UniformGL4(((ContextGL4*)this), shader, uid));
+		return shader->uniform(uname);
     }
     
     UniformConstBuffer* ContextGL4::get_uniform_const_buffer(Square::Render::Shader* shader, const std::string& uname) const
     {
-        auto uit = shader->m_uniform_const_buffer_map.find(uname);
-        //if find
-        if (uit != shader->m_uniform_const_buffer_map.end()) return &uit->second;
-        //else
-        GLint uid =  glGetUniformBlockIndex(shader->m_shader_id,uname.c_str());
-        if (uid < 0) return nullptr;
-		//new index
-		GLuint bind = shader->get_new_constat_buffer_bind_index();
-		//buind index
-		glUniformBlockBinding(shader->m_shader_id, uid, bind);
-        //add and return
-        return &shader->add_uniform_const_buffer(uname, UniformConstBufferGL4(((ContextGL4*)this), shader, uid, bind));
+		return shader->uniform_const_buffer(uname);
     }
 
 	/*

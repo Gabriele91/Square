@@ -89,6 +89,9 @@ namespace Video
 		virtual unsigned int width() = 0;
 		virtual unsigned int height() = 0;
 
+		virtual bool get_vsync() = 0;
+		virtual void set_vsync(bool) = 0;
+
 		virtual void* get_device() = 0;
 		virtual void* get_device_context(size_t i=0) = 0;
 		virtual void* get_swap_chain() = 0;

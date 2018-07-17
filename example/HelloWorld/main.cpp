@@ -155,7 +155,7 @@ public:
 		context().add_resource_file(Filesystem::resource_dir() + "/assets/effect.mat");
 
 		//shader
-        m_shader = context().resource<Shader>("effect");
+        //m_shader = context().resource<Shader>("effect");
 		m_effect = context().resource<Effect>("effect");
 		m_material = context().resource<Material>("effect");
 
@@ -314,6 +314,9 @@ public:
 			//errors?
 			render().print_errors();
 		}
+		//frames
+		std::cout << m_counter.count_frame() << std::endl;
+		//
         return m_loop;
     }
     bool end()
@@ -343,6 +346,7 @@ public:
 private:
     
     bool m_loop = true;
+	Square::Time::FPSCounter				   m_counter;
 	Square::Shared<Square::Resource::Shader>   m_shader;
 	Square::Shared<Square::Resource::Effect>   m_effect;
 	Square::Shared<Square::Resource::Material> m_material;

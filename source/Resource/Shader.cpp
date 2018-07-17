@@ -12,12 +12,8 @@
 #include "Square/Data/ParserUtils.h"
 #include "Square/Resource/Shader.h"
 #include "Square/Core/ClassObjectRegistration.h"
-//compiler Xsc
-#include <iostream>
-#include <Xsc/Xsc.h>
-#include <fstream>
-#include <sstream>
-#include <list>
+//compiler HLSL2ALL
+#include <HLSL2ALL/HLSL2ALL.h>
 
 namespace Square
 {
@@ -59,83 +55,6 @@ namespace Resource
 		destoy();
 	}
 
-	// Help compiler
-	class CompilerLog : public Xsc::Log
-	{
-	public:
-		//! Submits the specified report.
-		virtual void SubmitReport(const Xsc::Report& report)
-		{
-			switch (report.Type())
-			{
-			case Xsc::ReportTypes::Info:
-				m_info_list.push_back(report);
-				break;
-			case Xsc::ReportTypes::Warning:
-				m_warning_list.push_back(report);
-				break;
-			case Xsc::ReportTypes::Error:
-				m_error_list.push_back(report);
-				if(!m_entry_point_not_found) 
-					m_entry_point_not_found =
-					   report.Message().find("entry") != std::string::npos
-					&& report.Message().find("point") != std::string::npos
-					&& report.Message().find("not")   != std::string::npos
-					&& report.Message().find("found") != std::string::npos
-					;
-				break;
-			}
-		}
-
-		//errors to string
-		std::string get_errors() const
-		{
-			std::stringstream ss;
-			for (auto error : m_error_list)
-			{
-				ss << error.Message();
-				ss << std::endl;
-			}
-			return ss.str();
-		}
-
-		//warning to string
-		std::string get_warning() const
-		{
-			std::stringstream ss;
-			for (auto warning : m_warning_list)
-			{
-				ss << warning.Message();
-				ss << std::endl;
-			}
-			return ss.str();
-		}
-
-		//warning to string
-		std::string get_info() const
-		{
-			std::stringstream ss;
-			for (auto info : m_info_list)
-			{
-				ss << info.Message();
-				ss << std::endl;
-			}
-			return ss.str();
-		}
-
-		bool entry_point_not_found()
-		{
-			return m_entry_point_not_found;
-		}
-
-	protected:
-		//error info
-		std::list<Xsc::Report> m_error_list;
-		std::list<Xsc::Report> m_warning_list;
-		std::list<Xsc::Report> m_info_list;
-		bool m_entry_point_not_found{ false };
-	};
-	
 	// Help parser
 	struct ShaderImportLoader
 	{
@@ -396,26 +315,15 @@ namespace Resource
 		std::string source_header = shader_commond_header + header_string;
 		std::string source = source_header + raw_source;
 		////////////////////////////////////////////////////////////////////////////////
-		//shaders
-		Xsc::ShaderInput shader_input_info[Render::ST_N_SHADER];
-		Xsc::ShaderOutput shader_output_info[Render::ST_N_SHADER];
-		Xsc::Reflection::ReflectionData reflection_data[Render::ST_N_SHADER];
-
-		std::stringstream  shader_output[Render::ST_N_SHADER];
-		std::string shader_headers[Render::ST_N_SHADER];
-		std::string shader_sources[Render::ST_N_SHADER];
-		std::vector< Render::ShaderSourceInformation > shader_info;
-		//Square -> Xsc map
-		Xsc::ShaderTarget shader_target_map[Render::ST_N_SHADER]
+		//output
+		bool is_hlsl = false;
+		if (auto render = context().render())
 		{
-			  Xsc::ShaderTarget::VertexShader
-			, Xsc::ShaderTarget::FragmentShader
-			, Xsc::ShaderTarget::GeometryShader
-			, Xsc::ShaderTarget::TessellationControlShader
-			, Xsc::ShaderTarget::TessellationEvaluationShader
-            , Xsc::ShaderTarget::ComputeShader
-		};
-		std::string shader_target_name[Render::ST_N_SHADER] 
+			is_hlsl = render->get_render_driver_info().m_shader_language == "HLSL";
+		}
+		////////////////////////////////////////////////////////////////////////////////////////////////////
+		//inputs
+		std::string shader_target_name[Render::ST_N_SHADER]
 		{
 			  "vertex"
 			, "fragment"
@@ -424,103 +332,90 @@ namespace Resource
 			, "tass_eval"
 			, "compute"
 		};
-		//output
-		bool is_hlsl = false;
-		if (auto render = context().render())
+		//save types
+		HLSL2ALL::TypeSpirvShaderList shader_spirv_outputs;
+		HLSL2ALL::ErrorSpirvShaderList shader_spirv_errors;
+		HLSL2ALL::InfoSpirvShaderList shader_spirv_info
 		{
-			is_hlsl = render->get_render_driver_info().m_shader_language == "HLSL";
-		}
-		////////////////////////////////////////////////////////////////////////////////////////////////////
-		if (is_hlsl)
+			{ HLSL2ALL::ST_VERTEX_SHADER, shader_target_name[Render::ST_VERTEX_SHADER] },
+			{ HLSL2ALL::ST_FRAGMENT_SHADER, shader_target_name[Render::ST_FRAGMENT_SHADER] },
+			{ HLSL2ALL::ST_GEOMETRY_SHADER, shader_target_name[Render::ST_GEOMETRY_SHADER] },
+			{ HLSL2ALL::ST_TASSELLATION_CONTROL_SHADER, shader_target_name[Render::ST_TASSELLATION_CONTROL_SHADER] },
+			{ HLSL2ALL::ST_TASSELLATION_EVALUATION_SHADER, shader_target_name[Render::ST_TASSELLATION_EVALUATION_SHADER] },
+			{ HLSL2ALL::ST_COMPUTE_SHADER, shader_target_name[Render::ST_COMPUTE_SHADER] },
+		};
+		//info
+		HLSL2ALL::TargetShaderInfo info;
+		info.m_client_version = 450;
+		info.m_desktop = true;
+		info.m_reverse_mul = true;
+		//build
+		if (!HLSL2ALL::hlsl_to_spirv(
+			  source
+			, resource_name()
+			, shader_spirv_info
+			, shader_spirv_outputs
+			, shader_spirv_errors
+			, info
+		))
 		{
-			source = "#pragma pack_matrix( row_major )\n" + source;
-		}
-		else
-		{
-			source = "#pragma pack_matrix( column_major )\n" + source;
-			source = "#define mul(x,y) mul(y,x)\n" + source; //trick mul
-		}
+			context().add_wrong("Error to shader compile");
+			context().add_wrongs(shader_spirv_errors);
+			return false;
+		}		
 		////////////////////////////////////////////////////////////////////////////////////////////////////
 		//init all inputs
-		for (unsigned short type = 0; type != Render::ST_N_SHADER; ++type)
+		std::vector< Render::ShaderSourceInformation > shader_info;
+		//compile
+		std::string shader_headers[Render::ST_N_SHADER];
+		std::string shader_sources[Render::ST_N_SHADER];
+		//to HLSL/GLSL
+		for (const HLSL2ALL::TypeSpirvShader& ssoutput : shader_spirv_outputs)
 		{
-			//supported?
-			if (shader_target_map[type] == Xsc::ShaderTarget::Undefined) continue;
-			//input
-			shader_input_info[type].sourceCode    = std::make_shared<std::stringstream>(source);
-			shader_input_info[type].shaderVersion = Xsc::InputShaderVersion::HLSL5;
-			shader_input_info[type].shaderTarget  = shader_target_map[type];
-			shader_input_info[type].entryPoint    = shader_target_name[type];
-			//output
-			shader_output_info[type].sourceCode    = &shader_output[type];
-			shader_output_info[type].shaderVersion = (Xsc::OutputShaderVersion)shader_version;
-			shader_output_info[type].formatting.lineMarks = true;
-			shader_output_info[type].formatting.alwaysBracedScopes = true;
-			shader_output_info[type].options.separateShaders = true;
-			shader_output_info[type].options.separateSamplers = true;
-			shader_output_info[type].nameMangling.inputPrefix = "sq_";
-			shader_output_info[type].nameMangling.outputPrefix = "sq_";
-			shader_output_info[type].nameMangling.useAlwaysSemantics = true;
-			shader_output_info[type].nameMangling.renameBufferFields = true;
-			//compile
+			//unpack
+			int type = std::get<0>(ssoutput);
+			HLSL2ALL::SpirvShader shader_spirv_out = std::get<1>(ssoutput);
+			//convert 
+			if (is_hlsl)
 			{
-				//output errors
-				CompilerLog logs;
-				//pass to compile
-				if (Xsc::CompileShader(shader_input_info[type], shader_output_info[type], &logs, &reflection_data[type]))
+				//header
+				shader_headers[type] = "#pragma pack_matrix( row_major )\n" + source_header;
+				//add inf
+				shader_info.push_back
+				(Render::ShaderSourceInformation
 				{
-					//save source
-					shader_sources[type] = shader_output[type].str();
-					//source split
-					extract_version_line(shader_sources[type], shader_headers[type]);
-					//if directX get original source code
-					if (is_hlsl)
-					{
-						shader_info.push_back
-						(Render::ShaderSourceInformation
-						{
-							 (Render::ShaderType)type //shader type
-							, source_header			  //header
-							, source			      //source output ref
-							, shader_target_name[type]//source output ref
-							, 0						  //line 0
-						});
-					}
-					else
-					{
-						//add inf
-						shader_info.push_back
-						(Render::ShaderSourceInformation
-						{
-							(Render::ShaderType)type   //shader type
-							, shader_headers[type]     //header
-							, shader_sources[type]     //source output ref
-							, 0						   //line 0
-						});
-					}
-				}
-				else
+					 (Render::ShaderType)type //shader type
+					, shader_headers[type]	  //header
+					, raw_source			  //source output ref
+					, shader_target_name[type]//source output ref
+					, 0						  //line 0
+				});
+			}
+			else
+			{
+				HLSL2ALL::GLSLConfig glsl_config;
+				glsl_config.m_rename_input_with_semantic = type == HLSL2ALL::ST_VERTEX_SHADER;
+				glsl_config.m_rename_position_in_position0 = true;
+				glsl_config.m_fixup_clipspace = true;
+				glsl_config.m_flip_vert_y = false;
+				//compile
+				if (!HLSL2ALL::spirv_to_glsl(shader_spirv_out, shader_sources[type], shader_spirv_errors, glsl_config))
 				{
-					for (auto& entry : reflection_data[type].functions)
-					{
-						if (entry.ident == shader_target_name[type] || type <= Render::ST_FRAGMENT_SHADER)
-						{
-							context().add_wrong
-							(
-								"Error to compile \"" + shader_target_name[type] + "\": \n" + logs.get_errors()
-							);
-							return false;
-						}
-					}
-					if (!reflection_data[type].functions.size() && type <= Render::ST_FRAGMENT_SHADER)
-					{
-						context().add_wrong
-						(
-							"Error to compile \"" + shader_target_name[type] + "\": \n" + logs.get_errors()
-						);
-						return false;
-					}
+					context().add_wrong("Error to shader compile");
+					context().add_wrongs(shader_spirv_errors);
+					return false;
 				}
+				//remove #version
+				extract_version_line(shader_sources[type], shader_headers[type]);
+				//add inf
+				shader_info.push_back
+				(Render::ShaderSourceInformation
+				{
+					(Render::ShaderType)type //shader type
+					, shader_headers[type]   //header
+					, shader_sources[type]   //source output ref
+					, 0						 //line 0
+				});
 			}
 		}
 		////////////////////////////////////////////////////////////////////////////////
