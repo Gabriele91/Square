@@ -14,7 +14,7 @@
 #include "Square/Core/ClassObjectRegistration.h"
 //compiler HLSL2ALL
 #include <HLSL2ALL/HLSL2ALL.h>
-#include <iostream>
+
 namespace Square
 {
 namespace Resource
@@ -422,7 +422,6 @@ namespace Resource
 					, shader_sources[type]   //source output ref
 					, 0						 //line 0
 				});
-                std::cout << "shader: \n" << shader_sources[type] << "\n";
 			}
 		}
 		////////////////////////////////////////////////////////////////////////////////

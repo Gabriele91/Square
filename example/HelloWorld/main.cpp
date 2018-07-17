@@ -264,7 +264,7 @@ public:
 			//transform
 			m_cbtransform = Render::stream_constant_buffer<UniformBufferTransform>(&render());
 			auto utransform = Render::map_buffer<UniformBufferTransform>(&render(), m_cbtransform.get());
-			utransform->m_position = { 0,0,-5.0 };
+			utransform->m_position = { 0,0,5.0 };
 			utransform->m_scale = { 1,1,1 };
 			utransform->m_rotation = Mat3(1);
 			utransform->m_model = translate(Mat4(1.0f), { utransform->m_position });
@@ -274,13 +274,22 @@ public:
 			m_cbcamera = Render::stream_constant_buffer<UniformBufferCamera>(&render());
 			auto ucamera = Render::map_buffer<UniformBufferCamera>(&render(), m_cbcamera.get());
 			ucamera->m_viewport = { 0, 0, 1280, 768 };
-			ucamera->m_position = { 0, 2.0,0 };
+			ucamera->m_position = { 0, 5.0,-10. };
 			ucamera->m_projection = perspective<float>(radians(90.0f), ucamera->m_viewport.z / ucamera->m_viewport.w, 0.1f,100.0f);
-			ucamera->m_view = look_at(ucamera->m_position, Vec3(0.0, 0.0, -5.0), Vec3(0.0, 1.0, 0.0));
+			ucamera->m_view = look_at(ucamera->m_position, Vec3(0.0, 0.0, 5.0), Vec3(0.0, 1.0, 0.0));
 			ucamera->m_model = inverse(ucamera->m_view);
 			Render::unmap_buffer(&render(), m_cbcamera.get());
 			
 		}
+	}
+
+	void set_transform_actor(Square::Scene::Actor& actor)
+	{
+		using namespace Square;
+		using namespace Square::Scene;
+		auto utransform = Render::map_buffer<UniformBufferTransform>(&render(), m_cbtransform.get());
+		actor.set(utransform);
+		Render::unmap_buffer(&render(), m_cbtransform.get());
 	}
 
     bool run(double dt)
@@ -292,6 +301,8 @@ public:
 			using namespace Square::Data;
 			using namespace Square::Scene;
 			using namespace Square::Resource;
+			//by actor
+			Actor actor(context());
 			//bind
 			auto& pass = m_effect->techniques().begin()->second.operator[](0);
 			//start
@@ -302,10 +313,22 @@ public:
 			//bin
 			pass.bind(&render(), m_cbcamera.get(), m_cbtransform.get(), m_material->parameters());
 			//draw
+			const float dist = 15.0;
+			const float nmax = 30.0;
 			render().bind_VBO(m_model.get());
 			render().bind_IBO(m_index_model.get());
 			render().bind_IL(m_input_layout.get());
-			render().draw_elements(Render::DRAW_TRIANGLES, 6 * 6);
+			for (float n = 0; n < nmax; ++n)
+			{
+				actor.position({ 
+					 std::cos(Constants::pi2<float>()*(n / nmax))*dist
+					,0
+					,std::sin(Constants::pi2<float>()*(n / nmax))*dist+10.0
+				});
+				set_transform_actor(actor);
+
+				render().draw_elements(Render::DRAW_TRIANGLES, 6 * 6);
+			}
 			render().bind_IL(m_input_layout.get());
 			render().unbind_IBO(m_index_model.get());
 			render().unbind_VBO(m_model.get());
@@ -365,7 +388,7 @@ int main()
       WindowSizePixel({ 1280, 768 })
     , WindowMode::NOT_RESIZABLE
 	, 
-#if defined(_WIN32) & 0
+#if defined(_WIN32) & 1
 	  WindowRenderDriver
 	  {
 		 Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, false
