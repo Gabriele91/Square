@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 03/05/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Data/ParserUtils.h"
 #include "Square/Data/ParserParameters.h"
@@ -403,11 +403,12 @@ namespace Parser
 	{
 		struct { const char* m_key; ParameterType m_type; } map_key_type[]
 		{
+        //Primitive
 		{ "int", ParameterType::PT_INT },
 		{ "float", ParameterType::PT_FLOAT },
 		{ "double", ParameterType::PT_DOUBLE },
 		{ "Texture", ParameterType::PT_TEXTURE },
-
+        //like GLSL
 		{ "IVec2", ParameterType::PT_IVEC2 },
 		{ "IVec3", ParameterType::PT_IVEC3 },
 		{ "IVec4", ParameterType::PT_IVEC4 },
@@ -423,6 +424,22 @@ namespace Parser
 		{ "DVec4", ParameterType::PT_DVEC4 },
 		{ "DMat3", ParameterType::PT_DMAT3 },
 		{ "DMat4", ParameterType::PT_DMAT4 },
+        //like DirectX
+        { "int2", ParameterType::PT_IVEC2 },
+        { "int3", ParameterType::PT_IVEC3 },
+        { "int4", ParameterType::PT_IVEC4 },
+        
+        { "float2", ParameterType::PT_VEC2 },
+        { "float3", ParameterType::PT_VEC3 },
+        { "float4", ParameterType::PT_VEC4 },
+        { "float3x3", ParameterType::PT_MAT3 },
+        { "float4x4", ParameterType::PT_MAT4 },
+        
+        { "double2", ParameterType::PT_DVEC2 },
+        { "double3", ParameterType::PT_DVEC3 },
+        { "double4x4", ParameterType::PT_DVEC4 },
+        { "double3x3", ParameterType::PT_DMAT3 },
+        { "double4x4", ParameterType::PT_DMAT4 },
 		};
 
 		for (auto map : map_key_type)
