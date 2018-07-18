@@ -287,9 +287,15 @@ public:
 	{
 		using namespace Square;
 		using namespace Square::Scene;
+        #if 0
 		auto utransform = Render::map_buffer<UniformBufferTransform>(&render(), m_cbtransform.get());
 		actor.set(utransform);
 		Render::unmap_buffer(&render(), m_cbtransform.get());
+        #else
+        UniformBufferTransform utransform;
+        actor.set(&utransform);
+        render().update_steam_CB(m_cbtransform.get(), (const unsigned char*)&utransform, sizeof(utransform));
+        #endif
 	}
 
     bool run(double dt)
@@ -311,13 +317,9 @@ public:
 			//errors?
 			render().print_errors();
 			//bin
-			pass.bind(&render(), m_cbcamera.get(), m_cbtransform.get(), m_material->parameters());
 			//draw
 			const float dist = 15.0;
 			const float nmax = 30.0;
-			render().bind_VBO(m_model.get());
-			render().bind_IBO(m_index_model.get());
-			render().bind_IL(m_input_layout.get());
 			for (float n = 0; n < nmax; ++n)
 			{
 				actor.position({ 
@@ -327,13 +329,16 @@ public:
 				});
 				set_transform_actor(actor);
 
+                pass.bind(&render(), m_cbcamera.get(), m_cbtransform.get(), m_material->parameters());
+                render().bind_VBO(m_model.get());
+                render().bind_IBO(m_index_model.get());
+                render().bind_IL(m_input_layout.get());
 				render().draw_elements(Render::DRAW_TRIANGLES, 6 * 6);
+                render().unbind_IL(m_input_layout.get());
+                render().unbind_IBO(m_index_model.get());
+                render().unbind_VBO(m_model.get());
+                pass.unbind();
 			}
-			render().bind_IL(m_input_layout.get());
-			render().unbind_IBO(m_index_model.get());
-			render().unbind_VBO(m_model.get());
-			//unbind
-			pass.unbind();
 			//errors?
 			render().print_errors();
 		}
