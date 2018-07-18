@@ -131,5 +131,13 @@ namespace Render
 			}
 		}
 	}
+    
+    
+    //clear
+    void Collection::clear()
+    {
+        m_lights.clear();
+        m_renderables.clear();
+    }
 }
 }
