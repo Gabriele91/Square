@@ -326,10 +326,10 @@ namespace Resource
 		std::string shader_target_name[Render::ST_N_SHADER]
 		{
 			  "vertex"
-			, "fragment"
+            , "fragment"
 			, "geometry"
-			, "tass_control"
-			, "tass_eval"
+            , "tass_control"
+            , "tass_eval"
 			, "compute"
 		};
 		//save types
@@ -338,10 +338,10 @@ namespace Resource
 		HLSL2ALL::InfoSpirvShaderList shader_spirv_info
 		{
 			{ HLSL2ALL::ST_VERTEX_SHADER, shader_target_name[Render::ST_VERTEX_SHADER] },
-			{ HLSL2ALL::ST_FRAGMENT_SHADER, shader_target_name[Render::ST_FRAGMENT_SHADER] },
-			{ HLSL2ALL::ST_GEOMETRY_SHADER, shader_target_name[Render::ST_GEOMETRY_SHADER] },
 			{ HLSL2ALL::ST_TASSELLATION_CONTROL_SHADER, shader_target_name[Render::ST_TASSELLATION_CONTROL_SHADER] },
 			{ HLSL2ALL::ST_TASSELLATION_EVALUATION_SHADER, shader_target_name[Render::ST_TASSELLATION_EVALUATION_SHADER] },
+            { HLSL2ALL::ST_GEOMETRY_SHADER, shader_target_name[Render::ST_GEOMETRY_SHADER] },
+            { HLSL2ALL::ST_FRAGMENT_SHADER, shader_target_name[Render::ST_FRAGMENT_SHADER] },
 			{ HLSL2ALL::ST_COMPUTE_SHADER, shader_target_name[Render::ST_COMPUTE_SHADER] },
 		};
 		//info
@@ -369,6 +369,13 @@ namespace Resource
 		//compile
 		std::string shader_headers[Render::ST_N_SHADER];
 		std::string shader_sources[Render::ST_N_SHADER];
+        //config
+        HLSL2ALL::GLSLConfig glsl_config;
+        glsl_config.m_rename_position_in_position0 = true;
+        glsl_config.m_fixup_clipspace = true;
+        glsl_config.m_flip_vert_y = false;
+        glsl_config.m_version = 410;
+        glsl_config.m_enable_420pack_extension = false;
 		//to HLSL/GLSL
 		for (const HLSL2ALL::TypeSpirvShader& ssoutput : shader_spirv_outputs)
 		{
@@ -393,18 +400,14 @@ namespace Resource
 			}
 			else
 			{
-				HLSL2ALL::GLSLConfig glsl_config;
+                //first
                 glsl_config.m_rename_input_with_semantic = type == HLSL2ALL::ST_VERTEX_SHADER;
-                #ifdef __APPLE__
-                glsl_config.m_rename_output_with_locations = type == HLSL2ALL::ST_VERTEX_SHADER;
-                glsl_config.m_rename_input_with_locations = type == HLSL2ALL::ST_FRAGMENT_SHADER;
-                #endif
-				glsl_config.m_rename_position_in_position0 = true;
-				glsl_config.m_fixup_clipspace = true;
-				glsl_config.m_flip_vert_y = false;
-                glsl_config.m_version = 410;
-                glsl_config.m_enable_420pack_extension = false;
-				//compile
+                //Apple bug
+                glsl_config.m_rename_input_with_locations = glsl_config.m_rename_output_with_locations;
+                glsl_config.m_input_prefix = glsl_config.m_output_prefix;
+                glsl_config.m_rename_output_with_locations = type != HLSL2ALL::ST_COMPUTE_SHADER;
+                glsl_config.m_output_prefix = std::string("__") + shader_target_name[type];
+                //compile
 				if (!HLSL2ALL::spirv_to_glsl(shader_spirv_out, shader_sources[type], shader_spirv_errors, glsl_config))
 				{
 					context().add_wrong("Error to shader compile");
