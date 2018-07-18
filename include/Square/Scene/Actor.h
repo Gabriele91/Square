@@ -93,20 +93,20 @@ namespace Scene
         void send_message(const Message& msg, bool brodcast = false);
         
         //matrix op
-        void translation(const Vec3& vector);
-        void move(const Vec3& vector);
-        void turn(const Quat& rot);
+        void translation(const Vec3& vector) override;
+        void move(const Vec3& vector) override;
+        void turn(const Quat& rot) override;
         
-        void position(const Vec3& pos);
-        void rotation(const Quat& rot);
-        void scale(const Vec3& pos);
+        void position(const Vec3& pos) override;
+        void rotation(const Quat& rot) override;
+        void scale(const Vec3& pos) override;
         
-        Vec3 position(bool global = false) const;
-        Quat rotation(bool global = false) const;
-        Vec3 scale(bool global = false) const;
+        Vec3 position(bool global = false) const override;
+        Quat rotation(bool global = false) const override;
+        Vec3 scale(bool global = false) const override;
         
-        Mat4 const& local_model_matrix() const;
-        Mat4 const& global_model_matrix() const;
+        Mat4 const& local_model_matrix() const override;
+        Mat4 const& global_model_matrix() const override;
 
 		//force to recompute all matrix
 		void dirty();
