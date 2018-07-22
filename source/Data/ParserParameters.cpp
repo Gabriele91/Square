@@ -45,7 +45,7 @@ namespace Parser
 	{
 		//move (std)
 		m_name     = std::move(value.m_name);
-		m_resource = std::move(value.m_resource);
+		m_resources = std::move(value.m_resources);
 		//move value type
 		m_type = value.m_type;
 		value.m_type = ParameterType::PT_NONE;
@@ -61,7 +61,7 @@ namespace Parser
 	{
 		m_type     = value.m_type;
 		m_name     = value.m_name;
-		m_resource = value.m_resource;
+		m_resources = value.m_resources;
 		//copy paramter
 		if (value.m_paramter)
 		{
@@ -173,7 +173,6 @@ namespace Parser
             case ParameterType::PT_INT:     if(!parse_int_values(ptr, field.m_paramter->value_ptr<int>(), 1))  return false;  break;
             case ParameterType::PT_FLOAT:   if(!parse_float_values(ptr, field.m_paramter->value_ptr<float>(), 1))  return false; break;
             case ParameterType::PT_DOUBLE:  if(!parse_double_values(ptr, field.m_paramter->value_ptr<double>(), 1))  return false; break;
-            case ParameterType::PT_TEXTURE: /*if(!parse_double_values(ptr, field.m_paramter->value_ptr<double>(), 1))  return false; */ break;
 
             case ParameterType::PT_IVEC2:   if(!parse_int_values(ptr, field.m_paramter->value_ptr<int>(), 2)) return false; break;
             case ParameterType::PT_IVEC3:   if(!parse_int_values(ptr, field.m_paramter->value_ptr<int>(), 3)) return false; break;
@@ -190,7 +189,14 @@ namespace Parser
             case ParameterType::PT_DVEC4:    if(!parse_double_values(ptr, field.m_paramter->value_ptr<double>(), 4)) return false; break;
             case ParameterType::PT_DMAT3:    if(!parse_dmat3(ptr, *field.m_paramter->value_ptr<DMat3>())) return false; break;
             case ParameterType::PT_DMAT4:    if(!parse_dmat4(ptr, *field.m_paramter->value_ptr<DMat4>())) return false;  break;
-                
+
+			case ParameterType::PT_TEXTURE: 
+			{
+				std::string value_name;
+				if (!parse_string(m_context->m_line, ptr, value_name))  return false;
+				field.add(value_name);
+			}
+			break;
             default: return false; break;
         }
         //jump space
@@ -270,7 +276,7 @@ namespace Parser
             return false;
         }
         //save texture name
-        field.m_resource.push_back(texture_name);
+        field.m_resources.push_back(texture_name);
         //ok
         return true;
     }
@@ -407,7 +413,10 @@ namespace Parser
 		{ "int", ParameterType::PT_INT },
 		{ "float", ParameterType::PT_FLOAT },
 		{ "double", ParameterType::PT_DOUBLE },
-		{ "Texture", ParameterType::PT_TEXTURE },
+		//3 name for texture
+		{ "texture", ParameterType::PT_TEXTURE },   //like primitive type
+		{ "Texture", ParameterType::PT_TEXTURE },   //like class object
+		{ "texture2D", ParameterType::PT_TEXTURE }, //like shader (GLSL 450, DX10/11/12)
         //like GLSL
 		{ "IVec2", ParameterType::PT_IVEC2 },
 		{ "IVec3", ParameterType::PT_IVEC3 },

@@ -75,14 +75,14 @@ namespace Resource
             switch (e_context.m_parameters[i].m_type)
             {
                 case EffectParameterType::PT_TEXTURE:
-					add_parameter((int)i, e_context.m_parameters[i].m_name, EffectParameter::create(context().resource<Texture>(e_context.m_parameters[i].m_resource[0])));
+					add_parameter((int)i, e_context.m_parameters[i].m_name, EffectParameter::create(context().resource<Texture>(e_context.m_parameters[i].m_resources[0])));
                 break;
                 case EffectParameterType::PT_STD_VECTOR_TEXTURE:
                 {
                     //vector of texture
                     std::vector< Shared<Texture> > v_textures;
                     //get all texture
-                    for(const std::string& tex_name : e_context.m_parameters[i].m_resource)
+                    for(const std::string& tex_name : e_context.m_parameters[i].m_resources)
                         v_textures.push_back( context().resource<Texture>(tex_name) );
 					//add
 					add_parameter((int)i, e_context.m_parameters[i].m_name, EffectParameter::create(v_textures));

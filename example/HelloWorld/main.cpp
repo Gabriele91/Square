@@ -154,10 +154,13 @@ public:
 		context().add_resource_file(Filesystem::resource_dir() + "/assets/header.hlsl");
 		context().add_resource_file(Filesystem::resource_dir() + "/assets/effect.mat");
 
+		render().print_errors();
 		//shader
         //m_shader = context().resource<Shader>("effect");
 		m_effect = context().resource<Effect>("effect");
 		m_material = context().resource<Material>("effect");
+
+		render().print_errors();
 
 		//test
 		auto player = m_level->actor("player");
@@ -196,7 +199,8 @@ public:
 	struct Vertex
 	{
 		Square::Vec3 m_position;
-		Square::Vec3 m_color;   
+		Square::Vec3 m_normal;
+		Square::Vec2 m_uv;
 	};
 
 	Square::Shared< Square::Render::ConstBuffer >  m_cbtransform;
@@ -220,47 +224,70 @@ public:
 			//input layout
 			m_input_layout = Render::input_layout(&render(), pass.m_shader->base_shader(), Render::AttributeList{
 				{ Render::ATT_POSITION,  Render::AST_FLOAT3, 0                        },
-				{ Render::ATT_COLOR0,    Render::AST_FLOAT3, offsetof(Vertex,m_color) }
+				{ Render::ATT_NORMAL0,   Render::AST_FLOAT3, offsetof(Vertex,m_normal)},
+				{ Render::ATT_TEXCOORD0, Render::AST_FLOAT2, offsetof(Vertex,m_uv)    }
 			});
 			//model
-			m_model = Render::stream_vertex_buffer< Vertex >(&render(), 8);
-			auto umodel = Render::map_buffer < Vertex > (&render(), m_model.get(), 8);
-			umodel[0].m_position = { -1.0, -1.0,  1.0 }; umodel[0].m_color = { 1,0,0 };
-			umodel[1].m_position = {  1.0, -1.0,  1.0 }; umodel[1].m_color = { 0,1,0 };
-			umodel[2].m_position = {  1.0,  1.0,  1.0 }; umodel[2].m_color = { 0,0,1 };
-			umodel[3].m_position = { -1.0,  1.0,  1.0 }; umodel[3].m_color = { 1,1,1 };
+			//////////////////////////////////////////////////////////////////////////////////////
+			m_model = Render::stream_vertex_buffer< Vertex >(&render(), 24);
+			Vertex model[]
+			{
 
-			umodel[4].m_position = { -1.0, -1.0, -1.0 }; umodel[4].m_color = { 1,0,0 };
-			umodel[5].m_position = {  1.0, -1.0, -1.0 }; umodel[5].m_color = { 0,1,0 };
-			umodel[6].m_position = {  1.0,  1.0, -1.0 }; umodel[6].m_color = { 0,0,1 };
-			umodel[7].m_position = { -1.0,  1.0, -1.0 }; umodel[7].m_color = { 1,1,1 };
-			Render::unmap_buffer(&render(), m_model.get());
+				{ Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.0f, 1.0f, 0.0f), Vec2(0.0f, 0.0f) }, // +Y (top face)
+				{ Vec3(0.5f, 0.5f, -0.5f), Vec3(0.0f, 1.0f, 0.0f), Vec2(1.0f, 0.0f) },
+				{ Vec3(0.5f, 0.5f,  0.5f), Vec3(0.0f, 1.0f, 0.0f), Vec2(1.0f, 1.0f) },
+				{ Vec3(-0.5f, 0.5f,  0.5f), Vec3(0.0f, 1.0f, 0.0f), Vec2(0.0f, 1.0f) },
 
+				{ Vec3(-0.5f, -0.5f,  0.5f), Vec3(0.0f, -1.0f, 0.0f), Vec2(0.0f, 0.0f) }, // -Y (bottom face)
+				{ Vec3(0.5f, -0.5f,  0.5f), Vec3(0.0f, -1.0f, 0.0f), Vec2(1.0f, 0.0f) },
+				{ Vec3(0.5f, -0.5f, -0.5f), Vec3(0.0f, -1.0f, 0.0f), Vec2(1.0f, 1.0f) },
+				{ Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.0f, -1.0f, 0.0f), Vec2(0.0f, 1.0f) },
+
+				{ Vec3(0.5f,  0.5f,  0.5f), Vec3(1.0f, 0.0f, 0.0f), Vec2(0.0f, 0.0f) }, // +X (right face)
+				{ Vec3(0.5f,  0.5f, -0.5f), Vec3(1.0f, 0.0f, 0.0f), Vec2(1.0f, 0.0f) },
+				{ Vec3(0.5f, -0.5f, -0.5f), Vec3(1.0f, 0.0f, 0.0f), Vec2(1.0f, 1.0f) },
+				{ Vec3(0.5f, -0.5f,  0.5f), Vec3(1.0f, 0.0f, 0.0f), Vec2(0.0f, 1.0f) },
+
+				{ Vec3(-0.5f,  0.5f, -0.5f), Vec3(-1.0f, 0.0f, 0.0f), Vec2(0.0f, 0.0f) }, // -X (left face)
+				{ Vec3(-0.5f,  0.5f,  0.5f), Vec3(-1.0f, 0.0f, 0.0f), Vec2(1.0f, 0.0f) },
+				{ Vec3(-0.5f, -0.5f,  0.5f), Vec3(-1.0f, 0.0f, 0.0f), Vec2(1.0f, 1.0f) },
+				{ Vec3(-0.5f, -0.5f, -0.5f), Vec3(-1.0f, 0.0f, 0.0f), Vec2(0.0f, 1.0f) },
+
+				{ Vec3(-0.5f,  0.5f, 0.5f), Vec3(0.0f, 0.0f, 1.0f), Vec2(0.0f, 0.0f) }, // +Z (front face)
+				{ Vec3(0.5f,  0.5f, 0.5f), Vec3(0.0f, 0.0f, 1.0f), Vec2(1.0f, 0.0f) },
+				{ Vec3(0.5f, -0.5f, 0.5f), Vec3(0.0f, 0.0f, 1.0f), Vec2(1.0f, 1.0f) },
+				{ Vec3(-0.5f, -0.5f, 0.5f), Vec3(0.0f, 0.0f, 1.0f), Vec2(0.0f, 1.0f) },
+
+				{ Vec3(0.5f,  0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(0.0f, 0.0f) }, // -Z (back face)
+				{ Vec3(-0.5f,  0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(1.0f, 0.0f) },
+				{ Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(1.0f, 1.0f) },
+				{ Vec3(0.5f, -0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(0.0f, 1.0f) },
+			};
+			render().update_steam_VBO(m_model.get(), (const unsigned char*)model, sizeof(Vertex) * 24);
+			//////////////////////////////////////////////////////////////////////////////////////
 			m_index_model = Render::stream_index_buffer(&render(), 6 * 6);
-			auto uimodel = Render::map_buffer(&render(), m_index_model.get(), 6 * 6);
 			unsigned int ids[]
 			{
-				// front
 				0, 1, 2,
-				2, 3, 0,
-				// right
-				1, 5, 6,
-				6, 2, 1,
-				// back
-				7, 6, 5,
-				5, 4, 7,
-				// left
-				4, 0, 3,
-				3, 7, 4,
-				// bottom
-				4, 5, 1,
-				1, 0, 4,
-				// top
-				3, 2, 6,
-				6, 7, 3,
+				0, 2, 3,
+
+				4, 5, 6,
+				4, 6, 7,
+
+				8, 9, 10,
+				8, 10, 11,
+
+				12, 13, 14,
+				12, 14, 15,
+
+				16, 17, 18,
+				16, 18, 19,
+
+				20, 21, 22,
+				20, 22, 23
 			};
-			std::memcpy(uimodel, ids, sizeof(unsigned int)*6*6);
-			Render::unmap_buffer(&render(), m_index_model.get());
+			render().update_steam_IBO(m_index_model.get(), ids, 6*6);
+			//////////////////////////////////////////////////////////////////////////////////////
 			//transform
 			m_cbtransform = Render::stream_constant_buffer<UniformBufferTransform>(&render());
 			auto utransform = Render::map_buffer<UniformBufferTransform>(&render(), m_cbtransform.get());
@@ -279,6 +306,7 @@ public:
 			ucamera->m_view = look_at(ucamera->m_position, Vec3(0.0, 0.0, 5.0), Vec3(0.0, 1.0, 0.0));
 			ucamera->m_model = inverse(ucamera->m_view);
 			Render::unmap_buffer(&render(), m_cbcamera.get());
+			//////////////////////////////////////////////////////////////////////////////////////
 			
 		}
 	}
@@ -287,15 +315,9 @@ public:
 	{
 		using namespace Square;
 		using namespace Square::Scene;
-        #if 0
-		auto utransform = Render::map_buffer<UniformBufferTransform>(&render(), m_cbtransform.get());
-		actor.set(utransform);
-		Render::unmap_buffer(&render(), m_cbtransform.get());
-        #else
         UniformBufferTransform utransform;
         actor.set(&utransform);
         render().update_steam_CB(m_cbtransform.get(), (const unsigned char*)&utransform, sizeof(utransform));
-        #endif
 	}
 
     bool run(double dt)
@@ -343,7 +365,7 @@ public:
 			render().print_errors();
 		}
 		//frames
-		std::cout << m_counter.count_frame() << std::endl;
+		//std::cout << m_counter.count_frame() << std::endl;
 		//
         return m_loop;
     }
@@ -393,7 +415,7 @@ int main()
       WindowSizePixel({ 1280, 768 })
     , WindowMode::NOT_RESIZABLE
 	, 
-#if defined(_WIN32) & 1
+#if defined(_WIN32) & 0
 	  WindowRenderDriver
 	  {
 		 Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, false

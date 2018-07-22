@@ -23,7 +23,7 @@ namespace Parser
             ParameterType   m_type;
             Parameter*      m_paramter{ nullptr };
             //resource
-            std::vector< std::string > m_resource;
+            std::vector< std::string > m_resources;
             //by type
             bool alloc(ParameterType type);
             bool alloc(const std::string& name, ParameterType type);
@@ -49,6 +49,11 @@ namespace Parser
                 //else
                 return true;
             }
+			//add resource
+			void add(const std::string& name)
+			{
+				m_resources.push_back(name);
+			}
 			//default
 			ParameterField();
 			//copy / move

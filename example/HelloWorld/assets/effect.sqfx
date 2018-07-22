@@ -2,6 +2,7 @@ parameters
 {
     mask float(-1.0)
 	color Vec4(1.0,1.0,1.0,1.0)
+	diffuse_texture texture("example")
 }
 
 sub_effect
@@ -26,14 +27,15 @@ sub_effect
             {
                 struct VertexShaderInput
                 {
-                    Vec3 m_position : POSITION;
-                    Vec3 m_color    : COLOR0;
+                    Vec3 m_position : POSITION0;
+                    Vec3 m_normal   : NORMAL0;
+                    Vec2 m_uv       : TEXCOORD0;
                 };
 
                 struct VertexShaderOutput
                 {
                     Vec4 m_position : SV_POSITION;  // interpolated vertex position (system value)
-                    Vec4 m_color    : COLOR0;       // interpolated diffuse color
+                    Vec2 m_uv       : NORMAL0;      // interpolated uv map
                 };
 
                 cbuffer Camera : register(b0)
@@ -56,6 +58,9 @@ sub_effect
                 //global uniform
                 float mask;
                 Vec4 color;
+				
+				//texture
+				Sampler2D(diffuse_texture);
 
                 VertexShaderOutput vertex(VertexShaderInput input) 
                 {    
@@ -66,15 +71,16 @@ sub_effect
                     position = mul(position, camera_projection);
                     VertexShaderOutput output;
                     output.m_position = position;
-                    output.m_color = Vec4(input.m_color.rgb, 1.0f);
+                    output.m_uv = input.m_uv;
 
                     return output;
                 }
 
                 Vec4 fragment(VertexShaderOutput input) : SV_TARGET 
                 {   
-                    if (input.m_color.a <= mask) discard;
-                    return input.m_color * color;
+					Vec4 texture_color = sample_texture(diffuse_texture,input.m_uv);
+                    if (texture_color.a <= mask) discard;
+					return  color * Vec4(texture_color.rgb,1.0);
                 }
             }
         }

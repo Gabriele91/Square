@@ -277,23 +277,27 @@ namespace Resource
 		if (m_shader) destoy();
         //commondo header
         const static std::string shader_commond_header
-        (
-        "#define IVec2 int2\n"
-        "#define IVec3 int3\n"
-        "#define IVec4 int4\n"
-        "#define IMat3 int3x3\n"
-        "#define IMat4 int4x4\n"
-        "#define Vec2 float2\n"
-        "#define Vec3 float3\n"
-        "#define Vec4 float4\n"
-        "#define Mat3 float3x3\n"
-        "#define Mat4 float4x4\n"
-        "#define DVec2 double2\n"
-        "#define DVec3 double3\n"
-        "#define DVec4 double4\n"
-        "#define DMat3 double3x3\n"
-        "#define DMat4 double4x4\n"
-        );
+        (R"HLSL(
+		#define IVec2 int2
+		#define IVec3 int3
+		#define IVec4 int4
+		#define IMat3 int3x3
+		#define IMat4 int4x4
+		#define Vec2 float2
+		#define Vec3 float3
+		#define Vec4 float4
+		#define Mat3 float3x3
+		#define Mat4 float4x4
+		#define DVec2 double2
+		#define DVec3 double3
+		#define DVec4 double4
+		#define DMat3 double3x3
+		#define DMat4 double4x4
+		#define Sampler2D(name) SamplerState  name; Texture2D name ## _texture;
+		#define Sampler3D(name) SamplerState  name; Texture3D name ## _texture;
+		#define SamplerCube(name) SamplerState  name; TextureCube name ## _texture;
+		#define sample_texture(name,pos) name ## _texture.Sample(name,pos)
+		)HLSL");
 		//int shader version
 		int shader_version = 410;
 		//list define
@@ -333,6 +337,7 @@ namespace Resource
 			, "compute"
 		};
 		//save types
+		HLSL2ALL::TextureSamplerList shader_glsl_tslist;
 		HLSL2ALL::TypeSpirvShaderList shader_spirv_outputs;
 		HLSL2ALL::ErrorSpirvShaderList shader_spirv_errors;
 		HLSL2ALL::InfoSpirvShaderList shader_spirv_info
@@ -345,10 +350,12 @@ namespace Resource
 			{ HLSL2ALL::ST_COMPUTE_SHADER, shader_target_name[Render::ST_COMPUTE_SHADER] },
 		};
 		//info
-		HLSL2ALL::TargetShaderInfo info;
-		info.m_client_version = 450;
-		info.m_desktop = true;
-		info.m_reverse_mul = true;
+		HLSL2ALL::TargetShaderInfo spirv_info;
+		spirv_info.m_client_version = 450;
+		spirv_info.m_desktop = true;
+		spirv_info.m_reverse_mul = true;
+		spirv_info.m_vulkan = false;
+		spirv_info.m_upgrade_texture_to_samples = true;
 		//build
 		if (!HLSL2ALL::hlsl_to_spirv(
 			  source
@@ -356,7 +363,7 @@ namespace Resource
 			, shader_spirv_info
 			, shader_spirv_outputs
 			, shader_spirv_errors
-			, info
+			, spirv_info
 		))
 		{
 			context().add_wrong("Error to shader compile");
@@ -371,11 +378,14 @@ namespace Resource
 		std::string shader_sources[Render::ST_N_SHADER];
         //config
         HLSL2ALL::GLSLConfig glsl_config;
-        glsl_config.m_rename_position_in_position0 = true;
-        glsl_config.m_fixup_clipspace = true;
-        glsl_config.m_flip_vert_y = false;
-        glsl_config.m_version = 410;
-        glsl_config.m_enable_420pack_extension = false;
+		glsl_config.m_version = 410;
+		glsl_config.m_es = false;
+		glsl_config.m_vulkan_semantics = false;
+		glsl_config.m_rename_position_in_position0 = true;
+		glsl_config.m_fixup_clipspace = true;
+		glsl_config.m_flip_vert_y = false;
+		glsl_config.m_enable_420pack_extension = false;
+		glsl_config.m_combined_texture_samplers = true;
 		//to HLSL/GLSL
 		for (const HLSL2ALL::TypeSpirvShader& ssoutput : shader_spirv_outputs)
 		{
@@ -408,7 +418,7 @@ namespace Resource
                 glsl_config.m_rename_output_with_locations = type != HLSL2ALL::ST_COMPUTE_SHADER;
                 glsl_config.m_output_prefix = std::string("__") + shader_target_name[type];
                 //compile
-				if (!HLSL2ALL::spirv_to_glsl(shader_spirv_out, shader_sources[type], shader_spirv_errors, glsl_config))
+				if (!HLSL2ALL::spirv_to_glsl(shader_spirv_out, shader_sources[type], shader_glsl_tslist, shader_spirv_errors, glsl_config))
 				{
 					context().add_wrong("Error to shader compile");
 					context().add_wrongs(shader_spirv_errors);
