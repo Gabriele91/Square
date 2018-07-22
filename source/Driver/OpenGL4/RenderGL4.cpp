@@ -117,7 +117,7 @@ namespace Render
 	{
 		long n_texture = ++m_shader->m_uniform_ntexture;
 		//bind texture
-		m_context->bind_texture(in_texture, (int)n_texture, 0);
+		m_context->bind_texture(in_texture, (int)n_texture, (int)n_texture);
 		//bind id
 		glUniform1i(m_id, (int)n_texture);
 	}
@@ -202,7 +202,7 @@ namespace Render
             //bind
             long n_texture = ++m_shader->m_uniform_ntexture;
             //bind texture
-            m_context->bind_texture(tvector++, (int)n_texture, 0);
+            m_context->bind_texture(tvector++, (int)n_texture, (int)n_texture);
             //bind ids
             glUniform1i(id++, (int)n_texture);
         }
@@ -2146,8 +2146,22 @@ namespace Render
 			std::string real_name = "_Global." + uname;
 			const char* ufiled_name[1] = { real_name.data() };
 			GLuint field_index[1] = { 0 };
-			GLint  offset[1] = { 0 };
 			glGetUniformIndices(m_shader_id, 1, ufiled_name, field_index);
+			//bad index 
+			if(field_index[0] == GL_INVALID_INDEX)
+			{
+				//legacy
+				auto uit = m_uniform_map.find(uname);
+				//if find
+				if (uit != m_uniform_map.end()) return uit->second.get();
+				//else
+				GLint uid = glGetUniformLocation(m_shader_id, uname.c_str());
+				if (uid < 0) return nullptr;
+				//add and return
+				return &add_uniform(uname, MakeUnique< UniformGL4 >(&m_context, this, uid));
+			}
+			//get offset
+			GLint  offset[1] = { 0 };
 			glGetActiveUniformsiv(m_shader_id, 1, field_index, GL_UNIFORM_OFFSET, offset);
 			//build
 			UniformGLGUBO* uglobal = new UniformGLGUBO(&m_context, this, m_global_buffer_cpu.data(), offset[0]);

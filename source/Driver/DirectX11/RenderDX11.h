@@ -382,7 +382,6 @@ namespace Render
 		mutable UniformMap m_uniform_map;
         mutable UniformConstBufferMap m_uniform_const_buffer_map;
 		mutable UniformConstBufferSlots m_uniform_const_buffer_slot_map;
-		mutable long m_uniform_ntexture{ -1 }; //n texture bind
 
 		//global uniforms
 		bool						 m_global_buffer_should_be_bind{ true };

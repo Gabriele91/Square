@@ -79,13 +79,13 @@ namespace Resource
 				switch (ctx_param.m_type)
 				{
 				//textures
-				case Render::EffectParameterType::PT_TEXTURE: param->set(context().resource<Resource::Texture>(ctx_param.m_resource[0])); break;
+				case Render::EffectParameterType::PT_TEXTURE: param->set(context().resource<Resource::Texture>(ctx_param.m_resources[0])); break;
 				case Render::EffectParameterType::PT_STD_VECTOR_TEXTURE:
 				{
 					//vector of texture
 					std::vector< Shared<Resource::Texture> > textures;
 					//get all texture
-					for (const std::string& tex_name : ctx_param.m_resource) textures.push_back(context().resource<Resource::Texture>(tex_name));
+					for (const std::string& tex_name : ctx_param.m_resources) textures.push_back(context().resource<Resource::Texture>(tex_name));
 					//set
 					param->set(textures);
 				}

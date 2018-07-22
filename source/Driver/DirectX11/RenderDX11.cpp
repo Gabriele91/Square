@@ -51,9 +51,8 @@ namespace Render
 	//uniform
 	void UniformDX11::set(Texture* in_texture)
 	{
-		long n_texture = ++m_shader->m_uniform_ntexture;
 		//bind texture
-		m_context->bind_texture(in_texture, (int)n_texture, (int)n_texture);
+		m_context->bind_texture(in_texture, (int)m_offset, (int)m_offset);
 	}
 
 	void UniformDX11::set(int i)
@@ -144,12 +143,10 @@ namespace Render
     {
         /* 3D texture? */
         //for all
-        while(n--)
+		for (size_t i = 0; i!= n; ++i)
         {
-            //bind
-            long n_texture = ++m_shader->m_uniform_ntexture;
             //bind texture
-            m_context->bind_texture(tvector++, (int)n_texture, (int)n_texture);
+            m_context->bind_texture(tvector++, (int)m_offset+i, (int)m_offset+i);
         }
     }
 
@@ -1149,11 +1146,11 @@ namespace Render
 		device_context()->Unmap(vbo->m_buffer, 0);
 	}
 
-	void ContextDX11::update_steam_IBO(IndexBuffer* ibo, const unsigned int* data, size_t size) 
+	void ContextDX11::update_steam_IBO(IndexBuffer* ibo, const unsigned int* data, size_t n) 
 	{
 		D3D11_MAPPED_SUBRESOURCE source;
 		device_context()->Map(ibo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &source);
-		memcpy(source.pData, (void*)data, size);
+		memcpy(source.pData, (void*)data, sizeof(unsigned int)*n);
 		device_context()->Unmap(ibo->m_buffer, 0);
 	}
 		 
@@ -2304,7 +2301,7 @@ namespace Render
 			if (name.find("$Global") != std::string::npos)
 			{
 				D3D11_SHADER_INPUT_BIND_DESC bind_desc;
-				reflector->GetResourceBindingDesc(i, &bind_desc);
+				reflector->GetResourceBindingDescByName(desc.Name, &bind_desc);
 				//save slot/name/size
 				info.m_slot[type] = bind_desc.BindPoint;
 				//test
@@ -2344,7 +2341,33 @@ namespace Render
 			info.m_fields_uniforms.insert({ pair.first, UniformDX11(context, shader, global_cpu_buffer, pair.second) });
 		}
 	}
+	
+	static void get_global_texture_uniforms(
+		  ContextDX11* context
+		, ID3DBlob* shader_blob
+		, Shader* shader
+		, Shader::GlobalBufferInfo& info
+	)
+	{
+		ID3D11ShaderReflection *reflector = nullptr;
+		D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+		D3D11_SHADER_DESC desc_shader;
+		reflector->GetDesc(&desc_shader);
+		for (UINT i = 0; i < desc_shader.BoundResources; ++i)
+		{
+			D3D11_SHADER_INPUT_BIND_DESC bind_desc;
+			if (SUCCEEDED(reflector->GetResourceBindingDesc(i, &bind_desc)))
+			{
+				//if is a texture // WIP, (D3D_SIT_TEXTURE) same location of texture                           
+				if (bind_desc.Type == D3D_SIT_SAMPLER)
+				{
+					info.m_fields_uniforms[std::string(bind_desc.Name)] = UniformDX11(context, shader, nullptr, bind_desc.BindPoint);
+				}
+			}
 
+		}
+		
+	}
 	Shader* ContextDX11::create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
@@ -2378,7 +2401,22 @@ namespace Render
 				//compile
 				ID3DBlob* shader_blob = nullptr;
 				ID3DBlob* error_blob = nullptr;
-				if (D3DCompile2(source.data(), source.size(), NULL, nullptr, nullptr, info.m_entry_point.c_str(), shader_version[info.m_type], D3DCOMPILE_OPTIMIZATION_LEVEL3, 0, 0, NULL, 0, &shader_blob, &error_blob) != S_OK)
+				if (D3DCompile2(
+					  source.data()
+					, source.size()
+					, NULL
+					, nullptr
+					, nullptr
+					, info.m_entry_point.c_str()
+					, shader_version[info.m_type]
+					, D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
+					, 0
+					, 0
+					, NULL
+					, 0
+					, &shader_blob
+					, &error_blob
+				) != S_OK)
 				{
 					//save error
 					std::string err(static_cast<char*>(error_blob->GetBufferPointer()), error_blob->GetBufferSize());
@@ -2406,6 +2444,8 @@ namespace Render
 						get_global_costant_buffer_uniforms(this, oshader, oshader->m_global_buffer_cpu.data(), oshader->m_global_buffer_info);
 					}
 				}
+				//textures
+				get_global_texture_uniforms(this, shader_blob, oshader, oshader->m_global_buffer_info);
 				//type 
 				switch (info.m_type)
 				{
@@ -2480,8 +2520,6 @@ namespace Render
 		}
 		//save
 		s_bind_context.m_shader = shader;
-		//start texture uniform
-		shader->m_uniform_ntexture = -1;
 		//util define
 		#define BIND(shader, name_field, type, type_slot)\
 			if (shader->name_field)\
@@ -2504,10 +2542,12 @@ namespace Render
 		{
 			assert(s_bind_context.m_shader == shader);
 			//disable textures
-			while (shader->m_uniform_ntexture >= 0)
+			for (auto texture_ptr : s_bind_context.m_textures)
 			{
-				unbind_texture((int)shader->m_uniform_ntexture);
-				--shader->m_uniform_ntexture;
+				if (texture_ptr)
+				{
+					unbind_texture(texture_ptr);
+				}
 			}
 		    //util define
 			#define UNBIND(shader, name_field, type, type_slot)\
