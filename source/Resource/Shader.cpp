@@ -6,7 +6,7 @@
 #include "Square/Config.h"
 #include "Square/Core/Application.h"
 #include "Square/Core/Filesystem.h"
-#include "Square/Core/StringUtils.h"
+#include "Square/Core/StringUtilities.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/Attribute.h"
 #include "Square/Data/ParserUtils.h"
@@ -293,12 +293,12 @@ namespace Resource
 		#define DVec4 double4
 		#define DMat3 double3x3
 		#define DMat4 double4x4
-		#define Sampler2D(name) SamplerState  name; Texture2D name ## _texture;
-		#define Sampler3D(name) SamplerState  name; Texture3D name ## _texture;
-		#define SamplerCube(name) SamplerState  name; TextureCube name ## _texture;
-        #define texture2D(name,pos) name ## _texture.Sample(name,pos)
-        #define texture3D(name,pos) name ## _texture.Sample(name,pos)
-        #define textureCube(name,pos) name ## _texture.Sample(name,pos)
+		#define Sampler2D(name) SamplerState  name; Texture2D name ## _texture_2D;
+		#define Sampler3D(name) SamplerState  name; Texture3D name ## _texture_3D;
+		#define SamplerCube(name) SamplerState  name; TextureCube name ## _texture_CUBE;
+        #define texture2D(name,pos) name ## _texture_2D.Sample(name,pos)
+        #define texture3D(name,pos) name ## _texture_3D.Sample(name,pos)
+        #define textureCube(name,pos) name ## _texture_CUBE.Sample(name,pos)
 		)HLSL");
 		//int shader version
 		int shader_version = 410;

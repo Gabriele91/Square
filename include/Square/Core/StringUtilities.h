@@ -15,7 +15,22 @@
 
 namespace Square
 {
-	inline std::string str_replace(std::string str, const std::string& old_str, const std::string& new_str)
+	inline void replace_implace(std::string& source, std::string const& find, std::string const& replace)
+	{
+		std::string::size_type i = source.find(find, 0);
+		if (i != std::string::npos) source.replace(i, find.length(), replace);
+	}
+
+	inline void replace_all_implace(std::string& source, std::string const& find, std::string const& replace)
+	{
+		for (std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
+		{
+			source.replace(i, find.length(), replace);
+			i += replace.length();
+		}
+	}
+
+	inline std::string replace(std::string str, const std::string& old_str, const std::string& new_str)
 	{
 		std::string::size_type pos = 0u;
 		while ((pos = str.find(old_str, pos)) != std::string::npos)
@@ -23,10 +38,21 @@ namespace Square
 			str.replace(pos, old_str.length(), new_str);
 			pos += new_str.length();
 		}
-		return str;
+		return std::move(str);
 	}
 
-	inline bool str_case_insensitive_equal(const std::string& lstr, const std::string& rstr)
+	inline std::string replace_all(std::string source, std::string const& find, std::string const& replace)
+	{
+		for (std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
+		{
+			source.replace(i, find.length(), replace);
+			i += replace.length();
+		}
+		return std::move(source);
+	}
+
+
+	inline bool scase_insensitive_equal(const std::string& lstr, const std::string& rstr)
 	{
 		//not equal len
 		if (lstr.size() != rstr.size()) return false;
@@ -39,7 +65,7 @@ namespace Square
 		return true;
 	}
 
-	inline std::vector<std::string> str_split(const std::string& input, const  std::string& regex_str)
+	inline std::vector<std::string> split(const std::string& input, const  std::string& regex_str)
 	{
 		std::regex regex(regex_str);
 		std::sregex_token_iterator first{ input.begin(), input.end(), regex, -1 };
