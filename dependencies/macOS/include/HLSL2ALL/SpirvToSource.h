@@ -14,14 +14,35 @@ namespace HLSL2ALL
     using SpirvShader  = std::vector<unsigned int>;
     //errors
     using ErrorSpirvShaderList = std::vector<std::string>;
+	//texture + sampler
+	struct TextureSampler
+	{
+		std::string m_combination;
+		std::string m_texture;
+		std::string m_sampler;
+		int m_combination_id;
+		int m_texture_id;
+		int m_sampler_id;
+	};
+	using TextureSamplerList = std::vector< TextureSampler >;
+    //rename texture modes
+    enum RenameTextureMode
+    {
+         COMBINE_TEXTURE_AND_SAMPLE     // NAME(TEXTURE) <- NAME(TEXTURE)+NAME(SAMPLE)
+       , RENAME_TEXTURE_WITH_SAMPLE     // NAME(TEXTURE) <- NAME(SAMPLE)
+       , FORCE_TO_ADD_SAMPLE_AS_TEXTURE // LEGACY HLSL SOURCE
+    };
     //config
     struct GLSLConfig
     {
         int  m_version{ 410 };
         bool m_es{ false };
+        bool m_vulkan_semantics{ false };
         bool m_fixup_clipspace{ true };
         bool m_flip_vert_y{ true };
         bool m_enable_420pack_extension{ false };
+        //rename texture
+        RenameTextureMode m_rename_texture_mode{RENAME_TEXTURE_WITH_SAMPLE};
         //semantic
         bool m_rename_input_with_semantic{ false };
         std::string m_semantic_prefix{ "in_" };
@@ -37,8 +58,9 @@ namespace HLSL2ALL
     //convert
     HLSL2ALL_API bool spirv_to_glsl
     (
-        SpirvShader shader
+      SpirvShader shader
     , std::string& source_glsl
+	, TextureSamplerList& texture_samplers
     , ErrorSpirvShaderList& errors
     , const GLSLConfig& config = GLSLConfig()
     );
@@ -52,7 +74,7 @@ namespace HLSL2ALL
 	//convert
     HLSL2ALL_API bool spirv_to_hlsl
     (
-        SpirvShader shader
+      SpirvShader shader
     , std::string& source_hlsl
     , ErrorSpirvShaderList& errors
     , const HLSLConfig& config = HLSLConfig()
