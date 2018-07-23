@@ -296,7 +296,9 @@ namespace Resource
 		#define Sampler2D(name) SamplerState  name; Texture2D name ## _texture;
 		#define Sampler3D(name) SamplerState  name; Texture3D name ## _texture;
 		#define SamplerCube(name) SamplerState  name; TextureCube name ## _texture;
-		#define sample_texture(name,pos) name ## _texture.Sample(name,pos)
+        #define texture2D(name,pos) name ## _texture.Sample(name,pos)
+        #define texture3D(name,pos) name ## _texture.Sample(name,pos)
+        #define textureCube(name,pos) name ## _texture.Sample(name,pos)
 		)HLSL");
 		//int shader version
 		int shader_version = 410;

@@ -78,7 +78,7 @@ sub_effect
 
                 Vec4 fragment(VertexShaderOutput input) : SV_TARGET 
                 {   
-					Vec4 texture_color = sample_texture(diffuse_texture,input.m_uv);
+					Vec4 texture_color = texture2D(diffuse_texture,input.m_uv);
                     if (texture_color.a <= mask) discard;
 					return  color * Vec4(texture_color.rgb,1.0);
                 }
