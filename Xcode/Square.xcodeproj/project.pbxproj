@@ -67,7 +67,6 @@
 		E08C38F82093753500DB2936 /* Viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E08C38F72093753500DB2936 /* Viewport.cpp */; };
 		E0AF07ED209B19FB00276401 /* ParserEffect.h in Headers */ = {isa = PBXBuildFile; fileRef = E0AF07EC209B19FB00276401 /* ParserEffect.h */; };
 		E0AF07EF209B1D2600276401 /* ParserEffect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0AF07EE209B1D2600276401 /* ParserEffect.cpp */; };
-		E0FF89B820ED0E520028A1C5 /* StringUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = E0FF89B720ED0E520028A1C5 /* StringUtils.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -199,7 +198,6 @@
 		E08C38F92093775100DB2936 /* Transformation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Transformation.h; sourceTree = "<group>"; };
 		E0AF07EC209B19FB00276401 /* ParserEffect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParserEffect.h; sourceTree = "<group>"; };
 		E0AF07EE209B1D2600276401 /* ParserEffect.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParserEffect.cpp; sourceTree = "<group>"; };
-		E0FF89B720ED0E520028A1C5 /* StringUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StringUtils.h; sourceTree = "<group>"; };
 		E0FF89B920ED0E880028A1C5 /* Window_private_dx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Window_private_dx.cpp; sourceTree = "<group>"; };
 		E0FF89BA20ED0E880028A1C5 /* Window_private_gl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Window_private_gl.cpp; sourceTree = "<group>"; };
 		E0FF89BD20ED0EA50028A1C5 /* InterfaceGL4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InterfaceGL4.cpp; sourceTree = "<group>"; };
@@ -256,7 +254,6 @@
 		E044BC3B206A97E6003D4406 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				E0FF89B720ED0E520028A1C5 /* StringUtils.h */,
 				E044BC3C206A97E6003D4406 /* Application.h */,
 				E044BC3D206A97E6003D4406 /* Attribute.h */,
 				E044BC3E206A97E6003D4406 /* ClassObjectRegistration.h */,
@@ -587,7 +584,6 @@
 				E001EC5F20D3B5D800241C6D /* World.h in Headers */,
 				E044BD0E206A9ACE003D4406 /* Window_private.h in Headers */,
 				E001EC5D20D3B5CE00241C6D /* Material.h in Headers */,
-				E0FF89B820ED0E520028A1C5 /* StringUtils.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
