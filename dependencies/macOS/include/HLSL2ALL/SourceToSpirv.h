@@ -30,9 +30,12 @@ namespace HLSL2ALL
     //Spirv
     using SpirvShader  = std::vector<unsigned int>;
 	//Spirv
-	using TypeSpirvShader = std::tuple<int, SpirvShader>;
-	//output
-	using TypeSpirvShaderList = std::vector< std::tuple<int, SpirvShader> >;
+    struct TypeSpirvShader
+    {
+        int m_type;
+        SpirvShader m_shader;
+    };
+	using TypeSpirvShaderList = std::vector< TypeSpirvShader >;
 	//errors
 	using ErrorSpirvShaderList = std::vector<std::string>;
 	//errors
@@ -44,6 +47,8 @@ namespace HLSL2ALL
 		bool  m_vulkan{ false };
 		bool  m_desktop{ true };
         bool  m_reverse_mul{ false };
+        bool  m_samplerarray_to_flat{ true };
+        bool  m_upgrade_texture_to_samples{ true };
 	};
     //convert
     HLSL2ALL_API bool hlsl_to_spirv
