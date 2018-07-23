@@ -355,7 +355,7 @@ namespace Resource
 		spirv_info.m_desktop = true;
 		spirv_info.m_reverse_mul = true;
 		spirv_info.m_vulkan = false;
-		spirv_info.m_upgrade_texture_to_samples = true;
+		spirv_info.m_upgrade_texture_to_samples = false;
 		//build
 		if (!HLSL2ALL::hlsl_to_spirv(
 			  source
@@ -385,13 +385,12 @@ namespace Resource
 		glsl_config.m_fixup_clipspace = true;
 		glsl_config.m_flip_vert_y = false;
 		glsl_config.m_enable_420pack_extension = false;
-		glsl_config.m_combined_texture_samplers = true;
 		//to HLSL/GLSL
 		for (const HLSL2ALL::TypeSpirvShader& ssoutput : shader_spirv_outputs)
 		{
 			//unpack
-			int type = std::get<0>(ssoutput);
-			HLSL2ALL::SpirvShader shader_spirv_out = std::get<1>(ssoutput);
+            int   type = ssoutput.m_type;
+            auto& shader_spirv_out = ssoutput.m_shader;
 			//convert 
 			if (is_hlsl)
 			{
