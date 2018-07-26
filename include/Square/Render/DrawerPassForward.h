@@ -12,7 +12,7 @@ namespace Square
 {
 namespace Render
 {
-    class DrawerPassForward : public DrawerPass
+    class SQUARE_API DrawerPassForward : public DrawerPass
     {
     public:
         //passo
