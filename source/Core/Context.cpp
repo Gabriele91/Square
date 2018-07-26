@@ -117,22 +117,28 @@ namespace Square
             add_resource_path(directorypath, recursive);
         }
         //for all files
-        for(const std::string& filepath : Filesystem::get_files(path))
+        for(const std::string& filename : Filesystem::get_files(path))
         {
             //get extension
-            auto f_ext = Filesystem::get_extension(filepath);
+            auto f_ext = Filesystem::get_extension(filename);
+            //next file
+            bool next_file { false };
             //if is supported
             for(auto r_info : m_resources_info)
-            for(auto r_ext  : r_info.second)
             {
-                if(r_ext == f_ext)
+                for(auto r_ext  : r_info.second)
                 {
-					auto class_name = m_object_factories[ r_info.first ]->info().name();
-                    auto file_name  = Filesystem::get_basename(filepath);
-					auto name       = class_name + ":" + file_name;
-                    m_resources_file[name] = ResourceFile( r_info.first, filepath );
-                    return;
+                    if(r_ext == f_ext)
+                    {
+                        auto class_name = m_object_factories[ r_info.first ]->info().name();
+                        auto file_name  = Filesystem::get_basename(filename);
+                        auto name       = class_name + ":" + file_name;
+                        m_resources_file[name] = ResourceFile( r_info.first, path + "/" + filename );
+                        next_file = true;
+                        break;
+                    }
                 }
+                if(next_file) break;
             }
         }
         //end
