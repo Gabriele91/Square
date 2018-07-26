@@ -25,6 +25,10 @@ sub_effect
             lights off
             shader source 
             {
+                ////////////////
+                #include <Camera>
+                #include <Transform>
+                ////////////////
                 struct VertexShaderInput
                 {
                     Vec3 m_position : POSITION0;
@@ -38,22 +42,6 @@ sub_effect
                     Vec2 m_uv       : NORMAL0;      // interpolated uv map
                 };
 
-                cbuffer Camera : register(b0)
-                {
-                    Vec4 camera_viewport;
-                    Mat4 camera_projection;
-                    Mat4 camera_view;
-                    Mat4 camera_model;
-                    Vec3 camera_position;
-                };
-
-                cbuffer Transform : register(b1)
-                {
-                    Mat4 model_model;
-                    Vec3 model_position;
-                    Vec3 model_scale;
-                    Mat3 model_rotation;
-                };
 
                 //global uniform
                 float mask;

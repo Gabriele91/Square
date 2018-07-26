@@ -14,6 +14,7 @@
 		E044C4D4206AA948003D4406 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044C4D3206AA947003D4406 /* main.cpp */; };
 		E068963620FE4DDB0008AE5D /* libHLSL2ALL.dylib in Resources */ = {isa = PBXBuildFile; fileRef = E068963320FE4BEF0008AE5D /* libHLSL2ALL.dylib */; };
 		E0DB04F9209FC915001ADF39 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = E0DB04F8209FC915001ADF39 /* assets */; };
+		E0DD8828210A1B9B004E1F3B /* common in Resources */ = {isa = PBXBuildFile; fileRef = E0DD8827210A1B9B004E1F3B /* common */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 		E044C4D3206AA947003D4406 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../../example/HelloWorld/main.cpp; sourceTree = "<group>"; };
 		E068963320FE4BEF0008AE5D /* libHLSL2ALL.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libHLSL2ALL.dylib; path = ../../../dependencies/macOS/lib/libHLSL2ALL.dylib; sourceTree = "<group>"; };
 		E0DB04F8209FC915001ADF39 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../../../../example/HelloWorld/assets; sourceTree = "<group>"; };
+		E0DD8827210A1B9B004E1F3B /* common */ = {isa = PBXFileReference; lastKnownFileType = folder; name = common; path = ../../../../common; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +62,7 @@
 		E044C4BC206AA8B8003D4406 /* HelloWorld */ = {
 			isa = PBXGroup;
 			children = (
+				E0DD8827210A1B9B004E1F3B /* common */,
 				E0DB04F8209FC915001ADF39 /* assets */,
 				E044C4D3206AA947003D4406 /* main.cpp */,
 				E044C4C0206AA8B8003D4406 /* Assets.xcassets */,
@@ -138,6 +141,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E0DD8828210A1B9B004E1F3B /* common in Resources */,
 				E068963620FE4DDB0008AE5D /* libHLSL2ALL.dylib in Resources */,
 				E0DB04F9209FC915001ADF39 /* assets in Resources */,
 				E02600D8206B0D46000328DB /* libSqOpenGL4.dylib in Resources */,
