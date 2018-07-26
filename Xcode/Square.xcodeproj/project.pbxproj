@@ -73,6 +73,7 @@
 		E0DD88192109A244004E1F3B /* VertexFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0DD88182109A244004E1F3B /* VertexFormat.cpp */; };
 		E0DD881F210A1A7D004E1F3B /* Camera.hlsl in Sources */ = {isa = PBXBuildFile; fileRef = E0DD881E210A1A7D004E1F3B /* Camera.hlsl */; };
 		E0DD8821210A1AD8004E1F3B /* Transform.hlsl in Sources */ = {isa = PBXBuildFile; fileRef = E0DD8820210A1AD8004E1F3B /* Transform.hlsl */; };
+		E0DD882A210A2652004E1F3B /* Vertex.hlsl in Sources */ = {isa = PBXBuildFile; fileRef = E0DD8829210A2652004E1F3B /* Vertex.hlsl */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -213,6 +214,7 @@
 		E0DD88182109A244004E1F3B /* VertexFormat.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VertexFormat.cpp; sourceTree = "<group>"; };
 		E0DD881E210A1A7D004E1F3B /* Camera.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; path = Camera.hlsl; sourceTree = "<group>"; };
 		E0DD8820210A1AD8004E1F3B /* Transform.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; path = Transform.hlsl; sourceTree = "<group>"; };
+		E0DD8829210A2652004E1F3B /* Vertex.hlsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = Vertex.hlsl; sourceTree = "<group>"; };
 		E0FF89B920ED0E880028A1C5 /* Window_private_dx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Window_private_dx.cpp; sourceTree = "<group>"; };
 		E0FF89BA20ED0E880028A1C5 /* Window_private_gl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Window_private_gl.cpp; sourceTree = "<group>"; };
 		E0FF89BD20ED0EA50028A1C5 /* InterfaceGL4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InterfaceGL4.cpp; sourceTree = "<group>"; };
@@ -592,6 +594,7 @@
 			children = (
 				E0DD881E210A1A7D004E1F3B /* Camera.hlsl */,
 				E0DD8820210A1AD8004E1F3B /* Transform.hlsl */,
+				E0DD8829210A2652004E1F3B /* Vertex.hlsl */,
 			);
 			name = common;
 			path = ../common;
@@ -697,6 +700,7 @@
 				E044BCFC206A9998003D4406 /* OBoundingBox.cpp in Sources */,
 				E073F2BA207CE7410054CE10 /* Collection.cpp in Sources */,
 				E044BCF9206A9998003D4406 /* CreateBounding.cpp in Sources */,
+				E0DD882A210A2652004E1F3B /* Vertex.hlsl in Sources */,
 				E001EC6A20D3B5FB00241C6D /* Material.cpp in Sources */,
 				E044BCF2206A997F003D4406 /* AttributeSerialize.cpp in Sources */,
 				E001EC6520D3B5EA00241C6D /* Material.cpp in Sources */,

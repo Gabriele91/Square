@@ -121,7 +121,7 @@ namespace Layout
     {
         SQUARE_STATIC_OBJECT(Vertex3D)
         
-        Vec2 m_position;
+        Vec3 m_position;
         
         static inline AttributeList attributes()
         {
