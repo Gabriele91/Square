@@ -14,7 +14,6 @@
 #include "Square/Core/ClassObjectRegistration.h"
 //compiler HLSL2ALL
 #include <HLSL2ALL/HLSL2ALL.h>
-#include <iostream>
 
 namespace Square
 {
@@ -321,7 +320,6 @@ namespace Resource
 		//end source
 		std::string source_header = shader_commond_header + header_string;
 		std::string source = source_header + raw_source;
-        std::cout << source << std::endl;
 		////////////////////////////////////////////////////////////////////////////////
 		//output
 		bool is_hlsl = false;
