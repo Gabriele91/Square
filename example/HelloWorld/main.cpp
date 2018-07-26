@@ -32,9 +32,9 @@ public:
         using namespace Square::Resource;
         using namespace Square::Render;
         using namespace Square::Render::Layout;
-        layout_id_from_object_name("Vertex3DNormalUV");
+        layout_id_from_type( LF_POSITION_3D | LF_NORMAL | LF_UVMAP );
         //init
-        Vertex3DNormalUV model[]
+        Position3DNormalUV model[]
         {
             
             { Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.0f, 1.0f, 0.0f), Vec2(0.0f, 0.0f) }, // +Y (top face)
@@ -67,7 +67,7 @@ public:
             { Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(1.0f, 1.0f) },
             { Vec3(0.5f, -0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(0.0f, 1.0f) },
         };
-        m_model  = Render::vertex_buffer< Vertex3DNormalUV >(context.render(), (unsigned char*)model, 24);
+        m_model  = Render::vertex_buffer< Position3DNormalUV >(context.render(), (unsigned char*)model, 24);
         //indexs
         unsigned int ids[]
         {
