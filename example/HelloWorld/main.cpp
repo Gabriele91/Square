@@ -213,7 +213,11 @@ public:
     
     bool run(double dt)
     {
-        m_drawer->draw( Square::Vec4(0.25,0.5,1.0,1.0), Square::Vec4(1.0), m_level->randerable_collection() );
+        m_drawer->draw( 
+			  Square::Vec4(0.25,0.5,1.0,1.0)
+			, Square::Vec4(1.0)
+			, m_level->randerable_collection()
+		);
         return m_loop;
     }
     bool end()

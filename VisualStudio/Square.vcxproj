@@ -185,7 +185,10 @@
     <ClInclude Include="..\include\Square\Math\Linear.h" />
     <ClInclude Include="..\include\Square\Math\Tangent.h" />
     <ClInclude Include="..\include\Square\Math\Transformation.h" />
+    <ClInclude Include="..\include\Square\Render\Camera.h" />
     <ClInclude Include="..\include\Square\Render\Collection.h" />
+    <ClInclude Include="..\include\Square\Render\Drawer.h" />
+    <ClInclude Include="..\include\Square\Render\DrawerPassForward.h" />
     <ClInclude Include="..\include\Square\Render\Effect.h" />
     <ClInclude Include="..\include\Square\Render\GBuffer.h" />
     <ClInclude Include="..\include\Square\Render\Light.h" />
@@ -193,6 +196,7 @@
     <ClInclude Include="..\include\Square\Render\Queue.h" />
     <ClInclude Include="..\include\Square\Render\Renderable.h" />
     <ClInclude Include="..\include\Square\Render\Transform.h" />
+    <ClInclude Include="..\include\Square\Render\VertexLayout.h" />
     <ClInclude Include="..\include\Square\Render\Viewport.h" />
     <ClInclude Include="..\include\Square\Resource\Effect.h" />
     <ClInclude Include="..\include\Square\Resource\Material.h" />
@@ -315,10 +319,13 @@
     <ClCompile Include="..\source\Geometry\OBoundingBox.cpp" />
     <ClCompile Include="..\source\Math\Tangent.cpp" />
     <ClCompile Include="..\source\Render\Collection.cpp" />
+    <ClCompile Include="..\source\Render\Drawer.cpp" />
+    <ClCompile Include="..\source\Render\DrawerPassForward.cpp" />
     <ClCompile Include="..\source\Render\Effect.cpp" />
     <ClCompile Include="..\source\Render\GBuffer.cpp" />
     <ClCompile Include="..\source\Render\Material.cpp" />
     <ClCompile Include="..\source\Render\Queue.cpp" />
+    <ClCompile Include="..\source\Render\VertexFormat.cpp" />
     <ClCompile Include="..\source\Render\Viewport.cpp" />
     <ClCompile Include="..\source\Resource\Effect.cpp" />
     <ClCompile Include="..\source\Resource\Material.cpp" />

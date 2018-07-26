@@ -279,6 +279,18 @@
     <ClInclude Include="..\include\Square\Math\Transformation.h">
       <Filter>include\Square\Math</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Render\Camera.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Render\Drawer.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Render\DrawerPassForward.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Render\VertexLayout.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -427,6 +439,15 @@
     </ClCompile>
     <ClCompile Include="..\source\Driver\Win32\Window_private_dx.cpp">
       <Filter>source\Driver\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Render\Drawer.cpp">
+      <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Render\DrawerPassForward.cpp">
+      <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Render\VertexFormat.cpp">
+      <Filter>Source\Render</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
