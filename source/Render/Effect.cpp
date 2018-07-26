@@ -328,15 +328,28 @@ namespace Render
 	EffectPass::~EffectPass() {}
 	
 	//enable pass effect
-	void EffectPass::bind(Render::Context* render, Shared<Render::ConstBuffer> camera_cb, Shared<Render::ConstBuffer> transform_cb, EffectParameters* params) const
+	void EffectPass::bind(  Render::Context* render
+                          , Layout::InputLayoutId  layout_id
+                          , Shared<Render::ConstBuffer> camera_cb
+                          , Shared<Render::ConstBuffer> transform_cb
+                          , EffectParameters* params) const
 	{
-		bind(render, camera_cb.get(), transform_cb.get(), params);
+		bind(render, layout_id, camera_cb.get(), transform_cb.get(), params);
 	}
 
-	void EffectPass::bind(Render::Context* render, Render::ConstBuffer* camera_cb, Render::ConstBuffer* transform_cb, EffectParameters* params) const
+	void EffectPass::bind(  Render::Context* render
+                          , Layout::InputLayoutId layout_id
+                          , Render::ConstBuffer* camera_cb
+                          , Render::ConstBuffer* transform_cb
+                          , EffectParameters* params) const
 	{
 		//bind
 		bind(render, params);
+        //bind layout
+        if(layout_id < m_shader->layouts().size())
+        {
+            render->bind_IL(m_shader->layouts()[layout_id].get());
+        }
 		//default uniforms
 		if (m_uniform_camera && m_uniform_camera->is_valid())
 		{
@@ -424,19 +437,27 @@ namespace Render
 	}
 
 	//safe enable pass effect
-	Render::State EffectPass::safe_bind(Render::Context* render, Render::ConstBuffer* camera_cb, Render::ConstBuffer* transform_cb, EffectParameters* params) const
+	Render::State EffectPass::safe_bind(  Render::Context* render
+                                        , Layout::InputLayoutId layout_id
+                                        , Render::ConstBuffer* camera_cb
+                                        , Render::ConstBuffer* transform_cb
+                                        , EffectParameters* params) const
 	{
 		//test
 		if (!render) return Render::State();
 		//do
 		Render::State state = render->get_render_state();
-		bind(render, camera_cb, transform_cb, params);
+		bind(render, layout_id, camera_cb, transform_cb, params);
 		return state;
 	}
 
-	Render::State EffectPass::safe_bind(Render::Context* render, Shared<Render::ConstBuffer> camera_cb, Shared<Render::ConstBuffer> transform_cb, EffectParameters* params) const
+	Render::State EffectPass::safe_bind(  Render::Context* render
+                                        , Layout::InputLayoutId layout_id
+                                        , Shared<Render::ConstBuffer> camera_cb
+                                        , Shared<Render::ConstBuffer> transform_cb
+                                        , EffectParameters* params) const
 	{
-		return safe_bind(render, camera_cb.get(), transform_cb.get(), params);
+		return safe_bind(render, layout_id, camera_cb.get(), transform_cb.get(), params);
 	}
 
 	Render::State EffectPass::safe_bind(Render::Context* render, EffectParameters* params) const

@@ -24,6 +24,7 @@
 		E001EC7320D3B6F800241C6D /* Tangent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E001EC7220D3B6F700241C6D /* Tangent.cpp */; };
 		E001EC7620D3FBBC00241C6D /* GBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E001EC7520D3FBBC00241C6D /* GBuffer.cpp */; };
 		E010CF5B207B652700D7A6FA /* Effect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E010CF5A207B652700D7A6FA /* Effect.cpp */; };
+		E024D1652108947B00F44C81 /* DrawerPassForward.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E024D1642108947B00F44C81 /* DrawerPassForward.cpp */; };
 		E044BCE9206A9974003D4406 /* Application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044BC6C206A98B7003D4406 /* Application.cpp */; };
 		E044BCEA206A9974003D4406 /* ClassObjectRegistration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044BC6D206A98B7003D4406 /* ClassObjectRegistration.cpp */; };
 		E044BCEB206A9974003D4406 /* Context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044BC6E206A98B7003D4406 /* Context.cpp */; };
@@ -61,12 +62,15 @@
 		E044BD10206A9ACE003D4406 /* Wrapper_private.h in Headers */ = {isa = PBXBuildFile; fileRef = E044BC85206A98B7003D4406 /* Wrapper_private.h */; };
 		E044BD11206A9ACE003D4406 /* Wrapper_private.mm in Sources */ = {isa = PBXBuildFile; fileRef = E044BC86206A98B7003D4406 /* Wrapper_private.mm */; };
 		E044BD13206A9ED8003D4406 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = E044BD12206A9ED7003D4406 /* libz.tbd */; };
+		E05DC673210760E800445CDF /* Camera.h in Headers */ = {isa = PBXBuildFile; fileRef = E05DC672210760E800445CDF /* Camera.h */; };
+		E05DC675210766EC00445CDF /* Drawer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E05DC674210766EC00445CDF /* Drawer.cpp */; };
 		E073F2BA207CE7410054CE10 /* Collection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E073F2B9207CE7410054CE10 /* Collection.cpp */; };
 		E073F2BE207CF94C0054CE10 /* Queue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E073F2BD207CF94C0054CE10 /* Queue.cpp */; };
 		E08C38F6209372DD00DB2936 /* Camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E08C38F5209372DD00DB2936 /* Camera.cpp */; };
 		E08C38F82093753500DB2936 /* Viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E08C38F72093753500DB2936 /* Viewport.cpp */; };
 		E0AF07ED209B19FB00276401 /* ParserEffect.h in Headers */ = {isa = PBXBuildFile; fileRef = E0AF07EC209B19FB00276401 /* ParserEffect.h */; };
 		E0AF07EF209B1D2600276401 /* ParserEffect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0AF07EE209B1D2600276401 /* ParserEffect.cpp */; };
+		E0DD88192109A244004E1F3B /* VertexFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0DD88182109A244004E1F3B /* VertexFormat.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -92,6 +96,8 @@
 		E007D8BE1F9DF1C90059D333 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		E010CF59207B643600D7A6FA /* Effect.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Effect.h; sourceTree = "<group>"; };
 		E010CF5A207B652700D7A6FA /* Effect.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Effect.cpp; sourceTree = "<group>"; };
+		E024D163210891C900F44C81 /* DrawerPassForward.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DrawerPassForward.h; sourceTree = "<group>"; };
+		E024D1642108947B00F44C81 /* DrawerPassForward.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DrawerPassForward.cpp; sourceTree = "<group>"; };
 		E044BC3A206A97E6003D4406 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Config.h; sourceTree = "<group>"; };
 		E044BC3C206A97E6003D4406 /* Application.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Application.h; sourceTree = "<group>"; };
 		E044BC3D206A97E6003D4406 /* Attribute.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Attribute.h; sourceTree = "<group>"; };
@@ -186,6 +192,9 @@
 		E044BCAE206A98B7003D4406 /* Level.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Level.cpp; sourceTree = "<group>"; };
 		E044BCDE206A9939003D4406 /* libSquare.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libSquare.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		E044BD12206A9ED7003D4406 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		E05DC67121075E0600445CDF /* Drawer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Drawer.h; sourceTree = "<group>"; };
+		E05DC672210760E800445CDF /* Camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Camera.h; sourceTree = "<group>"; };
+		E05DC674210766EC00445CDF /* Drawer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Drawer.cpp; sourceTree = "<group>"; };
 		E073F2B7207CE67C0054CE10 /* Collection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Collection.h; sourceTree = "<group>"; };
 		E073F2B9207CE7410054CE10 /* Collection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Collection.cpp; sourceTree = "<group>"; };
 		E073F2BB207CF8870054CE10 /* Light.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Light.h; sourceTree = "<group>"; };
@@ -198,6 +207,8 @@
 		E08C38F92093775100DB2936 /* Transformation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Transformation.h; sourceTree = "<group>"; };
 		E0AF07EC209B19FB00276401 /* ParserEffect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParserEffect.h; sourceTree = "<group>"; };
 		E0AF07EE209B1D2600276401 /* ParserEffect.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParserEffect.cpp; sourceTree = "<group>"; };
+		E0B369A52108F583007B943F /* VertexLayout.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VertexLayout.h; sourceTree = "<group>"; };
+		E0DD88182109A244004E1F3B /* VertexFormat.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VertexFormat.cpp; sourceTree = "<group>"; };
 		E0FF89B920ED0E880028A1C5 /* Window_private_dx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Window_private_dx.cpp; sourceTree = "<group>"; };
 		E0FF89BA20ED0E880028A1C5 /* Window_private_gl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Window_private_gl.cpp; sourceTree = "<group>"; };
 		E0FF89BD20ED0EA50028A1C5 /* InterfaceGL4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InterfaceGL4.cpp; sourceTree = "<group>"; };
@@ -238,6 +249,7 @@
 			isa = PBXGroup;
 			children = (
 				E044BC3A206A97E6003D4406 /* Config.h */,
+				E044BC69206A97E7003D4406 /* Square.h */,
 				E044BC3B206A97E6003D4406 /* Core */,
 				E044BC4A206A97E7003D4406 /* Data */,
 				E044BC50206A97E7003D4406 /* Driver */,
@@ -246,7 +258,6 @@
 				E073F2B6207CE62F0054CE10 /* Render */,
 				E044BC5E206A97E7003D4406 /* Resource */,
 				E044BC65206A97E7003D4406 /* Scene */,
-				E044BC69206A97E7003D4406 /* Square.h */,
 			);
 			path = Square;
 			sourceTree = "<group>";
@@ -509,6 +520,7 @@
 		E073F2B6207CE62F0054CE10 /* Render */ = {
 			isa = PBXGroup;
 			children = (
+				E05DC672210760E800445CDF /* Camera.h */,
 				E001EC5620D3B5C600241C6D /* Effect.h */,
 				E001EC5720D3B5C600241C6D /* Material.h */,
 				E001EC5520D3B5C600241C6D /* Renderable.h */,
@@ -518,6 +530,9 @@
 				E073F2B7207CE67C0054CE10 /* Collection.h */,
 				E073F2BB207CF8870054CE10 /* Light.h */,
 				E08C38F3209371A300DB2936 /* Viewport.h */,
+				E05DC67121075E0600445CDF /* Drawer.h */,
+				E024D163210891C900F44C81 /* DrawerPassForward.h */,
+				E0B369A52108F583007B943F /* VertexLayout.h */,
 			);
 			path = Render;
 			sourceTree = "<group>";
@@ -531,6 +546,9 @@
 				E073F2B9207CE7410054CE10 /* Collection.cpp */,
 				E08C38F72093753500DB2936 /* Viewport.cpp */,
 				E001EC7520D3FBBC00241C6D /* GBuffer.cpp */,
+				E05DC674210766EC00445CDF /* Drawer.cpp */,
+				E024D1642108947B00F44C81 /* DrawerPassForward.cpp */,
+				E0DD88182109A244004E1F3B /* VertexFormat.cpp */,
 			);
 			path = Render;
 			sourceTree = "<group>";
@@ -574,6 +592,7 @@
 				E044BD0C206A9ACE003D4406 /* Screen_private.h in Headers */,
 				E001EC6320D3B5E100241C6D /* ParserParameters.h in Headers */,
 				E001EC5920D3B5C600241C6D /* Renderable.h in Headers */,
+				E05DC673210760E800445CDF /* Camera.h in Headers */,
 				E001EC5B20D3B5C600241C6D /* Material.h in Headers */,
 				E044BD0A206A9ACE003D4406 /* Input_private.h in Headers */,
 				E001EC5A20D3B5C600241C6D /* Effect.h in Headers */,
@@ -648,11 +667,13 @@
 				E001EC6F20D3B61800241C6D /* ParserMaterial.cpp in Sources */,
 				E08C38F82093753500DB2936 /* Viewport.cpp in Sources */,
 				E044BCEF206A9974003D4406 /* Time.cpp in Sources */,
+				E0DD88192109A244004E1F3B /* VertexFormat.cpp in Sources */,
 				E044BD0B206A9ACE003D4406 /* Input_private.mm in Sources */,
 				E0AF07EF209B1D2600276401 /* ParserEffect.cpp in Sources */,
 				E001EC6720D3B5F100241C6D /* World.cpp in Sources */,
 				E044BCF5206A9982003D4406 /* Json.cpp in Sources */,
 				E073F2BE207CF94C0054CE10 /* Queue.cpp in Sources */,
+				E05DC675210766EC00445CDF /* Drawer.cpp in Sources */,
 				E044BCEA206A9974003D4406 /* ClassObjectRegistration.cpp in Sources */,
 				E044BCEB206A9974003D4406 /* Context.cpp in Sources */,
 				E010CF5B207B652700D7A6FA /* Effect.cpp in Sources */,
@@ -666,6 +687,7 @@
 				E08C38F6209372DD00DB2936 /* Camera.cpp in Sources */,
 				E044BD03206A99A5003D4406 /* Level.cpp in Sources */,
 				E044BD02206A99A5003D4406 /* Component.cpp in Sources */,
+				E024D1652108947B00F44C81 /* DrawerPassForward.cpp in Sources */,
 				E044BCED206A9974003D4406 /* Object.cpp in Sources */,
 				E044BCFB206A9998003D4406 /* Intersection.cpp in Sources */,
 				E001EC6E20D3B61800241C6D /* ParserParameters.cpp in Sources */,

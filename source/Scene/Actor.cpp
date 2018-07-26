@@ -471,8 +471,8 @@ namespace Scene
         if (m_tranform.m_dirty)
         {
             //T*R*S
-            m_model_local  = Square::translate(Mat4(1.0f), m_tranform.m_position);
-            m_model_local *= Square::to_mat4(  m_tranform.m_rotation );
+            m_model_local  = Square::translate( Constants::identity<Mat4>(), m_tranform.m_position);
+            m_model_local *= Square::to_mat4( m_tranform.m_rotation );
             m_model_local  = Square::scale(m_model_local, m_tranform.m_scale);
             //global
             if (parent())
@@ -488,7 +488,7 @@ namespace Scene
     }
     
     //set uniform buffer
-    void Actor::set(UniformBufferTransform* gpubuffer) const
+    void Actor::set(Render::UniformBufferTransform* gpubuffer) const
     {
 		gpubuffer->m_model    = global_model_matrix();
         gpubuffer->m_position = position(true);

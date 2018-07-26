@@ -11,15 +11,17 @@
 
 namespace Square
 {
-namespace Render
-{
-	class Material;
-	class Transform;
-}
-namespace Geometry
-{
-	class Sphere;
-}
+    namespace Render
+    {
+        class Material;
+        class Transform;
+        class Camera;
+    }
+    namespace Geometry
+    {
+        class Sphere;
+        class Frustum;
+    }
 }
 
 namespace Square
@@ -39,20 +41,29 @@ namespace Render
 		
 		SQUARE_OBJECT(Light)
 
-		virtual const Geometry::Sphere& bounding_sphere() = 0;
+        virtual const Geometry::Sphere& bounding_sphere() const = 0;
+        
+        virtual const Geometry::Frustum& frustum() const = 0;
 
-		virtual Weak<Transform> transform() const = 0;
+        virtual Weak<Transform> transform() const = 0;
+        
+        virtual Weak<Camera> camera() const = 0;
 
-		virtual LightType type() = 0;
+		virtual LightType type() const = 0;
 
-		bool visible() const { return m_visible; }
+        bool visible() const { return m_visible; }
+        
+        void visible(bool enable) { m_visible = enable; }
 
-		void visible(bool enable) { m_visible = enable; }
+        bool shadow_caster() const { return m_shadow_caster; }
+        
+        void shadow_caster(bool enable) { m_shadow_caster = enable; }
 
 
 	private:
 
 		bool m_visible{ true };
+        bool m_shadow_caster{ false };
 	};
 }
 }

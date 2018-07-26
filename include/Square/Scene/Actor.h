@@ -27,14 +27,6 @@ namespace Scene
 	class World;
 	using ActorList = std::vector< Shared<Actor> >;
 	using LevelList = std::vector< Shared<Level> >;
-	//Transform uniform buffer
-	PACKED(ConstantBufferStruct UniformBufferTransform
-    {
-		Mat4 m_model;
-	    Vec3 m_position; float __PADDING0__; //alignas(16) 
-		Vec3 m_scale;    float __PADDING1__; //alignas(16) 
-		Mat4 m_rotation;
-    });
 	//..................
     class SQUARE_API Actor : public Object
                            , public SharedObject<Actor>
@@ -124,7 +116,7 @@ namespace Scene
 		bool   remove_from_level();
         
         //set
-        void set(UniformBufferTransform* gpubuffer) const;
+        void set(Render::UniformBufferTransform* gpubuffer) const override;
 
     protected:
 		//friend class

@@ -75,10 +75,10 @@ namespace Square
     
     Application::~Application()
     {
+        //unregister items
+        m_context.clear();
 		//Self unregister
 		m_context.m_application = nullptr;
-		//unregister items
-		m_context.clear();
         //unregister
         s_instance = nullptr;
         //close
@@ -341,6 +341,9 @@ namespace Square
         }
         //end state
         bool end_state = m_instance->end();
+        
+        //clear context
+        context()->clear();
         
         //dealloc input
         delete m_input;
