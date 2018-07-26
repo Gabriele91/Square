@@ -28,20 +28,13 @@ sub_effect
                 ////////////////
                 #include <Camera>
                 #include <Transform>
+                #include <Vertex>
                 ////////////////
-                struct VertexShaderInput
-                {
-                    Vec3 m_position : POSITION0;
-                    Vec3 m_normal   : NORMAL0;
-                    Vec2 m_uv       : TEXCOORD0;
-                };
-
                 struct VertexShaderOutput
                 {
                     Vec4 m_position : SV_POSITION;  // interpolated vertex position (system value)
                     Vec2 m_uv       : NORMAL0;      // interpolated uv map
                 };
-
 
                 //global uniform
                 float mask;
@@ -50,7 +43,7 @@ sub_effect
 				//texture
 				Sampler2D(diffuse_texture);
 
-                VertexShaderOutput vertex(VertexShaderInput input) 
+                VertexShaderOutput vertex(Vertex3DNormalUV input) 
                 {    
 
                     Vec4 position = Vec4(input.m_position, 1.0f);
@@ -59,7 +52,7 @@ sub_effect
                     position = mul(position, camera_projection);
                     VertexShaderOutput output;
                     output.m_position = position;
-                    output.m_uv = input.m_uv;
+                    output.m_uv = input.m_uvmap;
 
                     return output;
                 }
