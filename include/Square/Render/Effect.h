@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 09/04/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -12,6 +12,7 @@
 #include "Square/Core/Resource.h"
 #include "Square/Driver/Render.h"
 #include "Square/Render/Queue.h"
+#include "Square/Render/VertexLayout.h"
 
 namespace Square
 {
@@ -301,21 +302,45 @@ namespace Render
 		virtual ~EffectPass();
 
 		//unsafe
-		void bind(Render::Context* render, Render::ConstBuffer* camera, Render::ConstBuffer* transform, EffectParameters* params = nullptr) const;
+		void bind(  Render::Context*       render
+                  , Layout::InputLayoutId  layout_index
+                  , Render::ConstBuffer*   camera
+                  , Render::ConstBuffer*   transform
+                  , EffectParameters*      params = nullptr
+                  ) const;
 
-		void bind(Render::Context* render, Shared<Render::ConstBuffer> camera, Shared<Render::ConstBuffer> transform, EffectParameters* params = nullptr) const;
+		void bind(  Render::Context* render
+                  , Layout::InputLayoutId  layout_index
+                  , Shared<Render::ConstBuffer> camera
+                  , Shared<Render::ConstBuffer> transform
+                  , EffectParameters* params = nullptr
+                  ) const;
 
-		void bind(Render::Context* render, EffectParameters* params = nullptr) const;
+		void bind(  Render::Context* render
+                  , EffectParameters* params = nullptr
+                  ) const;
 
 		void unbind() const;
 		//safe
-		Render::State safe_bind(Render::Context* render, Render::ConstBuffer* camera, Render::ConstBuffer* transform, EffectParameters* params = nullptr) const;
+		Render::State safe_bind(  Render::Context* render
+                                , Layout::InputLayoutId  layout_index
+                                , Render::ConstBuffer* camera
+                                , Render::ConstBuffer* transform
+                                , EffectParameters* params = nullptr) const;
 
-		Render::State safe_bind(Render::Context* render, Shared<Render::ConstBuffer> camera, Shared<Render::ConstBuffer> transform, EffectParameters* params = nullptr) const;
+		Render::State safe_bind(  Render::Context* render
+                                , Layout::InputLayoutId  layout_index
+                                , Shared<Render::ConstBuffer> camera
+                                , Shared<Render::ConstBuffer> transform
+                                , EffectParameters* params = nullptr) const;
 
-		Render::State safe_bind(Render::Context* render, EffectParameters* params = nullptr) const;
+		Render::State safe_bind(  Render::Context* render
+                                , EffectParameters* params = nullptr
+                                ) const;
 
-		void safe_unbind(Render::Context* render, const Render::State&);
+		void safe_unbind(  Render::Context* render
+                         , const Render::State&
+                         );
 	};
 
 	//pass list

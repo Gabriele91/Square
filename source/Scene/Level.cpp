@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 20/10/17.
-//  Copyright © 2017 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2017 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Core/Context.h"
 #include "Square/Core/Application.h"
@@ -257,6 +257,9 @@ namespace Scene
 
 		auto light = DynamicPointerCast<Render::Light, Component>(component);
 		if(light) { m_rander_collection.m_lights.push_back(light); return; }
+        
+        auto camera = DynamicPointerCast<Render::Camera, Component>(component);
+        if (camera) { m_rander_collection.m_cameras.push_back(camera); return; }
 	}
 	//remove a component
 	void Level::on_remove_a_component(Shared<Actor> actor, Shared<Component> component)
@@ -290,6 +293,21 @@ namespace Scene
 			); 
 			return;
 		}
+        
+        auto& cameras = m_rander_collection.m_cameras;
+        auto camera = DynamicPointerCast<Render::Camera, Component>(component);
+        if (camera)
+        {
+            cameras.erase(
+                 std::remove_if( cameras.begin(), cameras.end(),
+                                [&](Weak<Render::Camera> n_camera)
+                                {
+                                    return camera == n_camera.lock();
+                                }),
+                 cameras.end()
+            );
+            return;
+        }
 
 	}
 }

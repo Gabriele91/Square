@@ -140,7 +140,6 @@ namespace Square
 		ObjectFactoryMap m_object_factories;
 		//Context refs
 		Application*     m_application{ nullptr };
-		Application*     m_world{ nullptr };
         //Reousce factory
         ResourceFileMap   m_resources_file;
         ResourceInfoMap   m_resources_info;

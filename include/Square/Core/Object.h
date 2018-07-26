@@ -41,13 +41,16 @@ namespace Square
 	};
 
 	//Define object
+    #define SQUARE_STATIC_OBJECT(Class)\
+        static const ::Square::ObjectInfo& static_object_info()\
+        { static ::Square::ObjectInfo obj_info(#Class); return obj_info; }\
+        static ::Square::uint64 static_object_id()\
+        { return static_object_info().id(); }\
+        static const std::string& static_object_name()\
+        { return static_object_info().name(); }
+    
 	#define SQUARE_OBJECT(Class)\
-	    static const ::Square::ObjectInfo& static_object_info()\
-			{ static ::Square::ObjectInfo obj_info(#Class); return obj_info; }\
-		static ::Square::uint64 static_object_id()\
-			{ return static_object_info().id(); }\
-		static const std::string& static_object_name()\
-			{ return static_object_info().name(); }\
+	    SQUARE_STATIC_OBJECT(Class)\
 		::Square::uint64 object_id() const override\
 			{ return Class::static_object_id(); }\
 		const std::string& object_name() const override\

@@ -6,6 +6,7 @@
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Config.h"
+#include "Square/Render/Camera.h"
 #include "Square/Render/Viewport.h"
 #include "Square/Geometry/Frustum.h"
 #include "Square/Scene/Component.h"
@@ -17,18 +18,10 @@ namespace Scene
 {
     //Class Declaretion
     class  Actor;
-    //Camera uniform buffer
-    ConstantBufferStruct UniformBufferCamera
-    {
-        Vec4 m_viewport;
-        Mat4 m_projection;
-        Mat4 m_view;
-        Mat4 m_model;
-        Vec3 m_position;
-    };
     //Camera
     class SQUARE_API Camera : public Component
                             , public SharedObject<Camera>
+                            , public Render::Camera
     {
     public:
         
@@ -61,19 +54,20 @@ namespace Scene
         void ortogonal(float left, float right, float top, float bottom, float near, float far);
 
         //get
-        const Render::Viewport& viewport() const;
-        const Mat4& view() const;
-        const Geometry::Frustum& frustum() const;
+        const Mat4& model() const override;
+        const Mat4& view() const override;
+        const Render::Viewport& viewport() const override;
+        const Geometry::Frustum& frustum() const override;
         
         //set values to constant buffer
-        void set(UniformBufferCamera* gpubuffer);
+        void set(Render::UniformBufferCamera* gpubuffer) const override;
 
     protected:
-        Geometry::Frustum m_frustum; //fustrum
-        Render::Viewport  m_viewport;//viewport info
-        mutable Mat4      m_view;    //inverse of model matrix of actor
-        mutable bool      m_is_dirty;
-        void update_frustum();
+        Render::Viewport  m_viewport;         //viewport info
+        mutable Mat4              m_view;             //inverse of model matrix of actor
+        mutable bool              m_is_dirty{ true }; // for view matrix
+        mutable Geometry::Frustum m_frustum;                  //fustrum
+        mutable bool              m_frustum_is_dirty{ true }; // for fustrum
     };
 }
 }

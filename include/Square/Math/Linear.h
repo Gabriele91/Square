@@ -26,6 +26,7 @@
 #include <glm/gtx/matrix_operation.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
+#include <glm/ext.hpp>
 
 namespace Square
 {
@@ -77,7 +78,13 @@ namespace Square
 		inline T golden_ratio()
 		{
 			return glm::golden_ratio<T>();
-		}		
+		}
+        template <class T>
+        inline const T& identity()
+        {
+            static T I(1.0);
+            return I;
+        }
     }
     
     template < class T >
@@ -235,6 +242,20 @@ namespace Square
 	{
 		return glm::toMat4(q_v);
 	}
+    
+    /*
+    Quaternion
+    */
+    template < typename Scalar, glm::precision P = glm::defaultp >
+    inline auto to_quad(const Scalar& x, const Scalar& y,const Scalar& z) -> glm::tquat< Scalar, P >
+    {
+        return glm::eulerAngleXYZ<Scalar>(x,y,z);
+    }
+    template < typename Scalar, glm::precision P = glm::defaultp >
+    inline auto to_quad(const glm::tvec3< Scalar, P >& vec) -> glm::tquat< Scalar, P >
+    {
+        return glm::eulerAngleXYZ<Scalar,P>(vec.x,vec.y,vec.z);
+    }
     
     /*
     * Eigenvalues rotate

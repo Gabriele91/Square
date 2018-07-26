@@ -299,8 +299,14 @@ namespace Square
 
 	void BaseContext::clear()
 	{
+        //
+        m_wrongs.clear();
 		m_variables.clear();
 		m_attributes.clear();
 		m_object_factories.clear();
+        //
+        m_resources_file.clear();
+        m_resources_info.clear();
+        m_resources.clear();
 	}
 }

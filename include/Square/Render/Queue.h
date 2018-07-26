@@ -26,7 +26,13 @@ namespace Render
         QueueElement* m_next{ nullptr };
         float         m_depth{ ~0 };
         //fake lock
-        Shared<BaseObject> lock();
+        Shared<BaseObject> lock() const;
+        template < typename T >
+        Shared< T > lock() const
+        {
+            if(auto obj = lock()) return DynamicPointerCast<T>(obj);
+            return nullptr;
+        }
     };
     
     class SQUARE_API QueueIterator
@@ -35,11 +41,20 @@ namespace Render
         //queue
         QueueIterator(QueueElement* queue = nullptr);
         Shared<BaseObject> lock() const;
+        template < typename T >
+        Shared< T > lock() const
+        {
+            if(auto obj = lock()) return DynamicPointerCast<T>(obj);
+            return nullptr;
+        }
         //iterator ops
         QueueIterator operator++();
-        bool operator == (const QueueIterator& other);
-        bool operator!=(const QueueIterator& other);
-        Shared<BaseObject> operator*();
+        bool operator == (const QueueIterator& other) const;
+        bool operator!= (const QueueIterator& other) const;
+        
+        QueueElement* operator*();
+        const QueueElement* operator* () const;
+        
     protected:
         //element
         QueueElement* m_ref{ nullptr };
@@ -65,6 +80,10 @@ namespace Render
         //iterator
         QueueIterator begin();
         QueueIterator end();
+        
+        //iterator
+        QueueIterator begin() const;
+        QueueIterator end()   const;
         
         //clear
         void clear();

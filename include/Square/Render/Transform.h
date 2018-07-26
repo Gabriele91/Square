@@ -1,7 +1,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 08/06/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -12,6 +12,15 @@ namespace Square
 {
 namespace Render
 {
+    //Transform uniform buffer
+    PACKED(ConstantBufferStruct UniformBufferTransform
+    {
+        Mat4 m_model;
+        Vec3 m_position; float __PADDING0__; //alignas(16)
+        Vec3 m_scale;    float __PADDING1__; //alignas(16)
+        Mat4 m_rotation;
+    });
+    //Transform cpu class
 	class Transform : public BaseObject
 	{
 	public:
@@ -32,6 +41,9 @@ namespace Render
 
 		virtual Mat4 const& local_model_matrix() const = 0;
 		virtual Mat4 const& global_model_matrix() const = 0;
+        
+        //set gpu buffer
+        virtual void set(UniformBufferTransform* gpubuffer) const = 0;
 	};
 }
 }

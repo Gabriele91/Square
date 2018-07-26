@@ -1028,20 +1028,20 @@ namespace Render
 	/////////////////////////////////
 	// Buffer smart pointer	
 	DLL_EXPORT Shared<InputLayout>  input_layout(Context* ctx, Shader* shader, const AttributeList& attrs);
-	DLL_EXPORT Shared<ConstBuffer>  constant_buffer(Context* ctx, size_t size);
-	DLL_EXPORT Shared<VertexBuffer> vertex_buffer(Context* ctx, size_t stride, size_t n);
-	DLL_EXPORT Shared<IndexBuffer> index_buffer(Context* ctx, size_t n);
+	DLL_EXPORT Shared<ConstBuffer>  constant_buffer(Context* ctx,  unsigned char* data, size_t size);
+	DLL_EXPORT Shared<VertexBuffer> vertex_buffer(Context* ctx, unsigned char* data, size_t stride, size_t n);
+	DLL_EXPORT Shared<IndexBuffer> index_buffer(Context* ctx, unsigned int* data, size_t n);
 	DLL_EXPORT Shared<ConstBuffer>  stream_constant_buffer(Context* ctx, size_t size);
 	DLL_EXPORT Shared<VertexBuffer> stream_vertex_buffer(Context* ctx, size_t stride, size_t n);
 	DLL_EXPORT Shared<IndexBuffer> stream_index_buffer(Context* ctx, size_t n);
 	/////////////////////////////////
-	template<class T> static inline Shared<ConstBuffer> constant_buffer(Context* ctx)
+	template<class T> static inline Shared<ConstBuffer> constant_buffer(Context* ctx, unsigned char* data)
 	{
-		return constant_buffer(ctx, sizeof(T));
+		return constant_buffer(ctx, data, sizeof(T));
 	}
-	template<class T> static inline Shared<VertexBuffer> vertex_buffer(Context* ctx, size_t n)
+	template<class T> static inline Shared<VertexBuffer> vertex_buffer(Context* ctx, unsigned char* data, size_t n)
 	{
-		return vertex_buffer(ctx, sizeof(T), n);
+		return vertex_buffer(ctx, data, sizeof(T), n);
 	}	
 	template<class T> static inline Shared<ConstBuffer> stream_constant_buffer(Context* ctx)
 	{

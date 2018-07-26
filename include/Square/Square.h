@@ -6,9 +6,9 @@
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
-//Config
+/* --- Config --- */
 #include "Square/Config.h"
-//Core
+/* --- Core --- */
 #include "Square/Core/Time.h"
 #include "Square/Core/StringUtilities.h"
 #include "Square/Core/UtfConvert.h"
@@ -21,34 +21,49 @@
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/Application.h"
-//Math
+/* --- Math --- */
 #include "Square/Math/Linear.h"
 #include "Square/Math/Tangent.h"
 #include "Square/Math/Transformation.h"
-//Geometry
+/* --- Geometry --- */
 #include "Square/Geometry/Sphere.h"
 #include "Square/Geometry/Frustum.h"
 #include "Square/Geometry/OBoundingBox.h"
 #include "Square/Geometry/AABoundingBox.h"
 #include "Square/Geometry/Intersection.h"
-//Data
+/* --- Data --- */
 #include "Square/Data/Json.h"
 #include "Square/Data/Image.h"
 #include "Square/Data/Archive.h"
 #include "Square/Data/AttributeSerialize.h"
-//Driver
+/* --- Driver --- */
 #include "Square/Driver/Render.h"
 #include "Square/Driver/Input.h"
 #include "Square/Driver/Window.h"
-//Resource
+/* --- Resource --- */
 #include "Square/Resource/Texture.h"
 #include "Square/Resource/Shader.h"
 #include "Square/Resource/Effect.h"
 #include "Square/Resource/Material.h"
-//Scene
+/* --- Scene --- */
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/Level.h"
 #include "Square/Scene/Camera.h"
 #include "Square/Scene/World.h"
+/* --- Render --- */
+#include "Square/Render/Camera.h"
+#include "Square/Render/Effect.h"
+#include "Square/Render/GBuffer.h"
+#include "Square/Render/Viewport.h"
+#include "Square/Render/Queue.h"
+#include "Square/Render/Light.h"
+#include "Square/Render/Transform.h"
+#include "Square/Render/Renderable.h"
+#include "Square/Render/Drawer.h"
+#include "Square/Render/DrawerPassForward.h"
+#include "Square/Render/VertexLayout.h"
+
+
+
 

@@ -48,9 +48,9 @@ namespace Scene
     
     
     //all events
-    void Camera::on_attach(Actor& entity) { m_is_dirty = true; }
-    void Camera::on_deattch()             { m_is_dirty = true; }
-    void Camera::on_transform()           { m_is_dirty = true; }
+    void Camera::on_attach(Actor& entity) { m_is_dirty = true; m_frustum_is_dirty = true; }
+    void Camera::on_deattch()             { m_is_dirty = true; m_frustum_is_dirty = true; }
+    void Camera::on_transform()           { m_is_dirty = true; m_frustum_is_dirty = true; }
     void Camera::on_message(const Message& msg){}
     
     //set
@@ -60,22 +60,15 @@ namespace Scene
     }
     void Camera::projection(const Mat4& projection)
     {
-        m_viewport.projection(projection);
-        update_frustum();
+        m_viewport.projection(projection); m_frustum_is_dirty = true;
     }
     void Camera::perspective(float fov, float aspect, float near, float far)
     {
-        m_viewport.perspective(fov, aspect, near, far);
-        update_frustum();
+        m_viewport.perspective(fov, aspect, near, far); m_frustum_is_dirty = true;
     }
     void Camera::ortogonal(float left, float right, float top, float bottom, float near, float far)
     {
-        m_viewport.ortogonal(left,right,top,bottom,near,far);
-        update_frustum();
-    }
-    void Camera::update_frustum()
-    {
-        m_frustum.update_frustum(m_viewport.projection());
+        m_viewport.ortogonal(left,right,top,bottom,near,far); m_frustum_is_dirty = true;
     }
     
     //serialize
@@ -99,9 +92,13 @@ namespace Scene
     }
     
     //camera info
-    const Geometry::Frustum& Camera::frustum() const
+    const Mat4& Camera::model() const
     {
-        return m_frustum;
+        if(auto actor = Component::actor().lock())
+        {
+            return actor->global_model_matrix();
+        }
+        return Constants::identity<Mat4>();
     }
     const Mat4& Camera::view() const
     {
@@ -114,12 +111,21 @@ namespace Scene
             }
             else
             {
-                m_view = Mat4(1);
+                m_view = Constants::identity<Mat4>();
             }
             //dirty, not anymore
             m_is_dirty = false;
         }
         return m_view;
+    }
+    const Geometry::Frustum& Camera::frustum() const
+    {
+        if(m_frustum_is_dirty)
+        {
+            m_frustum.update_frustum(m_viewport.projection() * view());
+            m_frustum_is_dirty = false;
+        }
+        return m_frustum;
     }
     const Render::Viewport& Camera::viewport() const
     {
@@ -127,7 +133,7 @@ namespace Scene
     }
     
     //set
-    void Camera::set(UniformBufferCamera *gpubuffer)
+    void Camera::set(Render::UniformBufferCamera *gpubuffer) const
     {
         //info camera
         gpubuffer->m_projection = viewport().projection();
@@ -140,7 +146,7 @@ namespace Scene
         }
         else
         {
-            gpubuffer->m_model = Mat4(1);
+            gpubuffer->m_model = Constants::identity<Mat4>();
             gpubuffer->m_position = Vec3(0);
         }
 

@@ -13,16 +13,21 @@ namespace Render
     /////////////////////////////////////////////////////////////////////
     QueueElement::QueueElement() {};
     QueueElement::QueueElement(Weak<BaseObject> ref) : m_ref(ref) {};
-    Shared<BaseObject> QueueElement::lock() { return m_ref.lock(); }
+    Shared<BaseObject> QueueElement::lock() const { return m_ref.lock(); }
     /////////////////////////////////////////////////////////////////////
     //iterator
     QueueIterator::QueueIterator(QueueElement* queue) { m_ref = queue; }
     Shared<BaseObject> QueueIterator::lock() const { return m_ref->lock();  }
     //iterator ops
-    QueueIterator QueueIterator::operator++() { return QueueIterator(m_ref->m_next); }
-    bool QueueIterator::operator == (const QueueIterator& other){ return m_ref == other.m_ref; }
-    bool QueueIterator::operator!=(const QueueIterator& other){ return m_ref != other.m_ref; }
-    Shared<BaseObject> QueueIterator::operator*(){ return m_ref ? m_ref->lock() : nullptr; }
+    QueueIterator QueueIterator::operator++()
+    {
+        (*this) = QueueIterator(m_ref->m_next);
+        return *this;
+    }
+    bool QueueIterator::operator == (const QueueIterator& other) const { return m_ref == other.m_ref; }
+    bool QueueIterator::operator!=(const QueueIterator& other) const { return m_ref != other.m_ref; }
+    QueueElement* QueueIterator::operator*() { return m_ref; }
+    const QueueElement* QueueIterator::operator* () const { return m_ref; }
     /////////////////////////////////////////////////////////////////////
     Queue::Queue(size_t capacity)
     {
@@ -57,6 +62,8 @@ namespace Render
     //iterator
     QueueIterator Queue::begin() { return QueueIterator(get_first()); }
     QueueIterator Queue::end() { return QueueIterator(); }
+    QueueIterator Queue::begin() const { return QueueIterator(get_first()); }
+    QueueIterator Queue::end() const { return QueueIterator(); }
     //clear
     void  Queue::clear()
     {

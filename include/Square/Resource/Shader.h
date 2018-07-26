@@ -4,6 +4,7 @@
 #include "Square/Config.h"
 #include "Square/Core/Resource.h"
 #include "Square/Driver/Render.h"
+#include "Square/Render/VertexLayout.h"
 
 namespace Square
 {
@@ -20,6 +21,7 @@ namespace Resource
 		using FilepathMap       = std::unordered_map< size_t, std::string >;
 		using UnifomMap         = std::unordered_map< std::string, std::string >;
 		using CBufferMap        = std::unordered_map< std::string, std::string >;
+        using InputLayoutList   = Render::Layout::InputLayoutList;
 
         //Init object
         SQUARE_OBJECT(Shader)
@@ -56,6 +58,9 @@ namespace Resource
 		//RAW Shader
 		Render::Shader* base_shader() const;
         
+        //Input layout
+        const InputLayoutList& layouts() const;
+        
 		//bind shader
 		virtual void bind();
 
@@ -72,6 +77,8 @@ namespace Resource
 		FilepathMap	    m_filepath_map;
 		UnifomMap	    m_uniform_map;
 		CBufferMap	    m_cbuffer_map;
+        //layouts
+        InputLayoutList m_layouts;
 
 	};
 }

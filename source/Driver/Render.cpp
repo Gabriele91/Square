@@ -19,19 +19,19 @@ namespace Render
 		InputLayout* buffer = ctx->create_IL(shader, attrs);
 		return std::shared_ptr<InputLayout>(buffer, [=](InputLayout* ptr) { ctx->delete_IL(ptr); });
 	}
-	Shared<ConstBuffer>  constant_buffer(Context* ctx, size_t size)
+	Shared<ConstBuffer>  constant_buffer(Context* ctx, unsigned char* data, size_t size)
 	{
-		ConstBuffer* buffer = ctx->create_CB(nullptr, size);
+		ConstBuffer* buffer = ctx->create_CB(data, size);
 		return std::shared_ptr<ConstBuffer>(buffer, [=](ConstBuffer* ptr) { ctx->delete_CB(ptr); });
 	}
-	Shared<VertexBuffer> vertex_buffer(Context* ctx, size_t stride, size_t n)
+	Shared<VertexBuffer> vertex_buffer(Context* ctx, unsigned char* data, size_t stride, size_t n)
 	{
-		VertexBuffer* buffer = ctx->create_VBO(nullptr, stride, n);
+		VertexBuffer* buffer = ctx->create_VBO(data, stride, n);
 		return std::shared_ptr<VertexBuffer>(buffer, [=](VertexBuffer* ptr) { ctx->delete_VBO(ptr); });
 	}
-	Shared<IndexBuffer> index_buffer(Context* ctx, size_t n)
+	Shared<IndexBuffer> index_buffer(Context* ctx, unsigned int* data, size_t n)
 	{
-		IndexBuffer* buffer = ctx->create_IBO(nullptr, n);
+		IndexBuffer* buffer = ctx->create_IBO(data, n);
 		return std::shared_ptr<IndexBuffer>(buffer, [=](IndexBuffer* ptr) { ctx->delete_IBO(ptr); });
 	}
 
