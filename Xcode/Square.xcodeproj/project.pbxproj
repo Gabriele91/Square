@@ -195,6 +195,7 @@
 		E044BCAE206A98B7003D4406 /* Level.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Level.cpp; sourceTree = "<group>"; };
 		E044BCDE206A9939003D4406 /* libSquare.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libSquare.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		E044BD12206A9ED7003D4406 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		E04FBA8A210AF7A200248B01 /* Matrix.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = Matrix.hlsl; sourceTree = "<group>"; };
 		E05DC67121075E0600445CDF /* Drawer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Drawer.h; sourceTree = "<group>"; };
 		E05DC672210760E800445CDF /* Camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Camera.h; sourceTree = "<group>"; };
 		E05DC674210766EC00445CDF /* Drawer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Drawer.cpp; sourceTree = "<group>"; };
@@ -211,6 +212,7 @@
 		E0AF07EC209B19FB00276401 /* ParserEffect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParserEffect.h; sourceTree = "<group>"; };
 		E0AF07EE209B1D2600276401 /* ParserEffect.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParserEffect.cpp; sourceTree = "<group>"; };
 		E0B369A52108F583007B943F /* VertexLayout.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VertexLayout.h; sourceTree = "<group>"; };
+		E0D30ABA210A4B75002736EF /* Support.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = Support.hlsl; sourceTree = "<group>"; };
 		E0DD88182109A244004E1F3B /* VertexFormat.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VertexFormat.cpp; sourceTree = "<group>"; };
 		E0DD881E210A1A7D004E1F3B /* Camera.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; path = Camera.hlsl; sourceTree = "<group>"; };
 		E0DD8820210A1AD8004E1F3B /* Transform.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; path = Transform.hlsl; sourceTree = "<group>"; };
@@ -595,6 +597,8 @@
 				E0DD881E210A1A7D004E1F3B /* Camera.hlsl */,
 				E0DD8820210A1AD8004E1F3B /* Transform.hlsl */,
 				E0DD8829210A2652004E1F3B /* Vertex.hlsl */,
+				E0D30ABA210A4B75002736EF /* Support.hlsl */,
+				E04FBA8A210AF7A200248B01 /* Matrix.hlsl */,
 			);
 			name = common;
 			path = ../common;
