@@ -5,6 +5,7 @@
 //  Created by Gabriele Di Bari on 26/07/18.
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
+#pragma once
 
 // camera struct
 cbuffer Camera

@@ -29,6 +29,8 @@ sub_effect
                 #include <Camera>
                 #include <Transform>
                 #include <Vertex>
+                #include <Support>
+                #include <Matrix>
                 ////////////////
                 struct VertexShaderOutput
                 {
@@ -47,7 +49,7 @@ sub_effect
                 {    
 
                     Vec4 position = Vec4(input.m_position, 1.0f);
-                    position = mul(position, model_model);
+                    position = mul(position, transform_model);
                     position = mul(position, camera_view);
                     position = mul(position, camera_projection);
                     VertexShaderOutput output;
