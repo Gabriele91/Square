@@ -58,10 +58,12 @@ namespace Resource
 	// Help parser
 	struct ShaderImportLoader
 	{
-		//lines and files
-		size_t  m_n_files{ 0 };
-		bool    m_files_as_name{ true };
-		bool	m_fail{ false };
+        enum ParserState
+        {
+            PS_OK              = 1,
+            PS_FAIL            = 0,
+            PS_OLREADY_INCLUDE = 2
+        };
 		//load
 		ShaderImportLoader
 		(
@@ -76,29 +78,37 @@ namespace Resource
 		{
 			m_n_files = 0;
 			m_files_as_name = files_as_name;
-			out = load(context, source, source_path, filepath_map, line, 0);
+            m_once_map.clear();
+			m_state = load(context, source, source_path, filepath_map, line, 0, out);
 		}
 
 		bool fail() const
 		{
-			return m_fail;
+			return m_state == PS_FAIL;
 		}
 
 		bool success() const
 		{
-			return !m_fail;
+			return m_state != PS_FAIL;
 		}
 
 	protected:
+        //lines and files
+        size_t      m_n_files{ 0 };
+        bool        m_files_as_name{ true };
+        ParserState m_state{ PS_OK };
+        //mapof once
+        std::map<std::string,bool> m_once_map;
 		//loader
-		std::string load
+		ParserState load
 		(
 			Context& context,
 			std::stringstream& source,
 			const std::string& source_path,
 			Shader::FilepathMap& filepath_map,
 			size_t line,
-			size_t level
+			size_t level,
+            std::string& out
 		)
 		{
 			//cicle test
@@ -117,10 +127,16 @@ namespace Resource
 			//count files
 			size_t  this_file = m_n_files++;
 			std::string source_filename = (m_files_as_name ? "\"" + source_path + "\"" : std::to_string(this_file));
-			//add into the map
+			//once? Not reinclude
+            auto source_is_once = m_once_map.find(source_filename);
+            if(source_is_once != m_once_map.end() && source_is_once->second)
+            {
+                return PS_OLREADY_INCLUDE;
+            }
+            //add into the map
 			filepath_map[this_file] = source_dir;
 			//put line of "all" buffer
-			std::string out = "#line " + std::to_string(line + 1) + " " + source_filename  + "\n";
+            out = "#line " + std::to_string(line + 1) + " " + source_filename  + "\n";
 			//start to parse
 			while (std::getline(source, source_line))
 			{
@@ -131,7 +147,20 @@ namespace Resource
 				//jmp space
 				Parser::skip_line_space(line, c_effect_line);
 				//is pragma?
-				if (Parser::cstr_cmp_skip(c_effect_line, "#include"))
+                if (Parser::cstr_cmp_skip(c_effect_line, "#pragma"))
+                {
+                    //jmp space
+                    Parser::skip_line_space(line, c_effect_line);
+                    //get name
+                    std::string name;
+                    if(Parser::parse_name(c_effect_line, name))
+                    {
+                        m_once_map[source_filename] = name == "once";
+                    }
+                    continue;
+                }
+                //include
+                if (Parser::cstr_cmp_skip(c_effect_line, "#include"))
                 {
                     //name/path/info
                     std::string sourcefile_name;
@@ -151,8 +180,7 @@ namespace Resource
                             else
                             {
 								context.add_wrong("shader, include path is invalid: " + source_path);
-								m_fail = true;
-								return out;
+								return PS_FAIL;
                             }
                         break;
                         case '<': //import
@@ -163,40 +191,48 @@ namespace Resource
                                 if(!sourcefile_path.size())
                                 {
 									context.add_wrong("shader, include path is invalid: " + source_path + ", " + sourcefile_name + " not exists");
-									m_fail = true;
-									return out;
+									return PS_FAIL;
                                 }
                             }
                             else
                             {
 								context.add_wrong("shader, include path is invalid: " + source_path);
-								m_fail = true;
-								return out;
+								return PS_FAIL;
                             }
                         break;
                         default:
                             //error 3
 							context.add_wrong("shader, include path is invalid: " + source_path);
-							m_fail = true;
-							return out;
+							return PS_FAIL;
                         break;
                     };
                     //source
                     std::stringstream source_stream(Filesystem::text_file_read_all(sourcefile_path));
 					//ok
-					out += load
-					(
-						  context
-						, source_stream
-						, sourcefile_path
-						, filepath_map
-						, 0 //start from 0
-						, level + 1
-					);
-					//lines
-					std::string current_line = "#line " + std::to_string(line + 1) + " " + source_filename  + "\n";
-					out += current_line;
-				}
+                    std::string inc_output;
+                    ParserState result = load
+                    (
+                       context
+                     , source_stream
+                     , sourcefile_path
+                     , filepath_map
+                     , 0 //start from 0
+                     , level + 1
+                     , inc_output
+                    );
+                    //success
+					if(result == PS_OK)
+                    {
+                        //add file
+                        out += inc_output;
+                        //lines
+                        std::string current_line = "#line " + std::to_string(line + 1) + " " + source_filename  + "\n";
+                        out += current_line;
+                        //success
+                    }
+                    //return if is fail 
+                    if(result == PS_FAIL) return PS_FAIL;
+                }
 				else
 				{
 					//append to a output
@@ -204,7 +240,7 @@ namespace Resource
 					out += "\n";
 				}
 			}
-			return out;
+			return PS_OK;
 		}
 	};
 
