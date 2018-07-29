@@ -196,7 +196,7 @@ public:
         //camera
         auto camera = m_level->actor("camera");
         camera->translation({ 0,0,0 });
-        camera->rotation(to_quad(0.0f,Square::radians(180.0f),0.0f));
+        camera->rotation(euler_to_quat(0.0f,Square::radians(180.0f),0.0f));
         camera->component<Camera>()->viewport({0,0, 1280, 768});
         camera->component<Camera>()->perspective(radians(90.0), 1280. / 768., 0.1, 1000.);
 		//test
@@ -232,8 +232,12 @@ public:
     bool run(double dt)
     {
 		m_level->actor("main_node")->turn(
-			Square::to_quad<float>(0, 0, Square::Constants::pi2<float>() * 0.1 * dt)
+			Square::euler_to_quat<float>(0, 0, Square::Constants::pi2<float>() * 0.1 * dt)
 		);
+        for(auto child : m_level->actor("main_node")->childs())
+        {
+            child->turn(Square::euler_to_quat<float>(0.0f,Square::radians(90.0f*dt),0.0f));
+        }
         m_drawer->draw( 
 			  Square::Vec4(0.25,0.5,1.0,1.0)
 			, Square::Vec4(1.0)
