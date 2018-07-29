@@ -11,7 +11,7 @@
 Vec2 projection_to_screen(in Vec4 pos)
 {
     Vec2 screen_pos = pos.xy / pos.w;
-    return (screen_pos.xy + Vec2(1.0)) * 0.5;
+    return (screen_pos.xy + Vec2(1.0,1.0)) * 0.5;
 }
 
 Mat3 compute_normal(in Mat4 model)
@@ -32,7 +32,6 @@ Mat3 compute_tbn(in Mat3 normal_matrix,
     //as matrix
     return Mat3(t_pixel, b_pixel, n_pixel);
 }
-
 
 //Compute position
 Vec4 mul_model_view_projection(in Vec3 vertex)
