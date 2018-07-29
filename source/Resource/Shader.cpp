@@ -354,7 +354,8 @@ namespace Resource
 			header_string += "#" + std::get<0>(p) + " " + std::get<1>(p) + "\n";
 		}
 		//end source
-		std::string source_header = shader_commond_header + header_string;
+		std::string shader_matrix = "#pragma pack_matrix( row_major )\n";
+		std::string source_header = shader_matrix + shader_commond_header + header_string;
 		std::string source = source_header + raw_source;
 		////////////////////////////////////////////////////////////////////////////////
 		//output
@@ -391,7 +392,7 @@ namespace Resource
 		HLSL2ALL::TargetShaderInfo spirv_info;
 		spirv_info.m_client_version = 450;
 		spirv_info.m_desktop = true;
-		spirv_info.m_reverse_mul = true;
+		spirv_info.m_reverse_mul = false;
 		spirv_info.m_vulkan = false;
 		spirv_info.m_upgrade_texture_to_samples = false;
 		//build
@@ -432,14 +433,12 @@ namespace Resource
 			//convert 
 			if (is_hlsl)
 			{
-				//header
-				shader_headers[type] = "#pragma pack_matrix( row_major )\n" + source_header;
 				//add inf
 				shader_info.push_back
 				(Render::ShaderSourceInformation
 				{
 					 (Render::ShaderType)type //shader type
-					, shader_headers[type]	  //header
+					, source_header	          //header
 					, raw_source			  //source output ref
 					, shader_target_name[type]//source output ref
 					, 0						  //line 0

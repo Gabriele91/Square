@@ -7,15 +7,15 @@
 //
 #pragma once
 
+struct TransformStruct
+{
+	Mat4 m_model;
+	Vec3 m_position;
+	Vec3 m_scale;
+	Mat3 m_rotation;
+};
 cbuffer Transform
 {
-	struct TransformStruct
-	{
-		Mat4 m_model;
-		Vec3 m_position;
-		Vec3 m_scale;
-		Mat3 m_rotation;
-	}
-	transform;
+	TransformStruct transform;
 };
 
