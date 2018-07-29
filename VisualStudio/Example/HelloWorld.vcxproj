@@ -116,8 +116,12 @@
       <AdditionalDependencies>Square.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath)</Command>
+      <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath) &amp;&amp; copy $(SolutionDir)common\*.hlsl $(SolutionDir)example\HelloWorld\common</Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -137,8 +141,12 @@
       <AdditionalDependencies>Square.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath)</Command>
+      <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath) &amp;&amp; copy $(SolutionDir)common\*.hlsl $(SolutionDir)example\HelloWorld\common</Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

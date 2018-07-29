@@ -363,6 +363,32 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\common\Camera.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\common\DirectionLight.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\common\Matrix.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\common\PointLight.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\common\SpotLight.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\common\Support.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\common\Transform.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\common\Vertex.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

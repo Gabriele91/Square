@@ -73,6 +73,9 @@
     <Filter Include="include\Square\Scene\Resource">
       <UniqueIdentifier>{1a707ae0-7aa4-4cdc-8b60-45da222f2cf6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource\common">
+      <UniqueIdentifier>{6ff18884-2256-425e-aae5-07d9002016c9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Square\Math\Linear.h">
@@ -463,5 +466,31 @@
     <None Include="..\source\Driver\Cocoa\Wrapper_private.mm">
       <Filter>Source\Driver\Cocoa</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\common\Camera.hlsl">
+      <Filter>Resource\common</Filter>
+    </FxCompile>
+    <FxCompile Include="..\common\DirectionLight.hlsl">
+      <Filter>Resource\common</Filter>
+    </FxCompile>
+    <FxCompile Include="..\common\Matrix.hlsl">
+      <Filter>Resource\common</Filter>
+    </FxCompile>
+    <FxCompile Include="..\common\PointLight.hlsl">
+      <Filter>Resource\common</Filter>
+    </FxCompile>
+    <FxCompile Include="..\common\SpotLight.hlsl">
+      <Filter>Resource\common</Filter>
+    </FxCompile>
+    <FxCompile Include="..\common\Support.hlsl">
+      <Filter>Resource\common</Filter>
+    </FxCompile>
+    <FxCompile Include="..\common\Transform.hlsl">
+      <Filter>Resource\common</Filter>
+    </FxCompile>
+    <FxCompile Include="..\common\Vertex.hlsl">
+      <Filter>Resource\common</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

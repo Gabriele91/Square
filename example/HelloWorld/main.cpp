@@ -189,7 +189,7 @@ public:
         m_drawer = Square::MakeShared<Render::Drawer>(context());
         m_drawer->add(MakeShared<Render::DrawerPassForward>(context()));
 		//rs file
-        context().add_resource_path(Filesystem::resource_dir() + "/common");
+		context().add_resource_path(Filesystem::resource_dir() + "/common");
 		context().add_resource_file(Filesystem::resource_dir() + "/assets/example.png");
         context().add_resource_file(Filesystem::resource_dir() + "/assets/effect.sqfx");
 		context().add_resource_file(Filesystem::resource_dir() + "/assets/effect.mat");
@@ -200,9 +200,28 @@ public:
         camera->component<Camera>()->viewport({0,0, 1280, 768});
         camera->component<Camera>()->perspective(radians(90.0), 1280. / 768., 0.1, 1000.);
 		//test
-		auto player = m_level->actor("player");
-		player->translation({ 0,0, 10.0 });
-        player->component<Cube>()->m_material = context().resource<Material>("effect");
+		auto node = m_level->actor("main_node");
+		node->translation({ 0,0, 10.0 });
+		//n cubes
+		int n_cubes = 6;
+		float radius_dist = 5.0f;
+		//get
+		for (int i = 0; i != n_cubes; ++i)
+		{
+			auto player = m_level->actor("player"+std::to_string(i)); 
+			//add to main node
+			node->add(player);
+			//model + material
+			player->component<Cube>()->m_material = context().resource<Material>("effect");
+			//angle
+			float angle = float(i) / (n_cubes) * Constants::pi2<float>();
+			//local pos
+			player->position({ 
+				std::cos(angle) * radius_dist, 
+				std::sin(angle) * radius_dist,
+				0.0
+			});
+		}
 		//wrongs
 		for (const std::string& wrong : Square::reverse( context().wrongs() ))
 		{
@@ -212,6 +231,9 @@ public:
     
     bool run(double dt)
     {
+		m_level->actor("main_node")->turn(
+			Square::to_quad<float>(0, 0, Square::Constants::pi2<float>() * 0.1 * dt)
+		);
         m_drawer->draw( 
 			  Square::Vec4(0.25,0.5,1.0,1.0)
 			, Square::Vec4(1.0)

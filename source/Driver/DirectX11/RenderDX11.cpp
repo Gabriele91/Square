@@ -2409,7 +2409,8 @@ namespace Render
 					, nullptr
 					, info.m_entry_point.c_str()
 					, shader_version[info.m_type]
-					, D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
+					,   D3DCOMPILE_OPTIMIZATION_LEVEL3  
+					  | D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY 
 					, 0
 					, 0
 					, NULL
@@ -2450,27 +2451,27 @@ namespace Render
 				switch (info.m_type)
 				{
 				case ST_VERTEX_SHADER:
-					if (device()->CreateVertexShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_vertex) != S_OK)
+					if (!dx_op_success(device()->CreateVertexShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_vertex)))
 					{ oshader->push_compiler_error({ info.m_type,  "Error to compile bytecode" }); }
 				break;
 				case ST_FRAGMENT_SHADER:
-					if (device()->CreatePixelShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_pixel) != S_OK)
+					if (!dx_op_success(device()->CreatePixelShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_pixel)))
 					{ oshader->push_compiler_error({ info.m_type,  "Error to compile bytecode" }); }
 				break;
 				case ST_GEOMETRY_SHADER:
-					if (device()->CreateGeometryShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_geometry) != S_OK)
+					if (!dx_op_success(device()->CreateGeometryShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_geometry)))
 					{ oshader->push_compiler_error({ info.m_type,  "Error to compile bytecode" }); }
 				break;
 				case ST_TASSELLATION_CONTROL_SHADER:
-					if (device()->CreateHullShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_hull) != S_OK)
+					if (!dx_op_success(device()->CreateHullShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_hull)))
 					{ oshader->push_compiler_error({ info.m_type,  "Error to compile bytecode" }); }
 				break;
 				case ST_TASSELLATION_EVALUATION_SHADER:
-					if (device()->CreateDomainShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_domain) != S_OK)
+					if (!dx_op_success(device()->CreateDomainShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_domain)))
 					{ oshader->push_compiler_error({ info.m_type,  "Error to compile bytecode" }); }
 				break;
 				case ST_COMPUTE_SHADER:
-					if (device()->CreateComputeShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_compute) != S_OK) 
+					if (!dx_op_success(device()->CreateComputeShader(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, &oshader->m_compute)))
 					{ oshader->push_compiler_error({ info.m_type,  "Error to compile bytecode" }); }
 				break;
 				default: break;
