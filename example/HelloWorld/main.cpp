@@ -231,16 +231,17 @@ public:
     
     bool run(double dt)
     {
+		using namespace Square;
 		m_level->actor("main_node")->turn(
-			Square::euler_to_quat<float>(0, 0, Square::Constants::pi2<float>() * 0.1 * dt)
+			euler_to_quat<float>(0, 0, Square::Constants::pi2<float>() * 0.1 * dt)
 		);
         for(auto child : m_level->actor("main_node")->childs())
         {
-            child->turn(Square::euler_to_quat<float>(0.0f,Square::radians(90.0f*dt),0.0f));
+            child->turn(euler_to_quat<float>(0.0f,radians(90.0f*dt),0.0f));
         }
         m_drawer->draw( 
-			  Square::Vec4(0.25,0.5,1.0,1.0)
-			, Square::Vec4(1.0)
+			  Vec4(0.25,0.5,1.0,1.0)
+			, Vec4(1.0)
 			, m_level->randerable_collection()
 		);
         return m_loop;
