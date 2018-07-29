@@ -209,6 +209,9 @@
 		E08C38F5209372DD00DB2936 /* Camera.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Camera.cpp; sourceTree = "<group>"; };
 		E08C38F72093753500DB2936 /* Viewport.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Viewport.cpp; sourceTree = "<group>"; };
 		E08C38F92093775100DB2936 /* Transformation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Transformation.h; sourceTree = "<group>"; };
+		E0A91F82210C9456007451F2 /* SpotLight.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = SpotLight.hlsl; sourceTree = "<group>"; };
+		E0A91F83210C9517007451F2 /* PointLight.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = PointLight.hlsl; sourceTree = "<group>"; };
+		E0A91F84210C95AF007451F2 /* DirectionLight.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = DirectionLight.hlsl; sourceTree = "<group>"; };
 		E0AF07EC209B19FB00276401 /* ParserEffect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParserEffect.h; sourceTree = "<group>"; };
 		E0AF07EE209B1D2600276401 /* ParserEffect.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParserEffect.cpp; sourceTree = "<group>"; };
 		E0B369A52108F583007B943F /* VertexLayout.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VertexLayout.h; sourceTree = "<group>"; };
@@ -599,6 +602,9 @@
 				E0DD8829210A2652004E1F3B /* Vertex.hlsl */,
 				E0D30ABA210A4B75002736EF /* Support.hlsl */,
 				E04FBA8A210AF7A200248B01 /* Matrix.hlsl */,
+				E0A91F82210C9456007451F2 /* SpotLight.hlsl */,
+				E0A91F83210C9517007451F2 /* PointLight.hlsl */,
+				E0A91F84210C95AF007451F2 /* DirectionLight.hlsl */,
 			);
 			name = common;
 			path = ../common;

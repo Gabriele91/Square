@@ -8,12 +8,13 @@
 #pragma once
 
 // camera struct
-cbuffer Camera
+struct Camera
 {
-    Vec4 camera_viewport;
-    Mat4 camera_projection;
-    Mat4 camera_view;
-    Mat4 camera_model;
-    Vec3 camera_position;
+    Vec4 m_viewport;
+    Mat4 m_projection;
+    Mat4 m_view;
+    Mat4 m_model;
+    Vec3 m_position;
 };
-
+//Const buffer
+ConstantBuffer<Camera> camera;

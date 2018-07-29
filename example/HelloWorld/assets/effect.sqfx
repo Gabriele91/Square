@@ -46,16 +46,10 @@ sub_effect
 				Sampler2D(diffuse_texture);
 
                 VertexShaderOutput vertex(Position3DNormalUV input) 
-                {    
-
-                    Vec4 position = Vec4(input.m_position, 1.0f);
-                    position = mul(position, transform_model);
-                    position = mul(position, camera_view);
-                    position = mul(position, camera_projection);
+                {
                     VertexShaderOutput output;
-                    output.m_position = position;
+                    output.m_position = mul_model_view_projection(input.m_position);
                     output.m_uv = input.m_uv;
-
                     return output;
                 }
 

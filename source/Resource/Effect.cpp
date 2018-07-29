@@ -207,6 +207,9 @@ namespace Resource
                     //default uniform
                     this_pass.m_uniform_camera    = this_pass.m_shader->constant_buffer("Camera");
                     this_pass.m_uniform_transform = this_pass.m_shader->constant_buffer("Transform");
+                    //try
+                    if(!this_pass.m_uniform_camera) this_pass.m_uniform_camera = this_pass.m_shader->constant_buffer("camera");
+                    if(!this_pass.m_uniform_transform) this_pass.m_uniform_transform = this_pass.m_shader->constant_buffer("transform");
                     //default true
                     this_pass.m_support_light = true;
                     //lights uniforms
@@ -214,12 +217,15 @@ namespace Resource
                     {
                         case DEF_RENDERING_SPOT_LIGHT:
                             this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("SpotLight");
+                            if(!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("spot_light");
                             break;
                         case DEF_RENDERING_POINT_LIGHT:
                             this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("PointLight");
+                            if(!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("point_light");
                             break;
                         case DEF_RENDERING_DIRECTION_LIGHT:
                             this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("DirectionLight");
+                            if(!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("direction_light");
                             break;
                         case DEF_RENDERING_AMBIENT_LIGHT:
                             this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("AmbientLight");
