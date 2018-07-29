@@ -37,11 +37,20 @@ Mat4 inverse(in Mat4 input)
 
 Mat3 inverse(in Mat3 input)
 {
-    float a00 = input[0][0], a01 = input[0][1], a02 = input[0][2];
-    float a10 = input[1][0], a11 = input[1][1], a12 = input[1][2];
-    float a20 = input[2][0], a21 = input[2][1], a22 = input[2][2];
-
-    return Mat3( (a22 * a11 - a12 * a21), (-a22 * a01 + a02 * a21),  (a12 * a01 - a02 * a11),
-                (-a22 * a10 + a12 * a20),  (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
-                 (a21 * a10 - a11 * a20), (-a21 * a00 + a01 * a20),  (a11 * a00 - a01 * a10)) / determinant(input);
+    #define minor(a,b) determinant(float2x2(input.a, input.b))
+    return Mat3(
+         minor(_33_22,_23_32),
+        -minor(_33_12,_13_32),
+         minor(_23_12,_13_22),
+        
+        -minor(_33_21,_23_31),
+         minor(_33_11,_13_31),
+        -minor(_23_11,_13_21),
+        
+         minor(_32_21,_22_31),
+        -minor(_32_11,_12_31),
+         minor(_22_11,_12_21)
+    ) / determinant(input);
+    #undef minor
 }
+

@@ -32,3 +32,14 @@ Mat3 compute_tbn(in Mat3 normal_matrix,
     //as matrix
     return Mat3(t_pixel, b_pixel, n_pixel);
 }
+
+
+//Compute position
+Vec4 mul_model_view_projection(in Vec3 vertex)
+{
+    Vec4 position = Vec4(vertex, 1.0);
+    position = mul(position, transform.m_model);
+    position = mul(position, camera.m_view);
+    position = mul(position, camera.m_projection);
+    return position;
+}

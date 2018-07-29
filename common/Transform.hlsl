@@ -8,10 +8,14 @@
 #pragma once
 
 // transform struct
-cbuffer Transform
+struct Transform
 {
-    Mat4 transform_model;
-    Vec3 transform_position;
-    Vec3 transform_scale;
-    Mat3 transform_rotation;
+    Mat4 m_model;
+    Vec3 m_position;
+    Vec3 m_scale;
+    Mat3 m_rotation;
 };
+//Const buffer
+ConstantBuffer<Transform> transform;
+
+
