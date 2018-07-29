@@ -247,12 +247,12 @@ namespace Square
     Quaternion
     */
     template < typename Scalar, glm::precision P = glm::defaultp >
-    inline auto to_quad(const Scalar& x, const Scalar& y,const Scalar& z) -> glm::tquat< Scalar, P >
+    inline auto euler_to_quat(const Scalar& x, const Scalar& y,const Scalar& z) -> glm::tquat< Scalar, P >
     {
         return glm::eulerAngleXYZ<Scalar>(x,y,z);
     }
     template < typename Scalar, glm::precision P = glm::defaultp >
-    inline auto to_quad(const glm::tvec3< Scalar, P >& vec) -> glm::tquat< Scalar, P >
+    inline auto euler_to_quat(const glm::tvec3< Scalar, P >& vec) -> glm::tquat< Scalar, P >
     {
         return glm::eulerAngleXYZ<Scalar,P>(vec.x,vec.y,vec.z);
     }
