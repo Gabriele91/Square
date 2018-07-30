@@ -189,10 +189,7 @@ public:
         m_drawer = Square::MakeShared<Render::Drawer>(context());
         m_drawer->add(MakeShared<Render::DrawerPassForward>(context()));
 		//rs file
-		context().add_resource_path(Filesystem::resource_dir() + "/common");
-		context().add_resource_file(Filesystem::resource_dir() + "/assets/example.png");
-        context().add_resource_file(Filesystem::resource_dir() + "/assets/effect.sqfx");
-		context().add_resource_file(Filesystem::resource_dir() + "/assets/effect.mat");
+		context().add_resources(Filesystem::resource_dir() + "/resources.rs");
         //camera
         auto camera = m_level->actor("camera");
         camera->translation({ 0,0,0 });
