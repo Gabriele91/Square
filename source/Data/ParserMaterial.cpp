@@ -35,7 +35,7 @@ namespace Parser
 	{
 		//set context
 		m_context = &default_context;
-		//skeep line and comments
+		//skip line and comments
 		skip_space_and_comments(m_context->m_line, ptr);
 		//get type
 		if (*ptr != EOF && *ptr != '\0')
@@ -45,7 +45,7 @@ namespace Parser
 			else if (cstr_cmp_skip(ptr, "parameters")) { if (!parse_effect(ptr))  return false; }
 			else if (cstr_cmp_skip(ptr, "material"))   { if (!parse_effect(ptr))  return false; }
 			else { push_error("Not found a valid command"); return false; }
-			//skeep line and comments
+			//skip line and comments
 			skip_space_and_comments(m_context->m_line, ptr);
 		}
 		return true;
@@ -53,7 +53,7 @@ namespace Parser
 	//////////////////////////////////////////////////////
 	bool Material::parse_effect(const char*& ptr)
 	{
-		//skeep spaces
+		//skip spaces
 		skip_space_and_comments(m_context->m_line, ptr);
 		//name technique
 		std::string effect_name;
@@ -70,7 +70,7 @@ namespace Parser
 	}
 	bool Material::parse_parameters_block(const char*& ptr)
 	{
-		//skeep spaces
+		//skip spaces
 		skip_space_and_comments(m_context->m_line, ptr);
 		//Parser
 		Parser::Parameters::Context params;

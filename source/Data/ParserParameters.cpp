@@ -97,11 +97,11 @@ namespace Parser
     {
 		//set
         m_context = &default_context;
-        //skeep line and comments
+        //skip line and comments
         skip_space_and_comments(m_context->m_line, ptr);
         //parsing a block
 		if (!parse_parameters_block(ptr)) return false; 
-        //skeep line and comments
+        //skip line and comments
         skip_space_and_comments(m_context->m_line, ptr);
 		//ok
         return true;
@@ -109,14 +109,14 @@ namespace Parser
 
     bool Parameters::parse_parameters_block(const char*& ptr)
     {
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //parse table
         if (is_start_table(*ptr))
         {
-            //skeep '{'
+            //skip '{'
             ++ptr;
-            //skeep spaces
+            //skip spaces
             skip_space_and_comments(m_context->m_line, ptr);
             //read all values
             while (!is_end_table(*ptr) && *ptr != EOF && *ptr != '\0')
@@ -129,7 +129,7 @@ namespace Parser
                     push_error("Not valid uniform name");
                     return false;
                 }
-                //skeep "line" space
+                //skip "line" space
                 skip_line_space(m_context->m_line, ptr);
                 //value
                 if (!parse_value(ptr, field))
@@ -139,7 +139,7 @@ namespace Parser
                 }
                 //push
                 m_context->m_parameters.push_back(std::move(field));
-                //skeep spaces
+                //skip spaces
                 skip_space_and_comments(m_context->m_line, ptr);
             }
             //end while
@@ -157,7 +157,7 @@ namespace Parser
     bool Parameters::parse_value(const char*& ptr, ParameterField& field)
     {
         if (!parse_type(ptr, field.m_type)) return false;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //parse '('
         if (!is_start_arg(*ptr)) return false;
@@ -285,7 +285,7 @@ namespace Parser
     {
         //first
         if (!parse_float(ptr, m3[0][0])) return false;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         // if one param, call mat4 constructor
         if (!is_comm_arg(*ptr))
@@ -316,7 +316,7 @@ namespace Parser
     {
         //first
         if (!parse_float(ptr, m4[0][0])) return false;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         // if one param, call mat4 constructor
         if (!is_comm_arg(*ptr))
@@ -347,7 +347,7 @@ namespace Parser
     {
         //first
         if (!parse_double(ptr, m3[0][0])) return false;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         // if one param, call mat4 constructor
         if (!is_comm_arg(*ptr))
@@ -378,7 +378,7 @@ namespace Parser
     {
         //first
         if (!parse_double(ptr, m4[0][0])) return false;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         // if one param, call mat4 constructor
         if (!is_comm_arg(*ptr))

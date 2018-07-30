@@ -294,6 +294,9 @@
     <ClInclude Include="..\include\Square\Render\VertexLayout.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Data\ParserResources.h">
+      <Filter>include\Square\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -452,6 +455,9 @@
     <ClCompile Include="..\source\Render\VertexFormat.cpp">
       <Filter>Source\Render</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\Data\ParserResources.cpp">
+      <Filter>source\Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\source\Driver\Cocoa\Input_private.mm">
@@ -466,31 +472,13 @@
     <None Include="..\source\Driver\Cocoa\Wrapper_private.mm">
       <Filter>Source\Driver\Cocoa</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="..\common\Camera.hlsl">
-      <Filter>Resource\common</Filter>
-    </FxCompile>
-    <FxCompile Include="..\common\DirectionLight.hlsl">
-      <Filter>Resource\common</Filter>
-    </FxCompile>
-    <FxCompile Include="..\common\Matrix.hlsl">
-      <Filter>Resource\common</Filter>
-    </FxCompile>
-    <FxCompile Include="..\common\PointLight.hlsl">
-      <Filter>Resource\common</Filter>
-    </FxCompile>
-    <FxCompile Include="..\common\SpotLight.hlsl">
-      <Filter>Resource\common</Filter>
-    </FxCompile>
-    <FxCompile Include="..\common\Support.hlsl">
-      <Filter>Resource\common</Filter>
-    </FxCompile>
-    <FxCompile Include="..\common\Transform.hlsl">
-      <Filter>Resource\common</Filter>
-    </FxCompile>
-    <FxCompile Include="..\common\Vertex.hlsl">
-      <Filter>Resource\common</Filter>
-    </FxCompile>
+    <None Include="..\common\Camera.hlsl" />
+    <None Include="..\common\DirectionLight.hlsl" />
+    <None Include="..\common\Matrix.hlsl" />
+    <None Include="..\common\PointLight.hlsl" />
+    <None Include="..\common\SpotLight.hlsl" />
+    <None Include="..\common\Support.hlsl" />
+    <None Include="..\common\Transform.hlsl" />
+    <None Include="..\common\Vertex.hlsl" />
   </ItemGroup>
 </Project>

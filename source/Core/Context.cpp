@@ -7,6 +7,7 @@
 #include "Square/Core/Context.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/Application.h"
+#include "Square/Data/ParserResources.h"
 #include <iostream>
 
 namespace Square
@@ -108,6 +109,37 @@ namespace Square
     }
     
     //Resource
+	bool BaseContext::add_resources(const std::string& file_of_resources)
+	{
+		//parser
+		Parser::Resources			r_parser;
+		Parser::Resources::Context  r_context;
+		//do parsing
+		if (!r_parser.parse(r_context, Filesystem::text_file_read_all(file_of_resources)))
+		{
+			add_wrong("Faild to read resources file: " + file_of_resources);
+			add_wrong(r_context.errors_to_string());
+			return false;
+		}
+		//Base path
+		std::string directory = Filesystem::get_directory(file_of_resources);
+		//add join path
+		if (directory.size()) directory += "/";
+		//add all paths
+		for (const Parser::Resources::PathField& path : r_context.m_paths)
+		{
+			if (path.m_filtered) add_resource_path(directory + path.m_path, path.m_reg_exp, path.m_recursive);
+			else				 add_resource_path(directory + path.m_path, path.m_recursive);
+		}
+		//add all files
+		for (const Parser::Resources::FileField& files : r_context.m_files)
+		{
+			if (files.m_use_asset_name) add_resource_file(files.m_asset_name, directory + files.m_path);
+			else				        add_resource_file(directory + files.m_path);
+		}
+		//end
+		return true;
+	}
     void BaseContext::add_resource_path(const std::string& path, bool recursive)
     {
         //for all sub path
@@ -143,6 +175,58 @@ namespace Square
         }
         //end
     }
+	void BaseContext::add_resource_path(const std::string& path, const std::string& filter, bool recursive)
+    {
+		//get all files
+		Filesystem::FilesList files = Filesystem::get_files(path);
+		//success?
+		if (!files.m_success) return;
+		//put into table
+		try
+		{
+			std::regex reg_exp(filter, std::regex::ECMAScript);
+			add_resource_path(path, reg_exp, recursive);
+		}
+		catch (std::regex_error& e)
+		{
+			add_wrong("Faild to generate regexp \""+ filter +"\" of resources file: " + path);
+			add_wrong(e.what());
+		}
+        //end
+    }
+	void BaseContext::add_resource_path(const std::string& path, const std::regex& filter, bool recursive)
+    {
+		//get all files
+		Filesystem::FilesList files = Filesystem::get_files(path);
+		//success?
+		if (!files.m_success) return;
+		//put into table
+		for (const std::string& filename : files.m_fields)
+		{
+			if (std::regex_match(filename, filter))
+			{
+				//get asset name
+				std::string basename = Filesystem::get_basename(filename);
+				//add
+				add_resource_file(basename, path + "/" + filename);
+			}
+		}
+		//sub directories
+		if (recursive)
+		{
+			//get all directories
+			Filesystem::DirectoriesList directories = Filesystem::get_sub_directories(path);
+			//success?
+			if (!directories.m_success) return;
+			//push dir into table
+			for (const std::string& directoryname : directories.m_fields)
+			{
+				add_resource_path(path + "/" + directoryname, filter, true);
+			}
+		}
+        //end
+    }
+
 	void BaseContext::add_resource_file(const std::string& filepath)
 	{
 		//get extension

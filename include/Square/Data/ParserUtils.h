@@ -138,7 +138,7 @@ namespace Parser
 	{
 		//not a line comment
 		if ((*inout) != '/' || *(inout + 1) != '/') return false;
-		//skeep
+		//skip
 		while (*(inout) != EOF && *(inout) != '\0'&& *(inout) != '\n') ++(inout);
 		//jump endline
 		if ((*(inout)) == '\n')

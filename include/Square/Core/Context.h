@@ -11,6 +11,7 @@
 #include "Square/Core/Attribute.h"
 #include <unordered_map>
 #include <ostream>
+#include <regex>
 
 namespace Square
 {
@@ -70,7 +71,10 @@ namespace Square
         void add_resource(ObjectFactory* object_fectory,const std::vector< std::string >& exts);
         
 		//Resource
-        void add_resource_path(const std::string& path, bool recursive = false);
+		bool add_resources(const std::string& file_of_resources);
+		void add_resource_path(const std::string& path, bool recursive = false);
+		void add_resource_path(const std::string& path, const std::string& filter, bool recursive = true);
+		void add_resource_path(const std::string& path, const std::regex& filter, bool recursive = true);
 		void add_resource_file(const std::string& filepath);
 		void add_resource_file(const std::string& name, const std::string& path);
 
@@ -168,6 +172,7 @@ namespace Square
 		using BaseContext::add_object;
 		using BaseContext::add_attributes;
 		using BaseContext::add_resource;
+		using BaseContext::add_resources;
 		using BaseContext::add_resource_path;
 		using BaseContext::add_resource_file;
 		using BaseContext::add_variable;
