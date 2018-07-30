@@ -172,6 +172,7 @@
     <ClInclude Include="..\include\Square\Data\ParserEffect.h" />
     <ClInclude Include="..\include\Square\Data\ParserMaterial.h" />
     <ClInclude Include="..\include\Square\Data\ParserParameters.h" />
+    <ClInclude Include="..\include\Square\Data\ParserResources.h" />
     <ClInclude Include="..\include\Square\Data\ParserUtils.h" />
     <ClInclude Include="..\include\Square\Driver\Input.h" />
     <ClInclude Include="..\include\Square\Driver\Render.h" />
@@ -282,6 +283,7 @@
     <ClCompile Include="..\source\Data\ParserEffect.cpp" />
     <ClCompile Include="..\source\Data\ParserMaterial.cpp" />
     <ClCompile Include="..\source\Data\ParserParameters.cpp" />
+    <ClCompile Include="..\source\Data\ParserResources.cpp" />
     <ClCompile Include="..\source\Driver\Render.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Input_private.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Screen_private.cpp" />

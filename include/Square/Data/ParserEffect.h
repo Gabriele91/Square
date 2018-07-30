@@ -134,6 +134,5 @@ namespace Parser
         void push_error(const std::string& error);
 
 	};
-
 }
 }

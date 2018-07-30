@@ -166,13 +166,13 @@ namespace Parser
         //get type
         while (*ptr != EOF && *ptr != '\0')
         {
-            //skeep line and comments
+            //skip line and comments
             skip_space_and_comments(m_context->m_line, ptr);
             //parsing a block
             if (cstr_cmp_skip(ptr, "parameters")) { if (!parse_parameters_block(ptr)) return false; }
             else  if (cstr_cmp_skip(ptr, "sub_effect")) { if (!parse_sub_effect_block(ptr)) return false; }
             else { push_error("Not found a valid command"); return false; }
-            //skeep line and comments
+            //skip line and comments
             skip_space_and_comments(m_context->m_line, ptr);
         }
         return true;
@@ -180,7 +180,7 @@ namespace Parser
 	//////////////////////////////////////////////////////
     bool Effect::parse_parameters_block(const char*& ptr)
     {
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
 		//Parser
 		Parser::Parameters::Context params;
@@ -204,13 +204,13 @@ namespace Parser
     bool Effect::parse_driver_type(const char*& ptr, RequirementField& field)
     {
         if (!parse_name(ptr, field.m_driver_name)) return false;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //parse '('
         if (!is_start_arg(*ptr)) return false;
         //jump  '('
         ++ptr;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //major
         if (!parse_int(ptr, field.m_driver_major_version)) return false;
@@ -220,7 +220,7 @@ namespace Parser
         skip_space_and_comments(m_context->m_line, ptr);
         //minor
         if (!parse_int(ptr, field.m_driver_minor_version)) return false;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //parse ')'
         if (!is_end_arg(*ptr)) return false;
@@ -233,23 +233,23 @@ namespace Parser
     bool Effect::parse_shader_type(const char*& ptr, RequirementField& field)
     {
         if (!parse_name(ptr, field.m_shader_name)) return false;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //parse '('
         if (!is_start_arg(*ptr)) return false;
         //jump  '('
         ++ptr;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //major
         if (!parse_int(ptr, field.m_shader_version)) return false;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //parse ')'
         if (!is_end_arg(*ptr)) return false;
         //jump  ')'
         ++ptr;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //ok
         return true;
@@ -264,9 +264,9 @@ namespace Parser
             READ_REQUIREMENT
         }
         state = NOT_READ_REQUIREMENT;
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //add technique
         m_context->m_sub_effect.resize(m_context->m_sub_effect.size() + 1);
@@ -275,9 +275,9 @@ namespace Parser
         //parse table
         if (is_start_table(*ptr))
         {
-            //skeep '{'
+            //skip '{'
             ++ptr;
-            //skeep spaces
+            //skip spaces
             skip_space_and_comments(m_context->m_line, ptr);
             //read all values
             while (!is_end_table(*ptr) && *ptr != EOF && *ptr != '\0')
@@ -291,11 +291,11 @@ namespace Parser
                         push_error("Requirement already declared");
                         return false;
                     }
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //parse textures
                     if (!parse_requirement_block(ptr, t_field.m_requirement)) return false;
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //change state
                     state = READ_REQUIREMENT;
@@ -304,20 +304,20 @@ namespace Parser
                 {
                     //..
                     EffectQueueType p_queue;
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //parse textures
                     if (!parse_queue_block(ptr, t_field.m_queue)) return false;
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
                 else if (cstr_cmp_skip(ptr, "technique"))
                 {
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //techniques
                     if (!parse_techniques_block(ptr, t_field)) return false;
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
                 else
@@ -325,7 +325,7 @@ namespace Parser
                     push_error("Keyword not valid");
                     return false;
                 }
-                //skeep spaces
+                //skip spaces
                 skip_space_and_comments(m_context->m_line, ptr);
                 
             }
@@ -347,9 +347,9 @@ namespace Parser
         //parse table
         if (is_start_table(*ptr))
         {
-            //skeep '{'
+            //skip '{'
             ++ptr;
-            //skeep spaces
+            //skip spaces
             skip_space_and_comments(m_context->m_line, ptr);
             //read all values
             while (!is_end_table(*ptr) && *ptr != EOF && *ptr != '\0')
@@ -357,7 +357,7 @@ namespace Parser
                 //all casses
                 if (cstr_cmp_skip(ptr, "driver"))
                 {
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //parse textures
                     if (!parse_driver_type(ptr, r_field))
@@ -365,12 +365,12 @@ namespace Parser
                         push_error("Requirement: driver value not valid");
                         return false;
                     }
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
                 else if (cstr_cmp_skip(ptr, "shader"))
                 {
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //parse textures
                     if (!parse_shader_type(ptr, r_field))
@@ -378,7 +378,7 @@ namespace Parser
                         push_error("Requirement: shader value not valid");
                         return false;
                     }
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
                 else
@@ -386,7 +386,7 @@ namespace Parser
                     push_error("Keyword not valid");
                     return false;
                 }
-                //skeep spaces
+                //skip spaces
                 skip_space_and_comments(m_context->m_line, ptr);
             }
             //end while
@@ -403,7 +403,7 @@ namespace Parser
     //////////////////////////////////////////////////////
     bool Effect::parse_techniques_block(const char*& ptr, SubEffectField& subeffect)
     {
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //name technique
         TechniqueField new_t_field;
@@ -413,7 +413,7 @@ namespace Parser
             push_error("Not valid technique name");
             return false;
         }
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //add technique
         subeffect.m_techniques.push_back(new_t_field);
@@ -422,9 +422,9 @@ namespace Parser
         //parse table
         if (is_start_table(*ptr))
         {
-            //skeep '{'
+            //skip '{'
             ++ptr;
-            //skeep spaces
+            //skip spaces
             skip_space_and_comments(m_context->m_line, ptr);
             //read all values
             while (!is_end_table(*ptr) && *ptr != EOF && *ptr != '\0')
@@ -433,11 +433,11 @@ namespace Parser
                 if (cstr_cmp_skip(ptr, "pass"))
                 {
                     PassField pass;
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //parse textures
                     if (!parse_pass_block(ptr, pass)) return false;
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //append
                     t_field.m_pass.push_back(pass);
@@ -447,7 +447,7 @@ namespace Parser
                     push_error("Keyword not valid");
                     return false;
                 }
-                //skeep spaces
+                //skip spaces
                 skip_space_and_comments(m_context->m_line, ptr);
                 
             }
@@ -483,9 +483,9 @@ namespace Parser
         //parse table
         if (is_start_table(*ptr))
         {
-            //skeep '{'
+            //skip '{'
             ++ptr;
-            //skeep spaces
+            //skip spaces
             skip_space_and_comments(m_context->m_line, ptr);
             //read all values
             while (!is_end_table(*ptr) && *ptr != EOF && *ptr != '\0')
@@ -500,7 +500,7 @@ namespace Parser
 					{
 						//parse textures
 						if (!(this->*keys_function.m_funtion)(ptr, pass)) return false;
-						//skeep spaces
+						//skip spaces
 						skip_space_and_comments(m_context->m_line, ptr);
 						//success
 						success = true;
@@ -511,7 +511,7 @@ namespace Parser
                     push_error("Keyword not valid");
                     return false;
                 }
-                //skeep spaces
+                //skip spaces
                 skip_space_and_comments(m_context->m_line, ptr);
             }
             //end while
@@ -530,9 +530,9 @@ namespace Parser
         //parse table
         if (is_start_table(*ptr))
         {
-            //skeep '{'
+            //skip '{'
             ++ptr;
-            //skeep spaces
+            //skip spaces
             skip_space_and_comments(m_context->m_line, ptr);
             //read all values
             while (!is_end_table(*ptr) && *ptr != EOF && *ptr != '\0')
@@ -540,7 +540,7 @@ namespace Parser
                 //all casses
                 if (cstr_cmp_skip(ptr, "type"))
                 {
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //parse textures
                     if (!parse_queue_type(ptr, p_queue.m_type))
@@ -548,12 +548,12 @@ namespace Parser
                         push_error("Queue type not valid");
                         return false;
                     }
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
                 else if (cstr_cmp_skip(ptr, "order"))
                 {
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //parse textures
                     if (!parse_int(ptr, p_queue.m_order))
@@ -561,7 +561,7 @@ namespace Parser
                         push_error("Queue order value not valid");
                         return false;
                     }
-                    //skeep spaces
+                    //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
                 else
@@ -569,7 +569,7 @@ namespace Parser
                     push_error("Keyword not valid");
                     return false;
                 }
-                //skeep spaces
+                //skip spaces
                 skip_space_and_comments(m_context->m_line, ptr);
             }
             //end while
@@ -586,7 +586,7 @@ namespace Parser
     //////////////////////////////////////////////////////
     bool Effect::parse_blend(const char*& ptr, PassField& pass)
     {
-        //skeep "line" space
+        //skip "line" space
         skip_line_space(m_context->m_line, ptr);
         //string
         std::string param1, param2;
@@ -602,7 +602,7 @@ namespace Parser
             pass.m_blend = Render::BlendState();
             return true;
         }
-        //skeep "line" space
+        //skip "line" space
         skip_line_space(m_context->m_line, ptr);
         //parse name
         if (!parse_name(ptr, param2))
@@ -618,7 +618,7 @@ namespace Parser
     }
     bool Effect::parse_depth(const char*& ptr, PassField& pass)
     {
-        //skeep "line" space
+        //skip "line" space
         skip_line_space(m_context->m_line, ptr);
         //string
         std::string param1;
@@ -641,7 +641,7 @@ namespace Parser
     }
     bool Effect::parse_cullface(const char*& ptr, PassField& pass)
     {
-        //skeep "line" space
+        //skip "line" space
         skip_line_space(m_context->m_line, ptr);
         //string
         std::string param1;
@@ -663,7 +663,7 @@ namespace Parser
     }
     bool Effect::parse_lights(const char*& ptr, PassField& pass)
     {
-        //skeep "line" space
+        //skip "line" space
         skip_line_space(m_context->m_line, ptr);
         //is off?
         if ((cstr_cmp_skip(ptr, "off")))
@@ -726,7 +726,7 @@ namespace Parser
     }
     bool Effect::parse_shader(const char*& ptr, PassField& pass)
     {
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //is a shader name?
         if (is_start_string(*ptr))
@@ -749,7 +749,7 @@ namespace Parser
             push_error("Shader source not found");
             return false;
         }
-        //skeep spaces
+        //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
         //parse source
         pass.m_shader.m_name = false;
@@ -760,7 +760,7 @@ namespace Parser
         //parse table
         if (is_start_table(*ptr))
         {
-            //skeep '{'
+            //skip '{'
             ++ptr;
             ++p_count;
             //save start line
