@@ -30,6 +30,7 @@ namespace Render
 {
 	enum class LightType
 	{
+        NONE,
 		SPOT,
 		POINT,
 		DIRECTION
@@ -49,8 +50,6 @@ namespace Render
         
         virtual Weak<Camera> camera() const = 0;
 
-		virtual LightType type() const = 0;
-
         bool visible() const { return m_visible; }
         
         void visible(bool enable) { m_visible = enable; }
@@ -59,11 +58,32 @@ namespace Render
         
         void shadow_caster(bool enable) { m_shadow_caster = enable; }
 
+        LightType type() const { return m_type; }
 
+    protected:
+        
+        void type(LightType type){ m_type=type; }
+        
 	private:
-
+        
+        LightType m_type{ LightType::NONE };
 		bool m_visible{ true };
         bool m_shadow_caster{ false };
 	};
+    
+    class SQUARE_API DirectionLight : public Light
+    {
+    public:
+    };
+    
+    class SQUARE_API PointLight : public Light
+    {
+    public:
+    };
+    
+    class SQUARE_API SpotLight : public Light
+    {
+    public:
+    };
 }
 }
