@@ -75,8 +75,8 @@ namespace Square
 		void add_resource_path(const std::string& path, bool recursive = false);
 		void add_resource_path(const std::string& path, const std::string& filter, bool recursive = true);
 		void add_resource_path(const std::string& path, const std::regex& filter, bool recursive = true);
-		void add_resource_file(const std::string& filepath);
-		void add_resource_file(const std::string& name, const std::string& path);
+		bool add_resource_file(const std::string& filepath);
+		bool add_resource_file(const std::string& name, const std::string& path);
 
 		//Add an attrbute
         void add_attributes(const std::string& name, const Attribute& attribute);
