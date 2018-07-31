@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E0119C8D21103D0E00CEE65B /* resources.rs in Resources */ = {isa = PBXBuildFile; fileRef = E0119C8C21103D0E00CEE65B /* resources.rs */; };
 		E02600D8206B0D46000328DB /* libSqOpenGL4.dylib in Resources */ = {isa = PBXBuildFile; fileRef = E02600D2206B0B56000328DB /* libSqOpenGL4.dylib */; };
 		E02600D9206B0D46000328DB /* libSquare.dylib in Resources */ = {isa = PBXBuildFile; fileRef = E02600D3206B0B56000328DB /* libSquare.dylib */; };
 		E044C4C1206AA8B8003D4406 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E044C4C0206AA8B8003D4406 /* Assets.xcassets */; };
@@ -18,6 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E0119C8C21103D0E00CEE65B /* resources.rs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = resources.rs; path = ../../../../example/HelloWorld/resources.rs; sourceTree = "<group>"; };
 		E02600D2206B0B56000328DB /* libSqOpenGL4.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; path = libSqOpenGL4.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		E02600D3206B0B56000328DB /* libSquare.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; path = libSquare.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		E044C4BA206AA8B8003D4406 /* HelloWorld.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HelloWorld.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -62,6 +64,7 @@
 		E044C4BC206AA8B8003D4406 /* HelloWorld */ = {
 			isa = PBXGroup;
 			children = (
+				E0119C8C21103D0E00CEE65B /* resources.rs */,
 				E0DD8827210A1B9B004E1F3B /* common */,
 				E0DB04F8209FC915001ADF39 /* assets */,
 				E044C4D3206AA947003D4406 /* main.cpp */,
@@ -143,6 +146,7 @@
 			files = (
 				E0DD8828210A1B9B004E1F3B /* common in Resources */,
 				E068963620FE4DDB0008AE5D /* libHLSL2ALL.dylib in Resources */,
+				E0119C8D21103D0E00CEE65B /* resources.rs in Resources */,
 				E0DB04F9209FC915001ADF39 /* assets in Resources */,
 				E02600D8206B0D46000328DB /* libSqOpenGL4.dylib in Resources */,
 				E02600D9206B0D46000328DB /* libSquare.dylib in Resources */,
