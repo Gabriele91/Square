@@ -521,5 +521,20 @@
     <Image Include="..\common\texture\white.tga">
       <Filter>Resource\common\texture</Filter>
     </Image>
+    <Image Include="..\common\texture\none_blue.tga">
+      <Filter>Resource\common\texture</Filter>
+    </Image>
+    <Image Include="..\common\texture\none_green.tga">
+      <Filter>Resource\common\texture</Filter>
+    </Image>
+    <Image Include="..\common\texture\none_orange.tga">
+      <Filter>Resource\common\texture</Filter>
+    </Image>
+    <Image Include="..\common\texture\none_red.tga">
+      <Filter>Resource\common\texture</Filter>
+    </Image>
+    <Image Include="..\common\texture\none.tga">
+      <Filter>Resource\common\texture</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -396,6 +396,11 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\common\texture\black.tga" />
+    <Image Include="..\common\texture\none.tga" />
+    <Image Include="..\common\texture\none_blue.tga" />
+    <Image Include="..\common\texture\none_green.tga" />
+    <Image Include="..\common\texture\none_orange.tga" />
+    <Image Include="..\common\texture\none_red.tga" />
     <Image Include="..\common\texture\normal_up.tga" />
     <Image Include="..\common\texture\white.tga" />
   </ItemGroup>
