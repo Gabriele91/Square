@@ -153,25 +153,8 @@ namespace Square
         {
             //get extension
             auto f_ext = Filesystem::get_extension(filename);
-            //next file
-            bool next_file { false };
-            //if is supported
-            for(auto r_info : m_resources_info)
-            {
-                for(auto r_ext  : r_info.second)
-                {
-                    if(r_ext == f_ext)
-                    {
-                        auto class_name = m_object_factories[ r_info.first ]->info().name();
-                        auto file_name  = Filesystem::get_basename(filename);
-                        auto name       = class_name + ":" + file_name;
-                        m_resources_file[name] = ResourceFile( r_info.first, path + "/" + filename );
-                        next_file = true;
-                        break;
-                    }
-                }
-                if(next_file) break;
-            }
+            //add file
+			add_resource_file(path + "/" + filename);
         }
         //end
     }
@@ -205,10 +188,8 @@ namespace Square
 		{
 			if (std::regex_match(filename, filter))
 			{
-				//get asset name
-				std::string basename = Filesystem::get_basename(filename);
 				//add
-				add_resource_file(basename, path + "/" + filename);
+				add_resource_file(path + "/" + filename);
 			}
 		}
 		//sub directories
@@ -227,28 +208,20 @@ namespace Square
         //end
     }
 
-	void BaseContext::add_resource_file(const std::string& filepath)
+	bool BaseContext::add_resource_file(const std::string& filepath)
 	{
-		//get extension
-		auto    f_ext = Filesystem::get_extension(filepath);
-		//if is supported
-		for (auto r_info : m_resources_info)
-		for (auto r_ext : r_info.second)
-		{
-			if (r_ext == f_ext)
-			{
-				auto class_name = m_object_factories[r_info.first]->info().name();
-				auto file_name = Filesystem::get_basename(filepath);
-				auto name = class_name + ":" + file_name;
-				m_resources_file[name] = ResourceFile(r_info.first, filepath);
-				return;
-			}
-		}
+		return add_resource_file(Filesystem::get_basename(filepath), filepath);
 	}
-	void BaseContext::add_resource_file(const std::string& resource_name, const std::string& filepath)
+	bool BaseContext::add_resource_file(const std::string& resource_name, const std::string& filepath)
 	{
 		//get extension
 		auto    f_ext = Filesystem::get_extension(filepath);
+		//special case
+		if (f_ext == ".rs" || f_ext == ".resources")
+		{
+			add_resources(filepath);
+			return true;
+		}
 		//if is supported
 		for (auto r_info : m_resources_info)
 		for (auto r_ext : r_info.second)
@@ -258,9 +231,10 @@ namespace Square
 				auto class_name = m_object_factories[r_info.first]->info().name();
 				auto name = class_name + ":" + resource_name;
 				m_resources_file[name] = ResourceFile(r_info.first, filepath);
-				return;
+				return true;
 			}
 		}
+		return false;
 	}
 
     
