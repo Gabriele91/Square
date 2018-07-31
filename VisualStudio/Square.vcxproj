@@ -366,30 +366,38 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\common\Camera.hlsl">
+    <None Include="..\common\shader\Camera.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\common\DirectionLight.hlsl">
+    <None Include="..\common\shader\DirectionLight.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\common\Matrix.hlsl">
+    <None Include="..\common\shader\Light.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\common\PointLight.hlsl">
+    <None Include="..\common\shader\Matrix.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\common\SpotLight.hlsl">
+    <None Include="..\common\shader\PointLight.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\common\Support.hlsl">
+    <None Include="..\common\shader\SpotLight.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\common\Transform.hlsl">
+    <None Include="..\common\shader\Support.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\common\Vertex.hlsl">
+    <None Include="..\common\shader\Transform.hlsl">
       <FileType>Document</FileType>
     </None>
+    <None Include="..\common\shader\Vertex.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\common\texture\black.tga" />
+    <Image Include="..\common\texture\normal_up.tga" />
+    <Image Include="..\common\texture\white.tga" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

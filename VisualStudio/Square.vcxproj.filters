@@ -76,6 +76,15 @@
     <Filter Include="Resource\common">
       <UniqueIdentifier>{6ff18884-2256-425e-aae5-07d9002016c9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource\common\texture">
+      <UniqueIdentifier>{e79c5f90-f279-4abc-808a-0dfa82a4e98a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\common\shader">
+      <UniqueIdentifier>{89bd8bac-7bab-41ad-996b-c65b4079ccfb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\common\effect">
+      <UniqueIdentifier>{c5579f5d-3729-4d13-9c31-e09314e3bfaf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Square\Math\Linear.h">
@@ -472,13 +481,45 @@
     <None Include="..\source\Driver\Cocoa\Wrapper_private.mm">
       <Filter>Source\Driver\Cocoa</Filter>
     </None>
-    <None Include="..\common\Camera.hlsl" />
-    <None Include="..\common\DirectionLight.hlsl" />
-    <None Include="..\common\Matrix.hlsl" />
-    <None Include="..\common\PointLight.hlsl" />
-    <None Include="..\common\SpotLight.hlsl" />
-    <None Include="..\common\Support.hlsl" />
-    <None Include="..\common\Transform.hlsl" />
-    <None Include="..\common\Vertex.hlsl" />
+    <None Include="..\common\shader\Camera.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </None>
+    <None Include="..\common\shader\DirectionLight.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </None>
+    <None Include="..\common\shader\Light.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </None>
+    <None Include="..\common\shader\Matrix.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\common\shader\PointLight.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\common\shader\SpotLight.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\common\shader\Support.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\common\shader\Transform.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\common\shader\Vertex.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\common\texture\black.tga">
+      <Filter>Resource\common\texture</Filter>
+    </Image>
+    <Image Include="..\common\texture\normal_up.tga">
+      <Filter>Resource\common\texture</Filter>
+    </Image>
+    <Image Include="..\common\texture\white.tga">
+      <Filter>Resource\common\texture</Filter>
+    </Image>
   </ItemGroup>
 </Project>
