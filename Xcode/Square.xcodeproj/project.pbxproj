@@ -24,6 +24,8 @@
 		E001EC7320D3B6F800241C6D /* Tangent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E001EC7220D3B6F700241C6D /* Tangent.cpp */; };
 		E001EC7620D3FBBC00241C6D /* GBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E001EC7520D3FBBC00241C6D /* GBuffer.cpp */; };
 		E010CF5B207B652700D7A6FA /* Effect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E010CF5A207B652700D7A6FA /* Effect.cpp */; };
+		E0119C8F21103D2D00CEE65B /* ParserResources.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0119C8E21103D2C00CEE65B /* ParserResources.cpp */; };
+		E0119C9121103D3E00CEE65B /* ParserResources.h in Headers */ = {isa = PBXBuildFile; fileRef = E0119C9021103D3E00CEE65B /* ParserResources.h */; };
 		E024D1652108947B00F44C81 /* DrawerPassForward.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E024D1642108947B00F44C81 /* DrawerPassForward.cpp */; };
 		E044BCE9206A9974003D4406 /* Application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044BC6C206A98B7003D4406 /* Application.cpp */; };
 		E044BCEA206A9974003D4406 /* ClassObjectRegistration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044BC6D206A98B7003D4406 /* ClassObjectRegistration.cpp */; };
@@ -99,6 +101,8 @@
 		E007D8BE1F9DF1C90059D333 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		E010CF59207B643600D7A6FA /* Effect.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Effect.h; sourceTree = "<group>"; };
 		E010CF5A207B652700D7A6FA /* Effect.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Effect.cpp; sourceTree = "<group>"; };
+		E0119C8E21103D2C00CEE65B /* ParserResources.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ParserResources.cpp; sourceTree = "<group>"; };
+		E0119C9021103D3E00CEE65B /* ParserResources.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParserResources.h; sourceTree = "<group>"; };
 		E024D163210891C900F44C81 /* DrawerPassForward.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DrawerPassForward.h; sourceTree = "<group>"; };
 		E024D1642108947B00F44C81 /* DrawerPassForward.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DrawerPassForward.cpp; sourceTree = "<group>"; };
 		E044BC3A206A97E6003D4406 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Config.h; sourceTree = "<group>"; };
@@ -215,6 +219,7 @@
 		E0AF07EC209B19FB00276401 /* ParserEffect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParserEffect.h; sourceTree = "<group>"; };
 		E0AF07EE209B1D2600276401 /* ParserEffect.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ParserEffect.cpp; sourceTree = "<group>"; };
 		E0B369A52108F583007B943F /* VertexLayout.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VertexLayout.h; sourceTree = "<group>"; };
+		E0B42CCF2110D8DF0013C1EA /* Light.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = Light.hlsl; sourceTree = "<group>"; };
 		E0D30ABA210A4B75002736EF /* Support.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = Support.hlsl; sourceTree = "<group>"; };
 		E0DD88182109A244004E1F3B /* VertexFormat.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VertexFormat.cpp; sourceTree = "<group>"; };
 		E0DD881E210A1A7D004E1F3B /* Camera.hlsl */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; path = Camera.hlsl; sourceTree = "<group>"; };
@@ -297,6 +302,7 @@
 		E044BC4A206A97E7003D4406 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				E0119C9021103D3E00CEE65B /* ParserResources.h */,
 				E001EC6020D3B5E100241C6D /* ParserMaterial.h */,
 				E001EC6120D3B5E100241C6D /* ParserParameters.h */,
 				E044BC4B206A97E7003D4406 /* Archive.h */,
@@ -401,6 +407,7 @@
 		E044BC74206A98B7003D4406 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				E0119C8E21103D2C00CEE65B /* ParserResources.cpp */,
 				E0AF07EE209B1D2600276401 /* ParserEffect.cpp */,
 				E001EC6D20D3B61800241C6D /* ParserMaterial.cpp */,
 				E001EC6C20D3B61800241C6D /* ParserParameters.cpp */,
@@ -605,6 +612,7 @@
 				E0A91F82210C9456007451F2 /* SpotLight.hlsl */,
 				E0A91F83210C9517007451F2 /* PointLight.hlsl */,
 				E0A91F84210C95AF007451F2 /* DirectionLight.hlsl */,
+				E0B42CCF2110D8DF0013C1EA /* Light.hlsl */,
 			);
 			name = common;
 			path = ../common;
@@ -618,6 +626,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E044BD0C206A9ACE003D4406 /* Screen_private.h in Headers */,
+				E0119C9121103D3E00CEE65B /* ParserResources.h in Headers */,
 				E001EC6320D3B5E100241C6D /* ParserParameters.h in Headers */,
 				E001EC5920D3B5C600241C6D /* Renderable.h in Headers */,
 				E05DC673210760E800445CDF /* Camera.h in Headers */,
@@ -705,6 +714,7 @@
 				E044BCEA206A9974003D4406 /* ClassObjectRegistration.cpp in Sources */,
 				E0DD881F210A1A7D004E1F3B /* Camera.hlsl in Sources */,
 				E044BCEB206A9974003D4406 /* Context.cpp in Sources */,
+				E0119C8F21103D2D00CEE65B /* ParserResources.cpp in Sources */,
 				E010CF5B207B652700D7A6FA /* Effect.cpp in Sources */,
 				E044BCF7206A9988003D4406 /* tga.cpp in Sources */,
 				E044BCFC206A9998003D4406 /* OBoundingBox.cpp in Sources */,
