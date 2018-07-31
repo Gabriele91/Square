@@ -172,6 +172,14 @@
   <ItemGroup>
     <ClCompile Include="..\..\example\HelloWorld\main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\example\HelloWorld\assets\effect.mat" />
+    <None Include="..\..\example\HelloWorld\assets\effect.sqfx" />
+    <None Include="..\..\example\HelloWorld\resources.rs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\example\HelloWorld\assets\example.png" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

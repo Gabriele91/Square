@@ -9,10 +9,32 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="resource">
+      <UniqueIdentifier>{1a109de7-4352-4fd2-9b6d-c7462f0690bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resource\assets">
+      <UniqueIdentifier>{79b0051c-a9f7-47b9-b0d1-e0198a7f4cdf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\example\HelloWorld\main.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\example\HelloWorld\assets\effect.mat">
+      <Filter>resource\assets</Filter>
+    </None>
+    <None Include="..\..\example\HelloWorld\assets\effect.sqfx">
+      <Filter>resource\assets</Filter>
+    </None>
+    <None Include="..\..\example\HelloWorld\resources.rs">
+      <Filter>resource</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\example\HelloWorld\assets\example.png">
+      <Filter>resource\assets</Filter>
+    </Image>
   </ItemGroup>
 </Project>

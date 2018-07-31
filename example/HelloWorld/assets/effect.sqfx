@@ -2,7 +2,7 @@ parameters
 {
     mask float(-1.0)
 	color Vec4(1.0,1.0,1.0,1.0)
-	diffuse_texture texture("example")
+	diffuse_texture texture("none")
 }
 
 sub_effect
