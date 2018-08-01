@@ -1,0 +1,43 @@
+parameters
+{
+    diffuse_map  texture("white")
+    normal_map   texture("normal_up")
+    specular_map texture("black")
+    occlusion_map texture("white")
+
+	color        Vec4(1.0,1.0,1.0,1.0)
+    mask         float(-1.0)
+	metallic     float(0.0)
+	smoothness   float(0.0)
+}
+
+sub_effect
+{	
+    technique "forward"
+    {
+        pass 
+        {
+            zbuffer less
+            blend off
+            cullface back
+            lights only_ambient
+            shader source 
+            {
+				#define FORWARD_RENDERING
+				#include "Base.hlsl"
+            }
+        }
+        pass 
+        {
+            zbuffer equal
+            blend one one
+            cullface back
+            lights spot_point_direction
+            shader source 
+            {
+                #define FORWARD_RENDERING
+				#include "Base.hlsl"
+            }
+		}
+    }
+}

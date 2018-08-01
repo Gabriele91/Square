@@ -164,7 +164,7 @@ namespace Resource
                     //add pass
                     this_technique.push_back(EffectPass());
                     //pass
-                    EffectPass& this_pass = this_technique[this_technique.size()-1];
+                    EffectPass& this_pass = this_technique.back();
                     //get all values
                     this_pass.m_blend    = parser_pass.m_blend;
                     this_pass.m_cullface = parser_pass.m_cullface;
@@ -194,13 +194,12 @@ namespace Resource
                             std::string debug_preproc;
                             for(const Shader::PreprocessElement& preproc : shader_defines)
                             {
-                                debug_preproc += "#"+std::get<0>(preproc)+" "+std::get<1>(preproc)+"\n";
+                                debug_preproc += "#"+std::get<0>(preproc)+" "+std::get<1>(preproc)+"\t";
                             }
                             //output
-                            context().add_wrong("Effect: "
-                                                + path
-                                                + "\n"
-                                                + "Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
+							context().add_wrong("Effect: " + path);
+							context().add_wrong("Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
+							context().add_wrong("Error technique preproces: " + debug_preproc);
                             return false;
                         }
                     }
@@ -216,19 +215,23 @@ namespace Resource
                     switch (current_shader_def)
                     {
                         case DEF_RENDERING_SPOT_LIGHT:
-                            this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("SpotLight");
-                            if(!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("spot_light");
+							this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("SpotLight");
+							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("spot_light");
+							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("light");
                             break;
                         case DEF_RENDERING_POINT_LIGHT:
                             this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("PointLight");
-                            if(!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("point_light");
+							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("point_light");
+							if (!this_pass.m_uniform_point) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("light");
                             break;
                         case DEF_RENDERING_DIRECTION_LIGHT:
                             this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("DirectionLight");
-                            if(!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("direction_light");
-                            break;
+							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("direction_light");
+							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("light");
+							break;
                         case DEF_RENDERING_AMBIENT_LIGHT:
                             this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("AmbientLight");
+							if (!this_pass.m_uniform_ambient_light) this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("light");
                             break;
                         default:
                             this_pass.m_support_light = false;

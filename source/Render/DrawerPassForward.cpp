@@ -84,14 +84,33 @@ namespace Render
             for(auto& pass : *technique)
             {
                 //bind effect
-                pass.bind(  &render()
-                          , randerable->layout_id()
-                          , m_cb_camera.get()
-                          , m_cb_transform.get()
-                          , material->parameters()
-                          );
-                //draw
-                randerable->draw(render());
+				if (!pass.m_support_light)
+				{
+					//bind
+					pass.bind(
+						 &render()
+						, randerable->layout_id()
+						, m_cb_camera.get()
+						, m_cb_transform.get()
+						, material->parameters()
+					);
+					//draw
+					randerable->draw(render());
+				}
+				else if(pass.m_uniform_ambient_light && pass.m_uniform_ambient_light->is_valid())
+				{
+					pass.bind(
+						 &render()
+						, randerable->layout_id()
+						, m_cb_camera.get()
+						, m_cb_transform.get()
+						, material->parameters()
+					);
+					//set color
+					pass.m_uniform_ambient_light->set(ambient_color);
+					//draw
+					randerable->draw(render());
+				}
             }
         }
     }

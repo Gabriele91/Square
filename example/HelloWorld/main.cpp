@@ -32,9 +32,9 @@ public:
         using namespace Square::Resource;
         using namespace Square::Render;
         using namespace Square::Render::Layout;
-        layout_id_from_type( LF_POSITION_3D | LF_NORMAL | LF_UVMAP );
+        layout_id_from_type( LF_POSITION_3D | LF_NORMAL | LF_TANGENT | LF_BINOMIAL | LF_UVMAP );
         //init
-        Position3DNormalUV model[]
+		std::vector<Position3DNormalTangetBinomialUV> model
         {
             
             { Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.0f, 1.0f, 0.0f), Vec2(0.0f, 0.0f) }, // +Y (top face)
@@ -67,30 +67,29 @@ public:
             { Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(1.0f, 1.0f) },
             { Vec3(0.5f, -0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(0.0f, 1.0f) },
         };
-        m_model  = Render::vertex_buffer< Position3DNormalUV >(context.render(), (unsigned char*)model, 24);
-        //indexs
-        unsigned int ids[]
-        {
-            0, 1, 2,
-            0, 2, 3,
-            
-            4, 5, 6,
-            4, 6, 7,
-            
-            8, 9, 10,
-            8, 10, 11,
-            
-            12, 13, 14,
-            12, 14, 15,
-            
-            16, 17, 18,
-            16, 18, 19,
-            
-            20, 21, 22,
-            20, 22, 23
-        };
-        m_index_model = Render::index_buffer(context.render(), ids, 6*6);
-        //cube
+		std::vector<unsigned int> ids
+		{
+			0, 1, 2,
+			0, 2, 3,
+
+			4, 5, 6,
+			4, 6, 7,
+
+			8, 9, 10,
+			8, 10, 11,
+
+			12, 13, 14,
+			12, 14, 15,
+
+			16, 17, 18,
+			16, 18, 19,
+
+			20, 21, 22,
+			20, 22, 23
+		};
+		//compute tangent and binomial
+		Square::tangent_model_fast(ids, model);
+		//cube as obb
         m_obb_global =
         m_obb_local = Geometry::OBoundingBox
         (
@@ -98,6 +97,9 @@ public:
            ,Vec3(0,0,0)
            ,Vec3(0.5,0.5,0.5)
         );
+		//build gpu buffers
+        m_model  = Render::vertex_buffer< Position3DNormalTangetBinomialUV >(context.render(), (unsigned char*)model.data(), model.size());
+        m_index_model = Render::index_buffer(context.render(), ids.data(), ids.size());
     }
     
     

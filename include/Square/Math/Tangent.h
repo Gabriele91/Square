@@ -12,7 +12,7 @@ namespace Square
         for (unsigned int i = 0; i < vertices.size(); ++i)
         {
             vertices[i].m_tangent = { 0,0,0 };
-            vertices[i].m_bitangent = { 0,0,0 };
+            vertices[i].m_binomial = { 0,0,0 };
         }
         //compute tangent per vertex
         for (unsigned int i = 0; i < vertices.size(); i += 3)
@@ -53,9 +53,9 @@ namespace Square
                 vertices[i + 2].m_tangent += tangent;
 
                 //add bitangent
-                vertices[i + 0].m_bitangent += bitangent;
-                vertices[i + 1].m_bitangent += bitangent;
-                vertices[i + 2].m_bitangent += bitangent;
+                vertices[i + 0].m_binomial += bitangent;
+                vertices[i + 1].m_binomial += bitangent;
+                vertices[i + 2].m_binomial += bitangent;
             }
 
         }
@@ -65,7 +65,7 @@ namespace Square
         {
             TVec3<Scalar>& n = vertices[i].m_normal;
             TVec3<Scalar>& t = vertices[i].m_tangent;
-            TVec3<Scalar>& b = vertices[i].m_bitangent;
+            TVec3<Scalar>& b = vertices[i].m_binomial;
 
             //normalize
             t = normalize(t);
@@ -88,7 +88,7 @@ namespace Square
         for (unsigned int i = 0; i < indexes.size(); ++i)
         {
             vertices[indexes[i]].m_tangent = { 0,0,0 };
-            vertices[indexes[i]].m_bitangent = { 0,0,0 };
+            vertices[indexes[i]].m_binomial = { 0,0,0 };
         }
         //compute tangent per vertex
         for (unsigned int i = 0; i < indexes.size(); i += 3)
@@ -129,9 +129,9 @@ namespace Square
                 vertices[indexes[i + 2]].m_tangent += tangent;
 
                 //add bitangent
-                vertices[indexes[i + 0]].m_bitangent += bitangent;
-                vertices[indexes[i + 1]].m_bitangent += bitangent;
-                vertices[indexes[i + 2]].m_bitangent += bitangent;
+                vertices[indexes[i + 0]].m_binomial += bitangent;
+                vertices[indexes[i + 1]].m_binomial += bitangent;
+                vertices[indexes[i + 2]].m_binomial += bitangent;
             }
         }
 
@@ -140,7 +140,7 @@ namespace Square
         {
             TVec3<Scalar>& n = vertices[i].m_normal;
             TVec3<Scalar>& t = vertices[i].m_tangent;
-            TVec3<Scalar>& b = vertices[i].m_bitangent;
+            TVec3<Scalar>& b = vertices[i].m_binomial;
 
             //normalize
             t = normalize(t);
@@ -189,7 +189,7 @@ namespace Square
             virtual Vec2  uv(const unsigned int index) { return { m_vertices[index].m_position }; }
 
 			virtual void  normal(const unsigned int index, const Vec3& n) { m_vertices[index].m_normal = n; }
-			virtual void  bitangent(const unsigned int index, const Vec3& b) { m_vertices[index].m_bitangent = b; }
+			virtual void  bitangent(const unsigned int index, const Vec3& b) { m_vertices[index].m_binomial = b; }
 			virtual void  tangent(const unsigned int index, const Vec3& t) { m_vertices[index].m_tangent = t; }
 		};
 		void tangent_model_slow(Proxy& model, bool replace_normal=false);

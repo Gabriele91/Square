@@ -20,7 +20,7 @@ namespace Layout
     SQUARE_REGISTERED_VERTEX(Position3D)
     SQUARE_REGISTERED_VERTEX(Position3DUV)
     SQUARE_REGISTERED_VERTEX(Position3DNormalUV)
-    SQUARE_REGISTERED_VERTEX(Position3DNormalUVTangetBinomial)
+    SQUARE_REGISTERED_VERTEX(Position3DNormalTangetBinomialUV)
 
     //item
     struct VertexItem

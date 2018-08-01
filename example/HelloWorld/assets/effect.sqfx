@@ -2,7 +2,7 @@ parameters
 {
     mask float(-1.0)
 	color Vec4(1.0,1.0,1.0,1.0)
-	diffuse_texture texture("none")
+	diffuse_map texture("none")
 }
 
 sub_effect
@@ -26,17 +26,19 @@ sub_effect
             shader source 
             {
                 ////////////////
+				#define FORWARD_RENDERING
+                ////////////////
                 #include <Camera>
                 #include <Transform>
                 #include <Vertex>
                 #include <Support>
                 #include <Matrix>
-                #include <Light>
+                #include <Surface>
                 ////////////////
                 struct VertexShaderOutput
                 {
                     Vec4 m_position : SV_POSITION;  // interpolated vertex position (system value)
-                    Vec2 m_uv       : NORMAL0;      // interpolated uv map
+                    Vec2 m_uv       : TEXCOORD0;    // interpolated uv map
                 };
 
                 //global uniform
@@ -44,7 +46,7 @@ sub_effect
                 Vec4 color;
 				
 				//texture
-				Sampler2D(diffuse_texture);
+				Sampler2D(diffuse_map);
 
                 VertexShaderOutput vertex(Position3DNormalUV input) 
                 {
@@ -54,13 +56,17 @@ sub_effect
                     return output;
                 }
 
+				surface(VertexShaderOutput input)
+				{
+					Vec4 texcolor = texture2D(diffuse_map,input.m_uv);
+					if (texcolor.a <= mask) discard;
 
-                Vec4 fragment(VertexShaderOutput input) : SV_TARGET
-                {
-                  Vec4 texture_color = texture2D(diffuse_texture,input.m_uv);
-                  if (texture_color.a <= mask) discard;
-                  return  color * Vec4(texture_color.rgb,1.0);
-                }
+					SurfaceData data = DefaultSurfaceData();
+					data.m_position = input.m_position.rgb;
+					data.m_albedo = color.rgb * texcolor.rgb;
+					data.m_alpha = color.a * texcolor.a;
+					surface_return(data);
+				}
             }
         }
     }
