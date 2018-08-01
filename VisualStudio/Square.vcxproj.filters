@@ -493,7 +493,6 @@
     <None Include="..\common\shader\Matrix.hlsl">
       <Filter>Resource\common\shader</Filter>
     </None>
-    <None Include="..\common\shader\AmbientLight.hlsl" />
     <None Include="..\common\shader\PointLight.hlsl">
       <Filter>Resource\common\shader</Filter>
     </None>
@@ -514,6 +513,12 @@
     </None>
     <None Include="..\common\common.rs">
       <Filter>Resource\common</Filter>
+    </None>
+    <None Include="..\common\shader\Surface.hlsl" />
+    <None Include="..\common\shader\SurfaceForward.hlsl" />
+    <None Include="..\common\effect\Base.hlsl" />
+    <None Include="..\common\shader\AmbientLight.hlsl">
+      <Filter>Resource\common\shader</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -541,16 +546,5 @@
     <Image Include="..\common\texture\none.tga">
       <Filter>Resource\common\texture</Filter>
     </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="..\common\shader\Surface.hlsl">
-      <Filter>Resource\common\shader</Filter>
-    </FxCompile>
-    <FxCompile Include="..\common\shader\SurfaceForward.hlsl">
-      <Filter>Resource\common\shader</Filter>
-    </FxCompile>
-    <FxCompile Include="..\common\effect\Base.hlsl">
-      <Filter>Resource\common\effect</Filter>
-    </FxCompile>
   </ItemGroup>
 </Project>

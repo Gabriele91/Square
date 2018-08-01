@@ -23,6 +23,7 @@ LightResult compute_light
      in Vec3  fposition,
      in Vec3  vdir,
      in Vec3  normal,
+	 in float occlusion,
      in float shininess
 )
 {

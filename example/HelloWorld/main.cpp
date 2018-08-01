@@ -292,7 +292,7 @@ int main()
 #if defined(_WIN32) & 1
 	  WindowRenderDriver
 	  {
-		 Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, false
+		 Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, true
 	  }
 #else
 	  WindowRenderDriver
