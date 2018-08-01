@@ -23,7 +23,13 @@ SurfaceOutput compute_surface_output(in SurfaceData data)
 	Vec3 view_dir = normalize(camera.m_position - data.m_position);
 
 	// Then calculate lighting as usual
-	LightResult light_results = compute_light(data.m_position, view_dir, data.m_normal, shininess);
+	LightResult light_results = compute_light(
+		  data.m_position
+		, view_dir
+		, data.m_normal
+		, data.m_occlusion
+		, shininess
+	);
 
 	//output
 	SurfaceOutput output;

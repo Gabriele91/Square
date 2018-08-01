@@ -8,7 +8,7 @@
 ////////////////
 struct VertexShaderOutput
 {
-	Vec4 m_position : SV_POSITION;  // interpolated vertex position (system value)
+	Vec4 m_position : SV_POSITION;  // vertex position (system value)
 	Mat3 m_normal   : NORMAL0;      // normal
 	Vec2 m_uv       : TEXCOORD0;    // interpolated uv map
 };
