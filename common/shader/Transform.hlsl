@@ -1,5 +1,5 @@
 //
-//  Transform.hlsl.metal
+//  Transform.hlsl
 //  Square
 //
 //  Created by Gabriele Di Bari on 26/07/18.

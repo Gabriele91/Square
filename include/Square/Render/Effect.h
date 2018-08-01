@@ -361,7 +361,6 @@ namespace Render
 
 		//push
 		void push_back(const EffectPass&& pass);
-
 		//operator
 		EffectPass& operator[](size_t i);
 		const EffectPass& operator[](size_t i) const;
@@ -372,6 +371,9 @@ namespace Render
 
 		PassListCIt begin() const;
 		PassListCIt end() const;
+		//last one
+		EffectPass& back();
+		const EffectPass& back() const;
 
 	protected:
 

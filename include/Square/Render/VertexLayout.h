@@ -84,7 +84,7 @@ namespace Layout
         static inline AttributeList attributes()
         {
             return Render::AttributeList{
-                { Render::ATT_POSITION,  Render::AST_FLOAT2, 0 },
+                { Render::ATT_POSITION,  Render::AST_FLOAT2, offsetof(Position2D,m_position) }
             };
         }
         
@@ -101,12 +101,33 @@ namespace Layout
         
         Vec2 m_position;
         Vec2 m_uvmap;
-        
+
+		Position2DUV() = default;
+
+		Position2DUV
+		(
+			const Vec2& position,
+			const Vec2& uvmap
+		)
+		{
+			m_position = position;
+			m_uvmap = uvmap;
+		}
+
+		Position2DUV
+		(
+			const Vec2& position
+		)
+		{
+			m_position = position;
+			m_uvmap = Vec2(0.0);
+		}
+
         static inline AttributeList attributes()
         {
             return Render::AttributeList{
-                { Render::ATT_POSITION,  Render::AST_FLOAT2, 0                               },
-                { Render::ATT_TEXCOORD0, Render::AST_FLOAT2, offsetof(Position2DUV,m_uvmap)  }
+                { Render::ATT_POSITION,  Render::AST_FLOAT2, offsetof(Position2DUV,m_position) },
+                { Render::ATT_TEXCOORD0, Render::AST_FLOAT2, offsetof(Position2DUV,m_uvmap)    }
             };
         }
         
@@ -126,7 +147,7 @@ namespace Layout
         static inline AttributeList attributes()
         {
             return Render::AttributeList{
-                { Render::ATT_POSITION,  Render::AST_FLOAT3, 0 },
+                { Render::ATT_POSITION,  Render::AST_FLOAT3, offsetof(Position3D,m_position) }
             };
         }
         
@@ -143,12 +164,33 @@ namespace Layout
         
         Vec3 m_position;
         Vec2 m_uvmap;
-        
+
+		Position3DUV() = default;
+
+		Position3DUV
+		(
+			const Vec3& position,
+			const Vec2& uvmap
+		)
+		{
+			m_position = position;
+			m_uvmap = uvmap;
+		}
+
+		Position3DUV
+		(
+			const Vec3& position
+		)
+		{
+			m_position = position;
+			m_uvmap = Vec2(0.0);
+		}
+		
         static inline AttributeList attributes()
         {
             return Render::AttributeList{
-                { Render::ATT_POSITION,  Render::AST_FLOAT3, 0                               },
-                { Render::ATT_TEXCOORD0, Render::AST_FLOAT2, offsetof(Position3DUV,m_uvmap)  }
+                { Render::ATT_POSITION,  Render::AST_FLOAT3, offsetof(Position3DUV,m_position) },
+                { Render::ATT_TEXCOORD0, Render::AST_FLOAT2, offsetof(Position3DUV,m_uvmap)    }
             };
         }
         
@@ -166,13 +208,48 @@ namespace Layout
         Vec3 m_position;
         Vec3 m_normal;
         Vec2 m_uvmap;
-        
+
+		Position3DNormalUV() = default;
+
+		Position3DNormalUV
+		(
+			const Vec3& position,
+			const Vec3& normal,
+			const Vec2& uvmap
+		)
+		{
+			m_position = position;
+			m_normal = normal;
+			m_uvmap = uvmap;
+		}
+
+		Position3DNormalUV
+		(
+			const Vec3& position,
+			const Vec2& uvmap
+		)
+		{
+			m_position = position;
+			m_normal = Vec3(0.0);
+			m_uvmap = uvmap;
+		}
+
+		Position3DNormalUV
+		(
+			const Vec3& position
+		)
+		{
+			m_position = position;
+			m_normal = Vec3(0.0);
+			m_uvmap = Vec2(0.0);
+		}
+
         static inline AttributeList attributes()
         {
             return Render::AttributeList{
-                { Render::ATT_POSITION,  Render::AST_FLOAT3, 0                                     },
-                { Render::ATT_NORMAL0,   Render::AST_FLOAT3, offsetof(Position3DNormalUV,m_normal) },
-                { Render::ATT_TEXCOORD0, Render::AST_FLOAT2, offsetof(Position3DNormalUV,m_uvmap)  }
+                { Render::ATT_POSITION,  Render::AST_FLOAT3, offsetof(Position3DNormalUV,m_position) },
+                { Render::ATT_NORMAL0,   Render::AST_FLOAT3, offsetof(Position3DNormalUV,m_normal)   },
+                { Render::ATT_TEXCOORD0, Render::AST_FLOAT2, offsetof(Position3DNormalUV,m_uvmap)    }
             };
         }
         
@@ -183,24 +260,81 @@ namespace Layout
     };
     
     //vertex (3D) + normal + tangent + bitangent + uv
-    struct Position3DNormalUVTangetBinomial
+    struct Position3DNormalTangetBinomialUV
     {
-        SQUARE_STATIC_OBJECT(Position3DNormalUVTangetBinomial)
+        SQUARE_STATIC_OBJECT(Position3DNormalTangetBinomialUV)
         
         Vec3 m_position;
         Vec3 m_normal;
         Vec3 m_tangent;
         Vec3 m_binomial;
         Vec2 m_uvmap;
-        
+
+		Position3DNormalTangetBinomialUV() = default;
+
+		Position3DNormalTangetBinomialUV
+		(
+			const Vec3& position,
+			const Vec3& normal,
+			const Vec3& tangent,
+			const Vec3& binomial,
+			const Vec2& uvmap
+		)
+		{
+			m_position = position;
+			m_normal = normal;
+			m_tangent = tangent;
+			m_binomial = binomial;
+			m_uvmap = uvmap;
+		}
+
+		Position3DNormalTangetBinomialUV
+		(
+			const Vec3& position,
+			const Vec3& normal,
+			const Vec2& uvmap
+		)
+		{
+			m_position = position;
+			m_normal = normal;
+			m_tangent = Vec3(0.0);
+			m_binomial = Vec3(0.0);
+			m_uvmap = uvmap;
+		}
+
+		Position3DNormalTangetBinomialUV
+		(
+			const Vec3& position,
+			const Vec2& uvmap
+		)
+		{
+			m_position = position;
+			m_normal = Vec3(0.0);
+			m_tangent = Vec3(0.0);
+			m_binomial = Vec3(0.0);
+			m_uvmap = uvmap;
+		}
+
+		Position3DNormalTangetBinomialUV
+		(
+			const Vec3& position
+		)
+		{
+			m_position = position;
+			m_normal = Vec3(0.0);
+			m_tangent = Vec3(0.0);
+			m_binomial = Vec3(0.0);
+			m_uvmap = Vec2(0.0);
+		}
+
         static inline AttributeList attributes()
         {
             return Render::AttributeList{
-                { Render::ATT_POSITION,  Render::AST_FLOAT3, 0                                                    },
-                { Render::ATT_NORMAL0,   Render::AST_FLOAT3, offsetof(Position3DNormalUVTangetBinomial,m_normal)  },
-                { Render::ATT_TANGENT0,  Render::AST_FLOAT3, offsetof(Position3DNormalUVTangetBinomial,m_tangent) },
-                { Render::ATT_BINORMAL0, Render::AST_FLOAT3, offsetof(Position3DNormalUVTangetBinomial,m_binomial)},
-                { Render::ATT_TEXCOORD0, Render::AST_FLOAT2, offsetof(Position3DNormalUVTangetBinomial,m_uvmap)   }
+                { Render::ATT_POSITION,  Render::AST_FLOAT3, offsetof(Position3DNormalTangetBinomialUV,m_position)},
+                { Render::ATT_NORMAL0,   Render::AST_FLOAT3, offsetof(Position3DNormalTangetBinomialUV,m_normal)  },
+                { Render::ATT_TANGENT0,  Render::AST_FLOAT3, offsetof(Position3DNormalTangetBinomialUV,m_tangent) },
+                { Render::ATT_BINORMAL0, Render::AST_FLOAT3, offsetof(Position3DNormalTangetBinomialUV,m_binomial)},
+                { Render::ATT_TEXCOORD0, Render::AST_FLOAT2, offsetof(Position3DNormalTangetBinomialUV,m_uvmap)   }
             };
         }
         

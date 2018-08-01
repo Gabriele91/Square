@@ -21,6 +21,7 @@ struct Position2DUV
     Vec2 m_uvmap    : TEXCOORD0;
 };
 #define Pos2DUV Position2DUV
+#define P2DUV Position2DUV
 
 //position (3D)
 struct Position3D
@@ -36,6 +37,7 @@ struct Position3DUV
     Vec2 m_uv       : TEXCOORD0;
 };
 #define Pos3DUV Position3DUV
+#define P3DUV Position3DUV
 
 //position (3D) + normal + uv
 struct Position3DNormalUV
@@ -46,6 +48,7 @@ struct Position3DNormalUV
 };
 #define Pos3DNormalUV Position3DNormalUV
 #define Pos3DNorUV Position3DNormalUV
+#define P3DNUV Position3DNormalUV
 
 //position (3D) + normal + tangent + bitangent + uv
 struct Position3DNormalTangetBinomialUV
@@ -58,4 +61,5 @@ struct Position3DNormalTangetBinomialUV
 };
 #define Pos3DNormalTangetBinomialUV Position3DNormalTangetBinomialUV
 #define Pos3DNorTanBinUV Position3DNormalTangetBinomialUV
+#define P3DNTBUV Position3DNormalTangetBinomialUV
 

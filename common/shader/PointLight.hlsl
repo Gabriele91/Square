@@ -9,6 +9,7 @@
 
 struct PointLightStruct
 {
+	Vec3  m_position;
     Vec3  m_diffuse;
     Vec3  m_specular;
     float m_constant;
@@ -52,7 +53,7 @@ LightResult compute_light
     // Diffuse shading
     float diff = max(dot(normal, light_dir), 0.0);
     // Specular shading
-    Vec3  halfway_dir = normalize(light_dir + view_dir);
+    Vec3  halfway_dir = normalize(light_dir + vdir);
     float spec = pow(max(dot(normal, halfway_dir), 0.0), shininess);
     // Combine results
     result.m_diffuse  = light.m_diffuse  * diff * attenuation;

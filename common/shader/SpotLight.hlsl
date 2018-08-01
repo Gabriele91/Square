@@ -9,6 +9,8 @@
 
 struct SpotLightStruct
 {
+	Vec3  m_position;
+	Vec3  m_direction;
     Vec3  m_diffuse;
     Vec3  m_specular;
     float m_constant;
@@ -41,7 +43,7 @@ LightResult compute_light
     //value return
     LightResult result;
     // Attenuation
-    float attenuation = spot_light_compute_attenuation(frag_position);
+    float attenuation = spot_light_compute_attenuation(fposition);
     // Exit case
     if (attenuation <= 0.0)
     {
@@ -50,11 +52,11 @@ LightResult compute_light
         return result;
     }
     // Light dir
-    Vec3 light_dir = normalize(light.m_position - frag_position);
+    Vec3 light_dir = normalize(light.m_position - fposition);
     // Diffuse shading
     float diff = max(dot(normal, light_dir), 0.0);
     // Specular shading
-    Vec3  halfway_dir  = normalize(light_dir + view_dir);
+    Vec3  halfway_dir  = normalize(light_dir + vdir);
     float spec         = pow(max(dot(normal, halfway_dir), 0.0), shininess);
     // Spotlight intensity
     float theta = dot(light_dir, normalize(-light.m_direction));

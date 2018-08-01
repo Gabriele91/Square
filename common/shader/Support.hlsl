@@ -14,7 +14,7 @@ Vec2 projection_to_screen(in Vec4 pos)
     return (screen_pos.xy + Vec2(1.0,1.0)) * 0.5;
 }
 
-Mat3 compute_normal(in Mat4 model)
+Mat3 compute_normal_matrix(in Mat4 model)
 {
     Mat3 m3x3 = (Mat3)(model);
     return transpose(inverse(m3x3));
@@ -31,6 +31,14 @@ Mat3 compute_tbn(in Mat3 normal_matrix,
     Vec3 n_pixel = normalize(mul(normal_matrix,normal));
     //as matrix
     return Mat3(t_pixel, b_pixel, n_pixel);
+}
+
+Vec3 normal_from_texture(in Vec4 normal_color)
+{
+	//inv x axis (todo:try)
+	normal_color.r = 1.0f - normal_color.r;
+	//return
+	return normalize(normal_color.rgb * 2.0f - 1.0f);
 }
 
 //Compute position
