@@ -2185,12 +2185,11 @@ namespace Render
 			device_context()->PSSetSamplers(ctx_texture->m_sempler_id, 1, &sempler);
 			device_context()->GSSetSamplers(ctx_texture->m_sempler_id, 1, &sempler);
 			device_context()->CSSetSamplers(ctx_texture->m_sempler_id, 1, &sempler);
-			//
+            //to null
+            s_bind_context.m_textures[ctx_texture->m_texture_id] = nullptr;
 			ctx_texture->m_texture_bind = false;
 			ctx_texture->m_texture_id = 0;
 			ctx_texture->m_sempler_id = 0;
-            //to null
-            s_bind_context.m_textures[ctx_texture->m_texture_id] = nullptr;
         }
 	}
         
