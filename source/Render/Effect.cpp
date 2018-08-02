@@ -328,36 +328,46 @@ namespace Render
 	EffectPass::~EffectPass() {}
 	
 	//enable pass effect
-	void EffectPass::bind(  Render::Context* render
-                          , Layout::InputLayoutId  layout_id
-                          , Shared<Render::ConstBuffer> camera_cb
-                          , Shared<Render::ConstBuffer> transform_cb
-                          , EffectParameters* params) const
-	{
-		bind(render, layout_id, camera_cb.get(), transform_cb.get(), params);
-	}
-
-	void EffectPass::bind(  Render::Context* render
-                          , Layout::InputLayoutId layout_id
-                          , Render::ConstBuffer* camera_cb
-                          , Render::ConstBuffer* transform_cb
+	void EffectPass::bind(  Render::Context*  render
+						  , const Vec4&		  ambient_light
+						  , const Buffers&    buffers
                           , EffectParameters* params) const
 	{
 		//bind
 		bind(render, params);
         //bind layout
-        if(layout_id < m_shader->layouts().size())
+        if(buffers.m_layout_id < m_shader->layouts().size())
         {
-            render->bind_IL(m_shader->layouts()[layout_id].get());
+            render->bind_IL(m_shader->layouts()[buffers.m_layout_id].get());
         }
-		//default uniforms
-		if (m_uniform_camera && m_uniform_camera->is_valid())
+		//buffers (camera/model/transofrm)
+		if (buffers.m_camera && m_uniform_camera && m_uniform_camera->is_valid())
 		{
-			m_uniform_camera->bind(camera_cb);
+			m_uniform_camera->bind(buffers.m_camera);
 		}
-		if (m_uniform_transform && m_uniform_transform->is_valid())
+		if (buffers.m_transform && m_uniform_transform && m_uniform_transform->is_valid())
 		{
-			m_uniform_transform->bind(transform_cb);
+			m_uniform_transform->bind(buffers.m_transform);
+		}
+		//lights
+		if (m_support_light)
+		{
+			if (m_uniform_ambient_light && m_uniform_ambient_light->is_valid())
+			{
+				m_uniform_ambient_light->set(ambient_light);
+			}
+			if (buffers.m_direction_light && m_uniform_direction && m_uniform_direction->is_valid())
+			{
+				m_uniform_direction->bind(buffers.m_direction_light);
+			}
+			if (buffers.m_point_light && m_uniform_point && m_uniform_point->is_valid())
+			{
+				m_uniform_point->bind(buffers.m_point_light);
+			}
+			if (buffers.m_spot_light && m_uniform_spot && m_uniform_spot->is_valid())
+			{
+				m_uniform_spot->bind(buffers.m_spot_light);
+			}
 		}
 	}
 
@@ -435,51 +445,6 @@ namespace Render
 	{
 		m_shader->unbind();
 	}
-
-	//safe enable pass effect
-	Render::State EffectPass::safe_bind(  Render::Context* render
-                                        , Layout::InputLayoutId layout_id
-                                        , Render::ConstBuffer* camera_cb
-                                        , Render::ConstBuffer* transform_cb
-                                        , EffectParameters* params) const
-	{
-		//test
-		if (!render) return Render::State();
-		//do
-		Render::State state = render->get_render_state();
-		bind(render, layout_id, camera_cb, transform_cb, params);
-		return state;
-	}
-
-	Render::State EffectPass::safe_bind(  Render::Context* render
-                                        , Layout::InputLayoutId layout_id
-                                        , Shared<Render::ConstBuffer> camera_cb
-                                        , Shared<Render::ConstBuffer> transform_cb
-                                        , EffectParameters* params) const
-	{
-		return safe_bind(render, layout_id, camera_cb.get(), transform_cb.get(), params);
-	}
-
-	Render::State EffectPass::safe_bind(Render::Context* render, EffectParameters* params) const
-	{
-		//test
-		if (!render) return Render::State();
-		//do
-		Render::State state = render->get_render_state();
-		bind(render, params);
-		return state;
-	}
-	//safe disable pass effect
-	void EffectPass::safe_unbind(Render::Context* render, const Render::State& state)
-	{
-		//test
-		if (!render) return;
-		//set state
-		render->set_render_state(state);
-		//unbind
-		unbind();
-	}
-
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// EffectTechnique
 	/////////////////////////////////////////////////////////////////////////////////////////////////////

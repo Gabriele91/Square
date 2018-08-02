@@ -42,7 +42,7 @@ namespace Resource
         "RENDERING_AMBIENT_LIGHT",
         "RENDERING_DIRECTION_LIGHT",
         "RENDERING_POINT_LIGHT",
-        "RENDERING_SPOT_LIGHT"
+		"RENDERING_SPOT_LIGHT"
     };
     
     //constructor
@@ -131,36 +131,41 @@ namespace Resource
                 //lights sub pass
                 int light_sub_pass = parser_pass.m_lights;
                 //Type render
-                shader_define_rendering current_shader_def = DEF_RENDERING_COLOR;
+                shader_define_rendering current_shader_def;
                 //pass
-                while(light_sub_pass)
+				while (light_sub_pass)
                 {
-                    //sub light
-                    if(light_sub_pass & Parser::Effect::LF_BASE)
-                    {
-                        current_shader_def = DEF_RENDERING_COLOR;
-                        light_sub_pass    ^= Parser::Effect::LF_BASE;
-                    }
-                    else if(light_sub_pass & Parser::Effect::LF_AMBIENT)
+                    //1 pass for light
+					if (light_sub_pass & Parser::Effect::LT_COLOR)
+					{
+						current_shader_def = DEF_RENDERING_COLOR;
+						light_sub_pass ^= Parser::Effect::LT_COLOR;
+					}
+					if(light_sub_pass & Parser::Effect::LT_AMBIENT)
                     {
                         current_shader_def = DEF_RENDERING_AMBIENT_LIGHT;
-                        light_sub_pass    ^= Parser::Effect::LF_AMBIENT;
+                        light_sub_pass    ^= Parser::Effect::LT_AMBIENT;
                     }
-                    else if(light_sub_pass & Parser::Effect::LF_DIRECTION)
+                    else if(light_sub_pass & Parser::Effect::LT_DIRECTION)
                     {
                         current_shader_def = DEF_RENDERING_DIRECTION_LIGHT;
-                        light_sub_pass    ^= Parser::Effect::LF_DIRECTION;
+                        light_sub_pass    ^= Parser::Effect::LT_DIRECTION;
                     }
-                    else if(light_sub_pass & Parser::Effect::LF_POINT)
+                    else if(light_sub_pass & Parser::Effect::LT_POINT)
                     {
                         current_shader_def = DEF_RENDERING_POINT_LIGHT;
-                        light_sub_pass    ^= Parser::Effect::LF_POINT;
+                        light_sub_pass    ^= Parser::Effect::LT_POINT;
                     }
-                    else if(light_sub_pass & Parser::Effect::LF_SPOT)
+                    else if(light_sub_pass & EffectPass::LT_SPOT)
                     {
                         current_shader_def = DEF_RENDERING_SPOT_LIGHT;
-                        light_sub_pass    ^= Parser::Effect::LF_SPOT;
+                        light_sub_pass    ^= Parser::Effect::LT_SPOT;
                     }
+					//not suppoted
+					else
+					{
+						break;
+					}
                     //add pass
                     this_technique.push_back(EffectPass());
                     //pass
@@ -209,32 +214,34 @@ namespace Resource
                     //try
                     if(!this_pass.m_uniform_camera) this_pass.m_uniform_camera = this_pass.m_shader->constant_buffer("camera");
                     if(!this_pass.m_uniform_transform) this_pass.m_uniform_transform = this_pass.m_shader->constant_buffer("transform");
-                    //default true
-                    this_pass.m_support_light = true;
                     //lights uniforms
                     switch (current_shader_def)
                     {
-                        case DEF_RENDERING_SPOT_LIGHT:
-							this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("SpotLight");
-							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("spot_light");
-							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("light");
+                        case DEF_RENDERING_AMBIENT_LIGHT:
+                            this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("AmbientLight");
+							if (!this_pass.m_uniform_ambient_light) this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("light");
+							this_pass.m_support_light = EffectPass::LT_AMBIENT;
                             break;
+						case DEF_RENDERING_DIRECTION_LIGHT:
+							this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("DirectionLight");
+							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("direction_light");
+							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("light");
+							this_pass.m_support_light = EffectPass::LT_DIRECTION;
+							break;
                         case DEF_RENDERING_POINT_LIGHT:
                             this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("PointLight");
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("point_light");
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("light");
+							this_pass.m_support_light = EffectPass::LT_POINT;
                             break;
-                        case DEF_RENDERING_DIRECTION_LIGHT:
-                            this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("DirectionLight");
-							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("direction_light");
-							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("light");
-							break;
-                        case DEF_RENDERING_AMBIENT_LIGHT:
-                            this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("AmbientLight");
-							if (!this_pass.m_uniform_ambient_light) this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("light");
+                        case DEF_RENDERING_SPOT_LIGHT:
+							this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("SpotLight");
+							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("spot_light");
+							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("light");
+							this_pass.m_support_light = EffectPass::LT_SPOT;
                             break;
                         default:
-                            this_pass.m_support_light = false;
+							this_pass.m_support_light = EffectPass::LT_NONE;
                             break;
                     }
                     //get uniforms
@@ -250,8 +257,8 @@ namespace Resource
                             this_pass.m_uniform.push_back(u_shader);
                         }
                     }
-                }
-            }
+                }// pass for each lights
+			}
             
         }
         

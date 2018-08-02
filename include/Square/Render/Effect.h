@@ -286,34 +286,65 @@ namespace Render
 		std::vector< int >                 m_param_id;
 		std::vector< Render::Uniform* >    m_uniform;
 		//default uniform
-		Render::UniformConstBuffer*        m_uniform_camera;
-		Render::UniformConstBuffer*        m_uniform_transform;
+		Render::UniformConstBuffer*        m_uniform_camera{ nullptr };
+		Render::UniformConstBuffer*        m_uniform_transform{ nullptr };
 		//all light uniform
-		bool m_support_light{ false };
+		enum LightsType : unsigned int
+		{
+			LT_NONE      = 0b00000,
+			LT_AMBIENT   = 0b00001,
+			LT_SPOT      = 0b00010,
+			LT_POINT     = 0b00100,
+			LT_DIRECTION = 0b01000,
+			LT_AREA		 = 0b10000
+		};
+		LightsType m_support_light{ LT_NONE };
 		//uniforms
 		Render::Uniform*             m_uniform_ambient_light{ nullptr };
-		Render::UniformConstBuffer*  m_uniform_spot;
-		Render::UniformConstBuffer*  m_uniform_point;
-		Render::UniformConstBuffer*  m_uniform_direction;
+		Render::UniformConstBuffer*  m_uniform_spot{ nullptr };
+		Render::UniformConstBuffer*  m_uniform_point{ nullptr };
+		Render::UniformConstBuffer*  m_uniform_direction{ nullptr };
 
 		//constructor
 		EffectPass();
-		EffectPass(Render::Effect* effect);
 		virtual ~EffectPass();
+
+		//input pass
+		struct SQUARE_API Buffers
+		{
+			Layout::InputLayoutId  m_layout_id{ ~size_t(0) };
+			Render::ConstBuffer*   m_camera{ nullptr };
+			Render::ConstBuffer*   m_transform{ nullptr };
+			Render::ConstBuffer*   m_direction_light{ nullptr };
+			Render::ConstBuffer*   m_point_light{ nullptr };
+			Render::ConstBuffer*   m_spot_light{ nullptr };
+
+			Buffers() = default;
+
+			Buffers
+			(
+			  Layout::InputLayoutId  layout_id
+			, Render::ConstBuffer*   camera
+			, Render::ConstBuffer*   transform
+			, Render::ConstBuffer*   direction_light = nullptr
+			, Render::ConstBuffer*   point_light = nullptr
+			, Render::ConstBuffer*   spot_light = nullptr
+			)
+			{
+				m_layout_id = layout_id;
+				m_camera = camera;
+				m_transform = transform;
+				m_direction_light = direction_light;
+				m_point_light = point_light;
+				m_spot_light = spot_light;
+			}
+		};
 
 		//unsafe
 		void bind(  Render::Context*       render
-                  , Layout::InputLayoutId  layout_index
-                  , Render::ConstBuffer*   camera
-                  , Render::ConstBuffer*   transform
+                  , const Vec4&			   ambient_light
+                  , const Buffers&         buffers = Buffers()
                   , EffectParameters*      params = nullptr
-                  ) const;
-
-		void bind(  Render::Context* render
-                  , Layout::InputLayoutId  layout_index
-                  , Shared<Render::ConstBuffer> camera
-                  , Shared<Render::ConstBuffer> transform
-                  , EffectParameters* params = nullptr
                   ) const;
 
 		void bind(  Render::Context* render
@@ -322,25 +353,6 @@ namespace Render
 
 		void unbind() const;
 		//safe
-		Render::State safe_bind(  Render::Context* render
-                                , Layout::InputLayoutId  layout_index
-                                , Render::ConstBuffer* camera
-                                , Render::ConstBuffer* transform
-                                , EffectParameters* params = nullptr) const;
-
-		Render::State safe_bind(  Render::Context* render
-                                , Layout::InputLayoutId  layout_index
-                                , Shared<Render::ConstBuffer> camera
-                                , Shared<Render::ConstBuffer> transform
-                                , EffectParameters* params = nullptr) const;
-
-		Render::State safe_bind(  Render::Context* render
-                                , EffectParameters* params = nullptr
-                                ) const;
-
-		void safe_unbind(  Render::Context* render
-                         , const Render::State&
-                         );
 	};
 
 	//pass list

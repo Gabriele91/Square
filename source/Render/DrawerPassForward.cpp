@@ -56,7 +56,14 @@ namespace Render
         }
         //transfor
         Render::UniformBufferCamera ucamera;
-        Render::UniformBufferTransform utransform;
+        Render::UniformBufferTransform utransform;			
+		//parameters
+		EffectPass::Buffers cbuffers
+		{
+			  ~size_t(0)
+			, m_cb_camera.get()
+			, m_cb_transform.get()
+		};
         //update camera
         camera.set(&ucamera);
         render().update_steam_CB(m_cb_camera.get(), (const unsigned char*)&ucamera, sizeof(ucamera));
@@ -80,37 +87,20 @@ namespace Render
                 transform->set(&utransform);
                 render().update_steam_CB(m_cb_transform.get(), (const unsigned char*)&utransform, sizeof(utransform));
             }
+			//set id
+			cbuffers.m_layout_id = randerable->layout_id();
             //draw for each pass
             for(auto& pass : *technique)
             {
-                //bind effect
-				if (!pass.m_support_light)
-				{
-					//bind
-					pass.bind(
-						 &render()
-						, randerable->layout_id()
-						, m_cb_camera.get()
-						, m_cb_transform.get()
-						, material->parameters()
-					);
-					//draw
-					randerable->draw(render());
-				}
-				else if(pass.m_uniform_ambient_light && pass.m_uniform_ambient_light->is_valid())
-				{
-					pass.bind(
-						 &render()
-						, randerable->layout_id()
-						, m_cb_camera.get()
-						, m_cb_transform.get()
-						, material->parameters()
-					);
-					//set color
-					pass.m_uniform_ambient_light->set(ambient_color);
-					//draw
-					randerable->draw(render());
-				}
+				//bind
+				pass.bind(
+					  &render()
+					, ambient_color
+					, cbuffers
+					, material->parameters()
+				);
+				//draw
+				randerable->draw(render());
             }
         }
     }

@@ -54,18 +54,19 @@ namespace Parser
 			size_t      m_line{ 0 };
 		};
 
-		enum LightsField
+		enum LightsField : unsigned int
 		{
-			LF_NONE = 0b00000,
-			LF_BASE = 0b00001,
-			LF_AMBIENT = 0b00010,
-			LF_SPOT = 0b00100,
-			LF_POINT = 0b01000,
-			LF_DIRECTION = 0b10000,
-			LF_SPOT_POINT = LF_SPOT | LF_POINT,
-			LF_SPOT_DIRECTION = LF_SPOT | LF_DIRECTION,
-			LF_POINT_DIRECTION = LF_POINT | LF_DIRECTION,
-			LF_SPOT_POINT_DIRECTION = LF_SPOT | LF_POINT | LF_DIRECTION
+			LT_NONE                 = 0b000000,
+			LT_COLOR                = 0b000001,
+			LT_AMBIENT              = 0b000010,
+			LT_SPOT                 = 0b000100,
+			LT_POINT                = 0b001000,
+			LT_DIRECTION            = 0b010000,
+			LT_AREA                 = 0b100000,
+			LT_SPOT_POINT           = LT_SPOT | LT_POINT,
+			LT_SPOT_DIRECTION       = LT_SPOT | LT_DIRECTION,
+			LT_POINT_DIRECTION      = LT_POINT| LT_DIRECTION,
+			LT_SPOT_POINT_DIRECTION = LT_SPOT | LT_POINT | LT_DIRECTION
 		};
 
 		struct PassField
@@ -74,7 +75,7 @@ namespace Parser
 			Render::DepthBufferState m_depth;
 			Render::BlendState       m_blend;
 			ShaderField              m_shader;
-			LightsField	             m_lights{ LF_BASE };
+			LightsField	             m_lights{ LT_COLOR };
 		};
 
 		struct TechniqueField

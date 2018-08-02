@@ -669,56 +669,65 @@ namespace Parser
         if ((cstr_cmp_skip(ptr, "off")))
         {
             //default pass.m_lights
+			pass.m_lights = LightsField::LT_COLOR;
             return true;
         }
-        //is only_ambient?
-        if ((cstr_cmp_skip(ptr, "only_ambient")))
+        //is ambient?
+        if (cstr_cmp_skip(ptr, "ambient") || cstr_cmp_skip(ptr, "only_ambient"))
         {
-            pass.m_lights = LF_AMBIENT;
+            pass.m_lights = LightsField::LT_AMBIENT;
             return true;
         }
         //spot point and direction
-        if ((cstr_cmp_skip(ptr, "spot_point_direction")))
+        if (   cstr_cmp_skip(ptr, "spot_point_direction") 
+			|| cstr_cmp_skip(ptr, "point_direction_spot") 
+			|| cstr_cmp_skip(ptr, "direction_spot_point"))
         {
-            pass.m_lights = LF_SPOT_POINT_DIRECTION;
+            pass.m_lights = LightsField::LT_SPOT_POINT_DIRECTION;
             return true;
         }
         //spot and point
-        if ((cstr_cmp_skip(ptr, "spot_point")))
+        if (cstr_cmp_skip(ptr, "spot_point") || cstr_cmp_skip(ptr, "point_spot"))
         {
-            pass.m_lights = LF_SPOT_POINT;
+            pass.m_lights = LightsField::LT_SPOT_POINT;
             return true;
         }
         //spot and direction
-        if ((cstr_cmp_skip(ptr, "spot_direction")))
+        if (cstr_cmp_skip(ptr, "spot_direction") || cstr_cmp_skip(ptr, "direction_spot"))
         {
-            pass.m_lights = LF_SPOT_DIRECTION;
+            pass.m_lights = LightsField::LT_SPOT_DIRECTION;
             return true;
         }
         //point and direction
-        if ((cstr_cmp_skip(ptr, "point_direction")))
+        if (cstr_cmp_skip(ptr, "point_direction") || cstr_cmp_skip(ptr, "direction_spot"))
         {
-            pass.m_lights = LF_POINT_DIRECTION;
+            pass.m_lights = LightsField::LT_POINT_DIRECTION;
             return true;
         }
+		//direction
+		if ((cstr_cmp_skip(ptr, "direction")))
+		{
+			pass.m_lights = LightsField::LT_DIRECTION;
+			return true;
+		}
+		//point
+		if ((cstr_cmp_skip(ptr, "point")))
+		{
+			pass.m_lights = LightsField::LT_POINT;
+			return true;
+		}
         //spot
         if ((cstr_cmp_skip(ptr, "spot")))
         {
-            pass.m_lights = LF_SPOT;
+            pass.m_lights = LightsField::LT_SPOT;
             return true;
         }
-        //spot
-        if ((cstr_cmp_skip(ptr, "point")))
-        {
-            pass.m_lights = LF_POINT;
-            return true;
-        }
-        //spot
-        if ((cstr_cmp_skip(ptr, "direction")))
-        {
-            pass.m_lights = LF_DIRECTION;
-            return true;
-        }
+		//area
+		if ((cstr_cmp_skip(ptr, "area")))
+		{
+			pass.m_lights = LightsField::LT_AREA;
+			return true;
+		}
         //error
         push_error("Lights parameter not valid");
         //end
