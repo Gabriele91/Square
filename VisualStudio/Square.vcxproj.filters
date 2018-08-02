@@ -70,9 +70,6 @@
     <Filter Include="Source\Render">
       <UniqueIdentifier>{2554acb3-f47d-4f8e-8cf5-b25f7cb5d962}</UniqueIdentifier>
     </Filter>
-    <Filter Include="include\Square\Scene\Resource">
-      <UniqueIdentifier>{1a707ae0-7aa4-4cdc-8b60-45da222f2cf6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource\common">
       <UniqueIdentifier>{6ff18884-2256-425e-aae5-07d9002016c9}</UniqueIdentifier>
     </Filter>
@@ -84,6 +81,9 @@
     </Filter>
     <Filter Include="Resource\common\effect">
       <UniqueIdentifier>{c5579f5d-3729-4d13-9c31-e09314e3bfaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Square\Resource">
+      <UniqueIdentifier>{1a707ae0-7aa4-4cdc-8b60-45da222f2cf6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -127,7 +127,7 @@
       <Filter>Include\Square\Scene</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Resource\Texture.h">
-      <Filter>include\Square\Scene\Resource</Filter>
+      <Filter>Include\Square\Resource</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Data\Image.h">
       <Filter>Include\Square\Data</Filter>
@@ -220,7 +220,7 @@
       <Filter>Include\Square\Core</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Resource\Shader.h">
-      <Filter>include\Square\Scene\Resource</Filter>
+      <Filter>Include\Square\Resource</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Scene\Level.h">
       <Filter>Include\Square\Scene</Filter>
@@ -232,10 +232,10 @@
       <Filter>include\Square\Core</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Resource\Geometry.h">
-      <Filter>include\Square\Scene\Resource</Filter>
+      <Filter>Include\Square\Resource</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Resource\Model.h">
-      <Filter>include\Square\Scene\Resource</Filter>
+      <Filter>Include\Square\Resource</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Data\ParserEffect.h">
       <Filter>include\Square\Data</Filter>
@@ -259,7 +259,7 @@
       <Filter>include\Square\Scene</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Resource\Effect.h">
-      <Filter>include\Square\Scene\Resource</Filter>
+      <Filter>Include\Square\Resource</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Scene\World.h">
       <Filter>include\Square\Scene</Filter>
@@ -277,7 +277,7 @@
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Resource\Material.h">
-      <Filter>include\Square\Scene\Resource</Filter>
+      <Filter>Include\Square\Resource</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Data\ParserMaterial.h">
       <Filter>include\Square\Data</Filter>
@@ -514,11 +514,17 @@
     <None Include="..\common\common.rs">
       <Filter>Resource\common</Filter>
     </None>
-    <None Include="..\common\shader\Surface.hlsl" />
-    <None Include="..\common\shader\SurfaceForward.hlsl" />
-    <None Include="..\common\effect\Base.hlsl" />
     <None Include="..\common\shader\AmbientLight.hlsl">
       <Filter>Resource\common\shader</Filter>
+    </None>
+    <None Include="..\common\shader\SurfaceForward.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </None>
+    <None Include="..\common\shader\Surface.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </None>
+    <None Include="..\common\effect\Base.hlsl">
+      <Filter>Resource\common\effect</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
