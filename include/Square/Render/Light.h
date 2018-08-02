@@ -73,8 +73,9 @@ namespace Render
     
     PACKED(ConstantBufferStruct UniformDirectionLight
     {
-        Vec3 m_diffuse;  float __PADDING0__{0.0}; //v4
-        Vec3 m_specular; float __PADDING1__{0.0}; //v4
+		Vec3 m_direction; float __PADDING0__{0.0}; //v4
+        Vec3 m_diffuse;   float __PADDING1__{0.0}; //v4
+        Vec3 m_specular;  float __PADDING2__{0.0}; //v4
     });
 
     class SQUARE_API DirectionLight : public Light
@@ -92,7 +93,7 @@ namespace Render
         void diffure(const Vec3& diffuse)   { m_diffuse  = diffuse;  }
         void specular(const Vec3& specular) { m_specular = specular; }
 
-        void set(UniformDirectionLight* data)
+        virtual void set(UniformDirectionLight* data) const
         {
             data->m_diffuse = diffuse();
             data->m_specular = specular();
@@ -105,11 +106,12 @@ namespace Render
     
     PACKED(ConstantBufferStruct UniformPointLight
     {
-        Vec3  m_diffuse;       float __PADDING0__{0.0}; //v4
-        Vec3  m_specular;      float __PADDING1__{0.0}; //v4
-        float m_constant;      float __PADDING2__{0.0}; //v2
-        float m_radius;        float __PADDING3__{0.0}; //v2
-        float m_inside_radius; float __PADDING4__{0.0}; //v2
+	    Vec3  m_position;      float __PADDING0__{0.0}; //v4
+        Vec3  m_diffuse;       float __PADDING1__{0.0}; //v4
+        Vec3  m_specular;      float __PADDING2__{0.0}; //v4
+        float m_constant;      float __PADDING3__{0.0}; //v2
+        float m_radius;        float __PADDING4__{0.0}; //v2
+        float m_inside_radius; float __PADDING5__{0.0}; //v2
     });
     
     class SQUARE_API PointLight : public Light
@@ -138,7 +140,7 @@ namespace Render
         void specular(const Vec3& specular)           { m_specular = specular;  }
         void constant(const float constant)           { m_constant  = constant; }
         
-        void set(UniformPointLight* data)
+        virtual void set(UniformPointLight* data) const
         {
             data->m_diffuse = diffuse();
             data->m_specular = specular();
@@ -157,13 +159,15 @@ namespace Render
     
     PACKED(ConstantBufferStruct UniformSpotLight
     {
-        Vec3  m_diffuse;       float __PADDING0__{0.0}; //v4
-        Vec3  m_specular;      float __PADDING1__{0.0}; //v4
-        float m_constant;      float __PADDING2__{0.0}; //v2
-        float m_radius;        float __PADDING3__{0.0}; //v2
-        float m_inside_radius; float __PADDING4__{0.0}; //v2
-        float m_inner_cut_off; float __PADDING5__{0.0}; //v2
-        float m_outer_cut_off; float __PADDING6__{0.0}; //v2
+	    Vec3  m_position;      float __PADDING0__{0.0}; //v4
+		Vec3  m_direction;     float __PADDING1__{0.0}; //v4
+        Vec3  m_diffuse;       float __PADDING2__{0.0}; //v4
+        Vec3  m_specular;      float __PADDING3__{0.0}; //v4
+        float m_constant;      float __PADDING4__{0.0}; //v2
+        float m_radius;        float __PADDING5__{0.0}; //v2
+        float m_inside_radius; float __PADDING6__{0.0}; //v2
+        float m_inner_cut_off; float __PADDING7__{0.0}; //v2
+        float m_outer_cut_off; float __PADDING8__{0.0}; //v2
     });
     
     class SQUARE_API SpotLight : public Light
@@ -201,7 +205,7 @@ namespace Render
         void specular(const Vec3& specular)           { m_specular = specular; }
         void constant(const float constant)           { m_constant  = constant;}
         
-        void set(UniformSpotLight* data)
+        virtual void set(UniformSpotLight* data) const 
         {
             data->m_diffuse = diffuse();
             data->m_specular = specular();
