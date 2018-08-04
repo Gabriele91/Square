@@ -36,7 +36,7 @@ Mat3 compute_tbn(in Mat3 normal_matrix,
 Vec3 normal_from_texture(in Vec4 normal_color)
 {
 	//inv x axis (todo:try)
-	normal_color.r = 1.0f - normal_color.r;
+	normal_color.x = 1.0f - normal_color.x;
 	//return
 	return normalize(normal_color.rgb * 2.0f - 1.0f);
 }
@@ -49,4 +49,19 @@ Vec4 mul_model_view_projection(in Vec3 vertex)
     position = mul(position, camera.m_view);
     position = mul(position, camera.m_projection);
     return position;
+}
+
+Vec4 mul_view_projection(in Vec3 vertex)
+{
+	Vec4 position = Vec4(vertex, 1.0);
+	position = mul(position, camera.m_view);
+	position = mul(position, camera.m_projection);
+	return position;
+}
+
+Vec4 mul_model(in Vec3 vertex)
+{
+	Vec4 position = Vec4(vertex, 1.0);
+	position = mul(position, transform.m_model);
+	return position;
 }
