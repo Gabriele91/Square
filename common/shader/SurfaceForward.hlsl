@@ -34,8 +34,8 @@ SurfaceOutput compute_surface_output(in SurfaceData data)
 	//output
 	SurfaceOutput output;
 	output.m_color =  Vec4(
-		data.m_albedo * (light_results.m_diffuse + light_results.m_specular * data.m_specular), 
-		data.m_alpha
+		  data.m_albedo * (light_results.m_diffuse + light_results.m_specular * data.m_specular)
+		, data.m_alpha
 	);
 	return output;
 }

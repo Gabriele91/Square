@@ -23,9 +23,9 @@ cbuffer Light
 }
 
 //attenuation
-float point_light_compute_attenuation(in Vec3  frag_position)
+float point_light_compute_attenuation(in Vec3  light_relative)
 {
-    float light_distance = length(light.m_position - frag_position);
+    float light_distance = length(light_relative);
     return pow(smoothstep(light.m_radius, light.m_inside_radius, light_distance), light.m_constant);
 }
 
@@ -40,8 +40,10 @@ LightResult compute_light
 {
     //value return
     LightResult result;
+	// Light relative
+	Vec3 light_relative = light.m_position - fposition;
     // Attenuation
-    float attenuation = point_light_compute_attenuation(fposition);
+    float attenuation = point_light_compute_attenuation(light_relative);
     // Exit case
     if (attenuation <= 0.0)
     {
@@ -50,14 +52,14 @@ LightResult compute_light
         return result;
     }
     // Light dir
-    Vec3 light_dir = normalize(light.m_position - fposition);
+    Vec3 light_dir = normalize(light_relative);
     // Diffuse shading
     float diff = max(dot(normal, light_dir), 0.0);
     // Specular shading
     Vec3  halfway_dir = normalize(light_dir + vdir);
     float spec = pow(max(dot(normal, halfway_dir), 0.0), shininess);
     // Combine results
-    result.m_diffuse  = light.m_diffuse  * diff * attenuation;
+    result.m_diffuse  = light.m_diffuse * diff * attenuation;
     result.m_specular = light.m_specular * spec * attenuation;
     // Return
     return result;

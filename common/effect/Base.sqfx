@@ -30,7 +30,7 @@ sub_effect
         pass 
         {
             zbuffer equal
-            blend one one
+            blend one one  
             cullface back
             lights spot_point_direction
             shader source 

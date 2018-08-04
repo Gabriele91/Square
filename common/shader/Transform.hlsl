@@ -10,9 +10,10 @@
 struct TransformStruct
 {
 	Mat4 m_model;
+	Mat4 m_inv_model;
+	Mat4 m_rotation;
 	Vec3 m_position;
 	Vec3 m_scale;
-	Mat3 m_rotation;
 };
 cbuffer Transform
 {
