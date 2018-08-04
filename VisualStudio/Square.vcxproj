@@ -208,7 +208,9 @@
     <ClInclude Include="..\include\Square\Scene\Actor.h" />
     <ClInclude Include="..\include\Square\Scene\Camera.h" />
     <ClInclude Include="..\include\Square\Scene\Component.h" />
+    <ClInclude Include="..\include\Square\Scene\DirectionLight.h" />
     <ClInclude Include="..\include\Square\Scene\Level.h" />
+    <ClInclude Include="..\include\Square\Scene\SpotLight.h" />
     <ClInclude Include="..\include\Square\Scene\World.h" />
     <ClInclude Include="..\include\Square\Square.h" />
     <ClInclude Include="..\source\Driver\Cocoa\Input_private.h">
@@ -265,6 +267,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\include\Square\Scene\PointLight.h" />
     <ClCompile Include="..\source\Core\Application.cpp" />
     <ClCompile Include="..\source\Core\Context.cpp" />
     <ClCompile Include="..\source\Core\Filesystem.cpp" />
@@ -319,24 +322,29 @@
     <ClCompile Include="..\source\Geometry\Frustum.cpp" />
     <ClCompile Include="..\source\Geometry\Intersection.cpp" />
     <ClCompile Include="..\source\Geometry\OBoundingBox.cpp" />
+    <ClCompile Include="..\source\Geometry\Sphere.cpp" />
     <ClCompile Include="..\source\Math\Tangent.cpp" />
     <ClCompile Include="..\source\Render\Collection.cpp" />
     <ClCompile Include="..\source\Render\Drawer.cpp" />
     <ClCompile Include="..\source\Render\DrawerPassForward.cpp" />
     <ClCompile Include="..\source\Render\Effect.cpp" />
     <ClCompile Include="..\source\Render\GBuffer.cpp" />
+    <ClCompile Include="..\source\Render\Light.cpp" />
     <ClCompile Include="..\source\Render\Material.cpp" />
     <ClCompile Include="..\source\Render\Queue.cpp" />
     <ClCompile Include="..\source\Render\VertexFormat.cpp" />
     <ClCompile Include="..\source\Render\Viewport.cpp" />
     <ClCompile Include="..\source\Resource\Effect.cpp" />
     <ClCompile Include="..\source\Resource\Material.cpp" />
+    <ClCompile Include="..\source\Resource\PointLight.cpp" />
     <ClCompile Include="..\source\Resource\Shader.cpp" />
     <ClCompile Include="..\source\Resource\Texture.cpp" />
     <ClCompile Include="..\source\Scene\Actor.cpp" />
     <ClCompile Include="..\source\Scene\Camera.cpp" />
     <ClCompile Include="..\source\Scene\Component.cpp" />
+    <ClCompile Include="..\source\Scene\DirectionLight.cpp" />
     <ClCompile Include="..\source\Scene\Level.cpp" />
+    <ClCompile Include="..\source\Scene\SpotLight.cpp" />
     <ClCompile Include="..\source\Scene\World.cpp" />
   </ItemGroup>
   <ItemGroup>

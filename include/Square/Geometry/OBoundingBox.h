@@ -60,7 +60,7 @@ namespace Geometry
         OBoundingBox  operator*  (const Mat4& model) const;
 
 		/*
-		* Applay a matrix to obb and return this 
+		* Applay a matrix to obb and return it's self 
 		*/
 		OBoundingBox& operator*= (const Mat4& model);
 

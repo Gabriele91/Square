@@ -142,7 +142,7 @@ namespace Scene
         if(auto actor = Component::actor().lock())
         {
             gpubuffer->m_model = actor->global_model_matrix();
-            gpubuffer->m_position = actor->position();
+            gpubuffer->m_position = actor->position(true);
         }
         else
         {

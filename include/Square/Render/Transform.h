@@ -16,9 +16,10 @@ namespace Render
     PACKED(ConstantBufferStruct UniformBufferTransform
     {
         Mat4 m_model;
-        Vec3 m_position; float __PADDING0__; //alignas(16)
-        Vec3 m_scale;    float __PADDING1__; //alignas(16)
-        Mat4 m_rotation;
+		Mat4 m_inv_model;
+		Mat4 m_rotation;
+		Vec3 m_position; float __PADDING0__; //alignas(16)
+		Vec3 m_scale;    float __PADDING1__; //alignas(16)
     });
     //Transform cpu class
 	class Transform : public BaseObject

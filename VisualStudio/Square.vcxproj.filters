@@ -306,6 +306,12 @@
     <ClInclude Include="..\include\Square\Data\ParserResources.h">
       <Filter>include\Square\Data</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Scene\DirectionLight.h">
+      <Filter>include\Square\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Scene\SpotLight.h">
+      <Filter>include\Square\Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -466,6 +472,24 @@
     </ClCompile>
     <ClCompile Include="..\source\Data\ParserResources.cpp">
       <Filter>source\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\include\Square\Scene\PointLight.h">
+      <Filter>include\Square\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Resource\PointLight.cpp">
+      <Filter>source\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Render\Light.cpp">
+      <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Geometry\Sphere.cpp">
+      <Filter>source\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Scene\DirectionLight.cpp">
+      <Filter>source\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Scene\SpotLight.cpp">
+      <Filter>source\Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

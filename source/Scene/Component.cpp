@@ -37,8 +37,8 @@ namespace Scene
     //internal
     void Component::submit_add(Weak<Actor> actor)
     {
+		m_parent = actor;
         on_attach(*actor.lock());
-        m_parent = actor;
     }
     
     void Component::submit_remove()

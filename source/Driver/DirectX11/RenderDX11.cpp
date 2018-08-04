@@ -2616,10 +2616,14 @@ namespace Render
         auto uit = shader->m_uniform_const_buffer_map.find(uname);
         //if find
         if (uit != shader->m_uniform_const_buffer_map.end()) return uit->second.get();
+		//valid?
+		auto ucbuffer = MakeUnique<UniformConstBufferDX11>((ContextDX11*)this, shader, uname);
+		//is valid?
+		if (!ucbuffer->is_valid()) return nullptr;
         //add and return
 		shader->m_uniform_const_buffer_map.insert({ 
 			uname,
-			MakeUnique<UniformConstBufferDX11>((ContextDX11*)this, shader, uname)
+			std::move(ucbuffer)
 		});
 		return shader->m_uniform_const_buffer_map[uname].get();
     }

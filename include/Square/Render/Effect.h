@@ -291,12 +291,12 @@ namespace Render
 		//all light uniform
 		enum LightsType : unsigned int
 		{
-			LT_NONE      = 0b00000,
-			LT_AMBIENT   = 0b00001,
-			LT_SPOT      = 0b00010,
-			LT_POINT     = 0b00100,
-			LT_DIRECTION = 0b01000,
-			LT_AREA		 = 0b10000
+			LT_NONE      = 0b000000,
+			LT_AMBIENT   = 0b000010,
+			LT_SPOT      = 0b000100,
+			LT_POINT     = 0b001000,
+			LT_DIRECTION = 0b010000,
+			LT_AREA      = 0b100000,
 		};
 		LightsType m_support_light{ LT_NONE };
 		//uniforms
