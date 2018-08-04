@@ -25,15 +25,24 @@
     <None Include="..\..\example\HelloWorld\assets\effect.mat">
       <Filter>resource\assets</Filter>
     </None>
-    <None Include="..\..\example\HelloWorld\assets\effect.sqfx">
-      <Filter>resource\assets</Filter>
-    </None>
     <None Include="..\..\example\HelloWorld\resources.rs">
       <Filter>resource</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\example\HelloWorld\assets\example.png">
+      <Filter>resource\assets</Filter>
+    </Image>
+    <Image Include="..\..\example\HelloWorld\assets\box.png">
+      <Filter>resource\assets</Filter>
+    </Image>
+    <Image Include="..\..\example\HelloWorld\assets\box_normal_x.png">
+      <Filter>resource\assets</Filter>
+    </Image>
+    <Image Include="..\..\example\HelloWorld\assets\box_occlusion.png">
+      <Filter>resource\assets</Filter>
+    </Image>
+    <Image Include="..\..\example\HelloWorld\assets\box_specular.png">
       <Filter>resource\assets</Filter>
     </Image>
   </ItemGroup>

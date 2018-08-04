@@ -69,23 +69,23 @@ public:
         };
 		std::vector<unsigned int> ids
 		{
-			0, 1, 2,
-			0, 2, 3,
+			0, 2, 1,
+			0, 3, 2,
 
-			4, 5, 6,
-			4, 6, 7,
+			4, 6, 5,
+			4, 7, 6,
 
-			8, 9, 10,
-			8, 10, 11,
+			8, 10, 9,
+			8, 11, 10,
 
-			12, 13, 14,
-			12, 14, 15,
+			12, 14, 13,
+			12, 15, 14,
 
-			16, 17, 18,
-			16, 18, 19,
+			16, 18, 17,
+			16, 19, 18,
 
-			20, 21, 22,
-			20, 22, 23
+			20, 22, 21,
+			20, 23, 22
 		};
 		//compute tangent and binomial
 		Square::tangent_model_fast(ids, model);
@@ -170,12 +170,47 @@ public:
 	
 	void key_event(Square::Video::KeyboardEvent key, short mode, Square::Video::ActionEvent action)
 	{
+		using namespace Square;
+		using namespace Square::Data;
+		using namespace Square::Scene;
+		using namespace Square::Resource;
+		//move vel
+		const float velocity = 100.0  * application().last_delta_time();
+		//
 		switch (key)
 		{
 		case Square::Video::KEY_ESCAPE:
 		case Square::Video::KEY_Q: m_loop = false; break;
 		case Square::Video::KEY_W: Square::Application::instance()->fullscreen(false); break;
 		case Square::Video::KEY_F: Square::Application::instance()->fullscreen(true); break;
+
+		case Square::Video::KEY_D:
+			if (action == Square::Video::ActionEvent::RELEASE)
+			{
+				auto dlight = m_level->actor("light0")->component<DirectionLight>();
+				dlight->visible(!dlight->visible());
+			}
+		break;
+		case Square::Video::KEY_P:
+			if (action == Square::Video::ActionEvent::RELEASE)
+			{
+				auto plight = m_level->actor("light1")->component<PointLight>();
+				plight->visible(!plight->visible());
+			}
+		break;
+		case Square::Video::KEY_S:
+			if (action == Square::Video::ActionEvent::RELEASE)
+			{
+				auto slight = m_level->actor("light2")->component<SpotLight>();
+				slight->visible(!slight->visible());
+			}
+		break;
+		case Square::Video::KEY_LEFT:  m_level->actor("light2")->translation({ velocity,0,0 });   break;
+		case Square::Video::KEY_RIGHT: m_level->actor("light2")->translation({ -velocity,0,0 });  break;
+		case Square::Video::KEY_UP:    m_level->actor("light2")->translation({ 0,0,velocity });   break;
+		case Square::Video::KEY_DOWN:  m_level->actor("light2")->translation({ 0,0,-velocity });  break;
+		case Square::Video::KEY_PAGE_UP:    m_level->actor("light2")->translation({ 0,velocity,0 });   break;
+		case Square::Video::KEY_PAGE_DOWN:  m_level->actor("light2")->translation({ 0,-velocity,0 });  break;
 		default: break;
 		}
 	}
@@ -197,10 +232,33 @@ public:
         camera->translation({ 0,0,0 });
         camera->rotation(euler_to_quat(0.0f,Square::radians(180.0f),0.0f));
         camera->component<Camera>()->viewport({0,0, 1280, 768});
-        camera->component<Camera>()->perspective(radians(90.0), 1280. / 768., 0.1, 1000.);
+        camera->component<Camera>()->perspective(radians(90.0), 1280. / 768., 0.1, 1000.);		
 		//test
 		auto node = m_level->actor("main_node");
 		node->translation({ 0,0, 10.0 });
+		//background
+		auto background = m_level->actor("background");
+		//model + material + position + scale
+		background->component<Cube>()->m_material = context().resource<Material>("effect");
+		background->position({ 0.0, -6.0, 10.0 });
+		background->scale({ 20.0, 1.0, 20.0 });
+		//light
+		auto light0 = m_level->actor("light0");
+		light0->component<DirectionLight>()->diffuse({ 1.0,0.0,0.0 });
+		light0->rotation(euler_to_quat(0.0f, Square::radians(-90.0f), 0.0f));
+
+		auto light1 = m_level->actor("light1");
+		light1->component<PointLight>()->radius(8.0, 1.0);
+		light1->component<PointLight>()->diffuse({ 0.0,1.0,0.0 });
+		light1->component<PointLight>()->specular({ 0.0,0.0,0.0 });
+		light1->position({ 0,0,10 });
+
+		auto light2 = m_level->actor("light2");
+		light2->component<SpotLight>()->radius(15.0, 5.0);
+		light2->component<SpotLight>()->diffuse({ 1.0,1.0,1.0 });
+		light2->component<SpotLight>()->specular({ 1.0,1.0,1.0 });
+		light2->rotation(euler_to_quat(Square::radians(90.0f), 0.0f, 0.0f));
+		light2->position({ 0,0,10 });
 		//n cubes
 		int n_cubes = 6;
 		float radius_dist = 5.0f;
@@ -240,7 +298,7 @@ public:
         }
         m_drawer->draw( 
 			  Vec4(0.25,0.5,1.0,1.0)
-			, Vec4(1.0)
+			, Vec4(0.1,0.1,0.1,1.0)
 			, m_level->randerable_collection()
 		);
         return m_loop;

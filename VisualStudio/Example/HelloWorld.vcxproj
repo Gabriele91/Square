@@ -174,10 +174,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\example\HelloWorld\assets\effect.mat" />
-    <None Include="..\..\example\HelloWorld\assets\effect.sqfx" />
     <None Include="..\..\example\HelloWorld\resources.rs" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\example\HelloWorld\assets\box.png" />
+    <Image Include="..\..\example\HelloWorld\assets\box_normal_x.png" />
+    <Image Include="..\..\example\HelloWorld\assets\box_occlusion.png" />
+    <Image Include="..\..\example\HelloWorld\assets\box_specular.png" />
     <Image Include="..\..\example\HelloWorld\assets\example.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
