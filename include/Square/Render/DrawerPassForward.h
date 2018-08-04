@@ -41,8 +41,11 @@ namespace Render
         Square::Context& m_context;
         //GPU DATA
         Shared<Render::ConstBuffer> m_cb_camera;
-        Shared<Render::ConstBuffer> m_cb_transform;
-        
+		Shared<Render::ConstBuffer> m_cb_transform;
+		Shared<Render::ConstBuffer> m_cb_direction_light;
+		Shared<Render::ConstBuffer> m_cb_point_light;
+		Shared<Render::ConstBuffer> m_cb_spot_light;
+
     };
 }
 }

@@ -1052,6 +1052,19 @@ namespace Render
 		return stream_vertex_buffer(ctx, sizeof(T), n);
 	}
 	/////////////////////////////////
+	template<class T> static inline void update_constant_buffer(Context* ctx, ConstBuffer* buffer, const T* data, size_t n = 1)
+	{
+		ctx->update_steam_CB(buffer, (const unsigned char*)data, sizeof(T) * n);
+	}
+	template<class T> static inline void update_vertex_buffer(Context* ctx, VertexBuffer* buffer, const T* data, size_t n = 1)
+	{
+		ctx->update_steam_VBO(buffer, (const unsigned char*)data, sizeof(T) * n);
+	}
+	static inline void update_vertex_buffer(Context* ctx, IndexBuffer* buffer, const unsigned int* data, size_t n = 1)
+	{
+		ctx->update_steam_IBO(buffer, data, n);
+	}
+	/////////////////////////////////
 	template<class T> static inline  T* map_buffer(Context* ctx, ConstBuffer* buffer, size_t n = 1)
 	{
 		return (T*)ctx->map_CB(buffer, 0, sizeof(T) * n, Render::MAP_WRITE);

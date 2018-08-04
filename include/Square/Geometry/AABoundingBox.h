@@ -49,7 +49,7 @@ namespace Geometry
 		AABoundingBox  operator*  (const Mat4& model) const;
 
 		/*
-		* Applay a matrix to obb and return this
+		* Applay a matrix to obb aabb return it's self
 		*/
 		AABoundingBox& operator*= (const Mat4& model);
 

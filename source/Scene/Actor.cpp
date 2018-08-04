@@ -483,6 +483,7 @@ namespace Scene
             {
                 m_model_global = m_model_local;
             }
+			m_inv_model_global = inverse(m_model_global);
             m_tranform.m_dirty = false;
         }
     }
@@ -490,10 +491,11 @@ namespace Scene
     //set uniform buffer
     void Actor::set(Render::UniformBufferTransform* gpubuffer) const
     {
-		gpubuffer->m_model    = global_model_matrix();
-        gpubuffer->m_position = position(true);
-        gpubuffer->m_scale    = scale(true);
-		gpubuffer->m_rotation = mat4_cast(rotation(true));
+		gpubuffer->m_model     = global_model_matrix();
+		gpubuffer->m_inv_model = m_inv_model_global;
+		gpubuffer->m_rotation  = mat4_cast(rotation(true));
+        gpubuffer->m_position  = position(true);
+        gpubuffer->m_scale     = scale(true);
     }
 }
 }

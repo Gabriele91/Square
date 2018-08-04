@@ -24,7 +24,10 @@ namespace Render
     , m_context(context)
     {
         m_cb_camera    = Render::stream_constant_buffer<Render::UniformBufferCamera>(&render());
-        m_cb_transform = Render::stream_constant_buffer<Render::UniformBufferTransform>(&render());
+		m_cb_transform = Render::stream_constant_buffer<Render::UniformBufferTransform>(&render());
+		m_cb_direction_light = Render::stream_constant_buffer<Render::UniformDirectionLight>(&render());
+		m_cb_point_light = Render::stream_constant_buffer<Render::UniformPointLight>(&render());
+		m_cb_spot_light = Render::stream_constant_buffer<Render::UniformSpotLight>(&render());
     }
     //context
     Square::Context& DrawerPassForward::context(){ return m_context; }
@@ -56,13 +59,19 @@ namespace Render
         }
         //transfor
         Render::UniformBufferCamera ucamera;
-        Render::UniformBufferTransform utransform;			
+		Render::UniformBufferTransform utransform;
+		Render::UniformDirectionLight udirection_light;
+		Render::UniformPointLight upoint_light;
+		Render::UniformSpotLight uspot_light;
 		//parameters
 		EffectPass::Buffers cbuffers
 		{
 			  ~size_t(0)
 			, m_cb_camera.get()
 			, m_cb_transform.get()
+			, m_cb_direction_light.get()
+			, m_cb_point_light.get()
+			, m_cb_spot_light.get()
 		};
         //update camera
         camera.set(&ucamera);
@@ -92,15 +101,72 @@ namespace Render
             //draw for each pass
             for(auto& pass : *technique)
             {
-				//bind
-				pass.bind(
-					  &render()
+				//set parameters
+				pass.bind
+				(
+					&render()
 					, ambient_color
 					, cbuffers
 					, material->parameters()
 				);
-				//draw
-				randerable->draw(render());
+				//bind
+				switch (pass.m_support_light)
+				{
+				//not costant buffer
+				case EffectPass::LT_NONE:
+				case EffectPass::LT_AMBIENT:
+					pass.bind
+					(
+						&render()
+						, ambient_color
+						, cbuffers
+						, material->parameters()
+					);
+					//draw
+					randerable->draw(render());
+				break;
+				//update constant buffer
+				case EffectPass::LT_DIRECTION:
+					for (auto weak_light : queues[RQ_DIRECTION_LIGHT]) 
+					if  (auto light = weak_light->lock< Render::Light >())
+					{
+						//get buffer
+						light->set(&udirection_light);
+						//update buffer
+						Render::update_constant_buffer(&render(), m_cb_direction_light.get(), &udirection_light);
+						//draw
+						randerable->draw(render());
+					}
+				break;
+				//update constant buffer
+				case EffectPass::LT_POINT:
+					for (auto weak_light : queues[RQ_POINT_LIGHT]) 
+					if  (auto light = weak_light->lock< Render::Light >())
+					{
+						//get buffer
+						light->set(&upoint_light);
+						//update buffer
+						Render::update_constant_buffer(&render(), m_cb_point_light.get(), &upoint_light);
+						//draw
+						randerable->draw(render());
+					}
+				break;
+				//update constant buffer
+				case EffectPass::LT_SPOT:
+					for (auto weak_light : queues[RQ_SPOT_LIGHT]) 
+					if  (auto light = weak_light->lock< Render::Light >())
+					{
+						//get buffer
+						light->set(&uspot_light);
+						//update buffer
+						Render::update_constant_buffer(&render(), m_cb_spot_light.get(), &uspot_light);
+						//draw
+						randerable->draw(render());
+					}
+				break;
+				/* not support */
+				default: continue;
+				}
             }
         }
     }

@@ -87,6 +87,31 @@ namespace Square
         }
     }
     
+
+	template < class T >
+	T max(const T& a, const T& b)
+	{
+		return b < a ? a : b;
+	}
+
+	template < class T, typename ...ARGS>
+	T max(const T& a, const T& b, ARGS... args)
+	{ 
+		return max(max<T>(a,b), args...);
+	}
+
+	template < class T >
+	T min(const T& a, const T& b)
+	{
+		return a < b ? a : b;
+	}
+
+	template < class T, typename ...ARGS>
+	T min(const T& a, const T& b, ARGS... args) 
+	{ 
+		return min(min<T>(a, b), args...);
+	}
+
     template < class T >
     inline T dot(const T& a, const T& b)
     {

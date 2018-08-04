@@ -8,6 +8,7 @@
 #pragma once
 #include "Square/Config.h"
 #include "Square/Core/Object.h"
+#include "Square/Math/Linear.h"
 
 namespace Square
 {
@@ -36,6 +37,38 @@ namespace Render
 		DIRECTION
 	};
 
+	//uniform buffers
+    ConstantBufferStruct UniformDirectionLight
+    {
+		Vec3 m_direction; float __PADDING0__; //v4
+        Vec3 m_diffuse;   float __PADDING1__; //v4
+        Vec3 m_specular;  float __PADDING2__; //v4
+    };
+
+    ConstantBufferStruct UniformPointLight
+    {
+	    Vec3  m_position;      float __PADDING0__; //v4
+        Vec3  m_diffuse;       float __PADDING1__; //v4
+        Vec3  m_specular;      
+        float m_constant;      
+        float m_radius;        
+        float m_inside_radius; 
+    };
+
+    ConstantBufferStruct UniformSpotLight
+    {
+	    Vec3  m_position;      float __PADDING0__; //v4
+		Vec3  m_direction;     float __PADDING1__; //v4
+        Vec3  m_diffuse;       float __PADDING2__; //v4
+        Vec3  m_specular;      
+        float m_constant;      
+        float m_radius;        
+        float m_inside_radius; 
+        float m_inner_cut_off; 
+        float m_outer_cut_off; 
+    };
+
+	//lights
     class SQUARE_API Light : public BaseObject
     {
 	public:
@@ -50,19 +83,25 @@ namespace Render
         
         virtual Weak<Camera> camera() const = 0;
 
-        bool visible() const { return m_visible; }
+		bool visible() const;
         
-        void visible(bool enable) { m_visible = enable; }
+		void visible(bool enable);
 
-        bool shadow_caster() const { return m_shadow_caster; }
+		bool shadow_caster() const;
         
-        void shadow_caster(bool enable) { m_shadow_caster = enable; }
+		void shadow_caster(bool enable);
 
-        LightType type() const { return m_type; }
+		LightType type() const;
+
+		virtual void set(UniformDirectionLight* data) const;
+
+		virtual void set(UniformPointLight* data) const;
+
+		virtual void set(UniformSpotLight* data) const;
 
     protected:
         
-        void type(LightType type){ m_type=type; }
+		void type(LightType type);
         
 	private:
         
@@ -70,84 +109,46 @@ namespace Render
 		bool m_visible{ true };
         bool m_shadow_caster{ false };
 	};
-    
-    PACKED(ConstantBufferStruct UniformDirectionLight
-    {
-		Vec3 m_direction; float __PADDING0__{0.0}; //v4
-        Vec3 m_diffuse;   float __PADDING1__{0.0}; //v4
-        Vec3 m_specular;  float __PADDING2__{0.0}; //v4
-    });
-
+	
     class SQUARE_API DirectionLight : public Light
     {
     public:
         
-        DirectionLight()
-        {
-            type(LightType::DIRECTION);
-        }
+		DirectionLight();
         
-        Vec3 diffuse()  const { return m_diffuse;  }
-        Vec3 specular() const { return m_specular; }
+		virtual Vec3 diffuse()  const;
+		virtual Vec3 specular() const;
 
-        void diffure(const Vec3& diffuse)   { m_diffuse  = diffuse;  }
-        void specular(const Vec3& specular) { m_specular = specular; }
+		virtual void diffuse(const Vec3& diffuse);
+		virtual void specular(const Vec3& specular);
 
-        virtual void set(UniformDirectionLight* data) const
-        {
-            data->m_diffuse = diffuse();
-            data->m_specular = specular();
-        }
+		virtual void set(UniformDirectionLight* data) const override;
         
     public:
         Vec3  m_diffuse;
         Vec3  m_specular;
     };
     
-    PACKED(ConstantBufferStruct UniformPointLight
-    {
-	    Vec3  m_position;      float __PADDING0__{0.0}; //v4
-        Vec3  m_diffuse;       float __PADDING1__{0.0}; //v4
-        Vec3  m_specular;      float __PADDING2__{0.0}; //v4
-        float m_constant;      float __PADDING3__{0.0}; //v2
-        float m_radius;        float __PADDING4__{0.0}; //v2
-        float m_inside_radius; float __PADDING5__{0.0}; //v2
-    });
-    
     class SQUARE_API PointLight : public Light
     {
     public:
      
-        PointLight()
-        {
-            type(LightType::POINT);
-        }
+		PointLight();
         
-        float inside_radius() const { return m_inside_radius; }
-        float radius()        const { return m_radius; }
-        Vec3  diffuse()       const { return m_diffuse;  }
-        Vec3  specular()      const { return m_specular; }
-        float constant()      const { return m_constant; }
+		virtual float inside_radius() const;
+		virtual float radius()        const;
+		virtual Vec3  diffuse()       const;
+		virtual Vec3  specular()      const;
+		virtual float constant()      const;
         
-        void radius(const float radius, const float inside)
-        {
-            m_radius  = radius;
-            m_inside_radius = inside;
-        }
-        void inside_radius(const float inside_radius) { m_inside_radius  = inside_radius; }
-        void radius(const float radius)               { m_radius  = radius;     }
-        void diffure(const Vec3& diffuse)             { m_diffuse  = diffuse;   }
-        void specular(const Vec3& specular)           { m_specular = specular;  }
-        void constant(const float constant)           { m_constant  = constant; }
+		virtual void radius(const float radius, const float inside);
+		virtual void inside_radius(const float inside_radius);
+		virtual void radius(const float radius);
+		virtual void diffuse(const Vec3& diffuse);
+		virtual void specular(const Vec3& specular);
+		virtual void constant(const float constant);
         
-        virtual void set(UniformPointLight* data) const
-        {
-            data->m_diffuse = diffuse();
-            data->m_specular = specular();
-            data->m_constant = constant();
-            data->m_radius = radius();
-            data->m_inside_radius = inside_radius();
-        }
+		virtual void set(UniformPointLight* data) const override;
         
     public:
         Vec3  m_diffuse;
@@ -156,65 +157,32 @@ namespace Render
         float m_radius;
         float m_inside_radius;
     };
-    
-    PACKED(ConstantBufferStruct UniformSpotLight
-    {
-	    Vec3  m_position;      float __PADDING0__{0.0}; //v4
-		Vec3  m_direction;     float __PADDING1__{0.0}; //v4
-        Vec3  m_diffuse;       float __PADDING2__{0.0}; //v4
-        Vec3  m_specular;      float __PADDING3__{0.0}; //v4
-        float m_constant;      float __PADDING4__{0.0}; //v2
-        float m_radius;        float __PADDING5__{0.0}; //v2
-        float m_inside_radius; float __PADDING6__{0.0}; //v2
-        float m_inner_cut_off; float __PADDING7__{0.0}; //v2
-        float m_outer_cut_off; float __PADDING8__{0.0}; //v2
-    });
-    
+        
     class SQUARE_API SpotLight : public Light
     {
     public:
         
-        SpotLight()
-        {
-            type(LightType::SPOT);
-        }
+		SpotLight();
         
-        float inner_cut_off() const { return m_inner_cut_off; }
-        float outer_cut_off() const { return m_outer_cut_off; }
-        float inside_radius() const { return m_inside_radius; }
-        float radius()        const { return m_radius;   }
-        Vec3  diffuse()       const { return m_diffuse;  }
-        Vec3  specular()      const { return m_specular; }
-        float constant()      const { return m_constant; }
+		virtual float inner_cut_off() const;
+		virtual float outer_cut_off() const;
+		virtual float inside_radius() const;
+		virtual float radius()        const;
+		virtual Vec3  diffuse()       const;
+		virtual Vec3  specular()      const;
+		virtual float constant()      const;
         
-        void cut_off(const float outer_coff, const float inner_coff)
-        {
-            m_outer_cut_off = outer_coff;
-            m_inner_cut_off = inner_coff;
-        }
-        void inner_cut_off(const float coff) { m_inner_cut_off = coff; }
-        void outer_cut_off(const float coff) { m_outer_cut_off = coff; }
-        void radius(const float radius, const float inside)
-        {
-            m_radius  = radius;
-            m_inside_radius = inside;
-        }
-        void inside_radius(const float inside_radius) { m_inside_radius  = inside_radius; }
-        void radius(const float radius)               { m_radius  = radius;    }
-        void diffure(const Vec3& diffuse)             { m_diffuse  = diffuse;  }
-        void specular(const Vec3& specular)           { m_specular = specular; }
-        void constant(const float constant)           { m_constant  = constant;}
+		virtual void cut_off(const float outer_coff, const float inner_coff);
+		virtual void inner_cut_off(const float coff);
+		virtual void outer_cut_off(const float coff);
+		virtual void radius(const float radius, const float inside);
+		virtual void inside_radius(const float inside_radius);
+		virtual void radius(const float radius);
+		virtual void diffuse(const Vec3& diffuse);
+		virtual void specular(const Vec3& specular);
+		virtual void constant(const float constant);
         
-        virtual void set(UniformSpotLight* data) const 
-        {
-            data->m_diffuse = diffuse();
-            data->m_specular = specular();
-            data->m_constant = constant();
-            data->m_radius = radius();
-            data->m_inside_radius = inside_radius();
-            data->m_inner_cut_off = std::cos(inner_cut_off());
-            data->m_outer_cut_off = std::cos(outer_cut_off());
-        }
+		virtual void set(UniformSpotLight* data) const override;
     public:
         Vec3  m_diffuse;
         Vec3  m_specular;

@@ -63,7 +63,7 @@ namespace Scene
         void set(Render::UniformBufferCamera* gpubuffer) const override;
 
     protected:
-        Render::Viewport  m_viewport;         //viewport info
+        Render::Viewport          m_viewport;         //viewport info
         mutable Mat4              m_view;             //inverse of model matrix of actor
         mutable bool              m_is_dirty{ true }; // for view matrix
         mutable Geometry::Frustum m_frustum;                  //fustrum

@@ -40,17 +40,6 @@
 #include "Square/Driver/Render.h"
 #include "Square/Driver/Input.h"
 #include "Square/Driver/Window.h"
-/* --- Resource --- */
-#include "Square/Resource/Texture.h"
-#include "Square/Resource/Shader.h"
-#include "Square/Resource/Effect.h"
-#include "Square/Resource/Material.h"
-/* --- Scene --- */
-#include "Square/Scene/Actor.h"
-#include "Square/Scene/Component.h"
-#include "Square/Scene/Level.h"
-#include "Square/Scene/Camera.h"
-#include "Square/Scene/World.h"
 /* --- Render --- */
 #include "Square/Render/Camera.h"
 #include "Square/Render/Effect.h"
@@ -63,6 +52,20 @@
 #include "Square/Render/Drawer.h"
 #include "Square/Render/DrawerPassForward.h"
 #include "Square/Render/VertexLayout.h"
+/* --- Resource --- */
+#include "Square/Resource/Texture.h"
+#include "Square/Resource/Shader.h"
+#include "Square/Resource/Effect.h"
+#include "Square/Resource/Material.h"
+/* --- Scene --- */
+#include "Square/Scene/Actor.h"
+#include "Square/Scene/Component.h"
+#include "Square/Scene/Level.h"
+#include "Square/Scene/Camera.h"
+#include "Square/Scene/DirectionLight.h"
+#include "Square/Scene/PointLight.h"
+#include "Square/Scene/SpotLight.h"
+#include "Square/Scene/World.h"
 
 
 

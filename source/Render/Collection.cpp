@@ -29,10 +29,14 @@ namespace Render
     }
     
     //compute distance
-    static inline float compute_camera_depth(const Geometry::Frustum& f_camera, const Shared<Transform>& transform)
-    {
-        return f_camera.distance_from_near_plane(transform->position());
-    }
+	static inline float compute_camera_depth(const Geometry::Frustum& f_camera, const Shared<Transform>& transform)
+	{
+		return f_camera.distance_from_near_plane(transform->position(true));
+	}
+	static inline float compute_camera_depth(const Geometry::Sphere& in_sphere, const Shared<Transform>& transform)
+	{
+		return distance(in_sphere.get_center(),transform->position(true));
+	}
     
     //Query Lights
     void CollectionQuery::lights(const Collection& collection, PoolQueues& queues,const Geometry::Frustum& view_frustum)
@@ -50,18 +54,28 @@ namespace Render
         //build queue lights
         for (auto weak_light : collection.m_lights)
         {
+			//light
 			auto light = weak_light.lock();
-            if (light->visible() && Intersection::check(view_frustum, light->bounding_sphere()) != Intersection::OUTSIDE)
+			//visiable?
+			if (!light->visible()) continue;
+			//direction light
+			if (light->type() == LightType::DIRECTION)
+			{
+				rqueue_direction.push_front_to_back(weak_light, 0);
+				continue;
+			}
+			//transform
+			auto transform = light->transform().lock();
+			//get distance //force to  compute transform
+			float depth = compute_camera_depth(view_frustum, transform);
+			//test
+            if (Intersection::check(view_frustum, light->bounding_sphere()) != Intersection::OUTSIDE)
             {
-				//gate distance
-				auto transform = light->transform().lock();
-                float depth = compute_camera_depth(view_frustum, transform);
 				//add by type
                 switch (light->type())
                 {
                     case LightType::SPOT:      rqueue_spot.push_front_to_back(weak_light,depth);      break;
                     case LightType::POINT:     rqueue_point.push_front_to_back(weak_light,depth);     break;
-                    case LightType::DIRECTION: rqueue_direction.push_front_to_back(weak_light,depth); break;
                     default: break;
                 };
                 
@@ -86,17 +100,26 @@ namespace Render
         for (auto weak_light : collection.m_lights)
         {
             auto light = weak_light.lock();
-            if (light->visible() && Intersection::check(in_sphere, light->bounding_sphere()) != Intersection::OUTSIDE)
+			//visiable?
+			if (!light->visible()) continue;
+			//direction light
+			if (light->type() == LightType::DIRECTION)
+			{
+				rqueue_direction.push_front_to_back(weak_light, 0);
+				continue;
+			}
+			//gate distance
+			auto transform = light->transform().lock();
+			//get distance //force to compute transform
+			float depth = compute_camera_depth(in_sphere, transform);
+			//test
+			if (Intersection::check(in_sphere, light->bounding_sphere()) != Intersection::OUTSIDE)
             {
-                //gate distance
-                auto transform = light->transform().lock();
-                float depth = distance(in_sphere.get_center(), light->bounding_sphere().get_center());
                 //add by type
                 switch (light->type())
                 {
                     case LightType::SPOT:      rqueue_spot.push_front_to_back(weak_light,depth);      break;
                     case LightType::POINT:     rqueue_point.push_front_to_back(weak_light,depth);     break;
-                    case LightType::DIRECTION: rqueue_direction.push_front_to_back(weak_light,depth); break;
                     default: break;
                 };
                 

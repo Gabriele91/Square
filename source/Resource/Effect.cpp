@@ -156,7 +156,7 @@ namespace Resource
                         current_shader_def = DEF_RENDERING_POINT_LIGHT;
                         light_sub_pass    ^= Parser::Effect::LT_POINT;
                     }
-                    else if(light_sub_pass & EffectPass::LT_SPOT)
+                    else if(light_sub_pass & Parser::Effect::LT_SPOT)
                     {
                         current_shader_def = DEF_RENDERING_SPOT_LIGHT;
                         light_sub_pass    ^= Parser::Effect::LT_SPOT;
@@ -219,25 +219,33 @@ namespace Resource
                     {
                         case DEF_RENDERING_AMBIENT_LIGHT:
                             this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("AmbientLight");
+							if (!this_pass.m_uniform_ambient_light) this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("Light");
 							if (!this_pass.m_uniform_ambient_light) this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("light");
+							if (!this_pass.m_uniform_ambient_light) context().add_wrongs({ "Effect: " + path, "Wrong: not found AmbientLight"});
 							this_pass.m_support_light = EffectPass::LT_AMBIENT;
                             break;
 						case DEF_RENDERING_DIRECTION_LIGHT:
 							this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("DirectionLight");
+							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("Light");
 							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("direction_light");
 							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("light");
+							if (!this_pass.m_uniform_direction) context().add_wrongs({ "Effect: " + path, "Wrong: not found DirectionLight" });
 							this_pass.m_support_light = EffectPass::LT_DIRECTION;
 							break;
                         case DEF_RENDERING_POINT_LIGHT:
                             this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("PointLight");
+							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("Light");
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("point_light");
-							if (!this_pass.m_uniform_point) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("light");
+							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("light");
+							if (!this_pass.m_uniform_point) context().add_wrongs({ "Effect: " + path, "Wrong: not found PointLight" });
 							this_pass.m_support_light = EffectPass::LT_POINT;
                             break;
                         case DEF_RENDERING_SPOT_LIGHT:
 							this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("SpotLight");
+							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("Light");
 							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("spot_light");
 							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("light");
+							if (!this_pass.m_uniform_spot) context().add_wrongs({ "Effect: " + path, "Wrong: not found SpotLight" });
 							this_pass.m_support_light = EffectPass::LT_SPOT;
                             break;
                         default:

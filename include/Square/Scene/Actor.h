@@ -140,6 +140,7 @@ namespace Scene
         //matrix
         mutable Mat4  m_model_local;
         mutable Mat4  m_model_global;
+		mutable Mat4  m_inv_model_global;
         //compute
         void compute_matrix() const;
         //send dirty

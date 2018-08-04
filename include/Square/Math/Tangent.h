@@ -192,12 +192,12 @@ namespace Square
 			virtual void  bitangent(const unsigned int index, const Vec3& b) { m_vertices[index].m_binomial = b; }
 			virtual void  tangent(const unsigned int index, const Vec3& t) { m_vertices[index].m_tangent = t; }
 		};
-		void tangent_model_slow(Proxy& model, bool replace_normal=false);
+		SQUARE_API void tangent_model_slow(Proxy& model, bool replace_normal=false);
 	}
 	template < class T, typename Scalar = float >
-	void tangent_model_slow(const std::vector<unsigned int>& indexes, std::vector< T >& vertices)
+	void tangent_model_slow(const std::vector<unsigned int>& indexes, std::vector< T >& vertices, bool replace_normal = false)
 	{
 		TangentUtils::TProxy< T > proxy(indexes, vertices);
-		tangent_model_slow(proxy);
+		tangent_model_slow(proxy, replace_normal);
 	}
 }

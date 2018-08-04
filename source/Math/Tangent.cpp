@@ -588,17 +588,20 @@ namespace Square
 		//
 		void GetTriangleIndices(const unsigned int indwTriNo, unsigned int outdwPos[3], unsigned int outdwNorm[3], unsigned int outdwUV[3]) const
 		{
-			for (unsigned char i = 0; i != 3; ++i) outdwPos[i] = outdwNorm[i] = outdwUV[i] = m_proxy.indices(indwTriNo)[i];
+			auto indices = m_proxy.indices(indwTriNo);
+			for (unsigned char i = 0; i != 3; ++i) outdwPos[i] = outdwNorm[i] = outdwUV[i] = indices[i];
 		}
 		//
 		void GetPos(const unsigned int indwPos, float outfPos[3]) const
 		{
-			for (unsigned char i = 0; i != 3; ++i) outfPos[i] = m_proxy.position(indwPos)[i];
+			auto position = m_proxy.position(indwPos);
+			for (unsigned char i = 0; i != 3; ++i) outfPos[i] = position[i];
 		}
 		//
 		void GetUV(const unsigned int indwPos, float outfUV[2]) const
 		{
-			for (unsigned char i = 0; i != 2; ++i) outfUV[i] = m_proxy.uv(indwPos)[i];
+			auto uv = m_proxy.uv(indwPos);
+			for (unsigned char i = 0; i != 2; ++i) outfUV[i] = uv[i];
 		}
 	};
 
@@ -620,10 +623,12 @@ namespace Square
 				float bitangent[3];
 				float normal[3];
 				tangents.GetBase(baseIndices[i], tangent, bitangent, normal);
+				//vertex index
+				unsigned int index = model.index(t * 3 + i);
 				//put values into model vertex
-				model.tangent(model.index(t * 3 + i), { tangent[0],tangent[1],tangent[2] });
-				model.bitangent(model.index(t * 3 + i), { bitangent[0],bitangent[1],bitangent[2] });
-				if(replace_normal) model.normal(model.index(t * 3 + i), { normal[0],normal[1],normal[2] });
+				model.tangent(index, { tangent[0],tangent[1],tangent[2] });
+				model.bitangent(index, { bitangent[0],bitangent[1],bitangent[2] });
+				if(replace_normal) model.normal(index, { normal[0],normal[1],normal[2] });
 			}
 		}
 	}
