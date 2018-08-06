@@ -231,9 +231,6 @@
     <ClInclude Include="..\include\Square\Core\SharedLibrary.h">
       <Filter>include\Square\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Square\Resource\Geometry.h">
-      <Filter>Include\Square\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\Square\Resource\Model.h">
       <Filter>Include\Square\Resource</Filter>
     </ClInclude>

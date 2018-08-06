@@ -274,8 +274,43 @@ namespace Render
 
 	//alias vector of parameters
 	using EffectParameters = std::vector < Unique< EffectParameter > >;
+	
+	//input pass //todo: rename in pipeline inputs
+	struct SQUARE_API EffectPassInputs
+	{
+		//geometry/render
+		Render::ConstBuffer*   m_camera{ nullptr };
+		Render::ConstBuffer*   m_transform{ nullptr };
+		//lights
+		Vec4				   m_ambient_light{ 1,1,1,1 };
+		Render::ConstBuffer*   m_direction_light{ nullptr };
+		Render::ConstBuffer*   m_point_light{ nullptr };
+		Render::ConstBuffer*   m_spot_light{ nullptr };
 
-	//pass type
+		EffectPassInputs() = default;
+
+		EffectPassInputs
+		(
+			//render
+			  Render::ConstBuffer*   camera
+			, Render::ConstBuffer*   transform
+			//lights
+			, Vec4				     ambient_light
+			, Render::ConstBuffer*   direction_light = nullptr
+			, Render::ConstBuffer*   point_light = nullptr
+			, Render::ConstBuffer*   spot_light = nullptr
+		)
+		{
+			m_camera = camera;
+			m_transform = transform;
+			m_ambient_light = ambient_light;
+			m_direction_light = direction_light;
+			m_point_light = point_light;
+			m_spot_light = spot_light;
+		}
+	};
+
+	//pass type //todo: rename in pipeline
 	class SQUARE_API EffectPass
 	{
 	public:
@@ -309,41 +344,13 @@ namespace Render
 		EffectPass();
 		virtual ~EffectPass();
 
-		//input pass
-		struct SQUARE_API Buffers
-		{
-			Layout::InputLayoutId  m_layout_id{ ~size_t(0) };
-			Render::ConstBuffer*   m_camera{ nullptr };
-			Render::ConstBuffer*   m_transform{ nullptr };
-			Render::ConstBuffer*   m_direction_light{ nullptr };
-			Render::ConstBuffer*   m_point_light{ nullptr };
-			Render::ConstBuffer*   m_spot_light{ nullptr };
 
-			Buffers() = default;
-
-			Buffers
-			(
-			  Layout::InputLayoutId  layout_id
-			, Render::ConstBuffer*   camera
-			, Render::ConstBuffer*   transform
-			, Render::ConstBuffer*   direction_light = nullptr
-			, Render::ConstBuffer*   point_light = nullptr
-			, Render::ConstBuffer*   spot_light = nullptr
-			)
-			{
-				m_layout_id = layout_id;
-				m_camera = camera;
-				m_transform = transform;
-				m_direction_light = direction_light;
-				m_point_light = point_light;
-				m_spot_light = spot_light;
-			}
-		};
+		//shortcut
+		Render::InputLayout* layout(size_t layout_id) const;
 
 		//unsafe
 		void bind(  Render::Context*       render
-                  , const Vec4&			   ambient_light
-                  , const Buffers&         buffers = Buffers()
+                  , EffectPassInputs	   inputs = EffectPassInputs()
                   , EffectParameters*      params = nullptr
                   ) const;
 
@@ -352,7 +359,6 @@ namespace Render
                   ) const;
 
 		void unbind() const;
-		//safe
 	};
 
 	//pass list
