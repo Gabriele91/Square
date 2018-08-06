@@ -203,7 +203,6 @@
     <ClInclude Include="..\include\Square\Resource\Material.h" />
     <ClInclude Include="..\include\Square\Resource\Model.h" />
     <ClInclude Include="..\include\Square\Resource\Shader.h" />
-    <ClInclude Include="..\include\Square\Resource\Geometry.h" />
     <ClInclude Include="..\include\Square\Resource\Texture.h" />
     <ClInclude Include="..\include\Square\Scene\Actor.h" />
     <ClInclude Include="..\include\Square\Scene\Camera.h" />

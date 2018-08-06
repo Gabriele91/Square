@@ -326,47 +326,49 @@ namespace Render
 	//Constructor
 	EffectPass::EffectPass() {}
 	EffectPass::~EffectPass() {}
-	
+
+	//shortcut
+	Render::InputLayout* EffectPass::layout(size_t layout_id) const
+	{
+		if (m_shader && layout_id < m_shader->layouts().size())
+			return m_shader->layouts()[layout_id].get();
+		return nullptr;
+	}
+
 	//enable pass effect
 	void EffectPass::bind(  Render::Context*  render
-						  , const Vec4&		  ambient_light
-						  , const Buffers&    buffers
+						  , EffectPassInputs  inputs
                           , EffectParameters* params) const
 	{
 		//bind
 		bind(render, params);
-        //bind layout
-        if(buffers.m_layout_id < m_shader->layouts().size())
-        {
-            render->bind_IL(m_shader->layouts()[buffers.m_layout_id].get());
-        }
 		//buffers (camera/model/transofrm)
-		if (buffers.m_camera && m_uniform_camera && m_uniform_camera->is_valid())
+		if (inputs.m_camera && m_uniform_camera && m_uniform_camera->is_valid())
 		{
-			m_uniform_camera->bind(buffers.m_camera);
+			m_uniform_camera->bind(inputs.m_camera);
 		}
-		if (buffers.m_transform && m_uniform_transform && m_uniform_transform->is_valid())
+		if (inputs.m_transform && m_uniform_transform && m_uniform_transform->is_valid())
 		{
-			m_uniform_transform->bind(buffers.m_transform);
+			m_uniform_transform->bind(inputs.m_transform);
 		}
 		//lights
 		if (m_support_light)
 		{
 			if (m_uniform_ambient_light && m_uniform_ambient_light->is_valid())
 			{
-				m_uniform_ambient_light->set(ambient_light);
+				m_uniform_ambient_light->set(inputs.m_ambient_light);
 			}
-			if (buffers.m_direction_light && m_uniform_direction && m_uniform_direction->is_valid())
+			if (inputs.m_direction_light && m_uniform_direction && m_uniform_direction->is_valid())
 			{
-				m_uniform_direction->bind(buffers.m_direction_light);
+				m_uniform_direction->bind(inputs.m_direction_light);
 			}
-			if (buffers.m_point_light && m_uniform_point && m_uniform_point->is_valid())
+			if (inputs.m_point_light && m_uniform_point && m_uniform_point->is_valid())
 			{
-				m_uniform_point->bind(buffers.m_point_light);
+				m_uniform_point->bind(inputs.m_point_light);
 			}
-			if (buffers.m_spot_light && m_uniform_spot && m_uniform_spot->is_valid())
+			if (inputs.m_spot_light && m_uniform_spot && m_uniform_spot->is_valid())
 			{
-				m_uniform_spot->bind(buffers.m_spot_light);
+				m_uniform_spot->bind(inputs.m_spot_light);
 			}
 		}
 	}

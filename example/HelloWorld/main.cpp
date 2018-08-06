@@ -21,6 +21,7 @@ public:
     Square::Geometry::OBoundingBox m_obb_global;
     Square::Shared< Square::Resource::Material >   m_material;
     Square::Weak<Square::Render::Transform>        m_transform;
+	size_t										   m_layout{ ~size_t(0) };
     Square::Shared< Square::Render::VertexBuffer > m_model;
     Square::Shared< Square::Render::IndexBuffer >  m_index_model;
     
@@ -32,7 +33,8 @@ public:
         using namespace Square::Resource;
         using namespace Square::Render;
         using namespace Square::Render::Layout;
-        layout_id_from_type( LF_POSITION_3D | LF_NORMAL | LF_TANGENT | LF_BINOMIAL | LF_UVMAP );
+		//layout
+		m_layout = layout_id_from_type(LF_POSITION_3D | LF_NORMAL | LF_TANGENT | LF_BINOMIAL | LF_UVMAP);
         //init
 		std::vector<Position3DNormalTangetBinomialUV> model
         {
@@ -102,9 +104,31 @@ public:
         m_index_model = Render::index_buffer(context.render(), ids.data(), ids.size());
     }
     
+
+	virtual size_t materials_count() const { return 1; }
+
+	virtual Square::Weak<Square::Render::Material> material(size_t i = 0) const override
+	{
+		return Square::DynamicPointerCast<Square::Render::Material>(m_material);
+	}
     
-    virtual void draw(Square::Render::Context& render) override
+    virtual void draw
+	(
+		  Square::Render::Context&          render
+		, size_t							material_id
+		, Square::Render::EffectPassInputs& input
+		, Square::Render::EffectPass&       pass
+	) override
     {
+
+		using namespace Square;
+		using namespace Square::Data;
+		using namespace Square::Scene;
+		using namespace Square::Resource;
+		using namespace Square::Render;
+		using namespace Square::Render::Layout;
+		pass.bind(&render, input, m_material->parameters());
+		render.bind_IL(pass.layout(m_layout));
         render.bind_VBO(m_model.get());
         render.bind_IBO(m_index_model.get());
         render.draw_elements(Square::Render::DRAW_TRIANGLES, 6*6);
@@ -129,12 +153,7 @@ public:
     {
         return m_obb_global;
     }
-    
-    virtual Square::Weak<Square::Render::Material> material() const override
-    {
-        return Square::DynamicPointerCast<Square::Render::Material>(m_material);
-    }
-    
+	    
     virtual Square::Weak<Square::Render::Transform> transform() const override
     {
         return m_transform;

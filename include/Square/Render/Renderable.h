@@ -18,6 +18,8 @@ namespace Square
 		class Context;
 		class Material;
 		class Transform;
+		class EffectPass;
+		class EffectPassInputs;
 	}
 	namespace Geometry
 	{
@@ -39,46 +41,48 @@ namespace Render
 
 		virtual ~Renderable() {};
 
-		virtual void draw(Render::Context& render) = 0;
+		virtual size_t materials_count() const = 0;
+
+		virtual Weak<Material> material(size_t material_id = 0) const = 0;
+
+		virtual void draw(
+			  Render::Context& render
+			, size_t material_id
+			, EffectPassInputs& current_input
+			, EffectPass& current_pass
+		) = 0;
 
 		virtual bool support_culling() const = 0;
         
 		virtual const Geometry::OBoundingBox& bounding_box() = 0;
 
-		virtual Weak<Material> material() const = 0;
-
 		virtual Weak<Transform> transform() const = 0;
-
-        virtual Layout::InputLayoutId layout_id() const { return m_layout_input; };
         
 		bool visible() const { return m_visible; }
 
 		void visible(bool enable)  { m_visible = enable; }
 
-		bool can_draw() const { return visible() && m_layout_input != ~(size_t(0)) && material().lock() && transform().lock(); }
+		virtual bool can_draw() const { return visible() && material().lock() && transform().lock(); }
 		
     protected:
-        
-        virtual void layout_id(Layout::InputLayoutId id) {  m_layout_input = id; };
-        
-        void layout_id_from_type(unsigned long type)
+               
+        static const size_t layout_id_from_type(unsigned long type)
         {
-            layout_id(Layout::Collection::index_by_type(type));
+            return Layout::Collection::index_by_type(type);
         };
         
-        void layout_id_from_object_id(::Square::uint64 id)
+		static const size_t layout_id_from_object_id(::Square::uint64 id)
         {
-            layout_id(Layout::Collection::index_by_object_id(id));
+			return Layout::Collection::index_by_object_id(id);
         };
         
-        void layout_id_from_object_name(const std::string& name)
+		static const size_t layout_id_from_object_name(const std::string& name)
         {
-            layout_id(Layout::Collection::index_by_object_name(name));
+			return Layout::Collection::index_by_object_name(name);
         };
 
 	private:
         
-        Layout::InputLayoutId m_layout_input;
 		bool m_visible{ true };
 	};
 }
