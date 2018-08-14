@@ -38,17 +38,28 @@ namespace Render
 
         DrawerPass(DrawerPassType type) : m_type(type) {}
         
-        virtual void draw
-        (
-             Drawer&           drawer
-           , int               num_of_pass
-           , const Vec4&       clear_color
-           , const Vec4&       ambient_color
-           , const Camera&     camera
-           , const Collection& collection
-           , const PoolQueues& queues
-        ) = 0;
-        
+		virtual void draw
+		(
+			  Drawer&           drawer
+			, int               num_of_pass
+			, const Vec4&       clear_color
+			, const Vec4&       ambient_color
+			, const Camera&     camera
+			, const Collection& collection
+			, const PoolQueues& queues
+		) {};
+
+		virtual void draw
+		(
+			  Drawer&           drawer
+			, int               num_of_pass
+			, const Vec4&       clear_color
+			, const Vec4&       ambient_color
+			, const Light&      light
+			, const Collection& collection
+			, const PoolQueues& queues
+		) {};
+
         DrawerPassType type()
         {
             return m_type;

@@ -119,6 +119,11 @@ namespace Render
 		UINT					  m_width{ 0 };
 		UINT					  m_height{ 0 };
 		bool					  m_is_cube{ false };
+		bool					  m_is_depth{ false };
+		//more info
+		DXGI_FORMAT m_format_raw;
+		DXGI_FORMAT m_format_data;
+		DXGI_FORMAT m_format_shader_resource;
 
 		bool m_texture_bind{ false };
 		UINT m_texture_id{ 0 };
@@ -127,6 +132,10 @@ namespace Render
 		virtual operator ID3D11Texture1D*() { return nullptr; }
 		virtual operator ID3D11Texture2D*() { return nullptr; }
 		virtual operator ID3D11Texture3D*() { return nullptr; }
+
+		virtual ID3D11Texture1D* id3d11_texture1D() { return nullptr; }
+		virtual ID3D11Texture2D* id3d11_texture2D() { return nullptr; }
+		virtual ID3D11Texture3D* id3d11_texture3D() { return nullptr; }
 
 		virtual ~Texture()
 		{ 
@@ -141,6 +150,7 @@ namespace Render
 		Texture1D() { m_type = DX_TEXTURE_1D; }
 		ID3D11Texture1D* m_texture1D{ nullptr };
 		virtual operator ID3D11Texture1D*() { return m_texture1D; }
+		virtual ID3D11Texture1D* id3d11_texture1D() { return m_texture1D; }
 		virtual ~Texture1D(){ if (m_texture1D) m_texture1D->Release(); }
 	};
 
@@ -150,6 +160,7 @@ namespace Render
 		Texture2D() { m_type = DX_TEXTURE_2D; }
 		ID3D11Texture2D* m_texture2D{ nullptr };
 		virtual operator ID3D11Texture2D*() { return m_texture2D; }
+		virtual ID3D11Texture2D* id3d11_texture2D() { return m_texture2D; }
 		virtual ~Texture2D() { if (m_texture2D) m_texture2D->Release(); }
 	};
 
@@ -159,6 +170,7 @@ namespace Render
 		Texture3D() { m_type = DX_TEXTURE_3D; }
 		ID3D11Texture3D * m_texture3D{ nullptr };
 		virtual operator ID3D11Texture3D*() { return m_texture3D; }
+		virtual ID3D11Texture3D* id3d11_texture3D() { return m_texture3D; }
 		virtual ~Texture3D() { if (m_texture3D) m_texture3D->Release(); }
 	};
 	

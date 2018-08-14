@@ -8,6 +8,7 @@
 #pragma once
 #include "Square/Config.h"
 #include "Square/Render/Light.h"
+#include "Square/Render/ShadowBuffer.h"
 #include "Square/Geometry/Sphere.h"
 #include "Square/Scene/Component.h"
 
@@ -40,6 +41,15 @@ namespace Scene
 		//change radius aka change geometry
 		virtual void radius(const float radius) override;
 
+		//shadow map override
+		virtual const Render::ShadowBuffer& shadow_buffer() const override;
+		virtual bool shadow() const override;
+		virtual Vec4 shadow_viewport() const override;
+
+		//shadow map custom 
+		void  shadow(const IVec2& size);
+		const IVec2& shadow_size() const;
+
 		//all events
 		virtual void on_attach(Actor& entity)      override;
 		virtual void on_deattch()                  override;
@@ -58,14 +68,25 @@ namespace Scene
 		virtual const Geometry::Sphere& bounding_sphere() const override;
 		virtual const Geometry::Frustum& frustum() const override;
 		virtual Weak<Render::Transform> transform() const override;
-		virtual Weak<Render::Camera> camera() const override;
+
 		//Reg object
 		virtual void set(Render::UniformPointLight* data) const override;
+		virtual void set(Render::UniformPointShadowLight* data) const override;
 
 	protected:
-
+		//info
 		Vec3 m_position;
 		Geometry::Sphere m_sphere;
+		//shadow
+		Render::ShadowBuffer m_buffer;
+		//view matrix
+		mutable Mat4 m_views[6];
+		mutable bool m_views_is_dirty{ true };
+		mutable Mat4 m_projection;
+		mutable bool m_projection_is_dirty{ true };
+
+		const Mat4& views(size_t i) const;
+		const Mat4& projection() const;
 	};
 }
 }

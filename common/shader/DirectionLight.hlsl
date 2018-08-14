@@ -20,8 +20,8 @@ cbuffer Light
 
 LightResult compute_light
 (
-     in Vec3  fposition,
-     in Vec3  vdir,
+     in Vec4  fposition,
+     in Vec3  view_dir,
      in Vec3  normal,
 	 in float occlusion,
      in float shininess
@@ -32,7 +32,7 @@ LightResult compute_light
     // Diffuse shading
     float diff = max(dot(normal, light_dir), 0.0);
     // Specular shading
-    Vec3  halfway_dir = normalize(light_dir + vdir);
+    Vec3  halfway_dir = normalize(light_dir + view_dir);
     float spec = pow(max(dot(normal, halfway_dir), 0.0), shininess);
     // Combine results
     LightResult result;

@@ -287,6 +287,11 @@ namespace Render
 		Render::ConstBuffer*   m_point_light{ nullptr };
 		Render::ConstBuffer*   m_spot_light{ nullptr };
 
+		Render::Texture*       m_shadow_map{ nullptr };
+		Render::ConstBuffer*   m_direction_shadow_light{ nullptr };
+		Render::ConstBuffer*   m_point_shadow_light{ nullptr };
+		Render::ConstBuffer*   m_spot_shadow_light{ nullptr };
+
 		EffectPassInputs() = default;
 
 		EffectPassInputs
@@ -299,14 +304,25 @@ namespace Render
 			, Render::ConstBuffer*   direction_light = nullptr
 			, Render::ConstBuffer*   point_light = nullptr
 			, Render::ConstBuffer*   spot_light = nullptr
+
+			, Render::Texture*       shadow_map = nullptr
+			, Render::ConstBuffer*   direction_shadow_light = nullptr
+			, Render::ConstBuffer*   point_shadow_light = nullptr
+			, Render::ConstBuffer*   spot_shadow_light = nullptr
 		)
 		{
 			m_camera = camera;
 			m_transform = transform;
+
 			m_ambient_light = ambient_light;
 			m_direction_light = direction_light;
 			m_point_light = point_light;
 			m_spot_light = spot_light;
+
+			m_shadow_map = shadow_map;
+			m_direction_shadow_light = direction_shadow_light;
+			m_point_shadow_light = point_shadow_light;
+			m_spot_shadow_light = spot_shadow_light;
 		}
 	};
 
@@ -333,17 +349,22 @@ namespace Render
 			LT_DIRECTION = 0b010000,
 			LT_AREA      = 0b100000,
 		};
-		LightsType m_support_light{ LT_NONE };
-		//uniforms
+		LightsType m_support_light { LT_NONE };
+		LightsType m_support_shadow{ LT_NONE };
+		//uniforms lights
 		Render::Uniform*             m_uniform_ambient_light{ nullptr };
 		Render::UniformConstBuffer*  m_uniform_spot{ nullptr };
 		Render::UniformConstBuffer*  m_uniform_point{ nullptr };
 		Render::UniformConstBuffer*  m_uniform_direction{ nullptr };
+		//uniforms shadows
+		Render::Uniform*			 m_uniform_shadow_map{ nullptr };
+		Render::UniformConstBuffer*  m_uniform_spot_shadow{ nullptr };
+		Render::UniformConstBuffer*  m_uniform_point_shadow{ nullptr };
+		Render::UniformConstBuffer*  m_uniform_direction_shadow{ nullptr };
 
 		//constructor
 		EffectPass();
 		virtual ~EffectPass();
-
 
 		//shortcut
 		Render::InputLayout* layout(size_t layout_id) const;
@@ -433,10 +454,11 @@ namespace Render
 		const EffectTechniquesMap& techniques() const { return m_techniques_map; }
 
 		//get parameter
-		EffectParameters*  parameters();
-		EffectParameter*   parameter(int parameter);
-		EffectParameter*   parameter(const std::string& parameter);
-		EffectParameters*  copy_all_parameters();
+		EffectParameters*   parameters();
+		EffectParameter*    parameter(int parameter) const;
+		EffectParameter*    parameter(const std::string& parameter) const;
+		const std::string&  parameter_name(int parameter) const;
+		EffectParameters*   copy_all_parameters() const;;
 
 		//get id
 		int parameter_id(const std::string& parameter);

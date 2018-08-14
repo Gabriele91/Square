@@ -57,6 +57,10 @@ namespace Render
         static void renderables(const Collection& collection, PoolQueues& queues, const Geometry::Frustum& view_frustum);
         static void renderables(const Collection& collection, PoolQueues& queues, const Geometry::Sphere& in_sphere);
         static void renderables(const Collection& collection, PoolQueues& queues, const Camera&  in_camera);
+
+		static void opaque_renderables(const Collection& collection, PoolQueues& queues, const Vec3& position);
+		static void opaque_renderables(const Collection& collection, PoolQueues& queues, const Geometry::Frustum& view_frustum);
+		static void opaque_renderables(const Collection& collection, PoolQueues& queues, const Geometry::Sphere& in_sphere);
         static void renderables(const Collection& collection, PoolQueues& queues, const Light&  in_light);
 
     };

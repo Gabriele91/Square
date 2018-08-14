@@ -78,7 +78,12 @@ namespace Time
         m_count = 0;
         m_last = 0;
     }
-    
+
+	double FPSCounter::get()
+	{
+		return m_last;
+	}
+
     double FPSCounter::count_frame()
     {
         //sum

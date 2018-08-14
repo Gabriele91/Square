@@ -310,34 +310,25 @@ namespace Resource
 	)
 	{
 		//delete last shader
-		if (m_shader) destoy();
-        //commondo header
-        const static std::string shader_commond_header
-        (R"HLSL(
-		#define IVec2 int2
-		#define IVec3 int3
-		#define IVec4 int4
-		#define IMat3 int3x3
-		#define IMat4 int4x4
-		#define Vec2 float2
-		#define Vec3 float3
-		#define Vec4 float4
-		#define Mat3 float3x3
-		#define Mat4 float4x4
-		#define DVec2 double2
-		#define DVec3 double3
-		#define DVec4 double4
-		#define DMat3 double3x3
-		#define DMat4 double4x4
-		#define Sampler2D(name) SamplerState  name; Texture2D name ## _texture_2D;
-		#define Sampler3D(name) SamplerState  name; Texture3D name ## _texture_3D;
-		#define SamplerCube(name) SamplerState  name; TextureCube name ## _texture_CUBE;
-        #define texture2D(name,pos) name ## _texture_2D.Sample(name,pos)
-        #define texture3D(name,pos) name ## _texture_3D.Sample(name,pos)
-        #define textureCube(name,pos) name ## _texture_CUBE.Sample(name,pos)
-		)HLSL");
+		if (m_shader) destoy();		
 		//int shader version
 		int shader_version = 410;
+		bool is_target_texture = false;
+		//opengl or DirectX
+		bool is_hlsl = false;
+		if (auto render = context().render())
+		{
+			is_hlsl = render->get_render_driver_info().m_shader_language == "HLSL";
+		}
+        //commondo header
+		std::string shader_commond_header;
+		if (is_hlsl) shader_commond_header = "#define HLSL_BACKEND\n";
+		else		 shader_commond_header = "#define GLSL_BACKEND\n";
+        //add commond header
+		shader_commond_header +=
+		#include "ShaderCommonHeader.hlsl"
+		;
+		//define
 		//list define
 		std::string header_string;
 		//defines
@@ -350,6 +341,13 @@ namespace Resource
 				if (version > 0) shader_version = version;
 				continue;
 			}
+			//get is target
+			if (std::get<0>(p) == "pragma")
+			{
+				     if (std::get<1>(p) == "target_texture") is_target_texture = true;
+				else if (std::get<1>(p) == "target_screen") is_target_texture = false;
+				continue;
+			}
 			//add
 			header_string += "#" + std::get<0>(p) + " " + std::get<1>(p) + "\n";
 		}
@@ -359,11 +357,7 @@ namespace Resource
 		std::string source = source_header + raw_source;
 		////////////////////////////////////////////////////////////////////////////////
 		//output
-		bool is_hlsl = false;
-		if (auto render = context().render())
-		{
-			is_hlsl = render->get_render_driver_info().m_shader_language == "HLSL";
-		}
+
 		////////////////////////////////////////////////////////////////////////////////////////////////////
 		//inputs
 		std::string shader_target_name[Render::ST_N_SHADER]
@@ -422,7 +416,7 @@ namespace Resource
 		glsl_config.m_vulkan_semantics = false;
 		glsl_config.m_rename_position_in_position0 = true;
 		glsl_config.m_fixup_clipspace = true;
-		glsl_config.m_flip_vert_y = false;
+		glsl_config.m_flip_vert_y = is_target_texture;
 		glsl_config.m_enable_420pack_extension = false;
 		//to HLSL/GLSL
 		for (const HLSL2ALL::TypeSpirvShader& ssoutput : shader_spirv_outputs)

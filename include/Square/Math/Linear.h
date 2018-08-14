@@ -11,6 +11,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_RIGHT_HANDED 
+#define GLM_FORCE_RADIANS
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -26,6 +27,7 @@
 #include <glm/gtx/matrix_operation.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <glm/ext.hpp>
 
 namespace Square
@@ -53,10 +55,11 @@ namespace Square
     
     template < typename Scalar, glm::precision P = glm::defaultp >  using  TVec2 = glm::tvec2< Scalar, P >;
     template < typename Scalar, glm::precision P = glm::defaultp >  using  TVec3 = glm::tvec3< Scalar, P >;
-    template < typename Scalar, glm::precision P = glm::defaultp >  using  TVec4 = glm::tvec4< Scalar, P >;
-    template < typename Scalar, glm::precision P = glm::defaultp >  using  TMat3 = glm::tmat3x3< Scalar, P >;
+	template < typename Scalar, glm::precision P = glm::defaultp >  using  TVec4 = glm::tvec4< Scalar, P >;
+	template < typename Scalar, glm::precision P = glm::defaultp >  using  TQuat = glm::tquat< Scalar, P >;
+	template < typename Scalar, glm::precision P = glm::defaultp >  using  TMat3 = glm::tmat3x3< Scalar, P >;
     template < typename Scalar, glm::precision P = glm::defaultp >  using  TMat4 = glm::tmat4x4< Scalar, P >;
-
+	
     namespace Constants
     {
         template <class T>
@@ -251,99 +254,26 @@ namespace Square
     }
     
 	template < class T >
-	inline auto to_quat(const T& q_m) -> decltype(glm::toQuat(q_m))
+	inline auto to_quat(const T& q_m) -> decltype( glm::toQuat(q_m) )
 	{
 		return glm::toQuat(q_m);
 	}
 
 	template < class T >
-	inline auto to_mat3(const T& q_v) -> decltype(glm::toMat3(q_v))
+	inline auto to_mat3(const T& q_v) -> decltype( glm::toMat3(q_v) ) 
 	{
 		return glm::toMat3(q_v);
 	}
 
 	template < class T >
-	inline auto to_mat4(const T& q_v) -> decltype(glm::toMat4(q_v))
+	inline auto to_mat4(const T& q_v) -> decltype( glm::toMat4(q_v) )
 	{
 		return glm::toMat4(q_v);
 	}
-    
-    /*
-    Quaternion
-    */
-    template < typename Scalar, glm::precision P = glm::defaultp >
-    inline auto euler_to_quat(const Scalar& x, const Scalar& y,const Scalar& z) -> glm::tquat< Scalar, P >
-    {
-        return glm::eulerAngleXYZ<Scalar>(x,y,z);
-    }
-    template < typename Scalar, glm::precision P = glm::defaultp >
-    inline auto euler_to_quat(const glm::tvec3< Scalar, P >& vec) -> glm::tquat< Scalar, P >
-    {
-        return glm::eulerAngleXYZ<Scalar,P>(vec.x,vec.y,vec.z);
-    }
-    
-    /*
-    * Eigenvalues rotate
-    */
-    template < typename Scalar = float >
-    inline void eigenvalues_rotate(TMat3< Scalar >& mat, const Scalar& c, const Scalar& s, size_t i0, size_t j0, size_t i1, size_t j1)
-    {
-		Scalar a = c * mat[i0][j0] - s * mat[i1][j1];
-		Scalar b = s * mat[i0][j0] + c * mat[i1][j1];
-        mat[i0][j0] = (Scalar)a;
-        mat[i1][j1] = (Scalar)b;
-    }
-    
-    /**
-     * Diagonize matrix using Jacobi rotations.
-     * @remark Method does not check if matrix is diagonizable.
-     * Passing non diagonizable matrix and infinite max_iter (= -1)
-     * May result in infinite loop.
-     */
-    template < typename Scalar = float >
-    inline TVec3< Scalar > eigenvalues_jacobi(TMat3< Scalar >& mat, size_t max_iter, TMat3< Scalar >& E)
-    {
-        //return vector
-        TVec3< Scalar > ret;
-        
-        // initial eigenvalues
-        ret[0] = mat[0][0];
-        ret[1] = mat[1][1];
-        ret[2] = mat[2][2];
-        
-        mat[0][0] = 1.0;
-        mat[1][1] = 1.0;
-        mat[2][2] = 1.0;
-        
-        E = TMat3< Scalar >(1.0);
-        
-        for(size_t z = 0; z!=max_iter; ++z)
-        {
-            for (size_t i = 0; i != 3; ++i)
-            {
-                for (size_t j = i + 1; j < 3; j++)
-                {
-                    Scalar mii = ret[i];
-                    Scalar mjj = ret[j];
-                    Scalar mij = mat[i][j];
-                    Scalar phi = Scalar(0.5) * std::atan2(Scalar(2.0) * mij, mjj - mii);
-                    Scalar c = std::cos(phi);
-                    Scalar s = std::sin(phi);
-                    Scalar mii1 = c * c * mii - 2 * s * c * mij + s * s * mjj;
-                    Scalar mjj1 = s * s * mii + 2 * s * c * mij + c * c * mjj;
-                    if (std::abs(mii - mii1) < 0.00001 || (mjj - mjj1) < 0.00001) {
-                        ret[i]    = (Scalar)mii1;
-                        ret[j]    = (Scalar)mjj1;
-                        mat[i][j] = (Scalar)0.0;
-                        for (size_t k = 0;     k < i; ++k) eigenvalues_rotate<Scalar>(mat, c, s, k, i, k, j);
-                        for (size_t k = i + 1; k < j; ++k) eigenvalues_rotate<Scalar>(mat, c, s, i, k, k, j);
-                        for (size_t k = j + 1; k < 3; ++k) eigenvalues_rotate<Scalar>(mat, c, s, i, k, j, k);
-                        //rotate eigenvectors
-                        for (size_t k = 0; k < 3; k++) eigenvalues_rotate(E, c, s, k, i, k, j);
-                    }
-                }
-            }
-        }
-        return ret;
-    }
+
+	template < class T >
+	inline auto linear_to_string(const T& q_v) -> decltype(glm::to_string(q_v))
+	{
+		return glm::to_string(q_v);
+	}
 }

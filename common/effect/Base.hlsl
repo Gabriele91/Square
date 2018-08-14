@@ -1,4 +1,5 @@
 ////////////////
+#pragma once
 #include <Camera>
 #include <Transform>
 #include <Vertex>
@@ -55,7 +56,7 @@ surface(VertexShaderOutput input)
 	Vec4 occlusion_color = texture2D(occlusion_map, input.m_uv);
 	//output data
 	SurfaceData data = DefaultSurfaceData();
-	data.m_position = input.m_world_position.xyz;
+	data.m_position = input.m_world_position;
 	//color
 	data.m_albedo = color.rgb * diffuse_color.rgb;
 	data.m_alpha = color.a * diffuse_color.a;

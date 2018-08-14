@@ -477,6 +477,7 @@ namespace Parser
 			{ { "depth", "zbuffer" }, &Effect::parse_depth },
 			{ { "cullface" },         &Effect::parse_cullface },
 			{ { "lights" },           &Effect::parse_lights },
+			{ { "shadows" },          &Effect::parse_shadows },
 			{ { "shader" },           &Effect::parse_shader },
 		};
 
@@ -733,6 +734,75 @@ namespace Parser
         //end
         return false;
     }
+	bool Effect::parse_shadows(const char*& ptr, PassField& pass)
+	{
+		//skip "line" space
+		skip_line_space(m_context->m_line, ptr);
+		//is off?
+		if ((cstr_cmp_skip(ptr, "off")))
+		{
+			//default pass.m_shadow
+			pass.m_shadows = LightsField::LT_NONE;
+			return true;
+		}
+		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		//!! is ambient? shadow not supported !!
+		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		//spot point and direction
+		if (cstr_cmp_skip(ptr, "spot_point_direction")
+		||  cstr_cmp_skip(ptr, "point_direction_spot")
+		||  cstr_cmp_skip(ptr, "direction_spot_point"))
+		{
+			pass.m_shadows = LightsField::LT_SPOT_POINT_DIRECTION;
+			return true;
+		}
+		//spot and point
+		if (cstr_cmp_skip(ptr, "spot_point") || cstr_cmp_skip(ptr, "point_spot"))
+		{
+			pass.m_shadows = LightsField::LT_SPOT_POINT;
+			return true;
+		}
+		//spot and direction
+		if (cstr_cmp_skip(ptr, "spot_direction") || cstr_cmp_skip(ptr, "direction_spot"))
+		{
+			pass.m_shadows = LightsField::LT_SPOT_DIRECTION;
+			return true;
+		}
+		//point and direction
+		if (cstr_cmp_skip(ptr, "point_direction") || cstr_cmp_skip(ptr, "direction_spot"))
+		{
+			pass.m_shadows = LightsField::LT_POINT_DIRECTION;
+			return true;
+		}
+		//direction
+		if ((cstr_cmp_skip(ptr, "direction")))
+		{
+			pass.m_shadows = LightsField::LT_DIRECTION;
+			return true;
+		}
+		//point
+		if ((cstr_cmp_skip(ptr, "point")))
+		{
+			pass.m_shadows = LightsField::LT_POINT;
+			return true;
+		}
+		//spot
+		if ((cstr_cmp_skip(ptr, "spot")))
+		{
+			pass.m_shadows = LightsField::LT_SPOT;
+			return true;
+		}
+		//area
+		if ((cstr_cmp_skip(ptr, "area")))
+		{
+			pass.m_shadows = LightsField::LT_AREA;
+			return true;
+		}
+		//error
+		push_error("Shadows parameter not valid");
+		//end
+		return false;
+	}
     bool Effect::parse_shader(const char*& ptr, PassField& pass)
     {
         //skip spaces

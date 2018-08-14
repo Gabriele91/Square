@@ -75,7 +75,8 @@ namespace Parser
 			Render::DepthBufferState m_depth;
 			Render::BlendState       m_blend;
 			ShaderField              m_shader;
-			LightsField	             m_lights{ LT_COLOR };
+			LightsField	             m_lights{ LT_COLOR }; //enable lights
+			LightsField				 m_shadows{ LT_NONE  }; //enable shadows
 		};
 
 		struct TechniqueField
@@ -128,6 +129,7 @@ namespace Parser
         bool parse_depth(const char*& ptr, PassField& pass);
         bool parse_cullface(const char*& ptr, PassField& pass);
         bool parse_lights(const char*& ptr, PassField& pass);
+		bool parse_shadows(const char*& ptr, PassField& pass);
         bool parse_shader(const char*& ptr, PassField& pass);
 		//////////////////////////////////////////////////////
         bool parse_queue_type(const char*& inout, Render::QueueType& type);

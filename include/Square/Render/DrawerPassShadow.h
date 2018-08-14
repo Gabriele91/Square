@@ -1,22 +1,23 @@
 //
-//  DrawerPassForward.h
+//  DrawerPassShadow.h
 //  Square
 //
 //  Created by Gabriele Di Bari on 25/07/18.
-//  Copyright Â© 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Config.h"
+#include "Square/Render/Effect.h"
 #include "Square/Render/Drawer.h"
 
 namespace Square
 {
 namespace Render
 {
-    class SQUARE_API DrawerPassForward : public DrawerPass
+    class SQUARE_API DrawerPassShadow : public DrawerPass
     {
     public:
         //passo
-        DrawerPassForward(Square::Context& context);
+		DrawerPassShadow(Square::Context& context);
         //disegna
         virtual void draw
         (
@@ -24,7 +25,7 @@ namespace Render
         , int num_of_pass
         , const Vec4&  clear_color
         , const Vec4&  ambient_color
-        , const Camera& camera
+		, const Light& light
         , const Collection& collection
         , const PoolQueues& queues
         )
@@ -40,17 +41,13 @@ namespace Render
         //CPU DATA
         Square::Context& m_context;
         //GPU DATA
+		Shared<Render::Effect>	    m_shadow;
         Shared<Render::ConstBuffer> m_cb_camera;
 		Shared<Render::ConstBuffer> m_cb_transform;
-
-		Shared<Render::ConstBuffer> m_cb_direction_light;
-		Shared<Render::ConstBuffer> m_cb_point_light;
+		//SHADOW GPU DATA
 		Shared<Render::ConstBuffer> m_cb_spot_light;
-
-		Shared<Render::ConstBuffer> m_cb_direction_shadow_light;
-		Shared<Render::ConstBuffer> m_cb_point_shadow_light;
-		Shared<Render::ConstBuffer> m_cb_spot_shadow_light;
-
-    };
+		Shared<Render::ConstBuffer> m_cb_point_light;
+		Shared<Render::ConstBuffer> m_cb_direction_light;
+	};
 }
 }

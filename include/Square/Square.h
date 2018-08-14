@@ -49,9 +49,10 @@
 #include "Square/Render/Light.h"
 #include "Square/Render/Transform.h"
 #include "Square/Render/Renderable.h"
+#include "Square/Render/VertexLayout.h"
 #include "Square/Render/Drawer.h"
 #include "Square/Render/DrawerPassForward.h"
-#include "Square/Render/VertexLayout.h"
+#include "Square/Render/DrawerPassShadow.h"
 /* --- Resource --- */
 #include "Square/Resource/Texture.h"
 #include "Square/Resource/Shader.h"

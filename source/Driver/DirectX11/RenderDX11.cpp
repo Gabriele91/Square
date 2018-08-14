@@ -703,10 +703,15 @@ namespace Render
 
 	void ContextDX11::clear(int type)
 	{
-		if (type & CLEAR_COLOR) 
-			device_context()->ClearRenderTargetView(m_view_target->m_views[0], value_ptr(s_render_state.m_clear_color.m_color));
+		if (type & CLEAR_COLOR)
+		{
+			for (auto view : s_bind_context.m_render_target->m_views)
+			{
+				device_context()->ClearRenderTargetView(view, value_ptr(s_render_state.m_clear_color.m_color));
+			}
+		}
         if(type & CLEAR_DEPTH)
-			device_context()->ClearDepthStencilView(m_view_target->m_depth, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+			device_context()->ClearDepthStencilView(s_bind_context.m_render_target->m_depth, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1488,11 +1493,98 @@ namespace Render
 		m_layout = build(context11, shader->binary(ST_VERTEX_SHADER));
 	}
 
+	static std::map<std::string, DXGI_FORMAT> reflaction_input_layout(ID3DBlob* shader)
+	{
+		//////////////////////////////////////
+		std::map<std::string, DXGI_FORMAT> semantic_type_map;
+		//////////////////////////////////////
+		ID3D11ShaderReflection* shader_ref = nullptr;
+		if (FAILED(D3DReflect(
+			 shader->GetBufferPointer()
+		   , shader->GetBufferSize()
+		   , IID_ID3D11ShaderReflection
+		   , (void**)&shader_ref
+		)))
+		{
+			return semantic_type_map;
+		}
+		//////////////////////////////////////
+		// Get shader info
+		D3D11_SHADER_DESC shaderDesc;
+		shader_ref->GetDesc(&shaderDesc);
+
+		// Read input layout description from shader info
+		for (uint32 i = 0; i< shaderDesc.InputParameters; i++)
+		{
+			D3D11_SIGNATURE_PARAMETER_DESC paramDesc;
+			shader_ref->GetInputParameterDesc(i, &paramDesc);
+			DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
+
+			// determine DXGI format
+			if (paramDesc.Mask == 1)
+			{
+				     if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) format = DXGI_FORMAT_R32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) format = DXGI_FORMAT_R32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)format = DXGI_FORMAT_R32_FLOAT;
+			}
+			else if (paramDesc.Mask <= 3)
+			{
+				     if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) format = DXGI_FORMAT_R32G32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) format = DXGI_FORMAT_R32G32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)format = DXGI_FORMAT_R32G32_FLOAT;
+			}
+			else if (paramDesc.Mask <= 7)
+			{
+				     if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) format = DXGI_FORMAT_R32G32B32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) format = DXGI_FORMAT_R32G32B32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)format = DXGI_FORMAT_R32G32B32_FLOAT;
+			}
+			else if (paramDesc.Mask <= 15)
+			{
+				     if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) format = DXGI_FORMAT_R32G32B32A32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) format = DXGI_FORMAT_R32G32B32A32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			}
+
+			//save element desc
+			semantic_type_map[std::string(paramDesc.SemanticName)] = format;
+		}
+		return std::move(semantic_type_map);
+	}
+
+	static bool test_input_layout(ID3DBlob* shader, const std::vector<D3D11_INPUT_ELEMENT_DESC>& vals)
+	{
+		auto map = reflaction_input_layout(shader);
+		for (auto it : map)
+		{
+			bool find = false;
+			for (auto val : vals)
+			{
+				if (it.first == std::string(val.SemanticName))
+				{
+					if (it.second != val.Format)
+					{
+						return false;
+					}
+					find = true;
+					break;
+				}
+			}
+			if (!find) return false;
+		}
+		return true;
+	}
+
 	ID3D11InputLayout* InputLayout::build(ContextDX11* context11, ID3DBlob* shader)
 	{
 		if(!shader) return nullptr;
 		//input layout d3d11
 		ID3D11InputLayout* vertex_layout{ nullptr };
+		//debug
+#ifdef _DEBUG
+		//test
+		if (!test_input_layout(shader, m_description)) return nullptr;
+#endif
 		//SUCCEEDED
 		if (context11->dx_op_success(context11->device()->CreateInputLayout(
 			  m_description.data()
@@ -1893,6 +1985,36 @@ namespace Render
 		}
 		return nullptr;
 	}
+	
+	static bool is_depth_texture(DXGI_FORMAT format)
+	{
+		switch (format)
+		{
+		default: return false;
+		case DXGI_FORMAT_D16_UNORM:
+		case DXGI_FORMAT_D24_UNORM_S8_UINT:
+		case DXGI_FORMAT_D32_FLOAT:
+		return true;
+		}
+	}
+
+	static DXGI_FORMAT texture_depth_to_typeless_texture(DXGI_FORMAT format)
+	{
+		DXGI_FORMAT new_format = format;
+		     if (format == DXGI_FORMAT_D16_UNORM)         new_format = DXGI_FORMAT_R16_TYPELESS;
+		else if (format == DXGI_FORMAT_D24_UNORM_S8_UINT) new_format = DXGI_FORMAT_R24G8_TYPELESS;
+		else if (format == DXGI_FORMAT_D32_FLOAT)         new_format = DXGI_FORMAT_R32_TYPELESS;
+		return new_format;
+	}
+
+	static DXGI_FORMAT texture_depth_to_resource_format(DXGI_FORMAT format)
+	{
+		DXGI_FORMAT new_format = format;
+		     if (format == DXGI_FORMAT_D16_UNORM)         new_format = DXGI_FORMAT_R16_UNORM;
+		else if (format == DXGI_FORMAT_D24_UNORM_S8_UINT) new_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+		else if (format == DXGI_FORMAT_D32_FLOAT)         new_format = DXGI_FORMAT_R32_FLOAT;
+		return new_format;
+	}
 
 	Texture* ContextDX11::create_texture
 	(
@@ -1900,49 +2022,64 @@ namespace Render
 		const TextureGpuDataInformation& info
 	)
 	{
-		const unsigned char* texture_bytes = data.m_bytes;
-		DXGI_FORMAT texture_format = get_texture_format(data.m_format);
+		const unsigned char* texture_bytes = data.m_bytes; 
 		UINT pixel_size = get_textut_pixel_size(data.m_format);
 		D3D11_USAGE usage = info.m_read_from_cpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
 		UINT cpu_access_flags = info.m_read_from_cpu ? D3D11_CPU_ACCESS_READ : 0;
 		UINT mip_levels = info.m_build_mipmap ? 0 : info.m_mipmap_max;
 		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
+		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
+		//format
+		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format);
+		bool	    depth_target        = is_depth_texture(texture_format_raw);
+		DXGI_FORMAT texture_format_data = texture_depth_to_typeless_texture(texture_format_raw);
+		DXGI_FORMAT texture_format_resource = texture_depth_to_resource_format(texture_format_raw);
+		//render target
+		if (depth_target) bind_flags |= D3D11_BIND_DEPTH_STENCIL;
+		else              bind_flags |= D3D11_BIND_RENDER_TARGET;
 		//new image if need
 		auto new_image = Unique<const unsigned char[]> (add_alpha_if_need(data.m_bytes, data.m_width, data.m_height, data.m_format));
 		//if new image alloc, point to new image
 		if (new_image.get())
 		{
 			texture_bytes = new_image.get();
-			pixel_size += 1;
+			pixel_size += 1; //alpha channel
 		}
 		//TEXTURE2D
 		D3D11_TEXTURE2D_DESC texture_desc
 		{
-			data.m_width,									       //UINT Width;
-			data.m_height,									       //UINT Height;
-			mip_levels,											   //UINT MipLevels;
-			1,													   //UINT ArraySize;
-			texture_format,										   //DXGI_FORMAT Format;
-			1, 0,											       //DXGI_SAMPLE_DESC SampleDesc;
-			usage,												   //D3D11_USAGE Usage;
-			D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET, //UINT BindFlags;
-			cpu_access_flags,							           //UINT CPUAccessFlags;
-			misc_flags	                                           //UINT MiscFlags;
+			data.m_width,		//UINT Width;
+			data.m_height,		//UINT Height;
+			mip_levels,			//UINT MipLevels;
+			1,					//UINT ArraySize;
+			texture_format_data,//DXGI_FORMAT Format;
+			1, 0,				//DXGI_SAMPLE_DESC SampleDesc;
+			usage,				//D3D11_USAGE Usage;
+			bind_flags,			//UINT BindFlags;
+			cpu_access_flags,	//UINT CPUAccessFlags;
+			misc_flags	        //UINT MiscFlags;
 		};
 		//build
 		ID3D11Texture2D* d11_texture;
 		if (dx_op_success(device()->CreateTexture2D(&texture_desc, nullptr, &d11_texture)))
 		{
 			//upload
-			device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes, (data.m_width * pixel_size), 0);
+			if (texture_bytes)
+			{
+				device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes, (data.m_width * pixel_size), 0);
+			}
 			//declare
 			auto* texture2D = new Texture2D();
 			texture2D->m_texture2D = d11_texture;			
 			texture2D->m_width = data.m_width;
 			texture2D->m_height = data.m_height;
+			texture2D->m_is_depth = depth_target;
+			texture2D->m_format_raw = texture_format_raw;
+			texture2D->m_format_data = texture_format_data;
+			texture2D->m_format_shader_resource = texture_format_resource;
 			//view
 			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
-			s_resource_view.Format = texture_desc.Format;
+			s_resource_view.Format = texture_format_resource;
 			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			s_resource_view.Texture2D.MostDetailedMip = 0;
 			s_resource_view.Texture2D.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
@@ -1997,14 +2134,22 @@ namespace Render
 			data[0].m_bytes, data[1].m_bytes, data[2].m_bytes,
 			data[3].m_bytes, data[4].m_bytes, data[5].m_bytes
 		};
-		DXGI_FORMAT texture_format = get_texture_format(data[0].m_format);
 		UINT pixel_size = get_textut_pixel_size(data[0].m_format);
 		D3D11_USAGE usage = info.m_read_from_cpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
 		UINT cpu_access_flags = info.m_read_from_cpu ? D3D11_CPU_ACCESS_READ : 0;
 		UINT mip_levels = info.m_build_mipmap ? 0 : info.m_mipmap_max;
 		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
+		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
 		//is a cubemap
 		misc_flags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
+		//format
+		DXGI_FORMAT texture_format_raw = get_texture_format(data[0].m_format);
+		bool	    depth_target = is_depth_texture(texture_format_raw);
+		DXGI_FORMAT texture_format_data = texture_depth_to_typeless_texture(texture_format_raw);
+		DXGI_FORMAT texture_format_resource = texture_depth_to_resource_format(texture_format_raw);
+		//render target
+		if (depth_target) bind_flags |= D3D11_BIND_DEPTH_STENCIL;
+		else              bind_flags |= D3D11_BIND_RENDER_TARGET;
 		//new image if need
 		auto new_image0 = Unique<const unsigned char[]>(add_alpha_if_need(data[0].m_bytes, data[0].m_width, data[0].m_height, data[0].m_format));
 		auto new_image1 = Unique<const unsigned char[]>(add_alpha_if_need(data[1].m_bytes, data[1].m_width, data[1].m_height, data[1].m_format));
@@ -2026,16 +2171,16 @@ namespace Render
 		//TEXTURE2D
 		D3D11_TEXTURE2D_DESC texture_desc
 		{
-			data[0].m_width,				                       //UINT Width;
-			data[0].m_height,				                       //UINT Height;
-			mip_levels,						                       //UINT MipLevels;
-			6,                                                     //UINT ArraySize;
-			texture_format,                                        //DXGI_FORMAT Format;
-			1, 0,                                                  //DXGI_SAMPLE_DESC SampleDesc;
-			usage,                                                 //D3D11_USAGE Usage;
-			D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET, //UINT BindFlags;
-			cpu_access_flags,				                       //UINT CPUAccessFlags;
-			misc_flags						                       //UINT MiscFlags;
+			data[0].m_width,	 //UINT Width;
+			data[0].m_height,	 //UINT Height;
+			mip_levels,			 //UINT MipLevels;
+			6,                   //UINT ArraySize;
+			texture_format_data, //DXGI_FORMAT Format;
+			1, 0,                //DXGI_SAMPLE_DESC SampleDesc;
+			usage,               //D3D11_USAGE Usage;
+			bind_flags,          //UINT BindFlags;
+			cpu_access_flags,	 //UINT CPUAccessFlags;
+			misc_flags			 //UINT MiscFlags;
 		};	
 		//build
 		ID3D11Texture2D* d11_texture;
@@ -2044,7 +2189,8 @@ namespace Render
 			//upload
 			for (int i = 0; i != 6; ++i)
 			{
-				device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes[i], (data[i].m_width * pixel_size), 0);
+				if(texture_bytes[i])
+					device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes[i], (data[i].m_width * pixel_size), 0);
 			}
 			//declare
 			auto* texture2D = new Texture2D();
@@ -2052,9 +2198,13 @@ namespace Render
 			texture2D->m_width = data[0].m_width;
 			texture2D->m_height = data[0].m_height;
 			texture2D->m_is_cube = true;
+			texture2D->m_is_depth = depth_target;
+			texture2D->m_format_raw = texture_format_raw;
+			texture2D->m_format_data = texture_format_data;
+			texture2D->m_format_shader_resource = texture_format_resource;
 			//view
 			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
-			s_resource_view.Format = texture_desc.Format;
+			s_resource_view.Format = texture_format_resource;
 			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
 			s_resource_view.TextureCube.MostDetailedMip = 0;
 			s_resource_view.TextureCube.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
@@ -2071,7 +2221,7 @@ namespace Render
 				device_context()->GenerateMips(texture2D->m_resource_view);
 			}
 			//sampler
-			D3D11_SAMPLER_DESC sampler_desc;
+			D3D11_SAMPLER_DESC sampler_desc = {};
 			sampler_desc.AddressU = get_texture_edge_type(info.m_edge_s);
 			sampler_desc.AddressV = get_texture_edge_type(info.m_edge_t);
 			sampler_desc.AddressW = get_texture_edge_type(info.m_edge_r);;
@@ -2643,16 +2793,44 @@ namespace Render
 				if (t_field.m_type == RT_COLOR)
 				{
 					ID3D11RenderTargetView* rtarget_view;
-					device()->CreateRenderTargetView((ID3D11Texture2D*)t_field.m_texture, NULL, &rtarget_view);
+					if (!dx_op_success(device()->CreateRenderTargetView(t_field.m_texture->id3d11_texture2D(), NULL, &rtarget_view)))
+					{
+						delete_render_target(target);
+						return nullptr;
+					}
 					target->m_views.push_back(rtarget_view);
-					target->m_view_textures.push_back((ID3D11Texture2D*)t_field.m_texture);
+					target->m_view_textures.push_back(t_field.m_texture->id3d11_texture2D());
 				}
 				else if ((!target->m_depth) && (t_field.m_type == RT_DEPTH || t_field.m_type == RT_DEPTH_STENCIL))
 				{
 					ID3D11DepthStencilView* dstarget_view;
-					device()->CreateDepthStencilView((ID3D11Texture2D*)t_field.m_texture, NULL, &dstarget_view);
+					D3D11_DEPTH_STENCIL_VIEW_DESC desc_dsv;
+					ZeroMemory(&desc_dsv, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
+					///////////////////////////////////////////////////////////////
+					if(t_field.m_texture->m_is_cube)
+					{
+						desc_dsv.Format = t_field.m_texture->m_format_raw;
+						desc_dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+						desc_dsv.Texture2DArray.ArraySize = 6;
+					}
+					else
+					{
+						desc_dsv.Format = t_field.m_texture->m_format_raw;
+						desc_dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+					}
+					///////////////////////////////////////////////////////////////
+					if (!dx_op_success(device()->CreateDepthStencilView
+					(
+						  t_field.m_texture->id3d11_texture2D()
+						, &desc_dsv
+						, &dstarget_view
+					)))
+					{
+						delete_render_target(target);
+						return nullptr;
+					}
 					target->m_depth = dstarget_view;
-					target->m_depth_texture = (ID3D11Texture2D*)t_field.m_texture;
+					target->m_depth_texture = t_field.m_texture->id3d11_texture2D();
 				}
 			}
 		}

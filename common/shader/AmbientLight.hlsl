@@ -4,8 +4,8 @@ Vec4 light;
 
 LightResult compute_light
 (
-	in Vec3  fposition,
-	in Vec3  vdir,
+	in Vec4  fposition,
+	in Vec3  view_dir,
 	in Vec3  normal,
 	in float occlusion,
 	in float shininess

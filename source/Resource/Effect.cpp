@@ -36,15 +36,25 @@ namespace Resource
         DEF_RENDERING_POINT_LIGHT,
         DEF_RENDERING_SPOT_LIGHT
     };
-    const std::string shader_define_table[]=
-    {
-        "RENDERING_COLOR",
-        "RENDERING_AMBIENT_LIGHT",
-        "RENDERING_DIRECTION_LIGHT",
-        "RENDERING_POINT_LIGHT",
+	const std::string shader_lights_define_table[] =
+	{
+		"RENDERING_COLOR",
+		"RENDERING_AMBIENT_LIGHT",
+		"RENDERING_DIRECTION_LIGHT",
+		"RENDERING_POINT_LIGHT",
 		"RENDERING_SPOT_LIGHT"
-    };
-    
+	};
+	const std::string shader_shadows_define_table[] =
+	{
+		"RENDERING_SHADOW_DISABLE",
+		"RENDERING_SHADOW_ENABLE",
+	};
+	const std::string shader_target_define_table[] =
+	{
+		"target_screen",
+		"target_texture",
+	};
+
     //constructor
     Effect::Effect(Context& context):ResourceObject(context) {}
     Effect::Effect(Context& context, const std::string& path):ResourceObject(context){ load(path); }
@@ -128,102 +138,121 @@ namespace Resource
             {
                 //ref
                 Parser::Effect::PassField& parser_pass = ptr_sub_effect->m_techniques[t].m_pass[p];
-                //lights sub pass
-                int light_sub_pass = parser_pass.m_lights;
+				//lights/shadows sub pass
+				int sub_pass_masks[]
+				{
+					parser_pass.m_lights
+				   ,parser_pass.m_shadows
+				};
                 //Type render
                 shader_define_rendering current_shader_def;
                 //pass
-				while (light_sub_pass)
-                {
-                    //1 pass for light
-					if (light_sub_pass & Parser::Effect::LT_COLOR)
+				for (int shadow = 0; shadow != 2; ++shadow)
+				{
+					//sub light pass mask
+					int sub_pass_mask = sub_pass_masks[shadow];
+					//for each lights
+					while (sub_pass_mask)
 					{
-						current_shader_def = DEF_RENDERING_COLOR;
-						light_sub_pass ^= Parser::Effect::LT_COLOR;
-					}
-					if(light_sub_pass & Parser::Effect::LT_AMBIENT)
-                    {
-                        current_shader_def = DEF_RENDERING_AMBIENT_LIGHT;
-                        light_sub_pass    ^= Parser::Effect::LT_AMBIENT;
-                    }
-                    else if(light_sub_pass & Parser::Effect::LT_DIRECTION)
-                    {
-                        current_shader_def = DEF_RENDERING_DIRECTION_LIGHT;
-                        light_sub_pass    ^= Parser::Effect::LT_DIRECTION;
-                    }
-                    else if(light_sub_pass & Parser::Effect::LT_POINT)
-                    {
-                        current_shader_def = DEF_RENDERING_POINT_LIGHT;
-                        light_sub_pass    ^= Parser::Effect::LT_POINT;
-                    }
-                    else if(light_sub_pass & Parser::Effect::LT_SPOT)
-                    {
-                        current_shader_def = DEF_RENDERING_SPOT_LIGHT;
-                        light_sub_pass    ^= Parser::Effect::LT_SPOT;
-                    }
-					//not suppoted
-					else
-					{
-						break;
-					}
-                    //add pass
-                    this_technique.push_back(EffectPass());
-                    //pass
-                    EffectPass& this_pass = this_technique.back();
-                    //get all values
-                    this_pass.m_blend    = parser_pass.m_blend;
-                    this_pass.m_cullface = parser_pass.m_cullface;
-                    this_pass.m_depth    = parser_pass.m_depth;
-                    //shader
-                    if (parser_pass.m_shader.m_name)
-                    {
-                        this_pass.m_shader = context().resource<Shader>(parser_pass.m_shader.m_text);
-                    }
-                    else
-                    {
-                        Shader::PreprocessMap shader_defines
-                        {
-                            std::make_tuple(std::string("version"), std::to_string(ptr_sub_effect->m_requirement.m_shader_version) ),
-							std::make_tuple(std::string("define"), shader_define_table[current_shader_def] )
-                        };
-                        //shader
-                        this_pass.m_shader = MakeShared<Shader>(context());
-                        //load effect
-                        if (!this_pass.m_shader->load(path,
-                                                      parser_pass.m_shader.m_text,
-                                                      shader_defines,
-                                                      parser_pass.m_shader.m_line - 1
-                                                      ))
-                        {
-                            //preproc, debug
-                            std::string debug_preproc;
-                            for(const Shader::PreprocessElement& preproc : shader_defines)
-                            {
-                                debug_preproc += "#"+std::get<0>(preproc)+" "+std::get<1>(preproc)+"\t";
-                            }
-                            //output
-							context().add_wrong("Effect: " + path);
-							context().add_wrong("Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
-							context().add_wrong("Error technique preproces: " + debug_preproc);
-                            return false;
-                        }
-                    }
-                    //default uniform
-                    this_pass.m_uniform_camera    = this_pass.m_shader->constant_buffer("Camera");
-                    this_pass.m_uniform_transform = this_pass.m_shader->constant_buffer("Transform");
-                    //try
-                    if(!this_pass.m_uniform_camera) this_pass.m_uniform_camera = this_pass.m_shader->constant_buffer("camera");
-                    if(!this_pass.m_uniform_transform) this_pass.m_uniform_transform = this_pass.m_shader->constant_buffer("transform");
-                    //lights uniforms
-                    switch (current_shader_def)
-                    {
-                        case DEF_RENDERING_AMBIENT_LIGHT:
-                            this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("AmbientLight");
+						//1 pass for light
+						if (sub_pass_mask & Parser::Effect::LT_COLOR)
+						{
+							current_shader_def = DEF_RENDERING_COLOR;
+							sub_pass_mask ^= Parser::Effect::LT_COLOR;
+						}
+						else if (sub_pass_mask & Parser::Effect::LT_AMBIENT)
+						{
+							current_shader_def = DEF_RENDERING_AMBIENT_LIGHT;
+							sub_pass_mask ^= Parser::Effect::LT_AMBIENT;
+						}
+						else if (sub_pass_mask & Parser::Effect::LT_DIRECTION)
+						{
+							current_shader_def = DEF_RENDERING_DIRECTION_LIGHT;
+							sub_pass_mask ^= Parser::Effect::LT_DIRECTION;
+						}
+						else if (sub_pass_mask & Parser::Effect::LT_POINT)
+						{
+							current_shader_def = DEF_RENDERING_POINT_LIGHT;
+							sub_pass_mask ^= Parser::Effect::LT_POINT;
+						}
+						else if (sub_pass_mask & Parser::Effect::LT_SPOT)
+						{
+							current_shader_def = DEF_RENDERING_SPOT_LIGHT;
+							sub_pass_mask ^= Parser::Effect::LT_SPOT;
+						}
+						//not suppoted
+						else
+						{
+							break;
+						}
+						//add pass
+						this_technique.push_back(EffectPass());
+						//pass
+						EffectPass& this_pass = this_technique.back();
+						//get all values
+						this_pass.m_blend = parser_pass.m_blend;
+						this_pass.m_cullface = parser_pass.m_cullface;
+						this_pass.m_depth = parser_pass.m_depth;
+						//shader
+						if (parser_pass.m_shader.m_name)
+						{
+							this_pass.m_shader = context().resource<Shader>(parser_pass.m_shader.m_text);
+						}
+						else
+						{
+							Shader::PreprocessMap shader_defines
+							{
+								std::make_tuple(std::string("version"), std::to_string(ptr_sub_effect->m_requirement.m_shader_version)),
+								//std::make_tuple(std::string("pragma"), shader_target_define_table[shadow]),
+								std::make_tuple(std::string("define"), shader_lights_define_table[current_shader_def]),
+								std::make_tuple(std::string("define"), shader_shadows_define_table[shadow])
+							};
+							//shader
+							this_pass.m_shader = MakeShared<Shader>(context());
+							//load effect
+							if (!this_pass.m_shader->load(path,
+								parser_pass.m_shader.m_text,
+								shader_defines,
+								parser_pass.m_shader.m_line - 1
+							))
+							{
+								//preproc, debug
+								std::string debug_preproc;
+								for (const Shader::PreprocessElement& preproc : shader_defines)
+								{
+									debug_preproc += "#" + std::get<0>(preproc) + " " + std::get<1>(preproc) + "\t";
+								}
+								//output
+								context().add_wrong("Effect: " + path);
+								context().add_wrong("Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
+								context().add_wrong("Error technique preproces: " + debug_preproc);
+								return false;
+							}
+						}
+						//default uniform
+						this_pass.m_uniform_camera = this_pass.m_shader->constant_buffer("Camera");
+						this_pass.m_uniform_transform = this_pass.m_shader->constant_buffer("Transform");
+						//retry
+						if (!this_pass.m_uniform_camera) this_pass.m_uniform_camera = this_pass.m_shader->constant_buffer("camera");
+						if (!this_pass.m_uniform_transform) this_pass.m_uniform_transform = this_pass.m_shader->constant_buffer("transform");
+						//shadow
+						this_pass.m_uniform_direction_shadow = this_pass.m_shader->constant_buffer("DirectionShadowCamera");
+						this_pass.m_uniform_point_shadow = this_pass.m_shader->constant_buffer("PointShadowCamera");
+						this_pass.m_uniform_spot_shadow = this_pass.m_shader->constant_buffer("SpotShadowCamera");
+						//retry
+						if (!this_pass.m_uniform_direction_shadow) this_pass.m_uniform_direction_shadow = this_pass.m_shader->constant_buffer("direction_shadow_camera");
+						if (!this_pass.m_uniform_point_shadow) this_pass.m_uniform_point_shadow = this_pass.m_shader->constant_buffer("point_shadow_camera");
+						if (!this_pass.m_uniform_spot_shadow) this_pass.m_uniform_spot_shadow = this_pass.m_shader->constant_buffer("spot_shadow_camera");
+						//lights uniforms
+						switch (current_shader_def)
+						{
+						case DEF_RENDERING_AMBIENT_LIGHT:
+							this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("AmbientLight");
 							if (!this_pass.m_uniform_ambient_light) this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("Light");
 							if (!this_pass.m_uniform_ambient_light) this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("light");
-							if (!this_pass.m_uniform_ambient_light) context().add_wrongs({ "Effect: " + path, "Wrong: not found AmbientLight"});
+							if (!this_pass.m_uniform_ambient_light) context().add_wrongs({ "Effect: " + path, "Wrong: not found AmbientLight" });
 							this_pass.m_support_light = EffectPass::LT_AMBIENT;
-                            break;
+							break;
 						case DEF_RENDERING_DIRECTION_LIGHT:
 							this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("DirectionLight");
 							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("Light");
@@ -232,41 +261,83 @@ namespace Resource
 							if (!this_pass.m_uniform_direction) context().add_wrongs({ "Effect: " + path, "Wrong: not found DirectionLight" });
 							this_pass.m_support_light = EffectPass::LT_DIRECTION;
 							break;
-                        case DEF_RENDERING_POINT_LIGHT:
-                            this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("PointLight");
+						case DEF_RENDERING_POINT_LIGHT:
+							this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("PointLight");
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("Light");
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("point_light");
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("light");
 							if (!this_pass.m_uniform_point) context().add_wrongs({ "Effect: " + path, "Wrong: not found PointLight" });
 							this_pass.m_support_light = EffectPass::LT_POINT;
-                            break;
-                        case DEF_RENDERING_SPOT_LIGHT:
+							break;
+						case DEF_RENDERING_SPOT_LIGHT:
 							this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("SpotLight");
 							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("Light");
 							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("spot_light");
 							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("light");
 							if (!this_pass.m_uniform_spot) context().add_wrongs({ "Effect: " + path, "Wrong: not found SpotLight" });
 							this_pass.m_support_light = EffectPass::LT_SPOT;
-                            break;
-                        default:
+							break;
+						default:
 							this_pass.m_support_light = EffectPass::LT_NONE;
-                            break;
-                    }
-                    //get uniforms
-                    for (auto it : m_parameters_map)
-                    {
-                        //get
-                        Render::Uniform* u_shader = this_pass.m_shader->uniform(it.first.c_str());
-                        //test
-                        if (u_shader)
-                        {
-                            //push
-                            this_pass.m_param_id.push_back(it.second);
-                            this_pass.m_uniform.push_back(u_shader);
-                        }
-                    }
-                }// pass for each lights
-			}
+							break;
+						}
+						//support shadow
+						if (shadow)
+						{
+							//type of shadow
+							switch (current_shader_def)
+							{
+							case DEF_RENDERING_DIRECTION_LIGHT:
+								//shadow map
+								this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("DirectionShadowMap");
+								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("direction_shadow_map");
+								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("ShadowMap");
+								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("shadow_map");
+								if (!this_pass.m_uniform_shadow_map) context().add_wrongs({ "Effect: " + path, "Wrong: not found direction shadow map" });
+								this_pass.m_support_shadow = EffectPass::LT_DIRECTION;
+								this_pass.m_support_light = EffectPass::LT_NONE;
+							break;
+							case DEF_RENDERING_POINT_LIGHT:
+								//shadow map
+								this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("PointShadowMap");
+								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("point_shadow_map");
+								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("ShadowMap");
+								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("shadow_map");
+								if (!this_pass.m_uniform_shadow_map) context().add_wrongs({ "Effect: " + path, "Wrong: not found point shadow map" });
+								this_pass.m_support_shadow = EffectPass::LT_POINT;
+								this_pass.m_support_light = EffectPass::LT_NONE;
+							break;
+							case DEF_RENDERING_SPOT_LIGHT:
+								//shadow map
+								this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("SpotShadowMap");
+								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("spot_shadow_map");
+								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("ShadowMap");
+								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("shadow_map");
+								if (!this_pass.m_uniform_shadow_map) context().add_wrongs({ "Effect: " + path, "Wrong: not found spot shadow map" });
+								this_pass.m_support_shadow = EffectPass::LT_SPOT;
+								this_pass.m_support_light = EffectPass::LT_NONE;
+							break;
+							default: 
+								this_pass.m_support_shadow = EffectPass::LT_NONE;
+							break;
+							}
+						}
+						//get uniforms
+						for (auto it : m_parameters_map)
+						{
+							//get
+							Render::Uniform* u_shader = this_pass.m_shader->uniform(it.first);
+							//test
+							if (u_shader)
+							{
+								//push
+								this_pass.m_param_id.push_back(it.second);
+								this_pass.m_uniform.push_back(u_shader);
+							}
+						}
+					}
+				}// end shadow for
+			}// end pass for each lights
             
         }
         

@@ -25,6 +25,14 @@ cbuffer Light
     SpotLightStruct light;
 }
 
+#ifdef RENDERING_SHADOW_ENABLE
+#include <SpotShadowLight>
+#else
+void spot_light_apply_shadow(inout LightResult result, in Vec4 fposition)
+{
+}
+#endif
+
 //attenuation
 float spot_light_compute_attenuation(in Vec3 light_relative)
 {
@@ -34,8 +42,8 @@ float spot_light_compute_attenuation(in Vec3 light_relative)
 
 LightResult compute_light
 (
-     in Vec3  fposition,
-     in Vec3  vdir,
+     in Vec4  fposition,
+     in Vec3  view_dir,
      in Vec3  normal,
 	 in float occlusion,
      in float shininess
@@ -44,7 +52,7 @@ LightResult compute_light
     //value return
     LightResult result;
 	// Light relative
-	Vec3 light_relative = light.m_position - fposition;
+	Vec3 light_relative = light.m_position - fposition.xyz;
     // Attenuation
     float attenuation = spot_light_compute_attenuation(light_relative);
     // Exit case
@@ -59,7 +67,7 @@ LightResult compute_light
     // Diffuse shading
     float diff = max(dot(normal, light_dir), 0.0);
     // Specular shading
-    Vec3  halfway_dir  = normalize(light_dir + vdir);
+    Vec3  halfway_dir  = normalize(light_dir + view_dir);
     float spec         = pow(max(dot(normal, halfway_dir), 0.0), shininess);
     // Spotlight intensity
     float theta = dot(light_dir, normalize(-light.m_direction));
@@ -67,7 +75,9 @@ LightResult compute_light
     float intensity = clamp((theta - light.m_outer_cut_off) / epsilon, 0.0, 1.0);
     // Combine results
     result.m_diffuse  = light.m_diffuse  * diff * attenuation * intensity;
-    result.m_specular = light.m_specular * spec * attenuation * intensity;
+    result.m_specular = light.m_specular * spec * attenuation * intensity; 
+	//apply shadow
+	spot_light_apply_shadow(result, fposition);
     //return
     return result;
 }
