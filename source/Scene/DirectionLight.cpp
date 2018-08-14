@@ -43,6 +43,7 @@ namespace Scene
 	//light
 	DirectionLight::DirectionLight(Context& context)
 	: Component(context)
+	, m_buffer(context)
 	{
 		m_direction = { 0,0,1 };
 	}
@@ -67,6 +68,16 @@ namespace Scene
 		}
 	}
 	void DirectionLight::on_message(const Message& msg){}
+
+	//Shadow
+	const Render::ShadowBuffer& DirectionLight::shadow_buffer() const
+	{
+		return m_buffer;
+	}
+	bool DirectionLight::shadow() const
+	{
+		return false;
+	}
 
 	//object methods
 	//serialize
@@ -95,10 +106,6 @@ namespace Scene
 	Weak<Render::Transform> DirectionLight::transform() const
 	{
 		return { DynamicPointerCast<Render::Transform>(actor().lock()) };
-	}
-	Weak<Render::Camera> DirectionLight::camera() const
-	{
-		return {};
 	}
 	//methods
 	void DirectionLight::set(Render::UniformDirectionLight* data) const

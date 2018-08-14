@@ -35,7 +35,11 @@ namespace Render
 	}
 	static inline float compute_camera_depth(const Geometry::Sphere& in_sphere, const Shared<Transform>& transform)
 	{
-		return distance(in_sphere.get_center(),transform->position(true));
+		return distance(in_sphere.get_center(), transform->position(true));
+	}
+	static inline float compute_camera_depth(const Vec3& position, const Shared<Transform>& transform)
+	{
+		return distance(position, transform->position(true));
 	}
     
     //Query Lights
@@ -160,8 +164,8 @@ namespace Render
                 //distance
                 switch (queue.m_type)
                 {
-                    case RQ_OPAQUE:      rqueue_opaque.push_front_to_back(weak_renderable, distance(position, transform->position())); break;
-                    case RQ_TRANSLUCENT: rqueue_translucent.push_back_to_front(weak_renderable, distance(position, transform->position())); break;
+                    case RQ_OPAQUE:      rqueue_opaque.push_front_to_back(weak_renderable, compute_camera_depth(position, transform)); break;
+                    case RQ_TRANSLUCENT: rqueue_translucent.push_back_to_front(weak_renderable, compute_camera_depth(position, transform)); break;
                     default: queues[queue.m_type].push_back_to_front(weak_renderable, queue.m_order); break;
                 }
             }
@@ -230,8 +234,8 @@ namespace Render
 				//distance
 				switch (queue.m_type)
 				{
-				case RQ_OPAQUE:      rqueue_opaque.push_front_to_back(weak_renderable, distance(transform->position(), in_sphere.get_position())); break;
-				case RQ_TRANSLUCENT: rqueue_translucent.push_back_to_front(weak_renderable, distance(transform->position(), in_sphere.get_position())); break;
+				case RQ_OPAQUE:      rqueue_opaque.push_front_to_back(weak_renderable, compute_camera_depth(in_sphere, transform)); break;
+				case RQ_TRANSLUCENT: rqueue_translucent.push_back_to_front(weak_renderable, compute_camera_depth(in_sphere, transform)); break;
 				default: queues[queue.m_type].push_back_to_front(weak_renderable, queue.m_order); break;
 				}
 			}
@@ -243,20 +247,101 @@ namespace Render
         renderables(collection, queues, in_camera.frustum());
     }
     
+	void CollectionQuery::opaque_renderables(const Collection& collection,PoolQueues& queues, const Vec3& position)
+    {
+        //clear
+        queues[RQ_OPAQUE].clear();
+        //alias
+        auto& rqueue_opaque = queues.m_queues[RQ_OPAQUE];
+        //using
+        using namespace Geometry;
+        //build queue opaque
+        for (Weak<Renderable> weak_renderable : collection.m_renderables)
+        {
+            auto renderable = weak_renderable.lock();
+            if (renderable->can_draw() && !renderable->support_culling())
+            {
+                //gate distance
+                auto transform = renderable->transform().lock();
+                auto material = renderable->material().lock();
+                ///queue
+                EffectQueueType queue = material->queue();
+                //distance
+                if(queue.m_type == RQ_OPAQUE)
+					rqueue_opaque.push_front_to_back(weak_renderable, compute_camera_depth(position, transform));
+            }
+        }
+    }
+    
+    void CollectionQuery::opaque_renderables(const Collection& collection,PoolQueues& queues, const Geometry::Frustum& view_frustum)
+    {
+		//clea
+		queues[RQ_OPAQUE].clear();
+		//alias
+		auto& rqueue_opaque = queues.m_queues[RQ_OPAQUE];
+		//using
+		using namespace Geometry;
+        //build queue opaque
+        for (Weak<Renderable> weak_renderable : collection.m_renderables)
+        {
+            auto renderable = weak_renderable.lock();
+			if (renderable->can_draw())
+			{
+				//gate distance
+				auto transform = renderable->transform().lock();
+				auto material = renderable->material().lock();
+				///queue
+				EffectQueueType queue = material->queue();
+				//culling
+				if (queue.m_type == RQ_OPAQUE)
+				if (!renderable->support_culling() || Intersection::check(view_frustum, renderable->bounding_box()) != Intersection::OUTSIDE)
+						rqueue_opaque.push_front_to_back(weak_renderable, compute_camera_depth(view_frustum, transform));
+			}
+        }
+    }
+    
+    void CollectionQuery::opaque_renderables(const Collection& collection, PoolQueues& queues, const Geometry::Sphere& in_sphere)
+	{
+		//clear
+		queues[RQ_OPAQUE].clear();
+		//alias
+		auto& rqueue_opaque = queues.m_queues[RQ_OPAQUE];
+		//using
+		using namespace Geometry;
+		//build queue opaque
+		for (Weak<Renderable> weak_renderable : collection.m_renderables)
+		{
+			auto renderable = weak_renderable.lock();
+			if (renderable->can_draw())
+			if (!renderable->support_culling() || Intersection::check(renderable->bounding_box(), in_sphere) != Intersection::OUTSIDE)
+			{
+				//gate distance
+				auto transform = renderable->transform().lock();
+				auto material = renderable->material().lock();
+				///queue
+				EffectQueueType queue = material->queue();
+				//culling
+				if (queue.m_type == RQ_OPAQUE)
+					if (!renderable->support_culling() || Intersection::check(renderable->bounding_box(), in_sphere) != Intersection::OUTSIDE)
+						rqueue_opaque.push_front_to_back(weak_renderable, compute_camera_depth(in_sphere, transform));
+			}
+		}
+	}
+
     void CollectionQuery::renderables(const Collection& collection, PoolQueues& queues, const Light& in_light)
     {
         switch (in_light.type())
         {
             case LightType::SPOT:
-                renderables(collection, queues, in_light.frustum());
+				opaque_renderables(collection, queues, in_light.frustum());
             break;
             case LightType::POINT:
-                renderables(collection, queues, in_light.bounding_sphere());
+				opaque_renderables(collection, queues, in_light.bounding_sphere());
             break;
             case LightType::DIRECTION:
                 if(auto transform = in_light.transform().lock())
                 {
-                    renderables(collection, queues, transform->position());
+					opaque_renderables(collection, queues, transform->position());
                 }
             break;
         }

@@ -7,11 +7,13 @@
 //
 #include <set>
 #include "Square/Core/Context.h"
+#include "Square/Driver/Render.h"
 #include "Square/Render/Drawer.h"
 #include "Square/Render/Viewport.h"
 #include "Square/Render/Camera.h"
 #include "Square/Render/Light.h"
 #include "Square/Render/Renderable.h"
+#include "Square/Render/ShadowBuffer.h"
 
 namespace Square
 {
@@ -40,7 +42,7 @@ namespace Render
         std::set<Light*> m_shadows_draw;
         //filter
         auto can_draw_shadow = [&](Light* light) -> bool
-        {  return m_shadows_draw.find(light) == m_shadows_draw.end(); };
+        {  return light->shadow() && m_shadows_draw.find(light) == m_shadows_draw.end(); };
         //build queues
         int camera_index { 0 };
         for(auto weak_camera : collection.m_cameras)
@@ -64,26 +66,26 @@ namespace Render
                 auto draw_shadow = [&](Shared<Light> light)
                 {
                     if (light)
-                    if (light->shadow_caster())
                     if (can_draw_shadow(light.get()))
                     {
-                        //camera of shadow
-                        Weak<Camera> weak_shadow_camera = light->camera();
-                        //draw all
-                        if (auto shadow_camera = weak_shadow_camera.lock())
-                        {
-                            //set viewport (2D, On Screen)
-                            render().set_viewport_state({shadow_camera->viewport().viewport()});
-                            //draw
-                            pass->draw(  *this
-                                       , pass_shadow_count++
-                                       , clear_color
-                                       , ambient_color
-                                       , *camera
-                                       , collection
-                                       , queues[camera_index]
-                                       );
-                        }
+						//opaque queue
+						PoolQueues queues;
+						//compute queue
+						CollectionQuery::renderables(collection, queues, *light);
+						//render target
+						render().enable_render_target(light->shadow_buffer().target());
+                        //draw
+                        pass->draw(  *this
+                                    , pass_shadow_count++
+                                    , clear_color
+                                    , ambient_color
+                                    , *light
+                                    , collection
+                                    , queues
+                                    );
+						//disable
+						render().disable_render_target(light->shadow_buffer().target());
+						//drawed
                         m_shadows_draw.insert(light.get());
                     }
                 };

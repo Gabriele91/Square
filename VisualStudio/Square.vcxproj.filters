@@ -46,23 +46,11 @@
     <Filter Include="include\Square\Driver">
       <UniqueIdentifier>{33420c6c-7918-40a3-b951-eaa8fc02c6b1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Driver">
-      <UniqueIdentifier>{1765bbf0-91e0-47b9-a9d1-852bd0bc17a3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="include\Square\Geometry">
       <UniqueIdentifier>{23787cbd-2290-402e-8f38-f608f7b1515d}</UniqueIdentifier>
     </Filter>
     <Filter Include="source\Geometry">
       <UniqueIdentifier>{f5ea3472-4b2c-4316-ad3a-b7a938ef9bbb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\Driver\Win32">
-      <UniqueIdentifier>{6c16c117-6925-4b60-979d-654e20bbdcac}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\Driver\Xorg">
-      <UniqueIdentifier>{15539301-e609-4a99-8c04-7a711d7d1257}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\Driver\Cocoa">
-      <UniqueIdentifier>{7cd310e0-fb91-4fe7-b3e6-490930b0aade}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include\Square\Render">
       <UniqueIdentifier>{95925eac-4ef4-4439-a71a-5d790dd91d8e}</UniqueIdentifier>
@@ -84,6 +72,18 @@
     </Filter>
     <Filter Include="Include\Square\Resource">
       <UniqueIdentifier>{1a707ae0-7aa4-4cdc-8b60-45da222f2cf6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Driver">
+      <UniqueIdentifier>{1765bbf0-91e0-47b9-a9d1-852bd0bc17a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Driver\Win32">
+      <UniqueIdentifier>{6c16c117-6925-4b60-979d-654e20bbdcac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Driver\Xorg">
+      <UniqueIdentifier>{15539301-e609-4a99-8c04-7a711d7d1257}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Driver\Cocoa">
+      <UniqueIdentifier>{7cd310e0-fb91-4fe7-b3e6-490930b0aade}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -309,6 +309,12 @@
     <ClInclude Include="..\include\Square\Scene\SpotLight.h">
       <Filter>include\Square\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Render\ShadowBuffer.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\shader\PointShadowLight.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -405,7 +411,7 @@
       <Filter>Source\Scene</Filter>
     </ClCompile>
     <ClCompile Include="..\source\Driver\Render.cpp">
-      <Filter>source\Driver</Filter>
+      <Filter>Source\Driver</Filter>
     </ClCompile>
     <ClCompile Include="..\source\Core\SharedLibrary.cpp">
       <Filter>source\Core</Filter>
@@ -456,7 +462,7 @@
       <Filter>Source\Driver\Win32</Filter>
     </ClCompile>
     <ClCompile Include="..\source\Driver\Win32\Window_private_dx.cpp">
-      <Filter>source\Driver\Win32</Filter>
+      <Filter>Source\Driver\Win32</Filter>
     </ClCompile>
     <ClCompile Include="..\source\Render\Drawer.cpp">
       <Filter>Source\Render</Filter>
@@ -487,6 +493,15 @@
     </ClCompile>
     <ClCompile Include="..\source\Scene\SpotLight.cpp">
       <Filter>source\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\include\Square\Render\DrawerPassShadow.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Render\DrawerPassShadow.cpp">
+      <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Render\ShadowBuffer.cpp">
+      <Filter>Source\Render</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -546,6 +561,24 @@
     </None>
     <None Include="..\common\effect\Base.hlsl">
       <Filter>Resource\common\effect</Filter>
+    </None>
+    <None Include="..\common\effect\Shadow.sqfx">
+      <Filter>Resource\common\effect</Filter>
+    </None>
+    <None Include="..\common\shader\ShadowCamera.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </None>
+    <None Include="..\common\effect\SpotShadow.hlsl">
+      <Filter>Resource\common\effect</Filter>
+    </None>
+    <None Include="..\common\shader\SpotShadowLight.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </None>
+    <None Include="..\common\effect\PointShadow.hlsl">
+      <Filter>Resource\common\effect</Filter>
+    </None>
+    <None Include="..\source\Resource\ShaderCommonHeader.hlsl">
+      <Filter>source\Resource</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

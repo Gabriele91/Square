@@ -10,13 +10,19 @@
 #include "Square/Core/Object.h"
 #include "Square/Math/Linear.h"
 
+#define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 5
+
 namespace Square
 {
     namespace Render
     {
+		class Texture;
+		class Target;
         class Material;
-        class Transform;
-        class Camera;
+		class Transform;
+		class Camera;
+		class ShadowBuffer;
+		class Viewport;
     }
     namespace Geometry
     {
@@ -68,36 +74,68 @@ namespace Render
         float m_outer_cut_off; 
     };
 
-	//lights
-    class SQUARE_API Light : public BaseObject
+	//uniform buffers
+    ConstantBufferStruct UniformDirectionShadowLight
     {
+		Mat4 m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+		Mat4 m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+    };
+
+    ConstantBufferStruct UniformPointShadowLight
+    {
+		Mat4 m_projection;
+		Mat4 m_view[6];
+		Vec4 m_position;
+		float m_radius;
+    };
+
+    ConstantBufferStruct UniformSpotShadowLight
+    {
+		Mat4 m_projection;
+		Mat4 m_view;
+    };
+
+	//lights
+	class SQUARE_API Light : public BaseObject
+	{
 	public:
-		
+
 		SQUARE_OBJECT(Light)
 
-        virtual const Geometry::Sphere& bounding_sphere() const = 0;
-        
-        virtual const Geometry::Frustum& frustum() const = 0;
+		virtual const Geometry::Sphere& bounding_sphere() const = 0;
 
-        virtual Weak<Transform> transform() const = 0;
-        
-        virtual Weak<Camera> camera() const = 0;
+		virtual const Geometry::Frustum& frustum() const = 0;
 
-		bool visible() const;
-        
-		void visible(bool enable);
+		virtual Weak<Transform> transform() const = 0;
 
-		bool shadow_caster() const;
-        
-		void shadow_caster(bool enable);
+		//shadow
+		virtual const ShadowBuffer& shadow_buffer() const = 0;
 
-		LightType type() const;
+		virtual bool shadow() const = 0;
 
+		virtual Vec4 shadow_viewport() const;
+
+		//uniform light info
 		virtual void set(UniformDirectionLight* data) const;
 
 		virtual void set(UniformPointLight* data) const;
 
 		virtual void set(UniformSpotLight* data) const;
+
+		//uniform shadow light info
+		virtual void set(UniformDirectionShadowLight* data) const;
+
+		virtual void set(UniformPointShadowLight* data) const;
+
+		virtual void set(UniformSpotShadowLight* data) const;
+
+		//get viewport shadow camera
+
+		bool visible() const;
+
+		void visible(bool enable);
+
+		LightType type() const;
 
     protected:
         
@@ -107,7 +145,6 @@ namespace Render
         
         LightType m_type{ LightType::NONE };
 		bool m_visible{ true };
-        bool m_shadow_caster{ false };
 	};
 	
     class SQUARE_API DirectionLight : public Light
@@ -193,4 +230,4 @@ namespace Render
         float m_outer_cut_off;
     };
 }
-}
+} 

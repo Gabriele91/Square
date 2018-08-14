@@ -8,7 +8,7 @@
 #pragma once
 struct SurfaceData
 {
-	Vec3   m_position;    // world
+	Vec4   m_position;    // world
 	Vec3   m_albedo;      // diffuse color
 	Vec3   m_specular;    // specular color
 	Vec3   m_normal;      // normal in world space
@@ -22,7 +22,7 @@ struct SurfaceData
 SurfaceData DefaultSurfaceData()
 {
 	SurfaceData output;
-	output.m_position = Vec3(0.0, 0.0, 0.0);
+	output.m_position = Vec4(0.0, 0.0, 0.0, 1.0);
 	output.m_albedo = Vec3(1.0, 1.0, 1.0);
 	output.m_specular = Vec3(1.0, 1.0, 1.0);
 	output.m_normal = Vec3(0.0, 0.0, 0.0);

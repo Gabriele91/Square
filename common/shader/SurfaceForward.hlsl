@@ -20,7 +20,7 @@ SurfaceOutput compute_surface_output(in SurfaceData data)
 	float shininess = 16.0f;
 
 	//view dir
-	Vec3 view_dir = normalize(camera.m_position - data.m_position);
+	Vec3 view_dir = normalize(camera.m_position - data.m_position.xyz);
 
 	// Then calculate lighting as usual
 	LightResult light_results = compute_light(

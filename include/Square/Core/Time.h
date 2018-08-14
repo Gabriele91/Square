@@ -44,6 +44,8 @@ namespace Time
         void reset();
         
         double count_frame();
+
+		double get();
         
     private:
         

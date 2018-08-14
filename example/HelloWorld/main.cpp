@@ -186,6 +186,7 @@ class Game01 : public Square::AppInterface
 {
 public:
 
+	bool m_turn{ true };
 	
 	void key_event(Square::Video::KeyboardEvent key, short mode, Square::Video::ActionEvent action)
 	{
@@ -203,6 +204,18 @@ public:
 		case Square::Video::KEY_W: Square::Application::instance()->fullscreen(false); break;
 		case Square::Video::KEY_F: Square::Application::instance()->fullscreen(true); break;
 
+		case Square::Video::KEY_C:
+			if (action == Square::Video::ActionEvent::RELEASE)
+			{
+				std::cout << "FPS avg: " << m_counter.get() << std::endl;
+			}
+			break;
+		case Square::Video::KEY_T:
+			if (action == Square::Video::ActionEvent::RELEASE)
+			{
+				m_turn = !m_turn;
+			}
+		break;
 		case Square::Video::KEY_D:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
@@ -220,16 +233,16 @@ public:
 		case Square::Video::KEY_S:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
-				auto slight = m_level->actor("light2")->component<SpotLight>();
+				auto slight = m_level->actor("light1")->component<SpotLight>();
 				slight->visible(!slight->visible());
 			}
 		break;
-		case Square::Video::KEY_LEFT:  m_level->actor("light2")->translation({ velocity,0,0 });   break;
-		case Square::Video::KEY_RIGHT: m_level->actor("light2")->translation({ -velocity,0,0 });  break;
-		case Square::Video::KEY_UP:    m_level->actor("light2")->translation({ 0,0,velocity });   break;
-		case Square::Video::KEY_DOWN:  m_level->actor("light2")->translation({ 0,0,-velocity });  break;
-		case Square::Video::KEY_PAGE_UP:    m_level->actor("light2")->translation({ 0,velocity,0 });   break;
-		case Square::Video::KEY_PAGE_DOWN:  m_level->actor("light2")->translation({ 0,-velocity,0 });  break;
+		case Square::Video::KEY_LEFT:  m_level->actor("light1")->translation({ velocity,0,0 });   break;
+		case Square::Video::KEY_RIGHT: m_level->actor("light1")->translation({ -velocity,0,0 });  break;
+		case Square::Video::KEY_UP:    m_level->actor("light1")->translation({ 0,0,velocity });   break;
+		case Square::Video::KEY_DOWN:  m_level->actor("light1")->translation({ 0,0,-velocity });  break;
+		case Square::Video::KEY_PAGE_UP:    m_level->actor("light1")->translation({ 0,velocity,0 });   break;
+		case Square::Video::KEY_PAGE_DOWN:  m_level->actor("light1")->translation({ 0,-velocity,0 });  break;
 		default: break;
 		}
 	}
@@ -240,16 +253,17 @@ public:
 		using namespace Square::Data;
 		using namespace Square::Scene;
 		using namespace Square::Resource;
+		//rs file
+		context().add_resources(Filesystem::resource_dir() + "/resources.rs");
 		//level
 		m_level = context().create<Level>();
         m_drawer = Square::MakeShared<Render::Drawer>(context());
-        m_drawer->add(MakeShared<Render::DrawerPassForward>(context()));
-		//rs file
-		context().add_resources(Filesystem::resource_dir() + "/resources.rs");
+		m_drawer->add(MakeShared<Render::DrawerPassForward>(context()));
+		m_drawer->add(MakeShared<Render::DrawerPassShadow>(context()));
         //camera
         auto camera = m_level->actor("camera");
         camera->translation({ 0,0,0 });
-        camera->rotation(euler_to_quat(0.0f,Square::radians(180.0f),0.0f));
+        camera->rotation(rotate_euler(0.0f,Square::radians(180.0f),0.0f));
         camera->component<Camera>()->viewport({0,0, 1280, 768});
         camera->component<Camera>()->perspective(radians(90.0), 1280. / 768., 0.1, 1000.);		
 		//test
@@ -264,19 +278,24 @@ public:
 		//light
 		auto light0 = m_level->actor("light0");
 		light0->component<DirectionLight>()->diffuse({ 1.0,0.0,0.0 });
-		light0->rotation(euler_to_quat(0.0f, Square::radians(-90.0f), 0.0f));
+		//light0->component<DirectionLight>()->visible(false);
+		light0->rotation(rotate_euler(0.0f, Square::radians(-90.0f), 0.0f));
 
 		auto light1 = m_level->actor("light1");
-		light1->component<PointLight>()->radius(8.0, 1.0);
+		light1->component<PointLight>()->radius(20.0, 15.0);
 		light1->component<PointLight>()->diffuse({ 0.0,1.0,0.0 });
-		light1->component<PointLight>()->specular({ 0.0,0.0,0.0 });
+		light1->component<PointLight>()->specular({ 0.0,1.0,0.0 });
+		//light1->component<PointLight>()->visible(false);
+		light1->component<PointLight>()->shadow({ 512,512 });
 		light1->position({ 0,0,10 });
 
 		auto light2 = m_level->actor("light2");
 		light2->component<SpotLight>()->radius(15.0, 5.0);
 		light2->component<SpotLight>()->diffuse({ 1.0,1.0,1.0 });
 		light2->component<SpotLight>()->specular({ 1.0,1.0,1.0 });
-		light2->rotation(euler_to_quat(Square::radians(90.0f), 0.0f, 0.0f));
+		light2->component<SpotLight>()->shadow({ 512,512 });
+		//light2->component<SpotLight>()->visible(false);
+		light2->rotation(rotate_euler(Square::radians(-90.0f), 0.0f, 0.0f));
 		light2->position({ 0,0,10 });
 		//n cubes
 		int n_cubes = 6;
@@ -308,18 +327,22 @@ public:
     bool run(double dt)
     {
 		using namespace Square;
-		m_level->actor("main_node")->turn(
-			euler_to_quat<float>(0, 0, Square::Constants::pi2<float>() * 0.1 * dt)
-		);
+		if(m_turn)
+			m_level->actor("main_node")->turn(
+				rotate_euler<float>(0, 0, Square::Constants::pi2<float>() * 0.1 * dt)
+			);
         for(auto child : m_level->actor("main_node")->childs())
         {
-            child->turn(euler_to_quat<float>(0.0f,radians(90.0f*dt),0.0f));
+            child->turn(rotate_euler<float>(0.0f,radians(90.0f*dt),0.0f));
         }
         m_drawer->draw( 
 			  Vec4(0.25,0.5,1.0,1.0)
 			, Vec4(0.1,0.1,0.1,1.0)
 			, m_level->randerable_collection()
 		);
+		//fps counter
+		m_counter.count_frame();
+		//loop event
         return m_loop;
     }
     bool end()
@@ -366,7 +389,7 @@ int main()
       WindowSizePixel({ 1280, 768 })
     , WindowMode::NOT_RESIZABLE
 	, 
-#if defined(_WIN32) & 1
+#if defined(_WIN32) & 0
 	  WindowRenderDriver
 	  {
 		 Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, true

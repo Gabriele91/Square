@@ -1,0 +1,37 @@
+parameters
+{
+    diffuse_map  texture("white")
+    mask         float(-1.0)
+}
+
+sub_effect
+{	
+    technique "SpotShadow"
+    {
+        pass 
+        {
+            zbuffer less
+            blend off
+            cullface front
+		    lights off
+            shader source 
+            {
+				#include "SpotShadow.hlsl"
+            }
+        }
+    }
+    technique "PointShadow"
+    {
+        pass 
+        {
+            zbuffer less
+            blend off
+            cullface front
+		    lights off
+            shader source 
+            {
+				#include "PointShadow.hlsl"
+            }
+        }
+    }
+}

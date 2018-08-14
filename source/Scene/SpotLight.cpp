@@ -12,6 +12,9 @@
 #include "Square/Geometry/Frustum.h"
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/SpotLight.h"
+#include "Square/Scene/Camera.h"
+
+#define SPOT_LIGHT_DIR Vec3(0,0.0,-1.0)
 
 namespace Square
 {
@@ -68,22 +71,45 @@ namespace Scene
 		, float(1.0)
 		, [](const SpotLight* plight) -> float               { return plight->outer_cut_off(); }
 		, [](SpotLight* plight, const float& outer_cut_off)  { plight->outer_cut_off(outer_cut_off);  }));
+		//////////////////////////////////////////////////////////////////
+		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, Vec2>
+		("shadow"
+		, Vec2(0,0)
+		, [](const SpotLight* plight) -> Vec2             { return plight->shadow_size(); }
+		, [](SpotLight* plight, const Vec2& shadow_size)  { plight->shadow(shadow_size);  }));
+		//////////////////////////////////////////////////////////////////
+
     }
 
 	//light
 	SpotLight::SpotLight(Context& context)
 	: Component(context)
+	, m_buffer(context)
 	{
 		m_sphere.radius(this->Render::SpotLight::radius());
 		m_sphere.position({ 0,0,0 });
 		m_position = Vec3(0, 0, 0.0);
 		m_direction = Vec3(0, 0, 1.0);
 	}
+
 	//change radius aka change geometry
 	void SpotLight::radius(const float light_r)
 	{
 		this->Render::SpotLight::radius(light_r);
 		m_sphere.radius(this->Render::SpotLight::radius());
+		//dirty
+		m_frustum_is_dirty = true;
+		m_viewport_is_dirty = false;
+	}
+
+	//change outer cut_off aka change frustum
+	void SpotLight::outer_cut_off(const float coff)
+	{
+		//call light equivalent function
+		this->Render::SpotLight::outer_cut_off(coff);
+		//frustum dirty
+		m_frustum_is_dirty = true;
+		m_viewport_is_dirty = true;
 	}
 
 	//all events
@@ -91,28 +117,65 @@ namespace Scene
 	{
 		if (auto ptr_actor = actor().lock())
 		{
-			m_direction = to_mat3(ptr_actor->rotation(true)) * Vec3(0, 0, 1.0);
+			m_direction = to_mat3(ptr_actor->rotation(true)) * SPOT_LIGHT_DIR;
 			m_position = ptr_actor->position(true);
 			m_sphere.position(m_position);
+			m_view_is_dirty = true;
+			m_frustum_is_dirty = true;
 		}
 	}
 	void SpotLight::on_deattch()
 	{
-		m_direction = Vec3(0, 0, 1.0);
+		m_direction = SPOT_LIGHT_DIR;
 		m_position = Vec3(0, 0, 0.0);
 		m_sphere.position({ 0,0,0 });
+		m_view_is_dirty = true;
+		m_frustum_is_dirty = true;
 	}
 	void SpotLight::on_transform()
 	{
 		if (auto ptr_actor = actor().lock())
 		{
-			m_direction = to_mat3(ptr_actor->rotation(true)) * Vec3(0, 0, 1.0);
+			m_direction = to_mat3(ptr_actor->rotation(true)) * SPOT_LIGHT_DIR;
 			m_position = ptr_actor->position(true);
 			m_sphere.position(m_position);
+			m_view_is_dirty = true;
+			m_frustum_is_dirty = true;
 		}
-
 	}
 	void SpotLight::on_message(const Message& msg){}
+
+	//shadow
+	const Render::ShadowBuffer& SpotLight::shadow_buffer() const
+	{
+		return m_buffer;
+	}
+	Vec4 SpotLight::shadow_viewport() const
+	{
+		projection(); //force update
+		return m_viewport.viewport();
+	}
+	bool SpotLight::shadow() const
+	{
+		return m_buffer.width() != 0 && m_buffer.height() != 0;
+	}
+	void SpotLight::shadow(const IVec2& size)
+	{
+		if (m_buffer.size() != size)
+		{
+			if (size.x != 0 && size.y != 0)
+				m_buffer.build(size, Render::ShadowBuffer::SB_TEXTURE_2D);
+			else
+				m_buffer.destoy();
+			//dirty
+			m_frustum_is_dirty = true;
+			m_viewport_is_dirty = true;
+		}
+	}
+	const IVec2& SpotLight::shadow_size() const
+	{
+		return m_buffer.size();
+	}
 
 	//object methods
 	//serialize
@@ -137,18 +200,17 @@ namespace Scene
 	}
 	const Geometry::Frustum& SpotLight::frustum() const
 	{
-		return {};
+		if (m_frustum_is_dirty)
+		{
+			//update frustum
+			m_frustum.update_frustum(projection() * view());
+			m_frustum_is_dirty = false;
+		}
+		return m_frustum;
 	}
 	Weak<Render::Transform> SpotLight::transform() const
 	{
-		return
-		{
-			DynamicPointerCast<Render::Transform>(actor().lock())
-		};
-	}
-	Weak<Render::Camera> SpotLight::camera() const
-	{
-		return {};
+		return { DynamicPointerCast<Render::Transform>(actor().lock()) };
 	}
 	//methods
 	void SpotLight::set(Render::UniformSpotLight* data) const
@@ -156,6 +218,49 @@ namespace Scene
 		data->m_position = m_position;
 		data->m_direction = m_direction;
 		this->Render::SpotLight::set(data);
+	}
+	void SpotLight::set(Render::UniformSpotShadowLight* data) const
+	{
+		data->m_projection = projection();
+		data->m_view = view();
+	}
+	//update spot light
+	const Mat4& SpotLight::view() const
+	{
+		if (m_view_is_dirty)
+		{
+			if (auto ptr_actor = actor().lock())
+			{
+				m_view = Square::inverse(ptr_actor->global_model_matrix());
+			}
+			else
+			{
+				m_view = Constants::identity<Mat4>();
+			}
+			m_view_is_dirty = false;
+		}
+		return m_view;
+	}
+	const Mat4& SpotLight::projection() const
+	{
+		if (m_viewport_is_dirty)
+		{
+			//default aspect
+			float aspect = 1.0;
+			//shadow?
+			if (shadow())
+			{
+				auto size = m_buffer.size();
+				float aspect = size.x / size.y;
+				m_viewport.viewport({ 0,0,size.x,size.y });
+			}
+			//update frustum
+			m_viewport.perspective(m_outer_cut_off*1.99f, aspect, 0.1f, m_radius);
+			//dirty
+			m_viewport_is_dirty = false;
+		}
+		return m_viewport.projection();
+
 	}
 }
 }

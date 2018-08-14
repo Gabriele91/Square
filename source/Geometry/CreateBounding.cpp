@@ -6,6 +6,7 @@
 //
 #include  <algorithm>
 #include "Square/Config.h"
+#include "Square/Math/Transformation.h"
 #include "Square/Geometry/CreateBounding.h"
 
 namespace Square

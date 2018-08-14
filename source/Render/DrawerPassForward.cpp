@@ -13,6 +13,7 @@
 #include "Square/Render/Viewport.h"
 #include "Square/Render/Renderable.h"
 #include "Square/Render/Transform.h"
+#include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/DrawerPassForward.h"
 
 namespace Square
@@ -25,9 +26,14 @@ namespace Render
     {
         m_cb_camera    = Render::stream_constant_buffer<Render::UniformBufferCamera>(&render());
 		m_cb_transform = Render::stream_constant_buffer<Render::UniformBufferTransform>(&render());
+
 		m_cb_direction_light = Render::stream_constant_buffer<Render::UniformDirectionLight>(&render());
 		m_cb_point_light = Render::stream_constant_buffer<Render::UniformPointLight>(&render());
 		m_cb_spot_light = Render::stream_constant_buffer<Render::UniformSpotLight>(&render());
+		
+		m_cb_direction_shadow_light = Render::stream_constant_buffer<Render::UniformDirectionShadowLight>(&render());
+		m_cb_point_shadow_light = Render::stream_constant_buffer<Render::UniformPointShadowLight>(&render());
+		m_cb_spot_shadow_light = Render::stream_constant_buffer<Render::UniformSpotShadowLight>(&render());
     }
     //context
     Square::Context& DrawerPassForward::context(){ return m_context; }
@@ -57,12 +63,17 @@ namespace Render
             //clear
             render().clear();
         }
-        //transfor
+        //buffers
         Render::UniformBufferCamera ucamera;
 		Render::UniformBufferTransform utransform;
+
 		Render::UniformDirectionLight udirection_light;
 		Render::UniformPointLight upoint_light;
 		Render::UniformSpotLight uspot_light;
+
+		Render::UniformDirectionShadowLight udirection_shadow_light;
+		Render::UniformPointShadowLight upoint_shadow_light;
+		Render::UniformSpotShadowLight uspot_shadow_light;
 		//parameters
 		EffectPassInputs inputs
 		{
@@ -74,6 +85,11 @@ namespace Render
 			, m_cb_direction_light.get()
 			, m_cb_point_light.get()
 			, m_cb_spot_light.get()
+			//shadow
+			, nullptr
+			, m_cb_direction_shadow_light.get()
+			, m_cb_point_shadow_light.get()
+			, m_cb_spot_shadow_light.get()
 		};
         //update camera
         camera.set(&ucamera);
@@ -106,55 +122,97 @@ namespace Render
 				//draw for each pass
 				for (auto& pass : *technique)
 				{
+					//light only or light and shadow?
+					int support[]{ pass.m_support_light, pass.m_support_shadow };
+					//shadow?
+					bool shadow = pass.m_support_shadow != EffectPass::LT_NONE;
 					//bind
-					switch (pass.m_support_light)
+					switch (support[shadow])
 					{
-					//not costant buffer
+						//not costant buffer
 					case EffectPass::LT_NONE:
 					case EffectPass::LT_AMBIENT:
+						//no shadow light
+						if (shadow) break;
 						//draw
 						randerable->draw(render(), material_id, inputs, pass);
-					break;
-					//update constant buffer
+						break;
+						//update constant buffer
 					case EffectPass::LT_DIRECTION:
-						for(auto weak_light : queues[RQ_DIRECTION_LIGHT])
+						for (auto weak_light : queues[RQ_DIRECTION_LIGHT])
 						if (auto light = weak_light->lock< Render::Light >())
 						{
+							//is a shadow light
+							if (light->shadow() != shadow) break;
 							//get buffer
 							light->set(&udirection_light);
 							//update buffer
 							Render::update_constant_buffer(&render(), m_cb_direction_light.get(), &udirection_light);
+							//shadow
+							if (shadow)
+							{
+								//get buffer
+								light->set(&udirection_shadow_light);
+								//update buffer
+								Render::update_constant_buffer(&render(), m_cb_direction_shadow_light.get(), &udirection_shadow_light);
+								//shadow map
+								inputs.m_shadow_map = light->shadow_buffer().texture();
+							}
 							//draw
 							randerable->draw(render(), material_id, inputs, pass);
 						}
-					break;
-					//update constant buffer
+						break;
+						//update constant buffer
 					case EffectPass::LT_POINT:
 						for (auto weak_light : queues[RQ_POINT_LIGHT])
 						if (auto light = weak_light->lock< Render::Light >())
 						{
+							//is a shadow light
+							if (light->shadow() != shadow) break;
 							//get buffer
 							light->set(&upoint_light);
 							//update buffer
 							Render::update_constant_buffer(&render(), m_cb_point_light.get(), &upoint_light);
+							//shadow
+							if (shadow)
+							{
+								//get buffer
+								light->set(&upoint_shadow_light);
+								//update buffer
+								Render::update_constant_buffer(&render(), m_cb_point_shadow_light.get(), &upoint_shadow_light);
+								//shadow map
+								inputs.m_shadow_map = light->shadow_buffer().texture();
+							}
 							//draw
 							randerable->draw(render(), material_id, inputs, pass);
 						}
-					break;
-					//update constant buffer
+						break;
+						//update constant buffer
 					case EffectPass::LT_SPOT:
 						for (auto weak_light : queues[RQ_SPOT_LIGHT])
 						if (auto light = weak_light->lock< Render::Light >())
 						{
+							//is a shadow light
+							if (light->shadow() != shadow) break;
 							//get buffer
 							light->set(&uspot_light);
 							//update buffer
 							Render::update_constant_buffer(&render(), m_cb_spot_light.get(), &uspot_light);
+							//shadow
+							if (shadow)
+							{
+								//get buffer
+								light->set(&uspot_shadow_light);
+								//update buffer
+								Render::update_constant_buffer(&render(), m_cb_spot_shadow_light.get(), &uspot_shadow_light);
+								//shadow map
+								inputs.m_shadow_map = light->shadow_buffer().texture();
+							}
 							//draw
 							randerable->draw(render(), material_id, inputs, pass);
 						}
-					break;
-					/* not support */
+						break;
+						/* not support */
 					default: continue;
 					}
 				}

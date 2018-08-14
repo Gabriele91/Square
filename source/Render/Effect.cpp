@@ -352,24 +352,38 @@ namespace Render
 			m_uniform_transform->bind(inputs.m_transform);
 		}
 		//lights
-		if (m_support_light)
+		if (m_uniform_ambient_light && m_uniform_ambient_light->is_valid())
 		{
-			if (m_uniform_ambient_light && m_uniform_ambient_light->is_valid())
-			{
-				m_uniform_ambient_light->set(inputs.m_ambient_light);
-			}
-			if (inputs.m_direction_light && m_uniform_direction && m_uniform_direction->is_valid())
-			{
-				m_uniform_direction->bind(inputs.m_direction_light);
-			}
-			if (inputs.m_point_light && m_uniform_point && m_uniform_point->is_valid())
-			{
-				m_uniform_point->bind(inputs.m_point_light);
-			}
-			if (inputs.m_spot_light && m_uniform_spot && m_uniform_spot->is_valid())
-			{
-				m_uniform_spot->bind(inputs.m_spot_light);
-			}
+			m_uniform_ambient_light->set(inputs.m_ambient_light);
+		}
+		if (inputs.m_direction_light && m_uniform_direction && m_uniform_direction->is_valid())
+		{
+			m_uniform_direction->bind(inputs.m_direction_light);
+		}
+		if (inputs.m_point_light && m_uniform_point && m_uniform_point->is_valid())
+		{
+			m_uniform_point->bind(inputs.m_point_light);
+		}
+		if (inputs.m_spot_light && m_uniform_spot && m_uniform_spot->is_valid())
+		{
+			m_uniform_spot->bind(inputs.m_spot_light);
+		}
+		//shadow
+		if (inputs.m_shadow_map && m_uniform_shadow_map /*&& m_uniform_shadow_map->is_valid*/)
+		{
+			m_uniform_shadow_map->set(inputs.m_shadow_map);
+		}
+		if (inputs.m_direction_shadow_light && m_uniform_direction_shadow && m_uniform_direction_shadow->is_valid())
+		{
+			m_uniform_direction_shadow->bind(inputs.m_direction_shadow_light);
+		}
+		if (inputs.m_point_shadow_light && m_uniform_point_shadow && m_uniform_point_shadow->is_valid())
+		{
+			m_uniform_point_shadow->bind(inputs.m_point_shadow_light);
+		}
+		if (inputs.m_spot_shadow_light && m_uniform_spot_shadow && m_uniform_spot_shadow->is_valid())
+		{
+			m_uniform_spot_shadow->bind(inputs.m_spot_shadow_light);
 		}
 	}
 
@@ -384,7 +398,7 @@ namespace Render
 		//bind shader
 		m_shader->bind();
 		//uniform
-		for (size_t i = 0; i != m_uniform.size(); ++i)
+	    for (size_t i = 0; i != m_uniform.size(); ++i)
 		{
 			auto& param = (*params)[m_param_id[i]];
 			//uniform value
@@ -534,22 +548,21 @@ namespace Render
 	}
 
 	//get parameter
-	EffectParameter* Effect::parameter(int parameter_id)
+	EffectParameter* Effect::parameter(int parameter_id) const
 	{
 		if (m_parameters.size() > (size_t)parameter_id)
 			return m_parameters[parameter_id].get();
 		return nullptr;
 	}
 
-	EffectParameter* Effect::parameter(const std::string& parameter_name)
+	EffectParameter* Effect::parameter(const std::string& parameter_name) const
 	{
 		auto it_param = m_parameters_map.find(parameter_name);
 		if (it_param != m_parameters_map.end()) return parameter(it_param->second);
 		return nullptr;
 	}
-
-
-	EffectParameters* Effect::copy_all_parameters()
+	
+	EffectParameters* Effect::copy_all_parameters() const
 	{
 		//alloc vector
 		auto new_params = new EffectParameters(m_parameters.size());
@@ -560,7 +573,12 @@ namespace Render
 		}
 		return new_params;
 	}
-
+	
+	const std::string&  Effect::parameter_name(int parameter_id) const
+	{
+		for (auto element : m_parameters_map) if (element.second == parameter_id) return element.first;
+		return std::string();
+	}
 	//get id
 	int Effect::parameter_id(const std::string& parameter_name)
 	{

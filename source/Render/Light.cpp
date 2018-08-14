@@ -11,9 +11,8 @@ namespace Render
 
 	void Light::visible(bool enable) { m_visible = enable; }
 
-	bool Light::shadow_caster() const { return m_shadow_caster; }
-
-	void Light::shadow_caster(bool enable) { m_shadow_caster = enable; }
+	Vec4 Light::shadow_viewport() const { return {}; }
+	//uniform shadow light info
 
 	LightType Light::type() const { return m_type; }
 
@@ -22,6 +21,12 @@ namespace Render
 	void Light::set(UniformPointLight* data) const {};
 
 	void Light::set(UniformSpotLight* data) const {};
+
+	void Light::set(UniformDirectionShadowLight* data) const {}
+
+	void Light::set(UniformPointShadowLight* data) const {}
+
+	void Light::set(UniformSpotShadowLight* data) const {}
 
 	void Light::type(LightType type) { m_type = type; }
 
@@ -97,8 +102,8 @@ namespace Render
 		diffuse(Vec3{ 1.0,1.0,1.0 });
 		specular(Vec3{ 1.0,1.0,1.0 });
 		constant(1.0);
-		inner_cut_off(radians(45.0));
-		outer_cut_off(radians(90.0));
+		inner_cut_off(radians(22.5));
+		outer_cut_off(radians(45.0));
 	}
 
 	float SpotLight::inner_cut_off() const { return m_inner_cut_off; }
@@ -111,8 +116,8 @@ namespace Render
 
 	void SpotLight::cut_off(const float outer_coff, const float inner_coff)
 	{
-		m_outer_cut_off = outer_coff;
-		m_inner_cut_off = inner_coff;
+		inner_cut_off(inner_coff);
+		outer_cut_off(outer_coff);
 	}
 	void SpotLight::inner_cut_off(const float coff) { m_inner_cut_off = coff; }
 	void SpotLight::outer_cut_off(const float coff) { m_outer_cut_off = coff; }

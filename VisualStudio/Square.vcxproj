@@ -150,6 +150,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="..\common\shader\PointShadowLight.hlsl">
+      <FileType>Document</FileType>
+    </None>
     <ClInclude Include="..\include\Square\Config.h" />
     <ClInclude Include="..\include\Square\Core\Application.h" />
     <ClInclude Include="..\include\Square\Core\Attribute.h" />
@@ -196,6 +199,7 @@
     <ClInclude Include="..\include\Square\Render\Material.h" />
     <ClInclude Include="..\include\Square\Render\Queue.h" />
     <ClInclude Include="..\include\Square\Render\Renderable.h" />
+    <ClInclude Include="..\include\Square\Render\ShadowBuffer.h" />
     <ClInclude Include="..\include\Square\Render\Transform.h" />
     <ClInclude Include="..\include\Square\Render\VertexLayout.h" />
     <ClInclude Include="..\include\Square\Render\Viewport.h" />
@@ -266,6 +270,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\include\Square\Render\DrawerPassShadow.h" />
     <ClCompile Include="..\include\Square\Scene\PointLight.h" />
     <ClCompile Include="..\source\Core\Application.cpp" />
     <ClCompile Include="..\source\Core\Context.cpp" />
@@ -326,11 +331,13 @@
     <ClCompile Include="..\source\Render\Collection.cpp" />
     <ClCompile Include="..\source\Render\Drawer.cpp" />
     <ClCompile Include="..\source\Render\DrawerPassForward.cpp" />
+    <ClCompile Include="..\source\Render\DrawerPassShadow.cpp" />
     <ClCompile Include="..\source\Render\Effect.cpp" />
     <ClCompile Include="..\source\Render\GBuffer.cpp" />
     <ClCompile Include="..\source\Render\Light.cpp" />
     <ClCompile Include="..\source\Render\Material.cpp" />
     <ClCompile Include="..\source\Render\Queue.cpp" />
+    <ClCompile Include="..\source\Render\ShadowBuffer.cpp" />
     <ClCompile Include="..\source\Render\VertexFormat.cpp" />
     <ClCompile Include="..\source\Render\Viewport.cpp" />
     <ClCompile Include="..\source\Resource\Effect.cpp" />
@@ -349,6 +356,7 @@
   <ItemGroup>
     <None Include="..\common\common.rs" />
     <None Include="..\common\effect\Base.sqfx" />
+    <None Include="..\common\effect\Shadow.sqfx" />
     <None Include="..\source\Driver\Cocoa\Input_private.mm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -444,6 +452,31 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\common\shader\ShadowCamera.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\common\effect\SpotShadow.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\common\shader\SpotShadowLight.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\source\Resource\ShaderCommonHeader.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\common\effect\PointShadow.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

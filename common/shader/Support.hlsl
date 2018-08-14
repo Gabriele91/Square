@@ -42,13 +42,35 @@ Vec3 normal_from_texture(in Vec4 normal_color)
 }
 
 //Compute position
+Vec4 mul_model_view_projection(Vec4 position)
+{
+	position = mul(position, transform.m_model);
+	position = mul(position, camera.m_view);
+	position = mul(position, camera.m_projection);
+	return position;
+}
+
+Vec4 mul_view_projection(Vec4 position)
+{
+	position = mul(position, camera.m_view);
+	position = mul(position, camera.m_projection);
+	return position;
+}
+
+Vec4 mul_model(Vec4 position)
+{
+	position = mul(position, transform.m_model);
+	return position;
+}
+
+
 Vec4 mul_model_view_projection(in Vec3 vertex)
 {
-    Vec4 position = Vec4(vertex, 1.0);
-    position = mul(position, transform.m_model);
-    position = mul(position, camera.m_view);
-    position = mul(position, camera.m_projection);
-    return position;
+	Vec4 position = Vec4(vertex, 1.0);
+	position = mul(position, transform.m_model);
+	position = mul(position, camera.m_view);
+	position = mul(position, camera.m_projection);
+	return position;
 }
 
 Vec4 mul_view_projection(in Vec3 vertex)

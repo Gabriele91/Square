@@ -8,6 +8,7 @@
 #pragma once
 #include "Square/Config.h"
 #include "Square/Render/Light.h"
+#include "Square/Render/ShadowBuffer.h"
 #include "Square/Geometry/Sphere.h"
 #include "Square/Scene/Component.h"
 
@@ -34,6 +35,10 @@ namespace Scene
 		//Init
 		DirectionLight(Context& context);
 
+		//shadow map override
+		virtual const Render::ShadowBuffer& shadow_buffer() const override;
+		virtual bool shadow() const override;
+
 		//all events
 		virtual void on_attach(Actor& entity)      override;
 		virtual void on_deattch()                  override;
@@ -52,13 +57,15 @@ namespace Scene
 		virtual const Geometry::Sphere& bounding_sphere() const override;
 		virtual const Geometry::Frustum& frustum() const override;
 		virtual Weak<Render::Transform> transform() const override;
-		virtual Weak<Render::Camera> camera() const override;
+
 		//Reg object
 		virtual void set(Render::UniformDirectionLight* data) const override;
 	
 	protected:
 
 		Vec3 m_direction;
+		//shadow
+		Render::ShadowBuffer m_buffer;
 
 	};
 }
