@@ -55,10 +55,10 @@ namespace Render
 			};
 			Render::TextureGpuDataInformation gpu_data
 			{
-				TMIN_NEAREST, 
-				//TMIN_LINEAR,
-				TMAG_NEAREST,
-				//TMAG_LINEAR,
+				//TMIN_NEAREST, 
+				TMIN_LINEAR,
+				//TMAG_NEAREST,
+				TMAG_LINEAR,
 				//========
 				TEDGE_CLAMP,
 				TEDGE_CLAMP,
