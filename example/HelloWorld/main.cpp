@@ -298,7 +298,7 @@ public:
 		light2->rotation(rotate_euler(Square::radians(-90.0f), 0.0f, 0.0f));
 		light2->position({ 0,0,10 });
 		//n cubes
-		int n_cubes = 6;
+		int n_cubes = 8;
 		float radius_dist = 5.0f;
 		//get
 		for (int i = 0; i != n_cubes; ++i)
@@ -384,20 +384,25 @@ int main()
     using namespace Square::Scene;
 	//Create square application
 	Application app;
+#ifdef _DEBUG & 1
+	bool debug = true;
+#else
+	bool debug = false;
+#endif
 	//test
     app.execute(
       WindowSizePixel({ 1280, 768 })
     , WindowMode::NOT_RESIZABLE
 	, 
-#if defined(_WIN32) & 0
+#if defined(_WIN32) & 1
 	  WindowRenderDriver
 	  {
-		 Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, true
+		 Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, debug
 	  }
 #else
 	  WindowRenderDriver
 	  {
-		 Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, true
+		 Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, debug
 	  }
 #endif
     , "test"
