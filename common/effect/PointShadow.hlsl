@@ -20,7 +20,6 @@ struct VertexShaderOutput
 	Vec2 m_uv       : TEXCOORD1;    // interpolated uv map
 };
 
-
 //draw
 VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
 {
@@ -51,7 +50,7 @@ void geometry(triangle VertexShaderOutput input[3]
 		// set cubeface
 		outvertex.m_RTIndex = face;
 		// for each triangle's vertices
-		[unroll]
+		[loop]
 		for (int i = 0; i < 3; ++i)
 		{
 			outvertex.m_world_position = input[i].m_position;

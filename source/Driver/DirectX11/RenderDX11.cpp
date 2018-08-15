@@ -2559,7 +2559,7 @@ namespace Render
 					, info.m_entry_point.c_str()
 					, shader_version[info.m_type]
 					,   D3DCOMPILE_OPTIMIZATION_LEVEL3  
-					  | D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY 
+				  /*  | D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY */ 
 					, 0
 					, 0
 					, NULL
