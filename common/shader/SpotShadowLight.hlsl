@@ -23,8 +23,10 @@ float spot_light_shadow(in Vec3 proj_coords, const float bias)
 	const int kernel_size = 5;
 	const int kenrel_hsize = kernel_size / 2;
 	//pcf
+	[unroll]
 	for (int x = -kenrel_hsize; x <= kenrel_hsize; ++x)
 	{
+		[unroll]
 		for (int y = -kenrel_hsize; y <= kenrel_hsize; ++y)
 		{
 			Vec2 coord = proj_coords.xy + Vec2(x, y) * tex_size;
