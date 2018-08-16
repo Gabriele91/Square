@@ -6,7 +6,7 @@
 #include <ShadowCamera>
 ////////////////
 //global uniform
-float mask;
+float shadow_mask;
 //texture
 Sampler2D(diffuse_map);
 ////////////////
@@ -34,7 +34,7 @@ struct GeometryShaderOutput
 {
 	Vec4 m_position       : SV_POSITION;  // vertex position (system value)
 	Vec4 m_world_position : POSITION1;    // vertex position in world space
-	Vec2 m_uv             : TEXCOORD1;    // interpolated uv map
+	Vec2 m_uv             : TEXCOORD0;    // interpolated uv map
 	uint m_RTIndex        : SV_RenderTargetArrayIndex;
 };
 
@@ -67,7 +67,7 @@ struct FragmentShaderinput
 {
 	Vec4 m_position       : SV_POSITION;  // vertex position (system value)
 	Vec4 m_world_position : POSITION1;    // vertex position in world space
-	Vec2 m_uv             : TEXCOORD1;    // interpolated uv map
+	Vec2 m_uv             : TEXCOORD0;    // interpolated uv map
 #ifdef HLSL_BACKEND
 	uint m_RTIndex        : SV_RenderTargetArrayIndex;
 #endif
@@ -77,8 +77,8 @@ struct FragmentShaderinput
 float fragment(FragmentShaderinput input) : SV_Depth
 {
 	//diffuse/albedo
-	//Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);
-	//if (diffuse_color.a <= mask) discard; 
+	Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);
+    if (diffuse_color.a <= shadow_mask) discard;
 	//compute distance between wolrd and light source
 	float light_distance = length(point_shadow_camera.m_position - input.m_world_position.xyz);
 	//[0,1] range

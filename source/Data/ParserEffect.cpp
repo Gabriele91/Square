@@ -320,6 +320,24 @@ namespace Parser
                     //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
+				else if (cstr_cmp_skip(ptr, "import") || cstr_cmp_skip(ptr, "include"))
+				{
+					//skip spaces
+					skip_space_and_comments(m_context->m_line, ptr);
+					//techniques
+					if (!parse_import(ptr, t_field)) return false;
+					//skip spaces
+					skip_space_and_comments(m_context->m_line, ptr);
+				}
+				else if (cstr_cmp_skip(ptr, "from"))
+				{
+					//skip spaces
+					skip_space_and_comments(m_context->m_line, ptr);
+					//techniques
+					if (!parse_from(ptr, t_field)) return false;
+					//skip spaces
+					skip_space_and_comments(m_context->m_line, ptr);
+				}
                 else
                 {
                     push_error("Keyword not valid");
@@ -463,7 +481,116 @@ namespace Parser
         //end
         return true;
     }
-    //////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////
+	bool Effect::parse_import(const char*& ptr, SubEffectField& subeffect)
+	{
+		//skip spaces
+		skip_space_and_comments(m_context->m_line, ptr);		
+		//Import field
+		ImportField import_field;
+		//case
+		switch (*ptr)
+		{
+		case '\"':
+		{
+			//path
+			std::string effect_path;
+			//get
+			if (!parse_string(m_context->m_line, ptr, effect_path))
+			{
+				push_error("Not valid import path");
+				return false;
+			}
+			import_field.m_type = ImportField::I_INCLUDE;
+			import_field.m_data = effect_path;
+			subeffect.m_imports.push_back(import_field);
+			return true;
+		}
+		case '<':
+		{
+			//name
+			std::string effect_name;
+			//get
+			if (!parse_string(m_context->m_line, ptr, effect_name, '<', '>'))
+			{
+				push_error("Not valid import name");
+				return false;
+			}
+			import_field.m_type = ImportField::I_RESOUCE;
+			import_field.m_data = effect_name;
+			subeffect.m_imports.push_back(import_field);
+			return true;
+		}
+		default:
+			push_error("Not valid token after import");
+			return false;
+		break;
+		}
+	}
+	bool Effect::parse_from(const char*& ptr, SubEffectField& subeffect)
+	{
+		//Import field
+		ImportField import_field;
+		//skip spaces
+		skip_space_and_comments(m_context->m_line, ptr);
+		//case
+		switch (*ptr)
+		{
+		case '\"':
+		{
+			//path
+			std::string effect_path;
+			//get
+			if (!parse_string(m_context->m_line, ptr, effect_path))
+			{
+				push_error("Not valid import path");
+				return false;
+			}
+			import_field.m_type = ImportField::I_FROM_INCLUDE;
+			import_field.m_data = effect_path;
+			break;
+		}
+		case '<':
+		{
+			//name
+			std::string effect_name;
+			//get
+			if (!parse_string(m_context->m_line, ptr, effect_name, '<', '>'))
+			{
+				push_error("Not valid import name");
+				return false;
+			}
+			import_field.m_type = ImportField::I_FROM_RESOUCE;
+			import_field.m_data = effect_name;
+			break;
+		}
+		default:
+			push_error("Not valid token after import");
+			return false;
+			break;
+		}
+		//skip spaces
+		skip_space_and_comments(m_context->m_line, ptr);
+		//keyword
+		if (!cstr_cmp_skip(ptr, "import") && !cstr_cmp_skip(ptr, "include"))
+		{
+			push_error("Not found import/include token after technique name");
+			return false;
+		}
+		//skip spaces
+		skip_space_and_comments(m_context->m_line, ptr);
+		//name of technique
+		std::string technique_name;
+		if (!parse_string(m_context->m_line, ptr, technique_name))
+		{
+			push_error("Not valid import technique name");
+			return false;
+		}
+		import_field.m_technique_name = technique_name;
+		//import
+		subeffect.m_imports.push_back(import_field);
+	}
+	//////////////////////////////////////////////////////
     bool Effect::parse_pass_block(const char*& ptr, PassField& pass)
     {
 		//field alias		

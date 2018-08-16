@@ -94,11 +94,29 @@ namespace Parser
 			std::vector< PassField > m_pass;
 		};
 
+		struct ImportField
+		{
+			//type
+			enum Type
+			{
+				I_RESOUCE,
+				I_INCLUDE,
+				I_FROM_RESOUCE,
+				I_FROM_INCLUDE
+			};
+			Type m_type{ I_RESOUCE };
+			//effect path/name
+			std::string m_data;
+			//effect technique name
+			std::string m_technique_name;
+		};
+
 		struct SubEffectField
 		{
 			RequirementField m_requirement;
 			EffectQueueType   m_queue;
 			std::vector< TechniqueField > m_techniques;
+			std::vector< ImportField > m_imports;
 		};
 
 		struct Context
@@ -130,6 +148,9 @@ namespace Parser
         bool parse_requirement_block(const char*& ptr, RequirementField& r_field);
 		//////////////////////////////////////////////////////
         bool parse_techniques_block(const char*& ptr, SubEffectField& subeffect);
+		//////////////////////////////////////////////////////
+		bool parse_import(const char*& ptr, SubEffectField& subeffect);
+		bool parse_from(const char*& ptr, SubEffectField& subeffect);
 		//////////////////////////////////////////////////////
         bool parse_pass_block(const char*& ptr, PassField& pass);
         bool parse_queue_block(const char*& ptr, EffectQueueType& p_queue);

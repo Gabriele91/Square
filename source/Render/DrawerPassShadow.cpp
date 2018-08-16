@@ -24,8 +24,6 @@ namespace Render
     : DrawerPass(RPT_SHADOW)
     , m_context(context)
     {
-		m_shadow = DynamicPointerCast<Render::Effect>(context.resource<Resource::Effect>("Shadow"));
-
 		m_cb_camera = Render::stream_constant_buffer<Render::UniformBufferCamera>(&render());
 		m_cb_transform = Render::stream_constant_buffer<Render::UniformBufferTransform>(&render());
 
@@ -51,15 +49,16 @@ namespace Render
      , const PoolQueues& queues
     )
     {
-		//effect loaded
-		if (!m_shadow) 
-		{
-			context().add_wrong("Warning: can't draw shadow map");
-			return;
-		}
         //transfor
 		Render::UniformBufferTransform utransform;
-		Render::EffectTechnique* technique = nullptr;
+		//names
+		static const std::string techniques_table[]
+		{
+			"None",
+			"SpotShadow",
+			"PointShadow",
+			"DirectionShadow"
+		};
 		//parameters
 		EffectPassInputs inputs
 		{
@@ -79,14 +78,14 @@ namespace Render
 		//light
 		switch (light.type())
 		{
-		case LightType::DIRECTION:
+		case LightType::SPOT:
 		{
-			Render::UniformDirectionShadowLight udirectionshadow;
+			Render::UniformSpotShadowLight uspotshadow;
 			//update camera
-			light.set(&udirectionshadow);
-			render().update_steam_CB(m_cb_direction_light.get(), (const unsigned char*)&udirectionshadow, sizeof(udirectionshadow));
-			//load currect tequnique
-			technique = m_shadow->technique("DirectionShadow");
+			light.set(&uspotshadow);
+			render().update_steam_CB(m_cb_spot_light.get(), (const unsigned char*)&uspotshadow, sizeof(uspotshadow));
+			//set viewport
+			render().set_viewport_state(light.shadow_viewport());
 		}
 		break;
 		case LightType::POINT:
@@ -95,28 +94,23 @@ namespace Render
 			//update camera
 			light.set(&upointshadow);
 			render().update_steam_CB(m_cb_point_light.get(), (const unsigned char*)&upointshadow, sizeof(upointshadow));
-			//load currect tequnique
-			technique = m_shadow->technique("PointShadow");
 			//set viewport
 			render().set_viewport_state(light.shadow_viewport());
 		}
 		break;
-		case LightType::SPOT:
+		case LightType::DIRECTION:
 		{
-			Render::UniformSpotShadowLight uspotshadow;
+			Render::UniformDirectionShadowLight udirectionshadow;
 			//update camera
-			light.set(&uspotshadow);
-			render().update_steam_CB(m_cb_spot_light.get(), (const unsigned char*)&uspotshadow, sizeof(uspotshadow));
-			//load currect tequnique
-			technique = m_shadow->technique("SpotShadow");
-			//set viewport
-			render().set_viewport_state(light.shadow_viewport());
+			light.set(&udirectionshadow);
+			render().update_steam_CB(m_cb_direction_light.get(), (const unsigned char*)&udirectionshadow, sizeof(udirectionshadow));
 		}
 		break;
-		default: return;
+		default:
+			//not implemented, return
+			return;
+		break;
 		}
-		//not implemented, return
-		if (!technique) return;
 		//clear
 		render().clear(Render::CLEAR_DEPTH);
         //for each elements of opaque  and translucent queues
@@ -140,6 +134,10 @@ namespace Render
 				auto weak_material = randerable->material(material_id);
 				auto material = weak_material.lock();
 				if (!material) continue;
+				//effect
+				auto effect = material->effect();
+				auto technique = effect->technique(techniques_table[(size_t)light.type()]);
+				if (!technique) continue;
 				//draw for each pass
 				for (auto& pass : *technique)
 				{

@@ -355,7 +355,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\common\common.rs" />
-    <None Include="..\common\effect\Base.sqfx" />
+    <None Include="..\common\effect\Solid.sqfx" />
     <None Include="..\common\effect\Shadow.sqfx" />
     <None Include="..\source\Driver\Cocoa\Input_private.mm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

@@ -449,6 +449,7 @@ namespace Render
 
 		//get technique
 		EffectTechnique* technique(const std::string& technique);
+		const EffectTechnique* technique(const std::string& technique) const;
 
 		//all techniques
 		const EffectTechniquesMap& techniques() const { return m_techniques_map; }
@@ -463,13 +464,25 @@ namespace Render
 		//get id
 		int parameter_id(const std::string& parameter);
 
+		//get technique from other effect
+		bool import_technique(const Effect& effect, const std::string& name);
+
+		//get all techniques from other effect
+		bool import_techniques(const Effect& effect);
+
 	protected:
+		//info
 		EffectQueueType		 m_queue;
 		EffectParameters     m_parameters;
 		EffectParametersMap  m_parameters_map;
 		EffectTechniquesMap  m_techniques_map;
+
 		//get id
 		int add_parameter(int id, const std::string& name, EffectParameter* parameter);
+
+		//help
+		void for_each_pass_build_params_id();
+		void for_each_pass_build_params_id(EffectTechnique& effect);
 
 	};
 

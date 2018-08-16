@@ -345,25 +345,50 @@ namespace Resource
 							break;
 							}
 						}
-						//get uniforms
-						for (auto it : m_parameters_map)
-						{
-							//get
-							Render::Uniform* u_shader = this_pass.m_shader->uniform(it.first);
-							//test
-							if (u_shader)
-							{
-								//push
-								this_pass.m_param_id.push_back(it.second);
-								this_pass.m_uniform.push_back(u_shader);
-							}
-						}
 					}
 				}// end shadow for
 			}// end pass for each lights
-            
         }
-        
+		//imports
+        //n_import
+		size_t n_imports = ptr_sub_effect->m_imports.size();
+		for (size_t i = 0; i != n_imports; ++i)
+		{
+			//info import
+			Parser::Effect::ImportField& import_field = ptr_sub_effect->m_imports[i];
+			//cases
+			switch (import_field.m_type)
+			{
+			case Parser::Effect::ImportField::I_RESOUCE:
+			{
+				//get
+				auto effect = context().resource<Effect>(import_field.m_data);
+				//test
+				if (!effect || !import_techniques(*effect))
+				{
+					context().add_wrong("Effect: " + path + ", can't import techniques from " + import_field.m_data);
+				}
+			}
+			break;
+			case Parser::Effect::ImportField::I_FROM_RESOUCE:
+			{
+				//get
+				auto effect = context().resource<Effect>(import_field.m_data);
+				//test
+				if (!effect || !import_technique(*effect, import_field.m_technique_name))
+				{
+					context().add_wrong("Effect: " + path + ", can't import technique "+ import_field.m_technique_name +" from " + import_field.m_data);
+				}
+			}
+			break;
+			default: 
+				context().add_wrong("Effect: " + path + ", unsupported import from local file");
+			break;
+			}
+		}
+		//build parameters ids
+		for_each_pass_build_params_id();
+		//ok, return
         return true;
     }
     

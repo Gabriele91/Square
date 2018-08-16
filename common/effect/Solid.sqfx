@@ -7,12 +7,14 @@ parameters
 
 	color        Vec4(1.0,1.0,1.0,1.0)
     mask         float(-1.0)
+    mask_shadow  float(-1.0)
 	metallic     float(0.0)
 	smoothness   float(0.0)
 }
 
 sub_effect
 {	
+	//import shadow forward
     technique "forward"
     {
         pass 
@@ -41,4 +43,6 @@ sub_effect
             }
 		}
     }
+	//import shadow caster
+	import <Shadow> 
 }

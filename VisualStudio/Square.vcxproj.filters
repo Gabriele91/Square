@@ -312,9 +312,6 @@
     <ClInclude Include="..\include\Square\Render\ShadowBuffer.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\shader\PointShadowLight.hlsl">
-      <Filter>Resource\common\shader</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -544,9 +541,6 @@
     <None Include="..\common\shader\Vertex.hlsl">
       <Filter>Resource\common\shader</Filter>
     </None>
-    <None Include="..\common\effect\Base.sqfx">
-      <Filter>Resource\common\effect</Filter>
-    </None>
     <None Include="..\common\common.rs">
       <Filter>Resource\common</Filter>
     </None>
@@ -579,6 +573,10 @@
     </None>
     <None Include="..\source\Resource\ShaderCommonHeader.hlsl">
       <Filter>source\Resource</Filter>
+    </None>
+    <None Include="..\common\shader\PointShadowLight.hlsl" />
+    <None Include="..\common\effect\Solid.sqfx">
+      <Filter>Resource\common\effect</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
