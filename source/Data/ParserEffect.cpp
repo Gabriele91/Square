@@ -806,36 +806,54 @@ namespace Parser
     bool Effect::parse_shader(const char*& ptr, PassField& pass)
     {
         //skip spaces
-        skip_space_and_comments(m_context->m_line, ptr);
-        //is a shader name?
-        if (is_start_string(*ptr))
-        {
-            //shader name
-            std::string shader_name;
-            //get
-            if (!parse_string(m_context->m_line, ptr, shader_name))
-            {
-                push_error("Not valid shader name");
-                return false;
-            }
-            pass.m_shader.m_name = true;
-            pass.m_shader.m_text = shader_name;
-            return true;
-        }
+        skip_space_and_comments(m_context->m_line, ptr);    
+		//case
+		switch (*ptr)
+		{
+			case '\"':
+			{
+				//shader name
+				std::string shader_path;
+				//get
+				if (!parse_string(m_context->m_line, ptr, shader_path))
+				{
+					push_error("Not valid shader include");
+					return false;
+				}
+				pass.m_shader.m_type = ShaderField::S_INCLUDE;
+				pass.m_shader.m_data = shader_path;
+				return true;
+			}
+			case '<':
+			{
+				//shader name
+				std::string shader_name;
+				//get
+				if (!parse_string(m_context->m_line, ptr, shader_name, '<', '>'))
+				{
+					push_error("Not valid shader name");
+					return false;
+				}
+				pass.m_shader.m_type = ShaderField::S_INCLUDE;
+				pass.m_shader.m_data = shader_name;
+				return true;
+			}
+			default: /* is a source */ break;
+		}
         //else is a shader source
         if (!cstr_cmp_skip(ptr, "source"))
         {
             push_error("Shader source not found");
             return false;
-        }
+        }		
         //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
-        //parse source
-        pass.m_shader.m_name = false;
         //count parenthesis
         size_t p_count = 0;
         //inside a comment
-        bool   c_inside = false;
+        bool c_inside = false;
+		//ref to data field
+		std::string& output_source = pass.m_shader.m_data;
         //parse table
         if (is_start_table(*ptr))
         {
@@ -859,7 +877,7 @@ namespace Parser
                 //inc count line
                 if (*ptr == '\n') ++m_context->m_line;
                 //append
-                pass.m_shader.m_text += *ptr;
+				output_source += *ptr;
                 //next
                 ++ptr;
             }
@@ -872,6 +890,9 @@ namespace Parser
             //skip }
             ++ptr;
         }
+		//set as source
+		pass.m_shader.m_type = ShaderField::S_SOURCE;
+		//ok
         return true;
     }
     //////////////////////////////////////////////////////

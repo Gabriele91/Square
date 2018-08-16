@@ -173,9 +173,7 @@ namespace Resource
                         case '\"': //include
                             if (Parser::parse_string(line, c_effect_line, sourcefile_name))
                             {
-                                sourcefile_path = source_dir.size()
-                                                ? source_dir + "/" + sourcefile_name
-                                                : sourcefile_name;
+                                sourcefile_path = Filesystem::join(source_dir, sourcefile_name);
                             }
                             else
                             {
@@ -286,11 +284,26 @@ namespace Resource
 		//compile
 		return  preprocess.success() && compile(source, PreprocessMap());
 	}
-    
-    bool Shader::load(const std::string& path,
-                      const std::string& insource,
-                      const PreprocessMap& defines,
-                      const size_t line)
+
+	bool Shader::load(const std::string& path, const PreprocessMap& defines)
+	{
+		//buffers
+		std::string source;
+		//input stream
+		std::stringstream source_stream(Filesystem::text_file_read_all(path));
+		//process include/import
+		ShaderImportLoader preprocess(context(), source_stream, path, m_filepath_map, source);
+		//compile
+		return  preprocess.success() && compile(source, defines);
+	}
+
+    bool Shader::compile
+	(
+		const std::string& path,
+        const std::string& insource,
+        const PreprocessMap& defines,
+        const size_t line
+	)
     {
         //buffers
         std::string source(insource);
