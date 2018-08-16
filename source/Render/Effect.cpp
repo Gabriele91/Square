@@ -540,6 +540,12 @@ namespace Render
 		if (it_tech != m_techniques_map.end()) return &it_tech->second;
 		return nullptr;
 	}
+	const EffectTechnique* Effect::technique(const std::string& technique_name) const
+	{
+		auto it_tech = m_techniques_map.find(technique_name);
+		if (it_tech != m_techniques_map.end()) return &it_tech->second;
+		return nullptr;
+	}
 
 	//get parameters
 	EffectParameters* Effect::parameters()
@@ -587,6 +593,31 @@ namespace Render
 		return -1;
 	}
 
+	//copy pass (import)
+	bool Effect::import_technique(const Effect& effect,const std::string& name)
+	{
+		//get
+		const EffectTechnique* in_technique = effect.technique(name);
+		//test
+		if (!in_technique) return false;
+		//copy
+		auto& new_technique = (m_techniques_map[name] = *in_technique);
+		//rebuild ids
+		for_each_pass_build_params_id(new_technique);
+		return true;
+	}
+
+	//copy pass (import) 
+	bool Effect::import_techniques(const Effect& effect)
+	{
+		for (auto technique : effect.techniques())
+		{
+			if (!import_technique(effect, technique.first))
+				return false;
+		}
+		return true;
+	}
+
 	//add
 	int Effect::add_parameter(int id, const std::string& name, EffectParameter* parameter)
 	{
@@ -594,6 +625,35 @@ namespace Render
 		m_parameters[id] = std::move(Unique< EffectParameter >(parameter));
 		m_parameters_map[name] = id;
 		return id;
+	}
+
+	//help
+	void Effect::for_each_pass_build_params_id()
+	{
+		for (auto& technique : m_techniques_map)
+			for_each_pass_build_params_id(technique.second);
+	}
+	void Effect::for_each_pass_build_params_id(EffectTechnique& technique)
+	{
+		for (EffectPass& pass : technique)
+		{
+			//clear
+			pass.m_param_id.clear();
+			pass.m_uniform.clear();
+			//build
+			for (auto parameter : m_parameters_map)
+			{
+				//get
+				Render::Uniform* u_shader = pass.m_shader->uniform(parameter.first);
+				//test
+				if (u_shader)
+				{
+					//push
+					pass.m_param_id.push_back(parameter.second);
+					pass.m_uniform.push_back(u_shader);
+				}
+			}
+		}
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 }

@@ -1,7 +1,7 @@
 parameters
 {
     diffuse_map  texture("white")
-    mask         float(-1.0)
+    shadow_mask  float(-1.0)
 }
 
 sub_effect

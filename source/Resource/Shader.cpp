@@ -42,7 +42,6 @@ namespace Resource
 	//Contructor
 	Shader::Shader(Context& context) : ResourceObject(context)
 	{
-
 	}
 	Shader::Shader(Context& context, const std::string& path) : ResourceObject(context)
 	{

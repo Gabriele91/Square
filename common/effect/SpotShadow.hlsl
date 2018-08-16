@@ -12,7 +12,7 @@ struct VertexShaderOutput
 };
 
 //global uniform
-float mask;
+float shadow_mask;
 
 //texture
 Sampler2D(diffuse_map);
@@ -30,5 +30,5 @@ void fragment(VertexShaderOutput input)
 {
 	//diffuse/albedo
 	Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);
-	if (diffuse_color.a <= mask) discard;
+	if (diffuse_color.a <= shadow_mask) discard;
 }

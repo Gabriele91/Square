@@ -41,7 +41,6 @@ namespace Render
         //CPU DATA
         Square::Context& m_context;
         //GPU DATA
-		Shared<Render::Effect>	    m_shadow;
         Shared<Render::ConstBuffer> m_cb_camera;
 		Shared<Render::ConstBuffer> m_cb_transform;
 		//SHADOW GPU DATA
