@@ -127,11 +127,15 @@ public:
 		using namespace Square::Resource;
 		using namespace Square::Render;
 		using namespace Square::Render::Layout;
+		//bind
 		pass.bind(&render, input, m_material->parameters());
+		//draw
 		render.bind_IL(pass.layout(m_layout));
         render.bind_VBO(m_model.get());
         render.bind_IBO(m_index_model.get());
         render.draw_elements(Square::Render::DRAW_TRIANGLES, 6*6);
+		//unbind
+		pass.unbind();
     }
     
     virtual bool support_culling() const override
@@ -298,7 +302,7 @@ public:
 		light2->rotation(rotate_euler(Square::radians(-90.0f), 0.0f, 0.0f));
 		light2->position({ 0,0,10 });
 		//n cubes
-		int n_cubes = 8;
+		int n_cubes = 600;
 		float radius_dist = 5.0f;
 		//get
 		for (int i = 0; i != n_cubes; ++i)
