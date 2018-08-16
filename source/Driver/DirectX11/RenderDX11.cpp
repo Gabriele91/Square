@@ -358,7 +358,7 @@ namespace Render
 				{   
 					//bind
 					D3D11_SHADER_INPUT_BIND_DESC bind_desc;
-					reflector->GetResourceBindingDesc(ic, &bind_desc);
+					reflector->GetResourceBindingDescByName(desc.Name, &bind_desc);
 					//slot
 					m_slots[s_type] = bind_desc.BindPoint;
 					m_found_the_cbuffer = true;
@@ -2428,7 +2428,7 @@ namespace Render
 		m_global_buffer_should_be_bind = true;
 	}
 
-	static bool get_global_costant_buffers(
+	static bool get_global_costant_buffer(
 		  ID3DBlob* shader_blob
 		, ShaderType type
 		, Shader::GlobalBufferInfo& info
@@ -2478,6 +2478,36 @@ namespace Render
 		return true;
 	}
 	
+	static bool get_global_costant_buffer_slot(
+		  ID3DBlob* shader_blob
+		, ShaderType type
+		, Shader::GlobalBufferInfo& info
+	)
+	{
+		ID3D11ShaderReflection *reflector = nullptr;
+		D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+		D3D11_SHADER_DESC desc_shader;
+		reflector->GetDesc(&desc_shader);
+		for (UINT i = 0; i < desc_shader.ConstantBuffers; ++i)
+		{
+			auto global = reflector->GetConstantBufferByIndex(i);
+			//shader desc
+			D3D11_SHADER_BUFFER_DESC desc;
+			global->GetDesc(&desc);
+			//name of buffer
+			std::string name(desc.Name);
+			//info
+			if (name.find("$Global") != std::string::npos)
+			{
+				D3D11_SHADER_INPUT_BIND_DESC bind_desc;
+				reflector->GetResourceBindingDescByName(desc.Name, &bind_desc);
+				//save slot/name/size
+				info.m_slot[type] = bind_desc.BindPoint;
+			}
+		}
+		return true;
+	}
+
 	static void get_global_costant_buffer_uniforms(
 		  ContextDX11* context
 		, Shader* shader
@@ -2585,7 +2615,7 @@ namespace Render
 				if (!oshader->m_global_buffer_gpu)
 				{
 					//get global info
-					get_global_costant_buffers(shader_blob, info.m_type, oshader->m_global_buffer_info);
+					get_global_costant_buffer(shader_blob, info.m_type, oshader->m_global_buffer_info);
 					//is != 0
 					if(oshader->m_global_buffer_info.m_size)
 					{
@@ -2594,6 +2624,8 @@ namespace Render
 						get_global_costant_buffer_uniforms(this, oshader, oshader->m_global_buffer_cpu.data(), oshader->m_global_buffer_info);
 					}
 				}
+				//get global slot
+				get_global_costant_buffer_slot(shader_blob, info.m_type, oshader->m_global_buffer_info);
 				//textures
 				get_global_texture_uniforms(this, shader_blob, oshader, oshader->m_global_buffer_info);
 				//type 
