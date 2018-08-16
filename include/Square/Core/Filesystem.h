@@ -17,7 +17,6 @@ namespace Filesystem
     SQUARE_API std::string home_dir();
     SQUARE_API std::string resource_dir();
 
-
     SQUARE_API bool is_directory(const std::string& directorypath);
     SQUARE_API bool is_file(const std::string& filepath);
     SQUARE_API bool is_readable(const std::string& filepath);
@@ -30,6 +29,13 @@ namespace Filesystem
     SQUARE_API std::string get_extension(const std::string& filepath);
     SQUARE_API std::vector<char> file_read_all(const std::string& filepath);
     SQUARE_API std::string text_file_read_all(const std::string& filepath);
+	SQUARE_API std::string join(const std::string& path1, const std::string& path2);
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // template help
+    template < class ...Args >
+    static inline std::string join(const std::string& path1, const std::string& path2, Args... args) { return join(path1, join(path2, args...)); }
+    /////////////////////////////////////////////////////////////////////////////////////////////////
 
     //utilities path
     struct PathOperation

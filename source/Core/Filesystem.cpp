@@ -14,6 +14,7 @@
 	#define F_OK 00
 	#define R_OK 04
 	#define W_OK 02
+	#define SEPARETOR "\\"
 #else
 	#include <sys/types.h>
     #include <sys/stat.h>
@@ -24,6 +25,7 @@
 	#include <mach-o/dyld.h>
 	#include <libgen.h>
 	#endif
+	#define SEPARETOR "/"
 #endif
 
 #if defined(_DEBUG) || defined(DEBUG)
@@ -110,7 +112,7 @@ namespace Filesystem
             // Packaged into app bundle
             if (bundle_path != resources_path && bundle_path.size() && resources_path.size())
             {
-                return bundle_path + "/" + resources_path + "/";
+                return bundle_path + SEPARETOR + resources_path + SEPARETOR;
             }
             //or return executable path
             return  program_dir();
@@ -238,8 +240,7 @@ namespace Filesystem
         //return
         return out;
     }
-
-
+	
     PathOperation get_fullpath(const std::string& relative)
     {
 #ifdef _WIN32
@@ -289,7 +290,7 @@ namespace Filesystem
         std::string output_path;
 
         //split
-        std::string separetor("/");
+        std::string separetor(SEPARETOR);
         std::vector< std::string > base_directories = split(absolute_base.m_path, separetor);
         std::vector< std::string > path_directories = split(absolute_path.m_path, separetor);
 
@@ -311,7 +312,7 @@ namespace Filesystem
         //next
         for (i = max_size; i < path_directories.size(); ++i)
         {
-            output_path += path_directories[i] + "/";
+            output_path += path_directories[i] + SEPARETOR;
         }
 
         //ok
@@ -319,6 +320,12 @@ namespace Filesystem
 #endif
     }
 
+	std::string join(const std::string& path1, const std::string& path2)
+	{
+		if (!path1.size()) return path1;
+		if (!path2.size()) return path2;
+		return path1 + SEPARETOR + path2;
+	}
 
 #ifdef _WIN32
     bool is_directory(const std::string& directory)
@@ -336,7 +343,7 @@ namespace Filesystem
         //alloc output
         FilesList output{ true, std::vector<std::string>{} };
         //redefine path
-        std::string std_directorypath = directorypath + "/";
+        std::string std_directorypath = directorypath + SEPARETOR;
         std::string path_all = std_directorypath + "*";
         //attributes
         WIN32_FIND_DATAA ffd;
@@ -365,7 +372,7 @@ namespace Filesystem
         //alloc output
         DirectoriesList output{ true, std::vector<std::string>{} };
         //redefine path
-        std::string std_directorypath = directorypath + "/";
+        std::string std_directorypath = directorypath + SEPARETOR;
         std::string path_all = std_directorypath + "*";
         //attributes
         WIN32_FIND_DATAA ffd;
@@ -387,7 +394,6 @@ namespace Filesystem
         return output;
     }
 
-
 #else
     bool is_directory(const std::string& directory)
     {
@@ -408,7 +414,7 @@ namespace Filesystem
         //alloc output
         FilesList output{ true, std::vector<std::string>{} };
         //redefine path
-        std::string std_directorypath = directorypath + "/";
+        std::string std_directorypath = directorypath + SEPARETOR;
         //read all elements
         while ((dirent = readdir(directory)) != NULL)
         {
@@ -438,7 +444,7 @@ namespace Filesystem
         //alloc output
         DirectoriesList output{ true, std::vector<std::string>{} };
         //redefine path
-        std::string std_directorypath = directorypath + "/";
+        std::string std_directorypath = directorypath + SEPARETOR;
         //read all elements
         while ((dirent = readdir(directory)) != NULL)
         {

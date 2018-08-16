@@ -123,19 +123,17 @@ namespace Square
 		}
 		//Base path
 		std::string directory = Filesystem::get_directory(file_of_resources);
-		//add join path
-		if (directory.size()) directory += "/";
 		//add all paths
 		for (const Parser::Resources::PathField& path : r_context.m_paths)
 		{
-			if (path.m_filtered) add_resource_path(directory + path.m_path, path.m_reg_exp, path.m_recursive);
-			else				 add_resource_path(directory + path.m_path, path.m_recursive);
+			if (path.m_filtered) add_resource_path(Filesystem::join(directory, path.m_path), path.m_reg_exp, path.m_recursive);
+			else				 add_resource_path(Filesystem::join(directory, path.m_path), path.m_recursive);
 		}
 		//add all files
 		for (const Parser::Resources::FileField& files : r_context.m_files)
 		{
-			if (files.m_use_asset_name) add_resource_file(files.m_asset_name, directory + files.m_path);
-			else				        add_resource_file(directory + files.m_path);
+			if (files.m_use_asset_name) add_resource_file(files.m_asset_name, Filesystem::join(directory, files.m_path));
+			else				        add_resource_file(Filesystem::join(directory, files.m_path));
 		}
 		//end
 		return true;
@@ -154,7 +152,7 @@ namespace Square
             //get extension
             auto f_ext = Filesystem::get_extension(filename);
             //add file
-			add_resource_file(path + "/" + filename);
+			add_resource_file(Filesystem::join(path, filename));
         }
         //end
     }
@@ -189,7 +187,7 @@ namespace Square
 			if (std::regex_match(filename, filter))
 			{
 				//add
-				add_resource_file(path + "/" + filename);
+				add_resource_file(Filesystem::join(path, filename));
 			}
 		}
 		//sub directories
@@ -202,7 +200,7 @@ namespace Square
 			//push dir into table
 			for (const std::string& directoryname : directories.m_fields)
 			{
-				add_resource_path(path + "/" + directoryname, filter, true);
+				add_resource_path(Filesystem::join(path, directoryname), filter, true);
 			}
 		}
         //end
