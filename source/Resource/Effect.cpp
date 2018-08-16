@@ -194,39 +194,62 @@ namespace Resource
 						this_pass.m_cullface = parser_pass.m_cullface;
 						this_pass.m_depth = parser_pass.m_depth;
 						//shader
-						if (parser_pass.m_shader.m_name)
+						switch (parser_pass.m_shader.m_type)
 						{
-							this_pass.m_shader = context().resource<Shader>(parser_pass.m_shader.m_text);
-						}
-						else
-						{
-							Shader::PreprocessMap shader_defines
+							//NONE
+							case Parser::Effect::ShaderField::S_NONE:
 							{
-								std::make_tuple(std::string("version"), std::to_string(ptr_sub_effect->m_requirement.m_shader_version)),
-								//std::make_tuple(std::string("pragma"), shader_target_define_table[shadow]),
-								std::make_tuple(std::string("define"), shader_lights_define_table[current_shader_def]),
-								std::make_tuple(std::string("define"), shader_shadows_define_table[shadow])
-							};
-							//shader
-							this_pass.m_shader = MakeShared<Shader>(context());
-							//load effect
-							if (!this_pass.m_shader->load(path,
-								parser_pass.m_shader.m_text,
-								shader_defines,
-								parser_pass.m_shader.m_line - 1
-							))
-							{
-								//preproc, debug
-								std::string debug_preproc;
-								for (const Shader::PreprocessElement& preproc : shader_defines)
-								{
-									debug_preproc += "#" + std::get<0>(preproc) + " " + std::get<1>(preproc) + "\t";
-								}
-								//output
 								context().add_wrong("Effect: " + path);
 								context().add_wrong("Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
-								context().add_wrong("Error technique preproces: " + debug_preproc);
+								context().add_wrong("Error pass: shader source is required");
 								return false;
+							}
+							default:
+							//FROM RESOURCE
+							{
+							}
+							{
+								Shader::PreprocessMap shader_defines
+								{
+									std::make_tuple(std::string("version"), std::to_string(ptr_sub_effect->m_requirement.m_shader_version)),
+								  //std::make_tuple(std::string("pragma"), shader_target_define_table[shadow]),
+									std::make_tuple(std::string("define"), shader_lights_define_table[current_shader_def]),
+									std::make_tuple(std::string("define"), shader_shadows_define_table[shadow])
+								};
+								//shader
+								this_pass.m_shader = MakeShared<Shader>(context());
+								//event
+								bool success = false;
+								//get shader
+								switch (parser_pass.m_shader.m_type)
+								{
+								default:
+								case Parser::Effect::ShaderField::S_SOURCE:  
+									success = this_pass.m_shader->compile(path, parser_pass.m_shader.m_data, shader_defines, parser_pass.m_shader.m_line - 1);
+								break;
+								case Parser::Effect::ShaderField::S_INCLUDE:
+									success = this_pass.m_shader->load(Filesystem::join(Filesystem::get_directory(path), parser_pass.m_shader.m_data), shader_defines);
+								break;
+								case Parser::Effect::ShaderField::S_RESOUCE:
+									this_pass.m_shader = context().resource<Shader>(parser_pass.m_shader.m_data); 
+									success = !this_pass.m_shader;
+								break;
+								}
+								//load effect
+								if (!success)
+								{
+									//preproc, debug
+									std::string debug_preproc;
+									for (const Shader::PreprocessElement& preproc : shader_defines)
+									{
+										debug_preproc += "#" + std::get<0>(preproc) + " " + std::get<1>(preproc) + "\t";
+									}
+									//output
+									context().add_wrong("Effect: " + path);
+									context().add_wrong("Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
+									context().add_wrong("Error technique preproces: " + debug_preproc);
+									return false;
+								}
 							}
 						}
 						//default uniform

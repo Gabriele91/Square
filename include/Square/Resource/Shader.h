@@ -38,19 +38,22 @@ namespace Resource
 		//load shader
         bool load(const std::string& path) override;
         
-        //load from effect
-        bool load(const std::string& path,
-                  const std::string& source,
-                  const PreprocessMap& defines,
-                  const size_t line = 0);
-        
+        //load + defiles
+        bool load(const std::string& path, const PreprocessMap& defines);
+		        
 		//compile from source
 		bool compile
 		(
 			const std::string& source,
 			const PreprocessMap& defines
 		);
-
+		bool compile
+		(
+			const std::string& path,					 
+			const std::string& source,
+			const PreprocessMap& defines,
+			const size_t line = 0
+		);
 		//get buffer
 		Render::Uniform*            uniform(const std::string& name) const;
 		Render::UniformConstBuffer* constant_buffer(const std::string& name) const;

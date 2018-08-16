@@ -49,8 +49,17 @@ namespace Parser
 
 		struct ShaderField
 		{
-			bool        m_name{ false };
-			std::string m_text;
+			enum Type
+			{
+				S_NONE,
+				S_SOURCE,
+				S_RESOUCE,
+				S_INCLUDE
+			};
+			//shader type
+			Type m_type{ S_NONE };
+			//include
+			std::string m_data;
 			size_t      m_line{ 0 };
 		};
 
