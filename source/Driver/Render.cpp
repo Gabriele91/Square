@@ -75,7 +75,7 @@ namespace Render
 		{
 			auto extension = get_extension(file);
 			if (extension == ".dll"  || extension == ".so"  || extension == ".dylib")
-			if (auto lib = open(location + "/" + file))
+			if (auto lib = open(Filesystem::join(location, file)))
 			{
 				//get function
 				if (auto get_type = (square_render_get_type)SharedLibrary::get(lib, "square_render_get_type"))
@@ -119,7 +119,7 @@ namespace Render
 		{
 			auto extension = get_extension(file);
 			if (extension == ".dll"  || extension == ".so"  || extension == ".dylib")
-			if (auto lib = open(location + "/" + file))
+			if (auto lib = open(Filesystem::join(location, file)))
 			{
 				//get function
 				if (auto get_type = (square_render_get_type)SharedLibrary::get(lib, "square_render_get_type"))
