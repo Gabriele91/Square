@@ -1425,6 +1425,13 @@ namespace Render
 		device_context()->DrawIndexed(n, 0, 0);
 	}
 
+	void ContextDX11::draw_elements(DrawType type, unsigned int start, unsigned int n)
+	{
+		if (s_bind_context.m_shader)
+			s_bind_context.m_shader->bind_global_buffer(this);
+		device_context()->IASetPrimitiveTopology(get_draw_type(type));
+		device_context()->DrawIndexed(n, start, 0);
+	}
 	/*
 		InputLayout
 	*/

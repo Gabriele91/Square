@@ -952,6 +952,7 @@ namespace Render
 		virtual void draw_arrays(DrawType type, unsigned int n) = 0;
 		virtual void draw_arrays(DrawType type, unsigned int start, unsigned int size) = 0;
 		virtual void draw_elements(DrawType type, unsigned int n) = 0;
+		virtual void draw_elements(DrawType type, unsigned int start, unsigned int n) = 0;
 
 		//IL=Input Layaut
 		virtual InputLayout* create_IL(Shader* shader,const AttributeList& atl) = 0;

@@ -22,11 +22,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\example\HelloWorld\assets\effect.mat">
-      <Filter>resource\assets</Filter>
-    </None>
     <None Include="..\..\example\HelloWorld\resources.rs">
       <Filter>resource</Filter>
+    </None>
+    <None Include="..\..\example\HelloWorld\assets\box.mat">
+      <Filter>resource\assets</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

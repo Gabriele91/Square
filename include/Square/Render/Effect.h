@@ -370,12 +370,12 @@ namespace Render
 		Render::InputLayout* layout(size_t layout_id) const;
 
 		//unsafe
-		void bind(  Render::Context*       render
+		void bind(  Render::Context&       render
                   , EffectPassInputs	   inputs = EffectPassInputs()
                   , EffectParameters*      params = nullptr
                   ) const;
 
-		void bind(  Render::Context* render
+		void bind(  Render::Context& render
                   , EffectParameters* params = nullptr
                   ) const;
 

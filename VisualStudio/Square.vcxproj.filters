@@ -231,9 +231,6 @@
     <ClInclude Include="..\include\Square\Core\SharedLibrary.h">
       <Filter>include\Square\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Square\Resource\Model.h">
-      <Filter>Include\Square\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\Square\Data\ParserEffect.h">
       <Filter>include\Square\Data</Filter>
     </ClInclude>
@@ -310,6 +307,9 @@
       <Filter>include\Square\Scene</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Square\Render\ShadowBuffer.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Render\Mesh.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
   </ItemGroup>
@@ -498,6 +498,9 @@
       <Filter>Source\Render</Filter>
     </ClCompile>
     <ClCompile Include="..\source\Render\ShadowBuffer.cpp">
+      <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Render\Mesh.cpp">
       <Filter>Source\Render</Filter>
     </ClCompile>
   </ItemGroup>

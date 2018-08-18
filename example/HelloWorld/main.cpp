@@ -19,11 +19,9 @@ public:
     
     Square::Geometry::OBoundingBox m_obb_local;
     Square::Geometry::OBoundingBox m_obb_global;
+	Square::Shared< Square::Render::Mesh >         m_mesh;
     Square::Shared< Square::Resource::Material >   m_material;
     Square::Weak<Square::Render::Transform>        m_transform;
-	size_t										   m_layout{ ~size_t(0) };
-    Square::Shared< Square::Render::VertexBuffer > m_model;
-    Square::Shared< Square::Render::IndexBuffer >  m_index_model;
     
     Cube(Square::Context& context) : Component(context)
     {
@@ -34,9 +32,9 @@ public:
         using namespace Square::Render;
         using namespace Square::Render::Layout;
 		//layout
-		m_layout = layout_id_from_type(LF_POSITION_3D | LF_NORMAL | LF_TANGENT | LF_BINOMIAL | LF_UVMAP);
+		m_mesh = MakeShared<Mesh>(context);
         //init
-		std::vector<Position3DNormalTangetBinomialUV> model
+		std::vector<Position3DNormalTangetBinomialUV> vertexs
         {
             
             { Vec3(-0.5f, 0.5f, -0.5f), Vec3(0.0f, 1.0f, 0.0f), Vec2(0.0f, 0.0f) }, // +Y (top face)
@@ -90,7 +88,9 @@ public:
 			20, 23, 22
 		};
 		//compute tangent and binomial
-		Square::tangent_model_fast(ids, model);
+		Square::tangent_model_fast(ids, vertexs);
+		//build gpu buffers
+		m_mesh->build(vertexs, ids);
 		//cube as obb
         m_obb_global =
         m_obb_local = Geometry::OBoundingBox
@@ -99,9 +99,6 @@ public:
            ,Vec3(0,0,0)
            ,Vec3(0.5,0.5,0.5)
         );
-		//build gpu buffers
-        m_model  = Render::vertex_buffer< Position3DNormalTangetBinomialUV >(context.render(), (unsigned char*)model.data(), model.size());
-        m_index_model = Render::index_buffer(context.render(), ids.data(), ids.size());
     }
     
 
@@ -128,12 +125,12 @@ public:
 		using namespace Square::Render;
 		using namespace Square::Render::Layout;
 		//bind
-		pass.bind(&render, input, m_material->parameters());
+		pass.bind(render, input, m_material->parameters());
 		//draw
-		render.bind_IL(pass.layout(m_layout));
-        render.bind_VBO(m_model.get());
-        render.bind_IBO(m_index_model.get());
-        render.draw_elements(Square::Render::DRAW_TRIANGLES, 6*6);
+		render.bind_IL(pass.layout(m_mesh->layout()));
+        render.bind_VBO(m_mesh->vertex_buffer().get());
+        render.bind_IBO(m_mesh->index_buffer().get());
+		m_mesh->draw(render);
 		//unbind
 		pass.unbind();
     }
@@ -276,7 +273,7 @@ public:
 		//background
 		auto background = m_level->actor("background");
 		//model + material + position + scale
-		background->component<Cube>()->m_material = context().resource<Material>("effect");
+		background->component<Cube>()->m_material = context().resource<Material>("box");
 		background->position({ 0.0, -6.0, 10.0 });
 		background->scale({ 20.0, 1.0, 20.0 });
 		//light
@@ -302,7 +299,7 @@ public:
 		light2->rotation(rotate_euler(Square::radians(-90.0f), 0.0f, 0.0f));
 		light2->position({ 0,0,10 });
 		//n cubes
-		int n_cubes = 600;
+		int n_cubes = 6;
 		float radius_dist = 5.0f;
 		//get
 		for (int i = 0; i != n_cubes; ++i)
@@ -311,7 +308,7 @@ public:
 			//add to main node
 			node->add(player);
 			//model + material
-			player->component<Cube>()->m_material = context().resource<Material>("effect");
+			player->component<Cube>()->m_material = context().resource<Material>("box");
 			//angle
 			float angle = float(i) / (n_cubes) * Constants::pi2<float>();
 			//local pos

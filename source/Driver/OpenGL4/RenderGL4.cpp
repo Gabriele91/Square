@@ -1477,6 +1477,10 @@ namespace Render
 	{
 		glDrawElements(get_draw_type(type), n, GL_UNSIGNED_INT, (void*)NULL);
 	}
+	void ContextGL4::draw_elements(DrawType type, unsigned int start, unsigned int n)
+	{
+		glDrawElements(get_draw_type(type), n, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * start));
+	}
 
 	/*
 		InputLayout

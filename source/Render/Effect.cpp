@@ -336,7 +336,7 @@ namespace Render
 	}
 
 	//enable pass effect
-	void EffectPass::bind(  Render::Context*  render
+	void EffectPass::bind(  Render::Context&  render
 						  , EffectPassInputs  inputs
                           , EffectParameters* params) const
 	{
@@ -387,16 +387,16 @@ namespace Render
 		}
 	}
 
-	void EffectPass::bind(Render::Context* render, EffectParameters* params) const
+	void EffectPass::bind(Render::Context& render, EffectParameters* params) const
 	{
-		//test
-		if (!render || !params) return;
 		//bind
-		render->set_blend_state(m_blend);
-		render->set_cullface_state(m_cullface);
-		render->set_depth_buffer_state(m_depth);
+		render.set_blend_state(m_blend);
+		render.set_cullface_state(m_cullface);
+		render.set_depth_buffer_state(m_depth);
 		//bind shader
 		m_shader->bind();
+		//test
+		if (!params) return;
 		//uniform
 	    for (size_t i = 0; i != m_uniform.size(); ++i)
 		{
