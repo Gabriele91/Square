@@ -1,5 +1,5 @@
 //
-//  Effect.h
+//  Material.h
 //  Square
 //
 //  Created by Gabriele Di Bari on 09/04/18.

@@ -47,6 +47,7 @@
 #include "Square/Render/Viewport.h"
 #include "Square/Render/Queue.h"
 #include "Square/Render/Light.h"
+#include "Square/Render/Mesh.h"
 #include "Square/Render/Transform.h"
 #include "Square/Render/Renderable.h"
 #include "Square/Render/VertexLayout.h"

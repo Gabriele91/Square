@@ -197,6 +197,7 @@
     <ClInclude Include="..\include\Square\Render\GBuffer.h" />
     <ClInclude Include="..\include\Square\Render\Light.h" />
     <ClInclude Include="..\include\Square\Render\Material.h" />
+    <ClInclude Include="..\include\Square\Render\Mesh.h" />
     <ClInclude Include="..\include\Square\Render\Queue.h" />
     <ClInclude Include="..\include\Square\Render\Renderable.h" />
     <ClInclude Include="..\include\Square\Render\ShadowBuffer.h" />
@@ -205,7 +206,6 @@
     <ClInclude Include="..\include\Square\Render\Viewport.h" />
     <ClInclude Include="..\include\Square\Resource\Effect.h" />
     <ClInclude Include="..\include\Square\Resource\Material.h" />
-    <ClInclude Include="..\include\Square\Resource\Model.h" />
     <ClInclude Include="..\include\Square\Resource\Shader.h" />
     <ClInclude Include="..\include\Square\Resource\Texture.h" />
     <ClInclude Include="..\include\Square\Scene\Actor.h" />
@@ -336,6 +336,7 @@
     <ClCompile Include="..\source\Render\GBuffer.cpp" />
     <ClCompile Include="..\source\Render\Light.cpp" />
     <ClCompile Include="..\source\Render\Material.cpp" />
+    <ClCompile Include="..\source\Render\Mesh.cpp" />
     <ClCompile Include="..\source\Render\Queue.cpp" />
     <ClCompile Include="..\source\Render\ShadowBuffer.cpp" />
     <ClCompile Include="..\source\Render\VertexFormat.cpp" />
