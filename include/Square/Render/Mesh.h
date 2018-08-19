@@ -84,7 +84,7 @@ namespace Render
 		//get surfaces
 		const SubMeshList& sub_meshs() const;
 
-		//draw sub mesh
+		//draw all sub meshs
 		void draw(Render::Context& render) const;
 
 	protected:
