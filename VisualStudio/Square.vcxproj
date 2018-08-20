@@ -357,7 +357,7 @@
   <ItemGroup>
     <None Include="..\common\common.rs" />
     <None Include="..\common\effect\Solid.sqfx" />
-    <None Include="..\common\effect\Shadow.sqfx" />
+    <None Include="..\common\effect\CastShadow.sqfx" />
     <None Include="..\source\Driver\Cocoa\Input_private.mm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -444,7 +444,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\common\effect\Base.hlsl">
+    <None Include="..\common\effect\Solid.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
@@ -462,7 +462,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\common\effect\SpotShadow.hlsl">
+    <None Include="..\common\effect\CastSpotShadow.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
@@ -477,7 +477,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\common\effect\PointShadow.hlsl">
+    <None Include="..\common\effect\CastPointShadow.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

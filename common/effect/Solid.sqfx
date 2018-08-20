@@ -26,7 +26,7 @@ sub_effect
             shader source 
             {
 				#define FORWARD_RENDERING
-				#include "Base.hlsl"
+				#include "Solid.hlsl"
             }
         }
         pass 
@@ -39,10 +39,10 @@ sub_effect
             shader source 
             {
                 #define FORWARD_RENDERING
-				#include "Base.hlsl"
+				#include "Solid.hlsl"
             }
 		}
     }
 	//import shadow caster
-	import <Shadow> 
+	import <CastShadow> 
 }
