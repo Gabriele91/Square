@@ -556,29 +556,31 @@
     <None Include="..\common\shader\Surface.hlsl">
       <Filter>Resource\common\shader</Filter>
     </None>
-    <None Include="..\common\effect\Base.hlsl">
-      <Filter>Resource\common\effect</Filter>
-    </None>
-    <None Include="..\common\effect\Shadow.sqfx">
-      <Filter>Resource\common\effect</Filter>
-    </None>
     <None Include="..\common\shader\ShadowCamera.hlsl">
       <Filter>Resource\common\shader</Filter>
-    </None>
-    <None Include="..\common\effect\SpotShadow.hlsl">
-      <Filter>Resource\common\effect</Filter>
     </None>
     <None Include="..\common\shader\SpotShadowLight.hlsl">
       <Filter>Resource\common\shader</Filter>
     </None>
-    <None Include="..\common\effect\PointShadow.hlsl">
-      <Filter>Resource\common\effect</Filter>
-    </None>
     <None Include="..\source\Resource\ShaderCommonHeader.hlsl">
       <Filter>source\Resource</Filter>
     </None>
-    <None Include="..\common\shader\PointShadowLight.hlsl" />
     <None Include="..\common\effect\Solid.sqfx">
+      <Filter>Resource\common\effect</Filter>
+    </None>
+    <None Include="..\common\effect\CastPointShadow.hlsl">
+      <Filter>Resource\common\effect</Filter>
+    </None>
+    <None Include="..\common\shader\PointShadowLight.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </None>
+    <None Include="..\common\effect\CastShadow.sqfx">
+      <Filter>Resource\common\effect</Filter>
+    </None>
+    <None Include="..\common\effect\CastSpotShadow.hlsl">
+      <Filter>Resource\common\effect</Filter>
+    </None>
+    <None Include="..\common\effect\Solid.hlsl">
       <Filter>Resource\common\effect</Filter>
     </None>
   </ItemGroup>

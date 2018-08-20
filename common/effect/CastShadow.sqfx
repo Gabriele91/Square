@@ -14,7 +14,7 @@ sub_effect
             blend off
             cullface front
 		    lights off
-            shader "SpotShadow.hlsl"
+            shader "CastSpotShadow.hlsl"
         }
     }
     technique "PointShadow"
@@ -25,7 +25,7 @@ sub_effect
             blend off
             cullface front
 		    lights off
-            shader "PointShadow.hlsl"
+            shader "CastPointShadow.hlsl"
         }
     }
 }

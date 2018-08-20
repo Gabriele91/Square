@@ -461,8 +461,11 @@ namespace Render
         //shader type
 		context->s_render_driver_info.m_shader_language = "HLSL";
         //shader version
-		context->s_render_driver_info.m_shader_version  = 5;
-    }
+		context->s_render_driver_info.m_shader_version  = 50;
+		//DX11 version
+		context->s_render_driver_info.m_major_version = 11;
+		context->s_render_driver_info.m_minor_version = 0;
+	}
 	
 	bool ContextDX11::get_devices(Video::DeviceResources* resource)
 	{
