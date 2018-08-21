@@ -127,9 +127,6 @@ public:
 		//bind
 		pass.bind(render, input, m_material->parameters());
 		//draw
-		render.bind_IL(pass.layout(m_mesh->layout()));
-        render.bind_VBO(m_mesh->vertex_buffer().get());
-        render.bind_IBO(m_mesh->index_buffer().get());
 		m_mesh->draw(render);
 		//unbind
 		pass.unbind();
@@ -234,7 +231,7 @@ public:
 		case Square::Video::KEY_S:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
-				auto slight = m_level->actor("light1")->component<SpotLight>();
+				auto slight = m_level->actor("light2")->component<SpotLight>();
 				slight->visible(!slight->visible());
 			}
 		break;
@@ -279,14 +276,14 @@ public:
 		//light
 		auto light0 = m_level->actor("light0");
 		light0->component<DirectionLight>()->diffuse({ 1.0,0.0,0.0 });
-		//light0->component<DirectionLight>()->visible(false);
+		light0->component<DirectionLight>()->visible(false);
 		light0->rotation(rotate_euler(0.0f, Square::radians(-90.0f), 0.0f));
 
 		auto light1 = m_level->actor("light1");
 		light1->component<PointLight>()->radius(20.0, 15.0);
 		light1->component<PointLight>()->diffuse({ 0.0,1.0,0.0 });
 		light1->component<PointLight>()->specular({ 0.0,1.0,0.0 });
-		//light1->component<PointLight>()->visible(false);
+		light1->component<PointLight>()->visible(false);
 		light1->component<PointLight>()->shadow({ 512,512 });
 		light1->position({ 0,0,10 });
 
@@ -295,11 +292,11 @@ public:
 		light2->component<SpotLight>()->diffuse({ 1.0,1.0,1.0 });
 		light2->component<SpotLight>()->specular({ 1.0,1.0,1.0 });
 		light2->component<SpotLight>()->shadow({ 512,512 });
-		//light2->component<SpotLight>()->visible(false);
+		light2->component<SpotLight>()->visible(false);
 		light2->rotation(rotate_euler(Square::radians(-90.0f), 0.0f, 0.0f));
 		light2->position({ 0,0,10 });
 		//n cubes
-		int n_cubes = 6;
+		int n_cubes = 2;
 		float radius_dist = 5.0f;
 		//get
 		for (int i = 0; i != n_cubes; ++i)
@@ -395,7 +392,7 @@ int main()
       WindowSizePixel({ 1280, 768 })
     , WindowMode::NOT_RESIZABLE
 	, 
-#if defined(_WIN32) & 1
+#if defined(_WIN32) & 0
 	  WindowRenderDriver
 	  {
 		 Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, debug

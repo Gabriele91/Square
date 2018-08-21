@@ -327,14 +327,6 @@ namespace Render
 	EffectPass::EffectPass() {}
 	EffectPass::~EffectPass() {}
 
-	//shortcut
-	Render::InputLayout* EffectPass::layout(size_t layout_id) const
-	{
-		if (m_shader && layout_id < m_shader->layouts().size())
-			return m_shader->layouts()[layout_id].get();
-		return nullptr;
-	}
-
 	//enable pass effect
 	void EffectPass::bind(  Render::Context&  render
 						  , EffectPassInputs  inputs

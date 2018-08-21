@@ -46,17 +46,13 @@ namespace Layout
     //collections
     class Collection
     {
-        
     public:
-        
         //Add a vertex as commond vertex
         static bool append(const ObjectInfo& info, const AttributeList& attrs, unsigned long type, size_t vertex_size);
         //index of layout vector
-        static InputLayoutId index_by_type(unsigned long type);      //O(N)
-        static InputLayoutId index_by_object_id(::Square::uint64 id);       //O(N)
-        static InputLayoutId index_by_object_name(const std::string& name); //O(N + |name|)
-        //build
-        static InputLayoutList layouts(Render::Context* render,Render::Shader* shader);
+        static Shared< Render::InputLayout > index_by_type(Render::Context* render, unsigned long type);             //O(N)
+        static Shared< Render::InputLayout > index_by_object_id(Render::Context* render, ::Square::uint64 id);       //O(N)
+        static Shared< Render::InputLayout > index_by_object_name(Render::Context* render, const std::string& name); //O(N + |name|)
     };
     
     //class used for static registration of a costum vertex

@@ -94,10 +94,13 @@ namespace Render
 		//for shader
 		AttributeList							m_attributes;
 		std::vector< D3D11_INPUT_ELEMENT_DESC > m_description;
-		ID3D11InputLayout*						m_layout{ nullptr }; //only for vertex shader
+		//map
+		std::unordered_map<Shader*, ID3D11InputLayout*> m_map_layouts;
 		//build
-		InputLayout(ContextDX11* context11, Shader* shader, const AttributeList& attributes, const std::vector< D3D11_INPUT_ELEMENT_DESC >& description);
-		operator ID3D11InputLayout*() { return m_layout; }
+		InputLayout(const AttributeList& attributes, const std::vector< D3D11_INPUT_ELEMENT_DESC >& description);
+		//get
+		ID3D11InputLayout* get_dx11_input_layout(ContextDX11* context11, Shader* shader);
+		//delete all
 		virtual ~InputLayout();
 	};
 
@@ -519,13 +522,15 @@ namespace Render
 		virtual void draw_elements(DrawType type, unsigned int start, unsigned int n) override;
 
 		//IL=Input Layaut
-		virtual InputLayout* create_IL(Shader* shader, const AttributeList& atl) override;
+		virtual InputLayout* create_IL(const AttributeList& atl) override;
+		virtual void delete_IL(InputLayout*&) override;
+
+		virtual void bind_IL(InputLayout*) override;
+		virtual void unbind_IL(InputLayout* il) override;
+
 		virtual size_t size_IL(const InputLayout* layout) override;
 		virtual bool   has_a_position_IL(const InputLayout* layout) override;
 		virtual size_t position_offset_IL(const InputLayout* layout) override;
-		virtual void delete_IL(InputLayout*&) override;
-		virtual void bind_IL(InputLayout*) override;
-		virtual void unbind_IL(InputLayout* il) override;
 
 		//depth
 		virtual float get_depth(const Vec2& pixel) const override;

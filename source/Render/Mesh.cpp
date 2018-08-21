@@ -32,25 +32,19 @@ namespace Render
 	//build
 	void Mesh::build(const Mesh::Vertex2DList& vertexs)
 	{
-		m_layout = Layout::Collection::index_by_type
-		(
-			  Layout::LF_POSITION_2D 
-		);
+		build_vertex_layout( Layout::LF_POSITION_2D );
 		build_vertex_buffer(vertexs);
 		m_sub_meshs.emplace_back(vertexs.size());
 	}
 	void Mesh::build(const Mesh::Vertex3DList& vertexs) 
 	{
-		m_layout = Layout::Collection::index_by_type
-		(
-			  Layout::LF_POSITION_3D
-		);
+		build_vertex_layout( Layout::LF_POSITION_3D );
 		build_vertex_buffer(vertexs);
 		m_sub_meshs.emplace_back(vertexs.size());
 	}
 	void Mesh::build(const Mesh::Vertex2DUVList& vertexs)
 	{
-		m_layout = Layout::Collection::index_by_type
+		build_vertex_layout
 		(
 			  Layout::LF_POSITION_2D
 			| Layout::LF_UVMAP
@@ -60,7 +54,7 @@ namespace Render
 	}
 	void Mesh::build(const Mesh::Vertex3DUVList& vertexs)
 	{
-		m_layout = Layout::Collection::index_by_type
+		build_vertex_layout
 		(
 			  Layout::LF_POSITION_3D
 			| Layout::LF_UVMAP
@@ -70,7 +64,7 @@ namespace Render
 	}
 	void Mesh::build(const Mesh::Vertex3DNTBUVList& vertexs) 
 	{
-		m_layout = Layout::Collection::index_by_type
+		build_vertex_layout
 		(
 			  Layout::LF_POSITION_3D
 			| Layout::LF_NORMAL
@@ -110,7 +104,7 @@ namespace Render
 
 	void Mesh::build(const Vertex2DList& vertexs, const IndexList& indexs)
 	{
-		m_layout = Layout::Collection::index_by_type
+		build_vertex_layout
 		(
 			Layout::LF_POSITION_2D
 		);
@@ -120,7 +114,7 @@ namespace Render
 	}
 	void Mesh::build(const Vertex3DList& vertexs, const IndexList& indexs)
 	{
-		m_layout = Layout::Collection::index_by_type
+		build_vertex_layout
 		(
 			Layout::LF_POSITION_3D
 		);
@@ -130,7 +124,7 @@ namespace Render
 	}
 	void Mesh::build(const Vertex2DUVList& vertexs, const IndexList& indexs)
 	{
-		m_layout = Layout::Collection::index_by_type
+		build_vertex_layout
 		(
 			  Layout::LF_POSITION_2D
 			| Layout::LF_UVMAP
@@ -140,7 +134,7 @@ namespace Render
 	}
 	void Mesh::build(const Vertex3DUVList& vertexs, const IndexList& indexs)
 	{
-		m_layout = Layout::Collection::index_by_type
+		build_vertex_layout
 		(
 			  Layout::LF_POSITION_3D
 			| Layout::LF_UVMAP
@@ -151,7 +145,7 @@ namespace Render
 	}
 	void Mesh::build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs)
 	{
-		m_layout = Layout::Collection::index_by_type
+		build_vertex_layout
 		(
 			  Layout::LF_POSITION_3D
 			| Layout::LF_NORMAL
@@ -191,7 +185,7 @@ namespace Render
 	}
 
 	//data info
-	size_t Mesh::layout() const
+	Shared<Render::InputLayout> Mesh::layout() const
 	{
 		return m_layout;
 	}
@@ -214,6 +208,13 @@ namespace Render
 	//draw sub mesh
 	void Mesh::draw(Render::Context& render) const
 	{
+		//bind input layout
+		render.bind_IL(layout().get());
+		//bind vertex buffer
+		render.bind_VBO(vertex_buffer().get());
+		//bind index buffer
+		render.bind_IBO(index_buffer().get());
+		//draw
 		if (m_index_buffer)
 		{
 			for (auto& sub_mesh : m_sub_meshs)
@@ -224,6 +225,14 @@ namespace Render
 			for (auto& sub_mesh : m_sub_meshs)
 				render.draw_arrays(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
 		}
+	}
+
+	//build help
+	bool Mesh::build_vertex_layout(Layout::InputLayoutId type)
+	{
+		if (auto render = context().render())
+			m_layout = Layout::Collection::index_by_type(render, type);
+		return m_layout != false;
 	}
 
 	//build help

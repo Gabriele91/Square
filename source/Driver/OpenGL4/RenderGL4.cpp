@@ -30,6 +30,8 @@
 #ifndef GL_R
 #define GL_R GL_RED
 #endif
+// offeset "VertexAttribPointer"
+#define GL_OFFSET_OF(x) ((char *)NULL + (x))
 //--------------------------------------------------
 
 namespace Square
@@ -1512,59 +1514,99 @@ namespace Render
 		default: return "";
 		}
 	}
-
-	InputLayout* ContextGL4::create_IL(Shader* shader, const AttributeList& atl)
+	static inline const char* hlsl_attribute_to_string(AttributeType type)
 	{
-		//alloc
-		InputLayout* output = new InputLayout();
+		switch (type)
+		{
+		case Square::Render::ATT_POSITION0: return "in_POSITION0";
+		case Square::Render::ATT_NORMAL0:   return "in_NORMAL0";
+		case Square::Render::ATT_TEXCOORD0: return "in_TEXCOORD0";
+		case Square::Render::ATT_TANGENT0:  return "in_TANGENT0";
+		case Square::Render::ATT_BINORMAL0: return "in_BINORMAL0";
+		case Square::Render::ATT_COLOR0:	return "in_COLOR0";
+
+		case Square::Render::ATT_POSITION1: return "in_POSITION1";
+		case Square::Render::ATT_NORMAL1:   return "in_NORMAL1";
+		case Square::Render::ATT_TEXCOORD1: return "in_TEXCOORD1";
+		case Square::Render::ATT_TANGENT1:  return "in_TANGENT1";
+		case Square::Render::ATT_BINORMAL1: return "in_BINORMAL1";
+		case Square::Render::ATT_COLOR1:	return "in_COLOR1";
+
+		case Square::Render::ATT_NORMAL2:   return "in_NORMAL2";
+		case Square::Render::ATT_TEXCOORD2: return "in_TEXCOORD2";
+		case Square::Render::ATT_TANGENT2:  return "in_TANGENT2";
+		case Square::Render::ATT_BINORMAL2: return "in_BINORMAL2";
+		case Square::Render::ATT_COLOR2:	return "in_COLOR2";
+
+		default: return "";
+		}
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+	//InputLayout
+	InputLayout::GLLayout InputLayout::build(Shader* shader)
+	{
+		InputLayout::GLLayout output;
 		//add fiels
-		for (auto& attr : atl)
+		for (auto& attr : m_list)
 		{
 			//get location name
-			std::string  location_name = attribute_to_string(attr.m_attribute);
-			GLint location = glGetAttribLocation(shader->m_shader_id, location_name.c_str());
+			GLint location = glGetAttribLocation(shader->shader_id(), attribute_to_string(attr.m_attribute));
 			//re-try (HLSLcc)
 			if (location < 0)
 			{
-				location_name = std::string("in_") + location_name;
-				location = glGetAttribLocation(shader->m_shader_id, location_name.c_str());
+				location = glGetAttribLocation(shader->shader_id(), hlsl_attribute_to_string(attr.m_attribute));
 			}
 			//add
 			if (location > -1)
 			{
-				output->m_locations.push_back(location);
-				output->m_list.push(attr);
+				output.m_locations.push_back(location);
+				output.m_attributes.push(attr);
 			}
 		}
-		//size is the same of input
-		output->m_list.size(atl.size());
-		//
 		return output;
 	}
 
-	size_t ContextGL4::size_IL(const InputLayout* layout)
+	InputLayout::GLLayout* InputLayout::get(Shader* shader)
 	{
-		return layout->m_list.size();
+		//nullcase
+		if (!shader) return nullptr;
+		//find
+		auto it = m_map_layout.find(shader);
+		//ok if find
+		if (it != m_map_layout.end()) return &it->second;
+		//build
+		auto layout = build(shader);
+		//if null
+		if (!layout.size()) return nullptr;
+		//else save
+		m_map_layout[shader] = layout;
+		//end return
+		return &m_map_layout[shader];
+	}
+	InputLayout* ContextGL4::create_IL(const AttributeList& atl)
+	{
+		//alloc
+		InputLayout* output = new InputLayout();
+		//save info
+		output->m_list = atl;
+		//return output
+		return output;
 	}
 
-	bool ContextGL4::has_a_position_IL(const InputLayout* layout)
+	void ContextGL4::delete_IL(InputLayout*& layout)
 	{
-
-		for (auto& in : layout->m_list)
-			if (in.is_position_transform())
-				return true;
-		return false;
+		//is bind?
+		if (s_bind_context.m_input_layout == layout)
+		{
+			unbind_IL(layout);
+		}
+		//delete
+		delete  layout;
+		layout = nullptr;
 	}
 
-	size_t ContextGL4::position_offset_IL(const InputLayout* layout)
-	{
-		for (auto& in : layout->m_list)
-			if (in.is_position_transform())
-				return in.m_offset;
-		return ~((size_t)0);
-	}
-
-	static GLenum type_component(AttributeStripType type)
+	static GLenum gl_vertex_attribute_component(AttributeStripType type)
 	{
 
 		switch (type)
@@ -1593,7 +1635,7 @@ namespace Render
 		}
 	}
 
-	static bool type_component_is_integer(AttributeStripType type)
+	static bool gl_vertex_attribute_is_integer(AttributeStripType type)
 	{
 
 		switch (type)
@@ -1602,12 +1644,12 @@ namespace Render
 		case AST_INT2:
 		case AST_INT3:
 		case AST_INT4:
-		case AST_UINT: 
+		case AST_UINT:
 		case AST_UINT2:
 		case AST_UINT3:
-		case AST_UINT4: 
+		case AST_UINT4:
 			return true;
-		default: 
+		default:
 			return false;
 		}
 	}
@@ -1621,32 +1663,54 @@ namespace Render
             {
                 unbind_IL(s_bind_context.m_input_layout);
             }
-			//id counte
-			int location_id = 0;
+			//get 
+			InputLayout::GLLayout* gllayout = layout->get(s_bind_context.m_shader);
+			//build vertex layout
+			if (!gllayout)
+			{
+				//todo: push error
+				return;
+			}
+			//id location
+			GLint location_id = 0;
+			//size of vertex
+			GLuint vertex_size = layout->m_list.size();
             //bind
-            for (const Attribute& data : layout->m_list)
+			for(auto& attribute : gllayout->m_attributes)
             {
-				//get location
-				GLint location = layout->m_locations[location_id++];
+				////////////////////////////////////////////////////////////////////////////////////////
+				//get location/data
+				GLint location = gllayout->m_locations[location_id++];
+				//components
+				GLint components = attribute.components();
+				//component type
+				GLenum component_type = gl_vertex_attribute_component(attribute.m_strip);
+				//offset
+				auto offset = GL_OFFSET_OF(attribute.m_offset);
+				////////////////////////////////////////////////////////////////////////////////////////
 				//bind attribute
                 glEnableVertexAttribArray(location);
 				//types
-				if (type_component_is_integer(data.m_strip))
-					glVertexAttribIPointer(
-						location,
-						(GLint)data.components(),
-						type_component(data.m_strip),
-						(GLuint)layout->m_list.size(),
-						((char *)NULL + (data.m_offset))
-					);
-				else glVertexAttribPointer(
+				if (gl_vertex_attribute_is_integer(attribute.m_strip))
+				glVertexAttribIPointer
+				(
 					location,
-					(GLint)data.components(),
-					type_component(data.m_strip),
-					GL_FALSE,
-					(GLuint)layout->m_list.size(),
-					((char *)NULL + (data.m_offset))
+					components,
+					component_type,
+					vertex_size, 
+					offset
 				);
+				else 
+				glVertexAttribPointer
+				(
+					location,
+					components,
+					component_type,
+					GL_FALSE,
+					vertex_size, 
+					offset
+				);
+				////////////////////////////////////////////////////////////////////////////////////////
             }
             //save
             s_bind_context.m_input_layout = layout;
@@ -1658,9 +1722,12 @@ namespace Render
         if(layout)
         {
             //test
-            assert(s_bind_context.m_input_layout==layout);
+			assert(s_bind_context.m_input_layout == layout);
+			assert(s_bind_context.m_shader);
+			//get 
+			InputLayout::GLLayout* gllayout = layout->get(s_bind_context.m_shader);
             //unbind
-            for (const Attribute& data : layout->m_list)
+            for (const Attribute& data : gllayout->m_attributes)
             {
                 glDisableVertexAttribArray(data.m_attribute);
             }
@@ -1668,18 +1735,28 @@ namespace Render
             s_bind_context.m_input_layout = nullptr;
         }
 	}
-
-	void ContextGL4::delete_IL(InputLayout*& layout)
+	
+	size_t ContextGL4::size_IL(const InputLayout* layout)
 	{
-		//is bind?
-		if (s_bind_context.m_input_layout == layout)
-		{
-			unbind_IL(layout);
-		}
-		//delete
-		delete  layout;
-		layout = nullptr;
+		return layout->m_list.size();
 	}
+
+	bool ContextGL4::has_a_position_IL(const InputLayout* layout)
+	{
+		for (auto& in : layout->m_list)
+			if (in.is_position_transform())
+				return true;
+		return false;
+	}
+
+	size_t ContextGL4::position_offset_IL(const InputLayout* layout)
+	{
+		for (auto& in : layout->m_list)
+			if (in.is_position_transform())
+				return in.m_offset;
+		return ~((size_t)0);
+	}
+
 
 	//DEPTH
 	float ContextGL4::get_depth(const Vec2& pixel) const
@@ -1696,9 +1773,8 @@ namespace Render
 		glReadPixels(GLint(pixel.x), GLint(pixel.y), 1, 1, GL_RGBA, GL_FLOAT, &rgba);
 		return rgba;
 	}
-	/*
-		Textures
-	*/
+	
+	//Textures
 	inline const GLenum get_texture_format(TextureFormat type)
 	{
 		switch (type)
@@ -2393,6 +2469,11 @@ namespace Render
 		if (shader)
 		{
 			assert(s_bind_context.m_shader == shader);
+			//unbind input layout
+			if (s_bind_context.m_input_layout)
+			{
+				unbind_IL(s_bind_context.m_input_layout);
+			}
 			//disable program
 			shader->unbind();
 			//to null

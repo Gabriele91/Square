@@ -77,7 +77,7 @@ namespace Render
 		void build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs);
 
 		//info
-		size_t layout() const;
+		Shared<Render::InputLayout> layout() const;
 		Shared<Render::VertexBuffer> vertex_buffer() const;
 		Shared<Render::IndexBuffer> index_buffer() const;
 
@@ -88,6 +88,8 @@ namespace Render
 		void draw(Render::Context& render) const;
 
 	protected:
+		//build help
+		bool build_vertex_layout(Layout::InputLayoutId type);
 		//build help
 		bool build_vertex_buffer(unsigned char* data, size_t stride, size_t size);
 		//build help
@@ -103,7 +105,7 @@ namespace Render
 			return build_index_buffer((unsigned int*)indexs.data(), indexs.size());
 		}
 		//gpu
-		size_t				         m_layout{ ~size_t(0) };
+		Shared<Render::InputLayout>	 m_layout;
 		Shared<Render::VertexBuffer> m_vertex_buffer;
 		Shared<Render::IndexBuffer>  m_index_buffer;
 		//vector of sub meshs

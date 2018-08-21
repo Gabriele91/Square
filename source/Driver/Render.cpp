@@ -14,9 +14,9 @@ namespace Render
 	using square_render_delete_context = void(*)(Square::Render::Context*&);
 
 	//help
-	Shared<InputLayout>  input_layout(Context* ctx, Shader* shader, const AttributeList& attrs)
+	Shared<InputLayout>  input_layout(Context* ctx, const AttributeList& attrs)
 	{
-		InputLayout* buffer = ctx->create_IL(shader, attrs);
+		InputLayout* buffer = ctx->create_IL(attrs);
 		return std::shared_ptr<InputLayout>(buffer, [=](InputLayout* ptr) { ctx->delete_IL(ptr); });
 	}
 	Shared<ConstBuffer>  constant_buffer(Context* ctx, unsigned char* data, size_t size)
