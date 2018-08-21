@@ -80,9 +80,30 @@ namespace Render
 	class InputLayout
 	{
 	public:
+		//locations
+		using LocationList = std::vector< GLint >;
+		//location
+		struct GLLayout
+		{
+			LocationList  m_locations;
+			AttributeList m_attributes;
+			size_t size() const
+			{
+				return m_locations.size();
+			}
+		};
+		//map
+		using GLLayoutMap = std::unordered_map< Shader*, GLLayout >;
+		//OpenGL info
+		GLLayoutMap m_map_layout;
+		//info given from appliction
+		AttributeList m_list;
+		//utils
+		GLLayout* get(Shader* shader);
 
-		std::vector<GLint> m_locations;
-		AttributeList      m_list;
+	private:
+		//build
+		GLLayout build(Shader* shader);
 	};
 
 	//TEXTURE
@@ -353,7 +374,8 @@ namespace Render
 		GLint              m_id;
 		GLuint             m_bind;
     };
-	//SHADER
+	
+	//Shader
 	class Shader
 	{
 	public:
@@ -399,6 +421,9 @@ namespace Render
 		void push_compiler_error(const ShaderCompileError& error_log);
         
 		void push_liker_error(const std::string& error_log);
+
+		//shader id
+		unsigned int shader_id() const { return m_shader_id; }
         
     protected:
         //friends
@@ -440,7 +465,7 @@ namespace Render
         
 	};
     
-	//BIND CONTEXT
+	//Bind context
 	struct BindContext
 	{
 		Texture*       m_textures[32]{ nullptr };
@@ -535,13 +560,15 @@ namespace Render
 		virtual void draw_elements(DrawType type, unsigned int start, unsigned int n) override;
 
 		//IL=Input Layaut
-		virtual InputLayout* create_IL(Shader* shader, const AttributeList& atl) override;
+		virtual InputLayout* create_IL(const AttributeList& atl) override;
+		virtual void delete_IL(InputLayout*&) override;
+
+		virtual void bind_IL(InputLayout*) override;
+		virtual void unbind_IL(InputLayout* il) override;
+
 		virtual size_t size_IL(const InputLayout* layout) override;
 		virtual bool   has_a_position_IL(const InputLayout* layout) override;
 		virtual size_t position_offset_IL(const InputLayout* layout) override;
-		virtual void delete_IL(InputLayout*&) override;
-		virtual void bind_IL(InputLayout*) override;
-		virtual void unbind_IL(InputLayout* il) override;
 
 		//depth
 		virtual float get_depth(const Vec2& pixel) const override;

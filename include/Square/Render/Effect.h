@@ -365,10 +365,7 @@ namespace Render
 		//constructor
 		EffectPass();
 		virtual ~EffectPass();
-
-		//shortcut
-		Render::InputLayout* layout(size_t layout_id) const;
-
+		
 		//unsafe
 		void bind(  Render::Context&       render
                   , EffectPassInputs	   inputs = EffectPassInputs()

@@ -60,10 +60,7 @@ namespace Resource
 
 		//RAW Shader
 		Render::Shader* base_shader() const;
-        
-        //Input layout
-        const InputLayoutList& layouts() const;
-        
+
 		//bind shader
 		virtual void bind();
 
@@ -80,8 +77,6 @@ namespace Resource
 		FilepathMap	    m_filepath_map;
 		UnifomMap	    m_uniform_map;
 		CBufferMap	    m_cbuffer_map;
-        //layouts
-        InputLayoutList m_layouts;
 
 	};
 }

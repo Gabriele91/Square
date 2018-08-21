@@ -1491,16 +1491,14 @@ namespace Render
 	}
 
 
-	InputLayout::InputLayout(
-		  ContextDX11* context11
-		, Shader* shader
-		, const AttributeList& attributes
+	InputLayout::InputLayout
+	(
+		  const AttributeList& attributes
 		, const std::vector< D3D11_INPUT_ELEMENT_DESC >& description
 	)
 	: m_attributes(attributes)
 	, m_description(description)
 	{
-		m_layout = build(context11, shader->binary(ST_VERTEX_SHADER));
 	}
 
 	static std::map<std::string, DXGI_FORMAT> reflaction_input_layout(ID3DBlob* shader)
@@ -1584,7 +1582,7 @@ namespace Render
 		}
 		return true;
 	}
-
+	
 	ID3D11InputLayout* InputLayout::build(ContextDX11* context11, ID3DBlob* shader)
 	{
 		if(!shader) return nullptr;
@@ -1609,12 +1607,30 @@ namespace Render
 		return nullptr;
 	}
 
-	InputLayout::~InputLayout()
+	ID3D11InputLayout* InputLayout::get_dx11_input_layout(ContextDX11* context11, Shader* shader)
 	{
-		if(m_layout) m_layout->Release();
+		//find
+		auto it = m_map_layouts.find(shader);
+		//ok if find
+		if(it != m_map_layouts.end()) return it->second;
+		//build
+		auto dx11il = build(context11, shader->binary(ST_VERTEX_SHADER));
+		//if null
+		if (!dx11il) return nullptr;
+		//else save
+		m_map_layouts[shader] = dx11il;
+		//end return
+		return dx11il;
 	}
 
-	InputLayout* ContextDX11::create_IL(Shader* shader, const AttributeList& atl)
+	InputLayout::~InputLayout()
+	{
+		for(auto s_il_pair : m_map_layouts)
+			if(s_il_pair.second) 
+				s_il_pair.second->Release();
+	}
+
+	InputLayout* ContextDX11::create_IL(const AttributeList& atl)
 	{
 		//directx li
 		std::vector<D3D11_INPUT_ELEMENT_DESC> layouts;
@@ -1635,7 +1651,7 @@ namespace Render
 			layouts.push_back(layout);
 		}
 		//success
-		return new InputLayout(this, shader, atl, layouts);
+		return new InputLayout(atl, layouts);
 	}
 
 	size_t ContextDX11::size_IL(const InputLayout* layout)
@@ -1668,8 +1684,16 @@ namespace Render
             {
                 unbind_IL(s_bind_context.m_input_layout);
             }
+			//get
+			ID3D11InputLayout* dx11il = layout->get_dx11_input_layout(this, s_bind_context.m_shader);
+			//test
+			if (!dx11il)
+			{
+				m_errors.push_back({ "D3D11 Wrapper, bind_IL: can not build a input layout" });
+				return;
+			}
             //bind
-			device_context()->IASetInputLayout(*layout);
+			device_context()->IASetInputLayout(dx11il);
             //save
             s_bind_context.m_input_layout = layout;
         }

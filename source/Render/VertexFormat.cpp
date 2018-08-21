@@ -28,7 +28,19 @@ namespace Layout
         ObjectInfo    m_info;
         AttributeList m_attributes;
         unsigned long m_type;
-        size_t m_size;
+        size_t        m_size;
+		//layout 
+		Shared< Render::InputLayout > m_layout;
+		//get input layout
+		Shared< Render::InputLayout > layout(Render::Context* render)
+		{
+			//test
+			if (m_layout) return m_layout;
+			//build
+			m_layout = Render::input_layout(render, m_attributes);
+			//return
+			return m_layout;
+		}
     };
     
     //map
@@ -46,39 +58,29 @@ namespace Layout
         return true;
     }
     //index of layout vector
-    InputLayoutId Collection::index_by_type(unsigned long type)
+	Shared< Render::InputLayout > Collection::index_by_type(Render::Context* render, unsigned long type)
     {
         auto it = std::find_if(vertex_list().begin(), vertex_list().end(), [type](const VertexItem& element){
             return element.m_type == type;
         });
-        if(it ==  vertex_list().end()) return ~(size_t(0));
-        return std::distance(vertex_list().begin(),it);
+		if (it == vertex_list().end()) return nullptr;
+		return it->layout(render);
     }
-    InputLayoutId Collection::index_by_object_id(::Square::uint64 id)
+	Shared< Render::InputLayout > Collection::index_by_object_id(Render::Context* render, ::Square::uint64 id)
     {
         auto it = std::find_if(vertex_list().begin(), vertex_list().end(), [id](const VertexItem& element){
             return element.m_info.id() == id;
         });
-        if(it ==  vertex_list().end()) return ~(size_t(0));
-        return std::distance(vertex_list().begin(),it);
+		if (it == vertex_list().end()) return nullptr;
+		return it->layout(render);
     }
-    InputLayoutId Collection::index_by_object_name(const std::string& name)
+	Shared< Render::InputLayout > Collection::index_by_object_name(Render::Context* render, const std::string& name)
     {
         auto it = std::find_if(vertex_list().begin(), vertex_list().end(), [&name](const VertexItem& element){
             return element.m_info.name() == name;
         });
-        if(it ==  vertex_list().end()) return ~(size_t(0));
-        return std::distance(vertex_list().begin(),it);
-    }
-    //build
-    InputLayoutList Collection::layouts(Render::Context* render,Render::Shader* shader)
-    {
-        std::vector< Shared< Render::InputLayout > > output;
-        for(auto& vinfo : vertex_list())
-        {
-            output.push_back(Render::input_layout(render, shader, vinfo.m_attributes));
-        }
-        return std::move(output);
+        if(it ==  vertex_list().end()) return nullptr;
+        return it->layout(render);
     }
 }
 }

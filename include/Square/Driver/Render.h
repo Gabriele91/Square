@@ -955,13 +955,16 @@ namespace Render
 		virtual void draw_elements(DrawType type, unsigned int start, unsigned int n) = 0;
 
 		//IL=Input Layaut
-		virtual InputLayout* create_IL(Shader* shader,const AttributeList& atl) = 0;
+		virtual InputLayout* create_IL(const AttributeList& atl) = 0;
+		virtual void delete_IL(InputLayout*&) = 0;
+
+		virtual void bind_IL(InputLayout*) = 0;
+		virtual void unbind_IL(InputLayout* il) = 0;
+
 		virtual size_t size_IL(const InputLayout* layout) = 0;
 		virtual bool   has_a_position_IL(const InputLayout* layout) = 0;
 		virtual size_t position_offset_IL(const InputLayout* layout) = 0;
-		virtual void delete_IL(InputLayout*&) = 0;
-		virtual void bind_IL(InputLayout*) = 0;
-		virtual void unbind_IL(InputLayout* il) = 0;
+
 
 		//depth
 		virtual float get_depth(const Vec2& pixel) const = 0;
@@ -1028,10 +1031,10 @@ namespace Render
 	};
 	/////////////////////////////////
 	// Buffer smart pointer	
-	DLL_EXPORT Shared<InputLayout>  input_layout(Context* ctx, Shader* shader, const AttributeList& attrs);
+	DLL_EXPORT Shared<InputLayout>  input_layout(Context* ctx, const AttributeList& attrs);
 	DLL_EXPORT Shared<ConstBuffer>  constant_buffer(Context* ctx,  unsigned char* data, size_t size);
 	DLL_EXPORT Shared<VertexBuffer> vertex_buffer(Context* ctx, unsigned char* data, size_t stride, size_t n);
-	DLL_EXPORT Shared<IndexBuffer> index_buffer(Context* ctx, unsigned int* data, size_t n);
+	DLL_EXPORT Shared<IndexBuffer>  index_buffer(Context* ctx, unsigned int* data, size_t n);
 	DLL_EXPORT Shared<ConstBuffer>  stream_constant_buffer(Context* ctx, size_t size);
 	DLL_EXPORT Shared<VertexBuffer> stream_vertex_buffer(Context* ctx, size_t stride, size_t n);
 	DLL_EXPORT Shared<IndexBuffer> stream_index_buffer(Context* ctx, size_t n);

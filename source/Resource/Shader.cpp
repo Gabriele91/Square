@@ -494,19 +494,12 @@ namespace Resource
 				context().add_wrong(render->get_shader_liker_error(m_shader));
 				return false;
 			}
-			//success
-            m_layouts = Render::Layout::Collection::layouts(render, m_shader);
             //ok
 			return true;
 		}
 		return false;
 	}
-
-    const Shader::InputLayoutList& Shader::layouts() const
-    {
-        return m_layouts;
-    }
-
+	
     //get buffer
     Render::Uniform* Shader::uniform(const std::string& name) const
     {

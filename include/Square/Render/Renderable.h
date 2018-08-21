@@ -63,23 +63,6 @@ namespace Render
 		void visible(bool enable)  { m_visible = enable; }
 
 		virtual bool can_draw() const { return visible() && material().lock() && transform().lock(); }
-		
-    protected:
-               
-        static const size_t layout_id_from_type(unsigned long type)
-        {
-            return Layout::Collection::index_by_type(type);
-        };
-        
-		static const size_t layout_id_from_object_id(::Square::uint64 id)
-        {
-			return Layout::Collection::index_by_object_id(id);
-        };
-        
-		static const size_t layout_id_from_object_name(const std::string& name)
-        {
-			return Layout::Collection::index_by_object_name(name);
-        };
 
 	private:
         
