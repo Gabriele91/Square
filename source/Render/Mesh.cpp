@@ -232,7 +232,7 @@ namespace Render
 	{
 		if (auto render = context().render())
 			m_layout = Layout::Collection::index_by_type(render, type);
-		return m_layout != false;
+		return m_layout != nullptr;
 	}
 
 	//build help
@@ -240,7 +240,7 @@ namespace Render
 	{
 		if(auto render = context().render())
 			m_vertex_buffer = Render::vertex_buffer(render, data, stride, size);
-		return m_vertex_buffer != false;
+		return m_vertex_buffer != nullptr;
 	}
 
 	//build help
@@ -248,7 +248,7 @@ namespace Render
 	{
 		if (auto render = context().render())
 			m_index_buffer = Render::index_buffer(render, data, size);
-		return m_index_buffer != false;
+		return m_index_buffer != nullptr;
 	}
 }
 }

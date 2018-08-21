@@ -141,8 +141,8 @@ namespace Resource
 				//lights/shadows sub pass
 				int sub_pass_masks[]
 				{
-					parser_pass.m_lights
-				   ,parser_pass.m_shadows
+                     static_cast<int>(parser_pass.m_lights)
+                    ,static_cast<int>(parser_pass.m_shadows)
 				};
                 //Type render
                 shader_define_rendering current_shader_def;

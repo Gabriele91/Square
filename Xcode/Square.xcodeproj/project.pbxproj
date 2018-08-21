@@ -27,6 +27,20 @@
 		E0119C8F21103D2D00CEE65B /* ParserResources.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0119C8E21103D2C00CEE65B /* ParserResources.cpp */; };
 		E0119C9121103D3E00CEE65B /* ParserResources.h in Headers */ = {isa = PBXBuildFile; fileRef = E0119C9021103D3E00CEE65B /* ParserResources.h */; };
 		E024D1652108947B00F44C81 /* DrawerPassForward.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E024D1642108947B00F44C81 /* DrawerPassForward.cpp */; };
+		E0375978212CDD96006BCCE3 /* Sphere.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0375977212CDD96006BCCE3 /* Sphere.cpp */; };
+		E037597D212CDDA5006BCCE3 /* ShadowBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0375979212CDDA5006BCCE3 /* ShadowBuffer.cpp */; };
+		E037597E212CDDA5006BCCE3 /* DrawerPassShadow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E037597A212CDDA5006BCCE3 /* DrawerPassShadow.cpp */; };
+		E037597F212CDDA5006BCCE3 /* Light.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E037597B212CDDA5006BCCE3 /* Light.cpp */; };
+		E0375980212CDDA5006BCCE3 /* Mesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E037597C212CDDA5006BCCE3 /* Mesh.cpp */; };
+		E0375983212CDDB1006BCCE3 /* PointLight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0375981212CDDB1006BCCE3 /* PointLight.cpp */; };
+		E0375986212CDDC5006BCCE3 /* DirectionLight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0375984212CDDC5006BCCE3 /* DirectionLight.cpp */; };
+		E0375987212CDDC5006BCCE3 /* SpotLight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E0375985212CDDC5006BCCE3 /* SpotLight.cpp */; };
+		E037598B212CDDEB006BCCE3 /* Mesh.h in Headers */ = {isa = PBXBuildFile; fileRef = E0375988212CDDEB006BCCE3 /* Mesh.h */; };
+		E037598C212CDDEB006BCCE3 /* DrawerPassShadow.h in Headers */ = {isa = PBXBuildFile; fileRef = E0375989212CDDEB006BCCE3 /* DrawerPassShadow.h */; };
+		E037598D212CDDEB006BCCE3 /* ShadowBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = E037598A212CDDEB006BCCE3 /* ShadowBuffer.h */; };
+		E0375991212CDE0B006BCCE3 /* DirectionLight.h in Headers */ = {isa = PBXBuildFile; fileRef = E037598E212CDE0B006BCCE3 /* DirectionLight.h */; };
+		E0375992212CDE0B006BCCE3 /* PointLight.h in Headers */ = {isa = PBXBuildFile; fileRef = E037598F212CDE0B006BCCE3 /* PointLight.h */; };
+		E0375993212CDE0B006BCCE3 /* SpotLight.h in Headers */ = {isa = PBXBuildFile; fileRef = E0375990212CDE0B006BCCE3 /* SpotLight.h */; };
 		E044BCE9206A9974003D4406 /* Application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044BC6C206A98B7003D4406 /* Application.cpp */; };
 		E044BCEA206A9974003D4406 /* ClassObjectRegistration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044BC6D206A98B7003D4406 /* ClassObjectRegistration.cpp */; };
 		E044BCEB206A9974003D4406 /* Context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E044BC6E206A98B7003D4406 /* Context.cpp */; };
@@ -102,6 +116,21 @@
 		E0119C9021103D3E00CEE65B /* ParserResources.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParserResources.h; sourceTree = "<group>"; };
 		E024D163210891C900F44C81 /* DrawerPassForward.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DrawerPassForward.h; sourceTree = "<group>"; };
 		E024D1642108947B00F44C81 /* DrawerPassForward.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DrawerPassForward.cpp; sourceTree = "<group>"; };
+		E0375977212CDD96006BCCE3 /* Sphere.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Sphere.cpp; sourceTree = "<group>"; };
+		E0375979212CDDA5006BCCE3 /* ShadowBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ShadowBuffer.cpp; sourceTree = "<group>"; };
+		E037597A212CDDA5006BCCE3 /* DrawerPassShadow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DrawerPassShadow.cpp; sourceTree = "<group>"; };
+		E037597B212CDDA5006BCCE3 /* Light.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Light.cpp; sourceTree = "<group>"; };
+		E037597C212CDDA5006BCCE3 /* Mesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Mesh.cpp; sourceTree = "<group>"; };
+		E0375981212CDDB1006BCCE3 /* PointLight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PointLight.cpp; sourceTree = "<group>"; };
+		E0375982212CDDB1006BCCE3 /* ShaderCommonHeader.hlsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ShaderCommonHeader.hlsl; sourceTree = "<group>"; };
+		E0375984212CDDC5006BCCE3 /* DirectionLight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DirectionLight.cpp; sourceTree = "<group>"; };
+		E0375985212CDDC5006BCCE3 /* SpotLight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SpotLight.cpp; sourceTree = "<group>"; };
+		E0375988212CDDEB006BCCE3 /* Mesh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Mesh.h; sourceTree = "<group>"; };
+		E0375989212CDDEB006BCCE3 /* DrawerPassShadow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DrawerPassShadow.h; sourceTree = "<group>"; };
+		E037598A212CDDEB006BCCE3 /* ShadowBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShadowBuffer.h; sourceTree = "<group>"; };
+		E037598E212CDE0B006BCCE3 /* DirectionLight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DirectionLight.h; sourceTree = "<group>"; };
+		E037598F212CDE0B006BCCE3 /* PointLight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PointLight.h; sourceTree = "<group>"; };
+		E0375990212CDE0B006BCCE3 /* SpotLight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpotLight.h; sourceTree = "<group>"; };
 		E044BC3A206A97E6003D4406 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Config.h; sourceTree = "<group>"; };
 		E044BC3C206A97E6003D4406 /* Application.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Application.h; sourceTree = "<group>"; };
 		E044BC3D206A97E6003D4406 /* Attribute.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Attribute.h; sourceTree = "<group>"; };
@@ -370,6 +399,9 @@
 		E044BC65206A97E7003D4406 /* Scene */ = {
 			isa = PBXGroup;
 			children = (
+				E037598E212CDE0B006BCCE3 /* DirectionLight.h */,
+				E037598F212CDE0B006BCCE3 /* PointLight.h */,
+				E0375990212CDE0B006BCCE3 /* SpotLight.h */,
 				E001EC5E20D3B5D800241C6D /* World.h */,
 				E044BC68206A97E7003D4406 /* Level.h */,
 				E044BC66206A97E7003D4406 /* Actor.h */,
@@ -509,6 +541,7 @@
 		E044BCA0206A98B7003D4406 /* Geometry */ = {
 			isa = PBXGroup;
 			children = (
+				E0375977212CDD96006BCCE3 /* Sphere.cpp */,
 				E044BCA1206A98B7003D4406 /* AABoundingBox.cpp */,
 				E044BCA2206A98B7003D4406 /* CreateBounding.cpp */,
 				E044BCA3206A98B7003D4406 /* Frustum.cpp */,
@@ -521,6 +554,8 @@
 		E044BCA6206A98B7003D4406 /* Resource */ = {
 			isa = PBXGroup;
 			children = (
+				E0375981212CDDB1006BCCE3 /* PointLight.cpp */,
+				E0375982212CDDB1006BCCE3 /* ShaderCommonHeader.hlsl */,
 				E001EC6420D3B5EA00241C6D /* Material.cpp */,
 				E044BCA7206A98B7003D4406 /* Shader.cpp */,
 				E044BCAA206A98B7003D4406 /* Texture.cpp */,
@@ -532,6 +567,8 @@
 		E044BCAB206A98B7003D4406 /* Scene */ = {
 			isa = PBXGroup;
 			children = (
+				E0375984212CDDC5006BCCE3 /* DirectionLight.cpp */,
+				E0375985212CDDC5006BCCE3 /* SpotLight.cpp */,
 				E001EC6620D3B5F100241C6D /* World.cpp */,
 				E044BCAE206A98B7003D4406 /* Level.cpp */,
 				E044BCAC206A98B7003D4406 /* Actor.cpp */,
@@ -544,6 +581,9 @@
 		E073F2B6207CE62F0054CE10 /* Render */ = {
 			isa = PBXGroup;
 			children = (
+				E0375989212CDDEB006BCCE3 /* DrawerPassShadow.h */,
+				E0375988212CDDEB006BCCE3 /* Mesh.h */,
+				E037598A212CDDEB006BCCE3 /* ShadowBuffer.h */,
 				E05DC672210760E800445CDF /* Camera.h */,
 				E001EC5620D3B5C600241C6D /* Effect.h */,
 				E001EC5720D3B5C600241C6D /* Material.h */,
@@ -564,6 +604,10 @@
 		E073F2B8207CE7410054CE10 /* Render */ = {
 			isa = PBXGroup;
 			children = (
+				E037597A212CDDA5006BCCE3 /* DrawerPassShadow.cpp */,
+				E037597B212CDDA5006BCCE3 /* Light.cpp */,
+				E037597C212CDDA5006BCCE3 /* Mesh.cpp */,
+				E0375979212CDDA5006BCCE3 /* ShadowBuffer.cpp */,
 				E001EC6920D3B5FB00241C6D /* Effect.cpp */,
 				E001EC6820D3B5FA00241C6D /* Material.cpp */,
 				E073F2BD207CF94C0054CE10 /* Queue.cpp */,
@@ -656,18 +700,24 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E037598C212CDDEB006BCCE3 /* DrawerPassShadow.h in Headers */,
 				E044BD0C206A9ACE003D4406 /* Screen_private.h in Headers */,
 				E0119C9121103D3E00CEE65B /* ParserResources.h in Headers */,
 				E001EC6320D3B5E100241C6D /* ParserParameters.h in Headers */,
 				E001EC5920D3B5C600241C6D /* Renderable.h in Headers */,
 				E05DC673210760E800445CDF /* Camera.h in Headers */,
+				E037598D212CDDEB006BCCE3 /* ShadowBuffer.h in Headers */,
 				E001EC5B20D3B5C600241C6D /* Material.h in Headers */,
+				E0375992212CDE0B006BCCE3 /* PointLight.h in Headers */,
 				E044BD0A206A9ACE003D4406 /* Input_private.h in Headers */,
+				E0375991212CDE0B006BCCE3 /* DirectionLight.h in Headers */,
 				E001EC5A20D3B5C600241C6D /* Effect.h in Headers */,
 				E0AF07ED209B19FB00276401 /* ParserEffect.h in Headers */,
+				E037598B212CDDEB006BCCE3 /* Mesh.h in Headers */,
 				E001EC6220D3B5E100241C6D /* ParserMaterial.h in Headers */,
 				E001EC5820D3B5C600241C6D /* Transform.h in Headers */,
 				E044BD10206A9ACE003D4406 /* Wrapper_private.h in Headers */,
+				E0375993212CDE0B006BCCE3 /* SpotLight.h in Headers */,
 				E001EC5F20D3B5D800241C6D /* World.h in Headers */,
 				E044BD0E206A9ACE003D4406 /* Window_private.h in Headers */,
 				E001EC5D20D3B5CE00241C6D /* Material.h in Headers */,
@@ -736,19 +786,25 @@
 				E08C38F82093753500DB2936 /* Viewport.cpp in Sources */,
 				E044BCEF206A9974003D4406 /* Time.cpp in Sources */,
 				E0DD88192109A244004E1F3B /* VertexFormat.cpp in Sources */,
+				E037597E212CDDA5006BCCE3 /* DrawerPassShadow.cpp in Sources */,
 				E044BD0B206A9ACE003D4406 /* Input_private.mm in Sources */,
 				E0AF07EF209B1D2600276401 /* ParserEffect.cpp in Sources */,
 				E001EC6720D3B5F100241C6D /* World.cpp in Sources */,
 				E044BCF5206A9982003D4406 /* Json.cpp in Sources */,
 				E073F2BE207CF94C0054CE10 /* Queue.cpp in Sources */,
 				E05DC675210766EC00445CDF /* Drawer.cpp in Sources */,
+				E0375987212CDDC5006BCCE3 /* SpotLight.cpp in Sources */,
 				E044BCEA206A9974003D4406 /* ClassObjectRegistration.cpp in Sources */,
 				E044BCEB206A9974003D4406 /* Context.cpp in Sources */,
+				E0375980212CDDA5006BCCE3 /* Mesh.cpp in Sources */,
+				E037597F212CDDA5006BCCE3 /* Light.cpp in Sources */,
 				E0119C8F21103D2D00CEE65B /* ParserResources.cpp in Sources */,
 				E010CF5B207B652700D7A6FA /* Effect.cpp in Sources */,
 				E044BCF7206A9988003D4406 /* tga.cpp in Sources */,
 				E044BCFC206A9998003D4406 /* OBoundingBox.cpp in Sources */,
+				E037597D212CDDA5006BCCE3 /* ShadowBuffer.cpp in Sources */,
 				E073F2BA207CE7410054CE10 /* Collection.cpp in Sources */,
+				E0375978212CDD96006BCCE3 /* Sphere.cpp in Sources */,
 				E044BCF9206A9998003D4406 /* CreateBounding.cpp in Sources */,
 				E001EC6A20D3B5FB00241C6D /* Material.cpp in Sources */,
 				E044BCF2206A997F003D4406 /* AttributeSerialize.cpp in Sources */,
@@ -760,6 +816,7 @@
 				E044BCED206A9974003D4406 /* Object.cpp in Sources */,
 				E044BCFB206A9998003D4406 /* Intersection.cpp in Sources */,
 				E001EC6E20D3B61800241C6D /* ParserParameters.cpp in Sources */,
+				E0375986212CDDC5006BCCE3 /* DirectionLight.cpp in Sources */,
 				E044BD0F206A9ACE003D4406 /* Window_private.mm in Sources */,
 				E044BCE9206A9974003D4406 /* Application.cpp in Sources */,
 				E044BD01206A99A5003D4406 /* Actor.cpp in Sources */,
@@ -777,6 +834,7 @@
 				E044BCF8206A9998003D4406 /* AABoundingBox.cpp in Sources */,
 				E044BCF4206A997F003D4406 /* ImageLoader.cpp in Sources */,
 				E001EC7620D3FBBC00241C6D /* GBuffer.cpp in Sources */,
+				E0375983212CDDB1006BCCE3 /* PointLight.cpp in Sources */,
 				E001EC7320D3B6F800241C6D /* Tangent.cpp in Sources */,
 				E044BD09206A9AC8003D4406 /* Render.cpp in Sources */,
 			);

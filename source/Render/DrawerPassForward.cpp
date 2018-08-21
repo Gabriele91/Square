@@ -123,7 +123,11 @@ namespace Render
 				for (auto& pass : *technique)
 				{
 					//light only or light and shadow?
-					int support[]{ pass.m_support_light, pass.m_support_shadow };
+                    int support[]
+                    {
+                          static_cast<int>(pass.m_support_light)
+                        , static_cast<int>(pass.m_support_shadow)
+                    };
 					//shadow?
 					bool shadow = pass.m_support_shadow != EffectPass::LT_NONE;
 					//bind
