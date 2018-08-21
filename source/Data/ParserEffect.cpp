@@ -589,6 +589,8 @@ namespace Parser
 		import_field.m_technique_name = technique_name;
 		//import
 		subeffect.m_imports.push_back(import_field);
+        //ok
+        return true;
 	}
 	//////////////////////////////////////////////////////
     bool Effect::parse_pass_block(const char*& ptr, PassField& pass)
