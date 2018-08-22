@@ -430,6 +430,7 @@ namespace Resource
 		glsl_config.m_fixup_clipspace = true;
 		glsl_config.m_flip_vert_y = is_target_texture;
 		glsl_config.m_enable_420pack_extension = false;
+        glsl_config.m_force_to_remove_query_texture = true;
 		//to HLSL/GLSL
 		for (const HLSL2ALL::TypeSpirvShader& ssoutput : shader_spirv_outputs)
 		{
