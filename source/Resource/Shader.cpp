@@ -284,6 +284,17 @@ namespace Resource
 		return  compile(path, Filesystem::text_file_read_all(path), defines);
 	}
 
+	//compile from source
+	bool Shader::compile
+	(
+		const std::string& insource,
+		const PreprocessMap& defines
+	)
+	{
+		return compile(Filesystem::resource_dir(), insource, defines);
+	}
+
+	//compile
     bool Shader::compile
 	(
 		const std::string& path,
@@ -292,38 +303,29 @@ namespace Resource
         const size_t line
 	)
     {
-        //buffers
-        std::string preprocessed_source;
-        //process include/import
-        ShaderImportLoader preprocess(context(), insource, path, m_filepath_map, preprocessed_source, true, line);
-        //compile
-        return  preprocess.success() && compile(preprocessed_source, defines);
+		//delete last shader
+		if (m_shader) destoy();
+		//allocs
+		std::string                   preprocessed_source;
+		PostprocessOutput             postprocessed_source;
+		HLSL2ALL::TypeSpirvShaderList spirv;
+		//process include/import
+		ShaderImportLoader preprocess(context(), insource, path, m_filepath_map, preprocessed_source, true, line);
+		//fail
+		if (!preprocess.success()) return false;
+		//first pass, compute program
+		if (!source_preprocess(preprocessed_source, defines, postprocessed_source)) return false;
+		//next to spirv
+		if (!source_to_spirv(postprocessed_source, spirv)) return false;
+		//if is hlsl
+		if (postprocessed_source.m_hlsl_target) { if (!spirv_to_hlsl_compile(postprocessed_source, spirv)) return false; }
+		else								    { if (!spirv_to_glsl_compile(postprocessed_source, spirv)) return false; }
+        //success
+        return true;
     }
 
-	//compile from source
-	bool Shader::compile
-	(
-		const std::string& raw_source,
-		const PreprocessMap& defines
-	)
-	{
-		//delete last shader
-		if (m_shader) destoy();	
-		//allocs
-		PostprocessOutput source;
-		HLSL2ALL::TypeSpirvShaderList spirv;
-		//first pass, compute program
-		if (!source_preproces(raw_source, defines, source)) return false;
-		//next to spirv
-		if (!source_to_spirv(source, spirv)) return false;
-		//if is hlsl
-		if (source.m_hlsl_target) { if (!spirv_to_hlsl_compile(source, spirv)) return false; }
-		else					  { if (!spirv_to_glsl_compile(source, spirv)) return false; }
-		//ok
-		return true;
-	}	
 
-	bool Shader::source_preproces
+	bool Shader::source_preprocess
 	(
 		const std::string& raw_source,
 		const PreprocessMap& defines,
@@ -407,11 +409,13 @@ namespace Resource
 		};
 		//info
 		HLSL2ALL::TargetShaderInfo spirv_info;
-		spirv_info.m_client_version = 450;
+		spirv_info.m_client_version = 100;
 		spirv_info.m_desktop = true;
 		spirv_info.m_reverse_mul = false;
-		spirv_info.m_vulkan = false;
+		spirv_info.m_vulkan = true;
 		spirv_info.m_upgrade_texture_to_samples = false;
+		//SPIRV-Cross currently does not support flattening structs recursively.
+		spirv_info.m_samplerarray_to_flat = false;
 		//build
 		if (!HLSL2ALL::hlsl_to_spirv
 		(
@@ -429,7 +433,8 @@ namespace Resource
 		}	
 		return true;
 	}
-
+	//SPIRV-Cross HLSL's backend implementation (tessellation, geometry and compute shaders) is unfinished.
+	//So, do not use that backend.
 	bool Shader::spirv_to_hlsl_compile
 	(
 		const PostprocessOutput& source,

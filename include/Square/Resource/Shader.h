@@ -90,7 +90,7 @@ namespace Resource
 			std::string m_raw_source;
 		};
 
-		bool source_preproces
+		bool source_preprocess
 		(
 			const std::string& sourcecode,
 			const PreprocessMap& defines,

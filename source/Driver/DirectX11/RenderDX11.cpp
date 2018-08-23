@@ -2481,7 +2481,7 @@ namespace Render
 			//name of buffer
 			std::string name(desc.Name);
 			//info
-			if (name.find("$Global") != std::string::npos)
+			if ((name.find("$Global") != std::string::npos) || (name.find("_Global") != std::string::npos))
 			{
 				D3D11_SHADER_INPUT_BIND_DESC bind_desc;
 				reflector->GetResourceBindingDescByName(desc.Name, &bind_desc);
@@ -2531,7 +2531,7 @@ namespace Render
 			//name of buffer
 			std::string name(desc.Name);
 			//info
-			if (name.find("$Global") != std::string::npos)
+			if ((name.find("$Global") != std::string::npos) || (name.find("_Global") != std::string::npos))
 			{
 				D3D11_SHADER_INPUT_BIND_DESC bind_desc;
 				reflector->GetResourceBindingDescByName(desc.Name, &bind_desc);
@@ -2823,6 +2823,10 @@ namespace Render
         auto uit = shader->m_global_buffer_info.m_fields_uniforms.find(uname);
         //if find
         if (uit != shader->m_global_buffer_info.m_fields_uniforms.end()) return &uit->second;
+		//re try with _Global
+		uit = shader->m_global_buffer_info.m_fields_uniforms.find("_Global_"+uname);
+		//if find
+		if (uit != shader->m_global_buffer_info.m_fields_uniforms.end()) return &uit->second;
         //else
         return nullptr;
     }
