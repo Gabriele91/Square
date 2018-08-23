@@ -392,7 +392,7 @@ int main()
       WindowSizePixel({ 1280, 768 })
     , WindowMode::NOT_RESIZABLE
 	, 
-#if defined(_WIN32) & 0
+#if defined(_WIN32) & 1
 	  WindowRenderDriver
 	  {
 		 Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, debug
