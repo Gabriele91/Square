@@ -113,6 +113,8 @@ namespace Render
 		}
 		//clear
 		render().clear(Render::CLEAR_DEPTH);
+		//get technique name
+		const auto& technique_name = techniques_table[(size_t)light.type()];
         //for each elements of opaque  and translucent queues
 		for(QueueType qtype : {RQ_OPAQUE, RQ_TRANSLUCENT})
         for(const QueueElement* e_randerable : queues[qtype])
@@ -126,7 +128,6 @@ namespace Render
 				transform->set(&utransform);
 				render().update_steam_CB(m_cb_transform.get(), (const unsigned char*)&utransform, sizeof(utransform));
 			}
-			//set id
 			//for each materials
 			for (size_t material_id = 0; material_id != randerable->materials_count(); ++material_id)
 			{
@@ -136,7 +137,7 @@ namespace Render
 				if (!material) continue;
 				//effect
 				auto effect = material->effect();
-				auto technique = effect->technique(techniques_table[(size_t)light.type()]);
+				auto technique = effect->technique(technique_name);
 				if (!technique) continue;
 				//draw for each pass
 				for (auto& pass : *technique)
