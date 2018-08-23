@@ -5,6 +5,7 @@
 #include "Square/Core/Resource.h"
 #include "Square/Driver/Render.h"
 #include "Square/Render/VertexLayout.h"
+#include <HLSL2ALL/HLSL2ALL.h>
 
 namespace Square
 {
@@ -78,6 +79,41 @@ namespace Resource
 		UnifomMap	    m_uniform_map;
 		CBufferMap	    m_cbuffer_map;
 
+		//help to compile
+		struct PostprocessOutput
+		{
+			size_t	    m_version;
+			bool	    m_hlsl_target;
+			bool	    m_texture_target;
+			std::string m_header;
+			std::string m_source;
+			std::string m_raw_source;
+		};
+
+		bool source_preproces
+		(
+			const std::string& sourcecode,
+			const PreprocessMap& defines,
+			PostprocessOutput& source
+		);
+
+		bool source_to_spirv
+		(
+			const PostprocessOutput& source,
+			HLSL2ALL::TypeSpirvShaderList& output
+		);
+
+		bool spirv_to_hlsl_compile
+		(
+			const PostprocessOutput& source,
+			const HLSL2ALL::TypeSpirvShaderList& input
+		);
+
+		bool spirv_to_glsl_compile
+		(
+			const PostprocessOutput& source,
+			const HLSL2ALL::TypeSpirvShaderList& input
+		);
 	};
 }
 }

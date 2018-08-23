@@ -67,7 +67,7 @@ namespace Resource
 		ShaderImportLoader
 		(
 			Context& context,
-			std::stringstream& source,
+			const std::string& source,
 			const std::string& source_path,
 			Shader::FilepathMap& filepath_map,
 			std::string& out,
@@ -78,7 +78,7 @@ namespace Resource
 			m_n_files = 0;
 			m_files_as_name = files_as_name;
             m_once_map.clear();
-			m_state = load(context, source, source_path, filepath_map, line, 0, out);
+			m_state = load(context, std::stringstream(source), source_path, filepath_map, line, 0, out);
 		}
 
 		bool fail() const
@@ -274,26 +274,14 @@ namespace Resource
 	//load shader
 	bool Shader::load(const std::string& path) 
 	{
-		//buffers
-		std::string source;
-		//input stream
-		std::stringstream source_stream(Filesystem::text_file_read_all(path));
-		//process include/import
-		ShaderImportLoader preprocess(context(), source_stream, path, m_filepath_map, source);
-		//compile
-		return  preprocess.success() && compile(source, PreprocessMap());
+		//load & compile
+		return compile(path, Filesystem::text_file_read_all(path), PreprocessMap());
 	}
 
 	bool Shader::load(const std::string& path, const PreprocessMap& defines)
 	{
-		//buffers
-		std::string source;
-		//input stream
-		std::stringstream source_stream(Filesystem::text_file_read_all(path));
-		//process include/import
-		ShaderImportLoader preprocess(context(), source_stream, path, m_filepath_map, source);
-		//compile
-		return  preprocess.success() && compile(source, defines);
+		//load & compile
+		return  compile(path, Filesystem::text_file_read_all(path), defines);
 	}
 
     bool Shader::compile
@@ -305,13 +293,11 @@ namespace Resource
 	)
     {
         //buffers
-        std::string source(insource);
-        //input stream
-        std::stringstream source_stream(source);
+        std::string preprocessed_source;
         //process include/import
-        ShaderImportLoader preprocess(context(), source_stream, path, m_filepath_map, source, true, line);
+        ShaderImportLoader preprocess(context(), insource, path, m_filepath_map, preprocessed_source, true, line);
         //compile
-        return  preprocess.success() && compile(source, defines);
+        return  preprocess.success() && compile(preprocessed_source, defines);
     }
 
 	//compile from source
@@ -322,25 +308,45 @@ namespace Resource
 	)
 	{
 		//delete last shader
-		if (m_shader) destoy();		
+		if (m_shader) destoy();	
+		//allocs
+		PostprocessOutput source;
+		HLSL2ALL::TypeSpirvShaderList spirv;
+		//first pass, compute program
+		if (!source_preproces(raw_source, defines, source)) return false;
+		//next to spirv
+		if (!source_to_spirv(source, spirv)) return false;
+		//if is hlsl
+		if (source.m_hlsl_target) { if (!spirv_to_hlsl_compile(source, spirv)) return false; }
+		else					  { if (!spirv_to_glsl_compile(source, spirv)) return false; }
+		//ok
+		return true;
+	}	
+
+	bool Shader::source_preproces
+	(
+		const std::string& raw_source,
+		const PreprocessMap& defines,
+		PostprocessOutput& source
+	)
+	{	
 		//int shader version
-		int shader_version = 410;
-		bool is_target_texture = false;
-		//opengl or DirectX
-		bool is_hlsl = false;
+		source.m_hlsl_target = false;
+		source.m_version = 410;
+		source.m_texture_target = false;
+		//OpenGL or DirectX
 		if (auto render = context().render())
 		{
-			is_hlsl = render->get_render_driver_info().m_shader_language == "HLSL";
+			source.m_hlsl_target = render->get_render_driver_info().m_shader_language == "HLSL";
 		}
-        //commondo header
-		std::string shader_commond_header;
-		if (is_hlsl) shader_commond_header = "#define HLSL_BACKEND\n";
-		else		 shader_commond_header = "#define GLSL_BACKEND\n";
+        //commond header
+		std::string               shader_commond_header = "#pragma pack_matrix( row_major )\n";
+		if (source.m_hlsl_target) shader_commond_header+= "#define HLSL_BACKEND\n";
+		else		              shader_commond_header+= "#define GLSL_BACKEND\n";
         //add commond header
 		shader_commond_header +=
 		#include "ShaderCommonHeader.hlsl"
 		;
-		//define
 		//list define
 		std::string header_string;
 		//defines
@@ -350,26 +356,33 @@ namespace Resource
 			if (std::get<0>(p) == "version")
 			{
 				int version = std::atoi(std::get<1>(p).c_str());
-				if (version > 0) shader_version = version;
+				if (version > 0) source.m_version = version;
 				continue;
 			}
 			//get is target
 			if (std::get<0>(p) == "pragma")
 			{
-				     if (std::get<1>(p) == "target_texture") is_target_texture = true;
-				else if (std::get<1>(p) == "target_screen") is_target_texture = false;
+				     if (std::get<1>(p) == "target_texture") source.m_texture_target = true;
+				else if (std::get<1>(p) == "target_screen")  source.m_texture_target = false;
 				continue;
 			}
 			//add
 			header_string += "#" + std::get<0>(p) + " " + std::get<1>(p) + "\n";
 		}
 		//end source
-		std::string shader_matrix = "#pragma pack_matrix( row_major )\n";
-		std::string source_header = shader_matrix + shader_commond_header + header_string;
-		std::string source = source_header + raw_source;
+		source.m_header = shader_commond_header + header_string;
+		source.m_source = source.m_header + raw_source;
+		source.m_raw_source = raw_source;
 		////////////////////////////////////////////////////////////////////////////////
-		//output
+		return true;
+	}
 
+	bool Shader::source_to_spirv
+	(
+		const PostprocessOutput& source,
+		HLSL2ALL::TypeSpirvShaderList& shader_spirv_outputs
+	)
+	{		
 		////////////////////////////////////////////////////////////////////////////////////////////////////
 		//inputs
 		std::string shader_target_name[Render::ST_N_SHADER]
@@ -382,8 +395,6 @@ namespace Resource
 			, "compute"
 		};
 		//save types
-		HLSL2ALL::TextureSamplerList shader_glsl_tslist;
-		HLSL2ALL::TypeSpirvShaderList shader_spirv_outputs;
 		HLSL2ALL::ErrorSpirvShaderList shader_spirv_errors;
 		HLSL2ALL::InfoSpirvShaderList shader_spirv_info
 		{
@@ -402,8 +413,9 @@ namespace Resource
 		spirv_info.m_vulkan = false;
 		spirv_info.m_upgrade_texture_to_samples = false;
 		//build
-		if (!HLSL2ALL::hlsl_to_spirv(
-			  source
+		if (!HLSL2ALL::hlsl_to_spirv
+		(
+			  source.m_source
 			, resource_name()
 			, shader_spirv_info
 			, shader_spirv_outputs
@@ -414,71 +426,45 @@ namespace Resource
 			context().add_wrong("Error to shader compile");
 			context().add_wrongs(shader_spirv_errors);
 			return false;
-		}		
+		}	
+		return true;
+	}
+
+	bool Shader::spirv_to_hlsl_compile
+	(
+		const PostprocessOutput& source,
+		const HLSL2ALL::TypeSpirvShaderList& shader_spirv_outputs
+	)
+	{
 		////////////////////////////////////////////////////////////////////////////////////////////////////
-		//init all inputs
+		std::string shader_target_name[Render::ST_N_SHADER]
+		{
+			  "vertex"
+			, "fragment"
+			, "geometry"
+			, "tass_control"
+			, "tass_eval"
+			, "compute"
+		};
+		////////////////////////////////////////////////////////////////////////////////////////////////////
 		std::vector< Render::ShaderSourceInformation > shader_info;
-		//compile
-		std::string shader_headers[Render::ST_N_SHADER];
-		std::string shader_sources[Render::ST_N_SHADER];
-        //config
-        HLSL2ALL::GLSLConfig glsl_config;
-		glsl_config.m_version = 410;
-		glsl_config.m_es = false;
-		glsl_config.m_vulkan_semantics = false;
-		glsl_config.m_rename_position_in_position0 = true;
-		glsl_config.m_fixup_clipspace = true;
-		glsl_config.m_flip_vert_y = is_target_texture;
-		glsl_config.m_enable_420pack_extension = false;
-        glsl_config.m_force_to_remove_query_texture = true;
+		////////////////////////////////////////////////////////////////////////////////////////////////////
 		//to HLSL/GLSL
 		for (const HLSL2ALL::TypeSpirvShader& ssoutput : shader_spirv_outputs)
 		{
 			//unpack
             int   type = ssoutput.m_type;
             auto& shader_spirv_out = ssoutput.m_shader;
-			//convert 
-			if (is_hlsl)
+			//output
+			shader_info.push_back
+			(Render::ShaderSourceInformation
 			{
-				//add inf
-				shader_info.push_back
-				(Render::ShaderSourceInformation
-				{
-					 (Render::ShaderType)type //shader type
-					, source_header	          //header
-					, raw_source			  //source output ref
-					, shader_target_name[type]//source output ref
-					, 0						  //line 0
-				});
-			}
-			else
-			{
-                //first
-                glsl_config.m_rename_input_with_semantic = type == HLSL2ALL::ST_VERTEX_SHADER;
-                //Apple bug
-                glsl_config.m_rename_input_with_locations = glsl_config.m_rename_output_with_locations;
-                glsl_config.m_input_prefix = glsl_config.m_output_prefix;
-                glsl_config.m_rename_output_with_locations = type != HLSL2ALL::ST_COMPUTE_SHADER;
-                glsl_config.m_output_prefix = std::string("__") + shader_target_name[type];
-                //compile
-				if (!HLSL2ALL::spirv_to_glsl(shader_spirv_out, shader_sources[type], shader_glsl_tslist, shader_spirv_errors, glsl_config))
-				{
-					context().add_wrong("Error to shader compile");
-					context().add_wrongs(shader_spirv_errors);
-					return false;
-				}
-				//remove #version
-				extract_version_line(shader_sources[type], shader_headers[type]);
-				//add inf
-				shader_info.push_back
-				(Render::ShaderSourceInformation
-				{
-					(Render::ShaderType)type //shader type
-					, shader_headers[type]   //header
-					, shader_sources[type]   //source output ref
-					, 0						 //line 0
-				});
-			}
+				 (Render::ShaderType)type  //shader type
+				, source.m_header	       //header
+				, source.m_raw_source	   //source output ref
+				, shader_target_name[type] //source output ref
+				, 0						   //line 0
+			});
 		}
 		////////////////////////////////////////////////////////////////////////////////
 		// load shaders from files
@@ -498,9 +484,95 @@ namespace Resource
             //ok
 			return true;
 		}
-		return false;
 	}
-	
+
+	bool Shader::spirv_to_glsl_compile
+	(
+		const PostprocessOutput& source,
+		const HLSL2ALL::TypeSpirvShaderList& shader_spirv_outputs
+	)
+	{
+		////////////////////////////////////////////////////////////////////////////////////////////////////
+		std::string shader_target_name[Render::ST_N_SHADER]
+		{
+			  "vertex"
+			, "fragment"
+			, "geometry"
+			, "tass_control"
+			, "tass_eval"
+			, "compute"
+		};
+		////////////////////////////////////////////////////////////////////////////////////////////////////
+		std::vector< Render::ShaderSourceInformation > shader_info;
+		////////////////////////////////////////////////////////////////////////////////////////////////////
+		//compile
+		std::string shader_headers[Render::ST_N_SHADER];
+		std::string shader_sources[Render::ST_N_SHADER];
+        //config
+        HLSL2ALL::GLSLConfig glsl_config;
+		glsl_config.m_version = source.m_version;
+		glsl_config.m_es = false;
+		glsl_config.m_vulkan_semantics = false;
+		glsl_config.m_rename_position_in_position0 = true;
+		glsl_config.m_fixup_clipspace = true;
+		glsl_config.m_flip_vert_y = source.m_texture_target; //flip y if is a texture target
+		glsl_config.m_enable_420pack_extension = false;
+        glsl_config.m_force_to_remove_query_texture = true;		
+		//errors
+		HLSL2ALL::TextureSamplerList shader_glsl_tslist;
+		HLSL2ALL::ErrorSpirvShaderList shader_spirv_errors;
+		//to HLSL/GLSL
+		for (const HLSL2ALL::TypeSpirvShader& ssoutput : shader_spirv_outputs)
+		{
+			//unpack
+            int   type = ssoutput.m_type;
+            auto& shader_spirv_out = ssoutput.m_shader;
+            //first
+            glsl_config.m_rename_input_with_semantic = type == HLSL2ALL::ST_VERTEX_SHADER;
+            //Apple bug
+            glsl_config.m_rename_input_with_locations = glsl_config.m_rename_output_with_locations;
+            glsl_config.m_input_prefix = glsl_config.m_output_prefix;
+            glsl_config.m_rename_output_with_locations = type != HLSL2ALL::ST_COMPUTE_SHADER;
+            glsl_config.m_output_prefix = std::string("__") + shader_target_name[type];
+            //compile
+			if (!HLSL2ALL::spirv_to_glsl(shader_spirv_out, shader_sources[type], shader_glsl_tslist, shader_spirv_errors, glsl_config))
+			{
+				context().add_wrong("Error to shader compile");
+				context().add_wrongs(shader_spirv_errors);
+				return false;
+			}
+			//remove #version
+			extract_version_line(shader_sources[type], shader_headers[type]);
+			//add inf
+			shader_info.push_back
+			(Render::ShaderSourceInformation
+			{
+				(Render::ShaderType)type //shader type
+				, shader_headers[type]   //header
+				, shader_sources[type]   //source output ref
+				, 0						 //line 0
+			});
+		}
+		////////////////////////////////////////////////////////////////////////////////
+		// load shaders from files
+		if (auto render = context().render())
+		{
+			//compile
+			m_shader = render->create_shader(shader_info);
+			//tests
+			if (!m_shader || render->shader_compiled_with_errors(m_shader) || render->shader_linked_with_error(m_shader))
+			{
+				//fail
+				context().add_wrong("Error to shader compile");
+				context().add_wrongs(render->get_shader_compiler_errors(m_shader));
+				context().add_wrong(render->get_shader_liker_error(m_shader));
+				return false;
+			}
+            //ok
+			return true;
+		}
+	}
+
     //get buffer
     Render::Uniform* Shader::uniform(const std::string& name) const
     {
