@@ -116,7 +116,7 @@
       <AdditionalDependencies>Square.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath) &amp;&amp; copy $(SolutionDir)common\*.hlsl $(SolutionDir)example\HelloWorld\common</Command>
+      <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>
@@ -141,7 +141,7 @@
       <AdditionalDependencies>Square.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath) &amp;&amp; copy $(SolutionDir)common\*.hlsl $(SolutionDir)example\HelloWorld\common</Command>
+      <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>
