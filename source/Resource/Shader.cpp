@@ -78,7 +78,10 @@ namespace Resource
 			m_n_files = 0;
 			m_files_as_name = files_as_name;
             m_once_map.clear();
-			m_state = load(context, std::stringstream(source), source_path, filepath_map, line, 0, out);
+            //source to stream source
+            std::stringstream stream_source(source);
+            //execute
+			m_state = load(context, stream_source, source_path, filepath_map, line, 0, out);
 		}
 
 		bool fail() const
@@ -489,6 +492,8 @@ namespace Resource
             //ok
 			return true;
 		}
+        //fail
+        return false;
 	}
 
 	bool Shader::spirv_to_glsl_compile
@@ -574,8 +579,9 @@ namespace Resource
 				return false;
 			}
             //ok
-			return true;
+            return true;
 		}
+        return false;
 	}
 
     //get buffer
