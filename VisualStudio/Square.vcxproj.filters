@@ -312,6 +312,9 @@
     <ClInclude Include="..\include\Square\Render\Mesh.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\Resource\ShaderPreprocess.h">
+      <Filter>source\Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">

@@ -150,6 +150,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\source\Resource\ShaderPreprocess.h" />
     <None Include="..\common\shader\PointShadowLight.hlsl">
       <FileType>Document</FileType>
     </None>
