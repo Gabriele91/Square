@@ -63,8 +63,9 @@ namespace Scene
 	void Level::deserialize(Data::Archive& archivie)
 	{
 		///clear
+		m_rander_collection.clear();
 		m_actors.clear(); //todo: call events
-						  //deserialize this
+		//deserialize this
 		Data::deserialize(archivie, this);
 		//deserialize childs
 		{
@@ -97,7 +98,12 @@ namespace Scene
 		{
 			//remove child from list
 			auto it = std::find(m_actors.begin(), m_actors.end(), actor);
-			if (it != m_actors.end()) { m_actors.erase(it); return true; }
+			if (it != m_actors.end()) 
+			{
+				actor->level(Weak<Level>());
+				m_actors.erase(it); 
+				return true; 
+			}
 		}
 		return false;
 	}

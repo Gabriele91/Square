@@ -148,16 +148,21 @@ namespace Square
             //wrapper?
             if(m_wrapper) m_wrapper->get(serializable, retvalue);
             //is a field
-            retvalue = VariantRef(m_value_type, (void*)((const char*)serializable+m_offset));
+            else retvalue = VariantRef(m_value_type, (void*)((const char*)serializable+m_offset));
         }
         void set(Object* serializable, const VariantRef& setvalue) const
         {
             //wrapper?
-            if(m_wrapper) m_wrapper->set(serializable, setvalue);
-            //cast to variant
-            VariantRef field_as_variant(m_value_type, (void*)((char*)serializable+m_offset));
-            //value copy
-            field_as_variant.copy_from( setvalue );
+            if(m_wrapper)
+				m_wrapper->set(serializable, setvalue);
+			//is a field
+			else
+			{
+				//cast to variant
+				VariantRef field_as_variant(m_value_type, (void*)((char*)serializable + m_offset));
+				//value copy
+				field_as_variant.copy_from(setvalue);
+			}
         }
         
 	protected:
@@ -254,13 +259,14 @@ namespace Square
 	{
 	public:
 		// Ptr
-		using GetFunction = typename Trait::ReturnType(*)(const T*);
-		using SetFunction = void(*)(T*, typename Trait::ParameterType);
+		using ReturnFunction = typename Trait::ReturnType;
+		using GetFunction    = typename Trait::ReturnType(*)(const T*);
+		using SetFunction    = void(*)(T*, typename Trait::ParameterType);
 
 		// Construct with function pointers.
 		AttributeAccessFunction(GetFunction get_function, SetFunction set_function)
-			: m_get(get_function)
-			, m_set(set_function)
+		: m_get(get_function)
+		, m_set(set_function)
 		{
 			assert(m_get);
 			assert(m_set);
@@ -271,7 +277,10 @@ namespace Square
 		{
 			assert(serializable);
 			const T* self = static_cast<const T*>(serializable);
-			ret = (*m_get)(self);
+			// Save into buffer
+			m_return_data = (*m_get)(self);
+			// Return ref
+			ret = m_return_data;
 		}
 
 		// Invoke setter function.
@@ -287,6 +296,12 @@ namespace Square
 
 		// Pointer to setter function.
 		SetFunction m_set;
+
+	protected:
+
+		// Save the return value;
+		mutable ReturnFunction m_return_data;
+
 	};
 
 	//helper

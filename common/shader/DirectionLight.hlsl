@@ -28,7 +28,7 @@ LightResult compute_light
 )
 {
     // Light dir
-    Vec3 light_dir = normalize(light.m_direction);
+	Vec3 light_dir = normalize(-light.m_direction);
     // Diffuse shading
     float diff = max(dot(normal, light_dir), 0.0);
     // Specular shading

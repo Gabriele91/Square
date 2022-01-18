@@ -169,7 +169,22 @@ public:
     virtual void on_message(const Square::Scene::Message& msg) override  {  }
     
     //regs
-    static void object_registration(Square::Context& context) { context.add_object<Cube>(); }
+    static void object_registration(Square::Context& ctx)
+	{ 
+		//using
+		using namespace Square;
+		using namespace Square::Resource;
+		//add cude
+		ctx.add_object<Cube>(); 
+		//material
+		ctx.add_attributes<Cube>(attribute_function<Cube, std::string>
+		("material"
+		, std::string()
+		, [](const Cube* cube) -> std::string     
+		{ if(cube->m_material) return cube->m_material->resource_untyped_name(); else return ""; }
+		, [](Cube* cube, const std::string& name) 
+		{ if(name.size()) cube->m_material = cube->context().resource<Material>(name); }));
+	}
     
     //serialize
     virtual void serialize(Square::Data::Archive& archivie)  override   {  Square::Data::serialize(archivie, this); }
@@ -179,6 +194,7 @@ public:
     virtual void deserialize_json(Square::Data::Json& archivie) override {  /* none */ }
 };
 SQUARE_CLASS_OBJECT_REGISTRATION(Cube);
+
 
 class Game01 : public Square::AppInterface
 {
@@ -194,6 +210,7 @@ public:
 		using namespace Square::Resource;
 		//move vel
 		const float velocity = 100.0  * application().last_delta_time();
+		const auto  level_path = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.sq");
 		//
 		switch (key)
 		{
@@ -201,6 +218,18 @@ public:
 		case Square::Video::KEY_Q: m_loop = false; break;
 		case Square::Video::KEY_W: Square::Application::instance()->fullscreen(false); break;
 		case Square::Video::KEY_F: Square::Application::instance()->fullscreen(true); break;
+		case Square::Video::KEY_N: serialize(level_path); break;
+		case Square::Video::KEY_M: 
+			if (Square::Filesystem::exists(level_path))
+			{
+				deserialize(level_path);
+				auto camera = m_level->actor("camera");
+				camera->translation({ 0,0,0 });
+				camera->rotation(rotate_euler(0.0f, Square::radians(180.0f), 0.0f));
+				camera->component<Camera>()->viewport({ 0,0, 1280, 768 });
+				camera->component<Camera>()->perspective(radians(90.0), 1280. / 768., 0.1, 1000.);
+			}
+		break;
 
 		case Square::Video::KEY_C:
 			if (action == Square::Video::ActionEvent::RELEASE)
@@ -267,17 +296,29 @@ public:
 		//test
 		auto node = m_level->actor("main_node");
 		node->translation({ 0,0, 10.0 });
-		//background
-		auto background = m_level->actor("background");
+		//bottom box
+		auto box_bottom = m_level->actor("box_bottom");
 		//model + material + position + scale
-		background->component<Cube>()->m_material = context().resource<Material>("box");
-		background->position({ 0.0, -6.0, 10.0 });
-		background->scale({ 20.0, 1.0, 20.0 });
+		box_bottom->component<Cube>()->m_material = context().resource<Material>("box");
+		box_bottom->position({ 0.0, -6.0, 10.0 });
+		box_bottom->scale({ 20.0, 1.0, 20.0 });
+		//right box
+		auto box_right = m_level->actor("box_right");
+		//model + material + position + scale
+		box_right->component<Cube>()->m_material = context().resource<Material>("box");
+		box_right->position({ -6.0, 0.0, 10.0 });
+		box_right->scale({ 0.5, 20.0, 20.0 });
+		//left box
+		auto box_left = m_level->actor("box_left");
+		//model + material + position + scale
+		box_left->component<Cube>()->m_material = context().resource<Material>("box");
+		box_left->position({ 6.0, 0.0, 10.0 });
+		box_left->scale({ 0.5, 20.0, 20.0 });
 		//light
 		auto light0 = m_level->actor("light0");
 		light0->component<DirectionLight>()->diffuse({ 1.0,0.0,0.0 });
 		light0->component<DirectionLight>()->visible(false);
-		light0->rotation(rotate_euler(0.0f, Square::radians(-90.0f), 0.0f));
+		light0->rotation(rotate_euler(Square::radians(-45.0f), Square::radians(-45.0f), 0.0f));
 
 		auto light1 = m_level->actor("light1");
 		light1->component<PointLight>()->radius(20.0, 15.0);
@@ -288,13 +329,13 @@ public:
 		light1->position({ 0,0,10 });
 
 		auto light2 = m_level->actor("light2");
-		light2->component<SpotLight>()->radius(15.0, 5.0);
+		light2->component<SpotLight>()->radius(20.0, 6.0);
 		light2->component<SpotLight>()->diffuse({ 1.0,1.0,1.0 });
 		light2->component<SpotLight>()->specular({ 1.0,1.0,1.0 });
 		light2->component<SpotLight>()->shadow({ 512,512 });
 		light2->component<SpotLight>()->visible(false);
-		light2->rotation(rotate_euler(Square::radians(-90.0f), 0.0f, 0.0f));
-		light2->position({ 0,0,10 });
+		light2->rotation(rotate_euler(Square::radians(-45.0f), Square::radians(-45.0f), 0.0f));
+		light2->position({ 0,0,13 });
 		//n cubes
 		int n_cubes = 2;
 		float radius_dist = 5.0f;
@@ -389,7 +430,7 @@ int main()
 #endif
 	//test
     app.execute(
-      WindowSizePixel({ 1280, 768 })
+      WindowSizePixel({ 1280, 720 })
     , WindowMode::NOT_RESIZABLE
 	, 
 #if defined(_WIN32) & 1
