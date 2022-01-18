@@ -13,6 +13,8 @@
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/DirectionLight.h"
 
+#define DIRECTION_LIGHT_DIR Vec3(0.0,0.0,-1.0)
+
 namespace Square
 {
 namespace Scene
@@ -26,7 +28,12 @@ namespace Scene
         //factory
         ctx.add_object<DirectionLight>();
         //Attributes
-		/* TODO */
+		ctx.add_attributes<DirectionLight>(attribute_function<DirectionLight, bool>
+		("visible"
+		, bool(0)
+		, [](const DirectionLight* plight) -> bool       { return plight->visible(); }
+		, [](DirectionLight* plight, const bool& visible){ plight->visible(visible); }));
+
 		ctx.add_attributes<DirectionLight>(attribute_function<DirectionLight, Vec3>
 		("diffuse"
 		, Vec3(1.0)
@@ -45,7 +52,7 @@ namespace Scene
 	: Component(context)
 	, m_buffer(context)
 	{
-		m_direction = { 0,0,1 };
+		m_direction = Vec3(0, 1.0, 0.0);
 	}
 
 	//all events
@@ -53,18 +60,18 @@ namespace Scene
 	{
 		if (auto ptr_actor = actor().lock())
 		{
-			m_direction = to_mat3(ptr_actor->rotation(true)) * Vec3(0, 0, 1.0);
+			m_direction = to_mat3(ptr_actor->rotation(true)) * DIRECTION_LIGHT_DIR;
 		}
 	}
 	void DirectionLight::on_deattch()
 	{
-		m_direction = Vec3(0, 0, 1.0);
+		m_direction = DIRECTION_LIGHT_DIR;
 	}
 	void DirectionLight::on_transform()
 	{
 		if (auto ptr_actor = actor().lock())
 		{
-			m_direction = to_mat3(ptr_actor->rotation(true)) * Vec3(0, 0, 1.0);
+			m_direction = to_mat3(ptr_actor->rotation(true)) * DIRECTION_LIGHT_DIR;
 		}
 	}
 	void DirectionLight::on_message(const Message& msg){}

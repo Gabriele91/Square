@@ -27,7 +27,12 @@ namespace Scene
         //factory
         ctx.add_object<PointLight>();
         //Attributes
-		/* TODO */
+		ctx.add_attributes<PointLight>(attribute_function<PointLight, bool>
+		("visible"
+		, bool(0)
+		, [](const PointLight* plight) -> bool       { return plight->visible(); }
+		, [](PointLight* plight, const bool& visible){ plight->visible(visible); }));
+
 		ctx.add_attributes<PointLight>(attribute_function<PointLight, Vec3>
 		("diffuse"
 		, Vec3(1.0)

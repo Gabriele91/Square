@@ -219,6 +219,11 @@ namespace Square
 			return DynamicPointerCast<T>(BaseContext::resource(T::static_object_name() + ":" + name));
 		}
 
+		template< class T >  inline Shared<T> reinterpret_resource(const std::string& name)
+		{
+			return DynamicPointerCast<T>(BaseContext::resource(name));
+		}
+
 		template< class T >  inline const std::string& resource_path(const std::string& name)
 		{
 			return BaseContext::resource_path(T::static_object_name() + ":" + name);

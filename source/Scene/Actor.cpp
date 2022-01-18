@@ -304,7 +304,7 @@ namespace Scene
 	//level
 	Weak<Level> Actor::level() const
 	{
-		     if (m_level.lock()) return m_level;
+		if (m_level.lock()) return m_level;
 		else return Weak<Level>();
 	}	
 

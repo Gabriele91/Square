@@ -14,7 +14,7 @@
 #include "Square/Scene/SpotLight.h"
 #include "Square/Scene/Camera.h"
 
-#define SPOT_LIGHT_DIR Vec3(0,0.0,-1.0)
+#define SPOT_LIGHT_DIR Vec3(0.0,0.0,-1.0)
 
 namespace Square
 {
@@ -29,7 +29,12 @@ namespace Scene
         //factory
         ctx.add_object<SpotLight>();
         //Attributes
-		/* TODO */
+		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, bool>
+		("visible"
+		, bool(0)
+		, [](const SpotLight* plight) -> bool       { return plight->visible(); }
+		, [](SpotLight* plight, const bool& visible){ plight->visible(visible); }));
+
 		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, Vec3>
 		("diffuse"
 		, Vec3(1.0)

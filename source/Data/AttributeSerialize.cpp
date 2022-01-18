@@ -11,10 +11,11 @@ namespace Square
 {
 namespace  Data
 {
-    SQUARE_API bool attribute_serialize(Archive& archivie, const Object* object, const std::vector < Attribute >* attrbutes)
+    SQUARE_API bool attribute_serialize(Archive& archivie, const Object* object, const std::vector < Attribute >* attributes)
     {
+		if (!attributes) return false;
         //serialize
-        for(const Attribute& attr : *attrbutes)
+        for(const Attribute& attr : *attributes)
         if (attr.type() & Attribute::FILE)
         {
             //get
@@ -28,6 +29,7 @@ namespace  Data
     
     SQUARE_API bool attribute_deserialize(Archive& archivie, Object* object, const std::vector < Attribute >* attributes)
     {
+		if (!attributes) return false;
         //deserialize
         for(const Attribute& attr : *attributes)
         if (attr.type() & Attribute::FILE)

@@ -24,17 +24,23 @@ namespace Scene
         //factory
         ctx.add_object<Camera>();
         //Attributes
+		ctx.add_attributes<Camera>(attribute_function<Camera, bool>
+		("enable"
+		, bool(0)
+		, [](const Camera* plight) -> bool      { return plight->enable(); }
+		, [](Camera* plight, const bool& enable){ plight->enable(enable); }));
+
         ctx.add_attributes<Camera>(attribute_function<Camera, Vec4>
-                                  ("viewport"
-                                   , Vec4(0,0,1,1)
-                                   , [](const Camera* camera) -> Vec4   { return camera->viewport(); }
-                                   , [](Camera* camera, const Vec4& viewport){ camera->viewport(viewport); }));
+        ("viewport"
+        , Vec4(0,0,1,1)
+        , [](const Camera* camera) -> Vec4   { return camera->viewport(); }
+        , [](Camera* camera, const Vec4& viewport){ camera->viewport(viewport); }));
         
         ctx.add_attributes<Camera>(attribute_function<Camera, Mat4>
-                                  ("projection"
-                                   , Mat4(1)
-                                   , [](const Camera* camera) -> Mat4  { return camera->viewport().projection(); }
-                                   , [](Camera* camera, const Mat4& sc){ camera->projection(sc); }));
+        ("projection"
+        , Mat4(1)
+        , [](const Camera* camera) -> Mat4  { return camera->viewport().projection(); }
+        , [](Camera* camera, const Mat4& sc){ camera->projection(sc); }));
     }
     
     
