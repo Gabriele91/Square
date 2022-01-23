@@ -221,14 +221,7 @@ public:
 		case Square::Video::KEY_N: serialize(level_path); break;
 		case Square::Video::KEY_M: 
 			if (Square::Filesystem::exists(level_path))
-			{
 				deserialize(level_path);
-				auto camera = m_level->actor("camera");
-				camera->translation({ 0,0,0 });
-				camera->rotation(rotate_euler(0.0f, Square::radians(180.0f), 0.0f));
-				camera->component<Camera>()->viewport({ 0,0, 1280, 768 });
-				camera->component<Camera>()->perspective(radians(90.0), 1280. / 768., 0.1, 1000.);
-			}
 		break;
 
 		case Square::Video::KEY_C:
@@ -368,11 +361,11 @@ public:
 		using namespace Square;
 		if(m_turn)
 			m_level->actor("main_node")->turn(
-				rotate_euler<float>(0, 0, Square::Constants::pi2<float>() * 0.1 * dt)
+				rotate_euler<float>(0, 0, Square::Constants::pi2<float>() * 0.1f * float(dt))
 			);
         for(auto child : m_level->actor("main_node")->childs())
         {
-            child->turn(rotate_euler<float>(0.0f,radians(90.0f*dt),0.0f));
+            child->turn(rotate_euler<float>(0.0f,radians(90.0f*float(dt)),0.0f));
         }
         m_drawer->draw( 
 			  Vec4(0.25,0.5,1.0,1.0)
