@@ -62,7 +62,7 @@ namespace Square
 		}
 
 		//Move
-		Attribute(Attribute&& from)
+		Attribute(Attribute&& from) noexcept
 		{
 			m_name       = std::move(from.m_name);
 			m_type       = std::move(from.m_type);
@@ -141,6 +141,18 @@ namespace Square
         Shared<AttributeAccess> access()        const { return m_wrapper; }
         const char**            enum_name()     const { return m_enum_names; }
 
+		//copy op
+		Attribute& operator =(const Attribute& from)
+		{
+			m_name = from.m_name;
+			m_type = from.m_type;
+			m_value_type = from.m_value_type;
+			m_offset = from.m_offset;
+			m_wrapper = from.m_wrapper;
+			m_default = from.m_default;
+			m_enum_names = from.m_enum_names;
+			return *this;
+		}
         
         //helper
         void get(const Object* serializable, VariantRef& retvalue) const
