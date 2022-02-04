@@ -88,7 +88,7 @@ namespace Render
 			default: return false;
 			}
 			//fail to build texture
-			if (!m_texture) return nullptr;
+			if (!m_texture) return false;
             //target
 			m_target = render->create_render_target({ Render::TargetField{ m_texture, Render::RT_DEPTH } });
         }
