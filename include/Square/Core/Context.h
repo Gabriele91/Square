@@ -79,10 +79,10 @@ namespace Square
 		bool add_resource_file(const std::string& name, const std::string& path);
 
 		//Add an attrbute
-        void add_attributes(const std::string& name, const Attribute& attribute);
-        void add_attributes(uint64 object_id, const Attribute& attribute);
-        void add_attributes(const Object& object, const Attribute& attribute);
-        void add_attributes(const ObjectInfo& info, const Attribute& attribute);
+        void add_attributes(const std::string& name, Attribute&& attribute);
+        void add_attributes(uint64 object_id, Attribute&& attribute);
+        void add_attributes(const Object& object, Attribute&& attribute);
+        void add_attributes(const ObjectInfo& info, Attribute&& attribute);
 
 		//Add variable
         void add_variable(const std::string& name, const Variant& value);
@@ -209,9 +209,14 @@ namespace Square
 			BaseContext::add_resource(new ObjectFactoryItem<T>(*this), exts);
 		}
 
-		template < class T > inline void add_attributes(const Attribute& attribute)
+		template < class T > inline void add_attributes(Attribute& attribute)
 		{
-			BaseContext::add_attributes(T::static_object_id(), attribute);
+			BaseContext::add_attributes(T::static_object_id(), std::move<Attribute>(attribute));
+		}
+
+		template < class T > inline void add_attributes(Attribute&& attribute)
+		{
+			BaseContext::add_attributes(T::static_object_id(), std::forward<Attribute>(attribute));
 		}
 
 		template< class T >  inline Shared<T> resource(const std::string& name)
