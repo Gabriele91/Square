@@ -82,7 +82,7 @@ namespace Square
 			size_t          offset,
 			Type			type = DEFAULT
 		)
-        :m_default(std::move(default_value))
+        :m_default(std::forward<Variant>(default_value))
 		{
 			m_name = name;
 			m_type = type;
@@ -101,7 +101,7 @@ namespace Square
 			Shared<AttributeAccess> access,
 			Type			        type = DEFAULT
 		)
-        :m_default(std::move(default_value))
+        :m_default(std::forward<Variant>(default_value))
 		{
 			m_name = name;
 			m_type = type;
@@ -121,7 +121,7 @@ namespace Square
 			const char**    enum_names,
 			Type			type = DEFAULT
 		)
-        :m_default(std::move(default_value))
+        :m_default(std::forward<Variant>(default_value))
 		{
 			m_name = name;
 			m_type = type;
@@ -329,7 +329,7 @@ namespace Square
         //alias
         using AAMethod = AttributeAccessMethod< T, U, Trait >;
         //ok
-		return Attribute(
+		return std::move(Attribute(
 			  attribute_name
 			, variant_traits<U>()
 			, default_value
@@ -337,7 +337,7 @@ namespace Square
                 Shared<AAMethod>(new AAMethod(get_method, set_method))
               )
 			, type
-		);
+		));
 	}
 
 	template<typename T, typename U, typename Trait = AttributeFunctionTrain<U> >
@@ -353,7 +353,7 @@ namespace Square
         //alias
         using AAFunction = AttributeAccessFunction< T, U, Trait >;
         //ok
-		return Attribute(
+		return std::move(Attribute(
 			  attribute_name
 			, variant_traits<U>()
 			, default_value
@@ -361,7 +361,7 @@ namespace Square
                 Shared<AAFunction>(new AAFunction(get_function, set_function))
               )
 			, type
-		);
+		));
 	}
 
 	template<typename T, typename U >
@@ -373,13 +373,13 @@ namespace Square
 		, Attribute::Type type = Attribute::DEFAULT
 	)
 	{
-		return Attribute(
+		return std::move(Attribute(
 			  field_name
 			, variant_traits<U>()
 			, default_value
 			, //(char*)&((T*)nullptr->*member) - (char*)nullptr
 			 (size_t)((char*)&(((T*)nullptr)->*member) - (char*)nullptr)
 			, type
-		);
+		));
 	}
 }

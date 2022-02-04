@@ -193,12 +193,10 @@ namespace Square
 			copy_from(in);
 		}
 
-#ifndef _WIN32
         Variant(Variant&& in)
         {
-            move_from(std::move(in));
+            move_from(std::forward<Variant>(in));
         }
-#endif
 
 		~Variant()
 		{
@@ -749,6 +747,9 @@ namespace Square
                     std::memcpy(this, &in, sizeof(Variant));
                     break;
             }
+			//reinit in
+			std::memset(&in, 0, sizeof(Variant));
+			in.m_type = VR_NONE;
         }
         
 		//copy from other variant
@@ -969,10 +970,10 @@ namespace Square
 			case VR_STD_VECTOR_DVEC3: m_ptr = new std::vector<DVec3>; break;
 			case VR_STD_VECTOR_DVEC4: m_ptr = new std::vector<DVec4>; break;
 
-            case VR_C_STRING:          assert(0);                            break;
-			case VR_STD_STRING:        m_ptr = new std::string;				 break;
-			case VR_STD_VECTOR_STRING: m_ptr = new std::vector<std::string>; break;
-			case VR_RESOURCE:          m_ptr = new Shared<ResourceObject>(); break;
+            case VR_C_STRING:          assert(0);                             break;
+			case VR_STD_STRING:        m_ptr = new std::string();			  break;
+			case VR_STD_VECTOR_STRING: m_ptr = new std::vector<std::string>();break;
+			case VR_RESOURCE:          m_ptr = new Shared<ResourceObject>();  break;
 			default: break;
 			}
 		}

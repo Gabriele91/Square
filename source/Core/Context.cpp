@@ -237,21 +237,21 @@ namespace Square
 
     
     //Add an attrbute
-    void BaseContext::add_attributes(const std::string& name, const Attribute& attribute)
+    void BaseContext::add_attributes(const std::string& name, Attribute&& attribute)
     {
-        m_attributes[ObjectInfo::compute_id(name)].push_back(attribute);
+        m_attributes[ObjectInfo::compute_id(name)].push_back(std::forward<Attribute>(attribute));
     }
-    void BaseContext::add_attributes(uint64 object_id, const Attribute& attribute)
+    void BaseContext::add_attributes(uint64 object_id, Attribute&& attribute)
     {
-        m_attributes[object_id].push_back(attribute);
+        m_attributes[object_id].push_back(std::forward<Attribute>(attribute));
     }
-    void BaseContext::add_attributes(const Object& object, const Attribute& attribute)
+    void BaseContext::add_attributes(const Object& object, Attribute&& attribute)
     {
-        m_attributes[object.object_id()].push_back(attribute);
+        m_attributes[object.object_id()].push_back(std::forward<Attribute>(attribute));
     }
-    void BaseContext::add_attributes(const ObjectInfo& info, const Attribute& attribute)
+    void BaseContext::add_attributes(const ObjectInfo& info, Attribute&& attribute)
     {
-        m_attributes[info.id()].push_back(attribute);
+        m_attributes[info.id()].push_back(std::forward<Attribute>(attribute));
     }
     
     //Add variable
