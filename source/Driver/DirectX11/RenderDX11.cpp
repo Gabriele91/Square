@@ -584,6 +584,8 @@ namespace Render
 			if (!get_view_target(resource)) { close(); return false; }
 			//set view target
 			enable_render_target(m_view_target);
+			// OK
+			return true;
 		};
 		//target
 		set_view_target(resource);
@@ -1897,9 +1899,7 @@ namespace Render
 		case Square::Render::TF_DEPTH_COMPONENT16: return 2;
 		case Square::Render::TF_DEPTH_COMPONENT24: return 3;
 		case Square::Render::TF_DEPTH_COMPONENT32: return 4;
-			break;
-		default:
-			break;
+		default:								   return 0;
 		}
 	}
 
