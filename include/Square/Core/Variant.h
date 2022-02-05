@@ -565,7 +565,7 @@ namespace Square
         //move op
         Variant& operator = (Variant&& in)
         {
-            move_from(std::move(in));
+            move_from(std::forward<Variant>(in));
             return *this;
         }
         
@@ -1448,7 +1448,8 @@ namespace Square
 		VariantType  m_type{ VR_NONE };
 
 	};
-    //to variant ref
+    
+	//to variant ref
     inline VariantRef Variant::as_variant_ref() const
     {
         if(is_heap_value())
