@@ -1110,19 +1110,19 @@ namespace Render
 		return nullptr;
 	}
 
-	Variant ContextDX11::get_native_CB(const ConstBuffer* cb) const
+	uint64 ContextDX11::get_native_CB(const ConstBuffer* cb) const
 	{
-		return{ cb->m_buffer };
+		return (uint64)cb->m_buffer;
 	}
 
-	Variant ContextDX11::get_native_VBO(const VertexBuffer* vb) const
+	uint64 ContextDX11::get_native_VBO(const VertexBuffer* vb) const
 	{
-		return{ vb->m_buffer };
+		return (uint64)vb->m_buffer;
 	}
 
-	Variant ContextDX11::get_native_IBO(const IndexBuffer* ib) const
+	uint64 ContextDX11::get_native_IBO(const IndexBuffer* ib) const
 	{
-		return{ ib->m_buffer };
+		return (uint64)ib->m_buffer;
 	}
         
     size_t ContextDX11::get_size_CB(const ConstBuffer* cb) const
