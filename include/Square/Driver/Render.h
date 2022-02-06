@@ -913,9 +913,9 @@ namespace Render
 		virtual VertexBuffer* create_VBO(const unsigned char* vbo, size_t stride, size_t n) = 0;
 		virtual IndexBuffer* create_IBO(const unsigned int* ibo, size_t size) = 0;
 
-		virtual Variant get_native_CB(const ConstBuffer*) const = 0;
-		virtual Variant get_native_VBO(const VertexBuffer*) const = 0;
-		virtual Variant get_native_IBO(const IndexBuffer*) const = 0;
+		virtual uint64 get_native_CB(const ConstBuffer*) const = 0;
+		virtual uint64 get_native_VBO(const VertexBuffer*) const = 0;
+		virtual uint64 get_native_IBO(const IndexBuffer*) const = 0;
         
         virtual size_t get_size_CB(const ConstBuffer*) const = 0;
         virtual size_t get_size_VBO(const VertexBuffer*) const = 0;
