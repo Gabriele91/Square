@@ -682,7 +682,7 @@ namespace Render
     void UniformConstBufferGL4::bind(const ConstBuffer* buffer)
     {
 		m_const_buffer = buffer;
-		glBindBufferRange(GL_UNIFORM_BUFFER, m_bind, m_context->get_native_CB(m_const_buffer).get<GLuint>(), 0, m_const_buffer->get_size());
+		glBindBufferRange(GL_UNIFORM_BUFFER, m_bind, (GLuint)m_context->get_native_CB(m_const_buffer), 0, m_const_buffer->get_size());
 	}
     void UniformConstBufferGL4::unbind()
     {
@@ -1165,19 +1165,19 @@ namespace Render
 		return ptr;
 	}
 
-	Variant ContextGL4::get_native_CB(const ConstBuffer* cb) const
+	uint64 ContextGL4::get_native_CB(const ConstBuffer* cb) const
 	{
-		return{ cb->m_id_buffer };
+		return (uint64)cb->m_id_buffer;
 	}
 
-	Variant ContextGL4::get_native_VBO(const VertexBuffer* vb) const
+	uint64 ContextGL4::get_native_VBO(const VertexBuffer* vb) const
 	{
-		return{ vb->m_id_buffer };
+		return (uint64)vb->m_id_buffer;
 	}
 
-	Variant ContextGL4::get_native_IBO(const IndexBuffer* ib) const
+	uint64 ContextGL4::get_native_IBO(const IndexBuffer* ib) const
 	{
-		return{ ib->m_id_buffer };
+		return (uint64)ib->m_id_buffer;
 	}
     
     
