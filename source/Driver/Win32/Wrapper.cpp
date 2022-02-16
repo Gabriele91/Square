@@ -589,7 +589,7 @@ namespace Video
 			s_os_context.m_windows.erase(it_wnd);
 		}
 		//window input
-		Win32::InputWin32*  wnd_input = (Win32::InputWin32*)GetProp((HWND)window->narive(), WINDOW_INPUT_NAME_REF);
+		Win32::InputWin32*  wnd_input = (Win32::InputWin32*)GetWindowLongPtr((HWND)window->narive(), GWLP_USERDATA);
 		//delete input
 		if (wnd_input)
 		{
@@ -759,7 +759,7 @@ namespace Video
 		//add to map
 		s_os_context.m_input[in] = in;
 		//set prob
-		SetProp((HWND)wnd->native(), WINDOW_INPUT_NAME_REF, in);
+		SetWindowLongPtr((HWND)wnd->native(), GWLP_USERDATA, (LONG_PTR)in);
 		//return
 		return in;
 	}
@@ -774,7 +774,7 @@ namespace Video
 			s_os_context.m_input.erase(it_in);
 		}
 		//remove prob
-		RemoveProp((HWND)in->m_window_ref->native(), WINDOW_INPUT_NAME_REF);
+		SetWindowLongPtr((HWND)in->m_window_ref->native(), GWLP_USERDATA, 0);
 		//dealloc
 		delete in;
 		//to null
@@ -835,7 +835,7 @@ namespace Video
 	LRESULT CALLBACK win32_event_wrapper(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		//window input
-		Win32::InputWin32*  wnd_input = (Win32::InputWin32*)GetProp(hWnd, WINDOW_INPUT_NAME_REF);
+		Win32::InputWin32*  wnd_input = (Win32::InputWin32*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 		if (!wnd_input)
 		{
