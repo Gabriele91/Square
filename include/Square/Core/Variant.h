@@ -654,90 +654,91 @@ namespace Square
             //alloc
             set_type(in.get_type());
             //copy
+
             switch (m_type)
             {
                 //copy from heap
-                case VR_FLOAT_MATRIX:    get<Mat4>() = std::move((Mat4&)in); break;
-                case VR_DOUBLE_MATRIX:   get<DMat4>() = std::move((DMat4&)in); break;
+                case VR_FLOAT_MATRIX:    get<Mat4>() = std::move(in.get< Mat4 >()); break;
+                case VR_DOUBLE_MATRIX:   get<DMat4>() = std::move(in.get< DMat4 >()); break;
                     
                 case VR_STD_VECTOR_SHORT:
-                    get< std::vector<short> >() =  std::move((std::vector<short>&)in);
+                    get< std::vector<short> >() =  std::move(in.get< std::vector<short> >());
                     break;
                 case VR_STD_VECTOR_INT:
-                    get< std::vector<int> >() = std::move((std::vector<int>&)in);
+                    get< std::vector<int> >() = std::move(in.get< std::vector<int> >());
                     break;
                 case VR_STD_VECTOR_LONG:
-                    get< std::vector<long> >() = std::move((std::vector<long>&)in);
+                    get< std::vector<long> >() = std::move(in.get< std::vector<long> >());
                     break;
                 case VR_STD_VECTOR_LONGLONG:
-                    get< std::vector<long long> >() = std::move((std::vector<long long>&)in);
+                    get< std::vector<long long> >() = std::move(in.get< std::vector<long long> >());
                     break;
                 case VR_STD_VECTOR_USHORT:
-                    get< std::vector<unsigned short> >() = std::move((std::vector<unsigned short>&)in);
+                    get< std::vector<unsigned short> >() = std::move(in.get< std::vector<unsigned short> >());
                     break;
                 case VR_STD_VECTOR_UINT:
-                    get< std::vector<unsigned int> >() = std::move((std::vector<unsigned int>&)in);
+                    get< std::vector<unsigned int> >() = std::move(in.get< std::vector<unsigned int> >());
                     break;
                 case VR_STD_VECTOR_ULONG:
-                    get< std::vector<unsigned long> >() = std::move((std::vector<unsigned long>&)in);
+                    get< std::vector<unsigned long> >() = std::move(in.get< std::vector<unsigned long> >());
                     break;
                 case VR_STD_VECTOR_ULONGLONG:
-                    get< std::vector<unsigned long long> >() = std::move((std::vector<unsigned long long>&)in);
+                    get< std::vector<unsigned long long> >() = std::move(in.get< std::vector<unsigned long long> >());
                     break;
                 case VR_STD_VECTOR_FLOAT:
-                    get< std::vector<float> >() = std::move((std::vector<float>&)in);
+                    get< std::vector<float> >() = std::move(in.get< std::vector<float> >());
                     break;
                 case VR_STD_VECTOR_DOUBLE:
-                    get< std::vector<double> >() = std::move((std::vector<double>&)in);
+                    get< std::vector<double> >() = std::move(in.get< std::vector<double> >());
                     break;
                 case VR_STD_VECTOR_LONG_DOUBLE:
-                    get< std::vector<long double> >() = std::move((std::vector<long double>&)in);
+                    get< std::vector<long double> >() = std::move(in.get< std::vector<long double> >());
                     break;
                 case VR_STD_VECTOR_FLOAT_MATRIX:
-                    get< std::vector<Mat4> >() = std::move((std::vector<Mat4>&)in);
+                    get< std::vector<Mat4> >() = std::move(in.get< std::vector<Mat4> >());
                     break;
                 case VR_STD_VECTOR_DOUBLE_MATRIX:
-                    get< std::vector<DMat4> >() = std::move((std::vector<DMat4>&)in);
+                    get< std::vector<DMat4> >() = std::move(in.get< std::vector<DMat4> >());
                     break;
                     
                 case VR_STD_VECTOR_VEC2:
-                    get< std::vector<Vec2> >() = std::move((std::vector<Vec2>&)in);
+                    get< std::vector<Vec2> >() = std::move(in.get< std::vector<Vec2> >());
                     break;
                 case VR_STD_VECTOR_VEC3:
-                    get< std::vector<Vec3> >() = std::move((std::vector<Vec3>&)in);
+                    get< std::vector<Vec3> >() = std::move(in.get< std::vector<Vec3> >());
                     break;
                 case VR_STD_VECTOR_VEC4:
-                    get< std::vector<Vec4> >() = std::move((std::vector<Vec4>&)in);
+                    get< std::vector<Vec4> >() = std::move(in.get< std::vector<Vec4> >());
                     break;
                     
                 case VR_STD_VECTOR_IVEC2:
-                    get< std::vector<IVec2> >() = std::move((std::vector<IVec2>&)in);
+                    get< std::vector<IVec2> >() = std::move(in.get< std::vector<IVec2> >());
                     break;
                 case VR_STD_VECTOR_IVEC3:
-                    get< std::vector<IVec3> >() = std::move((std::vector<IVec3>&)in);
+                    get< std::vector<IVec3> >() = std::move(in.get< std::vector<IVec3> >());
                     break;
                 case VR_STD_VECTOR_IVEC4:
-                    get< std::vector<IVec4> >() = std::move((std::vector<IVec4>&)in);
+                    get< std::vector<IVec4> >() = std::move(in.get< std::vector<IVec4> >());
                     break;
                     
                 case VR_STD_VECTOR_DVEC2:
-                    get< std::vector<DVec2> >() = std::move((std::vector<DVec2>&)in);
+                    get< std::vector<DVec2> >() = std::move(in.get< std::vector<DVec2> >());
                     break;
                 case VR_STD_VECTOR_DVEC3:
-                    get< std::vector<DVec3> >() = std::move((std::vector<DVec3>&)in);
+                    get< std::vector<DVec3> >() = std::move(in.get< std::vector<DVec3> >());
                     break;
                 case VR_STD_VECTOR_DVEC4:
-                    get< std::vector<DVec4> >() = std::move((std::vector<DVec4>&)in);
+                    get< std::vector<DVec4> >() = std::move(in.get < std::vector<DVec4> >());
                     break;
                     
                 case VR_C_STRING:
                     assert(0);
                     break;
                 case VR_STD_STRING:
-                    get<std::string>() = std::move((std::string&)in);
+					get<std::string>() = std::move(in.get<std::string>());
                     break;
                 case VR_STD_VECTOR_STRING:
-                    get< std::vector<std::string> >() = std::move((std::vector<std::string>&)in);
+					get< std::vector<std::string> >() = std::move(in.get< std::vector<std::string> >());
                     break;
 				case VR_RESOURCE:
 					get< Shared<ResourceObject> >() = std::move(in.get< Shared<ResourceObject> >());
