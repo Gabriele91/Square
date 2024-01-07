@@ -19,7 +19,7 @@ namespace Square
 		class Material;
 		class Transform;
 		class EffectPass;
-		class EffectPassInputs;
+		struct EffectPassInputs;
 	}
 	namespace Geometry
 	{

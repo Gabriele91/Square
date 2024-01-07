@@ -219,6 +219,28 @@ namespace Filesystem
         return out;
     }
 
+    std::vector<unsigned char> binary_file_read_all(const std::string& filepath)
+    {
+        std::vector<unsigned char> out;
+        /////////////////////////////////////////////////////////////////////
+        FILE* file = fopen(filepath.c_str(), "rb");
+        //bad case
+        if (!file) return out;
+        /////////////////////////////////////////////////////////////////////
+        std::fseek(file, 0, SEEK_END);
+        size_t size = std::ftell(file);
+        std::fseek(file, 0, SEEK_SET);
+        //no size:
+        if (!size) std::fclose(file);
+        /////////////////////////////////////////////////////////////////////
+        out.resize(size, 0);
+        square_assert(std::fread(&out[0], size, 1, file));
+        /////////////////////////////////////////////////////////////////////
+        std::fclose(file);
+        //return
+        return out;
+    }
+
     std::string text_file_read_all(const std::string &filepath)
     {
         std::string out;

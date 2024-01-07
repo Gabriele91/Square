@@ -16,7 +16,7 @@ namespace  Data
 		if (!attributes) return false;
         //serialize
         for(const Attribute& attr : *attributes)
-        if (attr.type() & Attribute::FILE)
+        if (attr.type() & Attribute::Type::FILE)
         {
             //get
             VariantRef value;

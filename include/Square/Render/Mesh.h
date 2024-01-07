@@ -31,7 +31,7 @@ namespace Render
 		SubMesh(Render::DrawType type, unsigned int count, unsigned int offset);
 	};
 
-	class SQUARE_API Mesh : public Object,
+	class SQUARE_API Mesh : public virtual Object,
 						    public SharedObject<Mesh>
 	{		
 

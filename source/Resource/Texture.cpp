@@ -114,7 +114,7 @@ namespace Resource
 	}
 	//////////////////////////////////////////////////////////////
 	// Texture
-	Texture::Texture(Context& context) : ResourceObject(context)
+	Texture::Texture(Context& context) : Object(context), ResourceObject(context)
 	{
 	}
 
@@ -123,7 +123,7 @@ namespace Resource
 		destoy();
 	}
 
-	Texture::Texture(Context& context, const std::string& path) : ResourceObject(context)
+	Texture::Texture(Context& context, const std::string& path) : Object(context), ResourceObject(context)
 
 	{
 		load(path);
@@ -134,7 +134,7 @@ namespace Resource
 		Context& context,
 		const Attributes& attr,
 		const std::string& path
-	) : ResourceObject(context)
+	) : Object(context), ResourceObject(context)
 	{
 		load(attr, path);
 	}
@@ -148,7 +148,7 @@ namespace Resource
 		unsigned long height,
 		Render::TextureFormat format,
 		Render::TextureType   type
-	) : ResourceObject(context)
+	) : Object(context), ResourceObject(context)
 	{
 		build(attr, buffer, width, height, format, type);
 	}
@@ -162,7 +162,7 @@ namespace Resource
 		unsigned long height,
 		Render::TextureFormat format,
 		Render::TextureType   type
-	) : ResourceObject(context)
+	) : Object(context), ResourceObject(context)
 	{
 		build(attr, buffer, width, height, format, type);
 	}

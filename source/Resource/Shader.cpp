@@ -42,10 +42,10 @@ namespace Resource
     }
 
 	//Contructor
-	Shader::Shader(Context& context) : ResourceObject(context)
+	Shader::Shader(Context& context) : Object(context), ResourceObject(context)
 	{
 	}
-	Shader::Shader(Context& context, const std::string& path) : ResourceObject(context)
+	Shader::Shader(Context& context, const std::string& path) : Object(context), ResourceObject(context)
 	{
 		load(path);
 	}

@@ -29,6 +29,7 @@
 #include "Square/Geometry/Sphere.h"
 #include "Square/Geometry/Frustum.h"
 #include "Square/Geometry/OBoundingBox.h"
+#include "Square/Geometry/CreateBounding.h"
 #include "Square/Geometry/AABoundingBox.h"
 #include "Square/Geometry/Intersection.h"
 /* --- Data --- */
@@ -59,6 +60,7 @@
 #include "Square/Resource/Shader.h"
 #include "Square/Resource/Effect.h"
 #include "Square/Resource/Material.h"
+#include "Square/Resource/Mesh.h"
 /* --- Scene --- */
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"

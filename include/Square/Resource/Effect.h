@@ -19,7 +19,6 @@ namespace Resource
 {
     class SQUARE_API Effect : public ResourceObject
                             , public SharedObject<Effect>
-                            , public Uncopyable
 						    , public Render::Effect
     {
         

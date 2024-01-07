@@ -36,7 +36,13 @@
 
 namespace Square
 {
-
+	template <class ARG1, class ARG2, class RESULT>
+	struct binary_function
+	{
+		using first_argument_type = ARG1;
+		using second_argument_type = ARG2;
+		using result_type = RESULT;
+	};
 	// derive your proxy from this class
 	// not virtual to save the call overhead
 	struct ITriangleInputProxy
@@ -153,7 +159,7 @@ namespace Square
 		};
 
 		// helper to get order for CVertexLoadHelper
-		struct CBaseIndexOrder: public std::binary_function< CBaseIndex, CBaseIndex, bool>
+		struct CBaseIndexOrder: public binary_function< CBaseIndex, CBaseIndex, bool >
 		{
 			bool operator() ( const CBaseIndex &a, const CBaseIndex &b ) const
 			{

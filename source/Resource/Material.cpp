@@ -31,8 +31,8 @@ namespace Resource
 	}
 	//////////////////////////////////////////////////////////////
 	//constructor
-	Material::Material(Context& context) :ResourceObject(context) {}
-	Material::Material(Context& context, const std::string& path) : ResourceObject(context) { load(path); }
+	Material::Material(Context& context) : Object(context), ResourceObject(context) {}
+	Material::Material(Context& context, const std::string& path) : Object(context), ResourceObject(context) { load(path); }
 	//help
 	static void save_default_parameter(int id_param, const std::string& name, int default_parameters[])
 	{

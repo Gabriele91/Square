@@ -119,7 +119,7 @@ namespace Render
 			Layout::LF_POSITION_3D
 		);
 		build_vertex_buffer(vertexs);
-		build_vertex_buffer(vertexs);
+		build_index_buffer(indexs);
 		m_sub_meshs.emplace_back(indexs.size());
 	}
 	void Mesh::build(const Vertex2DUVList& vertexs, const IndexList& indexs)
@@ -130,6 +130,7 @@ namespace Render
 			| Layout::LF_UVMAP
 		);
 		build_vertex_buffer(vertexs);
+		build_index_buffer(indexs);
 		m_sub_meshs.emplace_back(indexs.size());
 	}
 	void Mesh::build(const Vertex3DUVList& vertexs, const IndexList& indexs)

@@ -18,8 +18,8 @@ namespace Square
 	class SQUARE_API AttributeAccess : public SharedObject<AttributeAccess>
 	{
 	public:
-		virtual void get(const Object* serializable, VariantRef& ret) const =0;
-		virtual void set(Object* serializable, const VariantRef& set) =0;
+		virtual bool get(const Object* serializable, VariantRef& ret) const =0;
+		virtual bool set(Object* serializable, const VariantRef& set) =0;
         virtual ~AttributeAccess()  { /* none */ }
 	};
 
@@ -29,20 +29,20 @@ namespace Square
 	public:
 
 		//type of Attribute
-		enum Type
+		enum Type : unsigned char
 		{
 			NETWORK           = 0b0001,  //replicate on network
 			FILE              = 0b0010,  //serializable/deserializable
 			FILE_READONLY     = 0b0100,  //deserializable only
 			EDITOR			  = 0b1000,  //used by editor (no serializable)
-			//Composition
-			DEFAULT = FILE | NETWORK     //default serializable/deserializable/network
+			// Composition
+			DEFAULT = FILE | NETWORK,     //default serializable/deserializable/network
 		};
 
 		//Default
 		Attribute()
 		{
-			m_type = DEFAULT;
+			m_type = Type::DEFAULT;
 			m_value_type = VariantType::VR_INT;
 			m_offset = 0;
 			m_wrapper = nullptr;
@@ -80,7 +80,7 @@ namespace Square
 			VariantType     value_type,
             Variant&&       default_value,
 			size_t          offset,
-			Type			type = DEFAULT
+			Type			type = Type::DEFAULT
 		)
         :m_default(std::forward<Variant>(default_value))
 		{
@@ -99,7 +99,7 @@ namespace Square
 			VariantType             value_type,
             Variant&&               default_value,
 			Shared<AttributeAccess> access,
-			Type			        type = DEFAULT
+			Type			        type = Type::DEFAULT
 		)
         :m_default(std::forward<Variant>(default_value))
 		{
@@ -119,7 +119,7 @@ namespace Square
 			VariantType     value_type,
             Variant&&       default_value,
 			const char**    enum_names,
-			Type			type = DEFAULT
+			Type			type = Type::DEFAULT
 		)
         :m_default(std::forward<Variant>(default_value))
 		{
@@ -155,18 +155,20 @@ namespace Square
 		}
         
         //helper
-        void get(const Object* serializable, VariantRef& retvalue) const
+        bool get(const Object* serializable, VariantRef& retvalue) const
         {
             //wrapper?
-            if(m_wrapper) m_wrapper->get(serializable, retvalue);
+            if(m_wrapper) return m_wrapper->get(serializable, retvalue);
             //is a field
             else retvalue = VariantRef(m_value_type, (void*)((const char*)serializable+m_offset));
+			// Ok
+			return true;
         }
-        void set(Object* serializable, const VariantRef& setvalue) const
+        bool set(Object* serializable, const VariantRef& setvalue) const
         {
             //wrapper?
             if(m_wrapper)
-				m_wrapper->set(serializable, setvalue);
+				return m_wrapper->set(serializable, setvalue);
 			//is a field
 			else
 			{
@@ -175,6 +177,8 @@ namespace Square
 				//value copy
 				field_as_variant.copy_from(setvalue);
 			}
+			// Ok
+			return true;
         }
         
 	protected:
@@ -243,19 +247,29 @@ namespace Square
 		}
 
 		// Invoke getter function.
-		virtual void get(const Object* serializable, VariantRef& ret) const override
+		virtual bool get(const Object* serializable, VariantRef& ret) const override
 		{
 			assert(serializable);
-			const T* self = static_cast<const T*>(serializable);
+			const T* self = dynamic_cast<const T*>(serializable);
+			// Test
+			if (!self) return false;
+			// Call
 			ret = (self->*m_get)();
+			// Ok 
+			return true;
 		}
 
 		// Invoke setter function.
-		virtual void set(Object* serializable, const VariantRef& value) override
+		virtual bool set(Object* serializable, const VariantRef& value) override
 		{
 			assert(serializable);
-			T* self = static_cast<T*>(serializable);
+			T* self = dynamic_cast<T*>(serializable);
+			// Test
+			if (!self) return false;
+			// Call
 			(self->*m_set)(value.get<U>());
+			// Ok 
+			return true;
 		}
 
 		// Pointer to getter function.
@@ -285,22 +299,31 @@ namespace Square
 		}
 
 		// Invoke getter function.
-		virtual void get(const Object* serializable, VariantRef& ret) const override
+		virtual bool get(const Object* serializable, VariantRef& ret) const override
 		{
 			assert(serializable);
-			const T* self = static_cast<const T*>(serializable);
+			const T* self = dynamic_cast<const T*>(serializable);
+			// Test
+			if (!self) return false;
 			// Save into buffer
 			m_return_data = (*m_get)(self);
 			// Return ref
 			ret = m_return_data;
+			// Ok
+			return true;
 		}
 
 		// Invoke setter function.
-		virtual void set(Object* serializable, const VariantRef& value) override
+		virtual bool set(Object* serializable, const VariantRef& value) override
 		{
 			assert(serializable);
-			T* self = static_cast<T*>(serializable);
+			T* self = dynamic_cast<T*>(serializable);
+			// Test
+			if (!self) return false;
+			// Call set
 			(*m_set)(self, value.get<U>());
+			// Ok
+			return true;
 		}
 
 		// Pointer to getter function.
@@ -347,7 +370,7 @@ namespace Square
 		, const U& default_value
 		, typename AttributeAccessFunction< T, U, Trait >::GetFunction get_function
 		, typename AttributeAccessFunction< T, U, Trait >::SetFunction set_function
-		, Attribute::Type type = Attribute::DEFAULT
+		, Attribute::Type type = Attribute::Type::DEFAULT
 	)
 	{
         //alias

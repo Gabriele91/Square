@@ -2139,9 +2139,9 @@ namespace Render
 			sampler_desc.BorderColor[1] = 0;
 			sampler_desc.BorderColor[2] = 0;
 			sampler_desc.BorderColor[3] = 0;
-			sampler_desc.MaxAnisotropy = info.m_anisotropy;
-			sampler_desc.MinLOD = info.m_mipmap_min;
-			sampler_desc.MaxLOD = info.m_mipmap_max;
+			sampler_desc.MaxAnisotropy = (UINT)info.m_anisotropy;
+			sampler_desc.MinLOD = (FLOAT)info.m_mipmap_min;
+			sampler_desc.MaxLOD = (FLOAT)info.m_mipmap_max;
 			//try
 			if (!dx_op_success(device()->CreateSamplerState(&sampler_desc, &texture2D->m_sempler)))
 			{
@@ -2264,9 +2264,9 @@ namespace Render
 			sampler_desc.BorderColor[1] = 0;
 			sampler_desc.BorderColor[2] = 0;
 			sampler_desc.BorderColor[3] = 0;
-			sampler_desc.MaxAnisotropy = info.m_anisotropy;
-			sampler_desc.MinLOD = info.m_mipmap_min;
-			sampler_desc.MaxLOD = info.m_mipmap_max;
+			sampler_desc.MaxAnisotropy = (UINT)info.m_anisotropy;
+			sampler_desc.MinLOD = (FLOAT)info.m_mipmap_min;
+			sampler_desc.MaxLOD = (FLOAT)info.m_mipmap_max;
 			//try
 			if (!SUCCEEDED(device()->CreateSamplerState(&sampler_desc, &texture2D->m_sempler)))
 			{

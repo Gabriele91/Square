@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{02A92C52-C478-4A2F-AFDB-03C9FBF6832C}</ProjectGuid>
     <RootNamespace>Square</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -91,8 +91,10 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS; _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
@@ -105,8 +107,10 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS; _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
@@ -121,8 +125,10 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS; _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -139,8 +145,10 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS; _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -150,6 +158,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\Square\Data\ParserStaticMesh.h" />
+    <ClInclude Include="..\include\Square\Render\Mesh.h" />
+    <ClInclude Include="..\include\Square\Resource\Mesh.h" />
     <ClInclude Include="..\source\Resource\ShaderPreprocess.h" />
     <None Include="..\common\shader\PointShadowLight.hlsl">
       <FileType>Document</FileType>
@@ -198,7 +209,6 @@
     <ClInclude Include="..\include\Square\Render\GBuffer.h" />
     <ClInclude Include="..\include\Square\Render\Light.h" />
     <ClInclude Include="..\include\Square\Render\Material.h" />
-    <ClInclude Include="..\include\Square\Render\Mesh.h" />
     <ClInclude Include="..\include\Square\Render\Queue.h" />
     <ClInclude Include="..\include\Square\Render\Renderable.h" />
     <ClInclude Include="..\include\Square\Render\ShadowBuffer.h" />
@@ -292,6 +302,7 @@
     <ClCompile Include="..\source\Data\ParserMaterial.cpp" />
     <ClCompile Include="..\source\Data\ParserParameters.cpp" />
     <ClCompile Include="..\source\Data\ParserResources.cpp" />
+    <ClCompile Include="..\source\Data\ParserStaticMesh.cpp" />
     <ClCompile Include="..\source\Driver\Render.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Input_private.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Screen_private.cpp" />
@@ -344,6 +355,7 @@
     <ClCompile Include="..\source\Render\Viewport.cpp" />
     <ClCompile Include="..\source\Resource\Effect.cpp" />
     <ClCompile Include="..\source\Resource\Material.cpp" />
+    <ClCompile Include="..\source\Resource\Mesh.cpp" />
     <ClCompile Include="..\source\Resource\PointLight.cpp" />
     <ClCompile Include="..\source\Resource\Shader.cpp" />
     <ClCompile Include="..\source\Resource\Texture.cpp" />

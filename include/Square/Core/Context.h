@@ -155,7 +155,7 @@ namespace Square
 	};
 	
 	//Template help context
-	class Context : public BaseContext
+	class SQUARE_API Context : public BaseContext
 	{
 	protected:
 
