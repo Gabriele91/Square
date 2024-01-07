@@ -57,6 +57,26 @@
 // Macro help
 #define ConstantBufferStruct  struct alignas(16)
 /////////////////////////////////////////////////////////////////////////////
+// Export STD libs
+#if defined( _WIN32 ) && defined( SQUARE_API )
+// Disable warning
+#pragma warning(disable: 4251)
+// Import commonest class/struct
+#include <string>
+#include <vector>
+// Export string
+template class SQUARE_API std::allocator<char>;
+template struct SQUARE_API std::char_traits<char>;
+template class SQUARE_API std::basic_string<char, std::char_traits<char>, std::allocator<char>>;
+// Export vector
+template class SQUARE_API std::allocator<int>;
+template class SQUARE_API std::vector<int>;
+template class SQUARE_API std::allocator<unsigned int>;
+template class SQUARE_API std::vector<unsigned int>;
+template class SQUARE_API std::allocator< std::string >;
+template class SQUARE_API std::vector< std::string >;
+#endif
+/////////////////////////////////////////////////////////////////////////////
 // TYPES
 namespace Square
 {
@@ -113,7 +133,7 @@ namespace Square
 	};
 	  
 	template <class T>
-	const_reverse_wrapper<T> reverse(const T &x)
+	inline const_reverse_wrapper<T> reverse(const T &x)
 	{
 		return const_reverse_wrapper<T>(x);
 	}

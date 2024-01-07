@@ -31,7 +31,7 @@ namespace Square
 
 	//resource interface
 	class SQUARE_API ResourceObject 
-	: public Object
+	: public virtual Object
 	, public SharedObject<ResourceObject>
 	, public Uncopyable
 	{

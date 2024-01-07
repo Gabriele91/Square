@@ -84,10 +84,10 @@ namespace Video
 		{
 			RECT window_rect
 			{
-				0
+				  0
 				, 0
-				, size_in[0] // right = Width
-				, size_in[1] // bottom = Height
+				, LONG(size_in[0]) // right = Width
+				, LONG(size_in[1]) // bottom = Height
 			};
 			AdjustWindowRectEx(&window_rect, SQUARE_WINDOW_STYLE, true, 0);
 			//calc size window
@@ -306,7 +306,7 @@ namespace Video
 		s_os_context.m_key_map.m_keyboard[0x037] = KeyboardEvent::KEY_KP_MULTIPLY;
 		s_os_context.m_key_map.m_keyboard[0x04A] = KeyboardEvent::KEY_KP_SUBTRACT;
 
-		for (size_t i_scancode = 0; i_scancode != 512; ++i_scancode)
+		for (unsigned int i_scancode = 0; i_scancode != 512; ++i_scancode)
 		{
 			if (s_os_context.m_key_map.m_keyboard[i_scancode] > 0)
 				if (s_os_context.m_key_map.m_keyboard[i_scancode] != KeyboardEvent::KEY_UNKNOWN)
@@ -429,14 +429,14 @@ namespace Video
 			PFD_DOUBLEBUFFER |							// Must Support Double Buffering
 			PFD_SWAP_EXCHANGE,
 			PFD_TYPE_RGBA,								// Request An RGBA Format
-			info.m_context.m_color, 				    // Select Our Color Depth
+			BYTE(info.m_context.m_color), 				// Select Our Color Depth
 			0, 0, 0, 0, 0, 0,							// Color Bits Ignored
 			0,											// No Alpha Resource
 			0,											// Shift Bit Ignored
 			0,											// No Accumulation Resource
 			0, 0, 0, 0,									// Accumulation Bits Ignored
-			info.m_context.m_depth,						// Z-Resource (Depth Resource)
-			info.m_context.m_stencil,					// Stencil Resource
+			BYTE(info.m_context.m_depth),			    // Z-Resource (Depth Resource)
+			BYTE(info.m_context.m_stencil),				// Stencil Resource
 			0,											// No Auxiliary Resource
 			PFD_MAIN_PLANE,								// Main Drawing Layer
 			0,											// Reserved
@@ -476,8 +476,8 @@ namespace Video
 			#define WGL_CONTEXT_PROFILE_MASK_ARB            0x9126
 			const int attribs[] =
 			{
-				WGL_CONTEXT_MAJOR_VERSION_ARB, info.m_context.m_version[0],
-				WGL_CONTEXT_MINOR_VERSION_ARB, info.m_context.m_version[1],
+				WGL_CONTEXT_MAJOR_VERSION_ARB, (const int)info.m_context.m_version[0],
+				WGL_CONTEXT_MINOR_VERSION_ARB, (const int)info.m_context.m_version[1],
 				NULL
 			};
 			//overload

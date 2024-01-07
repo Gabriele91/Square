@@ -22,7 +22,7 @@ namespace Render
 		Vec3 m_scale;    float __PADDING1__; //alignas(16)
     });
     //Transform cpu class
-	class Transform : public BaseObject
+	class SQUARE_API Transform : public BaseObject
 	{
 	public:
 		//Transform

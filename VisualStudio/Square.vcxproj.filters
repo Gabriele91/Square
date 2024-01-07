@@ -309,11 +309,17 @@
     <ClInclude Include="..\include\Square\Render\ShadowBuffer.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\Resource\ShaderPreprocess.h">
+      <Filter>source\Resource</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\Square\Render\Mesh.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\Resource\ShaderPreprocess.h">
-      <Filter>source\Resource</Filter>
+    <ClInclude Include="..\include\Square\Resource\Mesh.h">
+      <Filter>Include\Square\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Data\ParserStaticMesh.h">
+      <Filter>include\Square\Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -505,6 +511,12 @@
     </ClCompile>
     <ClCompile Include="..\source\Render\Mesh.cpp">
       <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Resource\Mesh.cpp">
+      <Filter>source\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Data\ParserStaticMesh.cpp">
+      <Filter>source\Data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

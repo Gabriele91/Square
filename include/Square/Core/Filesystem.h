@@ -28,6 +28,7 @@ namespace Filesystem
     SQUARE_API std::string get_basename(const std::string& filepath);
     SQUARE_API std::string get_extension(const std::string& filepath);
     SQUARE_API std::vector<char> file_read_all(const std::string& filepath);
+    SQUARE_API std::vector<unsigned char> binary_file_read_all(const std::string& filepath);
     SQUARE_API std::string text_file_read_all(const std::string& filepath);
 	SQUARE_API std::string join(const std::string& path1, const std::string& path2);
 
