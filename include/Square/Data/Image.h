@@ -35,16 +35,14 @@ namespace  Data
 	class Image : public SharedObject<Image>, public Uncopyable
 	{
 	public:
-		static Shared<Image> from_r     (const unsigned char* buffer,unsigned long width,unsigned long height);
-		static Shared<Image> from_rg    (const unsigned char* buffer,unsigned long width,unsigned long height);
-		static Shared<Image> from_rgb   (const unsigned char* buffer,unsigned long width,unsigned long height);
-		static Shared<Image> from_rgb565(const unsigned char* buffer, unsigned long width, unsigned long height);
-		static Shared<Image> from_rgb5a1(const unsigned char* buffer, unsigned long width, unsigned long height);
-		static Shared<Image> from_rgba  (const unsigned char* buffer,unsigned long width,unsigned long height);
+		static Shared<Image> from_r     (Allocator* allocator, const unsigned char* buffer,unsigned long width,unsigned long height);
+		static Shared<Image> from_rg    (Allocator* allocator, const unsigned char* buffer,unsigned long width,unsigned long height);
+		static Shared<Image> from_rgb   (Allocator* allocator, const unsigned char* buffer,unsigned long width,unsigned long height);
+		static Shared<Image> from_rgb565(Allocator* allocator, const unsigned char* buffer, unsigned long width, unsigned long height);
+		static Shared<Image> from_rgb5a1(Allocator* allocator, const unsigned char* buffer, unsigned long width, unsigned long height);
+		static Shared<Image> from_rgba  (Allocator* allocator, const unsigned char* buffer,unsigned long width,unsigned long height);
     
-
-
-		Image(){}
+		Image(Allocator* allocator) : SharedObject_t(allocator) {}
     
 		void apply_kernel(ImageKernel kernel);
 		void flip_vertical();
@@ -58,7 +56,7 @@ namespace  Data
 		std::vector< unsigned char > to_rgba();
 
 		//load image from file
-		static Shared<Image> load(const std::string& path);
+		static Shared<Image> load(Allocator* allocator, const std::string& path);
 
 		//load image from file raw
 		static bool load

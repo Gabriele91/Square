@@ -3,12 +3,15 @@
 #include <cstdlib>
 #include <cstring>
 #include <assert.h>
+#include <zlib.h>
 
 #ifdef _WIN32
 	#include <windows.h>
 	#include <direct.h>
 	#include <io.h>
 	#include <Shlwapi.h>
+    #include <intrin.h>
+    #define bswap32 _byteswap_ulong
 	#define getcwd _getcwd
 	#define access _access
 	#define F_OK 00
@@ -20,18 +23,14 @@
     #include <sys/stat.h>
     #include <dirent.h>
 	#include <unistd.h>
+    #include <stdint.h>
 	#if defined(__APPLE__)
     #include <CoreFoundation/CoreFoundation.h>
 	#include <mach-o/dyld.h>
 	#include <libgen.h>
 	#endif
+    #define bswap32 __builtin_bswap32
 	#define SEPARETOR "/"
-#endif
-
-#if defined(_DEBUG) || defined(DEBUG)
-#define square_assert(x) assert(x)
-#else 
-#define square_assert(x) x
 #endif
 
 namespace Square
@@ -212,7 +211,29 @@ namespace Filesystem
         if(!size) std::fclose(file);
         /////////////////////////////////////////////////////////////////////
         out.resize(size, 0);
-		square_assert(std::fread(&out[0], size, 1, file));
+		square_assert_or_release(std::fread(&out[0], size, 1, file));
+        /////////////////////////////////////////////////////////////////////
+        std::fclose(file);
+        //return
+        return out;
+    }
+
+    std::string text_file_read_all(const std::string& filepath)
+    {
+        std::string out;
+        /////////////////////////////////////////////////////////////////////
+        FILE* file = fopen(filepath.c_str(), "r");
+        //bad case
+        if (!file) return "";
+        /////////////////////////////////////////////////////////////////////
+        std::fseek(file, 0, SEEK_END);
+        size_t size = std::ftell(file);
+        std::fseek(file, 0, SEEK_SET);
+        //no size:
+        if (!size) std::fclose(file);
+        /////////////////////////////////////////////////////////////////////
+        out.resize(size);
+        square_assert_or_release(std::fread(&out[0], size, 1, file));
         /////////////////////////////////////////////////////////////////////
         std::fclose(file);
         //return
@@ -234,35 +255,113 @@ namespace Filesystem
         if (!size) std::fclose(file);
         /////////////////////////////////////////////////////////////////////
         out.resize(size, 0);
-        square_assert(std::fread(&out[0], size, 1, file));
+        square_assert_or_release(std::fread(&out[0], size, 1, file));
         /////////////////////////////////////////////////////////////////////
         std::fclose(file);
         //return
         return out;
     }
 
-    std::string text_file_read_all(const std::string &filepath)
+    static inline int is_big_endian()
     {
-        std::string out;
+        int i = 1;
+        return !*((char*)&i);
+    }
+
+    static uint32_t get_uncompressed_size(const std::string& filepath)
+    {
         /////////////////////////////////////////////////////////////////////
         FILE* file = fopen(filepath.c_str(), "rb");
         //bad case
-        if (!file) return "";
+        if (!file) return 0;
         /////////////////////////////////////////////////////////////////////
-        std::fseek(file, 0, SEEK_END);
-        size_t size = std::ftell(file);
-        std::fseek(file, 0, SEEK_SET);
+        if(fseek(file, -4, SEEK_END) != 0) { fclose(file);  return 0; }
+        //read the last 4 bytes
+        uint32_t uncompressed_size = 0;
+        if (fread(&uncompressed_size, sizeof(uncompressed_size), 1, file) != 1) { fclose(file);  return 0; }
+        //gzip stores the size in little-endian format, so convert if necessary
+        if (is_big_endian()) uncompressed_size = bswap32(uncompressed_size);
+        //ok
+        fclose(file);
+        return uncompressed_size;
+    }
+
+    std::vector<unsigned char> binary_compress_file_read_all(const std::string& filepath)
+    {
+        std::vector<unsigned char> out;
+        //get size
+        long uncompressed_size = get_uncompressed_size(filepath);
         //no size:
-        if(!size) std::fclose(file);
+        if (!uncompressed_size) { return out; }
         /////////////////////////////////////////////////////////////////////
-        out.resize(size);
-		square_assert(std::fread(&out[0], size, 1, file));
+        gzFile file = gzopen(filepath.c_str(), "rb");
+        //bad case
+        if (!file) return out;
         /////////////////////////////////////////////////////////////////////
-        std::fclose(file);
+        out.resize(uncompressed_size, 0);
+        square_assert_or_release(gzread(file, &out[0], uncompressed_size));
+        /////////////////////////////////////////////////////////////////////
+        gzclose(file);
         //return
         return out;
     }
-	
+
+    bool file_write_all(const std::string& filepath, const std::vector<char>& buffer)
+    {
+        /////////////////////////////////////////////////////////////////////
+        FILE* file = fopen(filepath.c_str(), "wb");
+        //bad case
+        if (!file) return false;
+        /////////////////////////////////////////////////////////////////////
+        bool has_been_write = !!std::fwrite(buffer.data(), buffer.size(), 1, file);
+        /////////////////////////////////////////////////////////////////////
+        std::fclose(file);
+        //return
+        return has_been_write;
+    }
+
+    bool text_file_write_all(const std::string& filepath, const std::string& buffer)
+    {
+        /////////////////////////////////////////////////////////////////////
+        FILE* file = fopen(filepath.c_str(), "w");
+        //bad case
+        if (!file) return false;
+        /////////////////////////////////////////////////////////////////////
+        bool has_been_write = !!std::fwrite(buffer.data(), buffer.size(), 1, file);
+        /////////////////////////////////////////////////////////////////////
+        std::fclose(file);
+        //return
+        return has_been_write;
+    }
+    
+    bool binary_file_write_all(const std::string& filepath, const std::vector<unsigned char>& buffer)
+    {
+        /////////////////////////////////////////////////////////////////////
+        FILE* file = fopen(filepath.c_str(), "wb");
+        //bad case
+        if (!file) return false;
+        /////////////////////////////////////////////////////////////////////
+        bool has_been_write = !!std::fwrite(buffer.data(), buffer.size(), 1, file);
+        /////////////////////////////////////////////////////////////////////
+        std::fclose(file);
+        //return
+        return has_been_write;
+    }
+
+    bool binary_compress_file_write_all(const std::string& filepath, const std::vector<unsigned char>& buffer)
+    {
+        /////////////////////////////////////////////////////////////////////
+        gzFile file = gzopen(filepath.c_str(), "wb");
+        //bad case
+        if (!file) return false;
+        /////////////////////////////////////////////////////////////////////
+        bool has_been_write = !!gzwrite(file, buffer.data(), static_cast<unsigned int>(buffer.size()));
+        /////////////////////////////////////////////////////////////////////
+        gzclose(file);
+        //return
+        return has_been_write;
+    }
+
     PathOperation get_fullpath(const std::string& relative)
     {
 #ifdef _WIN32
@@ -485,6 +584,124 @@ namespace Filesystem
     }
 #endif
 
+namespace Stream
+{
+#pragma region GZStreambuf
+    GZStreambuf::GZStreambuf() : file_(nullptr)
+    {
+        setg(buffer_, buffer_ + 4, buffer_ + 4);  // Initialize get area
+    }
 
-};
+    GZStreambuf::~GZStreambuf()
+    {
+        close();
+    }
+
+    bool GZStreambuf::open(const std::string& filename, const char* mode)
+    {
+        close();  // Close any previously opened file
+        file_ = gzopen(filename.c_str(), mode);
+        if (!file_)
+        {
+            throw std::runtime_error("Failed to open gzip file");
+        }
+        return true;
+    }
+
+    void GZStreambuf::close()
+    {
+        if (file_)
+        {
+            gzclose((::gzFile)file_);
+            file_ = nullptr;
+        }
+    }
+
+    int GZStreambuf::overflow(int ch)
+    {
+        if (ch != EOF)
+        {
+            char c = static_cast<char>(ch);
+            if (gzwrite((::gzFile)file_, &c, 1) != 1)
+            {
+                return EOF;
+            }
+        }
+        return ch;
+    }
+
+    std::streamsize GZStreambuf::xsputn(const char* s, std::streamsize count)
+    {
+        return gzwrite((::gzFile)file_, s, static_cast<unsigned int>(count));
+    }
+
+    int GZStreambuf::underflow()
+    {
+        if (gptr() < egptr())
+        {
+            return traits_type::to_int_type(*gptr());
+        }
+
+        int num = gzread((::gzFile)file_, buffer_, sizeof(buffer_));
+        if (num <= 0)
+        {
+            return EOF;
+        }
+
+        setg(buffer_, buffer_, buffer_ + num);
+        return traits_type::to_int_type(*gptr());
+    }
+#pragma endregion
+
+#pragma region GZOStream
+    GZOStream::GZOStream() : std::ostream(&buf_) {}
+
+    GZOStream::GZOStream(const std::string& filename) : std::ostream(&buf_)
+    {
+        if (!buf_.open(filename, "wb"))
+        {
+            throw std::runtime_error("Failed to open gzip file");
+        }
+    }
+
+    void GZOStream::open(const std::string& filename)
+    {
+        if (!buf_.open(filename, "wb"))
+        {
+            throw std::runtime_error("Failed to open gzip file");
+        }
+    }
+
+    void GZOStream::close()
+    {
+        buf_.close();
+    }
+#pragma endregion
+
+#pragma region GZOStream
+    GZIStream::GZIStream() : std::istream(&buf_) {}
+
+    GZIStream::GZIStream(const std::string& filename) : std::istream(&buf_)
+    {
+        if (!buf_.open(filename, "rb"))
+        {
+            throw std::runtime_error("Failed to open gzip file");
+        }
+    }
+
+    void GZIStream::open(const std::string& filename)
+    {
+        if (!buf_.open(filename, "rb"))
+        {
+            throw std::runtime_error("Failed to open gzip file");
+        }
+    }
+
+    void GZIStream::close()
+    {
+        buf_.close();
+    }
+#pragma endregion
+}
+}
 }

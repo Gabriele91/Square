@@ -28,28 +28,28 @@ namespace Scene
 		//factory
 		ctx.add_object<Actor>();
 		//Attributes
-        ctx.add_attributes<Actor>(attribute_field("name", std::string(), &Actor::m_name));
-		ctx.add_attributes<Actor>(attribute_function<Actor, Vec3>
+        ctx.add_attribute_field<Actor, std::string>("name", std::string(), &Actor::m_name);
+		ctx.add_attribute_function<Actor, Vec3>
 		("position"
 		, Vec3(0)
 		, [](const Actor* actor) -> Vec3   { return actor->position(); }
-		, [](Actor* actor, const Vec3& pos){ actor->position(pos);     }));
+		, [](Actor* actor, const Vec3& pos){ actor->position(pos);     });
 
-		ctx.add_attributes<Actor>(attribute_function<Actor, Vec3>
+		ctx.add_attribute_function<Actor, Vec3>
 		("scale"
 		, Vec3(0)
 		, [](const Actor* actor) -> Vec3  { return actor->scale(); }
-		, [](Actor* actor, const Vec3& sc){ actor->scale(sc);      }));
+		, [](Actor* actor, const Vec3& sc){ actor->scale(sc);      });
 
-		ctx.add_attributes<Actor>(attribute_function<Actor, Quat>
+		ctx.add_attribute_function<Actor, Quat>
 		("rotation"
 		, Quat()
 		, [](const Actor* actor) -> Quat  { return actor->rotation(); }
-		, [](Actor* actor,const Quat& rot){ actor->rotation(rot);     }));
+		, [](Actor* actor,const Quat& rot){ actor->rotation(rot);     });
 	}
 
-	Actor::Actor(Context& context) : Object(context) {}
-	Actor::Actor(Context& context, const std::string& name) : Object(context), m_name(name) {}
+	Actor::Actor(Context& context) : Object(context), SharedObject_t(context.allocator()) {}
+	Actor::Actor(Context& context, const std::string& name) : Object(context), SharedObject_t(context.allocator()), m_name(name) {}
 
     //serialize
     void Actor::serialize(Data::Archive& archivie)
@@ -280,22 +280,22 @@ namespace Scene
 	}
 
     //message to components
-    void Actor::send_message(const Variant& variant, bool brodcast)
+    void Actor::send_message(const VariantRef& variant, bool brodcast)
     {
         //create message
-        Message msg(this,variant);
+        Message msg(this, variant);
         //send
         send_message(msg, brodcast);
     }
     void Actor::send_message(const Message& msg, bool brodcast)
     {
         //send
-        for(auto component : m_components)
+        for(auto& component : m_components)
         {
             component->submit_message(msg);
         }
         //brodcast
-        if(brodcast) for(auto child : m_childs)
+        if(brodcast) for(auto& child : m_childs)
         {
             child->send_message(msg, brodcast);
         }

@@ -32,7 +32,7 @@ namespace Render
 
 		EffectParameters* parameters() const;
 
-		virtual Shared<Material> copy() const;
+		virtual Shared<Material> copy(Allocator* allocator) const;
 
 		enum default_parameters
 		{

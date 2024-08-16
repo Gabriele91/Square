@@ -64,9 +64,9 @@ namespace Render
 		return nullptr;
 	}
 	
-	Shared<Material> Material::copy() const
+	Shared<Material> Material::copy(Allocator* allocator) const
 	{
-		auto omaterial = MakeShared<Material>();
+		auto omaterial = MakeShared<Material>(allocator);
 		//effect
 		omaterial->m_effect = m_effect;
 		//parameters alloc

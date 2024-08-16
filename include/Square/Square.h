@@ -14,6 +14,8 @@
 #include "Square/Core/UtfConvert.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/SmartPointers.h"
+#include "Square/Core/StringUtilities.h"
+#include "Square/Core/ShellParser.h"
 #include "Square/Core/Variant.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/Resource.h"
@@ -37,6 +39,13 @@
 #include "Square/Data/Image.h"
 #include "Square/Data/Archive.h"
 #include "Square/Data/AttributeSerialize.h"
+/* --- Parsers --- */
+#include "Square/Data/ParserParameters.h"
+#include "Square/Data/ParserResources.h"
+#include "Square/Data/ParserEffect.h"
+#include "Square/Data/ParserMaterial.h"
+#include "Square/Data/ParserStaticMesh.h"
+#include "Square/Data/ParserUtils.h"
 /* --- Driver --- */
 #include "Square/Driver/Render.h"
 #include "Square/Driver/Input.h"

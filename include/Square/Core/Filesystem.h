@@ -7,7 +7,6 @@
 #pragma once
 #include "Square/Config.h"
 
-
 namespace Square
 {
 namespace Filesystem
@@ -27,10 +26,17 @@ namespace Filesystem
     SQUARE_API std::string get_filename(const std::string& filepath);
     SQUARE_API std::string get_basename(const std::string& filepath);
     SQUARE_API std::string get_extension(const std::string& filepath);
-    SQUARE_API std::vector<char> file_read_all(const std::string& filepath);
-    SQUARE_API std::vector<unsigned char> binary_file_read_all(const std::string& filepath);
+    SQUARE_API std::string join(const std::string& path1, const std::string& path2);
+    //read
+    SQUARE_API std::vector<char> file_read_all(const std::string& filepath);    
     SQUARE_API std::string text_file_read_all(const std::string& filepath);
-	SQUARE_API std::string join(const std::string& path1, const std::string& path2);
+    SQUARE_API std::vector<unsigned char> binary_file_read_all(const std::string& filepath);
+    SQUARE_API std::vector<unsigned char> binary_compress_file_read_all(const std::string& filepath);
+    //write
+    SQUARE_API bool file_write_all(const std::string& filepath, const std::vector<char>& buffer);
+    SQUARE_API bool text_file_write_all(const std::string& filepath, const std::string& buffer);
+    SQUARE_API bool binary_file_write_all(const std::string& filepath, const std::vector<unsigned char>& buffer);
+    SQUARE_API bool binary_compress_file_write_all(const std::string& filepath, const std::vector<unsigned char>& buffer);
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // template help
@@ -62,5 +68,53 @@ namespace Filesystem
 
     SQUARE_API FilesList       get_files(const std::string& directorypath);
     SQUARE_API DirectoriesList get_sub_directories(const std::string& directorypath);
+    
+    namespace Stream
+    {
+        class SQUARE_API GZStreambuf : public std::streambuf
+        {
+            using gzFile = void*;
+            static const size_t buffer_size = 8192;
+        public:
+            GZStreambuf();
+            ~GZStreambuf() override;
+
+            bool open(const std::string& filename, const char* mode);
+            void close();
+
+        protected:
+            int overflow(int ch) override;
+            std::streamsize xsputn(const char* s, std::streamsize count) override;
+            int underflow() override;
+
+        private:
+            gzFile file_;
+            char buffer_[buffer_size];
+        };
+
+        class SQUARE_API GZOStream : public std::ostream
+        {
+        public:
+            GZOStream();
+            explicit GZOStream(const std::string& filename);
+            void open(const std::string& filename);
+            void close();
+
+        private:
+            GZStreambuf buf_;
+        };
+
+        class SQUARE_API GZIStream : public std::istream
+        {
+        public:
+            GZIStream();
+            explicit GZIStream(const std::string& filename);
+            void open(const std::string& filename);
+            void close();
+
+        private:
+            GZStreambuf buf_;
+        };
+    }
 }
 }

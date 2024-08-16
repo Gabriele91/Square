@@ -27,41 +27,48 @@ namespace Scene
         //factory
         ctx.add_object<PointLight>();
         //Attributes
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, bool>
+		ctx.add_attribute_function<PointLight, bool>
 		("visible"
 		, bool(0)
 		, [](const PointLight* plight) -> bool       { return plight->visible(); }
-		, [](PointLight* plight, const bool& visible){ plight->visible(visible); }));
+		, [](PointLight* plight, const bool& visible){ plight->visible(visible); });
 
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, Vec3>
+		ctx.add_attribute_function<PointLight, Vec3>
 		("diffuse"
 		, Vec3(1.0)
 		, [](const PointLight* plight) -> Vec3       { return plight->diffuse(); }
-		, [](PointLight* plight, const Vec3& diffuse){ plight->diffuse(diffuse); }));
+		, [](PointLight* plight, const Vec3& diffuse){ plight->diffuse(diffuse); });
 
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, Vec3>
+		ctx.add_attribute_function<PointLight, Vec3>
 		("specular"
 		, Vec3(1.0)
 		, [](const PointLight* plight) -> Vec3        { return plight->specular(); }
-		, [](PointLight* plight, const Vec3& specular){ plight->specular(specular); }));
+		, [](PointLight* plight, const Vec3& specular){ plight->specular(specular); });
 
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, float>
+		ctx.add_attribute_function<PointLight, float>
 		("constant"
 		, float(1.0)
 		, [](const PointLight* plight) -> float        { return plight->constant(); }
-		, [](PointLight* plight, const float& constant){ plight->constant(constant); }));
+		, [](PointLight* plight, const float& constant){ plight->constant(constant); });
 
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, float>
+		ctx.add_attribute_function<PointLight, float>
 		("radius"
 		, float(1.0)
 		, [](const PointLight* plight) -> float        { return plight->radius(); }
-		, [](PointLight* plight, const float& radius)  { plight->radius(radius);  }));
+		, [](PointLight* plight, const float& radius)  { plight->radius(radius);  });
 
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, float>
+		ctx.add_attribute_function<PointLight, float>
 		("inside_radius"
 		, float(1.0)
 		, [](const PointLight* plight) -> float               { return plight->inside_radius(); }
-		, [](PointLight* plight, const float& inside_radius)  { plight->inside_radius(inside_radius);  }));
+		, [](PointLight* plight, const float& inside_radius)  { plight->inside_radius(inside_radius);  });
+		
+		ctx.add_attribute_function<PointLight, IVec2>
+		("shadow"
+		, IVec2(0)
+		, [](const PointLight* plight) -> IVec2 { return plight->shadow_size(); }
+		, [](PointLight* plight, const IVec2& shadow_size)  { plight->shadow(shadow_size);  });
+		
     }
 
 	////////////////////////////////////////
@@ -85,6 +92,7 @@ namespace Scene
 	//light
 	PointLight::PointLight(Context& context)
 	: Component(context)
+	, SharedObject<PointLight>(context.allocator())
 	, m_buffer(context)
 	{
 		m_sphere.radius(this->Render::PointLight::radius());

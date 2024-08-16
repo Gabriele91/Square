@@ -36,8 +36,9 @@ namespace Render
     }
     void Drawer::draw(const Vec4& clear_color,const Vec4& ambient_color, const Collection& collection)
     {
-        //objects queues;
-        std::vector<PoolQueues> queues(collection.m_cameras.size());
+        //objects queues
+        std::vector<PoolQueues> queues;
+        init_only_movable_t_vector(queues, collection.m_cameras.size(), context().allocator());
         //shadow rendered
         std::set<Light*> m_shadows_draw;
         //filter
@@ -60,7 +61,7 @@ namespace Render
             //pass counter
             int pass_shadow_count { 0 };
             //for each pass
-            for(auto pass : m_rendering_pass[RPT_SHADOW])
+            for(auto& pass : m_rendering_pass[RPT_SHADOW])
             {
                 //draw a shadow map
                 auto draw_shadow = [&](Shared<Light> light)
@@ -69,7 +70,7 @@ namespace Render
                     if (can_draw_shadow(light.get()))
                     {
 						//opaque queue
-						PoolQueues queues;
+						PoolQueues queues(context().allocator());
 						//compute queue
 						CollectionQuery::renderables(collection, queues, *light);
 						//render target
@@ -103,7 +104,7 @@ namespace Render
             //pass counter
             int pass_render_count { 0 };
             //draw all
-            for(auto pass : m_rendering_pass[RPT_RENDER])
+            for(auto& pass : m_rendering_pass[RPT_RENDER])
             {
                 pass->draw(  *this
                            , pass_render_count++
@@ -117,7 +118,7 @@ namespace Render
             //pass counter
             int pass_ui_count { 0 };
             //draw all
-            for(auto pass : m_rendering_pass[RPT_UI])
+            for(auto& pass : m_rendering_pass[RPT_UI])
             {
                 pass->draw(  *this
                            , pass_ui_count++

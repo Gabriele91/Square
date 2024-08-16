@@ -1216,7 +1216,7 @@ namespace Render
 	{
 		if (cb)
 		{
-			assert(s_bind_context.m_const_buffer == cb);
+			square_assert(s_bind_context.m_const_buffer == cb);
 			/* not use */
 			s_bind_context.m_const_buffer = nullptr;
 		}
@@ -1226,7 +1226,7 @@ namespace Render
 	{
         if(vbo)
         {
-            assert(s_bind_context.m_vertex_buffer == vbo);
+            square_assert(s_bind_context.m_vertex_buffer == vbo);
 			device_context()->IASetVertexBuffers(0, 0, nullptr, 0, 0);
             s_bind_context.m_vertex_buffer = nullptr;
         }
@@ -1236,7 +1236,7 @@ namespace Render
     {
         if(ibo)
         {
-            assert(s_bind_context.m_index_buffer == ibo);
+            square_assert(s_bind_context.m_index_buffer == ibo);
 			device_context()->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0);
             s_bind_context.m_index_buffer = nullptr;
         }
@@ -1259,14 +1259,113 @@ namespace Render
 		}
 	}
 
+	std::vector<unsigned char> ContextDX11::copy_buffer_CB(const ConstBuffer* cb)
+	{
+		D3D11_BUFFER_DESC sbd = {};
+		sbd.Usage = D3D11_USAGE_STAGING;
+		sbd.ByteWidth = cb->get_size();
+		sbd.BindFlags = 0;
+		sbd.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		ID3D11Buffer* sb = nullptr;
+
+		if (dx_op_success(device()->CreateBuffer(&sbd, nullptr, &sb)))
+		{
+			std::vector<unsigned char> result;
+			device_context()->CopyResource(sb, *cb);
+			D3D11_MAPPED_SUBRESOURCE mapping;
+
+			if (dx_op_success(device_context()->Map(sb, 0, D3D11_MAP_READ, 0, &mapping)))
+			{
+				auto data_start_ptr = static_cast<unsigned char*>(mapping.pData);
+				auto data_end_ptr = data_start_ptr + cb->get_size();
+				result = std::vector<unsigned char>{ data_start_ptr, data_end_ptr };
+				device_context()->Unmap(sb, 0);
+			}
+
+			sb->Release();
+			return result;
+		}
+
+		return {};
+	}
+
+	std::vector<unsigned char> ContextDX11::copy_buffer_VBO(const VertexBuffer* vbo)
+	{
+		D3D11_BUFFER_DESC sbd = {};
+		sbd.Usage = D3D11_USAGE_STAGING;
+		sbd.ByteWidth = vbo->get_size();
+		sbd.BindFlags = 0;
+		sbd.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		ID3D11Buffer* sb = nullptr;
+
+		if (dx_op_success(device()->CreateBuffer(&sbd, nullptr, &sb)))
+		{
+			std::vector<unsigned char> result;
+			device_context()->CopyResource(sb, *vbo);
+			D3D11_MAPPED_SUBRESOURCE mapping;
+
+			if (dx_op_success(device_context()->Map(sb, 0, D3D11_MAP_READ, 0, &mapping)))
+			{
+				auto data_start_ptr = static_cast<unsigned char*>(mapping.pData);
+				auto data_end_ptr = data_start_ptr + vbo->get_size();
+				result = std::move(std::vector<unsigned char>{ data_start_ptr, data_end_ptr });
+				device_context()->Unmap(sb, 0);
+			}
+
+			sb->Release();
+			return result;
+		}
+		return {};
+	}
+
+	std::vector<unsigned char> ContextDX11::copy_buffer_IBO(const IndexBuffer* ibo)
+	{
+		D3D11_BUFFER_DESC sbd = {};
+		sbd.Usage = D3D11_USAGE_STAGING;
+		sbd.ByteWidth = ibo->get_size();
+		sbd.BindFlags = 0;
+		sbd.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		ID3D11Buffer* sb = nullptr;
+
+		if (dx_op_success(device()->CreateBuffer(&sbd, nullptr, &sb)))
+		{
+			std::vector<unsigned char> result;
+			device_context()->CopyResource(sb, *ibo);
+			D3D11_MAPPED_SUBRESOURCE mapping;
+
+			if (dx_op_success(device_context()->Map(sb, 0, D3D11_MAP_READ, 0, &mapping)))
+			{
+				auto data_start_ptr = static_cast<unsigned char*>(mapping.pData);
+				auto data_end_ptr = data_start_ptr + ibo->get_size();
+				result = std::vector<unsigned char>{ data_start_ptr, data_end_ptr };
+				device_context()->Unmap(sb, 0);
+			}
+
+			sb->Release();
+			return result;
+		}
+
+		return {};
+	}
+
 	unsigned char* ContextDX11::map_CB(ConstBuffer* cb, size_t start, size_t n, MappingType type)
 	{
 		D3D11_MAPPED_SUBRESOURCE source;
-		device_context()->Map(cb->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source);
+		dx_op_success(device_context()->Map(cb->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
 		//get ptr
 		unsigned char* ptr = (unsigned char*)source.pData;
 		//add offset
 		ptr += start;
+		//return
+		return ptr;
+	}
+	
+	unsigned char* ContextDX11::map_CB(ConstBuffer* cb, MappingType type)
+	{
+		D3D11_MAPPED_SUBRESOURCE source;
+		dx_op_success(device_context()->Map(cb->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
+		//get ptr
+		unsigned char* ptr = (unsigned char*)source.pData;
 		//return
 		return ptr;
 	}
@@ -1279,11 +1378,21 @@ namespace Render
 	unsigned char* ContextDX11::map_VBO(VertexBuffer* vbo, size_t start, size_t n, MappingType type)
 	{
 		D3D11_MAPPED_SUBRESOURCE source;
-		device_context()->Map(vbo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source);
+		dx_op_success(device_context()->Map(vbo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
 		//get ptr
 		unsigned char* ptr = (unsigned char*)source.pData;
 		//add offset
 		ptr += start;
+		//return
+		return ptr;
+	}
+
+	unsigned char* ContextDX11::map_VBO(VertexBuffer* vbo, MappingType type)
+	{
+		D3D11_MAPPED_SUBRESOURCE source;
+		dx_op_success(device_context()->Map(vbo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
+		//get ptr
+		unsigned char* ptr = (unsigned char*)source.pData;
 		//return
 		return ptr;
 	}
@@ -1296,11 +1405,21 @@ namespace Render
 	unsigned int* ContextDX11::map_IBO(IndexBuffer* ibo, size_t start, size_t n, MappingType type)
 	{
 		D3D11_MAPPED_SUBRESOURCE source;
-		device_context()->Map(ibo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source);
+		dx_op_success(device_context()->Map(ibo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
 		//get ptr
 		unsigned char* ptr = (unsigned char*)source.pData;
 		//add offset
 		ptr += start * sizeof(unsigned int);
+		//return
+		return (unsigned int*)ptr;
+	}
+
+	unsigned int* ContextDX11::map_IBO(IndexBuffer* ibo, MappingType type)
+	{
+		D3D11_MAPPED_SUBRESOURCE source;
+		dx_op_success(device_context()->Map(ibo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
+		//get ptr
+		unsigned char* ptr = (unsigned char*)source.pData;
 		//return
 		return (unsigned int*)ptr;
 	}
@@ -1340,7 +1459,7 @@ namespace Render
 	{
 		if (tbo)
 		{
-			assert(s_bind_context.m_texture_buffer == tbo);
+			square_assert(s_bind_context.m_texture_buffer == tbo);
 			//unmap
 			switch (tbo->m_type)
 			{
@@ -1706,7 +1825,7 @@ namespace Render
         if(layout)
         {
             //test
-            assert(s_bind_context.m_input_layout==layout);
+            square_assert(s_bind_context.m_input_layout==layout);
             //unbind
 			device_context()->IASetInputLayout(nullptr);
             //safe
@@ -1933,9 +2052,9 @@ namespace Render
 		}
 	}
 
-	static const unsigned char* add_alpha_to_image(const unsigned char* rgb, size_t w, size_t h, size_t t_size,void* value_alpha)
+	static const unsigned char* add_alpha_to_image(Allocator* allocator, const unsigned char* rgb, size_t w, size_t h, size_t t_size,void* value_alpha)
 	{
-		unsigned char* rgba = new unsigned char[w*h*(4*t_size)];
+		unsigned char* rgba = (unsigned char*)allocator->alloc(w*h*(4*t_size), "static Square::Render::add_alpha_to_image", AllocType::ALCT_DEFAULT);
 		for (size_t y = 0; y != w; ++y)
 		for (size_t x = 0; x != w; ++x)
 		{
@@ -1949,7 +2068,7 @@ namespace Render
 		return rgba;
 	}
 
-	static const unsigned char* add_alpha_if_need(const unsigned char* data, size_t w, size_t h, TextureFormat type)
+	static const unsigned char* add_alpha_if_need(Allocator* allocator, const unsigned char* data, size_t w, size_t h, TextureFormat type)
 	{
 		//select
 		switch (type)
@@ -1959,33 +2078,33 @@ namespace Render
 		case TF_RGB8:
 		{
 			unsigned char value = 0xFF;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break;
 		//uint
 		case TF_RGB16UI:
 		{
 			unsigned __int16 value = 0xFFFF;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break; 
 		case TF_RGB32UI:
 		{
 			unsigned __int32 value = 0xFFFFFFF;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break;
 		//int
 		case TF_RGB16I:
 		{
 			__int16 value = 0x7FFF;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break;
 		case TF_RGB32I:
 		{
 			__int32 value = 0x7FFFFFFF;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break;
 		//float
@@ -2006,12 +2125,12 @@ namespace Render
 			value.IEEE.exp  = 31-1;
 			value.IEEE.frac = ~0;
 			value.IEEE.sign = 0x0;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		break;
 		case TF_RGB32F:
 		{
 			float value = 340282346638528859811704183484516925440.0;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break;
 		////////////////////////////////////////////////////////////////////////////////
@@ -2072,7 +2191,7 @@ namespace Render
 		if (depth_target) bind_flags |= D3D11_BIND_DEPTH_STENCIL;
 		else              bind_flags |= D3D11_BIND_RENDER_TARGET;
 		//new image if need
-		auto new_image = Unique<const unsigned char[]> (add_alpha_if_need(data.m_bytes, data.m_width, data.m_height, data.m_format));
+		auto new_image = Unique<const unsigned char[]> (add_alpha_if_need(allocator(), data.m_bytes, data.m_width, data.m_height, data.m_format), DefaultDelete(allocator()));
 		//if new image alloc, point to new image
 		if (new_image.get())
 		{
@@ -2185,12 +2304,12 @@ namespace Render
 		if (depth_target) bind_flags |= D3D11_BIND_DEPTH_STENCIL;
 		else              bind_flags |= D3D11_BIND_RENDER_TARGET;
 		//new image if need
-		auto new_image0 = Unique<const unsigned char[]>(add_alpha_if_need(data[0].m_bytes, data[0].m_width, data[0].m_height, data[0].m_format));
-		auto new_image1 = Unique<const unsigned char[]>(add_alpha_if_need(data[1].m_bytes, data[1].m_width, data[1].m_height, data[1].m_format));
-		auto new_image2 = Unique<const unsigned char[]>(add_alpha_if_need(data[2].m_bytes, data[2].m_width, data[2].m_height, data[2].m_format));
-		auto new_image3 = Unique<const unsigned char[]>(add_alpha_if_need(data[3].m_bytes, data[3].m_width, data[3].m_height, data[3].m_format));
-		auto new_image4 = Unique<const unsigned char[]>(add_alpha_if_need(data[4].m_bytes, data[4].m_width, data[4].m_height, data[4].m_format));
-		auto new_image5 = Unique<const unsigned char[]>(add_alpha_if_need(data[5].m_bytes, data[5].m_width, data[5].m_height, data[5].m_format));
+		auto new_image0 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[0].m_bytes, data[0].m_width, data[0].m_height, data[0].m_format), DefaultDelete(allocator()));
+		auto new_image1 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[1].m_bytes, data[1].m_width, data[1].m_height, data[1].m_format), DefaultDelete(allocator()));
+		auto new_image2 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[2].m_bytes, data[2].m_width, data[2].m_height, data[2].m_format), DefaultDelete(allocator()));
+		auto new_image3 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[3].m_bytes, data[3].m_width, data[3].m_height, data[3].m_format), DefaultDelete(allocator()));
+		auto new_image4 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[4].m_bytes, data[4].m_width, data[4].m_height, data[4].m_format), DefaultDelete(allocator()));
+		auto new_image5 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[5].m_bytes, data[5].m_width, data[5].m_height, data[5].m_format), DefaultDelete(allocator()));
 		//if new image alloc, point to new image
 		if (new_image0.get())
 		{
@@ -2756,7 +2875,7 @@ namespace Render
 	{
 		if (shader)
 		{
-			assert(s_bind_context.m_shader == shader);
+			square_assert(s_bind_context.m_shader == shader);
 			//disable textures
 			for (auto texture_ptr : s_bind_context.m_textures)
 			{
@@ -2837,7 +2956,7 @@ namespace Render
         //if find
         if (uit != shader->m_uniform_const_buffer_map.end()) return uit->second.get();
 		//valid?
-		auto ucbuffer = MakeUnique<UniformConstBufferDX11>((ContextDX11*)this, shader, uname);
+		auto ucbuffer = MakeUnique<UniformConstBufferDX11>(allocator(),(ContextDX11*)this, shader, uname);
 		//is valid?
 		if (!ucbuffer->is_valid()) return nullptr;
         //add and return
@@ -2921,7 +3040,7 @@ namespace Render
 	{
         if(r_target)
         {
-            assert(s_bind_context.m_render_target == r_target);
+            square_assert(s_bind_context.m_render_target == r_target);
 			device_context()->OMSetRenderTargets(0, nullptr, nullptr);
             s_bind_context.m_render_target = nullptr;
 			//default target

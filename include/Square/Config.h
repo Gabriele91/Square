@@ -12,6 +12,7 @@
 #include <sstream>
 #include <map>
 #include <list>
+#include <array>
 #include <vector>
 #include <memory>
 #include <limits>
@@ -77,6 +78,18 @@ template class SQUARE_API std::allocator< std::string >;
 template class SQUARE_API std::vector< std::string >;
 #endif
 /////////////////////////////////////////////////////////////////////////////
+// debug
+#include <assert.h>
+#if defined(_DEBUG) || defined(DEBUG)
+#define square_assert_debug(x) assert(x)
+#define square_assert_or_release(x) assert(x)
+#define square_assert(x) assert(x)
+#else 
+#define square_assert_debug(x)
+#define square_assert_or_release(x) x
+#define square_assert(x) assert(x)
+#endif
+/////////////////////////////////////////////////////////////////////////////
 // TYPES
 namespace Square
 {
@@ -136,5 +149,12 @@ namespace Square
 	inline const_reverse_wrapper<T> reverse(const T &x)
 	{
 		return const_reverse_wrapper<T>(x);
+	}
+
+	template<typename T, typename... Args>
+	inline void init_only_movable_t_vector(std::vector<T>& vector, size_t size, Args&&... args)
+	{
+		vector.reserve(size);
+		for (size_t i = 0; i < size; ++i) vector.emplace_back(std::forward<Args>(args)...);
 	}
 }

@@ -24,31 +24,30 @@ namespace Resource
 	void Mesh::object_registration(Context& ctx)
 	{
 		//factory
-		ctx.add_resource<Mesh>({ ".sm3d" });
+		ctx.add_resource<Mesh>({ ".sm3d", ".sm3dgz"});
 	}
 	//////////////////////////////////////////////////////////////
 	//constructor
-	Mesh::Mesh(Context& context) : Object(context), ResourceObject(context), Render::Mesh(context) {}
-	Mesh::Mesh(Context& context, const std::string& path) : Object(context), ResourceObject(context), Render::Mesh(context) { load(path); }
+	Mesh::Mesh(Context& context) : Object(context), ResourceObject(context), Render::Mesh(context), SharedObject<Mesh>(context.allocator()) {}
+	Mesh::Mesh(Context& context, const std::string& path) : Object(context), ResourceObject(context), Render::Mesh(context), SharedObject<Mesh>(context.allocator()) { load(path); }
 
-	// helper type for the visitor #4
-	template<class... Ts> struct vertex_visit : Ts... { using Ts::operator()...; };
-	// explicit deduction guide 
-	template<class... Ts> vertex_visit(Ts...) -> vertex_visit<Ts...>;
 	// for type
 	template < typename T >
 	struct vertex_gpu_build
 	{
 		Render::Mesh& m_mesh;
 		Parser::StaticMesh::Context& m_context;
+		bool& m_gpu_build_status;
 
 		vertex_gpu_build
 		(
 			Render::Mesh& mesh,
-			Parser::StaticMesh::Context& context
+			Parser::StaticMesh::Context& context,
+			bool& gpu_build_status
 		)
 		: m_mesh(mesh)
 		, m_context(context)
+		, m_gpu_build_status(gpu_build_status)
 		{
 		}
 
@@ -56,19 +55,19 @@ namespace Resource
 		{
 			if (m_context.m_index.empty() && m_context.m_submesh.empty())
 			{
-				m_mesh.build(value);
+				m_gpu_build_status = m_mesh.build(value);
 			}
 			else if (m_context.m_submesh.empty())
 			{
-				m_mesh.build(value, m_context.m_index);
+				m_gpu_build_status = m_mesh.build(value, m_context.m_index);
 			}
 			else if (m_context.m_index.empty())
 			{
-				m_mesh.build(value, m_context.m_submesh);
+				m_gpu_build_status = m_mesh.build(value, m_context.m_submesh);
 			}
 			else
 			{
-				m_mesh.build(value, m_context.m_index, m_context.m_submesh);
+				m_gpu_build_status = m_mesh.build(value, m_context.m_index, m_context.m_submesh);
 			}
 		}
 	};
@@ -78,25 +77,30 @@ namespace Resource
 	{
 		Parser::StaticMesh static_mesh_parser;
 		Parser::StaticMesh::Context static_mesh_context;
+		//get ext
+		bool is_compress = Filesystem::get_extension(path) == ".sm3dgz";
+		std::vector<unsigned char> buffer = is_compress
+			                                ? Filesystem::binary_compress_file_read_all(path) 
+			                                : Filesystem::binary_file_read_all(path);
 		//do parsing
-		if (!static_mesh_parser.parse(static_mesh_context, Filesystem::binary_file_read_all(path)))
+		if (!static_mesh_parser.parse(static_mesh_context, buffer))
 		{
 			ResourceObject::context().add_wrong("Static model: " + path);
 			return false;
 		}
 		// Ok?
-		bool gpu_build = true;
+		bool gpu_build_status = true;
 		//build
-		std::visit(vertex_visit {
-			[&](auto arg) { gpu_build = false; },
-			vertex_gpu_build<Render::Mesh::Vertex2DList>(*this,static_mesh_context),
-			vertex_gpu_build<Render::Mesh::Vertex3DList>(*this,static_mesh_context),
-			vertex_gpu_build<Render::Mesh::Vertex2DUVList>(*this,static_mesh_context),
-			vertex_gpu_build<Render::Mesh::Vertex3DUVList>(*this,static_mesh_context),
-			vertex_gpu_build<Render::Mesh::Vertex3DNTBUVList>(*this,static_mesh_context),
-        }, static_mesh_context.m_vertex);
+		static_mesh_context.visit(
+			[&](auto arg) { gpu_build_status = false; },
+			vertex_gpu_build<Render::Mesh::Vertex2DList>(*this, static_mesh_context, gpu_build_status),
+			vertex_gpu_build<Render::Mesh::Vertex3DList>(*this, static_mesh_context, gpu_build_status),
+			vertex_gpu_build<Render::Mesh::Vertex2DUVList>(*this, static_mesh_context, gpu_build_status),
+			vertex_gpu_build<Render::Mesh::Vertex3DUVList>(*this, static_mesh_context, gpu_build_status),
+			vertex_gpu_build<Render::Mesh::Vertex3DNTBUVList>(*this, static_mesh_context, gpu_build_status)
+        );
 		// Return status
-		return gpu_build;
+		return gpu_build_status;
 	}
 }
 }

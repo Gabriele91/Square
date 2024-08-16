@@ -24,18 +24,18 @@ namespace Resource
         //factory
         ctx.add_resource<Texture>({ ".png", ".jpg", ".jpeg", ".tga" });
         //attributes
-        ctx.add_attributes<Texture>(attribute_function<Texture, unsigned long>
+        ctx.add_attribute_function<Texture, unsigned long>
                                   ("width"
                                    , (unsigned long)(0)
                                    , [](const Texture* tex) -> unsigned long{ return tex->get_width(); }
                                    , [](Texture* tex, const unsigned long& ){ /*none*/ }
-                                   ));
-        ctx.add_attributes<Texture>(attribute_function<Texture, unsigned long>
+                                   );
+        ctx.add_attribute_function<Texture, unsigned long>
                                     ("height"
                                      , (unsigned long)(0)
                                      , [](const Texture* tex) -> unsigned long { return tex->get_height(); }
                                      , [](Texture* actor, const unsigned long& ){ /*none*/ }
-                                     ));
+                                     );
         //end
     }
     
@@ -114,7 +114,7 @@ namespace Resource
 	}
 	//////////////////////////////////////////////////////////////
 	// Texture
-	Texture::Texture(Context& context) : Object(context), ResourceObject(context)
+	Texture::Texture(Context& context) : Object(context), ResourceObject(context), SharedObject<Texture>(context.allocator())
 	{
 	}
 
@@ -123,7 +123,7 @@ namespace Resource
 		destoy();
 	}
 
-	Texture::Texture(Context& context, const std::string& path) : Object(context), ResourceObject(context)
+	Texture::Texture(Context& context, const std::string& path) : Object(context), ResourceObject(context), SharedObject<Texture>(context.allocator())
 
 	{
 		load(path);
@@ -134,7 +134,7 @@ namespace Resource
 		Context& context,
 		const Attributes& attr,
 		const std::string& path
-	) : Object(context), ResourceObject(context)
+	) : Object(context), ResourceObject(context), SharedObject<Texture>(context.allocator())
 	{
 		load(attr, path);
 	}
@@ -148,7 +148,7 @@ namespace Resource
 		unsigned long height,
 		Render::TextureFormat format,
 		Render::TextureType   type
-	) : Object(context), ResourceObject(context)
+	) : Object(context), ResourceObject(context), SharedObject<Texture>(context.allocator())
 	{
 		build(attr, buffer, width, height, format, type);
 	}
@@ -162,7 +162,7 @@ namespace Resource
 		unsigned long height,
 		Render::TextureFormat format,
 		Render::TextureType   type
-	) : Object(context), ResourceObject(context)
+	) : Object(context), ResourceObject(context), SharedObject<Texture>(context.allocator())
 	{
 		build(attr, buffer, width, height, format, type);
 	}

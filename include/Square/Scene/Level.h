@@ -62,7 +62,7 @@ namespace Scene
 		void name(const std::string&);
 
 		//message
-		void send_message(const Variant& value, bool brodcast = false);
+		void send_message(const VariantRef& value, bool brodcast = false);
 		void send_message(const Message& msg, bool brodcast = false);
 
 		//serialize

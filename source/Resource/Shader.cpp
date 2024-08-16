@@ -31,7 +31,7 @@ namespace Resource
         ctx.add_resource<Shader>({ ".glsl", ".hlsl" });
 		//attributes
         #if 0
-		ctx.add_attributes<Shader>(attribute_function<Shader, void*>
+		ctx.add_attribute_function<Shader>(
 		("constant_buffer"
 		, (void*)(nullptr)
 		, [](const Shader* shader) -> void* { return (void*)shader->constant_buffer(name); }
@@ -42,10 +42,10 @@ namespace Resource
     }
 
 	//Contructor
-	Shader::Shader(Context& context) : Object(context), ResourceObject(context)
+	Shader::Shader(Context& context) : Object(context), ResourceObject(context), SharedObject<Shader>(context.allocator())
 	{
 	}
-	Shader::Shader(Context& context, const std::string& path) : Object(context), ResourceObject(context)
+	Shader::Shader(Context& context, const std::string& path) : Object(context), ResourceObject(context), SharedObject<Shader>(context.allocator())
 	{
 		load(path);
 	}

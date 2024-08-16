@@ -11,6 +11,7 @@
 #include <string>
 #include <sstream>
 #include <regex>
+#include <tuple>
 #include <vector>
 
 namespace Square
@@ -51,7 +52,6 @@ namespace Square
 		return std::move(source);
 	}
 
-
 	inline bool scase_insensitive_equal(const std::string& lstr, const std::string& rstr)
 	{
 		//not equal len
@@ -72,4 +72,114 @@ namespace Square
 		std::sregex_token_iterator last;
 		return { first, last };
 	}
+
+	SQUARE_API bool to_short(const char* arg, short& svalue);
+
+	SQUARE_API bool to_int(const char* arg, int& ivalue);
+
+	SQUARE_API bool to_long(const char* arg, long& lvalue);
+
+	SQUARE_API bool to_long_long(const char* arg, long long& llvalue);
+
+	SQUARE_API bool to_unsigned_short(const char* arg, unsigned short& usvalue);
+
+	SQUARE_API bool to_unsigned_int(const char* arg, unsigned int& uivalue);
+
+	SQUARE_API bool to_unsigned_long(const char* arg, unsigned long& ulvalue);
+
+	SQUARE_API bool to_unsigned_long_long(const char* arg, unsigned long long& ullvalue);
+
+	SQUARE_API bool to_float(const char* arg, float& fvalue);
+
+	SQUARE_API bool to_double(const char* arg, double& dvalue);
+
+	SQUARE_API bool to_boolean(const char* arg, bool& bvalue);
+
+	template < typename T > 
+	inline std::tuple< bool, T > to_(const char* arg){ assert(0); return std::make_tuple(false, T()); }
+
+	template <> 
+	inline std::tuple< bool, std::string > to_<std::string>(const char* arg)
+	{
+		std::string v{arg};
+		return std::make_tuple(!!v.size(), v);
+	}
+
+	template <> 
+	inline std::tuple< bool, short > to_<short>(const char* arg)
+	{
+		short v{0};
+		return std::make_tuple(to_short(arg, v), v);
+	}
+
+	template <> 
+	inline std::tuple< bool, int > to_<int>(const char* arg)
+	{
+		int v{0};
+		return std::make_tuple(to_int(arg, v), v);
+	}
+
+	template <> 
+	inline std::tuple< bool, long > to_<long>(const char* arg)
+	{
+		long v{0};
+		return std::make_tuple(to_long(arg, v), v);
+	}
+
+	template <> 
+	inline std::tuple< bool, long long > to_<long long>(const char* arg)
+	{
+		long long v{0};
+		return std::make_tuple(to_long_long(arg, v), v);
+	}
+
+	template <> 
+	inline std::tuple< bool, unsigned short > to_<unsigned short>(const char* arg)
+	{
+		unsigned short v{0};
+		return std::make_tuple(to_unsigned_short(arg, v), v);
+	}
+
+	template <> 
+	inline std::tuple< bool, unsigned int > to_< unsigned int >(const char* arg)
+	{
+		unsigned int v{0};
+		return std::make_tuple(to_unsigned_int(arg, v), v);
+	}
+
+	template <> 
+	inline std::tuple< bool, unsigned long > to_< unsigned long >(const char* arg)
+	{
+		unsigned long v{0};
+		return std::make_tuple(to_unsigned_long(arg, v), v);
+	}
+
+	template <> 
+	inline std::tuple< bool, unsigned long long > to_<unsigned long long>(const char* arg)
+	{
+		unsigned long long v{0};
+		return std::make_tuple(to_unsigned_long_long(arg, v), v);
+	}
+
+	template <> 
+	inline std::tuple< bool, float > to_<float>(const char* arg)
+	{
+		float v{0};
+		return std::make_tuple(to_float(arg, v), v);
+	}
+
+	template <> 
+	inline std::tuple< bool, double > to_<double>(const char* arg)
+	{
+		double v{0};
+		return std::make_tuple(to_double(arg, v), v);
+	}
+
+	template <> 
+	inline std::tuple< bool, bool > to_<bool>(const char* arg)
+	{
+		bool v{0};
+		return std::make_tuple(to_boolean(arg, v), v);
+	}
+
 }

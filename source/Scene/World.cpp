@@ -29,10 +29,10 @@ namespace Scene
 		//factory
 		ctx.add_object<World>();
 		//Attributes
-		ctx.add_attributes<World>(attribute_field("name", std::string(), &World::m_name));
+		ctx.add_attribute_field<World, std::string>("name", std::string(), &World::m_name);
 	}
 
-	World::World(Context& context) : Object(context)
+	World::World(Context& context) : Object(context), SharedObject_t(context.allocator())
 	{
 
 	}
@@ -49,7 +49,7 @@ namespace Scene
 	//add an level	
 	Shared<Level> World::level()
 	{
-		m_levels.push_back(std::make_shared<Level>(context()));
+		m_levels.push_back(MakeShared<Level>(context()));
 		return m_levels.back();
 	}
 	void  World::add(Shared<Level> level)
@@ -65,7 +65,7 @@ namespace Scene
 	Shared<Level> World::level(const std::string& name)
 	{
 		//search
-		for (Shared<Level> level : m_levels) if (level->name() == name) return level;
+		for (const Shared<Level>& level : m_levels) if (level->name() == name) return level;
 		//create
 		auto level = MakeShared<Level>(context(), name);
 		//add
@@ -80,8 +80,8 @@ namespace Scene
 	Shared<Actor> World::find_actor(const std::string& name)
 	{
 		//search
-		for (Shared<Level> level : m_levels)
-			if (auto actor=level->find_actor(name)) 
+		for (const Shared<Level>& level : m_levels)
+			if (auto& actor = level->find_actor(name)) 
 				return actor;
 		//return
 		return nullptr;
@@ -91,7 +91,7 @@ namespace Scene
 	bool World::contains(Shared<Actor> child) const
 	{
 		//search
-		for (Shared<Level> level : m_levels)
+		for (const Shared<Level>& level : m_levels)
 			if (level->contains(child))
 				return true;
 		//return
@@ -100,7 +100,7 @@ namespace Scene
 	bool World::contains(Shared<Level> level_) const
 	{
 		//search
-		for (Shared<Level> level : m_levels)
+		for (const Shared<Level>& level : m_levels)
 			if (level == level_)
 				return true;
 		//return
@@ -111,7 +111,7 @@ namespace Scene
 	bool World::remove(Shared<Actor> child)
 	{
 		//search
-		for (Shared<Level> level : m_levels)
+		for (Shared<Level>& level : m_levels)
 			if (level->remove(child))
 				return true;
 		//return
@@ -127,14 +127,14 @@ namespace Scene
 	}
 
 	//message
-	void World::send_message(const Variant& value, bool brodcast)
+	void World::send_message(const VariantRef& value, bool brodcast)
 	{
-		for (Shared<Level> level : m_levels)
+		for (Shared<Level>& level : m_levels)
 			level->send_message(value, brodcast);
 	}
 	void World::send_message(const Message& msg, bool brodcast)
 	{
-		for (Shared<Level> level : m_levels)
+		for (Shared<Level>& level : m_levels)
 			level->send_message(msg, brodcast);
 	}
 
@@ -147,9 +147,9 @@ namespace Scene
 		{
 			uint64 size = m_levels.size();
 			archivie % size;
-			for (auto actor : m_levels)
+			for (auto& level : m_levels)
 			{
-				actor->serialize(archivie);
+				level->serialize(archivie);
 			}
 		}
 	}

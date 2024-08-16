@@ -54,7 +54,8 @@ namespace Video
 		{
 			CTX_OPENGL,
 			CTX_OPENGL_ES,
-			CTX_DIRECTX
+			CTX_DIRECTX,
+			CTX_UNKNOWN
 		};
 		context_type  m_type{ CTX_OPENGL };
 		unsigned int  m_version[2]{ 3, 0 };
