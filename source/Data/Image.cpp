@@ -5,6 +5,7 @@
 //  Copyright © 2016 Gabriele. All rights reserved.
 //
 #include "Square/Config.h"
+#include "Square/Core/Allocator.h"
 #include "Square/Data/Image.h"
 
 namespace Square
@@ -12,10 +13,10 @@ namespace Square
 namespace  Data
 {
 
-	Shared<Image> Image::from_rgb565(const unsigned char* buffer,unsigned long width,unsigned long height)
+	Shared<Image> Image::from_rgb565(Allocator* allocator, const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = MakeShared<Image>();
+		auto o_image = MakeShared<Image>(allocator, allocator);
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size
@@ -39,10 +40,10 @@ namespace  Data
 		return o_image;
 	}
 
-	Shared<Image> Image::from_rgb5a1(const unsigned char* buffer, unsigned long width, unsigned long height)
+	Shared<Image> Image::from_rgb5a1(Allocator* allocator, const unsigned char* buffer, unsigned long width, unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = MakeShared<Image>();
+		auto o_image = MakeShared<Image>(allocator, allocator);
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size
@@ -66,10 +67,10 @@ namespace  Data
 		return o_image;
 	}
 
-	Shared<Image> Image::from_r (const unsigned char* buffer,unsigned long width,unsigned long height)
+	Shared<Image> Image::from_r (Allocator* allocator, const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = MakeShared<Image>();
+		auto o_image = MakeShared<Image>(allocator, allocator);
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size
@@ -87,10 +88,10 @@ namespace  Data
 		return o_image;
 	}
 
-	Shared<Image> Image::from_rg (const unsigned char* buffer,unsigned long width,unsigned long height)
+	Shared<Image> Image::from_rg (Allocator* allocator, const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = MakeShared<Image>();
+		auto o_image = MakeShared<Image>(allocator, allocator);
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size
@@ -108,10 +109,10 @@ namespace  Data
 		return o_image;
 	}
 
-	Shared<Image> Image::from_rgb (const unsigned char* buffer,unsigned long width,unsigned long height)
+	Shared<Image> Image::from_rgb (Allocator* allocator, const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = MakeShared<Image>();
+		auto o_image = MakeShared<Image>(allocator, allocator);
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size
@@ -129,10 +130,10 @@ namespace  Data
 		return o_image;
 	}
 	
-	Shared<Image> Image::from_rgba (const unsigned char* buffer,unsigned long width,unsigned long height)
+	Shared<Image> Image::from_rgba (Allocator* allocator, const unsigned char* buffer,unsigned long width,unsigned long height)
 	{
 		//alloc conteiner
-		auto o_image = MakeShared<Image>();
+		auto o_image = MakeShared<Image>(allocator, allocator);
 		//alloc buffer
 		o_image->m_buffer.resize(width*height);
 		//save size

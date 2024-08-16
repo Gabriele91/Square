@@ -5,6 +5,7 @@
 //  Copyright � 2017 Gabriele. All rights reserved.
 //
 #pragma once
+#include <optional>
 #include "Square/Config.h"
 #include "Square/Core/Resource.h"
 #include "Square/Math/Linear.h"
@@ -756,7 +757,7 @@ namespace Square
                     break;
                     
                 case VariantType::VR_C_STRING:
-                    assert(0);
+                    square_assert(0);
                     break;
                 case VariantType::VR_STD_STRING:
 					get<std::string>() = std::move(in.get<std::string>());
@@ -866,7 +867,7 @@ namespace Square
 				break;
 
 			case VariantType::VR_C_STRING:
-                    assert(0);
+				square_assert(0);
                 break;
 			case VariantType::VR_STD_STRING:
 				get<std::string>() = (const std::string&)in;
@@ -963,10 +964,10 @@ namespace Square
 			case VariantType::VR_STD_VECTOR_DVEC3:   delete (std::vector<DVec3>*)m_ptr;   break;
 			case VariantType::VR_STD_VECTOR_DVEC4:   delete (std::vector<DVec4>*)m_ptr;   break;
 
-            case VariantType::VR_C_STRING:          assert(0);                                 break;
+            case VariantType::VR_C_STRING:          square_assert(0);                        break;
 			case VariantType::VR_STD_STRING:        delete (std::string*)m_ptr;			     break;
-			case VariantType::VR_STD_VECTOR_STRING: delete (std::vector<std::string>*)m_ptr;  break;
-			case VariantType::VR_RESOURCE:          delete (Shared<ResourceObject>*)m_ptr;  break;
+			case VariantType::VR_STD_VECTOR_STRING: delete (std::vector<std::string>*)m_ptr; break;
+			case VariantType::VR_RESOURCE:          delete (Shared<ResourceObject>*)m_ptr;   break;
 			default: break;
 			}
 			//change type
@@ -1005,8 +1006,8 @@ namespace Square
 			case VariantType::VR_STD_VECTOR_DVEC3: m_ptr = new std::vector<DVec3>; break;
 			case VariantType::VR_STD_VECTOR_DVEC4: m_ptr = new std::vector<DVec4>; break;
 
-            case VariantType::VR_C_STRING:          assert(0);                             break;
-			case VariantType::VR_STD_STRING:        m_ptr = new std::string();			  break;
+            case VariantType::VR_C_STRING:          square_assert(0);                      break;
+			case VariantType::VR_STD_STRING:        m_ptr = new std::string();			   break;
 			case VariantType::VR_STD_VECTOR_STRING: m_ptr = new std::vector<std::string>();break;
 			case VariantType::VR_RESOURCE:          m_ptr = new Shared<ResourceObject>();  break;
 			default: break;
@@ -1335,9 +1336,9 @@ namespace Square
 			m_type = VariantType::VR_STD_VECTOR_DVEC4;
 		}
 
-		VariantRef(const char*& c_str)
+		VariantRef(const char* c_str)
 		{
-			m_ptr = (void*)&c_str;
+			m_ptr = (void*)c_str;
 			m_type = VariantType::VR_C_STRING;
 		}
 
@@ -1412,6 +1413,26 @@ namespace Square
 		const T* get_ptr() const
 		{
 			return (T*)m_ptr;
+		}
+
+		template < class T >
+		std::optional<T*> ptr()
+		{
+			if (get_type() == variant_traits<T>())
+			{
+				return get_ptr<T>();
+			}
+			return {};
+		}
+
+		template < class T >
+		std::optional<const T*> ptr() const
+		{
+			if (get_type() == variant_traits<T>())
+			{
+				return get_ptr<T>();
+			}
+			return {};
 		}
         
         void copy_from(const VariantRef& ref)

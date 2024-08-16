@@ -7,6 +7,7 @@
 #pragma once
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
+#include "Square/Core/Variant.h"
 #include "Square/Core/Uncopyable.h"
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Object.h"
@@ -21,7 +22,7 @@ namespace Scene
 	//declaretion
 	class Actor;
 	class Level;
-	class World;
+	class Message;
 	using ActorList = std::vector< Shared<Actor> >;
 	using LevelList = std::vector< Shared<Level> >;
 	//..................
@@ -62,7 +63,7 @@ namespace Scene
 		bool remove(Shared<Level> child);
 			
 		//message
-		void send_message(const Variant& value, bool brodcast = false);
+		void send_message(const VariantRef& value, bool brodcast = false);
 		void send_message(const Message& msg, bool brodcast = false);
 
 		//serialize

@@ -21,7 +21,7 @@ namespace Square
 namespace Render
 {
     DrawerPassForward::DrawerPassForward(Square::Context& context)
-    : DrawerPass(RPT_RENDER)
+    : DrawerPass(context.allocator(), RPT_RENDER)
     , m_context(context)
     {
         m_cb_camera    = Render::stream_constant_buffer<Render::UniformBufferCamera>(&render());

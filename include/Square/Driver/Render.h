@@ -878,6 +878,8 @@ namespace Render
 	{
 	public:
 
+		Context(Allocator* allocator) : m_allocator(allocator) {}
+
 		virtual RenderDriver get_render_driver() = 0;
 		virtual RenderDriverInfo get_render_driver_info() = 0;
 		virtual void print_info() = 0;
@@ -933,13 +935,20 @@ namespace Render
 		virtual void unbind_VBO(VertexBuffer*) = 0;
 		virtual void unbind_IBO(IndexBuffer*) = 0;
 
+		virtual std::vector<unsigned char> copy_buffer_CB(const ConstBuffer*) = 0;
+		virtual std::vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) = 0;
+		virtual std::vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) = 0;
+
 		virtual unsigned char* map_CB(ConstBuffer*, size_t start, size_t n, MappingType type) = 0;
+		virtual unsigned char* map_CB(ConstBuffer*, MappingType type) = 0;
 		virtual void unmap_CB(ConstBuffer*) = 0;
 
 		virtual unsigned char* map_VBO(VertexBuffer*, size_t start, size_t n, MappingType type) = 0;
+		virtual unsigned char* map_VBO(VertexBuffer*, MappingType type) = 0;
 		virtual void unmap_VBO(VertexBuffer*) = 0;
 
-		virtual unsigned int*  map_IBO(IndexBuffer*, size_t start, size_t n, MappingType type) = 0;
+		virtual unsigned int* map_IBO(IndexBuffer*, size_t start, size_t n, MappingType type) = 0;
+		virtual unsigned int* map_IBO(IndexBuffer*, MappingType type) = 0;
 		virtual void unmap_IBO(IndexBuffer*) = 0;
 
 		virtual unsigned char* map_TBO(Texture*, MappingType type) = 0;
@@ -1028,6 +1037,11 @@ namespace Render
 		virtual bool print_errors() const = 0;
 		//Output file name and line
         virtual bool print_errors(const char* source_file_name, int line) const = 0;
+	
+		Allocator* allocator() const { return m_allocator; }
+
+	private:
+		Allocator* m_allocator;
 	};
 	/////////////////////////////////
 	// Buffer smart pointer	
@@ -1037,7 +1051,7 @@ namespace Render
 	DLL_EXPORT Shared<IndexBuffer>  index_buffer(Context* ctx, unsigned int* data, size_t n);
 	DLL_EXPORT Shared<ConstBuffer>  stream_constant_buffer(Context* ctx, size_t size);
 	DLL_EXPORT Shared<VertexBuffer> stream_vertex_buffer(Context* ctx, size_t stride, size_t n);
-	DLL_EXPORT Shared<IndexBuffer> stream_index_buffer(Context* ctx, size_t n);
+	DLL_EXPORT Shared<IndexBuffer>  stream_index_buffer(Context* ctx, size_t n);
 	/////////////////////////////////
 	template<class T> static inline Shared<ConstBuffer> constant_buffer(Context* ctx, unsigned char* data)
 	{
@@ -1096,7 +1110,7 @@ namespace Render
 	/////////////////////////////////
 	// Shared wrapper
 	DLL_EXPORT std::vector<RenderDriver> list_of_render_driver();
-	DLL_EXPORT Context* create_render_driver(RenderDriver);
+	DLL_EXPORT Context* create_render_driver(Allocator*,RenderDriver);
 	DLL_EXPORT void delete_render_driver(Context*&);
 }
 }

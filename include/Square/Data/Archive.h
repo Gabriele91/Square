@@ -58,5 +58,7 @@ namespace  Data
         //output stream
         std::istream& m_stream;
     };
+
+
 }
 }

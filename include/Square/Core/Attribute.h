@@ -8,8 +8,8 @@
 #include <string>
 #include <functional>
 #include <type_traits>
-#include "Square/Core/Object.h"
 #include "Square/Core/Variant.h"
+#include "Square/Core/Object.h"
 #include "Square/Core/SmartPointers.h"
 
 namespace Square
@@ -18,6 +18,7 @@ namespace Square
 	class SQUARE_API AttributeAccess : public SharedObject<AttributeAccess>
 	{
 	public:
+		explicit AttributeAccess(Allocator* alloc=nullptr) : SharedObject_t(alloc) {}
 		virtual bool get(const Object* serializable, VariantRef& ret) const =0;
 		virtual bool set(Object* serializable, const VariantRef& set) =0;
         virtual ~AttributeAccess()  { /* none */ }
@@ -242,14 +243,14 @@ namespace Square
 		: m_get(get_function)
 		, m_set(set_function)
 		{
-			assert(m_get);
-			assert(m_set);
+			square_assert_or_release(m_get);
+			square_assert_or_release(m_set);
 		}
 
 		// Invoke getter function.
 		virtual bool get(const Object* serializable, VariantRef& ret) const override
 		{
-			assert(serializable);
+			square_assert_or_release(serializable);
 			const T* self = dynamic_cast<const T*>(serializable);
 			// Test
 			if (!self) return false;
@@ -262,7 +263,7 @@ namespace Square
 		// Invoke setter function.
 		virtual bool set(Object* serializable, const VariantRef& value) override
 		{
-			assert(serializable);
+			square_assert_or_release(serializable);
 			T* self = dynamic_cast<T*>(serializable);
 			// Test
 			if (!self) return false;
@@ -294,14 +295,14 @@ namespace Square
 		: m_get(get_function)
 		, m_set(set_function)
 		{
-			assert(m_get);
-			assert(m_set);
+			square_assert_or_release(m_get);
+			square_assert_or_release(m_set);
 		}
 
 		// Invoke getter function.
 		virtual bool get(const Object* serializable, VariantRef& ret) const override
 		{
-			assert(serializable);
+			square_assert_or_release(serializable);
 			const T* self = dynamic_cast<const T*>(serializable);
 			// Test
 			if (!self) return false;
@@ -316,7 +317,7 @@ namespace Square
 		// Invoke setter function.
 		virtual bool set(Object* serializable, const VariantRef& value) override
 		{
-			assert(serializable);
+			square_assert_or_release(serializable);
 			T* self = dynamic_cast<T*>(serializable);
 			// Test
 			if (!self) return false;
@@ -342,7 +343,8 @@ namespace Square
 	//helper
 	template<typename T, typename U, typename Trait = AttributeTrain<U> >
 	static Attribute attribute_method(
-		  const std::string& attribute_name
+		  Allocator* allocator
+		, const std::string& attribute_name
 		, const U& default_value
 		, typename AttributeAccessMethod< T, U, Trait >::GetFunction get_method
 		, typename AttributeAccessMethod< T, U, Trait >::SetFunction set_method
@@ -357,7 +359,7 @@ namespace Square
 			, variant_traits<U>()
 			, default_value
 			, StaticPointerCast<AttributeAccess>(
-                Shared<AAMethod>(new AAMethod(get_method, set_method))
+				MakeShared<AAMethod>(allocator, get_method, set_method)
               )
 			, type
 		));
@@ -366,7 +368,8 @@ namespace Square
 	template<typename T, typename U, typename Trait = AttributeFunctionTrain<U> >
 	static Attribute attribute_function
 	(
-		  const std::string& attribute_name
+		  Allocator* allocator
+		, const std::string& attribute_name
 		, const U& default_value
 		, typename AttributeAccessFunction< T, U, Trait >::GetFunction get_function
 		, typename AttributeAccessFunction< T, U, Trait >::SetFunction set_function
@@ -381,7 +384,7 @@ namespace Square
 			, variant_traits<U>()
 			, default_value
             , StaticPointerCast<AttributeAccess>(
-                Shared<AAFunction>(new AAFunction(get_function, set_function))
+                MakeShared<AAFunction>(allocator, get_function, set_function)
               )
 			, type
 		));
@@ -390,7 +393,8 @@ namespace Square
 	template<typename T, typename U >
 	static Attribute attribute_field
 	(
-		  const std::string& field_name
+		  Allocator* allocator
+		, const std::string& field_name
 		, const U& default_value
 		, U T::*member
 		, Attribute::Type type = Attribute::DEFAULT

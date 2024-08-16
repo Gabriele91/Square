@@ -36,7 +36,7 @@ namespace Render
     public:
         SQUARE_OBJECT(DrawerPass)
 
-        DrawerPass(DrawerPassType type) : m_type(type) {}
+        DrawerPass(Allocator* allocator, DrawerPassType type) : SharedObject_t(allocator), m_type(type) {}
         
 		virtual void draw
 		(

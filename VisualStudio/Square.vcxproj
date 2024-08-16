@@ -158,6 +158,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\Square\Core\Allocator.h" />
+    <ClInclude Include="..\include\Square\Core\ShellParser.h" />
     <ClInclude Include="..\include\Square\Data\ParserStaticMesh.h" />
     <ClInclude Include="..\include\Square\Render\Mesh.h" />
     <ClInclude Include="..\include\Square\Resource\Mesh.h" />
@@ -283,12 +285,16 @@
   <ItemGroup>
     <ClCompile Include="..\include\Square\Render\DrawerPassShadow.h" />
     <ClCompile Include="..\include\Square\Scene\PointLight.h" />
+    <ClCompile Include="..\source\Core\Allocator.cpp" />
     <ClCompile Include="..\source\Core\Application.cpp" />
     <ClCompile Include="..\source\Core\Context.cpp" />
     <ClCompile Include="..\source\Core\Filesystem.cpp" />
     <ClCompile Include="..\source\Core\Object.cpp" />
     <ClCompile Include="..\source\Core\ClassObjectRegistration.cpp" />
+    <ClCompile Include="..\source\Core\Resource.cpp" />
     <ClCompile Include="..\source\Core\SharedLibrary.cpp" />
+    <ClCompile Include="..\source\Core\ShellParser.cpp" />
+    <ClCompile Include="..\source\Core\StringUtilities.cpp" />
     <ClCompile Include="..\source\Core\Time.cpp" />
     <ClCompile Include="..\source\Core\UtfConvert.cpp" />
     <ClCompile Include="..\source\Data\Archive.cpp" />

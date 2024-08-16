@@ -74,7 +74,6 @@ namespace Data
         return ostream;
     }
     
-
     ArchiveBinWrite::ArchiveBinWrite(Context& context, std::ostream& stream) : Archive(context), m_stream(stream) {}
     Archive& ArchiveBinWrite::operator % (VariantRef value)
     {
@@ -181,6 +180,7 @@ namespace Data
         istream.read((char*)&value, sizeof(T));
         return istream;
     }
+
     template <>
     std::istream& operator > (std::istream& istream, std::string& value)
     {

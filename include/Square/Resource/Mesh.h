@@ -1,5 +1,5 @@
 //
-//  Material.h
+//  Mesh.h
 //  Square
 //
 //  Created by Gabriele Di Bari on 07/01/2024.

@@ -10,6 +10,7 @@
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/Core/Application.h"
 #include "Square/Driver/Render.h"
+#include "Square/Scene/World.h"
 
 namespace Square
 {
@@ -59,18 +60,23 @@ namespace Square
     Application::Application()
     {
         //test
-        assert(s_instance == nullptr);
+        square_assert(s_instance == nullptr);
         //init
         Video::init();
         //registration
         s_instance = this;
+        //Self reg
+        m_context.m_application = this;
+        // Allocator
+        {
+            static DefaultAllocator s_default_allocator;
+            m_context.m_allocator = &s_default_allocator;
+        }
 		//Add static object factory
 		for (const auto& item : ClassObjectRegistration::item_list())
 		{
 			item.m_registration(m_context);
 		}
-		//Self reg
-		m_context.m_application = this;
     }
     
     Application::~Application()
@@ -229,7 +235,9 @@ namespace Square
 		case Square::Render::DR_DIRECTX:
 			return Video::ContextInfo::CTX_DIRECTX;
 		break;
-		default: break;
+		default: 
+            return Video::ContextInfo::CTX_UNKNOWN;
+        break;
 		}
 	}
 
@@ -275,7 +283,7 @@ namespace Square
         //enable render context and  disable vSync (auto by Video::Window)
         m_window->acquire_context();
 		//Get render
-		m_render = Render::create_render_driver(driver.m_type);
+		m_render = Render::create_render_driver(context()->allocator(),driver.m_type);
 		//init render
 		if (!m_render || !m_render->init(m_window->device()))
 		{
@@ -314,12 +322,25 @@ namespace Square
             //close event?
             if(event == Video::WindowEvent::CLOSE) close_event = true;
         });
+
+        //set world
+        m_world = new Scene::World(m_context);
+
         //start
         m_instance->start();
 		m_render->print_errors();
+
         //time
         double old_time = 0;
         double last_time = Time::get_time();
+
+        //send event
+        {
+            static std::string init_finished ("application::init::finished" );
+            static const VariantRef init_finished_ref(init_finished);
+            m_world->send_message(init_finished_ref, true);
+        }
+
         //loop
         while (!close_event)
         {
@@ -339,11 +360,20 @@ namespace Square
             //swap
             m_window->swap();
         }
+
+        //send event
+        {
+            static std::string loop_finished("application::loop::finished");
+            static const VariantRef loop_finished_ref(loop_finished);
+            m_world->send_message(loop_finished_ref, true);
+        }
+
         //end state
         bool end_state = m_instance->end();
         
         //clear context
         context()->clear();
+
         
         //dealloc input
         delete m_input;
@@ -352,6 +382,10 @@ namespace Square
         //dealloc
         delete m_instance;
         m_instance = nullptr;
+
+        //delete world
+        delete m_world;
+        m_world = nullptr;
         
         //delete render context
 		m_render->close();

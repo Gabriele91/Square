@@ -29,59 +29,59 @@ namespace Scene
         //factory
         ctx.add_object<SpotLight>();
         //Attributes
-		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, bool>
+		ctx.add_attribute_function<SpotLight, bool>
 		("visible"
 		, bool(0)
 		, [](const SpotLight* plight) -> bool       { return plight->visible(); }
-		, [](SpotLight* plight, const bool& visible){ plight->visible(visible); }));
+		, [](SpotLight* plight, const bool& visible){ plight->visible(visible); });
 
-		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, Vec3>
+		ctx.add_attribute_function<SpotLight, Vec3>
 		("diffuse"
 		, Vec3(1.0)
 		, [](const SpotLight* plight) -> Vec3       { return plight->diffuse(); }
-		, [](SpotLight* plight, const Vec3& diffuse){ plight->diffuse(diffuse); }));
+		, [](SpotLight* plight, const Vec3& diffuse){ plight->diffuse(diffuse); });
 
-		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, Vec3>
+		ctx.add_attribute_function<SpotLight, Vec3>
 		("specular"
 		, Vec3(1.0)
 		, [](const SpotLight* plight) -> Vec3        { return plight->specular(); }
-		, [](SpotLight* plight, const Vec3& specular){ plight->specular(specular); }));
+		, [](SpotLight* plight, const Vec3& specular){ plight->specular(specular); });
 
-		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, float>
+		ctx.add_attribute_function<SpotLight, float>
 		("constant"
 		, float(1.0)
 		, [](const SpotLight* plight) -> float        { return plight->constant(); }
-		, [](SpotLight* plight, const float& constant){ plight->constant(constant); }));
+		, [](SpotLight* plight, const float& constant){ plight->constant(constant); });
 
-		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, float>
+		ctx.add_attribute_function<SpotLight, float>
 		("radius"
 		, float(1.0)
 		, [](const SpotLight* plight) -> float        { return plight->radius(); }
-		, [](SpotLight* plight, const float& radius)  { plight->radius(radius);  }));
+		, [](SpotLight* plight, const float& radius)  { plight->radius(radius);  });
 
-		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, float>
+		ctx.add_attribute_function<SpotLight, float>
 		("inside_radius"
 		, float(1.0)
 		, [](const SpotLight* plight) -> float               { return plight->inside_radius(); }
-		, [](SpotLight* plight, const float& inside_radius)  { plight->inside_radius(inside_radius);  }));
+		, [](SpotLight* plight, const float& inside_radius)  { plight->inside_radius(inside_radius);  });
 
-		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, float>
+		ctx.add_attribute_function<SpotLight, float>
 		("inner_cut_off"
 		, float(1.0)
 		, [](const SpotLight* plight) -> float               { return plight->inner_cut_off(); }
-		, [](SpotLight* plight, const float& inner_cut_off)  { plight->inner_cut_off(inner_cut_off);  }));
+		, [](SpotLight* plight, const float& inner_cut_off)  { plight->inner_cut_off(inner_cut_off);  });
 
-		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, float>
+		ctx.add_attribute_function<SpotLight, float>
 		("outer_cut_off"
 		, float(1.0)
 		, [](const SpotLight* plight) -> float               { return plight->outer_cut_off(); }
-		, [](SpotLight* plight, const float& outer_cut_off)  { plight->outer_cut_off(outer_cut_off);  }));
+		, [](SpotLight* plight, const float& outer_cut_off)  { plight->outer_cut_off(outer_cut_off);  });
 		//////////////////////////////////////////////////////////////////
-		ctx.add_attributes<SpotLight>(attribute_function<SpotLight, Vec2>
+		ctx.add_attribute_function<SpotLight, Vec2>
 		("shadow"
 		, Vec2(0,0)
 		, [](const SpotLight* plight) -> Vec2             { return plight->shadow_size(); }
-		, [](SpotLight* plight, const Vec2& shadow_size)  { plight->shadow(shadow_size);  }));
+		, [](SpotLight* plight, const Vec2& shadow_size)  { plight->shadow(shadow_size);  });
 		//////////////////////////////////////////////////////////////////
 
     }
@@ -89,6 +89,7 @@ namespace Scene
 	//light
 	SpotLight::SpotLight(Context& context)
 	: Component(context)
+	, SharedObject<SpotLight>(context.allocator())
 	, m_buffer(context)
 	{
 		m_sphere.radius(this->Render::SpotLight::radius());
@@ -256,7 +257,7 @@ namespace Scene
 			if (shadow())
 			{
 				auto size = m_buffer.size();
-				float aspect = size.x / size.y;
+				float aspect = float(size.x) / size.y;
 				m_viewport.viewport({ 0,0,size.x,size.y });
 			}
 			//update frustum

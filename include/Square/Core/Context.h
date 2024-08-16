@@ -6,6 +6,7 @@
 //
 #pragma once
 #include "Square/Config.h"
+#include "Square/Core/Allocator.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/Resource.h"
 #include "Square/Core/Attribute.h"
@@ -67,8 +68,8 @@ namespace Square
         const Variant& variable(const std::string& name);
         
 		//Object fectory
-        void add_object(ObjectFactory* object_fectory);
-        void add_resource(ObjectFactory* object_fectory,const std::vector< std::string >& exts);
+        void add_object(Shared<ObjectFactory> object_fectory);
+        void add_resource(Shared<ObjectFactory> object_fectory,const std::vector< std::string >& exts);
         
 		//Resource
 		bool add_resources(const std::string& file_of_resources);
@@ -79,10 +80,10 @@ namespace Square
 		bool add_resource_file(const std::string& name, const std::string& path);
 
 		//Add an attrbute
-        void add_attributes(const std::string& name, Attribute&& attribute);
-        void add_attributes(uint64 object_id, Attribute&& attribute);
-        void add_attributes(const Object& object, Attribute&& attribute);
-        void add_attributes(const ObjectInfo& info, Attribute&& attribute);
+        void add_attribute(const std::string& name, Attribute&& attribute);
+        void add_attribute(uint64 object_id, Attribute&& attribute);
+        void add_attribute(const Object& object, Attribute&& attribute);
+        void add_attribute(const ObjectInfo& info, Attribute&& attribute);
 
 		//Add variable
         void add_variable(const std::string& name, const Variant& value);
@@ -99,7 +100,9 @@ namespace Square
 		void show_wrongs(std::ostream& output) const;
 
 		//get application
-		Application*  application();
+		Application* application();
+		//get allocator
+		Allocator* allocator();
         //get render
         Render::Context* render();
         //get window
@@ -110,6 +113,8 @@ namespace Square
 		Scene::World* world();
         //get application
         const Application* application() const;
+		//get allocator
+		Allocator* allocator() const;
         //get render
         const Render::Context* render() const;
         //get window
@@ -144,6 +149,8 @@ namespace Square
 		ObjectFactoryMap m_object_factories;
 		//Context refs
 		Application*     m_application{ nullptr };
+		//Allocator refs
+		Allocator*		 m_allocator;
         //Reousce factory
         ResourceFileMap   m_resources_file;
         ResourceInfoMap   m_resources_info;
@@ -153,6 +160,21 @@ namespace Square
 		//delete all
 		void clear();
 	};
+
+	// Specialization
+	template< class T, class U, class... Args >
+	static inline std::enable_if_t<std::is_base_of<U, BaseContext>::value, Shared<T> >
+	MakeShared(const U& base_context, Args&&... args) {
+		return std::move(Shared<T>(SQ_NEW(base_context.allocator(), T, AllocType::ALCT_DEFAULT) T(std::forward<Args>(args)...),
+			                       DefaultDelete(base_context.allocator())));
+	}
+
+	template< class T, class U, class... Args >
+	static inline std::enable_if_t<std::is_base_of<U, BaseContext>::value, Unique<T> >
+	MakeUnique(const U& base_context, Args&&... args) {
+		return std::move(Unique<T>(SQ_NEW(base_context.allocator(), T, AllocType::ALCT_DEFAULT) T(std::forward<Args>(args)...),
+			                       DefaultDelete(base_context.allocator())));
+	}
 	
 	//Template help context
 	class SQUARE_API Context : public BaseContext
@@ -170,7 +192,7 @@ namespace Square
 		using BaseContext::variable;
 		
 		using BaseContext::add_object;
-		using BaseContext::add_attributes;
+		using BaseContext::add_attribute;
 		using BaseContext::add_resource;
 		using BaseContext::add_resources;
 		using BaseContext::add_resource_path;
@@ -187,6 +209,7 @@ namespace Square
 		using BaseContext::window;
 		using BaseContext::input;
 		using BaseContext::world;
+		using BaseContext::allocator;
 
 		//template utils
 		template< class T > inline Shared<T> create()
@@ -201,24 +224,75 @@ namespace Square
 
 		template< class T > inline void add_object()
 		{
-			BaseContext::add_object(new ObjectFactoryItem<T>(*this));
+			BaseContext::add_object(MakeShared< ObjectFactoryItem<T> >(*this));
 		}
 
 		template< class T > inline void add_resource(const std::vector< std::string >& exts)
 		{
-			BaseContext::add_resource(new ObjectFactoryItem<T>(*this), exts);
+			BaseContext::add_resource(MakeShared< ObjectFactoryItem<T> >(*this), exts);
 		}
 
-		template < class T > inline void add_attributes(Attribute& attribute)
+		template < class T > inline void add_attribute(Attribute& attribute)
 		{
-			BaseContext::add_attributes(T::static_object_id(), std::move<Attribute>(attribute));
+			BaseContext::add_attribute(T::static_object_id(), std::move<Attribute>(attribute));
 		}
 
-		template < class T > inline void add_attributes(Attribute&& attribute)
+		template < class T > inline void add_attribute(Attribute&& attribute)
 		{
-			BaseContext::add_attributes(T::static_object_id(), std::forward<Attribute>(attribute));
+			BaseContext::add_attribute(T::static_object_id(), std::forward<Attribute>(attribute));
+		}
+		///
+#if 0
+		template < class T, class U, typename... Args > inline void add_attribute_field(Args&&... args)
+		{
+			BaseContext::add_attribute(T::static_object_id(), std::move<Attribute>(attribute_field<T,U>(this->allocator(), std::forward(args)...)));
 		}
 
+		template < class T, class U, typename... Args > inline void add_attribute_method(Args&&... args)
+		{
+			BaseContext::add_attribute(T::static_object_id(), std::move<Attribute>(attribute_method<T, U>(this->allocator(), std::forward(args)...)));
+		}
+
+		template < class T, class U, typename... Args > inline void add_attribute_function(Args&&... args)
+		{
+			BaseContext::add_attribute(T::static_object_id(), std::move<Attribute>(attribute_function<T, U>(this->allocator(), std::forward(args)...)));
+		}
+#endif		
+		///
+#if 1
+		template < class T, class U, typename... Args > inline void add_attribute_field(const Args&... args)
+		{
+			BaseContext::add_attribute(T::static_object_id(), std::move<Attribute>(attribute_field<T, U>(this->allocator(), args...)));
+		}
+
+		template < class T, class U, typename... Args > inline void add_attribute_method(const Args&... args)
+		{
+			BaseContext::add_attribute(T::static_object_id(), std::move<Attribute>(attribute_method<T, U>(this->allocator(), args...)));
+		}
+
+		template < class T, class U, typename... Args > inline void add_attribute_function(const Args&... args)
+		{
+			BaseContext::add_attribute(T::static_object_id(), std::move<Attribute>(attribute_function<T, U>(this->allocator(), args...)));
+		}
+#endif
+		///
+#if 0
+		template < class T, class U, typename... Args > inline void add_attribute_field(Args... args)
+		{
+			BaseContext::add_attribute(T::static_object_id(), std::move<Attribute>(attribute_field<T, U>(this->allocator(), args...)));
+		}
+
+		template < class T, class U, typename... Args > inline void add_attribute_method(Args... args)
+		{
+			BaseContext::add_attribute(T::static_object_id(), std::move<Attribute>(attribute_method<T, U>(this->allocator(), args...)));
+		}
+
+		template < class T, class U, typename... Args > inline void add_attribute_function(Args... args)
+		{
+			BaseContext::add_attribute(T::static_object_id(), std::move<Attribute>(attribute_function<T, U>(this->allocator(), args...)));
+		}
+#endif
+		///
 		template< class T >  inline Shared<T> resource(const std::string& name)
 		{
 			return DynamicPointerCast<T>(BaseContext::resource(T::static_object_name() + ":" + name));
@@ -234,4 +308,33 @@ namespace Square
 			return BaseContext::resource_path(T::static_object_name() + ":" + name);
 		}
 	};
+	// Specialization
+	template< class T, class... Args >
+	static inline Shared<T>
+	MakeShared(Context& context, Args&&... args) {
+		return std::move(Shared<T>(SQ_NEW(context.allocator(), T, AllocType::ALCT_DEFAULT) T(context, std::forward<Args>(args)...),
+			                       DefaultDelete(context.allocator())));
+	}
+
+	template< class T, class U, class... Args >
+	static inline Unique<T>
+	MakeUnique(Context& context, Args&&... args) {
+		return std::move(Unique<T>(SQ_NEW(context.allocator(), T, AllocType::ALCT_DEFAULT) T(context, std::forward<Args>(args)...),
+			                       DefaultDelete(context.allocator())));
+	}
+
+	// Specialization
+	template< class T, class... Args >
+	static inline Shared<T>
+	MakeShared(const Context& context, Args&&... args) {
+		return std::move(Shared<T>(SQ_NEW(context.allocator(), T, AllocType::ALCT_DEFAULT) T(context, std::forward<Args>(args)...),
+			                       DefaultDelete(context.allocator())));
+	}
+
+	template< class T, class U, class... Args >
+	static inline Unique<T>
+	MakeUnique(const Context& context, Args&&... args) {
+		return std::move(Unique<T>(SQ_NEW(context.allocator(), T, AllocType::ALCT_DEFAULT) T(context, std::forward<Args>(args)...),
+			                       DefaultDelete(context.allocator())));
+	}
 }

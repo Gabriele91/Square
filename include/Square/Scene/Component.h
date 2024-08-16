@@ -30,20 +30,20 @@ namespace Scene
     struct SQUARE_API Message
     {
         Actor* m_sender;
-        Variant m_value;
+        VariantRef m_value;
         
         Message()
         {
             m_sender = nullptr;
         }
         
-        Message(const Variant& value)
+        Message(const VariantRef& value)
         {
             m_sender = nullptr;
             m_value = value;
         }
         
-        Message(Actor* sender, const Variant& value)
+        Message(Actor* sender, const VariantRef& value)
         {
             m_sender = sender;
             m_value  = value;

@@ -98,11 +98,11 @@ namespace Square
     }
     
     //Object fectory
-    void BaseContext::add_object(ObjectFactory* object_fectory)
+    void BaseContext::add_object(Shared<ObjectFactory> object_fectory)
     {
-        m_object_factories[object_fectory->info().id()] = Unique<ObjectFactory>(object_fectory);
+        m_object_factories[object_fectory->info().id()] = object_fectory;
     }
-    void BaseContext::add_resource(ObjectFactory* object_fectory,const std::vector< std::string >& exts)
+    void BaseContext::add_resource(Shared<ObjectFactory> object_fectory,const std::vector< std::string >& exts)
     {
         add_object(object_fectory);
         m_resources_info[object_fectory->info().id()] = exts;
@@ -237,19 +237,19 @@ namespace Square
 
     
     //Add an attrbute
-    void BaseContext::add_attributes(const std::string& name, Attribute&& attribute)
+    void BaseContext::add_attribute(const std::string& name, Attribute&& attribute)
     {
         m_attributes[ObjectInfo::compute_id(name)].push_back(std::forward<Attribute>(attribute));
     }
-    void BaseContext::add_attributes(uint64 object_id, Attribute&& attribute)
+    void BaseContext::add_attribute(uint64 object_id, Attribute&& attribute)
     {
         m_attributes[object_id].push_back(std::forward<Attribute>(attribute));
     }
-    void BaseContext::add_attributes(const Object& object, Attribute&& attribute)
+    void BaseContext::add_attribute(const Object& object, Attribute&& attribute)
     {
         m_attributes[object.object_id()].push_back(std::forward<Attribute>(attribute));
     }
-    void BaseContext::add_attributes(const ObjectInfo& info, Attribute&& attribute)
+    void BaseContext::add_attribute(const ObjectInfo& info, Attribute&& attribute)
     {
         m_attributes[info.id()].push_back(std::forward<Attribute>(attribute));
     }
@@ -313,6 +313,11 @@ namespace Square
 	{
 		return m_application;
 	}
+	//get allocator
+	Allocator* BaseContext::allocator()
+	{
+		return m_allocator;
+	}
 	//get render
 	Render::Context* BaseContext::render()
 	{
@@ -338,6 +343,11 @@ namespace Square
     {
         return m_application;
     }
+	//get allocator
+	Allocator* BaseContext::allocator() const
+	{
+		return m_allocator;
+	}
     //get render
     const Render::Context* BaseContext::render() const
     {

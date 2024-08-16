@@ -41,7 +41,7 @@ namespace Data
 	);
 
 	//load image
-	Shared<Image> Image::load(const std::string& path)
+	Shared<Image> Image::load(Allocator* allocator,const std::string& path)
 	{
 		//get ext
 		std::string ext = Filesystem::get_extension(path);
@@ -78,10 +78,10 @@ namespace Data
 			//save
 			switch (components)
 			{
-				case 1: o_image = from_r(data, width, height);   break;
-				case 2: o_image = from_rg(data, width, height);   break;
-				case 3: o_image = from_rgb(data, width, height);   break;
-				case 4: o_image = from_rgba(data, width, height);   break;
+				case 1: o_image = from_r(allocator, data, width, height);   break;
+				case 2: o_image = from_rg(allocator, data, width, height);   break;
+				case 3: o_image = from_rgb(allocator, data, width, height);   break;
+				case 4: o_image = from_rgba(allocator, data, width, height);   break;
 				default:  break;
 			}
 			//
@@ -112,11 +112,11 @@ namespace Data
 			//types
 			switch (image_format)
 			{
-			case Render::TF_R8:     o_image = from_r(image_data.data(), image_width, image_height);        break;
-			case Render::TF_RGB565: o_image = from_rgb565(image_data.data(), image_width, image_height);   break;
-			case Render::TF_RGB5A1: o_image = from_rgb5a1(image_data.data(), image_width, image_height);   break;
-			case Render::TF_RGB8:   o_image = from_rgb(image_data.data(), image_width, image_height);      break;
-			case Render::TF_RGBA8:  o_image = from_rgba(image_data.data(), image_width, image_height);     break;
+			case Render::TF_R8:     o_image = from_r(allocator, image_data.data(), image_width, image_height);        break;
+			case Render::TF_RGB565: o_image = from_rgb565(allocator, image_data.data(), image_width, image_height);   break;
+			case Render::TF_RGB5A1: o_image = from_rgb5a1(allocator, image_data.data(), image_width, image_height);   break;
+			case Render::TF_RGB8:   o_image = from_rgb(allocator, image_data.data(), image_width, image_height);      break;
+			case Render::TF_RGBA8:  o_image = from_rgba(allocator, image_data.data(), image_width, image_height);     break;
 			default: break;
 			}
 			return o_image;

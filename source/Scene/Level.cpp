@@ -28,14 +28,14 @@ namespace Scene
 		//factory
 		ctx.add_object<Level>();
 		//Attributes
-		ctx.add_attributes<Level>(attribute_field("name", std::string(), &Level::m_name));
+		ctx.add_attribute_field<Level, std::string>("name", std::string(), &Level::m_name);
 	}
 
 	//constructor
-	Level::Level(Context& context) : Object(context)
+	Level::Level(Context& context) : Object(context), SharedObject_t(context.allocator())
 	{
 	}
-	Level::Level(Context& context, const std::string& name) : Object(context), m_name(name)
+	Level::Level(Context& context, const std::string& name) : Object(context), SharedObject_t(context.allocator()), m_name(name)
 	{
 	}
 
@@ -49,7 +49,7 @@ namespace Scene
 		{
 			uint64 size = m_actors.size();
 			archivie % size;
-			for (auto actor : m_actors)
+			for (auto& actor : m_actors)
 			{
 				actor->serialize(archivie);
 			}
@@ -217,7 +217,7 @@ namespace Scene
 	}
 
 	//message to actors
-	void Level::send_message(const Variant& variant, bool brodcast)
+	void Level::send_message(const VariantRef& variant, bool brodcast)
 	{
 		//create message
 		Message msg(nullptr, variant);

@@ -56,8 +56,8 @@ namespace Resource
 	};
 
     //constructor
-    Effect::Effect(Context& context): Object(context), ResourceObject(context) {}
-    Effect::Effect(Context& context, const std::string& path): Object(context), ResourceObject(context){ load(path); }
+    Effect::Effect(Context& context): Object(context), ResourceObject(context), Effect::SharedObject<Effect>(context.allocator()) {}
+    Effect::Effect(Context& context, const std::string& path): Object(context), ResourceObject(context), Effect::SharedObject<Effect>(context.allocator())  { load(path); }
     
     //load effect
     bool Effect::load(const std::string& path)

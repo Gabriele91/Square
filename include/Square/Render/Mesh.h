@@ -52,29 +52,29 @@ namespace Render
 		Mesh(Square::Context& context);
 		
 		//build
-		void build(const Vertex2DList& vertexs);
-		void build(const Vertex3DList& vertexs);
-		void build(const Vertex2DUVList& vertexs);
-		void build(const Vertex3DUVList& vertexs);
-		void build(const Vertex3DNTBUVList& vertexs);
+		bool build(const Vertex2DList& vertexs, bool cpu_access = false);
+		bool build(const Vertex3DList& vertexs, bool cpu_access = false);
+		bool build(const Vertex2DUVList& vertexs, bool cpu_access = false);
+		bool build(const Vertex3DUVList& vertexs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVList& vertexs, bool cpu_access = false);
 
-		void build(const Vertex2DList& vertexs, const SubMeshList& submeshs);
-		void build(const Vertex3DList& vertexs, const SubMeshList& submeshs);
-		void build(const Vertex2DUVList& vertexs, const SubMeshList& submeshs);
-		void build(const Vertex3DUVList& vertexs, const SubMeshList& submeshs);
-		void build(const Vertex3DNTBUVList& vertexs, const SubMeshList& submeshs);
+		bool build(const Vertex2DList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex2DUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 
-		void build(const Vertex2DList& vertexs, const IndexList& indexs);
-		void build(const Vertex3DList& vertexs, const IndexList& indexs);
-		void build(const Vertex2DUVList& vertexs, const IndexList& indexs);
-		void build(const Vertex3DUVList& vertexs, const IndexList& indexs);
-		void build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs);
+		bool build(const Vertex2DList& vertexs, const IndexList& indexs, bool cpu_access = false);
+		bool build(const Vertex3DList& vertexs, const IndexList& indexs, bool cpu_access = false);
+		bool build(const Vertex2DUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
+		bool build(const Vertex3DUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
 
-		void build(const Vertex2DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs);
-		void build(const Vertex3DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs);
-		void build(const Vertex2DUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs);
-		void build(const Vertex3DUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs);
-		void build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs);
+		bool build(const Vertex2DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex2DUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 
 		//info
 		Shared<Render::InputLayout> layout() const;
@@ -91,18 +91,18 @@ namespace Render
 		//build help
 		bool build_vertex_layout(Layout::InputLayoutId type);
 		//build help
-		bool build_vertex_buffer(unsigned char* data, size_t stride, size_t size);
+		bool build_vertex_buffer(unsigned char* data, size_t stride, size_t size, bool cpu_access);
 		//build help
-		bool build_index_buffer(unsigned int* data, size_t size);
+		bool build_index_buffer(unsigned int* data, size_t size, bool cpu_access);
 		//template help
 		template< typename T >
-		bool build_vertex_buffer(const std::vector<T>& vertexs)
+		bool build_vertex_buffer(const std::vector<T>& vertexs, bool cpu_access)
 		{
-			return build_vertex_buffer((unsigned char*)vertexs.data(), sizeof(T), vertexs.size());
+			return build_vertex_buffer((unsigned char*)vertexs.data(), sizeof(T), vertexs.size(), cpu_access);
 		}
-		bool build_index_buffer(const std::vector<unsigned int>& indexs)
+		bool build_index_buffer(const std::vector<unsigned int>& indexs, bool cpu_access)
 		{
-			return build_index_buffer((unsigned int*)indexs.data(), indexs.size());
+			return build_index_buffer((unsigned int*)indexs.data(), indexs.size(), cpu_access);
 		}
 		//gpu
 		Shared<Render::InputLayout>	 m_layout;

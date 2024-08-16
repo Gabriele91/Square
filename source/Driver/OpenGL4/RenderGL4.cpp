@@ -1283,7 +1283,7 @@ namespace Render
 	{
 		if (cb)
 		{
-			assert(s_bind_context.m_const_buffer == cb);
+			square_assert(s_bind_context.m_const_buffer == cb);
 			glBindBuffer(GL_UNIFORM_BUFFER, 0);
 			s_bind_context.m_const_buffer = nullptr;
 		}
@@ -1293,7 +1293,7 @@ namespace Render
 	{
         if(vbo)
         {
-            assert(s_bind_context.m_vertex_buffer == vbo);
+            square_assert(s_bind_context.m_vertex_buffer == vbo);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             s_bind_context.m_vertex_buffer = nullptr;
         }
@@ -1303,7 +1303,7 @@ namespace Render
     {
         if(ibo)
         {
-            assert(s_bind_context.m_index_buffer == ibo);
+            square_assert(s_bind_context.m_index_buffer == ibo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
             s_bind_context.m_index_buffer = nullptr;
         }
@@ -1337,11 +1337,66 @@ namespace Render
 		}
 	}
 
+	std::vector<unsigned char> ContextGL4::copy_buffer_CB(const ConstBuffer* cb)
+	{
+		GLuint sb;
+		glGenBuffers(1, &sb);
+		glBindBuffer(GL_COPY_READ_BUFFER, (GLuint)*cb);
+		glBindBuffer(GL_COPY_WRITE_BUFFER, sb);
+		glBufferData(GL_COPY_WRITE_BUFFER, cb->get_size(), nullptr, GL_STATIC_READ);
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, cb->get_size());
+
+		std::vector<unsigned char> result(cb->get_size());
+		glGetBufferSubData(GL_COPY_WRITE_BUFFER, 0, cb->get_size(), result.data());
+
+		glDeleteBuffers(1, &sb);
+		return result;
+	}
+
+	std::vector<unsigned char> ContextGL4::copy_buffer_VBO(const VertexBuffer* vbo)
+	{
+		GLuint sb;
+		glGenBuffers(1, &sb);
+		glBindBuffer(GL_COPY_READ_BUFFER, (GLuint)*vbo);
+		glBindBuffer(GL_COPY_WRITE_BUFFER, sb);
+		glBufferData(GL_COPY_WRITE_BUFFER, vbo->get_size(), nullptr, GL_STATIC_READ);
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, vbo->get_size());
+
+		std::vector<unsigned char> result(vbo->get_size());
+		glGetBufferSubData(GL_COPY_WRITE_BUFFER, 0, vbo->get_size(), result.data());
+
+		glDeleteBuffers(1, &sb);
+		return result;
+	}
+	
+	std::vector<unsigned char> ContextGL4::copy_buffer_IBO(const IndexBuffer* ibo)
+	{
+		GLuint sb;
+		glGenBuffers(1, &sb);
+		glBindBuffer(GL_COPY_READ_BUFFER, (GLuint)*ibo);
+		glBindBuffer(GL_COPY_WRITE_BUFFER, sb);
+		glBufferData(GL_COPY_WRITE_BUFFER, ibo->get_size(), nullptr, GL_STATIC_READ);
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, ibo->get_size());
+
+		std::vector<unsigned char> result(ibo->get_size());
+		glGetBufferSubData(GL_COPY_WRITE_BUFFER, 0, ibo->get_size(), result.data());
+
+		glDeleteBuffers(1, &sb);
+		return result;
+	}
+
 	unsigned char* ContextGL4::map_CB(ConstBuffer* cb, size_t start, size_t n, MappingType type)
 	{
 		bind_CB(cb);
 		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 		return (unsigned char*)glMapBufferRange(GL_UNIFORM_BUFFER, start, n, get_mapping_type_map_buff_range(type));
+	}
+
+	unsigned char* ContextGL4::map_CB(ConstBuffer* cb, MappingType type)
+	{
+		bind_CB(cb);
+		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+		return (unsigned char*)glMapBuffer(GL_UNIFORM_BUFFER, get_mapping_type_map_buff_range(type));
 	}
 
 	void ContextGL4::unmap_CB(ConstBuffer* cb)
@@ -1357,6 +1412,13 @@ namespace Render
 		return (unsigned char*)glMapBufferRange(GL_ARRAY_BUFFER, start, n, get_mapping_type_map_buff_range(type));
 	}
 
+	unsigned char* ContextGL4::map_VBO(VertexBuffer* vbo, MappingType type)
+	{
+		bind_VBO(vbo);
+		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+		return (unsigned char*)glMapBuffer(GL_ARRAY_BUFFER, get_mapping_type_map_buff_range(type));
+	}
+
 	void ContextGL4::unmap_VBO(VertexBuffer* vbo)
 	{
 		glUnmapBuffer(GL_ARRAY_BUFFER);
@@ -1368,6 +1430,13 @@ namespace Render
 		bind_IBO(ibo);
 		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 		return (unsigned int*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, start * sizeof(unsigned int), n * sizeof(unsigned int), get_mapping_type_map_buff_range(type));
+	}
+
+	unsigned int* ContextGL4::map_IBO(IndexBuffer* ibo, MappingType type)
+	{
+		bind_IBO(ibo);
+		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+		return (unsigned int*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, get_mapping_type_map_buff_range(type));
 	}
 
 	void ContextGL4::unmap_IBO(IndexBuffer* ibo)
@@ -1401,7 +1470,7 @@ namespace Render
 	{
 		if (tbo)
 		{
-			assert(s_bind_context.m_texture_buffer == tbo);
+			square_assert(s_bind_context.m_texture_buffer == tbo);
 			//unmap
 			glUnmapBuffer(GL_TEXTURE_BUFFER);
 			//unbind
@@ -1722,8 +1791,8 @@ namespace Render
         if(layout)
         {
             //test
-			assert(s_bind_context.m_input_layout == layout);
-			assert(s_bind_context.m_shader);
+			square_assert(s_bind_context.m_input_layout == layout);
+			square_assert(s_bind_context.m_shader);
 			//get 
 			InputLayout::GLLayout* gllayout = layout->get(s_bind_context.m_shader);
             //unbind
@@ -2238,7 +2307,7 @@ namespace Render
 				GLint uid = glGetUniformLocation(m_shader_id, uname.c_str());
 				if (uid < 0) return nullptr;
 				//add and return
-				return &add_uniform(uname, MakeUnique< UniformGL4 >(&m_context, this, uid));
+				return &add_uniform(uname, MakeUnique< UniformGL4 >(m_context.allocator(), &m_context, this, uid));
 			}
 			//get offset
 			GLint  offset[1] = { 0 };
@@ -2246,7 +2315,7 @@ namespace Render
 			//build
 			UniformGLGUBO* uglobal = new UniformGLGUBO(&m_context, this, m_global_buffer_cpu.data(), offset[0]);
 			//add and return
-			return &add_uniform(uname, std::move(Unique<Uniform>(uglobal)));
+			return &add_uniform(uname, std::move(Unique< Uniform >(uglobal, DefaultDelete(m_context.allocator()))));
 		}
 		else
 		{
@@ -2258,7 +2327,7 @@ namespace Render
 			GLint uid = glGetUniformLocation(m_shader_id, uname.c_str());
 			if (uid < 0) return nullptr;
 			//add and return
-			return &add_uniform(uname, MakeUnique< UniformGL4 >(&m_context, this, uid));
+			return &add_uniform(uname, MakeUnique< UniformGL4 >(m_context.allocator(), &m_context, this, uid));
 		}
 	}
 
@@ -2468,7 +2537,7 @@ namespace Render
 	{
 		if (shader)
 		{
-			assert(s_bind_context.m_shader == shader);
+			square_assert(s_bind_context.m_shader == shader);
 			//unbind input layout
 			if (s_bind_context.m_input_layout)
 			{
@@ -2611,7 +2680,7 @@ namespace Render
 	{
         if(r_target)
         {
-            assert(s_bind_context.m_render_target == r_target);
+            square_assert(s_bind_context.m_render_target == r_target);
             r_target->disable_FBO();
             s_bind_context.m_render_target = nullptr;
         }
@@ -2638,7 +2707,7 @@ namespace Render
 		case RT_STENCIL:	  return GL_STENCIL_BUFFER_BIT;
 		case RT_DEPTH_STENCIL:
 		default: 
-			assert(0); 
+			square_assert(0); 
 			return GL_NONE;  
 		break;
 		}

@@ -116,7 +116,7 @@ namespace Square
 		//Create
 		virtual Shared<Object> create()
 		{
-			return StaticPointerCast<Object>(std::make_shared<T>(m_context));
+			return StaticPointerCast<Object>(MakeShared<T>(m_context));
 		}
 
 		const ObjectInfo& info()

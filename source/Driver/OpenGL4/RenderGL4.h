@@ -483,6 +483,8 @@ namespace Render
 	{
 	public:
 
+		ContextGL4(Allocator* allocator) : Context(allocator) {}
+
 		virtual RenderDriver get_render_driver() override;
 		virtual RenderDriverInfo get_render_driver_info() override;
 		virtual void print_info() override;
@@ -538,13 +540,20 @@ namespace Render
 		virtual void unbind_VBO(VertexBuffer*) override;
 		virtual void unbind_IBO(IndexBuffer*) override;
 
+		virtual std::vector<unsigned char> copy_buffer_CB(const ConstBuffer*) override;
+		virtual std::vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) override;
+		virtual std::vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) override;
+
 		virtual unsigned char* map_CB(ConstBuffer*, size_t start, size_t n, MappingType type) override;
+		virtual unsigned char* map_CB(ConstBuffer*, MappingType type) override;
 		virtual void unmap_CB(ConstBuffer*) override;
 
 		virtual unsigned char* map_VBO(VertexBuffer*, size_t start, size_t n, MappingType type) override;
+		virtual unsigned char* map_VBO(VertexBuffer*, MappingType type) override;
 		virtual void unmap_VBO(VertexBuffer*) override;
 
-		virtual unsigned int*  map_IBO(IndexBuffer*, size_t start, size_t n, MappingType type) override;
+		virtual unsigned int* map_IBO(IndexBuffer*, size_t start, size_t n, MappingType type) override;
+		virtual unsigned int* map_IBO(IndexBuffer*, MappingType type) override;
 		virtual void unmap_IBO(IndexBuffer*) override;
 
 		virtual unsigned char* map_TBO(Texture*, MappingType type) override;

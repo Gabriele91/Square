@@ -321,6 +321,12 @@
     <ClInclude Include="..\include\Square\Data\ParserStaticMesh.h">
       <Filter>include\Square\Data</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Core\Allocator.h">
+      <Filter>include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Core\ShellParser.h">
+      <Filter>include\Square\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -517,6 +523,18 @@
     </ClCompile>
     <ClCompile Include="..\source\Data\ParserStaticMesh.cpp">
       <Filter>source\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Core\Allocator.cpp">
+      <Filter>source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Core\Resource.cpp">
+      <Filter>source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Core\ShellParser.cpp">
+      <Filter>source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Core\StringUtilities.cpp">
+      <Filter>source\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

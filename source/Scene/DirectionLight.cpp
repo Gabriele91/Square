@@ -28,28 +28,29 @@ namespace Scene
         //factory
         ctx.add_object<DirectionLight>();
         //Attributes
-		ctx.add_attributes<DirectionLight>(attribute_function<DirectionLight, bool>
+		ctx.add_attribute_function<DirectionLight, bool>
 		("visible"
 		, bool(0)
 		, [](const DirectionLight* plight) -> bool       { return plight->visible(); }
-		, [](DirectionLight* plight, const bool& visible){ plight->visible(visible); }));
+		, [](DirectionLight* plight, const bool& visible){ plight->visible(visible); });
 
-		ctx.add_attributes<DirectionLight>(attribute_function<DirectionLight, Vec3>
+		ctx.add_attribute_function<DirectionLight, Vec3>
 		("diffuse"
 		, Vec3(1.0)
 		, [](const DirectionLight* plight) -> Vec3       { return plight->diffuse(); }
-		, [](DirectionLight* plight, const Vec3& diffuse){ plight->diffuse(diffuse); }));
+		, [](DirectionLight* plight, const Vec3& diffuse){ plight->diffuse(diffuse); });
 
-		ctx.add_attributes<DirectionLight>(attribute_function<DirectionLight, Vec3>
+		ctx.add_attribute_function<DirectionLight, Vec3>
 		("specular"
 		, Vec3(1.0)
 		, [](const DirectionLight* plight) -> Vec3        { return plight->specular(); }
-		, [](DirectionLight* plight, const Vec3& specular){ plight->specular(specular); }));
+		, [](DirectionLight* plight, const Vec3& specular){ plight->specular(specular); });
     }
 
 	//light
 	DirectionLight::DirectionLight(Context& context)
 	: Component(context)
+	, SharedObject<DirectionLight>(context.allocator())
 	, m_buffer(context)
 	{
 		m_direction = Vec3(0, 1.0, 0.0);
