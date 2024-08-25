@@ -85,6 +85,9 @@
     <Filter Include="Source\Driver\Cocoa">
       <UniqueIdentifier>{7cd310e0-fb91-4fe7-b3e6-490930b0aade}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource\common\material">
+      <UniqueIdentifier>{d2943880-7911-42e3-bfe7-60ada0eb4fb5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Square\Math\Linear.h">
@@ -327,6 +330,12 @@
     <ClInclude Include="..\include\Square\Core\ShellParser.h">
       <Filter>include\Square\Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Scene\StaticMesh.h">
+      <Filter>include\Square\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Resource\Actor.h">
+      <Filter>Include\Square\Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -536,6 +545,9 @@
     <ClCompile Include="..\source\Core\StringUtilities.cpp">
       <Filter>source\Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\Scene\StaticMesh.cpp">
+      <Filter>source\Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\source\Driver\Cocoa\Input_private.mm">
@@ -615,6 +627,9 @@
     </None>
     <None Include="..\common\effect\Solid.hlsl">
       <Filter>Resource\common\effect</Filter>
+    </None>
+    <None Include="..\common\material\default.mat">
+      <Filter>Resource\common\material</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

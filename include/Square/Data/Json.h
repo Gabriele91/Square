@@ -47,6 +47,13 @@ namespace Data
         bool              boolean() const;
         const JsonArray&  array() const;
         const JsonObject& object() const;
+
+        const JsonString& string(const JsonString& value) const;
+        double            number(double value) const;
+        bool              boolean(bool value) const;
+        const JsonArray&  array(const JsonArray& value) const;
+        const JsonObject& object(const JsonObject& value) const;
+
         Type              type() const;
 		//info		
 		bool is_null() const;
@@ -56,7 +63,8 @@ namespace Data
 		bool is_array() const;
 		bool is_object() const;
 		//init
-		JsonValue( /* null */);
+		JsonValue() noexcept;
+		JsonValue(JsonValue&& v) noexcept;
 		JsonValue(const JsonValue& v);
         JsonValue(const char* value);
 		JsonValue(const std::string& value);
@@ -98,13 +106,16 @@ namespace Data
     public:
         
         //parse
-		Json();
+		Json() = default;
+		Json(Json&& json) = default;
 		Json(const JsonValue& document);
 		Json(const std::string& source);
+		Json(const char* source, std::size_t n);
 
         //parsing
-        bool parser(const std::string& source);
-        
+		bool parser(const std::string& source);
+		bool parser(const char* source, std::size_t n);
+
         //get error
         std::string errors() const;
         
@@ -130,12 +141,21 @@ namespace Data
             
             ErrorLine(size_t line, const std::string& error)
             : m_line(line)
+			, m_character(~size_t(0))
             , m_error(error)
             {
             }
             
-            size_t m_line{ 0 };
-            std::string m_error;
+            ErrorLine(size_t line, size_t character, const std::string& error)
+            : m_line(line)
+			, m_character(character)
+            , m_error(error)
+            {
+            }
+
+			size_t m_line{ 0 };
+			size_t m_character{ 0 };
+			std::string m_error;
         };
         
         JsonValue                m_document;
@@ -143,9 +163,9 @@ namespace Data
     };
 
 	//string illiterals
-	inline Json operator "" _json(const char* s, std::size_t n)
+	inline Json operator "" _json(const char* source, std::size_t n)
 	{
-		return std::string(s);
+		return { source, n };
 	}
 }
 }

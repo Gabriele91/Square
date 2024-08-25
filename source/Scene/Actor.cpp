@@ -5,6 +5,7 @@
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Core/Object.h"
+#include "Square/Core/Filesystem.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/Math/Transformation.h"
@@ -13,6 +14,7 @@
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Level.h"
 #include <algorithm>
+#include <fstream>
 
 
 namespace Square
@@ -25,10 +27,12 @@ namespace Scene
 	//Registration in context
 	void Actor::object_registration(Context& ctx)
 	{
+        //factory
+        ctx.add_resource<Actor>({ ".actor", ".gzactor" });
 		//factory
 		ctx.add_object<Actor>();
 		//Attributes
-        ctx.add_attribute_field<Actor, std::string>("name", std::string(), &Actor::m_name);
+        ctx.add_attribute_field<Actor, std::string>("name", std::string(), offsetof(Actor,m_name));
 		ctx.add_attribute_function<Actor, Vec3>
 		("position"
 		, Vec3(0)
@@ -48,8 +52,8 @@ namespace Scene
 		, [](Actor* actor,const Quat& rot){ actor->rotation(rot);     });
 	}
 
-	Actor::Actor(Context& context) : Object(context), SharedObject_t(context.allocator()) {}
-	Actor::Actor(Context& context, const std::string& name) : Object(context), SharedObject_t(context.allocator()), m_name(name) {}
+	Actor::Actor(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) {}
+	Actor::Actor(Context& context, const std::string& name) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_name(name) {}
 
     //serialize
     void Actor::serialize(Data::Archive& archivie)
@@ -335,12 +339,12 @@ namespace Scene
 		//ref to level
 		//..
 		if (current_level)
-			current_level->on_remove_a_actor(this->shared_from_this());
+			current_level->on_remove_a_actor(shared_from_this());
 		//..
 		m_level = level;
 		//..
 		if (new_level)
-			new_level->on_add_a_actor(this->shared_from_this());
+			new_level->on_add_a_actor(shared_from_this());
 		//event
 		dirty();
 		//same for each chils
@@ -496,6 +500,39 @@ namespace Scene
 		gpubuffer->m_rotation  = mat4_cast(rotation(true));
         gpubuffer->m_position  = position(true);
         gpubuffer->m_scale     = scale(true);
+    }
+
+
+    //load actor
+    bool Actor::load(const std::string& path)
+    {
+        using namespace Square;
+        using namespace Square::Data;
+        using namespace Square::Filesystem::Stream;
+        // Is compress?
+        bool is_compress = Filesystem::get_extension(path) == ".gzactor";
+        // cases
+        if (is_compress)
+        {
+            GZIStream in_file_stream(path);
+            if(in_file_stream.good())
+            { 
+                ArchiveBinRead in_archive(Object::context(), in_file_stream);
+                deserialize(in_archive);
+                return true;
+            }
+        }
+        else
+        {
+            std::ifstream in_file_stream(path);
+            if (in_file_stream.good())
+            {
+                ArchiveBinRead in_archive(Object::context(), in_file_stream);
+                deserialize(in_archive);
+                return true;
+            }
+        }
+        return false;
     }
 }
 }

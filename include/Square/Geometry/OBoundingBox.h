@@ -72,11 +72,14 @@ namespace Geometry
 		const Vec3& get_position() const { return m_position; }
 		const Vec3& get_extension() const { return m_extension; }
 
+		// Return if it is a valid OBB
+		bool valid() const;
+
 	private:
 
-		Mat3 m_rotation; // rotation matrix for the transformation
-		Vec3 m_position; // translation component of the transformation
-		Vec3 m_extension;// bounding box extents
+		Mat3 m_rotation { 0 };// rotation matrix for the transformation
+		Vec3 m_position { 0 };// translation component of the transformation
+		Vec3 m_extension{ 0 };// bounding box extents
 
 	};
 }

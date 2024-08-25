@@ -146,5 +146,34 @@ namespace Geometry
 
 		return closest_point;
 	}
+
+	// Test is valid OBB
+	bool OBoundingBox::valid() const
+	{
+		static const auto epsilon = Constants::epsilon<float>() * 100.0f;
+		// Check if rows (or columns) are orthogonal to each other
+		if (!epsilon_equal(dot(m_rotation[0], m_rotation[1]), 0.0f, epsilon) ||
+			!epsilon_equal(dot(m_rotation[0], m_rotation[2]), 0.0f, epsilon) ||
+			!epsilon_equal(dot(m_rotation[1], m_rotation[2]), 0.0f, epsilon)) {
+			return false;
+		}
+
+		// Check if each row (or column) is a unit vector
+		if (!epsilon_equal(length(m_rotation[0]), 1.0f, epsilon) ||
+			!epsilon_equal(length(m_rotation[1]), 1.0f, epsilon) ||
+			!epsilon_equal(length(m_rotation[2]), 1.0f, epsilon)) {
+			return false;
+		}
+
+		// Check if the determinant is close to 1
+		float det = determinant(m_rotation);
+		if (!epsilon_equal(det, 1.0f, epsilon)) {
+			return false;
+		}
+
+		// All conditions passed, so the matrix is a valid rotation matrix
+		return true;
+	}
+
 }
 }

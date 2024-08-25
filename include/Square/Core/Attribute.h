@@ -405,7 +405,26 @@ namespace Square
 			, variant_traits<U>()
 			, default_value
 			, //(char*)&((T*)nullptr->*member) - (char*)nullptr
-			 (size_t)((char*)&(((T*)nullptr)->*member) - (char*)nullptr)
+			  (size_t)((char*)&(((T*)nullptr)->*member) - (char*)nullptr)
+			, type
+		));
+	}	
+	
+	template<typename T, typename U >
+	static Attribute attribute_field
+	(
+		  Allocator* allocator
+		, const std::string& field_name
+		, const U& default_value
+		, size_t member_offset
+		, Attribute::Type type = Attribute::DEFAULT
+	)
+	{
+		return std::move(Attribute(
+			  field_name
+			, variant_traits<U>()
+			, default_value
+			, member_offset
 			, type
 		));
 	}

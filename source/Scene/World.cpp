@@ -29,7 +29,7 @@ namespace Scene
 		//factory
 		ctx.add_object<World>();
 		//Attributes
-		ctx.add_attribute_field<World, std::string>("name", std::string(), &World::m_name);
+		ctx.add_attribute_field<World, std::string>("name", std::string(), offsetof(World,m_name));
 	}
 
 	World::World(Context& context) : Object(context), SharedObject_t(context.allocator())

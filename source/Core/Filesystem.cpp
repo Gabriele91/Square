@@ -233,7 +233,7 @@ namespace Filesystem
         if (!size) std::fclose(file);
         /////////////////////////////////////////////////////////////////////
         out.resize(size);
-        square_assert_or_release(std::fread(&out[0], size, 1, file));
+        square_assert_or_release(std::fread(&out[0], 1, size, file));
         /////////////////////////////////////////////////////////////////////
         std::fclose(file);
         //return

@@ -21,6 +21,7 @@ namespace Parser
 				Render::Mesh::Vertex3DList,
 				Render::Mesh::Vertex2DUVList,
 				Render::Mesh::Vertex3DUVList,
+				Render::Mesh::Vertex3DNUVList,
 				Render::Mesh::Vertex3DNTBUVList
 			> m_vertex;
 			// Index

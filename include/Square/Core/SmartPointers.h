@@ -116,7 +116,7 @@ namespace Square
             return *this;
         }
 
-        ~SharedObject() = default;
+        virtual ~SharedObject() = default;
 
         Allocator* allocator() const { return m_allocator; }
 
@@ -125,6 +125,37 @@ namespace Square
         friend class std::unique_ptr<T, DefaultDelete>;
 
         Allocator* m_allocator;
+    };
+
+    class SQUARE_API BaseInheritableSharedObject : public SharedObject<BaseInheritableSharedObject>
+    {
+    public:
+        BaseInheritableSharedObject(Allocator* allocator) noexcept
+        : SharedObject<BaseInheritableSharedObject>(allocator)
+        {}
+        
+        BaseInheritableSharedObject(const BaseInheritableSharedObject& obj) noexcept
+        : SharedObject<BaseInheritableSharedObject>(obj.allocator())
+        {}
+
+        virtual ~BaseInheritableSharedObject() {}
+    };
+
+    template <class T>
+    class InheritableSharedObject : virtual public BaseInheritableSharedObject
+    {
+    protected:
+        InheritableSharedObject() : BaseInheritableSharedObject(nullptr) { };
+    public:
+        Shared<T> shared_from_this()
+        {
+            return DynamicPointerCast<T>(BaseInheritableSharedObject::shared_from_this());
+        }
+
+        Weak<T> weak_from_this()
+        {
+            return shared_from_this();
+        }
     };
 
     template< class T, class... Args >

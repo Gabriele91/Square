@@ -162,8 +162,11 @@
     <ClInclude Include="..\include\Square\Core\ShellParser.h" />
     <ClInclude Include="..\include\Square\Data\ParserStaticMesh.h" />
     <ClInclude Include="..\include\Square\Render\Mesh.h" />
+    <ClInclude Include="..\include\Square\Resource\Actor.h" />
     <ClInclude Include="..\include\Square\Resource\Mesh.h" />
+    <ClInclude Include="..\include\Square\Scene\StaticMesh.h" />
     <ClInclude Include="..\source\Resource\ShaderPreprocess.h" />
+    <None Include="..\common\material\default.mat" />
     <None Include="..\common\shader\PointShadowLight.hlsl">
       <FileType>Document</FileType>
     </None>
@@ -371,6 +374,7 @@
     <ClCompile Include="..\source\Scene\DirectionLight.cpp" />
     <ClCompile Include="..\source\Scene\Level.cpp" />
     <ClCompile Include="..\source\Scene\SpotLight.cpp" />
+    <ClCompile Include="..\source\Scene\StaticMesh.cpp" />
     <ClCompile Include="..\source\Scene\World.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -42,10 +42,10 @@ namespace Resource
     }
 
 	//Contructor
-	Shader::Shader(Context& context) : Object(context), ResourceObject(context), SharedObject<Shader>(context.allocator())
+	Shader::Shader(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
 	{
 	}
-	Shader::Shader(Context& context, const std::string& path) : Object(context), ResourceObject(context), SharedObject<Shader>(context.allocator())
+	Shader::Shader(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
 	{
 		load(path);
 	}

@@ -14,7 +14,7 @@ namespace Square
 namespace Resource
 {
 	class SQUARE_API Texture : public ResourceObject
-                             , public SharedObject<Texture>
+                             , public InheritableSharedObject<Texture>
 	{
 
 		Render::Texture*      m_ctx_texture{ nullptr };

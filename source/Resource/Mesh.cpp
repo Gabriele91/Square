@@ -28,8 +28,34 @@ namespace Resource
 	}
 	//////////////////////////////////////////////////////////////
 	//constructor
-	Mesh::Mesh(Context& context) : Object(context), ResourceObject(context), Render::Mesh(context), SharedObject<Mesh>(context.allocator()) {}
-	Mesh::Mesh(Context& context, const std::string& path) : Object(context), ResourceObject(context), Render::Mesh(context), SharedObject<Mesh>(context.allocator()) { load(path); }
+	Mesh::Mesh(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_mesh(context) {}
+	Mesh::Mesh(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_mesh(context) { load(path); }
+
+	//info
+	Shared<Render::InputLayout> Mesh::layout() const
+	{
+		return m_mesh.layout();
+	}
+	Shared<Render::VertexBuffer> Mesh::vertex_buffer() const
+	{
+		return m_mesh.vertex_buffer();
+	}
+	Shared<Render::IndexBuffer> Mesh::index_buffer() const
+	{
+		return m_mesh.index_buffer();
+	}
+
+	//get surfaces
+	const Render::Mesh::SubMeshList& Mesh::sub_meshs() const
+	{
+		return m_mesh.sub_meshs();
+	}
+
+	//draw all sub meshs
+	void Mesh::draw(Render::Context& render) const
+	{
+		m_mesh.draw(render);
+	}
 
 	// for type
 	template < typename T >
@@ -93,12 +119,13 @@ namespace Resource
 		//build
 		static_mesh_context.visit(
 			[&](auto arg) { gpu_build_status = false; },
-			vertex_gpu_build<Render::Mesh::Vertex2DList>(*this, static_mesh_context, gpu_build_status),
-			vertex_gpu_build<Render::Mesh::Vertex3DList>(*this, static_mesh_context, gpu_build_status),
-			vertex_gpu_build<Render::Mesh::Vertex2DUVList>(*this, static_mesh_context, gpu_build_status),
-			vertex_gpu_build<Render::Mesh::Vertex3DUVList>(*this, static_mesh_context, gpu_build_status),
-			vertex_gpu_build<Render::Mesh::Vertex3DNTBUVList>(*this, static_mesh_context, gpu_build_status)
-        );
+			vertex_gpu_build<Render::Mesh::Vertex2DList>(m_mesh, static_mesh_context, gpu_build_status),
+			vertex_gpu_build<Render::Mesh::Vertex3DList>(m_mesh, static_mesh_context, gpu_build_status),
+			vertex_gpu_build<Render::Mesh::Vertex2DUVList>(m_mesh, static_mesh_context, gpu_build_status),
+			vertex_gpu_build<Render::Mesh::Vertex3DUVList>(m_mesh, static_mesh_context, gpu_build_status),
+			vertex_gpu_build<Render::Mesh::Vertex3DNUVList>(m_mesh, static_mesh_context, gpu_build_status),
+			vertex_gpu_build<Render::Mesh::Vertex3DNTBUVList>(m_mesh, static_mesh_context, gpu_build_status)
+		);
 		// Return status
 		return gpu_build_status;
 	}

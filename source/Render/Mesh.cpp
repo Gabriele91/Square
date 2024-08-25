@@ -27,7 +27,7 @@ namespace Render
 	{}
 
 	//init
-	Mesh::Mesh(Square::Context& context) : Object(context), SharedObject_t(context.allocator()) {}
+	Mesh::Mesh(Square::Context& context) : Object(context), BaseInheritableSharedObject(context.allocator()) {}
 
 	//build
 	bool Mesh::build(const Mesh::Vertex2DList& vertexs, bool cpu_access)
@@ -54,6 +54,18 @@ namespace Render
 	bool Mesh::build(const Mesh::Vertex3DUVList& vertexs, bool cpu_access)
 	{
 		if (!build_vertex_layout(Layout::LF_POSITION_3D | Layout::LF_UVMAP)) return false;
+		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
+		m_sub_meshs.emplace_back(vertexs.size());
+		return true;
+	}
+	bool Mesh::build(const Mesh::Vertex3DNUVList& vertexs, bool cpu_access)
+	{
+		if (!build_vertex_layout
+		(
+			Layout::LF_POSITION_3D
+			| Layout::LF_NORMAL
+			| Layout::LF_UVMAP
+		)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
 		m_sub_meshs.emplace_back(vertexs.size());
 		return true;
@@ -92,6 +104,12 @@ namespace Render
 		return true;
 	}
 	bool Mesh::build(const Mesh::Vertex3DUVList& vertexs, const Mesh::SubMeshList& submeshs, bool cpu_access)
+	{
+		if (!build(vertexs, cpu_access)) return false;
+		m_sub_meshs = submeshs;
+		return true;
+	}
+	bool Mesh::build(const Mesh::Vertex3DNUVList& vertexs, const Mesh::SubMeshList& submeshs, bool cpu_access)
 	{
 		if (!build(vertexs, cpu_access)) return false;
 		m_sub_meshs = submeshs;
@@ -150,6 +168,19 @@ namespace Render
 		m_sub_meshs.emplace_back(indexs.size());
 		return true;
 	}
+	bool Mesh::build(const Vertex3DNUVList& vertexs, const IndexList& indexs, bool cpu_access)
+	{
+		if (!build_vertex_layout
+		(
+			Layout::LF_POSITION_3D
+			| Layout::LF_NORMAL
+			| Layout::LF_UVMAP
+		)) return false;
+		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
+		if (!build_index_buffer(indexs, cpu_access)) return false;
+		m_sub_meshs.emplace_back(indexs.size());
+		return true;
+	}
 	bool Mesh::build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, bool cpu_access)
 	{
 		if (!build_vertex_layout
@@ -185,6 +216,12 @@ namespace Render
 		return true;
 	}
 	bool Mesh::build(const Vertex3DUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access)
+	{
+		if (!build(vertexs, indexs, cpu_access)) return false;
+		m_sub_meshs = submeshs;
+		return true;
+	}
+	bool Mesh::build(const Vertex3DNUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access)
 	{
 		if (!build(vertexs, indexs, cpu_access)) return false;
 		m_sub_meshs = submeshs;

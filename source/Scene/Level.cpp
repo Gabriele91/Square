@@ -28,7 +28,7 @@ namespace Scene
 		//factory
 		ctx.add_object<Level>();
 		//Attributes
-		ctx.add_attribute_field<Level, std::string>("name", std::string(), &Level::m_name);
+		ctx.add_attribute_field<Level, std::string>("name", std::string(), offsetof(Level,m_name));
 	}
 
 	//constructor

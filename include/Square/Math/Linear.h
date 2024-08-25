@@ -24,6 +24,10 @@
 #include <glm/gtc/type_ptr.hpp> 
 #include <glm/gtc/matrix_access.hpp> 
 
+#pragma warning( disable : 4244 ) 
+#include <glm/gtx/matrix_decompose.hpp>
+#pragma warning( default : 4244 ) 
+
 #include <glm/gtx/matrix_operation.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
@@ -87,6 +91,11 @@ namespace Square
         {
             static T I(1.0);
             return I;
+        }
+        template <class T>
+        inline T epsilon()
+        {
+           return glm::epsilon<T>();
         }
     }
     
@@ -174,7 +183,13 @@ namespace Square
 	{
 		return glm::mix(a, b, f);
 	}
-    
+
+    template < class X, class Y, typename E >
+    inline bool epsilon_equal(const X& x, const Y& y, const E& epsilon)
+    {
+        return glm::epsilonEqual(x,y,epsilon);
+    }
+
     template < class T >
     inline T traspose(const T& a)
     {
@@ -276,4 +291,28 @@ namespace Square
 	{
 		return glm::to_string(q_v);
 	}
+
+    inline void decompose_mat4(const Mat4& mat, Vec3& translation, Quat& rotation, Vec3& scale)
+    {
+        Vec3 skew;
+        Vec4 perspective;
+
+        // Decomposing the matrix using glm's built-in function
+        glm::decompose(mat, scale, rotation, translation, skew, perspective);
+
+        // glm::decompose gives you the rotation as a matrix, so we convert it to a quaternion
+        rotation = Square::conjugate(rotation); // Fix for the quaternion's handedness
+    }
+
+    inline void decompose_dmat4(const DMat4& mat, DVec3& translation, DQuat& rotation, DVec3& scale)
+    {
+        DVec3 skew;
+        DVec4 perspective;
+
+        // Decomposing the matrix using glm's built-in function
+        glm::decompose<double, glm::packed_highp>(mat, scale, rotation, translation, skew, perspective);
+
+        // glm::decompose gives you the rotation as a matrix, so we convert it to a quaternion
+        rotation = Square::conjugate(rotation); // Fix for the quaternion's handedness
+    }
 }

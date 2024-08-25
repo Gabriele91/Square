@@ -244,7 +244,7 @@ namespace Scene
 			if (shadow())
 			{
 				auto size = m_buffer.size();
-				float aspect = size.x / size.y;
+				float aspect = float(size.x) / size.y;
 			}
 			//update projection
 			m_projection = perspective(Constants::pi<float>() / 2.0f, aspect, 0.1f, m_radius);

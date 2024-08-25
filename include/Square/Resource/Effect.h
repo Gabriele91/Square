@@ -18,7 +18,7 @@ namespace Square
 namespace Resource
 {
     class SQUARE_API Effect : public ResourceObject
-                            , public SharedObject<Effect>
+                            , public InheritableSharedObject<Effect>
 						    , public Render::Effect
     {
         
