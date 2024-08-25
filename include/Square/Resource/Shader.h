@@ -12,7 +12,7 @@ namespace Square
 namespace Resource
 {
 	class SQUARE_API Shader : public ResourceObject
-                            , public SharedObject<Shader>
+                            , public InheritableSharedObject<Shader>
 	{
 
 	public:

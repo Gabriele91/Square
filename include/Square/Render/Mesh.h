@@ -31,8 +31,8 @@ namespace Render
 		SubMesh(Render::DrawType type, unsigned int count, unsigned int offset);
 	};
 
-	class SQUARE_API Mesh : public virtual Object,
-						    public SharedObject<Mesh>
+	class SQUARE_API Mesh : public Object,
+						    public InheritableSharedObject<Mesh>
 	{		
 
 	public:
@@ -41,6 +41,7 @@ namespace Render
 		using Vertex3DList      = std::vector< Layout::Position3D >;
 		using Vertex2DUVList    = std::vector< Layout::Position2DUV >;
 		using Vertex3DUVList    = std::vector< Layout::Position3DUV >;
+		using Vertex3DNUVList   = std::vector< Layout::Position3DNormalUV >;
 		using Vertex3DNTBUVList = std::vector< Layout::Position3DNormalTangetBinomialUV >;
 		using IndexList   = std::vector<unsigned int>;
 		using SubMeshList = std::vector< SubMesh >;
@@ -56,24 +57,28 @@ namespace Render
 		bool build(const Vertex3DList& vertexs, bool cpu_access = false);
 		bool build(const Vertex2DUVList& vertexs, bool cpu_access = false);
 		bool build(const Vertex3DUVList& vertexs, bool cpu_access = false);
+		bool build(const Vertex3DNUVList& vertexs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, bool cpu_access = false);
 
 		bool build(const Vertex2DList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex2DUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DNUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 
 		bool build(const Vertex2DList& vertexs, const IndexList& indexs, bool cpu_access = false);
 		bool build(const Vertex3DList& vertexs, const IndexList& indexs, bool cpu_access = false);
 		bool build(const Vertex2DUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
 		bool build(const Vertex3DUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
+		bool build(const Vertex3DNUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
 
 		bool build(const Vertex2DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex2DUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DNUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 
 		//info

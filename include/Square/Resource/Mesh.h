@@ -18,10 +18,11 @@ namespace Square
     namespace Resource
     {
         class SQUARE_API Mesh : public ResourceObject
-                              , public Render::Mesh
-                              , public SharedObject<Mesh>
-                              , public Uncopyable
+                              , public InheritableSharedObject<Mesh>
         {
+        protected:
+            
+            Render::Mesh m_mesh;
 
         public:
 
@@ -35,10 +36,20 @@ namespace Square
             Mesh(Context& context);
             Mesh(Context& context, const std::string& path);
 
-            //load shader
+            //info
+            Shared<Render::InputLayout> layout() const;
+            Shared<Render::VertexBuffer> vertex_buffer() const;
+            Shared<Render::IndexBuffer> index_buffer() const;
+
+            //get surfaces
+            const Render::Mesh::SubMeshList& sub_meshs() const;
+
+            //draw all sub meshs
+            void draw(Render::Context& render) const;
+
+            //load mesh
             bool load(const std::string& path) override;
 
         };
-
     }
 }

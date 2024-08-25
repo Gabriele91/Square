@@ -11,6 +11,7 @@
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/Context.h"
+#include "Square/Core/Resource.h"
 #include "Square/Scene/Component.h"
 #include "Square/Data/AttributeSerialize.h"
 #include "Square/Data/Json.h"
@@ -28,15 +29,18 @@ namespace Scene
 	using ActorList = std::vector< Shared<Actor> >;
 	using LevelList = std::vector< Shared<Level> >;
 	//..................
-    class SQUARE_API Actor : public Object
-                           , public SharedObject<Actor>
-                           , public Uncopyable
+    class SQUARE_API Actor : public ResourceObject
+                           , public InheritableSharedObject<Actor>
 						   , public Render::Transform
     {
     public:
+
+        using InheritableSharedObject<Actor>::shared_from_this;
+        using InheritableSharedObject<Actor>::weak_from_this;
         
 		//Init object
 		SQUARE_OBJECT(Actor)
+
 		//Registration in context
 		static void object_registration(Context& ctx);
 
@@ -112,17 +116,19 @@ namespace Scene
 
 		//get level
 		Weak<Level> level() const;
+        void   level(Weak<Level> level);
 		bool   is_root_of_level() const;
 		bool   remove_from_level();
         
         //set
         void set(Render::UniformBufferTransform* gpubuffer) const override;
 
+        //load actor
+        bool load(const std::string& path) override;
+
     protected:
 		//friend class
 		friend class Level;
-		//set a level
-		void level(Weak<Level> level);
 		//level events
 		Weak<Level> m_level;
         //fake const

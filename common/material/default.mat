@@ -1,0 +1,9 @@
+effect "Solid"
+{
+    mask float(-1.0)
+	color Vec4(1.0,1.0,1.0,1.0)
+    diffuse_map  texture("white")
+    normal_map   texture("normal_up")
+    specular_map texture("black")
+    occlusion_map texture("white")
+}

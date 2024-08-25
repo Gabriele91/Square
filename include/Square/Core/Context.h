@@ -78,6 +78,11 @@ namespace Square
 		void add_resource_path(const std::string& path, const std::regex& filter, bool recursive = true);
 		bool add_resource_file(const std::string& filepath);
 		bool add_resource_file(const std::string& name, const std::string& path);
+		template< typename T >
+		bool add_resource_map(const std::unordered_map<std::string, std::string>& name_files)
+		{
+			return add_resource_map(T::static_object_id(), name_files);
+		}
 
 		//Add an attrbute
         void add_attribute(const std::string& name, Attribute&& attribute);
@@ -159,6 +164,8 @@ namespace Square
 		friend class Application;
 		//delete all
 		void clear();
+		//help function
+		bool add_resource_map(uint64 object_factory_id, const std::unordered_map<std::string, std::string>& name_files);
 	};
 
 	// Specialization

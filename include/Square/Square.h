@@ -70,6 +70,7 @@
 #include "Square/Resource/Effect.h"
 #include "Square/Resource/Material.h"
 #include "Square/Resource/Mesh.h"
+#include "Square/Resource/Actor.h"
 /* --- Scene --- */
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"
@@ -78,6 +79,7 @@
 #include "Square/Scene/DirectionLight.h"
 #include "Square/Scene/PointLight.h"
 #include "Square/Scene/SpotLight.h"
+#include "Square/Scene/StaticMesh.h"
 #include "Square/Scene/World.h"
 
 

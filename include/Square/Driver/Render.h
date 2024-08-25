@@ -119,24 +119,28 @@ namespace Render
 	};   
 	////////////////////////////////////////////////
 	// Types
-	enum CullfaceType
+	enum CullfaceType : unsigned char
 	{
 		CF_DISABLE = 0,
 		CF_FRONT,
 		CF_BACK,
-		CF_FRONT_AND_BACK
+		CF_FRONT_AND_BACK,
+
+		CF_INVALID = 0xFF
 	};
 
-	enum DrawType
+	enum DrawType : unsigned char
 	{
 		DRAW_POINTS,
 		DRAW_LINES,
 		DRAW_LINE_LOOP,
 		DRAW_TRIANGLES,
-		DRAW_TRIANGLE_STRIP
+		DRAW_TRIANGLE_STRIP,
+
+		DRAW_INVALID = 0xFF
 	};
 
-	enum BlendType
+	enum BlendType : unsigned char
 	{
 		BLEND_ZERO,
 		BLEND_ONE,
@@ -151,10 +155,12 @@ namespace Render
 
 		BLEND_SRC_COLOR,
 		BLEND_SRC_ALPHA,
-		BLEND_SRC_ALPHA_SATURATE
+		BLEND_SRC_ALPHA_SATURATE,
+
+		BLEND_INVALID = 0xFF
 	};
 	
-	enum DepthFuncType
+	enum DepthFuncType : unsigned char
 	{
 		DT_NEVER,
 		DT_LESS,          // <
@@ -163,32 +169,40 @@ namespace Render
 		DT_LESS_EQUAL,    // <=
 		DT_GREATER_EQUAL, // >=
 		DT_NOT_EQUAL,     // !=
-		DT_ALWAYS
+		DT_ALWAYS,
+
+		DT_INVALID = 0xFF
 	};
 
-	enum MappingType
+	enum MappingType : unsigned char
 	{
 		MAP_WRITE,
 		MAP_READ,
-		MAP_WRITE_AND_READ
+		MAP_WRITE_AND_READ,
+
+		MAP_INVALID = 0xFF
 	};
 	
-	enum ClearType
+	enum ClearType : unsigned char
 	{
 		CLEAR_COLOR = 0x01,
 		CLEAR_DEPTH = 0x02,
-		CLEAR_COLOR_DEPTH = 0x03
+		CLEAR_COLOR_DEPTH = 0x03,
+
+		CLEAR_INVALID = 0xFF
 	};
 
-	enum DepthMode
+	enum DepthMode : unsigned char
 	{
 		DM_DISABLE,
 		DM_ENABLE_AND_WRITE,
-		DM_ENABLE_ONLY_READ
+		DM_ENABLE_ONLY_READ,
+
+		DM_INVALID = 0xFF
 	};
 	////////////////////////////////////////////////
 	// TEXTURE
-	enum TextureFormat
+	enum TextureFormat : unsigned short
 	{
 		////////////////////
 		//RGBA
@@ -249,35 +263,43 @@ namespace Render
 		TF_DEPTH_COMPONENT16,
 		TF_DEPTH_COMPONENT24,
 		TF_DEPTH_COMPONENT32,
+
+		TF_INVALID = 0xFFFF
 	};
 
-	enum TextureType
+	enum TextureType : unsigned char
 	{
 		TT_R,
 		TT_RG,
 		TT_RGB,
 		TT_RGBA,
 		TT_DEPTH,
-		TT_DEPTH_STENCIL
+		TT_DEPTH_STENCIL,
+		
+		TT_INVALID = 0xFF
 	};
 
-	enum TextureTypeFormat
+	enum TextureTypeFormat : unsigned char
 	{
 		TTF_FLOAT,
 		TTF_UNSIGNED_BYTE,
 		TTF_UNSIGNED_SHORT,
 		TTF_UNSIGNED_INT,
         TTF_UNSIGNED_INT_24_8,
-        TTF_FLOAT_32_UNSIGNED_INT_24_8
+        TTF_FLOAT_32_UNSIGNED_INT_24_8,
+
+		TTF_INVALID = 0xFF
 	};
 
-	enum TextureMagFilterType
+	enum TextureMagFilterType : unsigned char
 	{
 		TMAG_NEAREST,
-		TMAG_LINEAR
+		TMAG_LINEAR,
+
+		TMAG_INVALID = 0xFF
 	};
 
-	enum TextureMinFilterType
+	enum TextureMinFilterType : unsigned char
 	{
 		TMIN_NEAREST,
 		TMIN_NEAREST_MIPMAP_NEAREST,
@@ -285,12 +307,16 @@ namespace Render
 		TMIN_LINEAR,
 		TMIN_LINEAR_MIPMAP_NEAREST,
 		TMIN_LINEAR_MIPMAP_LINEAR,
+		
+		TMIN_INVALID = 0xFF
 	};
 
-	enum TextureEdgeType
+	enum TextureEdgeType : unsigned char
 	{
 		TEDGE_CLAMP,
-		TEDGE_REPEAT
+		TEDGE_REPEAT,
+
+		TEDGE_INVALID = 0xFF
 	};
 	
 	struct TextureRawDataInformation
@@ -344,12 +370,14 @@ namespace Render
 	};
 	////////////////////////////////////////////////
 	// TARGET
-	enum TargetType
+	enum TargetType : unsigned char
 	{
 		RT_COLOR,
 		RT_DEPTH,
 		RT_DEPTH_STENCIL,
-		RT_STENCIL
+		RT_STENCIL,
+
+		RT_INVALID = 0xFF
 	};
 
 	struct TargetField
@@ -359,7 +387,7 @@ namespace Render
 	};
 	////////////////////////////////////////////////
 	// ATTRIBUTES
-	enum AttributeType
+	enum AttributeType : unsigned short
 	{
 		//POSITION TRANSFORM
 		ATT_POSITION = 0,
@@ -383,10 +411,12 @@ namespace Render
 		ATT_TEXCOORD2 = 13,
 		ATT_TANGENT2 = 14,
 		ATT_BINORMAL2 = 15,
-		ATT_COLOR2 = 16
+		ATT_COLOR2 = 16,
+
+		ATT_INVALID = 0xFFFF
 	};
 
-	enum AttributeStripType
+	enum AttributeStripType : unsigned short
 	{
 		AST_FLOAT,
 		AST_FLOAT2,
@@ -407,6 +437,8 @@ namespace Render
 		AST_TLESS2,
 		AST_TLESS3,
 		AST_TLESS4,
+
+		AST_INVALID = 0xFFFF
 	};
 
 	struct Attribute
@@ -684,12 +716,14 @@ namespace Render
 	};
 	/////////////////////////////////
 	// DRIVER INFO
-	enum RenderDriver
+	enum RenderDriver : unsigned char
 	{
 		DR_OPENGL,
 		DR_OPENGL_ES,
 		DR_VULKAN,
-		DR_DIRECTX
+		DR_DIRECTX,
+
+		DR_INVALID = 0xFF
 	};
 
 	static const char* render_driver_str[]

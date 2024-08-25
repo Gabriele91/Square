@@ -10,5 +10,5 @@
 
 namespace Square
 {
-	ResourceObject::ResourceObject(Context& context) : Object(context), SharedObject_t(context.allocator()) {}
+	ResourceObject::ResourceObject(Context& context) : Object(context), BaseInheritableSharedObject(context.allocator()) {}
 }

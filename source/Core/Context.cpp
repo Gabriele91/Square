@@ -233,8 +233,17 @@ namespace Square
 			}
 		}
 		return false;
+	}	
+	bool BaseContext::add_resource_map(uint64 object_factory_id,const std::unordered_map<std::string, std::string>& name_files)
+	{
+		for (const auto& name_file : name_files)
+		{
+			auto class_name = m_object_factories[object_factory_id]->info().name();
+			auto name = class_name + ":" + name_file.first;
+			m_resources_file[name] = ResourceFile(object_factory_id, name_file.second);
+		}
+		return false;
 	}
-
     
     //Add an attrbute
     void BaseContext::add_attribute(const std::string& name, Attribute&& attribute)

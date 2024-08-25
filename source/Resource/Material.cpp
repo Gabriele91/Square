@@ -31,8 +31,8 @@ namespace Resource
 	}
 	//////////////////////////////////////////////////////////////
 	//constructor
-	Material::Material(Context& context) : Object(context), ResourceObject(context), SharedObject<Material>(context.allocator()) {}
-	Material::Material(Context& context, const std::string& path) : Object(context), ResourceObject(context), SharedObject<Material>(context.allocator()) { load(path); }
+	Material::Material(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) {}
+	Material::Material(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) { load(path); }
 	//help
 	static void save_default_parameter(int id_param, const std::string& name, int default_parameters[])
 	{

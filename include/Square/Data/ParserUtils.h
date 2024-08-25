@@ -482,5 +482,13 @@ namespace Parser
 		}
 		return false;
 	}
+
+	static inline size_t get_line_character(const char* current_character, const char* start_source)
+	{
+		if (*current_character == '\n') return 0;
+		const char* start_line = current_character;
+		while (start_source < start_line && *(start_line - 1) != '\n') --start_line;
+		return size_t(current_character - start_line + 1);
+	}
 }
 }
