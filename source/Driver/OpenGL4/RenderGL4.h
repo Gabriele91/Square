@@ -32,14 +32,9 @@ namespace Render
 
 		ContextBuffer(GLuint id = 0) :m_id_buffer(id), m_size(0) {}
 
-		inline operator GLuint() const
+		const GLuint& id() const
 		{
 			return m_id_buffer;
-		}
-
-		inline operator GLuint*()
-		{
-			return &m_id_buffer;
 		}
 
 		void gen_buffer()

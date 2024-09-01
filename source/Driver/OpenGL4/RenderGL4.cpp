@@ -1069,12 +1069,14 @@ namespace Render
 		auto ptr = new ConstBuffer();
 		ptr->gen_buffer();
         ptr->set_size(size);
+		square_assert(ptr->id() != 0);
 		//save
 		auto last_bind = s_bind_context.m_const_buffer;
 		unbind_CB(last_bind);
 		//set size
-		glBindBuffer(GL_UNIFORM_BUFFER, *ptr);
+		glBindBuffer(GL_UNIFORM_BUFFER, ptr->id());
 		glBufferData(GL_UNIFORM_BUFFER, size, data, GL_STREAM_DRAW);
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		//bind last
 		unbind_CB(last_bind);
 		//return
@@ -1086,12 +1088,14 @@ namespace Render
 		auto ptr = new VertexBuffer();
 		ptr->gen_buffer();
         ptr->set_size(stride*n);
+		square_assert(ptr->id() != 0);
 		//save
 		auto last_bind = s_bind_context.m_vertex_buffer;
 		unbind_VBO(last_bind);
 		//set size
-		glBindBuffer(GL_ARRAY_BUFFER, *ptr);
+		glBindBuffer(GL_ARRAY_BUFFER, ptr->id());
 		glBufferData(GL_ARRAY_BUFFER, stride*n, vbo, GL_STREAM_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		//bind last
 		bind_VBO(last_bind);
 		//return
@@ -1103,12 +1107,14 @@ namespace Render
 		auto ptr = new IndexBuffer();
 		ptr->gen_buffer();
         ptr->set_size(sizeof(unsigned int)*size);
+		square_assert(ptr->id() != 0);
 		//save
 		auto last_bind = s_bind_context.m_index_buffer;
 		unbind_IBO(last_bind);
 		//set size
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ptr);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ptr->id());
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*size, ibo, GL_STREAM_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		//bind last
 		bind_IBO(last_bind);
 		//return
@@ -1120,12 +1126,14 @@ namespace Render
 		auto ptr = new ConstBuffer();
 		ptr->gen_buffer();
 		ptr->set_size(size);
+		square_assert(ptr->id() != 0);
 		//save
 		auto last_bind = s_bind_context.m_const_buffer;
 		unbind_CB(last_bind);
 		//set size
-		glBindBuffer(GL_UNIFORM_BUFFER, *ptr);
+		glBindBuffer(GL_UNIFORM_BUFFER, ptr->id());
 		glBufferData(GL_UNIFORM_BUFFER, size, data, GL_STATIC_DRAW);
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		//bind last
 		unbind_CB(last_bind);
 		//return
@@ -1137,12 +1145,14 @@ namespace Render
 		auto ptr = new VertexBuffer();
 		ptr->gen_buffer();
 		ptr->set_size(stride*n);
+		square_assert(ptr->id() != 0);
 		//save
 		auto last_bind = s_bind_context.m_vertex_buffer;
 		unbind_VBO(last_bind);
 		//set size
-		glBindBuffer(GL_ARRAY_BUFFER, *ptr);
+		glBindBuffer(GL_ARRAY_BUFFER, ptr->id());
 		glBufferData(GL_ARRAY_BUFFER, stride*n, vbo, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		//bind last
 		bind_VBO(last_bind);
 		//return
@@ -1154,12 +1164,14 @@ namespace Render
 		auto ptr = new IndexBuffer();
 		ptr->gen_buffer();
 		ptr->set_size(sizeof(unsigned int)*size);
+		square_assert(ptr->id() != 0);
 		//save
 		auto last_bind = s_bind_context.m_index_buffer;
 		unbind_IBO(last_bind);
 		//set size
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ptr);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ptr->id());
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*size, ibo, GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		//bind last
 		bind_IBO(last_bind);
 		//return
@@ -1203,7 +1215,7 @@ namespace Render
 		GLint lastbind = 0;
 		glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &lastbind);
 		//change
-		glBindBuffer(GL_UNIFORM_BUFFER, *cb);
+		glBindBuffer(GL_UNIFORM_BUFFER, cb->id());
 		glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
 		//restore
 		glBindBuffer(GL_UNIFORM_BUFFER, lastbind);
@@ -1215,7 +1227,7 @@ namespace Render
 		GLint lastbind = 0;
 		glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &lastbind);
 		//change
-		glBindBuffer(GL_ARRAY_BUFFER, *vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo->id());
 		glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
 		//restore
 		glBindBuffer(GL_ARRAY_BUFFER, lastbind);
@@ -1226,7 +1238,7 @@ namespace Render
 		GLint lastbind;
 		glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &lastbind);
 		//change
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ibo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo->id());
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, size * sizeof(unsigned int), data);
 		//restore
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastbind);
@@ -1242,7 +1254,7 @@ namespace Render
 				unbind_CB(s_bind_context.m_const_buffer);
 			}
 			//bind
-			glBindBuffer(GL_UNIFORM_BUFFER, *cb);
+			glBindBuffer(GL_UNIFORM_BUFFER, cb->id());
 			//update
 			s_bind_context.m_const_buffer = cb;
 		}
@@ -1258,7 +1270,7 @@ namespace Render
                 unbind_VBO(s_bind_context.m_vertex_buffer);
             }
             //bind
-            glBindBuffer(GL_ARRAY_BUFFER, *vbo);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo->id());
             //update
             s_bind_context.m_vertex_buffer = vbo;
         }
@@ -1274,7 +1286,7 @@ namespace Render
                 unbind_IBO(s_bind_context.m_index_buffer);
             }
             //bind
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ibo);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo->id());
             //update
             s_bind_context.m_index_buffer = ibo;
         }
@@ -1342,7 +1354,7 @@ namespace Render
 	{
 		GLuint sb;
 		glGenBuffers(1, &sb);
-		glBindBuffer(GL_COPY_READ_BUFFER, (GLuint)*cb);
+		glBindBuffer(GL_COPY_READ_BUFFER, cb->id());
 		glBindBuffer(GL_COPY_WRITE_BUFFER, sb);
 		glBufferData(GL_COPY_WRITE_BUFFER, cb->get_size(), nullptr, GL_STATIC_READ);
 		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, cb->get_size());
@@ -1358,7 +1370,7 @@ namespace Render
 	{
 		GLuint sb;
 		glGenBuffers(1, &sb);
-		glBindBuffer(GL_COPY_READ_BUFFER, (GLuint)*vbo);
+		glBindBuffer(GL_COPY_READ_BUFFER, vbo->id());
 		glBindBuffer(GL_COPY_WRITE_BUFFER, sb);
 		glBufferData(GL_COPY_WRITE_BUFFER, vbo->get_size(), nullptr, GL_STATIC_READ);
 		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, vbo->get_size());
@@ -1374,7 +1386,7 @@ namespace Render
 	{
 		GLuint sb;
 		glGenBuffers(1, &sb);
-		glBindBuffer(GL_COPY_READ_BUFFER, (GLuint)*ibo);
+		glBindBuffer(GL_COPY_READ_BUFFER, ibo->id());
 		glBindBuffer(GL_COPY_WRITE_BUFFER, sb);
 		glBufferData(GL_COPY_WRITE_BUFFER, ibo->get_size(), nullptr, GL_STATIC_READ);
 		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, ibo->get_size());
@@ -1489,7 +1501,7 @@ namespace Render
 			unbind_CB(s_bind_context.m_const_buffer);
 		}
 		//safe delete
-		glDeleteBuffers(1, *cb);
+		glDeleteBuffers(1, &cb->id());
 		delete cb;
 		cb = nullptr;
 	}
@@ -1502,7 +1514,7 @@ namespace Render
             unbind_VBO(s_bind_context.m_vertex_buffer);
         }
         //safe delete
-		glDeleteBuffers(1, *vbo);
+		glDeleteBuffers(1, &vbo->id());
 		delete vbo;
 		vbo = nullptr;
 	}
@@ -1515,7 +1527,7 @@ namespace Render
             unbind_IBO(s_bind_context.m_index_buffer);
         }
         //safe delete
-		glDeleteBuffers(1, *ibo);
+		glDeleteBuffers(1, &ibo->id());
 		delete ibo;
 		ibo = nullptr;
 	}
