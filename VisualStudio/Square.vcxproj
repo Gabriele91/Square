@@ -158,6 +158,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\Square\Core\Logger.h" />
+    <ClInclude Include="..\include\Square\SquareMain.h" />
     <ClInclude Include="..\include\Square\Core\Allocator.h" />
     <ClInclude Include="..\include\Square\Core\ShellParser.h" />
     <ClInclude Include="..\include\Square\Data\ParserStaticMesh.h" />
@@ -292,6 +294,7 @@
     <ClCompile Include="..\source\Core\Application.cpp" />
     <ClCompile Include="..\source\Core\Context.cpp" />
     <ClCompile Include="..\source\Core\Filesystem.cpp" />
+    <ClCompile Include="..\source\Core\Logger.cpp" />
     <ClCompile Include="..\source\Core\Object.cpp" />
     <ClCompile Include="..\source\Core\ClassObjectRegistration.cpp" />
     <ClCompile Include="..\source\Core\Resource.cpp" />

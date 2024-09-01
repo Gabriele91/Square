@@ -90,6 +90,15 @@ namespace Scene
 		m_actors.push_back(actor);
 		actor->level(this->shared_from_this());
 	}
+	Shared<Actor> Level::load_actor(const std::string& resource_name)
+	{
+		Shared<Actor> new_actor = context().resource<Actor>(resource_name);
+		if (new_actor)
+		{
+			add(new_actor);
+		}
+		return new_actor;
+	}
 	
 	//remove an actor
 	bool Level::remove(Shared<Actor> actor)

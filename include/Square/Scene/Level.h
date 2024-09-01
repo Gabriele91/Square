@@ -43,6 +43,7 @@ namespace Scene
 
 		//add an actor
 		void add(Shared<Actor> child);
+		Shared<Actor> load_actor(const std::string& resource_name);
 
 		//query
 		Shared<Actor> actor();

@@ -117,8 +117,8 @@ namespace Square
 		//do parsing
 		if (!r_parser.parse(r_context, Filesystem::text_file_read_all(file_of_resources)))
 		{
-			add_wrong("Faild to read resources file: " + file_of_resources);
-			add_wrong(r_context.errors_to_string());
+			logger()->warning("Faild to read resources file: " + file_of_resources);
+			logger()->warning(r_context.errors_to_string());
 			return false;
 		}
 		//Base path
@@ -170,8 +170,8 @@ namespace Square
 		}
 		catch (std::regex_error& e)
 		{
-			add_wrong("Faild to generate regexp \""+ filter +"\" of resources file: " + path);
-			add_wrong(e.what());
+			logger()->warning("Faild to generate regexp \""+ filter +"\" of resources file: " + path);
+			logger()->warning(e.what());
 		}
         //end
     }
@@ -284,39 +284,6 @@ namespace Square
 	{
 	}
 
-
-	//context errors/wrongs
-	void BaseContext::add_wrong(const std::string& wrong)
-	{
-		m_wrongs.push_back(wrong);
-	}
-
-	void BaseContext::add_wrongs(const BaseContext::StringList& wrongs)
-	{
-		for (const std::string& wrong : wrongs)
-		{
-			m_wrongs.push_back(wrong);
-		}
-	}
-
-	const BaseContext::StringList& BaseContext::wrongs() const
-	{
-		return m_wrongs;
-	}
-
-	void BaseContext::show_wrongs() const
-	{
-		show_wrongs(std::cerr);
-	}
-
-	void BaseContext::show_wrongs(std::ostream& output) const
-	{
-		for (const std::string& wrong : wrongs())
-		{
-			output << wrong << std::endl;
-		}
-	}
-
 	//get application
 	Application* BaseContext::application()
 	{
@@ -326,6 +293,11 @@ namespace Square
 	Allocator* BaseContext::allocator()
 	{
 		return m_allocator;
+	}
+	//get logger
+	Logger* BaseContext::logger()
+	{
+		return m_logger;
 	}
 	//get render
 	Render::Context* BaseContext::render()
@@ -357,6 +329,11 @@ namespace Square
 	{
 		return m_allocator;
 	}
+	//get logger
+	Logger* BaseContext::logger() const
+	{
+		return m_logger;
+	}
     //get render
     const Render::Context* BaseContext::render() const
     {
@@ -381,7 +358,6 @@ namespace Square
 	void BaseContext::clear()
 	{
         //
-        m_wrongs.clear();
 		m_variables.clear();
 		m_attributes.clear();
 		m_object_factories.clear();

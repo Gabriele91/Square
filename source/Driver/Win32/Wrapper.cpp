@@ -12,6 +12,47 @@
 
 typedef HRESULT(WINAPI * DwmIsCompositionEnabledFunction)(__out BOOL* isEnabled);
 typedef HRESULT(WINAPI *DwmGetWindowAttributeFunction) (__in  HWND hwnd, __in  DWORD dwAttribute, __out PVOID pvAttribute, DWORD cbAttribute);
+////////////////////////////////////////////////////////////////////////////////////
+// Trick, GPU selection OpenGL
+struct OptimusVariables
+{
+	OptimusVariables()
+	{
+		HMODULE hModule = GetModuleHandle(nullptr);
+		if (hModule != nullptr)
+		{
+			NvOptimusEnablement = (uint32_t*)GetProcAddress(hModule, "NvOptimusEnablement");
+			AmdPowerXpressRequestHighPerformance = (int*)GetProcAddress(hModule, "AmdPowerXpressRequestHighPerformance");
+		}
+	}
+
+	bool enable()
+	{
+		if (NvOptimusEnablement && AmdPowerXpressRequestHighPerformance)
+		{
+			(*NvOptimusEnablement) = 1;
+			(*AmdPowerXpressRequestHighPerformance) = 1;
+			return true;
+		}
+		return false;
+	}
+
+	bool disable()
+	{
+		if (NvOptimusEnablement && AmdPowerXpressRequestHighPerformance)
+		{
+			(*NvOptimusEnablement) = 0;
+			(*AmdPowerXpressRequestHighPerformance) = 0;
+			return true;
+		}
+		return false;
+	}
+
+protected:
+	uint32_t* NvOptimusEnablement = nullptr;
+	int* AmdPowerXpressRequestHighPerformance = nullptr;
+};
+////////////////////////////////////////////////////////////////////////////////////
 
 namespace Square
 {
@@ -374,10 +415,25 @@ namespace Video
 	{
 		((Win32::ScreenWin32*)m_native)-> /*get_size*/ get_monitor_size(width, height);
 	}	
+
 	////////////////////////////////////////////////////////////////////////////////////
 	// Window	
 	static Win32::WindowWin32* gl_window_create(const WindowInfo& info)
 	{
+		//////////////////////////////////////////////////////////////////////
+		switch (info.m_context.m_gpu_type)
+		{
+		case ContextInfo::GPU_TYPE_LOW:
+			OptimusVariables().disable();
+		break;
+		case ContextInfo::GPU_TYPE_HIGTH:
+			OptimusVariables().enable();
+		break;
+		// Default: not set
+		default:
+		case ContextInfo::GPU_TYPE_DEFAULT:
+		break;
+		}
 		//////////////////////////////////////////////////////////////////////
 		unsigned int last_window_real_size[2] = { 0,0 };
 		Win32::compute_window_size(info.m_size, last_window_real_size);

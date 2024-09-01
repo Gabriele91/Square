@@ -299,9 +299,6 @@ namespace Square
 
         // Decomposing the matrix using glm's built-in function
         glm::decompose(mat, scale, rotation, translation, skew, perspective);
-
-        // glm::decompose gives you the rotation as a matrix, so we convert it to a quaternion
-        rotation = Square::conjugate(rotation); // Fix for the quaternion's handedness
     }
 
     inline void decompose_dmat4(const DMat4& mat, DVec3& translation, DQuat& rotation, DVec3& scale)

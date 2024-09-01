@@ -54,7 +54,7 @@ namespace Resource
 		//do parsing
 		if (!mat_parser.parse(mat_context, Filesystem::text_file_read_all(path)))
 		{
-			context().add_wrong("Material: " + path + "\n" + mat_context.errors_to_string());
+			context().logger()->warning("Material: " + path + "\n" + mat_context.errors_to_string());
 			return false;
 		}
 		//load effect

@@ -5,7 +5,8 @@
 //  Copyright © 2016 Gabriele. All rights reserved.
 //
 #pragma once
-
+// Windows
+#define NOMINMAX
 /////////////////////////////////////////////////////////////////////////////
 // DEFAULT INCLUDE
 #include <string>

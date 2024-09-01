@@ -10,6 +10,7 @@
 #include "Square/Core/Object.h"
 #include "Square/Core/Resource.h"
 #include "Square/Core/Attribute.h"
+#include "Square/Core/Logger.h"
 #include <unordered_map>
 #include <ostream>
 #include <regex>
@@ -93,23 +94,14 @@ namespace Square
 		//Add variable
         void add_variable(const std::string& name, const Variant& value);
 		
-		//context errors/wrongs
-		void add_wrong(const std::string& wrong);
-
-		void add_wrongs(const StringList& wrongs);
-
-		const StringList& wrongs() const;
-
-		void show_wrongs() const;
-
-		void show_wrongs(std::ostream& output) const;
-
 		//get application
 		Application* application();
 		//get allocator
 		Allocator* allocator();
         //get render
         Render::Context* render();
+		//get logger
+		Logger* logger();
         //get window
         Video::Window* window();
         //get window
@@ -120,6 +112,8 @@ namespace Square
         const Application* application() const;
 		//get allocator
 		Allocator* allocator() const;
+		//get logger
+		Logger* logger() const;
         //get render
         const Render::Context* render() const;
         //get window
@@ -148,14 +142,14 @@ namespace Square
 		//context
 		VariantMap       m_variables;
 		AttributeMap     m_attributes;
-		//pool of errors
-		StringList		 m_wrongs;
         //Object factory
 		ObjectFactoryMap m_object_factories;
 		//Context refs
 		Application*     m_application{ nullptr };
 		//Allocator refs
 		Allocator*		 m_allocator;
+		//Logger refs
+		Logger*			 m_logger;
         //Reousce factory
         ResourceFileMap   m_resources_file;
         ResourceInfoMap   m_resources_info;
@@ -205,11 +199,6 @@ namespace Square
 		using BaseContext::add_resource_path;
 		using BaseContext::add_resource_file;
 		using BaseContext::add_variable;
-
-		using BaseContext::add_wrong;
-		using BaseContext::add_wrongs;
-		using BaseContext::wrongs;
-		using BaseContext::show_wrongs;
 
 		using BaseContext::application;
 		using BaseContext::render;

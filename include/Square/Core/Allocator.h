@@ -6,6 +6,8 @@
 //
 #pragma once
 #include "Square/Config.h"
+#include "Square/Core/Logger.h"
+#include <unordered_map>
 
 namespace Square
 {
@@ -28,6 +30,19 @@ namespace Square
 	class DefaultAllocator : public Allocator
 	{
 	public:
+		virtual void* alloc(size_t size, const char* name, uint8 flag) override;
+		virtual void* alloc(size_t size, const char* name, uint8 flag, uint16 align, uint16 align_offset) override;
+		virtual void  free(void* ptr, size_t size) override;
+		virtual void  free(void* ptr) override;
+	};
+
+	class DebugAllocator : public Allocator
+	{
+		Logger* m_logger;
+		Allocator* m_allocator;
+		std::unordered_map<void*, std::string> m_debug_map;
+	public:
+		DebugAllocator(Allocator* , Logger*);
 		virtual void* alloc(size_t size, const char* name, uint8 flag) override;
 		virtual void* alloc(size_t size, const char* name, uint8 flag, uint16 align, uint16 align_offset) override;
 		virtual void  free(void* ptr, size_t size) override;

@@ -52,6 +52,8 @@ namespace Square
 	//help
 	Application&     AppInterface::application() { return *Application::instance(); }
 	Context&		 AppInterface::context()     { return *application().context(); }
+	Allocator&		 AppInterface::allocator()   { return *application().allocator(); }
+	Logger&		     AppInterface::logger()      { return *application().logger(); }
 	Render::Context& AppInterface::render()      { return *application().render(); }
 	Video::Window&   AppInterface::window()      { return *application().window(); }
 	Video::Input&    AppInterface::input()       { return *application().input(); }
@@ -67,10 +69,17 @@ namespace Square
         s_instance = this;
         //Self reg
         m_context.m_application = this;
+        // Logger
+        m_context.m_logger = get_logger_intance(LoggerType::LOGGER_OS_DEFAULT);
         // Allocator
         {
             static DefaultAllocator s_default_allocator;
+            #if defined(_DEBUG)            
+            static DebugAllocator s_debug_allocator(&s_default_allocator, m_context.m_logger);
+            m_context.m_allocator = &s_debug_allocator;
+            #else 
             m_context.m_allocator = &s_default_allocator;
+            #endif
         }
 		//Add static object factory
 		for (const auto& item : ClassObjectRegistration::item_list())
@@ -165,7 +174,17 @@ namespace Square
     {
         return m_instance;
     }
-    
+
+    Allocator* Application::allocator()
+    {
+        return context() ? context()->allocator() : nullptr;
+    }
+
+    Logger* Application::logger()
+    {
+        return context() ? context()->logger() : nullptr;
+    }
+
     Video::Window* Application::window()
     {
         return m_window;
@@ -195,7 +214,17 @@ namespace Square
     {
         return m_instance;
     }
-    
+
+    Allocator* Application::allocator() const
+    {
+        return context() ? context()->allocator() : nullptr;
+    }
+
+    Logger* Application::logger() const
+    {
+        return context() ? context()->logger() : nullptr;
+    }
+
     const Video::Window* Application::window() const
     {
         return m_window;
@@ -241,6 +270,25 @@ namespace Square
 		}
 	}
 
+    Video::ContextInfo::gpu_type get_gpu_type(GpuType type)
+    {
+        switch (type)
+        {
+        default:
+        case Square::GpuType::GPU_DEFAULT: 
+            return Video::ContextInfo::GPU_TYPE_DEFAULT;
+
+        case Square::GpuType::GPU_HIGTH:
+        case Square::GpuType::GPU_AMD:
+        case Square::GpuType::GPU_NV:
+            return Video::ContextInfo::GPU_TYPE_HIGTH;
+
+        case Square::GpuType::GPU_INTEL:
+        case Square::GpuType::GPU_LOW:
+            return Video::ContextInfo::GPU_TYPE_LOW;
+        }
+    }
+
     bool Application::execute
     (
          const WindowSize& size,
@@ -266,7 +314,8 @@ namespace Square
 		winfo.m_context.m_stencil = driver.m_stencil_ctx;
 		winfo.m_context.m_version[0] = driver.m_major_ctx;
 		winfo.m_context.m_version[1] = driver.m_minor_ctx;
-		winfo.m_context.m_debug = driver.m_debug;
+        winfo.m_context.m_gpu_type = get_gpu_type(driver.m_gpu_type);
+        winfo.m_context.m_debug = driver.m_debug;
         winfo.m_size[0] = window_size.x;
         winfo.m_size[1] = window_size.y;
         winfo.m_fullscreen = mode == WindowMode::FULLSCREEN;
@@ -283,10 +332,11 @@ namespace Square
         //enable render context and  disable vSync (auto by Video::Window)
         m_window->acquire_context();
 		//Get render
-		m_render = Render::create_render_driver(context()->allocator(),driver.m_type);
+		m_render = Render::create_render_driver(context()->allocator(), context()->logger(), driver.m_type);
 		//init render
 		if (!m_render || !m_render->init(m_window->device()))
 		{
+            logger()->error("Unable to load render driver");
 			return false;
 		}
         //flush errors

@@ -81,7 +81,8 @@
 #include "Square/Scene/SpotLight.h"
 #include "Square/Scene/StaticMesh.h"
 #include "Square/Scene/World.h"
-
+/* main defines */
+#include "Square/SquareMain.h"
 
 
 
