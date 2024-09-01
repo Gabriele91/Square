@@ -1942,7 +1942,66 @@ namespace Render
 		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_WRAP_S, get_texture_edge_type(info.m_edge_s));
 		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_WRAP_T, get_texture_edge_type(info.m_edge_t));
 		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_WRAP_R, get_texture_edge_type(info.m_edge_r));
-		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_ANISOTROPY_EXT, info.m_anisotropy);
+		if (info.m_anisotropy)
+			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_ANISOTROPY_EXT, info.m_anisotropy);
+		// Generate mipmaps, by the way
+		if (info.m_build_mipmap)
+		{
+			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_BASE_LEVEL, info.m_mipmap_min);
+			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_LEVEL, info.m_mipmap_max);
+			glGenerateMipmap(ctx_texture->m_type_texture);
+		}
+		//disable texture
+		glBindTexture(ctx_texture->m_type_texture, 0);
+		//test
+		print_errors();
+		//return texture
+		return ctx_texture;
+	}
+	
+	Texture* ContextGL4::create_texture_array
+	(
+		const TextureRawDataInformation& data,
+		const TextureGpuDataInformation& info,
+		int   size
+	)
+	{
+
+		//new texture
+		Texture* ctx_texture = new Texture();
+		//create a texture id
+		ctx_texture->create_TBO();
+		//format
+		GLenum gl_format = get_texture_format(data.m_format);
+		GLenum gl_type = get_texture_type(data.m_type);
+		GLenum gl_type_format = get_texture_type_format(data.m_type_format);
+		//set type
+		ctx_texture->m_type_texture = GL_TEXTURE_2D_ARRAY;
+		//enable texture
+		glBindTexture(ctx_texture->m_type_texture, ctx_texture->m_tbo);
+		//create texture buffer
+		glTexImage3D
+		(
+			ctx_texture->m_type_texture,
+			0,
+			gl_format,
+			data.m_width,
+			data.m_height,
+			size,
+			0,
+			gl_type,
+			gl_type_format,
+			data.m_bytes
+		);
+		//set filters
+		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MIN_FILTER, get_texture_min_filter(info.m_min_type));
+		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAG_FILTER, get_texture_mag_filter(info.m_mag_type));
+		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_WRAP_S, get_texture_edge_type(info.m_edge_s));
+		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_WRAP_T, get_texture_edge_type(info.m_edge_t));
+		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_WRAP_R, get_texture_edge_type(info.m_edge_r));
+		// Set anisotropy
+		if(info.m_anisotropy)
+			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_ANISOTROPY_EXT, info.m_anisotropy);
 		// Generate mipmaps, by the way
 		if (info.m_build_mipmap)
 		{

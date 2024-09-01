@@ -35,7 +35,7 @@ sub_effect
             blend one one  
             cullface back
             lights spot_point_direction
-			shadows spot_point
+			shadows spot_point_direction
             shader source 
             {
                 #define FORWARD_RENDERING

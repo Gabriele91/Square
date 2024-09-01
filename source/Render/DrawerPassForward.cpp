@@ -156,7 +156,7 @@ namespace Render
 							if (shadow)
 							{
 								//get buffer
-								light->set(&udirection_shadow_light);
+								light->set(&udirection_shadow_light, &camera);
 								//update buffer
 								Render::update_constant_buffer(&render(), m_cb_direction_shadow_light.get(), &udirection_shadow_light);
 								//shadow map

@@ -94,7 +94,7 @@ namespace Scene
 		m_sphere.radius(this->Render::SpotLight::radius());
 		m_sphere.position({ 0,0,0 });
 		m_position = Vec3(0, 0, 0.0);
-		m_direction = Vec3(0, 0, 1.0);
+		m_direction = SPOT_LIGHT_DIR;
 	}
 
 	//change radius aka change geometry

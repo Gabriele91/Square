@@ -208,20 +208,27 @@ namespace Render
 	//draw sub mesh
 	void Mesh::draw(Render::Context& render) const
 	{
-		//bind input layout
-		render.bind_IL(layout().get());
+		//test
+		if (!layout().get() || !vertex_buffer().get())
+			return;
 		//bind vertex buffer
 		render.bind_VBO(vertex_buffer().get());
-		//bind index buffer
-		render.bind_IBO(index_buffer().get());
-		//draw
-		if (m_index_buffer)
+		//draw elements or array
+		if (index_buffer().get())
 		{
+			// Bind index buffer
+			render.bind_IBO(index_buffer().get());
+			//bind input layout
+			render.bind_IL(layout().get());
+			// Draw elements
 			for (auto& sub_mesh : m_sub_meshs)
 				render.draw_elements(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
 		}
 		else
 		{
+			//bind input layout
+			render.bind_IL(layout().get());
+			// Draw array
 			for (auto& sub_mesh : m_sub_meshs)
 				render.draw_arrays(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
 		}

@@ -22,7 +22,7 @@ namespace Render
 
 	void Light::set(UniformSpotLight* data) const {};
 
-	void Light::set(UniformDirectionShadowLight* data) const {}
+	void Light::set(UniformDirectionShadowLight* data, const Camera* camera) const {}
 
 	void Light::set(UniformPointShadowLight* data) const {}
 

@@ -38,6 +38,11 @@ namespace Scene
 		//shadow map override
 		virtual const Render::ShadowBuffer& shadow_buffer() const override;
 		virtual bool shadow() const override;
+		virtual Vec4 shadow_viewport() const override;
+
+		//shadow map custom 
+		void  shadow(const IVec2& size);
+		const IVec2& shadow_size() const;
 
 		//all events
 		virtual void on_attach(Actor& entity)      override;
@@ -60,7 +65,8 @@ namespace Scene
 
 		//Reg object
 		virtual void set(Render::UniformDirectionLight* data) const override;
-	
+		virtual void set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera) const override;
+
 	protected:
 
 		Vec3 m_direction;

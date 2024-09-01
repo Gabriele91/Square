@@ -27,7 +27,7 @@ float point_light_shadow(in Vec3 fposition_to_light, const float bias)
 		//0-1 to 0 to dist
 		closest_depth *= light.m_radius;
 		//test
-		if (current_depth - bias <= closest_depth) shadow += 1.0;
+		if (current_depth + bias <= closest_depth) shadow += 1.0;
 	}
 
 	shadow /= float(samples);
@@ -44,7 +44,7 @@ float point_light_shadow(in Vec3 fposition_to_light, const float bias)
 	// Now get current linear depth as the length between the fragment and light position
 	float current_depth = length(fposition_to_light);
 	// check whether current frag pos is in shadow
-	float shadow = (current_depth - bias) <= closest_depth ? 1.0 : 0.0;
+	float shadow = (current_depth + bias) <= closest_depth ? 1.0 : 0.0;
 	// shadow
 	return shadow;
 }
@@ -61,7 +61,7 @@ float point_light_compute_shadow(in Vec4 fposition, const float bias)
 void point_light_apply_shadow(inout LightResult result, in Vec4 fposition)
 {
 	//const bias
-	const float bias = 0.015;
+	const float bias = 0.001;
 	//factor
 	float shadow_factor = point_light_compute_shadow(fposition, bias);
 	//add shadow

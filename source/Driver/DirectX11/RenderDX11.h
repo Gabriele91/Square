@@ -121,6 +121,7 @@ namespace Render
 		ID3D11ShaderResourceView* m_resource_view{ nullptr };
 		UINT					  m_width{ 0 };
 		UINT					  m_height{ 0 };
+		UINT                      m_size{ 0 };
 		bool					  m_is_cube{ false };
 		bool					  m_is_depth{ false };
 		//more info
@@ -543,6 +544,12 @@ namespace Render
 		(
 			const TextureRawDataInformation& data,
 			const TextureGpuDataInformation& info
+		) override;
+		virtual Texture* create_texture_array
+		(
+			const TextureRawDataInformation& data,
+			const TextureGpuDataInformation& info,
+			int   size
 		) override;
 		virtual Texture* create_cube_texture
 		(

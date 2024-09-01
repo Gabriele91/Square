@@ -46,7 +46,7 @@ float spot_light_shadow(in Vec3 proj_coords, const float bias)
 	// depth of current pos
 	float current_depth = proj_coords.z;
 	// check whether current frag pos is in shadow
-	float shadow = (current_depth - bias) <= closest_depth ? 1.0 : 0.0;
+	float shadow = (current_depth + bias) <= closest_depth ? 1.0 : 0.0;
 	// shadow
 	return shadow;
 }
