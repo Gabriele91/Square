@@ -36,6 +36,14 @@
 
 namespace Square
 {
+	// Reimplement binary_function for C++17
+	template <class _Arg1, class _Arg2, class _Result>
+	struct binary_function 
+	{ 
+		using first_argument_type = _Arg1;
+		using second_argument_type = _Arg2;
+		using result_type = _Result;
+	};
 
 	// derive your proxy from this class
 	// not virtual to save the call overhead
@@ -153,7 +161,7 @@ namespace Square
 		};
 
 		// helper to get order for CVertexLoadHelper
-		struct CBaseIndexOrder: public std::binary_function< CBaseIndex, CBaseIndex, bool>
+		struct CBaseIndexOrder : public binary_function< CBaseIndex, CBaseIndex, bool>
 		{
 			bool operator() ( const CBaseIndex &a, const CBaseIndex &b ) const
 			{

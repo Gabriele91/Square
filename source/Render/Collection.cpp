@@ -259,7 +259,7 @@ namespace Render
         for (Weak<Renderable> weak_renderable : collection.m_renderables)
         {
             auto renderable = weak_renderable.lock();
-            if (renderable->can_draw() && !renderable->support_culling())
+            if (renderable->can_draw() /* && !renderable->support_culling() */)
             {
                 //gate distance
                 auto transform = renderable->transform().lock();

@@ -7,6 +7,7 @@
 //
 #include "Square/Core/Context.h"
 #include "Square/Driver/Render.h"
+#include "Square/Render/Light.h"
 #include "Square/Render/ShadowBuffer.h"
 
 namespace Square
@@ -84,6 +85,9 @@ namespace Render
 				};
 				m_texture = render->create_cube_texture(raw_cube, gpu_data);
 			}
+			break;
+			case SB_TEXTURE_CSM:
+				m_texture = render->create_texture_array(raw_data, gpu_data, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
 			break;
 			default: return false;
 			}

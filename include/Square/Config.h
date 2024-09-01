@@ -31,7 +31,7 @@
 	#define ALIGNED( size, __Declaration__ )\
 		__Declaration__ __attribute__ ((aligned(size)))
 #endif
-
+#define SqareArrayLangth(x) (sizeof(x)/sizeof(x[0]))
 /////////////////////////////////////////////////////////////////////////////
 // EXPORT/IMPOT
 #ifdef _WIN32
@@ -53,9 +53,6 @@
 	// static
 	#define SQUARE_API
 #endif
-/////////////////////////////////////////////////////////////////////////////
-// Macro help
-#define ConstantBufferStruct  struct alignas(16)
 /////////////////////////////////////////////////////////////////////////////
 // TYPES
 namespace Square

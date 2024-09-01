@@ -44,6 +44,7 @@ namespace Render
      , int               num_of_pass
      , const Vec4&       clear_color
      , const Vec4&       ambient_light
+	 , const Camera&     camera
 	 , const Light&      light
      , const Collection& collection
      , const PoolQueues& queues
@@ -102,8 +103,10 @@ namespace Render
 		{
 			Render::UniformDirectionShadowLight udirectionshadow;
 			//update camera
-			light.set(&udirectionshadow);
+			light.set(&udirectionshadow, &camera);
 			render().update_steam_CB(m_cb_direction_light.get(), (const unsigned char*)&udirectionshadow, sizeof(udirectionshadow));
+			//set viewport
+			render().set_viewport_state(light.shadow_viewport());
 		}
 		break;
 		default:

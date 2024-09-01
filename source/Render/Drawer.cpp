@@ -79,6 +79,7 @@ namespace Render
                                     , pass_shadow_count++
                                     , clear_color
                                     , ambient_color
+                                    , *camera
                                     , *light
                                     , collection
                                     , queues

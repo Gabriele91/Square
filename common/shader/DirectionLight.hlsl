@@ -18,6 +18,15 @@ cbuffer Light
     DirectionLight light;
 }
 
+#ifdef RENDERING_SHADOW_ENABLE
+#include <DirectionShadowLight>
+#else
+void direction_light_apply_shadow(inout LightResult result, in Vec4 fposition)
+{
+}
+#endif
+
+
 LightResult compute_light
 (
      in Vec4  fposition,
@@ -38,6 +47,8 @@ LightResult compute_light
     LightResult result;
     result.m_diffuse  = light.m_diffuse  * diff;
     result.m_specular = light.m_specular * spec;
+    //apply shadow
+    direction_light_apply_shadow(result, fposition);
     //return
     return result;
 }

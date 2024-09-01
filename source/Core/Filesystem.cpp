@@ -285,7 +285,18 @@ namespace Filesystem
             absolute_path.m_path.c_str(),
             FILE_ATTRIBUTE_NORMAL) == 0) return PathOperation{ false, "" };
 
-        return PathOperation{ true, output_path };
+        // Remove .\"" from relative path .\\"<disk>:"
+        std::string relative(output_path);
+        std::string::size_type dquote1 = relative.find('\"');
+        std::string::size_type dquote2 = relative.rfind('\"');
+        if (dquote1 != std::string::npos && 
+            dquote2 != std::string::npos && 
+            dquote1 != dquote2)
+        {
+            relative = relative.substr(dquote1 + 1, dquote2 - dquote1 -1);
+        }
+        // Return
+        return PathOperation{ true, std::move(relative) };
 #else
         std::string output_path;
 

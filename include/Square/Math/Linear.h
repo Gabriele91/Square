@@ -97,6 +97,24 @@ namespace Square
 		return b < a ? a : b;
 	}
 
+    template <>
+    inline Vec2 max< Vec2 >(const Vec2& a, const Vec2& b)
+    {
+        return Vec2(max(a.x, b.x), max(a.y, b.y));
+    }
+
+    template <>
+    inline Vec3 max< Vec3 >(const Vec3& a, const Vec3& b)
+    {
+        return Vec3(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z));
+    }
+
+    template <>
+    inline Vec4 max< Vec4 >(const Vec4& a, const Vec4& b)
+    {
+        return Vec4(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z), max(a.w, b.w));
+    }
+
 	template < class T, typename ...ARGS>
 	T max(const T& a, const T& b, ARGS... args)
 	{ 
@@ -108,6 +126,24 @@ namespace Square
 	{
 		return a < b ? a : b;
 	}
+
+    template <>
+    inline Vec2 min< Vec2 >(const Vec2& a, const Vec2& b)
+    {
+        return Vec2(min(a.x, b.x), min(a.y, b.y));
+    }
+
+    template <>
+    inline Vec3 min< Vec3 >(const Vec3& a, const Vec3& b)
+    {
+        return Vec3(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z));
+    }
+
+    template <>
+    inline Vec4 min< Vec4 >(const Vec4& a, const Vec4& b)
+    {
+        return Vec4(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z), min(a.w, b.w));
+    }
 
 	template < class T, typename ...ARGS>
 	T min(const T& a, const T& b, ARGS... args) 

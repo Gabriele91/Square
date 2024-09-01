@@ -12,7 +12,7 @@
 namespace Square
 {
 //work around for bug in MS Visual C++ 2015 https://social.msdn.microsoft.com/Forums/en-US/8f40dcd8-c67f-4eba-9134-a19b9178e481/vs-2015-rc-linker-stdcodecvt-error?forum=vcgeneral
-#if _MSC_VER >= 1900 
+#if _MSC_VER >= 1900
 
 	SQUARE_API std::u8string to_utf8(const std::u16string &s)
 	{
@@ -72,8 +72,6 @@ namespace Square
 	}
 
 #else
-
-
 	SQUARE_API std::u8string to_utf8(const std::u16string &s)
 	{
 		std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
@@ -130,6 +128,5 @@ namespace Square
 		std::wstring_convert<std::codecvt_utf16<char32_t>, char32_t> conv;
 		return conv.from_bytes(reinterpret_cast<const char*>(pData), reinterpret_cast<const char*>(pData + s.length()));
 	}
-
 #endif
 }

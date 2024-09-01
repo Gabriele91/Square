@@ -106,6 +106,7 @@ namespace Scene
         }
         return Constants::identity<Mat4>();
     }
+
     const Mat4& Camera::view() const
     {
         if(m_is_dirty)
@@ -119,11 +120,20 @@ namespace Scene
             {
                 m_view = Constants::identity<Mat4>();
             }
-            //dirty, not anymore
+            // Dirty, not anymore
             m_is_dirty = false;
+            // But frustum still
+            m_frustum_is_dirty = true;
+
         }
         return m_view;
     }
+    
+    const Mat4& Camera::projection() const
+    {
+        return viewport().projection();
+    }
+
     const Geometry::Frustum& Camera::frustum() const
     {
         if(m_frustum_is_dirty)
@@ -133,6 +143,7 @@ namespace Scene
         }
         return m_frustum;
     }
+
     const Render::Viewport& Camera::viewport() const
     {
         return m_viewport;
