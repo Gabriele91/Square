@@ -705,7 +705,7 @@ namespace Render
 
     ////////////////////
 	// Get Shader Version
-    static int make_test_to_get_shader_version()
+    static int make_test_to_get_shader_version(Logger* logger)
     {
         struct shader_test
         {
@@ -761,7 +761,8 @@ namespace Render
             }
             else
             {
-                std::cout << "Render driver error, can't determine supported shader version" << std::endl;
+				if(logger)
+					logger->warning("Render driver error, can't determine supported shader version");
                 break;
             }
         }
@@ -784,7 +785,7 @@ namespace Render
         //shader type
 		context->s_render_driver_info.m_shader_language = "GLSL";
         //shader version
-		context->s_render_driver_info.m_shader_version  = make_test_to_get_shader_version();
+		context->s_render_driver_info.m_shader_version  = make_test_to_get_shader_version(context->logger());
     }
         
 	bool ContextGL4::init(Video::DeviceResources* resource)
@@ -798,7 +799,7 @@ namespace Render
 		//try to init glew (get OpenGL calls)
 		if (glewInit() != GLEW_OK)
 		{
-			std::cout << "Glew init fail" << std::endl;
+			logger()->error("Glew init fail");
 			return false;
 		}
 		//clear OpenGL error by Glew init
@@ -857,8 +858,8 @@ namespace Render
 	{
 		std::string renderer = (const char*)glGetString(GL_RENDERER);
 		std::string version = (const char*)glGetString(GL_VERSION);
-		std::cout << "Renderer: " << renderer << std::endl;
-		std::cout << "OpenGL version supported: " << version << std::endl;
+		logger()->info("Renderer: " + renderer);
+		logger()->info("OpenGL version supported: " + version);
 	}
 
 	void ContextGL4::close()
@@ -2659,7 +2660,7 @@ namespace Render
 		//test
 		if (status != GL_FRAMEBUFFER_COMPLETE)
 		{
-			std::cout << framebuffer_error_to_str(status) << std::endl;
+			logger()->warning(framebuffer_error_to_str(status));
 		}
 		//disable
 		fbo->disable_FBO();
@@ -2773,7 +2774,7 @@ namespace Render
 		//print
 		if (gl_errors.size())
 		{
-			std::cout << gl_errors << std::endl;
+			logger()->warning(gl_errors);
 			return true;
 		}
 		return false;
@@ -2787,7 +2788,7 @@ namespace Render
 		//print
 		if (gl_errors.size())
 		{
-			std::cout << gl_errors << std::endl;
+			logger()->warning(gl_errors);
 			return true;
 		}
 		return false;

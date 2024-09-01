@@ -631,12 +631,11 @@ namespace Render
 
 	void ContextDX11::print_info()
 	{
-		std::cout << "Renderer: " << s_render_driver_info.m_name << std::endl;
-		std::cout << "DirectX version supported: " 
-			<< s_render_driver_info.m_major_version
-			<< '.'  
-			<< s_render_driver_info.m_minor_version 
-			<< std::endl;
+		logger()->debug("Renderer: " + s_render_driver_info.m_name);
+		logger()->debug("DirectX version supported: "
+			         + std::to_string(s_render_driver_info.m_major_version) 
+			         + '.'
+					 + std::to_string(s_render_driver_info.m_minor_version));
 	}
 
 	void ContextDX11::close()
@@ -3102,16 +3101,13 @@ namespace Render
 
 	bool ContextDX11::print_errors() const
 	{
-		std::stringstream output;
 		if (m_errors.size())
 		{
-			for (auto& err : m_errors)
+			for (auto& error : m_errors)
 			{
-				output << "DX11 error: " << err << std::endl;
+				logger()->warning(error);
 			}
 			m_errors.clear();
-			//print
-			std::cout << output.str() << std::endl;
 			return true;
 		}
 		return false;
@@ -3126,11 +3122,11 @@ namespace Render
 			output << "At file: " << source_file_name << " (" << line << ")" << ":" << std::endl;
 			for(auto& err : m_errors) 
 			{
-					output << "DX11 error: " << err << std::endl;
+					output << err << std::endl;
 			}
 			m_errors.clear();
 			//print
-			std::cout << output.str() << std::endl;
+			logger()->warning(output.str());
 			return true;
 		}
 		return false;

@@ -1,11 +1,16 @@
 #include "Square/Core/ShellParser.h"
 #include "Square/Core/StringUtilities.h"
+#include "Square/Core/Filesystem.h"
 
 namespace Square
 {
 
 namespace Shell
 {
+    const char __path__[] = "__path__";
+    const char __filename__[] = "__filename__";
+    const char __basename__[] = "__basename__";
+
     ParserReturn parser
     (
         int argc
@@ -28,7 +33,13 @@ namespace Shell
         ParserValue values;
         // Last command
         ParserCommands::const_iterator last_command;
-
+        // App name
+        if (1 < argc)
+        {
+            values[__path__] = argv[0];
+            values[__filename__] = Filesystem::get_filename(argv[0]);
+            values[__basename__] = Filesystem::get_basename(argv[0]);
+        }
         // Parsing
         for(int c = 1; c < argc; ++c)
         {

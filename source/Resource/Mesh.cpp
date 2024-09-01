@@ -111,7 +111,7 @@ namespace Resource
 		//do parsing
 		if (!static_mesh_parser.parse(static_mesh_context, buffer))
 		{
-			ResourceObject::context().add_wrong("Static model: " + path);
+			ResourceObject::context().logger()->warning("Static model: " + path);
 			return false;
 		}
 		// Ok?

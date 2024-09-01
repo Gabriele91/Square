@@ -28,7 +28,7 @@ namespace Scene
 	void Actor::object_registration(Context& ctx)
 	{
         //factory
-        ctx.add_resource<Actor>({ ".actor", ".gzactor" });
+        ctx.add_resource<Actor>({ ".ac", ".acgz" });
 		//factory
 		ctx.add_object<Actor>();
 		//Attributes
@@ -510,7 +510,7 @@ namespace Scene
         using namespace Square::Data;
         using namespace Square::Filesystem::Stream;
         // Is compress?
-        bool is_compress = Filesystem::get_extension(path) == ".gzactor";
+        bool is_compress = Filesystem::get_extension(path) == ".acgz";
         // cases
         if (is_compress)
         {

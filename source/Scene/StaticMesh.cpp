@@ -77,9 +77,9 @@ namespace Scene
 			{ if (name.size())
 			    {
 				    if(sm->m_mesh = sm->context().resource<Mesh>(name); !sm->m_mesh)
-						sm->context().add_wrong("Faild to load static model: " + name);
+						sm->context().logger()->warning("Faild to load static model: " + name);
 					if (!sm->m_obb_local.valid() && !sm->build_local_obounding_box())
-						sm->context().add_wrong("Faild to compute the OBB: " + name);
+						sm->context().logger()->warning("Faild to compute the OBB: " + name);
 				}
 			});
 	}

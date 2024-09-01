@@ -21,6 +21,7 @@ namespace Shell
         ErrorType   type        { ErrorType::none };
 
         Error(Error&&) = default;
+        Error(const Error&) = default;
     };
 
     enum class ValueType : unsigned char
@@ -75,7 +76,7 @@ namespace Shell
     using ParserReturn = std::tuple
     < 
           Error
-        , ParserValue  
+        , ParserValue
     >;
 
     using ParserCommands = std::vector<Command>;
@@ -88,5 +89,9 @@ namespace Shell
     );
 
     SQUARE_API std::string help(const ParserCommands& commands);
+
+    SQUARE_API extern const char __path__[];
+    SQUARE_API extern const char __filename__[];
+    SQUARE_API extern const char __basename__[];
 }
 }

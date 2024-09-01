@@ -444,7 +444,7 @@ namespace Render
 	class ContextDX11 : public Context
 	{
 	public:
-		ContextDX11(Allocator* allocator) : Context(allocator) {}
+		ContextDX11(Allocator* allocator, Logger* logger) : Context(allocator, logger) {}
 
 		virtual RenderDriver get_render_driver() override;
 		virtual RenderDriverInfo get_render_driver_info() override;

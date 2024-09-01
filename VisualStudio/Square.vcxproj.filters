@@ -336,6 +336,12 @@
     <ClInclude Include="..\include\Square\Resource\Actor.h">
       <Filter>Include\Square\Resource</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\SquareMain.h">
+      <Filter>Include\Square</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Core\Logger.h">
+      <Filter>include\Square\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -547,6 +553,9 @@
     </ClCompile>
     <ClCompile Include="..\source\Scene\StaticMesh.cpp">
       <Filter>source\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Core\Logger.cpp">
+      <Filter>source\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

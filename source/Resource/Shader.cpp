@@ -213,8 +213,8 @@ namespace Resource
 			, spirv_info
 		))
 		{
-			context().add_wrong("Error to shader compile");
-			context().add_wrongs(shader_spirv_errors);
+			context().logger()->warning("Error to shader compile");
+			context().logger()->warnings(shader_spirv_errors);
 			return false;
 		}	
 		return true;
@@ -267,9 +267,9 @@ namespace Resource
 			if (!m_shader || render->shader_compiled_with_errors(m_shader) || render->shader_linked_with_error(m_shader))
 			{
 				//fail
-				context().add_wrong("Error to shader compile");
-				context().add_wrongs(render->get_shader_compiler_errors(m_shader));
-				context().add_wrong(render->get_shader_liker_error(m_shader));
+				context().logger()->warning("Error to shader compile");
+				context().logger()->warnings(render->get_shader_compiler_errors(m_shader));
+				context().logger()->warning(render->get_shader_liker_error(m_shader));
 				return false;
 			}
             //ok
@@ -330,8 +330,8 @@ namespace Resource
             //compile
 			if (!HLSL2ALL::spirv_to_glsl(shader_spirv_out, shader_sources[type], shader_glsl_tslist, shader_spirv_errors, glsl_config))
 			{
-				context().add_wrong("Error to shader compile");
-				context().add_wrongs(shader_spirv_errors);
+				context().logger()->warning("Error to shader compile");
+				context().logger()->warnings(shader_spirv_errors);
 				return false;
 			}
 			//remove #version
@@ -356,9 +356,9 @@ namespace Resource
 			if (!m_shader || render->shader_compiled_with_errors(m_shader) || render->shader_linked_with_error(m_shader))
 			{
 				//fail
-				context().add_wrong("Error to shader compile");
-				context().add_wrongs(render->get_shader_compiler_errors(m_shader));
-				context().add_wrong(render->get_shader_liker_error(m_shader));
+				context().logger()->warning("Error to shader compile");
+				context().logger()->warnings(render->get_shader_compiler_errors(m_shader));
+				context().logger()->warning(render->get_shader_liker_error(m_shader));
 				return false;
 			}
             //ok

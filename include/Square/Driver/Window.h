@@ -57,12 +57,19 @@ namespace Video
 			CTX_DIRECTX,
 			CTX_UNKNOWN
 		};
+		enum gpu_type
+		{
+			GPU_TYPE_DEFAULT,
+			GPU_TYPE_LOW,
+			GPU_TYPE_HIGTH
+		};
 		context_type  m_type{ CTX_OPENGL };
 		unsigned int  m_version[2]{ 3, 0 };
 		unsigned int  m_depth     { 24   };
 		unsigned int  m_color     { 24   };
 		unsigned int  m_stencil   { 8    };
 		anti_aliasing m_anti_aliasing{ NOAA };
+		gpu_type	  m_gpu_type{ GPU_TYPE_DEFAULT };
 		bool		  m_debug{ false };
 		//add default constructor
 		ContextInfo() {}

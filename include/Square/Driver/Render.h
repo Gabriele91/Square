@@ -8,6 +8,8 @@
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
 #include "Square/Core/Variant.h"
+#include "Square/Core/Allocator.h"
+#include "Square/Core/Logger.h"
 
 
 //declare
@@ -912,7 +914,7 @@ namespace Render
 	{
 	public:
 
-		Context(Allocator* allocator) : m_allocator(allocator) {}
+		Context(Allocator* allocator, Logger* logger) : m_allocator(allocator), m_logger(logger) {}
 
 		virtual RenderDriver get_render_driver() = 0;
 		virtual RenderDriverInfo get_render_driver_info() = 0;
@@ -1073,9 +1075,11 @@ namespace Render
         virtual bool print_errors(const char* source_file_name, int line) const = 0;
 	
 		Allocator* allocator() const { return m_allocator; }
+		Logger* logger() const { return m_logger; }
 
 	private:
 		Allocator* m_allocator;
+		Logger* m_logger;
 	};
 	/////////////////////////////////
 	// Buffer smart pointer	
@@ -1144,7 +1148,7 @@ namespace Render
 	/////////////////////////////////
 	// Shared wrapper
 	DLL_EXPORT std::vector<RenderDriver> list_of_render_driver();
-	DLL_EXPORT Context* create_render_driver(Allocator*,RenderDriver);
+	DLL_EXPORT Context* create_render_driver(Allocator*, Logger*, RenderDriver);
 	DLL_EXPORT void delete_render_driver(Context*&);
 }
 }

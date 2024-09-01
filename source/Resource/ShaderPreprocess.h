@@ -193,7 +193,7 @@ namespace Resource
                             }
                             else
                             {
-								context.add_wrong("shader, include path is invalid: " + source_path);
+								context.logger()->warning("shader, include path is invalid: " + source_path);
 								return PS_FAIL;
                             }
                         break;
@@ -204,19 +204,19 @@ namespace Resource
                                 //test path
                                 if(!sourcefile_path.size())
                                 {
-									context.add_wrong("shader, include path is invalid: " + source_path + ", " + sourcefile_name + " not exists");
+									context.logger()->warning("shader, include path is invalid: " + source_path + ", " + sourcefile_name + " not exists");
 									return PS_FAIL;
                                 }
                             }
                             else
                             {
-								context.add_wrong("shader, include path is invalid: " + source_path);
+								context.logger()->warning("shader, include path is invalid: " + source_path);
 								return PS_FAIL;
                             }
                         break;
                         default:
                             //error 3
-							context.add_wrong("shader, include path is invalid: " + source_path);
+							context.logger()->warning("shader, include path is invalid: " + source_path);
 							return PS_FAIL;
                         break;
                     };
