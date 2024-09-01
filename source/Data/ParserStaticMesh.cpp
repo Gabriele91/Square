@@ -188,6 +188,7 @@ namespace Square
 			{
 				auto& index = *reinterpret_cast<const StaticMeshArray<unsigned int>*>(&ptr[offset]);
 				context.m_index = index.as_vector();
+				offset += index.full_size();
 			}
 			// SubMesh
 			if (header.submesh)
