@@ -1,6 +1,4 @@
 #pragma once
-
-#pragma once
 #include <Square/Square.h>
 
 namespace Square
@@ -39,7 +37,7 @@ namespace GLB
 		GLB(const GLB& glb) = default;
 	};
 
-	std::optional<GLB> decode_glb(const std::string& path)
+	static std::optional<GLB> decode_glb(const std::string& path)
 	{
 		std::vector<unsigned char> buffer = std::move(Filesystem::binary_file_read_all(path));
 		// Test
@@ -49,7 +47,7 @@ namespace GLB
 		const Header* header = reinterpret_cast<const Header*>(buffer.data());
 		// Test 
 		if (header->version != 2
-		||  strncmp(header->magic,"glTF",4) != 0
+		||  strncmp(header->magic, "glTF", 4) != 0
 		||  header->length < (sizeof(Header) + sizeof(Chunk)))
 		{
 			return {};
@@ -63,20 +61,21 @@ namespace GLB
 		while(ptr < file_end && ptr < &buffer.back())
 		{ 
 			const Chunk* chunk = reinterpret_cast<const Chunk*>(ptr);
+			const unsigned char* chunk_data = reinterpret_cast<const unsigned char*>(ptr + sizeof(Chunk));
 
 			switch (chunk->type)
 			{
 			case ChunkType::CT_JSON:
 			{
-				const char* start_string = reinterpret_cast<const char*>(ptr + sizeof(Chunk));
-				const char* end_string = reinterpret_cast<const char*>(ptr + sizeof(Chunk) + chunk->lenght);
+				const char* start_string = reinterpret_cast<const char*>(chunk_data);
+				const char* end_string = reinterpret_cast<const char*>(chunk_data + chunk->lenght);
 				glb_output.json = std::string(start_string, end_string);
 			}
 			break;
 			case ChunkType::CT_BIN:
 			{
-				const unsigned char* start_bin = ptr + sizeof(Chunk);
-				const unsigned char* end_bin = ptr + sizeof(Chunk) + chunk->lenght;
+				const unsigned char* start_bin = chunk_data;
+				const unsigned char* end_bin = chunk_data + chunk->lenght;
 				glb_output.bin = std::vector<unsigned char>(start_bin, end_bin);
 			}
 			break;
