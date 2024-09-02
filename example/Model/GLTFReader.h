@@ -52,6 +52,10 @@ namespace GLTF
         TRANSLATION = 0b0001, // Translation (Vec3)
         ROTATION    = 0b0010, // Rotation (Quat)
         SCALE       = 0b0100, // Scale (Vec3)
+        TRANSLATION_ROTATION       = TRANSLATION | ROTATION,
+        TRANSLATION_SCALE          = TRANSLATION | SCALE,
+        ROTATION_SCALE             = ROTATION    | SCALE,
+        TRANSLATION_ROTATION_SCALE = TRANSLATION | ROTATION | SCALE,
         MATRIX      = 0b1000  // Transformation matrix (Mat4)
     };
 
@@ -293,10 +297,10 @@ namespace GLTF
         std::string name;                // Name of the node
         NodeList children;               // Indices of child nodes
         std::optional<size_t> mesh;      // Index of the mesh this node references (if any)
-        Vec3 translation;
-        Quat rotation;
-        Vec3 scale;
-        Mat4 matrix;
+        Vec3 translation = { 0,0,0 };
+        Quat rotation = { 0,0,0,0 };
+        Vec3 scale = { 1,1,1 };
+        Mat4 matrix = Mat4(1);
         TransformType transform_type;    // Type of transformation (enum)
 
         // Constructor
@@ -767,10 +771,10 @@ namespace GLTF
                 mesh = node.at("mesh").number(0);
 
             // Decode transformation (use variant for translation, rotation, scale, or matrix)
-            Vec3 translation;
-            Quat rotation;
-            Vec3 scale;
-            Mat4 matrix;
+            Vec3 translation(0, 0, 0);
+            Quat rotation(0,0,0,0);
+            Vec3 scale(1,1,1);
+            Mat4 matrix(1);
             unsigned char transform_type = TransformType::NONE;
 
             // Check for translation
@@ -876,7 +880,7 @@ namespace GLTF
             // Get all components
             return GLTF
             {
-                  std::forward<Buffers>(buffers)
+                  std::move(buffers)
                 , std::move(decode_views(document["bufferViews"]))
                 , std::move(decode_accessors(document["accessors"]))
                 , std::move(decode_meshes(document["meshes"]))
@@ -909,11 +913,7 @@ namespace GLTF
         // Get buffers:
         Buffers buffers = load_buffers(path, jmodel.document()["buffers"]);
         // Decode
-        return Aux::decode_from_json_and_buffers
-        (
-            std::move(jmodel),
-            std::move(buffers)
-        );
+        return Aux::decode_from_json_and_buffers(std::move(jmodel), std::move(buffers));
     }    
     
     // Load GLTF from GLB bin
@@ -933,12 +933,10 @@ namespace GLTF
         {
             return "Invalid GLTF";
         }
+        // As a vector
+        Buffers buffers{ std::move(glb.bin) };
         // Decode
-        return Aux::decode_from_json_and_buffers
-        (
-            std::move(jmodel),
-            std::move(Buffers{ std::move(glb.bin) })
-        );
+        return Aux::decode_from_json_and_buffers(std::move(jmodel), std::move(buffers));
     }
 
     // Load GLTF
