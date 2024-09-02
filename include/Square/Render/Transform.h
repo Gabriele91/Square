@@ -7,20 +7,21 @@
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
 #include "Square/Core/Object.h"
+#include "Square/Render/ConstantBuffer.h"
 
 namespace Square
 {
 namespace Render
 {
     //Transform uniform buffer
-    PACKED(ConstantBufferStruct UniformBufferTransform
+    CBStruct UniformBufferTransform
     {
         Mat4 m_model;
 		Mat4 m_inv_model;
 		Mat4 m_rotation;
-		Vec3 m_position; float __PADDING0__; //alignas(16)
-		Vec3 m_scale;    float __PADDING1__; //alignas(16)
-    });
+		CBAlignas Vec3 m_position;
+		CBAlignas Vec3 m_scale;
+    };
     //Transform cpu class
 	class SQUARE_API Transform : public BaseObject
 	{

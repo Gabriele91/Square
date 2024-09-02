@@ -135,7 +135,7 @@ public:
     
     virtual bool support_culling() const override
     {
-        return true;
+        return false;
     }
     
     virtual void on_transform() override
@@ -269,6 +269,38 @@ public:
 		case Square::Video::KEY_DOWN:  m_level->actor("light1")->translation({ 0,0,-velocity });  break;
 		case Square::Video::KEY_PAGE_UP:    m_level->actor("light1")->translation({ 0,velocity,0 });   break;
 		case Square::Video::KEY_PAGE_DOWN:  m_level->actor("light1")->translation({ 0,-velocity,0 });  break;
+
+		case Square::Video::KEY_0:  
+			m_level->actor("light0")->turn(rotate_euler( 
+				0.0f, 
+				Constants::pi2<float>() / 4.f * float(application().last_delta_time()),
+				0.0f 
+			));
+			m_level->actor("box_center")->turn(rotate_euler(
+				0.0f,
+				Constants::pi2<float>() / 4.f * float(application().last_delta_time()),
+				0.0f
+			));
+		break;
+		case Square::Video::KEY_U:
+			m_level->actor("camera")->move({ 0,0,-10 * application().last_delta_time() });
+		break;
+		case Square::Video::KEY_J:
+			m_level->actor("camera")->move({ 0,0, 10 * application().last_delta_time() });
+		break;
+		case Square::Video::KEY_H:
+			m_level->actor("camera")->move({ -10 * application().last_delta_time(),0,0 });
+		break;
+		case Square::Video::KEY_K:
+			m_level->actor("camera")->move({ 10 * application().last_delta_time(),0,0 });
+		break;
+		case Square::Video::KEY_O:
+			m_level->actor("camera")->move({ 0,-10 * application().last_delta_time(),0 });
+		break;
+		case Square::Video::KEY_L:
+			m_level->actor("camera")->move({ 0, 10 * application().last_delta_time(),0 });
+		break;
+		break;
 		default: break;
 		}
 	}
@@ -295,7 +327,7 @@ public:
 		#endif
         //camera
         auto camera = m_level->actor("camera");
-        camera->translation({ 0,0,0 });
+        camera->translation({ 0,0,-5.0 });
         camera->rotation(rotate_euler(0.0f,Square::radians(180.0f),0.0f));
         camera->component<Camera>()->viewport({0,0, 1280, 768});
         camera->component<Camera>()->perspective(radians(90.0f), 1280.0f / 768.0f, 0.1f, 1000.0f);		
@@ -315,6 +347,7 @@ public:
 		auto box_right = m_level->actor("box_right");
 		//model + material + position + scale
 		box_right->component<Cube>()->m_material = context().resource<Material>("box");
+
 		box_right->position({ -6.0, 0.0, 10.0 });
 		box_right->scale({ 0.5f, 20.0f, 20.0f });
 		//left box
@@ -327,6 +360,7 @@ public:
 		auto light0 = m_level->actor("light0");
 		light0->component<DirectionLight>()->diffuse({ 1.0,0.0,0.0 });
 		light0->component<DirectionLight>()->visible(false);
+		light0->component<DirectionLight>()->shadow({ 512,512 });
 		light0->rotation(rotate_euler(Square::radians(-45.0f), Square::radians(-45.0f), 0.0f));
 
 		auto light1 = m_level->actor("light1");
@@ -362,7 +396,7 @@ public:
 			player->position({ 
 				std::cos(angle) * radius_dist, 
 				std::sin(angle) * radius_dist,
-				0.0
+				0
 			});
 		}
     }
@@ -370,10 +404,12 @@ public:
     bool run(double dt)
     {
 		using namespace Square;
+		m_acc += dt;
 		if(m_turn)
 			m_level->actor("main_node")->turn(
 				rotate_euler<float>(0, 0, Square::Constants::pi2<float>() * 0.1f * float(dt))
 			);
+		m_level->actor("main_node")->position({ 0, 0, sin(m_acc * Square::Constants::pi<float>() * 0.25) * 10 + 5 });
         for(auto child : m_level->actor("main_node")->childs())
         {
             child->turn(rotate_euler<float>(0.0f,radians(90.0f*float(dt)),0.0f));
@@ -426,6 +462,7 @@ public:
 private:
     
     bool m_loop = true;
+	double m_acc = 0;
 	Square::Time::FPSCounter				   m_counter;
 	Square::Shared<Square::Scene::Level>	   m_level;
     Square::Shared<Square::Render::Drawer>     m_drawer;

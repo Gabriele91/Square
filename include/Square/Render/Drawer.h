@@ -55,6 +55,7 @@ namespace Render
 			, int               num_of_pass
 			, const Vec4&       clear_color
 			, const Vec4&       ambient_color
+            , const Camera&     camera
 			, const Light&      light
 			, const Collection& collection
 			, const PoolQueues& queues

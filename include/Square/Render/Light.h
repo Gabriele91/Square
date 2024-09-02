@@ -9,8 +9,9 @@
 #include "Square/Config.h"
 #include "Square/Core/Object.h"
 #include "Square/Math/Linear.h"
+#include "Square/Render/ConstantBuffer.h"
 
-#define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 5
+#define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 4
 
 namespace Square
 {
@@ -29,6 +30,10 @@ namespace Square
         class Sphere;
         class Frustum;
     }
+	namespace Render
+	{
+		class Camera;
+	}
 }
 
 namespace Square
@@ -44,52 +49,53 @@ namespace Render
 	};
 
 	//uniform buffers
-    ConstantBufferStruct UniformDirectionLight
+	CBStruct UniformDirectionLight
     {
-		Vec3 m_direction; float __PADDING0__; //v4
-        Vec3 m_diffuse;   float __PADDING1__; //v4
-        Vec3 m_specular;  float __PADDING2__; //v4
+		CBAlignas Vec3 m_direction;
+	    CBAlignas Vec3 m_diffuse;
+		CBAlignas Vec3 m_specular;
     };
 
-    ConstantBufferStruct UniformPointLight
+    CBStruct UniformPointLight
     {
-	    Vec3  m_position;      float __PADDING0__; //v4
-        Vec3  m_diffuse;       float __PADDING1__; //v4
-        Vec3  m_specular;      
-        float m_constant;      
-        float m_radius;        
-        float m_inside_radius; 
+		CBAlignas Vec3  m_position;
+	    CBAlignas Vec3  m_diffuse;
+		CBAlignas Vec3  m_specular;
+	    float m_constant;
+		float m_radius;
+		float m_inside_radius;
     };
 
-    ConstantBufferStruct UniformSpotLight
-    {
-	    Vec3  m_position;      float __PADDING0__; //v4
-		Vec3  m_direction;     float __PADDING1__; //v4
-        Vec3  m_diffuse;       float __PADDING2__; //v4
-        Vec3  m_specular;      
+	CBStruct UniformSpotLight
+	{
+		CBAlignas Vec3  m_position;
+	    CBAlignas Vec3  m_direction;
+		CBAlignas Vec3  m_diffuse;
+		CBAlignas Vec3  m_specular;
         float m_constant;      
-        float m_radius;        
-        float m_inside_radius; 
-        float m_inner_cut_off; 
-        float m_outer_cut_off; 
+		float m_radius;
+		float m_inside_radius;
+		float m_inner_cut_off;
+		float m_outer_cut_off;
     };
 
 	//uniform buffers
-    ConstantBufferStruct UniformDirectionShadowLight
+    CBStruct UniformDirectionShadowLight
     {
-		Mat4 m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
-		Mat4 m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+		CBArrFloat m_depths     [DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // > hlsl packet rule: float4 for a float in array
+		CBArrMat4  m_projection [DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+		CBArrMat4  m_view       [DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
     };
 
-    ConstantBufferStruct UniformPointShadowLight
+	CBStruct UniformPointShadowLight
     {
-		Mat4 m_projection;
-		Mat4 m_view[6];
-		Vec4 m_position;
-		float m_radius;
+		Mat4      m_projection;
+	    CBArrMat4 m_view[6];
+		Vec4      m_position;
+		float     m_radius;
     };
 
-    ConstantBufferStruct UniformSpotShadowLight
+	CBStruct UniformSpotShadowLight
     {
 		Mat4 m_projection;
 		Mat4 m_view;
@@ -123,7 +129,7 @@ namespace Render
 		virtual void set(UniformSpotLight* data) const;
 
 		//uniform shadow light info
-		virtual void set(UniformDirectionShadowLight* data) const;
+		virtual void set(UniformDirectionShadowLight* data, const Camera* camera) const;
 
 		virtual void set(UniformPointShadowLight* data) const;
 

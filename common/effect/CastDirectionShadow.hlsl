@@ -12,12 +12,12 @@ Sampler2D(diffuse_map);
 ////////////////
 // REFERENCES:
 // DirectX http://developers-club.com/posts/259679/
-// OpenGL https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
+// OpenGL https://learnopengl.com/Guest-Articles/2021/CSM
 ////////////////
 struct VertexShaderOutput
 {
 	Vec4 m_position : TEXCOORD0;  // vertex position
-	Vec2 m_uv       : TEXCOORD1;    // interpolated uv map
+	Vec2 m_uv       : TEXCOORD1;  // interpolated uv map
 };
 
 //draw
@@ -38,29 +38,24 @@ struct GeometryShaderOutput
 	uint m_RTIndex        : SV_RenderTargetArrayIndex;
 };
 
-[maxvertexcount(18)]
+[maxvertexcount(3)]
+[instance(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES)]
 void geometry(triangle VertexShaderOutput input[3]
-			, inout TriangleStream<GeometryShaderOutput> output)
+			, inout TriangleStream<GeometryShaderOutput> output
+	        , uint id : SV_GSInstanceID)
 {
 	GeometryShaderOutput outvertex = (GeometryShaderOutput)0;
-	//for each cube faces
-	[unroll]
-	for (uint face = 0; face < 6; ++face)
+	// for each triangle's vertices
+	[loop]
+	for (int i = 0; i < 3; ++i)
 	{
-		// set cubeface
-		outvertex.m_RTIndex = face;
-		// for each triangle's vertices
-		[loop]
-		for (int i = 0; i < 3; ++i)
-		{
-			outvertex.m_world_position = input[i].m_position;
-			outvertex.m_position = mul_point_light_view_projection(input[i].m_position, face);
-			outvertex.m_uv = input[i].m_uv;
-			output.Append(outvertex);
-		}
-		//end primitive
-		output.RestartStrip();
+		outvertex.m_world_position = input[i].m_position;
+		outvertex.m_position = mul_direction_light_view_projection(input[i].m_position, id);
+		outvertex.m_uv = input[i].m_uv;
+		outvertex.m_RTIndex = id;
+		output.Append(outvertex);
 	}
+	output.RestartStrip();
 }
 
 struct FragmentShaderinput
@@ -74,16 +69,10 @@ struct FragmentShaderinput
 };
 
 #if 1
-float fragment(FragmentShaderinput input) : SV_Depth
+void fragment(FragmentShaderinput input)
 {
 	//diffuse/albedo
 	Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);
     if (diffuse_color.a <= shadow_mask) discard;
-	//compute distance between wolrd and light source
-	float light_distance = length(point_shadow_camera.m_position - input.m_world_position.xyz);
-	//[0,1] range
-	light_distance = light_distance / point_shadow_camera.m_radius;
-	//write as depth
-	return light_distance;
 }
 #endif

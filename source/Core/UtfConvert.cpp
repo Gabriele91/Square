@@ -72,8 +72,6 @@ namespace Square
 	}
 
 #else
-
-
 	SQUARE_API std::u8string to_utf8(const std::u16string &s)
 	{
 		std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
@@ -130,6 +128,5 @@ namespace Square
 		std::wstring_convert<std::codecvt_utf16<char32_t>, char32_t> conv;
 		return conv.from_bytes(reinterpret_cast<const char*>(pData), reinterpret_cast<const char*>(pData + s.length()));
 	}
-
 #endif
 }
