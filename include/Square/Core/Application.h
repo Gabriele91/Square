@@ -83,7 +83,7 @@ namespace Square
         GPU_AMD,
         GPU_NV,
         GPU_INTEL,
-        GPU_HIGTH,
+        GPU_HIGH,
         GPU_LOW
     };
 

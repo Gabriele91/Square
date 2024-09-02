@@ -61,7 +61,7 @@ namespace Video
 		{
 			GPU_TYPE_DEFAULT,
 			GPU_TYPE_LOW,
-			GPU_TYPE_HIGTH
+			GPU_TYPE_HIGH
 		};
 		context_type  m_type{ CTX_OPENGL };
 		unsigned int  m_version[2]{ 3, 0 };
