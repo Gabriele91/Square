@@ -472,13 +472,14 @@ namespace Filesystem
         std::string relative(output_path);
         std::string::size_type dquote1 = relative.find('\"');
         std::string::size_type dquote2 = relative.rfind('\"');
-        if (dquote1 != std::string::npos &&
-            dquote2 != std::string::npos &&
+        if (dquote1 != std::string::npos && 
+            dquote2 != std::string::npos && 
             dquote1 != dquote2)
         {
-            relative = relative.substr(dquote1 + 1, dquote2 - dquote1 - 1);
+            relative = relative.substr(dquote1 + 1, dquote2 - dquote1 -1);
         }
-        return PathOperation{ true, output_path };
+        // Return
+        return PathOperation{ true, std::move(relative) };
 #else
         std::string output_path;
 

@@ -88,6 +88,9 @@
     <Filter Include="Resource\common\material">
       <UniqueIdentifier>{d2943880-7911-42e3-bfe7-60ada0eb4fb5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Math">
+      <UniqueIdentifier>{678ef197-f289-4bac-b177-3fc9c569d678}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Square\Math\Linear.h">
@@ -342,6 +345,9 @@
     <ClInclude Include="..\include\Square\Core\Logger.h">
       <Filter>include\Square\Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Render\ConstantBuffer.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -479,9 +485,6 @@
     <ClCompile Include="..\source\Data\ParserMaterial.cpp">
       <Filter>source\Data</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\Math\Tangent.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\Render\GBuffer.cpp">
       <Filter>Source\Render</Filter>
     </ClCompile>
@@ -556,6 +559,9 @@
     </ClCompile>
     <ClCompile Include="..\source\Core\Logger.cpp">
       <Filter>source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Math\Tangent.cpp">
+      <Filter>Source\Math</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -639,6 +645,12 @@
     </None>
     <None Include="..\common\material\default.mat">
       <Filter>Resource\common\material</Filter>
+    </None>
+    <None Include="..\common\effect\CastDirectionShadow.hlsl">
+      <Filter>Resource\common\effect</Filter>
+    </None>
+    <None Include="..\common\shader\DirectionShadowLight.hlsl">
+      <Filter>Resource\common\shader</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

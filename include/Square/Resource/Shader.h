@@ -97,16 +97,15 @@ namespace Resource
 			PostprocessOutput& source
 		);
 
+		bool hlsl_compile
+		(
+			const PostprocessOutput& source
+		);
+
 		bool source_to_spirv
 		(
 			const PostprocessOutput& source,
 			HLSL2ALL::TypeSpirvShaderList& output
-		);
-
-		bool spirv_to_hlsl_compile
-		(
-			const PostprocessOutput& source,
-			const HLSL2ALL::TypeSpirvShaderList& input
 		);
 
 		bool spirv_to_glsl_compile

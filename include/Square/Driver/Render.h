@@ -1023,6 +1023,12 @@ namespace Render
 			const TextureRawDataInformation& data,
 			const TextureGpuDataInformation& info
 		) = 0;
+		virtual Texture* create_texture_array
+		(
+			const TextureRawDataInformation& data,
+			const TextureGpuDataInformation& info,
+			int   size
+		) = 0;
 		virtual Texture* create_cube_texture
 		(
 			const TextureRawDataInformation  data[6],

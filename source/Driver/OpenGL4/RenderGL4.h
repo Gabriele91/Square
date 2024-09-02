@@ -586,6 +586,12 @@ namespace Render
 			const TextureRawDataInformation& data,
 			const TextureGpuDataInformation& info
 		) override;
+		virtual Texture* create_texture_array
+		(
+			const TextureRawDataInformation& data,
+			const TextureGpuDataInformation& info,
+			int   size
+		) override;
 		virtual Texture* create_cube_texture
 		(
 			const TextureRawDataInformation  data[6],

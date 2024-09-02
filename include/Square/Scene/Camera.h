@@ -56,6 +56,7 @@ namespace Scene
         //get
         const Mat4& model() const override;
         const Mat4& view() const override;
+        const Mat4& projection() const override;
         const Render::Viewport& viewport() const override;
         const Geometry::Frustum& frustum() const override;
         

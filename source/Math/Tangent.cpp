@@ -36,6 +36,7 @@
 
 namespace Square
 {
+	// Reimplement binary_function for C++17
 	template <class ARG1, class ARG2, class RESULT>
 	struct binary_function
 	{

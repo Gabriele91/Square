@@ -2229,6 +2229,116 @@ namespace Render
 			texture2D->m_format_raw = texture_format_raw;
 			texture2D->m_format_data = texture_format_data;
 			texture2D->m_format_shader_resource = texture_format_resource;
+			texture2D->m_size = 1;
+			//view
+			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
+			s_resource_view.Format = texture_format_resource;
+			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			s_resource_view.Texture2D.MostDetailedMip = 0;
+			s_resource_view.Texture2D.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
+			//try
+			if (!dx_op_success(device()->CreateShaderResourceView(d11_texture, &s_resource_view, &texture2D->m_resource_view)))
+			{
+				m_errors.push_back({ "create_texture: wrong to generate shader resource view" });
+				//wrong
+				return texture2D;
+			}
+			//build
+			if (info.m_build_mipmap)
+			{
+				device_context()->GenerateMips(texture2D->m_resource_view);
+			}
+			//build sampler
+			D3D11_SAMPLER_DESC sampler_desc = {};
+			sampler_desc.AddressU = get_texture_edge_type(info.m_edge_s);
+			sampler_desc.AddressV = get_texture_edge_type(info.m_edge_t);
+			sampler_desc.AddressW = get_texture_edge_type(info.m_edge_r);
+			sampler_desc.Filter = get_texture_min_filter(info.m_min_type, info.m_mag_type);
+			sampler_desc.BorderColor[0] = 0;
+			sampler_desc.BorderColor[1] = 0;
+			sampler_desc.BorderColor[2] = 0;
+			sampler_desc.BorderColor[3] = 0;
+			sampler_desc.MaxAnisotropy = info.m_anisotropy;
+			sampler_desc.MinLOD = info.m_mipmap_min;
+			sampler_desc.MaxLOD = info.m_mipmap_max;
+			//try
+			if (!dx_op_success(device()->CreateSamplerState(&sampler_desc, &texture2D->m_sempler)))
+			{
+				//wrong
+				m_errors.push_back({ "create_texture: wrong to generate texture sampler" });
+			}
+			//wrong
+			return texture2D;
+		}
+		//test
+		print_errors();
+		//return texture
+		return nullptr;
+	}
+	
+	Texture* ContextDX11::create_texture_array
+	(
+		const TextureRawDataInformation& data,
+		const TextureGpuDataInformation& info,
+		int   size
+	)
+	{
+		const unsigned char* texture_bytes = data.m_bytes; 
+		UINT pixel_size = get_textut_pixel_size(data.m_format);
+		D3D11_USAGE usage = info.m_read_from_cpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
+		UINT cpu_access_flags = info.m_read_from_cpu ? D3D11_CPU_ACCESS_READ : 0;
+		UINT mip_levels = info.m_build_mipmap ? 0 : info.m_mipmap_max;
+		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
+		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
+		//format
+		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format);
+		bool	    depth_target        = is_depth_texture(texture_format_raw);
+		DXGI_FORMAT texture_format_data = texture_depth_to_typeless_texture(texture_format_raw);
+		DXGI_FORMAT texture_format_resource = texture_depth_to_resource_format(texture_format_raw);
+		//render target
+		if (depth_target) bind_flags |= D3D11_BIND_DEPTH_STENCIL;
+		else              bind_flags |= D3D11_BIND_RENDER_TARGET;
+		//new image if need
+		auto new_image = Unique<const unsigned char[]> (add_alpha_if_need(allocator(), data.m_bytes, data.m_width, data.m_height, data.m_format), DefaultDelete(allocator()));
+		//if new image alloc, point to new image
+		if (new_image.get())
+		{
+			texture_bytes = new_image.get();
+			pixel_size += 1; //alpha channel
+		}
+		//TEXTURE2D
+		D3D11_TEXTURE2D_DESC texture_desc
+		{
+			data.m_width,		//UINT Width;
+			data.m_height,		//UINT Height;
+			mip_levels,			//UINT MipLevels;
+			size + 1,		    //UINT ArraySize;
+			texture_format_data,//DXGI_FORMAT Format;
+			1, 0,				//DXGI_SAMPLE_DESC SampleDesc;
+			usage,				//D3D11_USAGE Usage;
+			bind_flags,			//UINT BindFlags;
+			cpu_access_flags,	//UINT CPUAccessFlags;
+			misc_flags	        //UINT MiscFlags;
+		};
+		//build
+		ID3D11Texture2D* d11_texture;
+		if (dx_op_success(device()->CreateTexture2D(&texture_desc, nullptr, &d11_texture)))
+		{
+			//upload
+			if (texture_bytes)
+			{
+				device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes, (data.m_width * pixel_size), 0);
+			}
+			//declare
+			auto* texture2D = new Texture2D();
+			texture2D->m_texture2D = d11_texture;			
+			texture2D->m_width = data.m_width;
+			texture2D->m_height = data.m_height;
+			texture2D->m_is_depth = depth_target;
+			texture2D->m_format_raw = texture_format_raw;
+			texture2D->m_format_data = texture_format_data;
+			texture2D->m_format_shader_resource = texture_format_resource;
+			texture2D->m_size = size;
 			//view
 			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
 			s_resource_view.Format = texture_format_resource;
@@ -2354,6 +2464,7 @@ namespace Render
 			texture2D->m_format_raw = texture_format_raw;
 			texture2D->m_format_data = texture_format_data;
 			texture2D->m_format_shader_resource = texture_format_resource;
+			texture2D->m_size = 6;
 			//view
 			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
 			s_resource_view.Format = texture_format_resource;
@@ -2690,7 +2801,7 @@ namespace Render
 			if (SUCCEEDED(reflector->GetResourceBindingDesc(i, &bind_desc)))
 			{
 				//if is a texture // WIP, (D3D_SIT_TEXTURE) same location of texture                           
-				if (bind_desc.Type == D3D_SIT_SAMPLER)
+				if (bind_desc.Type == D3D_SIT_TEXTURE /* D3D_SIT_SAMPLER */)
 				{
 					info.m_fields_uniforms[std::string(bind_desc.Name)] = UniformDX11(context, shader, nullptr, bind_desc.BindPoint);
 				}
@@ -2740,8 +2851,14 @@ namespace Render
 					, nullptr
 					, info.m_entry_point.c_str()
 					, shader_version[info.m_type]
-					,   D3DCOMPILE_OPTIMIZATION_LEVEL3  
-				  /*  | D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY */ 
+					,  D3DCOMPILE_PACK_MATRIX_ROW_MAJOR
+				     | D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
+#ifdef _DEBUG
+					 | D3DCOMPILE_OPTIMIZATION_LEVEL0
+					 | D3DCOMPILE_DEBUG
+#else // Release
+					| D3DCOMPILE_OPTIMIZATION_LEVEL3
+#endif 
 					, 0
 					, 0
 					, NULL
@@ -3000,6 +3117,12 @@ namespace Render
 						desc_dsv.Format = t_field.m_texture->m_format_raw;
 						desc_dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
 						desc_dsv.Texture2DArray.ArraySize = 6;
+					}
+					else if (t_field.m_texture->m_size > 1)
+					{
+						desc_dsv.Format = t_field.m_texture->m_format_raw;
+						desc_dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+						desc_dsv.Texture2DArray.ArraySize = t_field.m_texture->m_size;
 					}
 					else
 					{
