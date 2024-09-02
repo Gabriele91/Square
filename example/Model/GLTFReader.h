@@ -866,6 +866,29 @@ namespace GLTF
         return size_t(document.find("scene") != document.end() ? document.at("scene").number(0) : 0);
     }
 
+    namespace Aux
+    {
+        // Decode GLTF from json and bins
+        static GLTFReturn decode_from_json_and_buffers(Json&& jmodel, Buffers&& buffers)
+        {
+            // Get document:
+            auto& document = jmodel.document().object();
+            // Get all components
+            return GLTF
+            {
+                  std::forward<Buffers>(buffers)
+                , std::move(decode_views(document["bufferViews"]))
+                , std::move(decode_accessors(document["accessors"]))
+                , std::move(decode_meshes(document["meshes"]))
+                , std::move(decode_textures(document["textures"]))
+                , std::move(decode_materials(document["materials"]))
+                , std::move(decode_nodes(document["nodes"]))
+                , std::move(decode_scenes(document["scenes"]))
+                , decode_scene(document)
+            };
+        }
+    }
+
     // Load GLTF from GLTF file
     static GLTFReturn from_gltf(const std::string& path)
     {
@@ -883,21 +906,14 @@ namespace GLTF
         {
             return "Invalid GLTF";
         }
-        // Get document:
-        auto& document = jmodel.document().object();
-        // Get all components
-        return GLTF
-        {
-              std::move(load_buffers(path, document["buffers"]))
-            , std::move(decode_views(document["bufferViews"]))
-            , std::move(decode_accessors(document["accessors"]))
-            , std::move(decode_meshes(document["meshes"]))
-            , std::move(decode_textures(document["textures"]))
-            , std::move(decode_materials(document["materials"]))
-            , std::move(decode_nodes(document["nodes"]))
-            , std::move(decode_scenes(document["scenes"]))
-            , decode_scene(document)
-        };
+        // Get buffers:
+        Buffers buffers = load_buffers(path, jmodel.document()["buffers"]);
+        // Decode
+        return Aux::decode_from_json_and_buffers
+        (
+            std::move(jmodel),
+            std::move(buffers)
+        );
     }    
     
     // Load GLTF from GLB bin
@@ -917,21 +933,12 @@ namespace GLTF
         {
             return "Invalid GLTF";
         }
-        // Get document:
-        auto& document = jmodel.document().object();
-        // Get all components
-        return GLTF
-        {
-              std::move(Buffers{glb.bin})
-            , std::move(decode_views(document["bufferViews"]))
-            , std::move(decode_accessors(document["accessors"]))
-            , std::move(decode_meshes(document["meshes"]))
-            , std::move(decode_textures(document["textures"]))
-            , std::move(decode_materials(document["materials"]))
-            , std::move(decode_nodes(document["nodes"]))
-            , std::move(decode_scenes(document["scenes"]))
-            , decode_scene(document)
-        };
+        // Decode
+        return Aux::decode_from_json_and_buffers
+        (
+            std::move(jmodel),
+            std::move(Buffers{ std::move(glb.bin) })
+        );
     }
 
     // Load GLTF
