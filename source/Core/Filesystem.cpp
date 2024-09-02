@@ -1,4 +1,5 @@
 #include "Square/Core/Filesystem.h"
+#include "Square/Core/StringUtilities.h"
 #include <sstream>
 #include <cstdlib>
 #include <cstring>
@@ -17,7 +18,8 @@
 	#define F_OK 00
 	#define R_OK 04
 	#define W_OK 02
-	#define SEPARETOR "\\"
+	#define SEPARETOR '\\'
+    #define OS_MAX_PATH MAX_PATH
 #else
 	#include <sys/types.h>
     #include <sys/stat.h>
@@ -30,7 +32,8 @@
 	#include <libgen.h>
 	#endif
     #define bswap32 __builtin_bswap32
-	#define SEPARETOR "/"
+	#define SEPARETOR '/'
+    #define OS_MAX_PATH _POSIX_PATH_MAX
 #endif
 
 namespace Square
@@ -375,6 +378,65 @@ namespace Filesystem
 #endif
     }
 
+    SQUARE_API PathOperation get_canonical(const std::string& fullpath)
+    {
+        // Path output
+        char path[OS_MAX_PATH]{ 0 };
+
+#if defined( _WIN32 )
+        std::string fullpath_win32 = replace_all(fullpath, "/", "\\");
+        strncpy(path, fullpath_win32.c_str(), (std::min<size_t>)(fullpath_win32.size(), OS_MAX_PATH));
+#else 
+        strncpy(path, fullpath.c_str(), (std::min<size_t>)(fullpath.size(), OS_MAX_PATH));
+#endif
+
+        char* src { 0 };
+        char* dst { 0 };
+        char c;
+        int  slash = 0;
+
+        /* Convert multiple adjacent slashes to single slash */
+        src = dst = path;
+        while ((c = *dst++ = *src++) != '\0')
+        {
+            if (c == SEPARETOR)
+            {
+                slash = 1;
+                while (*src == SEPARETOR)
+                    src++;
+            }
+        }
+
+        if (slash == 0)
+            return PathOperation{ false, "" };
+
+        /* Remove "./" from "./xxx" but leave "./" alone. */
+        /* Remove "/." from "xxx/." but reduce "/." to "/". */
+        /* Reduce "xxx/./yyy" to "xxx/yyy" */
+        src = dst = (*path == SEPARETOR) ? path + 1 : path;
+        while (src[0] == '.' && src[1] == SEPARETOR && src[2] != '\0')
+            src += 2;
+        while ((c = *dst++ = *src++) != '\0')
+        {
+            if (c == SEPARETOR && src[0] == '.' && (src[1] == '\0' || src[1] == SEPARETOR))
+            {
+                src++;
+                dst--;
+            }
+        }
+        if (path[0] == SEPARETOR && path[1] == '.' &&
+            (path[2] == '\0' || (path[2] == SEPARETOR && path[3] == '\0')))
+            path[1] = '\0';
+
+        /* Remove trailing slash, if any.  There is at most one! */
+        /* dst is pointing one beyond terminating null */
+        if ((dst -= 2) > path && *dst == SEPARETOR)
+            *dst++ = '\0';
+        
+        // Ok
+        return PathOperation{ true, std::string(path) };
+    }
+
     std::vector<std::string> split(std::string str, const std::string& delimiter)
     {
         //temps
@@ -406,6 +468,16 @@ namespace Filesystem
             absolute_path.m_path.c_str(),
             FILE_ATTRIBUTE_NORMAL) == 0) return PathOperation{ false, "" };
 
+        // Remove .\"" from relative path .\\"<disk>:"
+        std::string relative(output_path);
+        std::string::size_type dquote1 = relative.find('\"');
+        std::string::size_type dquote2 = relative.rfind('\"');
+        if (dquote1 != std::string::npos &&
+            dquote2 != std::string::npos &&
+            dquote1 != dquote2)
+        {
+            relative = relative.substr(dquote1 + 1, dquote2 - dquote1 - 1);
+        }
         return PathOperation{ true, output_path };
 #else
         std::string output_path;

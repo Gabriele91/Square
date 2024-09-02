@@ -87,8 +87,11 @@ namespace Parser
 					//only dir
 					if (n_path_field.m_recursive)
 					{
-						n_path_field.m_path =
-							Filesystem::get_directory(n_path_field.m_path);
+						n_path_field.m_path = Filesystem::get_directory(n_path_field.m_path);
+						if(auto canonical_path = Filesystem::get_canonical(n_path_field.m_path); canonical_path.m_success)
+						{
+							n_path_field.m_path = canonical_path.m_path;
+						}
 					}
 					//skip spaces
 					skip_space_and_comments(m_context->m_line, ptr);

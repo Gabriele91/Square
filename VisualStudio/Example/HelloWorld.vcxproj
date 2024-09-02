@@ -99,6 +99,7 @@
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib;$(SolutionDir)\bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Square.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
       <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath)</Command>
@@ -118,6 +119,7 @@
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib;$(SolutionDir)\bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Square.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
       <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath)</Command>
@@ -145,6 +147,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib;$(SolutionDir)\bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Square.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
       <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath)</Command>
@@ -172,6 +175,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib;$(SolutionDir)\bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Square.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
       <Command>copy $(SolutionDir)dependencies\$(Platform)\bin\*.dll $(OutputPath)</Command>

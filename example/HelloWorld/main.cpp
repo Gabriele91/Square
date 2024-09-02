@@ -4,12 +4,13 @@
 //  Created by Gabriele Di Bari on 18/10/17.
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
+#define SQUARE_MAIN
 #include <Square/Square.h>
-#include <Square/Driver/Window.h>
-#include <Square/Driver/Input.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>
+//#define MODEL_LOAD "box" // "drone" // "box" // "crate"
+
 
 class Cube : public Square::Scene::Component
            , public Square::Render::Renderable
@@ -170,7 +171,7 @@ public:
 	{
 		if (auto str = msg.m_value.ptr<std::string>().value_or(nullptr))
 		{
-			std::cout << *str << std::endl;
+			context().logger()->info(*str);
 		}
 	}
     
@@ -201,178 +202,6 @@ public:
 };
 SQUARE_CLASS_OBJECT_REGISTRATION(Cube);
 
-namespace Square
-{
-
-	class StaticModel : public Square::Scene::Component
-			          , public Square::Render::Renderable
-	{
-	public:
-		SQUARE_OBJECT(StaticModel)
-
-		Square::Geometry::OBoundingBox m_obb_local;
-		Square::Geometry::OBoundingBox m_obb_global;
-		Square::Shared< Square::Resource::Mesh >       m_mesh;
-		Square::Shared< Square::Resource::Material >   m_material;
-		Square::Weak< Square::Render::Transform >      m_transform;
-
-		StaticModel(Square::Context& context) : Component(context)
-		{
-			build_local_obounding_box();
-		}
-
-		virtual size_t materials_count() const { return 1; }
-
-		virtual Square::Weak<Square::Render::Material> material(size_t i = 0) const override
-		{
-			return Square::DynamicPointerCast<Square::Render::Material>(m_material);
-		}
-
-		virtual void draw
-		(
-			  Square::Render::Context& render
-			, size_t material_id
-			, Square::Render::EffectPassInputs& input
-			, Square::Render::EffectPass& pass
-		) override
-		{
-
-			using namespace Square;
-			using namespace Square::Data;
-			using namespace Square::Scene;
-			using namespace Square::Resource;
-			using namespace Square::Render;
-			using namespace Square::Render::Layout;
-			//bind
-			pass.bind(render, input, m_material->parameters());
-			//draw
-			m_mesh->draw(render);
-			//unbind
-			pass.unbind();
-		}
-
-		virtual bool support_culling() const override
-		{
-			return true;
-		}
-
-		virtual bool visible() const override
-		{ 
-			return Square::Render::Renderable::visible() && m_mesh;
-		}
-
-		virtual void on_transform() override
-		{
-			if (auto transform = m_transform.lock())
-			{
-				using namespace Square;
-				m_obb_global = m_obb_local * transform->global_model_matrix();
-			}
-		}
-
-		virtual const Square::Geometry::OBoundingBox& bounding_box() override
-		{
-			return m_obb_global;
-		}
-
-		virtual Square::Weak<Square::Render::Transform> transform() const override
-		{
-			return m_transform;
-		}
-
-		//events
-		virtual void on_attach(Square::Scene::Actor& entity) override
-		{
-			m_transform = Square::DynamicPointerCast<Square::Render::Transform>(entity.shared_from_this());
-		}
-		
-		virtual void on_deattch() override
-		{
-			//m_transform = {nullptr};
-		}
-		
-		virtual void on_message(const Square::Scene::Message& msg) override {  }
-
-		//regs
-		static void object_registration(Square::Context& ctx)
-		{
-			//using
-			using namespace Square;
-			using namespace Square::Resource;
-			// Add StaticModel
-			ctx.add_object<StaticModel>();
-			// Material
-			ctx.add_attribute_function<StaticModel, std::string>
-				("material"
-				, std::string()
-				, [](const StaticModel* sm) -> std::string
-				{ if (sm->m_material) return sm->m_material->resource_untyped_name(); else return ""; }
-				, [](StaticModel* sm, const std::string& name)
-				{ if (name.size()) sm->m_material = sm->context().resource<Material>(name); });
-			// Mesh
-			ctx.add_attribute_function<StaticModel, std::string>
-				("mesh"
-				, std::string()
-				, [](const StaticModel* sm) -> std::string
-				{ if (sm->m_mesh) return sm->m_mesh->resource_untyped_name(); else return ""; }
-				, [](StaticModel* sm, const std::string& name)
-				{ if (name.size())
-			      {
-				     if(sm->m_mesh = sm->context().resource<Mesh>(name); !sm->m_mesh)
-						 sm->context().add_wrong("Faild to load static model: " + name);
-					 if (!sm->build_local_obounding_box())
-						 sm->context().add_wrong("Faild to compute the OBB: " + name);
-				  }
-				});
-		}
-
-		//serialize
-		virtual void serialize(Square::Data::Archive& archivie)  override 
-		{ 
-			Square::Data::serialize(archivie, this);
-		}
-		virtual void serialize_json(Square::Data::Json& archivie) override { }
-		//deserialize
-		virtual void deserialize(Square::Data::Archive& archivie) override 
-		{ 
-			Square::Data::deserialize(archivie, this); 
-		}
-		virtual void deserialize_json(Square::Data::Json& archivie) override { }
-
-		// build bbox
-		bool build_local_obounding_box()
-		{
-			if(m_mesh)
-			if(auto render = context().render())
-			if(auto vbuffer = m_mesh->vertex_buffer())
-			if(auto gpuvertex = context().render()->copy_buffer_VBO(vbuffer.get()); gpuvertex.size())
-			{
-				//offset of position:
-				size_t vertex_size = sizeof(Render::Layout::Position3DNormalTangetBinomialUV);
-				size_t offest_position = offsetof(Render::Layout::Position3DNormalTangetBinomialUV, m_position);
-				size_t n_points = render->get_size_VBO(vbuffer.get()) / vertex_size;
-				//cube as obb
-				m_obb_local = Geometry::obounding_box_from_sequenzial_triangles
-				(
-					  gpuvertex.data()
-					, offest_position
-					, vertex_size
-					, n_points
-				);
-				// Ok
-				return true;
-			}
-			return false;
-		}
-		
-		// store
-		private:
-			Square::Render::Mesh::Vertex3DNTBUVList m_mesh_vertexs;
-			Square::Render::Mesh::IndexList m_mesh_ids;
-	};
-	SQUARE_CLASS_OBJECT_REGISTRATION(StaticModel);
-}
-
 class Game01 : public Square::AppInterface
 {
 public:
@@ -386,7 +215,7 @@ public:
 		using namespace Square::Scene;
 		using namespace Square::Resource;
 		//move vel
-		const float velocity = 100.0f  * application().last_delta_time();
+		const float velocity = 20.0f  * application().last_delta_time();
 		const auto  level_path = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.sq");
 		//
 		switch (key)
@@ -404,7 +233,7 @@ public:
 		case Square::Video::KEY_C:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
-				std::cout << "FPS avg: " << m_counter.get() << std::endl;
+				context().logger()->info("FPS avg: " + std::to_string(m_counter.get()));
 			}
 			break;
 		case Square::Video::KEY_T:
@@ -451,12 +280,19 @@ public:
 		using namespace Square::Scene;
 		using namespace Square::Resource;
 		//rs file
-		context().add_resources(Filesystem::resource_dir() + "/resources.rs");
+		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "/resources.rs"));
+		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "../Model/resources.rs"));
 		//level
 		m_level = world().level();
         m_drawer = Square::MakeShared<Render::Drawer>(context());
 		m_drawer->add(MakeShared<Render::DrawerPassForward>(context()));
 		m_drawer->add(MakeShared<Render::DrawerPassShadow>(context()));
+		#ifdef MODEL_LOAD
+		{
+			auto model = m_level->load_actor(MODEL_LOAD);
+			model->translation({ 0.0,-2.0, 10.0 });
+		}
+		#endif
         //camera
         auto camera = m_level->actor("camera");
         camera->translation({ 0,0,0 });
@@ -469,10 +305,10 @@ public:
 		//bottom box
 		auto box_bottom = m_level->actor("box_bottom");
 		//model + material + position + scale
-//		box_bottom->component<Cube>()->m_material = context().resource<Material>("box");
-		box_bottom->component<StaticModel>()->m_material = context().resource<Material>("box");
-		box_bottom->component<StaticModel>()->m_mesh = context().resource<Mesh>("cube");
-		box_bottom->component<StaticModel>()->build_local_obounding_box();
+		box_bottom->component<Cube>()->m_material = context().resource<Material>("box");
+		//box_bottom->component<StaticMesh>()->m_material = context().resource<Material>("box");
+		//box_bottom->component<StaticMesh>()->m_mesh = context().resource<Mesh>("cube");
+		//box_bottom->component<StaticMesh>()->m_obb_local.set(Constants::identity<Mat3>(), { 0,0,0 }, { 0.5,0.5,0.5 });
 		box_bottom->position({ 0.0, -6.0, 10.0 });
 		box_bottom->scale({ 20.0, 1.0, 20.0 });
 		//right box
@@ -529,11 +365,6 @@ public:
 				0.0
 			});
 		}
-		//wrongs
-		for (const std::string& wrong : Square::reverse( context().wrongs() ))
-		{
-			std::cout << wrong << std::endl;
-		}
     }
     
     bool run(double dt)
@@ -552,6 +383,15 @@ public:
 			, Vec4(0.1,0.1,0.1,1.0)
 			, m_level->randerable_collection()
 		);
+		// Adam
+#ifdef MODEL_LOAD
+		if (auto model = m_level->actor(MODEL_LOAD))
+		{
+			model->turn(
+				rotate_euler(0.0f, Square::radians(90.0f) * float(dt), 0.0f)
+			);
+		}
+#endif
 		//fps counter
 		m_counter.count_frame();
 		//loop event
@@ -610,14 +450,14 @@ int main(int argc, const char** argv)
 	// Show help:
 	if (args.find("help") != args.end() && std::get<bool>(args["help"]))
 	{
-		std::cout << (Filesystem::get_filename(argv[0]) + ":\n") << std::endl;
-		std::cout << Shell::help(s_ShellCommands) << std::endl;
+		app.context()->logger()->info((Filesystem::get_filename(argv[0]) + ":\n"));
+		app.context()->logger()->info(Shell::help(s_ShellCommands));
 		return 0;
 	}
 	// Test error
 	if (error.type != Shell::ErrorType::none)
 	{
-		app.context()->add_wrong("Error to parse input [" + std::to_string(error.id_argument) + "]: " + error.what);
+		app.context()->logger()->error("Error to parse input [" + std::to_string(error.id_argument) + "]: " + error.what);
 		return -1;
 	}
 	// Build cube
@@ -692,8 +532,8 @@ int main(int argc, const char** argv)
 	bool debug = std::get<bool>(args.at("debug"));
 	//driver?
 	WindowRenderDriver render_driver = std::get<std::string>(args.at("backend")) == "d3d"
-		? (WindowRenderDriver{ Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, debug })
-		: (WindowRenderDriver{ Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, debug });
+		? (WindowRenderDriver{ Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, GpuType::GPU_HIGTH, debug })
+		: (WindowRenderDriver{ Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, GpuType::GPU_HIGTH, debug });
 	//test
     app.execute
 	(

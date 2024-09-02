@@ -51,6 +51,7 @@ namespace Filesystem
         std::string m_path;
     };
     SQUARE_API PathOperation get_fullpath(const std::string& relative);
+    SQUARE_API PathOperation get_canonical(const std::string& fullpath);
     SQUARE_API PathOperation get_relative_to(const std::string& base, const std::string& path);
     //utilities directories
     struct FolderList
