@@ -219,7 +219,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
       { 
          Render::RenderDriver::DR_OPENGL, 4, 1 // DRIVER and Version 
         , 24, 8                                // Colors and depth
-        , GpuType::GPU_HIGTH                   // GPU type
+        , GpuType::GPU_HIGH                   // GPU type
         , false                                // Debug
       }
     , "ModelImporter"

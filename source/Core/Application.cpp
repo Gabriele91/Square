@@ -278,10 +278,10 @@ namespace Square
         case Square::GpuType::GPU_DEFAULT: 
             return Video::ContextInfo::GPU_TYPE_DEFAULT;
 
-        case Square::GpuType::GPU_HIGTH:
+        case Square::GpuType::GPU_HIGH:
         case Square::GpuType::GPU_AMD:
         case Square::GpuType::GPU_NV:
-            return Video::ContextInfo::GPU_TYPE_HIGTH;
+            return Video::ContextInfo::GPU_TYPE_HIGH;
 
         case Square::GpuType::GPU_INTEL:
         case Square::GpuType::GPU_LOW:

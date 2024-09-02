@@ -426,7 +426,7 @@ namespace Video
 		case ContextInfo::GPU_TYPE_LOW:
 			OptimusVariables().disable();
 		break;
-		case ContextInfo::GPU_TYPE_HIGTH:
+		case ContextInfo::GPU_TYPE_HIGH:
 			OptimusVariables().enable();
 		break;
 		// Default: not set

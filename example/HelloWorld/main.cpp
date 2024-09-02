@@ -9,7 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-//#define MODEL_LOAD "box" // "drone" // "box" // "crate"
+// #define MODEL_LOAD // "adamHead" // "drone" // "box" // "crate"
 
 
 class Cube : public Square::Scene::Component
@@ -433,9 +433,10 @@ private:
 
 static Square::Shell::ParserCommands s_ShellCommands
 {
-	  Square::Shell::Command{ "backend","b", "select backend [ogl, d3d]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("opengl")) }
-    , Square::Shell::Command{ "debug",  "d", "enable debug"             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
-	, Square::Shell::Command{ "help",   "h", "show help"                , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
+	  Square::Shell::Command{ "backend","b", "select backend [ogl, d3d]"  , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("ogl")) }
+    , Square::Shell::Command{ "gputype","g", "select gpu type [low, high]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("high")) }
+	, Square::Shell::Command{ "debug",  "d", "enable debug"               , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
+	, Square::Shell::Command{ "help",   "h", "show help"                  , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 };
 
 int main(int argc, const char** argv)
@@ -530,10 +531,12 @@ int main(int argc, const char** argv)
 	}
 	//debug?
 	bool debug = std::get<bool>(args.at("debug"));
+	//gpy type
+	GpuType gputype = std::get<std::string>(args.at("gputype")) == "low" ? GpuType::GPU_LOW : GpuType::GPU_HIGH;
 	//driver?
 	WindowRenderDriver render_driver = std::get<std::string>(args.at("backend")) == "d3d"
-		? (WindowRenderDriver{ Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, GpuType::GPU_HIGTH, debug })
-		: (WindowRenderDriver{ Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, GpuType::GPU_HIGTH, debug });
+		? (WindowRenderDriver{ Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, gputype, debug })
+		: (WindowRenderDriver{ Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, gputype, debug });
 	//test
     app.execute
 	(
