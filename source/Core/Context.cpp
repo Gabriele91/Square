@@ -144,7 +144,7 @@ namespace Square
         if(recursive)
         for(const std::string& directorypath : Filesystem::get_sub_directories(path))
         {
-            add_resource_path(directorypath, recursive);
+            add_resource_path(Filesystem::join(path, directorypath), recursive);
         }
         //for all files
         for(const std::string& filename : Filesystem::get_files(path))
