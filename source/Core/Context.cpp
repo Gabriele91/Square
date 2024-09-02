@@ -141,11 +141,18 @@ namespace Square
     void BaseContext::add_resource_path(const std::string& path, bool recursive)
     {
         //for all sub path
-        if(recursive)
-        for(const std::string& directorypath : Filesystem::get_sub_directories(path))
-        {
-            add_resource_path(Filesystem::join(path, directorypath), recursive);
-        }
+		if (recursive)
+		{
+			for (const std::string& directorypath : Filesystem::get_sub_directories(path))
+			{
+				std::string subdirfullpath = Filesystem::join(path, directorypath);
+				if (auto canonical_path = Filesystem::get_canonical(subdirfullpath); canonical_path.m_success)
+				{
+					subdirfullpath = canonical_path.m_path;
+				}
+				add_resource_path(subdirfullpath, recursive);
+			}
+		}
         //for all files
         for(const std::string& filename : Filesystem::get_files(path))
         {
