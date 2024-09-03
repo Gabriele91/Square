@@ -302,6 +302,12 @@ public:
 		case Square::Video::KEY_L:
 			m_level->actor("camera")->move({ 0, 10 * application().last_delta_time(),0 });
 		break;
+		case Square::Video::KEY_I:
+			m_level->actor("camera")->turn(rotate_euler<float>(0,-1. * application().last_delta_time(),0 ));
+		break;
+		case Square::Video::KEY_Y:
+			m_level->actor("camera")->turn(rotate_euler<float>(0, 1. * application().last_delta_time(), 0));
+		break;
 		break;
 		default: break;
 		}
