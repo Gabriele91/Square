@@ -72,7 +72,7 @@ namespace Parser
             case DT_GREATER_EQUAL:  return "greater_equal";
             case DT_NOT_EQUAL:  return "not_equal";
             case DT_ALWAYS: return "always";
-            default: break;
+            default: square_assert_debug(0); return "less";
         }
     }
 
@@ -104,7 +104,7 @@ namespace Parser
             case CF_BACK: return "back";
             case CF_FRONT: return "front";
             case CF_FRONT_AND_BACK: return "front_and_back";
-            default: return "";
+            default: square_assert_debug(0); return "front_and_back";
         }
     }
     
