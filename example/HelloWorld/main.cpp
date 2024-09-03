@@ -484,26 +484,22 @@ static Square::Shell::ParserCommands s_ShellCommands
 	, Square::Shell::Command{ "help",   "h", "show help"                  , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 };
 
-int main(int argc, const char** argv)
+square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValue& args, Square::Shell::Error& errors)
 {
     using namespace Square;
     using namespace Square::Data;
     using namespace Square::Scene;
-	//Create square application
-	Application app;
-	//Parser
-	auto [error, args] = Shell::parser(argc, argv, s_ShellCommands);
 	// Show help:
 	if (args.find("help") != args.end() && std::get<bool>(args["help"]))
 	{
-		app.context()->logger()->info((Filesystem::get_filename(argv[0]) + ":\n"));
+		app.context()->logger()->info((std::get<std::string>(args[Shell::__filename__]) + ":\n"));
 		app.context()->logger()->info(Shell::help(s_ShellCommands));
 		return 0;
 	}
 	// Test error
-	if (error.type != Shell::ErrorType::none)
+	if (errors.type != Shell::ErrorType::none)
 	{
-		app.context()->logger()->error("Error to parse input [" + std::to_string(error.id_argument) + "]: " + error.what);
+		app.context()->logger()->error("Error to parse input [" + std::to_string(errors.id_argument) + "]: " + errors.what);
 		return -1;
 	}
 	// Build cube
