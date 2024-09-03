@@ -9,7 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#define MODEL_LOAD "box" // "adamHead" // "drone" // "box" // "crate"
+// #define MODEL_LOAD // "adamHead" // "drone" // "box" // "crate"
 
 
 class Cube : public Square::Scene::Component
