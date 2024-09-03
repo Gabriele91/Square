@@ -478,9 +478,10 @@ namespace Render
 	bool ContextDX11::get_view_target(Video::DeviceResources* resource)
 	{
 		//delete last view target
-		if (m_view_target) delete m_view_target;
+		if (m_view_target) SQ_DELETE(allocator(), Target, m_view_target);
+
 		//target
-		m_view_target = new Target(false);
+		m_view_target = SQ_NEW(allocator(), Target, AllocType::ALCT_DEFAULT) Target(false);
 
 		m_view_target->m_views.push_back((ID3D11RenderTargetView*)resource->get_render_target());
 		m_view_target->m_depth = (ID3D11DepthStencilView*)resource->get_depth_stencil_target();
@@ -506,7 +507,7 @@ namespace Render
 			D3D11_CPU_ACCESS_READ,         //UINT CPUAccessFlags;
 			0					           //UINT MiscFlags;
 		};
-		m_query_buffer[0] = new Texture2D();
+		m_query_buffer[0] = SQ_NEW(allocator(), Texture2D, AllocType::ALCT_DEFAULT) Texture2D();
 		if (!SUCCEEDED(device()->CreateTexture2D(&scd, NULL, &m_query_buffer[0]->m_texture2D))) return false;
 		//default format
 		DXGI_FORMAT depth_format = DXGI_FORMAT_D32_FLOAT;
@@ -531,7 +532,7 @@ namespace Render
 			D3D11_CPU_ACCESS_READ,  //UINT CPUAccessFlags;
 			0					    //UINT MiscFlags;
 		};
-		m_query_buffer[1] = new Texture2D();
+		m_query_buffer[1] = SQ_NEW(allocator(), Texture2D, AllocType::ALCT_DEFAULT) Texture2D();
 		if (!SUCCEEDED(device()->CreateTexture2D(&sdd, NULL, &m_query_buffer[1]->m_texture2D))) return false;
 		return true;
 	}
@@ -648,9 +649,9 @@ namespace Render
 		if (m_render_state_cullface_back_and_front) m_render_state_cullface_back_and_front->Release();
 		if (m_render_state_cullface_disable) m_render_state_cullface_disable->Release();
 		
-		if (m_view_target) delete m_view_target;
-		if (m_query_buffer[0]) delete m_query_buffer[0];
-		if (m_query_buffer[1]) delete m_query_buffer[1];
+		if (m_view_target) SQ_DELETE(allocator(), Target, m_view_target);
+		if (m_query_buffer[0]) SQ_DELETE(allocator(), Texture2D, m_query_buffer[0]);
+		if (m_query_buffer[1]) SQ_DELETE(allocator(), Texture2D, m_query_buffer[1]);
 
 		/* Resource managed by window device
 		if (m_device_context) m_device_context->Release();
@@ -981,7 +982,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&cbd, subresource, &buffer)))
 		{
-			return new ConstBuffer(buffer, size);
+			return SQ_NEW(allocator(), ConstBuffer, AllocType::ALCT_DEFAULT) ConstBuffer(buffer, size);
 		}
 		return nullptr;
 	}
@@ -1006,7 +1007,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&vbd, vbo ? &init_data : nullptr, &buffer)))
 		{
-			return new VertexBuffer(buffer, stride, n);
+			return SQ_NEW(allocator(), VertexBuffer, AllocType::ALCT_DEFAULT) VertexBuffer(buffer, stride, n);
 		}
 		return nullptr;
 	}
@@ -1031,7 +1032,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&ibd, ibo ? &init_data : nullptr, &buffer)))
 		{
-			return new IndexBuffer(buffer, size);
+			return SQ_NEW(allocator(), IndexBuffer, AllocType::ALCT_DEFAULT) IndexBuffer(buffer, size);
 		}
 		return nullptr;
 	}
@@ -1056,7 +1057,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&cbd, subresource, &buffer)))
 		{
-			return new ConstBuffer(buffer, size);
+			return SQ_NEW(allocator(), ConstBuffer, AllocType::ALCT_DEFAULT) ConstBuffer(buffer, size);
 		}
 		return nullptr;
 	}
@@ -1080,7 +1081,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&vbd, vbo ? &init_data : nullptr, &buffer)))
 		{
-			return new VertexBuffer(buffer, stride, n);
+			return SQ_NEW(allocator(), VertexBuffer, AllocType::ALCT_DEFAULT) VertexBuffer(buffer, stride, n);
 		}		
 		return nullptr;
 	}
@@ -1104,7 +1105,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&ibd, ibo ? &init_data : nullptr, &buffer)))
 		{
-			return new IndexBuffer(buffer, size);
+			return SQ_NEW(allocator(), IndexBuffer, AllocType::ALCT_DEFAULT) IndexBuffer(buffer, size);
 		}
 		return nullptr;
 	}
@@ -1480,7 +1481,7 @@ namespace Render
 			unbind_CB(s_bind_context.m_const_buffer);
 		}
 		//safe delete
-		delete cb;
+		SQ_DELETE(allocator(), ConstBuffer, cb);
 		cb = nullptr;
 	}
 
@@ -1492,7 +1493,7 @@ namespace Render
             unbind_VBO(s_bind_context.m_vertex_buffer);
         }
         //safe delete
-		delete vbo;
+		SQ_DELETE(allocator(), VertexBuffer, vbo);
 		vbo = nullptr;
 	}
 
@@ -1504,7 +1505,7 @@ namespace Render
             unbind_IBO(s_bind_context.m_index_buffer);
         }
         //safe delete
-		delete ibo;
+		SQ_DELETE(allocator(), IndexBuffer, ibo);
 		ibo = nullptr;
 	}
 	/*
@@ -1771,7 +1772,7 @@ namespace Render
 			layouts.push_back(layout);
 		}
 		//success
-		return new InputLayout(atl, layouts);
+		return SQ_NEW(allocator(), InputLayout, AllocType::ALCT_DEFAULT) InputLayout(atl, layouts);
 	}
 
 	size_t ContextDX11::size_IL(const InputLayout* layout)
@@ -1834,7 +1835,7 @@ namespace Render
 
 	void ContextDX11::delete_IL(InputLayout*& il)
 	{
-		delete  il;
+		SQ_DELETE(allocator(), InputLayout, il);
 		il = nullptr;
 	}
 
@@ -2221,7 +2222,7 @@ namespace Render
 				device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes, (data.m_width * pixel_size), 0);
 			}
 			//declare
-			auto* texture2D = new Texture2D();
+			auto* texture2D = SQ_NEW(allocator(), Texture2D, AllocType::ALCT_DEFAULT) Texture2D();
 			texture2D->m_texture2D = d11_texture;			
 			texture2D->m_width = data.m_width;
 			texture2D->m_height = data.m_height;
@@ -2330,7 +2331,7 @@ namespace Render
 				device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes, (data.m_width * pixel_size), 0);
 			}
 			//declare
-			auto* texture2D = new Texture2D();
+			auto* texture2D = SQ_NEW(allocator(), Texture2D, AllocType::ALCT_DEFAULT) Texture2D();
 			texture2D->m_texture2D = d11_texture;			
 			texture2D->m_width = data.m_width;
 			texture2D->m_height = data.m_height;
@@ -2455,7 +2456,7 @@ namespace Render
 					device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes[i], (data[i].m_width * pixel_size), 0);
 			}
 			//declare
-			auto* texture2D = new Texture2D();
+			auto* texture2D = SQ_NEW(allocator(), Texture2D, AllocType::ALCT_DEFAULT) Texture2D();
 			texture2D->m_texture2D = d11_texture;
 			texture2D->m_width = data[0].m_width;
 			texture2D->m_height = data[0].m_height;
@@ -2619,14 +2620,14 @@ namespace Render
             unbind_texture(ctx_texture);
         }
         //safe delete
-		delete ctx_texture;
+		SQ_DELETE(allocator(), Texture, ctx_texture);
 		ctx_texture = nullptr;
 	}
 
 	/*
 	Shader
 	*/
-	Shader::Shader()
+	Shader::Shader(Allocator* allocator) : m_allocator(allocator)
 	{
 		for (auto& shader_binary : m_shader_binaries) shader_binary = nullptr;
 	}
@@ -2636,7 +2637,7 @@ namespace Render
 		//release shader bitecode
 		for (auto& shader_binary : m_shader_binaries) if(shader_binary) shader_binary->Release();
 		//release global context
-		if(m_global_buffer_gpu) delete m_global_buffer_gpu;
+		if (m_global_buffer_gpu) SQ_DELETE(m_allocator, ConstBuffer, m_global_buffer_gpu);
 		//release shaders
 		if (m_vertex)   m_vertex->Release();
 		if (m_pixel)    m_pixel->Release();
@@ -2813,7 +2814,7 @@ namespace Render
 	Shader* ContextDX11::create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
-		Shader* oshader = new Shader();
+		Shader* oshader = SQ_NEW(allocator(), Shader, AllocType::ALCT_DEFAULT) Shader(allocator());
 		//
 		static const char* shader_version[ST_N_SHADER]
 		{
@@ -3044,7 +3045,7 @@ namespace Render
 		{
 			unbind_shader(shader);
 		}
-		delete shader;
+		SQ_DELETE(allocator(), Shader, shader);
 		shader = nullptr;
 	}
 
@@ -3089,7 +3090,7 @@ namespace Render
 	Target* ContextDX11::create_render_target(const std::vector< TargetField >& textures)
 	{
 		//create FBO
-		auto target = new Target();
+		auto target = SQ_NEW(allocator(), Target, AllocType::ALCT_DEFAULT) Target();
 		//attach
 		for (const TargetField& t_field : textures)
 		{
@@ -3178,7 +3179,7 @@ namespace Render
             disable_render_target(r_target);
         }
         //safe delete
-		delete r_target;
+		SQ_DELETE(allocator(), Target, r_target);
 		r_target = nullptr;
 	}
 

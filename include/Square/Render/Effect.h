@@ -196,21 +196,21 @@ namespace Render
 		virtual void set(const std::vector < DMat4 >& m4);
 
 		//init
-		EffectParameter();
+		EffectParameter(Allocator* allocator);
 		virtual ~EffectParameter(); 
 
 		//build a paramter
-		static EffectParameter* create(EffectParameterType type);
+		static Unique<EffectParameter> create(Allocator* allocator, EffectParameterType type);
 
 		template < class T >
-		static EffectParameter* create() { return create(parameter_type_traits<T>()); }
+		static Unique<EffectParameter> create() { return create(parameter_type_traits<T>()); }
 
 		template < class T >
-		static EffectParameter* create(const T& value)
+		static Unique<EffectParameter> create(Allocator* allocator, const T& value)
 		{
-			EffectParameter* param = create(parameter_type_traits<T>()); 
+			auto param = create(allocator, parameter_type_traits<T>());
 			param->set(value);
-			return param;
+			return std::move(param);
 		}
 
 		//is valid
@@ -259,7 +259,7 @@ namespace Render
 		virtual const std::vector<DMat3>&  get_vector_dmat3()  const;
 		virtual const std::vector<DMat4>&  get_vector_dmat4()  const;
 
-		virtual EffectParameter* copy() const = 0;
+		virtual Unique<EffectParameter> copy() const = 0;
 		virtual void copy_to(EffectParameter*) const = 0;
 		virtual void* value_ptr() = 0;
 		template < class T > T* value_ptr() { return (T*)value_ptr(); }
@@ -269,6 +269,7 @@ namespace Render
 		friend class		Effect;
 		int				    m_id{ -1 };
 		EffectParameterType m_type{ EffectParameterType::PT_NONE };
+		Allocator*			m_allocator{ nullptr };
 
 	};
 
@@ -429,7 +430,8 @@ namespace Render
 		SQUARE_OBJECT(Effect)
 
 		//contructor
-		Effect();
+		Effect(Allocator* allocator);
+		virtual ~Effect();
 
 		//no copy
 		Effect(const Effect&) = delete;
@@ -456,7 +458,7 @@ namespace Render
 		EffectParameter*    parameter(int parameter) const;
 		EffectParameter*    parameter(const std::string& parameter) const;
 		const std::string&  parameter_name(int parameter) const;
-		EffectParameters*   copy_all_parameters() const;;
+		Unique<EffectParameters>  copy_all_parameters() const;;
 
 		//get id
 		int parameter_id(const std::string& parameter);
@@ -473,9 +475,10 @@ namespace Render
 		EffectParameters     m_parameters;
 		EffectParametersMap  m_parameters_map;
 		EffectTechniquesMap  m_techniques_map;
+		Allocator*			 m_allocator;
 
 		//get id
-		int add_parameter(int id, const std::string& name, EffectParameter* parameter);
+		int add_parameter(int id, const std::string& name, Unique<EffectParameter>&& parameter);
 
 		//help
 		void for_each_pass_build_params_id();

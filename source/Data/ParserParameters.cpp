@@ -14,25 +14,27 @@ namespace Parser
 {
 	// // // // // // // // // // // // // // // // // // // // // // // // // //
     // ParameterField
-    bool  Parameters::ParameterField::alloc(ParameterType type)
+    bool  Parameters::ParameterField::alloc(Allocator* allocator, ParameterType type)
     {
         //type
         m_type = type;
         //alloc
-        m_paramter = ::Square::Render::EffectParameter::create(m_type);
+        m_paramter = ::Square::Render::EffectParameter::create(allocator, m_type);
+        m_allocator = allocator;
         //if
         if(!m_paramter) return false;
         //else
         return true;
     }
-    bool  Parameters::ParameterField::alloc(const std::string& name,ParameterType type)
+    bool  Parameters::ParameterField::alloc(Allocator* allocator, const std::string& name,ParameterType type)
     {
         //name
         m_name = name;
         //type
         m_type = type;
         //alloc
-        m_paramter = ::Square::Render::EffectParameter::create(m_type);
+        m_paramter = ::Square::Render::EffectParameter::create(allocator, m_type);
+        m_allocator = allocator;
         //if
         if(!m_paramter) return false;
         //else
@@ -53,8 +55,10 @@ namespace Parser
 		if (value.m_paramter)
 		{
 			//move
-			m_paramter = value.m_paramter;
+			m_paramter = std::move(value.m_paramter);
+            m_allocator = value.m_allocator;
 			value.m_paramter = nullptr;
+            value.m_allocator = nullptr;
 		}
 	}
 	Parameters::ParameterField::ParameterField(const ParameterField& value)
@@ -70,7 +74,6 @@ namespace Parser
 	}
 	Parameters::ParameterField::~ParameterField()
     {
-        if ( m_paramter ) delete m_paramter;
     }
     // // // // // // // // // // // // // // // // // // // // // // // // // //
     // Context
@@ -87,16 +90,17 @@ namespace Parser
     }
     // // // // // // // // // // // // // // // // // // // // // // // // // //
     // Parser
-    bool Parameters::parse(Context& default_context, const std::string& source)
+    bool Parameters::parse(Allocator* allocator, Context& default_context, const std::string& source)
     {
         const char* c_ptr = source.c_str();
-        return parse(default_context, c_ptr);
+        return parse(allocator, default_context, c_ptr);
     }
     
-    bool Parameters::parse(Context& default_context, const char*& ptr)
+    bool Parameters::parse(Allocator* allocator, Context& default_context, const char*& ptr)
     {
 		//set
         m_context = &default_context;
+        m_allocator = allocator;
         //skip line and comments
         skip_space_and_comments(m_context->m_line, ptr);
         //parsing a block
@@ -166,7 +170,7 @@ namespace Parser
         //space
         skip_space_and_comments(m_context->m_line, ptr);
         //alloc
-        field.alloc(field.m_type);
+        field.alloc(m_allocator, field.m_type);
         //parse by type
         switch (field.m_type)
         {

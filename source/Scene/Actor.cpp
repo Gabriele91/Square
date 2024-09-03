@@ -54,6 +54,9 @@ namespace Scene
 
 	Actor::Actor(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) {}
 	Actor::Actor(Context& context, const std::string& name) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_name(name) {}
+    Actor::~Actor()
+    {
+    }
 
     //serialize
     void Actor::serialize(Data::Archive& archivie)
@@ -154,10 +157,10 @@ namespace Scene
     //remove a child
     void Actor::remove(Shared<Actor> child)
     {
-        if(child->m_parent.get() == this)
+        if(auto parent = child->m_parent.lock(); parent.get() == this)
         {
             //remove ref to parent
-            child->m_parent = nullptr;
+            child->m_parent.reset();
             //remove child from list
             auto it = std::find(m_childs.begin(), m_childs.end(), child);
 			if (it != m_childs.end())
@@ -189,11 +192,14 @@ namespace Scene
     }
     void Actor::remove_from_parent()
     {
-        if(m_parent) m_parent->remove(shared_from_this());
+        if (auto parent = m_parent.lock())
+        {
+            parent->remove(shared_from_this());
+        }
     }
     
     //get parent
-    Shared<Actor> Actor::parent() const
+    Weak<Actor> Actor::parent() const
     {
         return m_parent;
     }
@@ -314,7 +320,7 @@ namespace Scene
 
 	bool Actor::is_root_of_level() const
 	{
-		return !parent() && m_level.lock();
+		return !parent().lock() && m_level.lock();
 	}
 
 	bool Actor::remove_from_level()
@@ -479,9 +485,9 @@ namespace Scene
             m_model_local *= Square::to_mat4( m_tranform.m_rotation );
             m_model_local  = Square::scale(m_model_local, m_tranform.m_scale);
             //global
-            if (parent())
+            if (auto parent = m_parent.lock(); parent)
             {
-                m_model_global = parent()->model_matrix() * m_model_local;
+                m_model_global = parent->model_matrix() * m_model_local;
             }
             else
             {

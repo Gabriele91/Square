@@ -356,7 +356,7 @@ namespace Render
 		static const char* hlsl_shader_names[ST_N_SHADER];
 		/////////////////////////////////////////////////////////////////////////
 		//init
-		Shader();
+		Shader(Allocator* allocator);
 		//delete
 		~Shader();
 
@@ -418,7 +418,8 @@ namespace Render
 		ID3D11GeometryShader* m_geometry{ nullptr };
 		ID3D11HullShader*     m_hull{ nullptr };
 		ID3D11DomainShader*   m_domain{ nullptr };
-		ID3D11ComputeShader*  m_compute{ nullptr };;
+		ID3D11ComputeShader*  m_compute{ nullptr };
+		Allocator*			  m_allocator;
 		
 		//shaders compiler errors
 		std::vector < ShaderCompileError > m_errors;

@@ -451,15 +451,15 @@ namespace Resource
 	//destoy shader
 	void Shader::destoy()
 	{
+		//clear info
+		m_filepath_map.clear();
+		m_uniform_map.clear();
+		m_cbuffer_map.clear();
 		//delete last shader
 		if (m_shader)
 			if (auto render = context().render())
 				render->delete_shader(m_shader);
 		m_shader = nullptr;
-		//clear info
-		m_filepath_map.clear();
-		m_uniform_map.clear();
-		m_cbuffer_map.clear();
 	}
 }
 }

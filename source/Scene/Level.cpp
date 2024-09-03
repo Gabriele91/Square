@@ -38,8 +38,9 @@ namespace Scene
 	Level::Level(Context& context, const std::string& name) : Object(context), SharedObject_t(context.allocator()), m_name(name)
 	{
 	}
-
-
+	Level::~Level()
+	{
+	}
 	//serialize
 	void Level::serialize(Data::Archive& archivie)
 	{
@@ -103,7 +104,7 @@ namespace Scene
 	//remove an actor
 	bool Level::remove(Shared<Actor> actor)
 	{
-		if (!actor->parent())
+		if (auto parent = actor->parent().lock(); !parent)
 		{
 			//remove child from list
 			auto it = std::find(m_actors.begin(), m_actors.end(), actor);

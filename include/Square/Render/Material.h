@@ -59,7 +59,7 @@ namespace Render
 		//effect class
 		Shared<Effect> m_effect;
 		//effect parameters
-		EffectParameters* m_parameters{ nullptr };
+		Unique<EffectParameters> m_parameters{ nullptr };
 		//dafault params
 		int m_default_parameters[MAT_DEFAULT_MAX]{ -1 };
 	};

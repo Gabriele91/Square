@@ -52,7 +52,7 @@ namespace Resource
 		Parser::Material mat_parser;
 		Parser::Material::Context mat_context;
 		//do parsing
-		if (!mat_parser.parse(mat_context, Filesystem::text_file_read_all(path)))
+		if (!mat_parser.parse(context().allocator(), mat_context, Filesystem::text_file_read_all(path)))
 		{
 			context().logger()->warning("Material: " + path + "\n" + mat_context.errors_to_string());
 			return false;

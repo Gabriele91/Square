@@ -22,6 +22,7 @@ namespace Square
         DefaultDelete(Allocator* allocator) noexcept
         : m_allocator(allocator)
         {
+            square_assert_debug(m_allocator);
         }
 
         template<typename T>
@@ -30,6 +31,7 @@ namespace Square
             if (ptr) 
             {
                 square_assert(m_allocator);
+                ptr->~T();
                 m_allocator->free((void*)ptr);
             }
         }

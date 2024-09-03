@@ -30,27 +30,42 @@ namespace Layout
         unsigned long m_type;
         size_t        m_size;
 		//layout 
-		Shared< Render::InputLayout > m_layout;
+#if 0
+        Shared< Render::InputLayout > m_layout;
+#endif 
 		//get input layout
 		Shared< Render::InputLayout > layout(Render::Context* render)
 		{
+#if 0
 			//test
 			if (m_layout) return m_layout;
 			//build
 			m_layout = Render::input_layout(render, m_attributes);
 			//return
 			return m_layout;
+#else
+            return  Render::input_layout(render, m_attributes);
+#endif 
 		}
     };
     
     //map
-    
     static std::vector < VertexItem >& vertex_list()
     {
         static std::vector < VertexItem > list;
         return list;
     };
     
+    static void clean_up_gpu_layouts()
+    {
+#if 0
+        for (auto& item : vertex_list())
+        {
+            item.m_layout = nullptr;
+        }
+#endif 
+    }
+
     //Add a vertex as commond vertex
     bool Collection::append(const ObjectInfo& info, const AttributeList& attrs, unsigned long type, size_t vertex_size)
     {
