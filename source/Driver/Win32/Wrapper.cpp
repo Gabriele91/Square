@@ -421,20 +421,6 @@ namespace Video
 	static Win32::WindowWin32* gl_window_create(const WindowInfo& info)
 	{
 		//////////////////////////////////////////////////////////////////////
-		switch (info.m_context.m_gpu_type)
-		{
-		case ContextInfo::GPU_TYPE_LOW:
-			OptimusVariables().disable();
-		break;
-		case ContextInfo::GPU_TYPE_HIGH:
-			OptimusVariables().enable();
-		break;
-		// Default: not set
-		default:
-		case ContextInfo::GPU_TYPE_DEFAULT:
-		break;
-		}
-		//////////////////////////////////////////////////////////////////////
 		unsigned int last_window_real_size[2] = { 0,0 };
 		Win32::compute_window_size(info.m_size, last_window_real_size);
 		//screen position
@@ -607,6 +593,21 @@ namespace Video
 	{
 		//output var
 		Win32::WindowWin32* out_wnd = nullptr;
+		//////////////////////////////////////////////////////////////////////
+		switch (info.m_context.m_gpu_type)
+		{
+		case ContextInfo::GPU_TYPE_LOW:
+			OptimusVariables().disable();
+			break;
+		case ContextInfo::GPU_TYPE_HIGH:
+			OptimusVariables().enable();
+			break;
+			// Default: not set
+		default:
+		case ContextInfo::GPU_TYPE_DEFAULT:
+			break;
+		}
+		//////////////////////////////////////////////////////////////////////
 		//select type of window
 		switch (info.m_context.m_type)
 		{
