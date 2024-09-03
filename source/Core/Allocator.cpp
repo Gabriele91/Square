@@ -13,7 +13,11 @@
 namespace Square
 {
 	static const size_t s_default_align = 16;
-	
+
+	Allocator::~Allocator() {}
+
+	DefaultAllocator::~DefaultAllocator() {}
+
 #if _WIN32
 	void* DefaultAllocator::alloc(size_t size, const char* name, uint8 flag)
 	{
@@ -59,6 +63,13 @@ namespace Square
 #endif
 
 	DebugAllocator::DebugAllocator(Allocator* allocator, Logger* logger) : m_allocator(allocator), m_logger(logger) {}
+	DebugAllocator::~DebugAllocator() 
+	{
+		for (auto& it : m_debug_map)
+		{
+			m_logger->debug("Memory leak: " + it.second + " ptr: " + std::to_string(size_t(it.first)));
+		}
+	}
 
 	void* DebugAllocator::alloc(size_t size, const char* name, uint8 flag)
 	{
@@ -96,7 +107,10 @@ namespace Square
 	{
 		auto ptr_name_it = m_debug_map.find(ptr);
 		if (ptr_name_it != m_debug_map.end())
-			m_logger->debug("Free: " + ptr_name_it->second +  " ptr: " + std::to_string(size_t(ptr)));
+		{
+			m_logger->debug("Free: " + ptr_name_it->second + " ptr: " + std::to_string(size_t(ptr)));
+			m_debug_map.erase(ptr_name_it);
+		}
 		else
 			m_logger->debug("Free: UNKNOWN ptr: " + std::to_string(size_t(ptr)));
 		m_allocator->free(ptr,size);
@@ -106,7 +120,10 @@ namespace Square
 	{
 		auto ptr_name_it = m_debug_map.find(ptr);
 		if (ptr_name_it != m_debug_map.end())
+		{
 			m_logger->debug("Free: " + ptr_name_it->second + " ptr: " + std::to_string(size_t(ptr)));
+			m_debug_map.erase(ptr_name_it);
+		}
 		else
 			m_logger->debug("Free: UNKNOWN ptr: " + std::to_string(size_t(ptr)));
 		m_allocator->free(ptr);

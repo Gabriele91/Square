@@ -90,14 +90,15 @@ namespace Square
     
     Application::~Application()
     {
-        //unregister items
+        // Unregister items
         m_context.clear();
-		//Self unregister
-		m_context.m_application = nullptr;
-        //unregister
+        // Unregister
         s_instance = nullptr;
-        //close
+        // Close
         Video::close();
+		// Unregister
+        m_context.m_application = nullptr;
+        m_context.m_allocator = nullptr;
     }
     
     void Application::clear() const
@@ -320,9 +321,9 @@ namespace Square
         winfo.m_size[1] = window_size.y;
         winfo.m_fullscreen = mode == WindowMode::FULLSCREEN;
         winfo.m_resize     = mode == WindowMode::RESIZABLE;
-        m_window = new Video::Window(winfo);
+        m_window = SQ_NEW(allocator(), Video::Window, AllocType::ALCT_DEFAULT) Video::Window(winfo);
         //input
-        m_input = new Video::Input(m_window);
+        m_input = SQ_NEW(allocator(), Video::Input, AllocType::ALCT_DEFAULT) Video::Input(m_window);
         //save instance
         m_instance = app;
         ////////////////////////////////////////////////////////////////////////        
@@ -374,7 +375,7 @@ namespace Square
         });
 
         //set world
-        m_world = new Scene::World(m_context);
+        m_world = SQ_NEW(allocator(), Scene::World, AllocType::ALCT_DEFAULT) Scene::World(m_context);
 
         //start
         m_instance->start();
@@ -420,30 +421,29 @@ namespace Square
 
         //end state
         bool end_state = m_instance->end();
-        
+
+        //dealloc input
+        SQ_DELETE_NAMESPACE(allocator(), Video, Input, m_input);
+        m_input = nullptr;
+
         //clear context
         context()->clear();
 
-        
-        //dealloc input
-        delete m_input;
-        m_input = nullptr;
-        
         //dealloc
         delete m_instance;
         m_instance = nullptr;
 
         //delete world
-        delete m_world;
+        SQ_DELETE_NAMESPACE(allocator(), Scene, World, m_world);
         m_world = nullptr;
         
         //delete render context
-		m_render->close();
-		Render::delete_render_driver(m_render);
-        
+        m_render->close();
+        Render::delete_render_driver(m_render);
+
         //dealloc window
-        delete m_window;
-        m_window =nullptr;
+        SQ_DELETE_NAMESPACE(allocator(), Video, Window, m_window);
+        m_window = nullptr;
         
         //return status
         return end_state;

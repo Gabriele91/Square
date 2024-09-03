@@ -19,24 +19,26 @@ namespace Parser
 		struct ParameterField
 		{
             //info
-			std::string     m_name;
-            ParameterType   m_type;
-            Parameter*      m_paramter{ nullptr };
+			std::string       m_name;
+            ParameterType     m_type;
+            Unique<Parameter> m_paramter{ nullptr };
+            Allocator*        m_allocator{ nullptr };
+
             //resource
             std::vector< std::string > m_resources;
             //by type
-            bool alloc(ParameterType type);
-            bool alloc(const std::string& name, ParameterType type);
+            bool alloc(Allocator* allocator, ParameterType type);
+            bool alloc(Allocator* allocator, const std::string& name, ParameterType type);
             //alloc
             template < class T >
-            bool alloc()
+            bool alloc(Allocator* allocator)
             {
-                return alloc(::Square::Render::parameter_type_traits<T>());
+                return alloc(allocator, ::Square::Render::parameter_type_traits<T>());
             }
             template < class T >
-            bool alloc(const std::string& name)
+            bool alloc(Allocator* allocator, const std::string& name)
             {
-                return alloc(name,::Square::Render::parameter_type_traits<T>());
+                return alloc(allocator, name,::Square::Render::parameter_type_traits<T>());
             }
             //alloc
             template < class T >
@@ -72,14 +74,15 @@ namespace Parser
             std::string errors_to_string() const;
 		};
 
-        bool parse(Context& default_context, const std::string& source);
+        bool parse(Allocator* allocator, Context& default_context, const std::string& source);
 
-        bool parse(Context& default_context, const char*& ptr);
+        bool parse(Allocator* allocator, Context& default_context, const char*& ptr);
 
 	protected:
         //////////////////////////////////////////////////////
-		Context* m_context{ nullptr };
-		//////////////////////////////////////////////////////
+        Context* m_context{ nullptr };
+        Allocator* m_allocator{ nullptr };
+        //////////////////////////////////////////////////////
         bool parse_parameters_block(const char*& ptr);
         bool parse_value(const char*& ptr, ParameterField& field);
         bool parse_int_values(const char*& ptr, int* values, size_t n);

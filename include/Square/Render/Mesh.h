@@ -51,7 +51,8 @@ namespace Render
 
 		//init
 		Mesh(Square::Context& context);
-		
+		virtual ~Mesh();
+
 		//build
 		bool build(const Vertex2DList& vertexs, bool cpu_access = false);
 		bool build(const Vertex3DList& vertexs, bool cpu_access = false);

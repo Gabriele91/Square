@@ -1066,7 +1066,7 @@ namespace Render
 	*/
 	ConstBuffer* ContextGL4::create_stream_CB(const unsigned char* data, size_t size)
 	{
-		auto ptr = new ConstBuffer();
+		auto ptr = SQ_NEW(allocator(), ConstBuffer, AllocType::ALCT_DEFAULT) ConstBuffer();
 		ptr->gen_buffer();
         ptr->set_size(size);
 		square_assert(ptr->id() != 0);
@@ -1085,7 +1085,7 @@ namespace Render
 
 	VertexBuffer* ContextGL4::create_stream_VBO(const unsigned char* vbo, size_t stride, size_t n)
 	{
-		auto ptr = new VertexBuffer();
+		auto ptr = SQ_NEW(allocator(), VertexBuffer, AllocType::ALCT_DEFAULT)  VertexBuffer();
 		ptr->gen_buffer();
         ptr->set_size(stride*n);
 		square_assert(ptr->id() != 0);
@@ -1104,7 +1104,7 @@ namespace Render
 
 	IndexBuffer* ContextGL4::create_stream_IBO(const unsigned int* ibo, size_t size)
 	{
-		auto ptr = new IndexBuffer();
+		auto ptr = SQ_NEW(allocator(), IndexBuffer, AllocType::ALCT_DEFAULT) IndexBuffer();
 		ptr->gen_buffer();
         ptr->set_size(sizeof(unsigned int)*size);
 		square_assert(ptr->id() != 0);
@@ -1123,7 +1123,7 @@ namespace Render
 		
 	ConstBuffer* ContextGL4::create_CB(const unsigned char* data, size_t size)
 	{
-		auto ptr = new ConstBuffer();
+		auto ptr = SQ_NEW(allocator(), ConstBuffer, AllocType::ALCT_DEFAULT) ConstBuffer();
 		ptr->gen_buffer();
 		ptr->set_size(size);
 		square_assert(ptr->id() != 0);
@@ -1142,7 +1142,7 @@ namespace Render
 
 	VertexBuffer* ContextGL4::create_VBO(const unsigned char* vbo, size_t stride, size_t n)
 	{
-		auto ptr = new VertexBuffer();
+		auto ptr = SQ_NEW(allocator(), VertexBuffer, AllocType::ALCT_DEFAULT) VertexBuffer();
 		ptr->gen_buffer();
 		ptr->set_size(stride*n);
 		square_assert(ptr->id() != 0);
@@ -1161,7 +1161,7 @@ namespace Render
 
 	IndexBuffer* ContextGL4::create_IBO(const unsigned int* ibo, size_t size)
 	{
-		auto ptr = new IndexBuffer();
+		auto ptr = SQ_NEW(allocator(), IndexBuffer, AllocType::ALCT_DEFAULT) IndexBuffer();
 		ptr->gen_buffer();
 		ptr->set_size(sizeof(unsigned int)*size);
 		square_assert(ptr->id() != 0);
@@ -1502,7 +1502,7 @@ namespace Render
 		}
 		//safe delete
 		glDeleteBuffers(1, &cb->id());
-		delete cb;
+		SQ_DELETE(allocator(), ConstBuffer, cb);
 		cb = nullptr;
 	}
 
@@ -1515,7 +1515,7 @@ namespace Render
         }
         //safe delete
 		glDeleteBuffers(1, &vbo->id());
-		delete vbo;
+		SQ_DELETE(allocator(), VertexBuffer, vbo);
 		vbo = nullptr;
 	}
 
@@ -1528,7 +1528,7 @@ namespace Render
         }
         //safe delete
 		glDeleteBuffers(1, &ibo->id());
-		delete ibo;
+		SQ_DELETE(allocator(), IndexBuffer, ibo);
 		ibo = nullptr;
 	}
 	/*
@@ -1669,7 +1669,7 @@ namespace Render
 	InputLayout* ContextGL4::create_IL(const AttributeList& atl)
 	{
 		//alloc
-		InputLayout* output = new InputLayout();
+		InputLayout* output = SQ_NEW(allocator(), InputLayout, AllocType::ALCT_DEFAULT) InputLayout();
 		//save info
 		output->m_list = atl;
 		//return output
@@ -1684,7 +1684,7 @@ namespace Render
 			unbind_IL(layout);
 		}
 		//delete
-		delete  layout;
+		SQ_DELETE(allocator(), InputLayout, layout);
 		layout = nullptr;
 	}
 
@@ -1996,7 +1996,7 @@ namespace Render
 	{
 
 		//new texture
-		Texture* ctx_texture = new Texture();
+		Texture* ctx_texture = SQ_NEW(allocator(), Texture, AllocType::ALCT_DEFAULT) Texture();
 		//create a texture id
 		ctx_texture->create_TBO();
 		//format
@@ -2050,7 +2050,7 @@ namespace Render
 	{
 
 		//new texture
-		Texture* ctx_texture = new Texture();
+		Texture* ctx_texture = SQ_NEW(allocator(), Texture, AllocType::ALCT_DEFAULT) Texture();
 		//create a texture id
 		ctx_texture->create_TBO();
 		//format
@@ -2107,7 +2107,7 @@ namespace Render
 	{
 
 		//new texture
-		Texture* ctx_texture = new Texture();
+		Texture* ctx_texture = SQ_NEW(allocator(), Texture, AllocType::ALCT_DEFAULT) Texture();
 		//set type
 		ctx_texture->m_type_texture = GL_TEXTURE_CUBE_MAP;
 		//create a texture id
@@ -2264,7 +2264,7 @@ namespace Render
             unbind_texture(ctx_texture);
         }
         //safe delete
-		delete ctx_texture;
+		SQ_DELETE(allocator(), Texture, ctx_texture);
 		ctx_texture = nullptr;
 	}
 
@@ -2385,9 +2385,9 @@ namespace Render
 			GLint  offset[1] = { 0 };
 			glGetActiveUniformsiv(m_shader_id, 1, field_index, GL_UNIFORM_OFFSET, offset);
 			//build
-			UniformGLGUBO* uglobal = new UniformGLGUBO(&m_context, this, m_global_buffer_cpu.data(), offset[0]);
+			auto uglobal = MakeUnique<UniformGLGUBO>(m_context.allocator(), &m_context, this, m_global_buffer_cpu.data(), offset[0]);
 			//add and return
-			return &add_uniform(uname, std::move(Unique< Uniform >(uglobal, DefaultDelete(m_context.allocator()))));
+			return &add_uniform(uname, std::move(uglobal));
 		}
 		else
 		{
@@ -2491,7 +2491,7 @@ namespace Render
 	Shader* ContextGL4::create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
-		Shader* out_shader = new Shader(*this);
+		Shader* out_shader = SQ_NEW(allocator(), Shader, AllocType::ALCT_DEFAULT) Shader(*this);
 		//shader program
 		out_shader->m_shader_id = glCreateProgram();
 		//compile
@@ -2644,7 +2644,7 @@ namespace Render
 		{
 			unbind_shader(shader);
 		}
-		delete shader;
+		SQ_DELETE(allocator(), Shader, shader);
 		shader = nullptr;
 	}
 
@@ -2685,7 +2685,7 @@ namespace Render
 		bool   depth_attach = false;
 		size_t color_count = 0;
 		//create FBO
-		auto fbo = new Target;
+		auto fbo = SQ_NEW(allocator(), Target, AllocType::ALCT_DEFAULT) Target();
 		fbo->gen_FBO();
 		//enable
 		fbo->enable_FBO();
@@ -2766,7 +2766,7 @@ namespace Render
             disable_render_target(r_target);
         }
         //safe delete
-		delete r_target;
+		SQ_DELETE(allocator(), Target, r_target);
 		r_target = nullptr;
 	}
 

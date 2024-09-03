@@ -28,6 +28,9 @@ namespace Render
 
 	//init
 	Mesh::Mesh(Square::Context& context) : Object(context), BaseInheritableSharedObject(context.allocator()) {}
+	Mesh::~Mesh() 
+	{
+	}
 
 	//build
 	bool Mesh::build(const Mesh::Vertex2DList& vertexs, bool cpu_access)

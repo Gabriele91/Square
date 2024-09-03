@@ -29,10 +29,10 @@ namespace Render
 			if (param_id != -1) m_default_parameters[i] = param_id;
 		}
 	}
-	Material::~Material() { if (m_parameters) delete m_parameters; };
+	Material::~Material() { };
 	
 	Shared<Effect>	  Material::effect() const { return m_effect; }
-	EffectParameters* Material::parameters() const { return m_parameters; }
+	EffectParameters* Material::parameters() const { return m_parameters.get(); }
 
 	EffectParameter* Material::default_parameter(Material::default_parameters dp)
 	{
@@ -70,11 +70,11 @@ namespace Render
 		//effect
 		omaterial->m_effect = m_effect;
 		//parameters alloc
-		omaterial->m_parameters = new EffectParameters(m_parameters->size());
+		omaterial->m_parameters = MakeUnique<EffectParameters>(allocator, m_parameters->size());
 		//copy
 		for (size_t i = 0; i != m_parameters->size(); ++i)
 		{
-			(*omaterial->m_parameters)[i] = Unique< EffectParameter >((*m_parameters)[i]->copy());
+			(*omaterial->m_parameters)[i] = std::move((*m_parameters)[i]->copy());
 		}
 		//return
 		return omaterial;

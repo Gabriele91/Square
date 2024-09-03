@@ -40,6 +40,7 @@ namespace Scene
 		//constructor
 		Level(Context& context);
 		Level(Context& context, const std::string& name);
+		virtual ~Level();
 
 		//add an actor
 		void add(Shared<Actor> child);

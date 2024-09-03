@@ -34,9 +34,11 @@ namespace Scene
 
 	World::World(Context& context) : Object(context), SharedObject_t(context.allocator())
 	{
-
 	}
-	//name        
+	World::~World()
+	{
+	}
+	//name
 	const std::string& World::name() const
 	{
 		return m_name;

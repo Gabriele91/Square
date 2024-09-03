@@ -47,6 +47,7 @@ namespace Scene
         //constructor
 		Actor(Context& context);
 		Actor(Context& context, const std::string& name);
+        virtual ~Actor();
         
         //add a child
         void add(Shared<Actor> child);
@@ -58,7 +59,7 @@ namespace Scene
         void remove_from_parent();
         
         //get parent
-        Shared<Actor> parent() const;
+        Weak<Actor> parent() const;
         
         //contains an actor
         bool contains(Shared<Actor> child) const;
@@ -155,7 +156,7 @@ namespace Scene
         //node name
         std::string m_name;
         //parent
-        Shared<Actor> m_parent;
+        Weak<Actor> m_parent;
         //child list
         ActorList     m_childs;
 		ComponentList m_components;

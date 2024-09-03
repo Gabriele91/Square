@@ -9,7 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-// #define MODEL_LOAD // "adamHead" // "drone" // "box" // "crate"
+#define MODEL_LOAD "box" // "adamHead" // "drone" // "box" // "crate"
 
 
 class Cube : public Square::Scene::Component
@@ -101,7 +101,9 @@ public:
            ,Vec3(0.5,0.5,0.5)
         );
     }
-    
+	virtual ~Cube()
+	{
+	}
 
 	virtual size_t materials_count() const { return 1; }
 

@@ -39,6 +39,7 @@ namespace Scene
 
 		//constructor
 		World(Context& context);
+		virtual ~World();
 
 		//name        
 		const std::string& name() const;

@@ -56,8 +56,8 @@ namespace Resource
 	};
 
     //constructor
-    Effect::Effect(Context& context): ResourceObject(context), BaseInheritableSharedObject(context.allocator()) {}
-    Effect::Effect(Context& context, const std::string& path): ResourceObject(context), BaseInheritableSharedObject(context.allocator())  { load(path); }
+    Effect::Effect(Context& context): ResourceObject(context), BaseInheritableSharedObject(context.allocator()), Render::Effect(context.allocator()) {}
+    Effect::Effect(Context& context, const std::string& path): ResourceObject(context), BaseInheritableSharedObject(context.allocator()), Render::Effect(context.allocator()) { load(path); }
     
     //load effect
     bool Effect::load(const std::string& path)
@@ -71,7 +71,7 @@ namespace Resource
         Parser::Effect          e_parser;
         Parser::Effect::Context e_context;
         //do parsing
-        if(!e_parser.parse(e_context, Filesystem::text_file_read_all(path)))
+        if(!e_parser.parse(context().allocator(), e_context, Filesystem::text_file_read_all(path)))
         {
             context().logger()->warning("Effect: " +  path + "\n" + e_context.errors_to_string());
             return false;
@@ -85,7 +85,7 @@ namespace Resource
             switch (e_context.m_parameters[i].m_type)
             {
                 case EffectParameterType::PT_TEXTURE:
-					add_parameter((int)i, e_context.m_parameters[i].m_name, EffectParameter::create(context().resource<Texture>(e_context.m_parameters[i].m_resources[0])));
+					add_parameter((int)i, e_context.m_parameters[i].m_name, std::move(EffectParameter::create(context().allocator(), context().resource<Texture>(e_context.m_parameters[i].m_resources[0]))));
                 break;
                 case EffectParameterType::PT_STD_VECTOR_TEXTURE:
                 {
@@ -95,7 +95,7 @@ namespace Resource
                     for(const std::string& tex_name : e_context.m_parameters[i].m_resources)
                         v_textures.push_back( context().resource<Texture>(tex_name) );
 					//add
-					add_parameter((int)i, e_context.m_parameters[i].m_name, EffectParameter::create(v_textures));
+					add_parameter((int)i, e_context.m_parameters[i].m_name, std::move(EffectParameter::create(context().allocator(), v_textures)));
                 }
                 break;
                 default:

@@ -369,8 +369,8 @@ namespace Square
 		m_attributes.clear();
 		m_object_factories.clear();
         //
+		m_resources.clear();
         m_resources_file.clear();
         m_resources_info.clear();
-        m_resources.clear();
 	}
 }
