@@ -142,6 +142,15 @@ Vec2 _SQUARE_textureSize2D(Texture2D tex2D, uint Level)
 }
 #define textureSize2D(name,lod) _SQUARE_textureSize2D(name, lod)
 
+Vec3 _SQUARE_textureSize2DArray(Texture2DArray tex2DArray, uint Level)
+{
+	float  param;
+	Vec3 ret;
+	tex2DArray.GetDimensions(Level, ret.x, ret.y, ret.z, param);
+	return ret;
+}
+#define textureSize2DArray(name, lod) _SQUARE_textureSize2DArray(name, lod)
+
 Vec3 _SQUARE_textureSize3D(Texture3D tex3D, uint Level)
 {
 	uint  param;
