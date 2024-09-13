@@ -83,8 +83,9 @@ namespace Render
 	//uniform buffers
 	CBStruct UniformDirectionShadowLight
     {
-		Mat4             m_view_projectio[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
-		CBArrFloat       m_depths        [DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // > hlsl packet rule: float4 for a float in array
+		CBArrMat4        m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+		CBArrMat4        m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+		CBArrFloat       m_depths[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // > hlsl packet rule: float4 for a float in array
     };
 
 	CBStruct UniformPointShadowLight
