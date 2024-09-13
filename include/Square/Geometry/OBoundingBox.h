@@ -12,13 +12,19 @@ namespace Square
 {
 namespace Geometry
 {
+	class AABoundingBox;
+
 	class SQUARE_API OBoundingBox
 	{
 	public:
 		/*		
 		* Constructor of Oriented Bounding Box
 		*/
-		OBoundingBox() {} //default
+		OBoundingBox();
+		OBoundingBox(OBoundingBox&&);
+		OBoundingBox(const OBoundingBox&);
+		OBoundingBox& operator = (OBoundingBox&&) = default;
+		OBoundingBox& operator = (const OBoundingBox&) = default;
 
 		/**
 		* Constructor of obb
@@ -66,6 +72,9 @@ namespace Geometry
 
 		//test
 		Vec3 closest_point(const Vec3& target) const;
+
+		//To AABB
+		AABoundingBox to_aabb() const;
 
 		//get info
 		const Mat3& get_rotation_matrix() const { return m_rotation; }

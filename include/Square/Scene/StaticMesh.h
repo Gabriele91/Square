@@ -15,14 +15,18 @@ namespace Scene
 	class SQUARE_API StaticMesh : public Square::Scene::Component
 								 , public Square::Render::Renderable
 	{
-	public:
-		SQUARE_OBJECT(StaticMesh)
+	private:
 
 		Square::Geometry::OBoundingBox m_obb_local;
 		Square::Geometry::OBoundingBox m_obb_global;
+		Square::Weak< Square::Render::Transform >      m_transform;
+		bool										   m_obb_dirty;
+
+	public:
+		SQUARE_OBJECT(StaticMesh)
+
 		Square::Shared< Square::Resource::Mesh >       m_mesh;
 		Square::Shared< Square::Resource::Material >   m_material;
-		Square::Weak< Square::Render::Transform >      m_transform;
 
 		StaticMesh(Square::Context& context);
 

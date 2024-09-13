@@ -11,6 +11,23 @@ namespace Square
 {
 namespace Geometry
 {
+	AABoundingBox::AABoundingBox()
+	{
+	}
+
+	AABoundingBox::AABoundingBox(AABoundingBox&& aabb)
+	{
+		std::swap(m_min, aabb.m_min);
+		std::swap(m_max, aabb.m_max);
+	}
+
+	AABoundingBox::AABoundingBox(const AABoundingBox& aabb)
+	: m_min(aabb.m_min)
+	, m_max(aabb.m_max)
+	{
+
+	}
+
 	AABoundingBox::AABoundingBox(const Vec3& min, const Vec3& max)
 	{
 		m_min = min;
@@ -82,6 +99,16 @@ namespace Geometry
 		//save new aabb
 		m_max = new_center + new_extension;
 		m_min = new_center - new_extension;
+	}
+
+	AABoundingBox AABoundingBox::merge(const AABoundingBox& other) const
+	{
+		// Compute the new min and max points
+		Vec3 new_min = min(m_min, other.get_min()); // element-wise min
+		Vec3 new_max = max(m_max, other.get_max()); // element-wise max
+
+		// Return the new AABB
+		return AABoundingBox(new_min, new_max);
 	}
 
 	AABoundingBox  AABoundingBox::operator*  (const Mat4& model) const

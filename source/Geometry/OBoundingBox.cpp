@@ -6,11 +6,31 @@
 //
 #include "Square/Config.h"
 #include "Square/Geometry/OBoundingBox.h"
+#include "Square/Geometry/AABoundingBox.h"
 
 namespace Square
 {
 namespace Geometry
 {
+
+	OBoundingBox::OBoundingBox()
+	{
+	}
+
+	OBoundingBox::OBoundingBox(OBoundingBox&& obb)
+	{
+		std::swap(m_rotation, obb.m_rotation);
+		std::swap(m_position, obb.m_position);
+		std::swap(m_extension, obb.m_extension);
+	}
+	
+	OBoundingBox::OBoundingBox(const OBoundingBox& obb)
+	: m_rotation(obb.m_rotation)
+	, m_position(obb.m_position)
+	, m_extension(obb.m_extension)
+	{
+	}
+
 	OBoundingBox::OBoundingBox(const Mat3& rotation, const Vec3& position, const Vec3& extension)
 	{
 		m_rotation = rotation;
@@ -93,6 +113,13 @@ namespace Geometry
 		m_position  = translation;
 		m_rotation  = Mat3_cast( rotation );
 		m_extension = scale * m_extension;
+#elif 1
+		Vec3 translation, scale;
+		Quat rotation;
+		decompose_mat4(transform, translation, rotation, scale);
+		m_position  = translation;
+		m_rotation  = to_mat3(rotation);
+		m_extension = scale * m_extension;
 #else
 		//to OBoundingBox
 		m_position   = Vec3(transform[3]);
@@ -145,6 +172,28 @@ namespace Geometry
 		}
 
 		return closest_point;
+	}
+
+
+	// Create AABB from a OBB
+	AABoundingBox OBoundingBox::to_aabb() const
+	{
+		// Get the 8 vertices of the OBB
+		std::vector<Vec3> obb_vertices = std::move(get_bounding_box());
+
+		// Initialize the min and max points for the AABB
+		Vec3 aabb_min = obb_vertices[0];
+		Vec3 aabb_max = obb_vertices[0];
+
+		// Find the min and max coordinates for the AABB
+		for (const auto& vertex : obb_vertices)
+		{
+			aabb_min = Square::min<Vec3>(aabb_min, vertex); // element-wise min
+			aabb_max = Square::max<Vec3>(aabb_max, vertex); // element-wise max
+		}
+
+		// Return the new AABB
+		return AABoundingBox(aabb_min, aabb_max);
 	}
 
 	// Test is valid OBB

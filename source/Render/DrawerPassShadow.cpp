@@ -15,6 +15,8 @@
 #include "Square/Render/Transform.h"
 #include "Square/Render/DrawerPassShadow.h"
 #include "Square/Resource/Effect.h"
+#include "Square/Geometry/OBoundingBox.h"
+#include "Square/Geometry/AABoundingBox.h"
 
 namespace Square
 {

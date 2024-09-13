@@ -1,4 +1,5 @@
 #include "Square/Render/Light.h"
+#include "Square/Geometry/AABoundingBox.h"
 
 namespace Square
 {
@@ -30,6 +31,7 @@ namespace Render
 
 	void Light::type(LightType type) { m_type = type; }
 
+	void Light::set_scene_size(const Geometry::AABoundingBox& scene) {}
 	//////////////////////
 	// DIRECTION LIGHTS //
 	//////////////////////
