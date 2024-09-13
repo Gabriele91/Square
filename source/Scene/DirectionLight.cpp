@@ -311,7 +311,8 @@ namespace Scene
 			{
 				auto texture_size = Square::max<size_t>(buffer.width(), buffer.height());
 				auto& [p, v] = get_projection(camera, cascade_vdepths[i], cascade_vdepths[i + 1], direction, texture_size);
-				data.m_view_projectio[i] = p * v;
+				data.m_projection[i] = p;
+				data.m_view[i] = v;
 				data.m_depths[i] = cascade_vdepths[i + 1];
 			}
 		}
@@ -421,11 +422,12 @@ namespace Scene
 			// Copy values
 			for (unsigned int i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++i)
 			{
-				data.m_view_projectio[i] = get_ortho(camera, 
-													 camera_inv_view,
-												     cascade_vdepths[i], 
-					                                 cascade_vdepths[i+1], 
-					                                 light_view) * light_view;
+				data.m_projection[i] = get_ortho(camera, 
+												camera_inv_view,
+												cascade_vdepths[i], 
+					                            cascade_vdepths[i+1], 
+					                            light_view);
+				data.m_view[i] = light_view;
 				data.m_depths[i] = cascade_vdepths[i + 1];
 			}
 		}
