@@ -29,6 +29,7 @@ namespace Square
     {
         class Sphere;
         class Frustum;
+		class AABoundingBox;
     }
 	namespace Render
 	{
@@ -133,6 +134,9 @@ namespace Render
 		virtual void set(UniformPointShadowLight* data) const;
 
 		virtual void set(UniformSpotShadowLight* data) const;
+
+		// For CSM
+		virtual void set_scene_size(const Geometry::AABoundingBox& scene);
 
 		//get viewport shadow camera
 

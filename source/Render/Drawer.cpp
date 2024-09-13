@@ -14,6 +14,8 @@
 #include "Square/Render/Light.h"
 #include "Square/Render/Renderable.h"
 #include "Square/Render/ShadowBuffer.h"
+#include "Square/Geometry/OBoundingBox.h"
+#include "Square/Geometry/AABoundingBox.h"
 
 namespace Square
 {
@@ -53,6 +55,27 @@ namespace Render
             CollectionQuery::renderables(collection, queues[camera_index], *camera);
             ++camera_index;
         }
+        //compute scene size
+        auto scene_size = [&](PoolQueues& queues) -> Geometry::AABoundingBox
+        {
+            //compute scene size
+            Geometry::AABoundingBox scene_aabb
+            (
+                Vec3{ std::numeric_limits<float>::max() },
+                Vec3{ std::numeric_limits<float>::lowest() }
+            );
+            //for each elements of opaque and translucent queues
+            for (QueueType qtype : {RQ_OPAQUE, RQ_TRANSLUCENT})
+            for (const QueueElement* e_randerable : queues[qtype])
+            if (auto randerable = e_randerable->lock< Render::Renderable >())
+            {
+                //jump?
+                if (!randerable->can_draw()) continue;
+                //get box
+                scene_aabb = scene_aabb.merge(randerable->bounding_box().to_aabb());
+            }
+            return scene_aabb;
+        };
         //shadow caster
         camera_index = 0;
         for(auto weak_camera : collection.m_cameras)
@@ -64,7 +87,7 @@ namespace Render
             for(auto& pass : m_rendering_pass[RPT_SHADOW])
             {
                 //draw a shadow map
-                auto draw_shadow = [&](Shared<Light> light)
+                auto draw_shadow = [&](Shared<Light> light, QueueType queue_type)
                 {
                     if (light)
                     if (can_draw_shadow(light.get()))
@@ -75,6 +98,9 @@ namespace Render
 						CollectionQuery::renderables(collection, queues, *light);
 						//render target
 						render().enable_render_target(light->shadow_buffer().target());
+                        //set scene size
+                        if(queue_type == RQ_DIRECTION_LIGHT)
+                            light->set_scene_size(scene_size(queues));
                         //draw
                         pass->draw(  *this
                                     , pass_shadow_count++
@@ -92,9 +118,9 @@ namespace Render
                     }
                 };
                 //for spot light objects
-                for(auto e_light : queues[camera_index][RQ_SPOT_LIGHT]) draw_shadow(e_light->lock<Light>());
-                for(auto e_light : queues[camera_index][RQ_POINT_LIGHT]) draw_shadow(e_light->lock<Light>());
-                for(auto e_light : queues[camera_index][RQ_DIRECTION_LIGHT]) draw_shadow(e_light->lock<Light>());
+                for(auto e_light : queues[camera_index][RQ_SPOT_LIGHT]) draw_shadow(e_light->lock<Light>(), RQ_SPOT_LIGHT);
+                for(auto e_light : queues[camera_index][RQ_POINT_LIGHT]) draw_shadow(e_light->lock<Light>(), RQ_POINT_LIGHT);
+                for(auto e_light : queues[camera_index][RQ_DIRECTION_LIGHT]) draw_shadow(e_light->lock<Light>(), RQ_DIRECTION_LIGHT);
             }
             
         }

@@ -23,6 +23,7 @@ public:
 	Square::Shared< Square::Render::Mesh >         m_mesh;
     Square::Shared< Square::Resource::Material >   m_material;
     Square::Weak<Square::Render::Transform>        m_transform;
+	bool										   m_global_obb_dirty;
     
     Cube(Square::Context& context) : Component(context)
     {
@@ -100,6 +101,8 @@ public:
            ,Vec3(0,0,0)
            ,Vec3(0.5,0.5,0.5)
         );
+		//
+		m_global_obb_dirty = true;
     }
 	virtual ~Cube()
 	{
@@ -137,21 +140,29 @@ public:
     
     virtual bool support_culling() const override
     {
-        return false;
+        return true;
     }
     
     virtual void on_transform() override
     {
-        if(auto transform = m_transform.lock())
-        {
-            using namespace Square;
-            m_obb_global = m_obb_local * transform->global_model_matrix();
-        }
+		m_global_obb_dirty = true;
     }
 
     
     virtual const Square::Geometry::OBoundingBox& bounding_box() override
     {
+		if (m_global_obb_dirty)
+		{
+			if (auto transform = m_transform.lock())
+			{
+				m_obb_global = m_obb_local * transform->global_model_matrix();
+			}
+			else
+			{
+				m_obb_global = m_obb_local;
+			}
+			m_global_obb_dirty = false;
+		}
         return m_obb_global;
     }
 	    
@@ -164,10 +175,12 @@ public:
     virtual void on_attach(Square::Scene::Actor& entity) override
     {
         m_transform = Square::DynamicPointerCast<Square::Render::Transform>(entity.shared_from_this());
+		m_global_obb_dirty = true;
     }
     virtual void on_deattch() override
     {
 		m_transform.reset();
+		m_global_obb_dirty = true;
     }
     virtual void on_message(const Square::Scene::Message& msg) override  
 	{
@@ -355,7 +368,6 @@ public:
 		auto box_right = m_level->actor("box_right");
 		//model + material + position + scale
 		box_right->component<Cube>()->m_material = context().resource<Material>("box");
-
 		box_right->position({ -6.0, -2.5f, 10.0 });
 		box_right->scale({ 0.5f, 5.0f, 20.0f });
 		//left box

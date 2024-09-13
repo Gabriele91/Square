@@ -86,6 +86,7 @@ namespace Scene
 
 	StaticMesh::StaticMesh(Square::Context& context) 
 	: Component(context)
+	, m_obb_dirty(true)
 	{
 		build_local_obounding_box();
 	}
@@ -135,15 +136,24 @@ namespace Scene
 
 	void StaticMesh::on_transform()
 	{
-		if (auto transform = m_transform.lock())
-		{
-			using namespace Square;
-			m_obb_global = m_obb_local * transform->global_model_matrix();
-		}
+		m_obb_dirty = true;
 	}
 
 	const Square::Geometry::OBoundingBox& StaticMesh::bounding_box()
 	{
+		if (m_obb_dirty)
+		{
+			if (auto transform = m_transform.lock())
+			{
+				using namespace Square;
+				m_obb_global = m_obb_local * transform->global_model_matrix();
+			}
+			else
+			{
+				m_obb_global = m_obb_local;
+			}
+			m_obb_dirty = false;
+		}
 		return m_obb_global;
 	}
 
@@ -156,12 +166,13 @@ namespace Scene
 	void StaticMesh::on_attach(Square::Scene::Actor& entity)
 	{
 		m_transform = Square::DynamicPointerCast<Square::Render::Transform>(entity.shared_from_this());
-		on_transform();
+		m_obb_dirty = true;
 	}
 		
 	void StaticMesh::on_deattch()
 	{
 		m_transform.reset();
+		m_obb_dirty = true;
 	}
 		
 	void StaticMesh::on_message(const Square::Scene::Message& msg) { }

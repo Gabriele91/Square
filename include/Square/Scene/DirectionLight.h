@@ -10,6 +10,7 @@
 #include "Square/Render/Light.h"
 #include "Square/Render/ShadowBuffer.h"
 #include "Square/Geometry/Sphere.h"
+#include "Square/Geometry/AABoundingBox.h"
 #include "Square/Scene/Component.h"
 
 namespace Square
@@ -67,13 +68,15 @@ namespace Scene
 		virtual void set(Render::UniformDirectionLight* data) const override;
 		virtual void set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera) const override;
 
+		virtual void set_scene_size(const Geometry::AABoundingBox& scene) override;
+
 	protected:
 
 		Vec3 m_direction;
 		Mat3 m_rotation;
 		//shadow
 		Render::ShadowBuffer m_buffer;
-
+		Geometry::AABoundingBox m_scene_size;
 	};
 }
 }

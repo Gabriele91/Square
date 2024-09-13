@@ -16,10 +16,13 @@ namespace Geometry
 	{
 	public:
 
-		AABoundingBox(){}
-
+		AABoundingBox();
+		AABoundingBox(AABoundingBox&&);
+		AABoundingBox(const AABoundingBox&);
 		AABoundingBox(const Vec3& min, const Vec3& max);
-		
+		AABoundingBox& operator = (AABoundingBox&&) = default;
+		AABoundingBox& operator = (const AABoundingBox&) = default;
+
 		const Vec3& get_min() const;
 
 		const Vec3& get_max() const;
@@ -42,6 +45,13 @@ namespace Geometry
 		* Applay a matrix to aabb
 		*/
 		void applay(const Mat4& model);
+
+		/**
+		* Create an AABB that contains this AABB and another AABB
+		* @param other, the other AABB
+		* @return A new AABoundingBox that encloses both AABBs
+		*/
+		AABoundingBox merge(const AABoundingBox& other) const;
 
 		/*
 		* Applay a matrix to aabb and return the new aabb

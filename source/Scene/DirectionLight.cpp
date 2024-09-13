@@ -433,11 +433,15 @@ namespace Scene
 	
 	void DirectionLight::set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera) const
 	{
-
 		if (auto ptr_actor = actor().lock())
 		{
 			Aux1::set_uniform(*data, *camera, m_buffer, m_rotation, m_direction);
 		}
+	}
+
+	void DirectionLight::set_scene_size(const Geometry::AABoundingBox& scene)
+	{
+		m_scene_size = scene;
 	}
 
 }
