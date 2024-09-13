@@ -338,7 +338,7 @@ public:
         camera->translation({ 0,0,-5.0 });
         camera->rotation(rotate_euler(0.0f,Square::radians(180.0f),0.0f));
         camera->component<Camera>()->viewport({0,0, 1280, 768});
-        camera->component<Camera>()->perspective(radians(90.0f), 1280.0f / 768.0f, 0.1f, 1000.0f);		
+        camera->component<Camera>()->perspective(radians(90.0f), 1280.0f / 768.0f, 0.1f, 30.0f);		
 		//test
 		auto node = m_level->actor("main_node");
 		node->translation({ 0,0, 10.0 });
@@ -356,8 +356,8 @@ public:
 		//model + material + position + scale
 		box_right->component<Cube>()->m_material = context().resource<Material>("box");
 
-		box_right->position({ -6.0, 0.0, 10.0 });
-		box_right->scale({ 0.5f, 20.0f, 20.0f });
+		box_right->position({ -6.0, -2.5f, 10.0 });
+		box_right->scale({ 0.5f, 5.0f, 20.0f });
 		//left box
 		auto box_left = m_level->actor("box_left");
 		//model + material + position + scale
@@ -368,7 +368,7 @@ public:
 		auto light0 = m_level->actor("light0");
 		light0->component<DirectionLight>()->diffuse({ 1.0,0.0,0.0 });
 		light0->component<DirectionLight>()->visible(false);
-		light0->component<DirectionLight>()->shadow({ 512,512 });
+		light0->component<DirectionLight>()->shadow({ 1024,1024 });
 		light0->rotation(rotate_euler(Square::radians(-45.0f), Square::radians(-45.0f), 0.0f));
 
 		auto light1 = m_level->actor("light1");

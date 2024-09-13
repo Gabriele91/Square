@@ -2313,7 +2313,7 @@ namespace Render
 			data.m_width,		//UINT Width;
 			data.m_height,		//UINT Height;
 			mip_levels,			//UINT MipLevels;
-			size + 1,		    //UINT ArraySize;
+			size,		        //UINT ArraySize;
 			texture_format_data,//DXGI_FORMAT Format;
 			1, 0,				//DXGI_SAMPLE_DESC SampleDesc;
 			usage,				//D3D11_USAGE Usage;
@@ -2343,9 +2343,10 @@ namespace Render
 			//view
 			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
 			s_resource_view.Format = texture_format_resource;
-			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-			s_resource_view.Texture2D.MostDetailedMip = 0;
-			s_resource_view.Texture2D.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
+			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+			s_resource_view.Texture2DArray.ArraySize = size;
+			s_resource_view.Texture2DArray.MostDetailedMip = 0;
+			s_resource_view.Texture2DArray.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
 			//try
 			if (!dx_op_success(device()->CreateShaderResourceView(d11_texture, &s_resource_view, &texture2D->m_resource_view)))
 			{

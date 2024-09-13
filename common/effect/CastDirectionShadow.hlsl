@@ -45,6 +45,8 @@ void geometry(triangle VertexShaderOutput input[3]
 	        , uint id : SV_GSInstanceID)
 {
 	GeometryShaderOutput outvertex = (GeometryShaderOutput)0;
+	// Set index
+	outvertex.m_RTIndex = id;
 	// for each triangle's vertices
 	[loop]
 	for (int i = 0; i < 3; ++i)
@@ -52,7 +54,6 @@ void geometry(triangle VertexShaderOutput input[3]
 		outvertex.m_world_position = input[i].m_position;
 		outvertex.m_position = mul_direction_light_view_projection(input[i].m_position, id);
 		outvertex.m_uv = input[i].m_uv;
-		outvertex.m_RTIndex = id;
 		output.Append(outvertex);
 	}
 	output.RestartStrip();
@@ -68,11 +69,9 @@ struct FragmentShaderinput
 #endif
 };
 
-#if 1
 void fragment(FragmentShaderinput input)
 {
 	//diffuse/albedo
 	Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);
     if (diffuse_color.a <= shadow_mask) discard;
 }
-#endif

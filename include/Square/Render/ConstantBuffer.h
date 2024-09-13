@@ -36,19 +36,40 @@ namespace Square
 		alignas(A) T m_value;
 
 	};
+
+	template < typename T, size_t A = 16, size_t P = 16 >
+	PACKED(struct alignas(A) CBAlignedWithPadding
+	{
+
+		// Array size
+		CBAlignedWithPadding() = default;
+		CBAlignedWithPadding(const T& value) : m_value(value) {}
+
+		// Asign operation
+		T& operator = (const T& value) { return (m_value = value); }
+
+		// Cast operator
+		operator const T& () const { return m_value; }
+		operator T& () { return m_value; }
+
+	protected:
+		static constexpr std::size_t struct_padding = P - sizeof(T) % P;
+		T m_value;
+		unsigned char m_pad[struct_padding];
+	});
                
 	using CBBool      = uint32;
-	using CBArrBool   = CBAligned < CBBool >;
-	using CBArrFloat  = CBAligned < float  >;
-	using CBArrDouble = CBAligned < double >;
-	using CBArrInt8   = CBAligned < int8 >;
-	using CBArrInt16  = CBAligned < int16 >;
-	using CBArrInt32  = CBAligned < int32 >;
-	using CBArrUint8  = CBAligned < uint8 >;
-	using CBArrUint16 = CBAligned < uint16 >;
-	using CBArrUint32 = CBAligned < uint32 >;
-	using CBArrVec2   = CBAligned < Vec2 >;
-	using CBArrVec3   = CBAligned < Vec3 >;
+	using CBArrBool   = CBAlignedWithPadding < CBBool >;
+	using CBArrFloat  = CBAlignedWithPadding < float  >;
+	using CBArrDouble = CBAlignedWithPadding < double >;
+	using CBArrInt8   = CBAlignedWithPadding < int8 >;
+	using CBArrInt16  = CBAlignedWithPadding < int16 >;
+	using CBArrInt32  = CBAlignedWithPadding < int32 >;
+	using CBArrUint8  = CBAlignedWithPadding < uint8 >;
+	using CBArrUint16 = CBAlignedWithPadding < uint16 >;
+	using CBArrUint32 = CBAlignedWithPadding < uint32 >;
+	using CBArrVec2   = CBAlignedWithPadding < Vec2 >;
+	using CBArrVec3   = CBAlignedWithPadding < Vec3 >;
 	using CBArrVec4	  = CBAligned < Vec4 >;
 	using CBArrMat4	  = CBAligned < Mat4 >;
 

@@ -368,9 +368,9 @@ namespace Render
 		virtual ~EffectPass();
 		
 		//unsafe
-		void bind(  Render::Context&       render
-                  , EffectPassInputs	   inputs = EffectPassInputs()
-                  , EffectParameters*      params = nullptr
+		void bind(  Render::Context&        render
+                  , const EffectPassInputs&	inputs = EffectPassInputs()
+                  , EffectParameters*       params = nullptr
                   ) const;
 
 		void bind(  Render::Context& render

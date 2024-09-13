@@ -23,7 +23,7 @@ namespace Square
 {
 	using CSMMatrixArray   = std::array<Mat4,  DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>;
 	using CSMCascadeSplits = std::array<float, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>;
-	using CSMCascadeDepth  = std::array<float, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>;
+	using CSMCascadeDepth  = std::array<float, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES + 1>;
 }
 
 namespace Square
@@ -64,7 +64,8 @@ namespace Scene
 	, SharedObject<DirectionLight>(context.allocator())
 	, m_buffer(context)
 	{
-		m_direction = Vec3(0, 0.0, 1.0);
+		m_rotation = Mat3(1);
+		m_direction = DIRECTION_LIGHT_DIR;
 	}
 
 	//all events
@@ -72,18 +73,21 @@ namespace Scene
 	{
 		if (auto ptr_actor = actor().lock())
 		{
-			m_direction = to_mat3(ptr_actor->rotation(true))* DIRECTION_LIGHT_DIR;
+			m_rotation = to_mat3(ptr_actor->rotation(true));
+			m_direction = m_rotation * DIRECTION_LIGHT_DIR;
 		}
 	}
 	void DirectionLight::on_deattch()
 	{
+		m_rotation = Mat3(1);
 		m_direction = DIRECTION_LIGHT_DIR;
 	}
 	void DirectionLight::on_transform()
 	{
 		if (auto ptr_actor = actor().lock())
 		{
-			m_direction = to_mat3(ptr_actor->rotation(true)) * DIRECTION_LIGHT_DIR;
+			m_rotation = to_mat3(ptr_actor->rotation(true));
+			m_direction = m_rotation * DIRECTION_LIGHT_DIR;
 		}
 	}
 	void DirectionLight::on_message(const Message& msg){}
@@ -151,305 +155,288 @@ namespace Scene
 		return { DynamicPointerCast<Render::Transform>(actor().lock()) };
 	}
 
-	/*
-		// Build a matrix for cropping light's projection    
-		// Given vectors are in light's clip space 
-		Matrix Light::CalculateCropMatrix(Frustum splitFrustum) 
-		{
-			Matrix lightViewProjMatrix = viewMatrix * projMatrix;   
-			// Find boundaries in light's clip space   
-			BoundingBox cropBB = CreateAABB(splitFrustum.AABB, lightViewProjMatrix);   
-			// Use default near-plane value   cropBB.min.z = 0.0f;  
-			// Create the crop matrix  
-			float scaleX, scaleY, scaleZ;   
-			float offsetX, offsetY, offsetZ;   
-			scaleX = 2.0f / (cropBB.max.x - cropBB.min.x);   
-			scaleY = 2.0f / (cropBB.max.y - cropBB.min.y);   
-			offsetX = -0.5f * (cropBB.max.x + cropBB.min.x) * scaleX;   
-			offsetY = -0.5f * (cropBB.max.y + cropBB.min.y) * scaleY;   
-			scaleZ = 1.0f / (cropBB.max.z - cropBB.min.z);   
-			offsetZ = -cropBB.min.z * scaleZ;   
-			return Matrix(  scaleX,     0.0f,     0.0f,  0.0f,
-							  0.0f,   scaleY,     0.0f,  0.0f,
-							  0.0f,     0.0f,   scaleZ,  0.0f,
-							offsetX,  offsetY,  offsetZ, 1.0f); 
-    
-		}
-
-		Matrix Light::CalculateCropMatrix(ObjectList casters, ObjectList receivers, Frustum frustum) {
-			// Bounding boxes   BoundingBox receiverBB, casterBB, splitBB;
-			Matrix lightViewProjMatrix = viewMatrix * projMatrix;
-			// Merge all bounding boxes of casters into a bigger "casterBB".
-			for(int i = 0; i < casters.size(); i++){
-				BoundingBox bb = CreateAABB(casters[i]->AABB, lightViewProjMatrix);
-				casterBB.Union(bb);
-			}
-			// Merge all bounding boxes of receivers into a bigger "receiverBB".
-			for(int i = 0; i < receivers.size(); i++){
-				bb = CreateAABB(receivers[i]->AABB, lightViewProjMatrix);
-				receiverBB.Union(bb);
-			}
-			// Find the bounding box of the current split
-			// in the light's clip space.
-			splitBB = CreateAABB(splitFrustum.AABB, lightViewProjMatrix);
-			// Scene-dependent bounding volume
-			BoundingBox cropBB;
-			cropBB.min.x = Max(Max(casterBB.min.x, receiverBB.min.x), splitBB.min.x);
-			cropBB.max.x = Min(Min(casterBB.max.x, receiverBB.max.x), splitBB.max.x);
-			cropBB.min.y = Max(Max(casterBB.min.y, receiverBB.min.y), splitBB.min.y);
-			cropBB.max.y = Min(Min(casterBB.max.y, receiverBB.max.y), splitBB.max.y);
-			cropBB.min.z = Min(casterBB.min.z, splitBB.min.z);
-			cropBB.max.z = Min(receiverBB.max.z, splitBB.max.z);
-			// Create the crop matrix.
-			float scaleX, scaleY, scaleZ;
-			float offsetX, offsetY, offsetZ;
-			scaleX = 2.0f / (cropBB.max.x - cropBB.min.x);
-			scaleY = 2.0f / (cropBB.max.y - cropBB.min.y);
-			offsetX = -0.5f * (cropBB.max.x + cropBB.min.x) * scaleX;
-			offsetY = -0.5f * (cropBB.max.y + cropBB.min.y) * scaleY;
-			scaleZ = 1.0f / (cropBB.max.z – cropBB.min.z);
-			offsetZ = -cropBB.min.z * scaleZ;
-			return Matrix(scaleX, 0.0f, 0.0f, 0.0f,
-			              0.0f, scaleY, 0.0f, 0.0f,
-		                  0.0f, 0.0f, scaleZ, 0.0f,
-			              offsetX, offsetY, offsetZ, 1.0f);
-		}
-	*/
-
-#if 1
-
-	static std::array<Vec4, 8> get_frustum_corners_worldapace(const Mat4& projview)
-	{
-		const auto inv = inverse(projview);
-		std::array<Vec4, 8> corners;
-		size_t i = 0;
-		for (unsigned short x = 0; x < 2; ++x)
-		for (unsigned short y = 0; y < 2; ++y)
-		for (unsigned short z = 0; z < 2; ++z)
-		{
-			const glm::vec4 pt = inv * glm::vec4(2.0f * x - 1.0f, 2.0f * y - 1.0f, 2.0f * z - 1.0f, 1.0f);
-			corners[i++] = pt / pt.w;
-		};
-		return std::move(corners);
-	}
-
-	static std::tuple<CSMCascadeDepth, CSMMatrixArray, CSMMatrixArray> get_light_space_matrices(const Vec3& light_direction,
-																							    const unsigned int texture_width,
-																							    const unsigned int texture_height,
-																							    const Render::Camera* camera,
-																							    const float z_distance_shadow = 100.0f)
-	{
-		CSMCascadeDepth  cascade_depth;
-		CSMMatrixArray   cascade_projection;
-		CSMMatrixArray   cascade_view;
-
-		float near_clip = camera->viewport().near();
-		float far_clip = camera->viewport().far();
-		float clip_range = far_clip - near_clip;
-
-		float min_z = near_clip;
-		float max_z = near_clip + clip_range;
-
-		float range = max_z - min_z;
-		float ratio = max_z / min_z;
-
-
-		for (uint32_t i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; i++)
-		{
-			float p = (i + 1) / static_cast<float>(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
-			float uniform = range * p;
-			cascade_depth[i] = uniform;
-		}
-
-		for (uint32_t i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; i++)
-		{
-			const float near = i ? cascade_depth[i-1] : near_clip;
-			const float far = cascade_depth[i];
-			Mat4 projection = Square::perspective_NO(camera->viewport().fov(), camera->viewport().aspect(), near, far);
-			std::array<Vec4, 8> corners = get_frustum_corners_worldapace(projection * camera->view());
-
-			glm::vec3 center = glm::vec3(0, 0, 0);
-			for (const auto& v : corners)
-				center += glm::vec3(v);
-			center /= corners.size();
-
-			Vec3 light_dir = -normalize(light_direction);
-			const auto light_view = look_at(center + light_dir, center, UP_LIGHT_DIR);
-
-			float min_x = std::numeric_limits<float>::max();
-			float max_x = std::numeric_limits<float>::lowest();
-			float min_y = std::numeric_limits<float>::max();
-			float max_y = std::numeric_limits<float>::lowest();
-			float min_z = std::numeric_limits<float>::max();
-			float max_z = std::numeric_limits<float>::lowest();
-			for (const auto& v : corners)
-			{
-				const auto trf = light_view * v;
-				min_x = std::min(min_x, trf.x);
-				max_x = std::max(max_x, trf.x);
-				min_y = std::min(min_y, trf.y);
-				max_y = std::max(max_y, trf.y);
-				min_z = std::min(min_z, trf.z);
-				max_z = std::max(max_z, trf.z);
-			}
-
-			// Tune this parameter according to the scene
-			if (min_z < 0) min_z *= z_distance_shadow;
-			else           min_z /= z_distance_shadow;
-
-			if (max_z < 0) max_z /= z_distance_shadow;
-			else		   max_z *= z_distance_shadow;
-
-			// Shadow projection
-			const Mat4 zo_light_projection = Square::perspective(camera->viewport().fov(), camera->viewport().aspect(), near, far);
-			const Mat4 zo_light_view = Square::ortho(min_x, max_x, min_y, max_y, min_z, max_z);
-
-			// Result
-			cascade_projection[i] = zo_light_projection;
-			cascade_view[i] = zo_light_view;
-		}
-		return { cascade_depth, cascade_projection, cascade_view };
-	}
-#else
-
-	static std::tuple<CSMMatrixArray, CSMCascadeDepth> get_light_space_matrices(const Vec3&        light_direction,
-																				const unsigned int texture_width,
-																				const unsigned int texture_height,
-																				const Render::Camera* camera)
-	{
-		// Compute global informations
-		CSMCascadeSplits cascade_splits;
-		CSMCascadeDepth  cascade_depth;
-		CSMMatrixArray   cascade_matrix;
-
-		float near_clip = camera->viewport().near();
-		float far_clip  = camera->viewport().far();
-		float clip_range = far_clip - near_clip;
-
-		float min_z = near_clip;
-		float max_z = near_clip + clip_range;
-
-		float range = max_z - min_z;
-		float ratio = max_z / min_z;
-
-		float last_split_dist = 0.0;
-		const float cascade_split_lambda = 0.99f;
-
-		Mat4 inv_cam = inverse(camera->projection() * camera->view());
-		// Calculate split depths based on view camera frustum
-		// Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
-		for (uint32_t i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; i++)
-		{
-#if 0
-			float p = (i + 1) / static_cast<float>(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
-			float log = min_z * std::pow(ratio, p);
-			float uniform = min_z + range * p;
-			float d = cascade_split_lambda * (log - uniform) + uniform;
-			cascade_splits[i] = (d - near_clip) / clip_range;
-#else 
-			float p = (i + 1) / static_cast<float>(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
-			float uniform =  range * p;
-			cascade_splits[i] = uniform / clip_range;
-#endif
-		}
-
-		// Calculate orthographic projection matrix for each cascade
-		for (uint32_t i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; i++)
-		{
-			float split_dist = cascade_splits[i];
-
-			Vec3 frustum_corners[8] = 
-			{
-				Vec3(-1.0f,  1.0f, -1.0f),
-				Vec3(1.0f,  1.0f, -1.0f),
-				Vec3(1.0f, -1.0f, -1.0f),
-				Vec3(-1.0f, -1.0f, -1.0f),
-				Vec3(-1.0f,  1.0f,  1.0f),
-				Vec3(1.0f,  1.0f,  1.0f),
-				Vec3(1.0f, -1.0f,  1.0f),
-				Vec3(-1.0f, -1.0f,  1.0f),
-			};
-			const size_t frustum_corners_size{ SqareArrayLangth(frustum_corners)  };
-
-			// Project frustum corners into world space
-			for (uint32_t i = 0; i < frustum_corners_size; i++)
-			{
-				Vec4 inv_corner = inv_cam * Vec4(frustum_corners[i], 1.0f);
-				frustum_corners[i] = inv_corner / inv_corner.w;
-			}
-
-			for (uint32_t i = 0; i < 4; i++)
-			{
-				Vec3 dist = frustum_corners[i + 4] - frustum_corners[i];
-				frustum_corners[i + 4] = frustum_corners[i] + (dist * split_dist);
-				frustum_corners[i] = frustum_corners[i] + (dist * last_split_dist);
-			}
-
-			// Get frustum center
-			Vec3 frustum_center = Vec3(0.0f);
-			for (uint32_t i = 0; i < frustum_corners_size; i++)
-			{
-				frustum_center += frustum_corners[i];
-			}
-			frustum_center /= float(frustum_corners_size);
-
-			float radius = 0.0f;
-			for (uint32_t i = 0; i < frustum_corners_size; i++)
-			{
-				float distance = length(frustum_corners[i] - frustum_center);
-				radius = Square::max(radius, distance);
-			}
-			radius = Square::ceil(radius * 16.0f) / 16.0f;
-
-			Vec3 maxExtents = Vec3(radius);
-			Vec3 minExtents = -maxExtents;
-
-			Vec3 light_dir = normalize(light_direction);
-			Mat4 light_view_matrix  = look_at(frustum_center - light_dir * maxExtents.z,
-											  frustum_center, 
-											  Vec3(0.0f, 1.0f, 0.0f));
-			Mat4 light_ortho_matrix = ortho(minExtents.x,
-											maxExtents.x, 
-											minExtents.y, 
-											maxExtents.y, 
-											0.0f, 
-											maxExtents.z - minExtents.z);
-
-			// Store split distance and matrix in cascade
-			cascade_depth [i] = (near_clip + split_dist * clip_range) * -1.0f;
-			cascade_matrix[i] = light_ortho_matrix * light_view_matrix;
-
-			last_split_dist = cascade_splits[i];
-		}
-		return { cascade_matrix, cascade_depth };
-	}
-#endif 
 	void DirectionLight::set(Render::UniformDirectionLight* data) const
 	{
 		data->m_direction = m_direction;
 		this->Render::DirectionLight::set(data);
 	}
 
+	namespace Aux1
+	{
+		CSMCascadeDepth compute_cascade_depth(const Render::Camera& camera)
+		{
+			CSMCascadeDepth  cascade_depth;
+
+			const float cam_near = camera.viewport().near();
+			const float cam_far = camera.viewport().far();
+			const float clip_range = cam_far - cam_near;
+
+			const float min_z = cam_near;
+			const float max_z = cam_near + clip_range;
+
+			const float range = max_z - min_z;
+			const float ratio = max_z / min_z;
+
+			cascade_depth[0] = cam_near;
+			for (uint32_t i = 1; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; i++)
+			{
+				float p = i / static_cast<float>(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
+				float uniform = range * p;
+				cascade_depth[i] = uniform;
+			}
+			cascade_depth[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES] = cam_far;
+
+			return cascade_depth;
+		}
+
+		Vec3 center_ndc(const std::array<Vec3, 8>& NDC)
+		{
+			Vec3 center(0.0f);
+			for (const Vec3& vec : NDC)
+			{
+				center += vec;
+			}
+			float div = 1.0f / NDC.size();
+			return center * div;
+		}
+
+		float radius_ndc(const std::array<Vec3, 8>& NDC, const Vec3& center)
+		{
+			float radius = 0.0f;
+			for (unsigned int i = 0; i < 8; ++i)
+			{
+				float distance = glm::length(NDC[i] - center);
+				radius = (max)(radius, distance);
+			}
+			radius = std::ceil(radius * 16.0f) / 16.0f;
+			return radius;
+		}
+
+		Mat4 get_ortho_matrix(const Vec3& min_point, const Vec3& max_point)
+		{
+			float distance = max_point.z - min_point.z;
+			//Create the orthographic matrix
+			return ortho(min_point.x, max_point.x, min_point.y, max_point.y, 0.0f, distance);
+		}
+
+		Mat4 get_round_matrix(Mat4 Ortho, const Mat4& View, const size_t texture_size)
+		{
+			Mat4 shadow_mat = Ortho * View;
+			Vec4 shadow_start_Pos(0.0f, 0.0f, 0.0f, 1.0f);
+			shadow_start_Pos = shadow_mat * shadow_start_Pos;
+			shadow_start_Pos = (shadow_start_Pos * texture_size) / 2.0f;
+
+			Vec4 round_start = glm::round(shadow_start_Pos);
+			Vec4 offset = round_start - shadow_start_Pos;
+			offset = Vec4(Vec2(offset * 2.0f / texture_size) , 0.0f, 0.0f);
+			Ortho[3] += offset;
+
+			return Ortho;
+		}
+
+		std::array<Vec3, 8> get_frustum_points(const Render::Camera& camera, float near, float far)
+		{
+			std::array<Vec3, 8> frustum_points
+			{
+				Vec3(-1.0f,  1.0f, -1.0f),
+				Vec3(1.0f,  1.0f, -1.0f),
+				Vec3(1.0f, -1.0f, -1.0f),
+				Vec3(-1.0f, -1.0f, -1.0f),
+
+				Vec3(-1.0f,  1.0f,  1.0f),
+				Vec3(1.0f,  1.0f,  1.0f),
+				Vec3(1.0f, -1.0f,  1.0f),
+				Vec3(-1.0f, -1.0f,  1.0f),
+			};
+
+			//Move the frustum coordinates to world space
+			Mat4 projection = glm::perspectiveRH_NO(camera.viewport().fov(), camera.viewport().aspect(), camera.viewport().near(), camera.viewport().far());
+			Mat4 inv_view_proj = inverse(projection * camera.view());
+
+			for (unsigned i = 0; i < 8; i++)
+			{
+				//Move to world
+				Vec4 inverse_point = inv_view_proj * Vec4(frustum_points[i], 1.0f);
+				//Perspective division
+				frustum_points[i] = Vec3(inverse_point / inverse_point.w);
+			}
+
+			float range = camera.viewport().far() - camera.viewport().near();
+			far = (far - camera.viewport().near()) / range;
+			near = (near - camera.viewport().near()) / range;
+
+			//Compute the real corners of the AABB
+			for (unsigned i = 0; i < 4; i++)
+			{
+				Vec3 frustum_vec = frustum_points[i + 4] - frustum_points[i];
+				//move vectors to real coordinates
+				Vec3 far_vec = frustum_vec * far;
+				Vec3 near_vec = frustum_vec * near;
+				//Compute real points
+				frustum_points[i + 4] = frustum_points[i] + far_vec;
+				frustum_points[i] = frustum_points[i] + near_vec;
+			}
+
+			return frustum_points;
+		}
+
+		std::tuple<Mat4, Mat4> get_projection( const Render::Camera& camera, 
+											   float near, 
+											   float far, 
+											   const Vec3& direction,
+											   size_t texture_size)
+		{
+			// looks Cascaded Shadow Maps - Sphere Based Bounding 
+			std::array<Vec3, 8> NDC = get_frustum_points(camera, near, far);
+			Vec3 center(center_ndc(NDC));
+			float radius(radius_ndc(NDC, center));
+			Vec3 max_point(radius);
+			Vec3 min_point(-max_point);
+			Mat4 light_projection = get_ortho_matrix(min_point, max_point);
+			Mat4 light_view = look_at(center - normalize(direction) * max_point.z, center, -UP_LIGHT_DIR);
+			light_projection = get_round_matrix(light_projection, light_view, texture_size);
+			return { light_projection , light_view };
+		}
+
+		void set_uniform(Render::UniformDirectionShadowLight& data, 
+						 const Render::Camera& camera,
+						 const Render::ShadowBuffer& buffer,
+						 const Mat3& rotation,
+						 const Vec3& direction)
+		{
+			// Depths
+			auto cascade_vdepths = compute_cascade_depth(camera);
+			// Copy values
+			for (unsigned int i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++i)
+			{
+				auto texture_size = Square::max<size_t>(buffer.width(), buffer.height());
+				auto& [p, v] = get_projection(camera, cascade_vdepths[i], cascade_vdepths[i + 1], direction, texture_size);
+				data.m_view_projectio[i] = p * v;
+				data.m_depths[i] = cascade_vdepths[i + 1];
+			}
+		}
+	}
+
+	namespace Aux2
+	{
+		CSMCascadeDepth compute_cascade_depth(const Render::Camera& camera)
+		{
+			CSMCascadeDepth  cascade_depth;
+
+			const float cam_near = camera.viewport().near();
+			const float cam_far = camera.viewport().far();
+			const float clip_range = cam_far - cam_near;
+
+			const float min_z = cam_near;
+			const float max_z = cam_near + clip_range;
+
+			const float range = max_z - min_z;
+			const float ratio = max_z / min_z;
+
+			cascade_depth[0] = cam_near;
+			for (uint32_t i = 1; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; i++)
+			{
+				float p = i / static_cast<float>(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
+				float uniform = range * p;
+				cascade_depth[i] = uniform;
+			}
+			cascade_depth[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES] = cam_far;
+
+			return cascade_depth;
+		}
+		
+		template<typename T>
+		T center_ndc(const std::array<T, 8>& NDC)
+		{
+			T center(0.0f);
+			for (const T& vec : NDC)
+			{
+				center += vec;
+			}
+			float div = 1.0f / NDC.size();
+			return center * div;
+		}
+
+		Mat4 get_ortho(const Render::Camera& camera,
+					   const Mat4& camera_inv_view,
+				       float near,
+				       float far,
+				       const Mat4& light_view)
+		{
+			float aspect = camera.viewport().aspect();
+			float FOV = camera.viewport().fov();
+			float tan_half_HFOV = std::tan(FOV / 2.0f);
+			float tan_half_VFOV = std::tan((FOV * aspect) / 2.0f);
+
+			float xn = near * tan_half_HFOV;
+			float xf = far * tan_half_HFOV;
+			float yn = near * tan_half_VFOV;
+			float yf = far * tan_half_VFOV;
+
+			const size_t frustum_corners_size = 8;
+			std::array<Vec4, frustum_corners_size> frustum_corners
+			{
+				// near face
+				Vec4(xn, yn, near, 1.0),
+				Vec4(-xn, yn, near, 1.0),
+				Vec4(xn, -yn, near, 1.0),
+				Vec4(-xn, -yn, near, 1.0),
+
+				// far face
+				Vec4(xf, yf, far, 1.0),
+				Vec4(-xf, yf, far, 1.0),
+				Vec4(xf, -yf, far, 1.0),
+				Vec4(-xf, -yf, far, 1.0)
+			};
+
+			
+			Vec4 center = camera_inv_view * center_ndc(frustum_corners);
+			Vec4 min{ std::numeric_limits<float>::max() };
+			Vec4 max{ std::numeric_limits<float>::lowest() };
+
+			for (size_t j = 0; j < frustum_corners_size; ++j)
+			{
+				// Transform the frustum coordinate from view to world space
+				Vec4 vc_world = camera_inv_view * frustum_corners[j];
+				Vec4 vc_light = light_view * vc_world;
+
+				min = Square::min(min, vc_light);
+				max = Square::max(max, vc_light);
+			}
+
+			return Square::ortho_ZO(min.x, max.x, min.y, max.y, min.z, max.z);
+		}
+
+		void set_uniform(Render::UniformDirectionShadowLight& data, 
+						 const Render::Camera& camera,
+						 const Render::ShadowBuffer& buffer,
+						 const Mat3& rotation,
+						 const Vec3& direction)
+		{
+			// Depths
+			auto cascade_vdepths = compute_cascade_depth(camera);
+			Mat4 light_model = Mat4(rotation);
+			Mat4 light_view = inverse(light_model);
+			Mat4 camera_inv_view = inverse(camera.view());
+			// Copy values
+			for (unsigned int i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++i)
+			{
+				data.m_view_projectio[i] = get_ortho(camera, 
+													 camera_inv_view,
+												     cascade_vdepths[i], 
+					                                 cascade_vdepths[i+1], 
+					                                 light_view) * light_view;
+				data.m_depths[i] = cascade_vdepths[i + 1];
+			}
+		}
+	}
+	
 	void DirectionLight::set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera) const
 	{
 
 		if (auto ptr_actor = actor().lock())
 		{
-			// Compute cascades
-			auto& [cascade_vdepths, cascade_vproj, cascade_vview] = get_light_space_matrices
-			(
-				m_direction, m_buffer.width(), m_buffer.height(), camera
-			);
-			// Init to 0
-			std::memset(data, 0, sizeof(Render::UniformDirectionShadowLight));
-			// Copy values
-			for (unsigned int i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++i)
-			{
-				data->m_depths[i] = cascade_vdepths[i];
-				data->m_projection[i] = cascade_vproj[i];
-				data->m_view[i] = cascade_vview[i];
-			}
-
+			Aux1::set_uniform(*data, *camera, m_buffer, m_rotation, m_direction);
 		}
 	}
 

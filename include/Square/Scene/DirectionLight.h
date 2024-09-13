@@ -70,6 +70,7 @@ namespace Scene
 	protected:
 
 		Vec3 m_direction;
+		Mat3 m_rotation;
 		//shadow
 		Render::ShadowBuffer m_buffer;
 

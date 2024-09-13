@@ -329,7 +329,7 @@ namespace Render
 
 	//enable pass effect
 	void EffectPass::bind(  Render::Context&  render
-						  , EffectPassInputs  inputs
+						  , const EffectPassInputs& inputs
                           , EffectParameters* params) const
 	{
 		//bind
