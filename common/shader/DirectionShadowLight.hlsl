@@ -19,6 +19,35 @@ uint find_csm_layer(in float depth)
 	return DIRECTION_SHADOW_CSM_NUMBER_OF_FACES - 1;
 }
 
+#ifdef PCF_SHADOW
+float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
+{
+	//depth of current pos
+	float current_depth = proj_coords.z;
+	//start shadow
+	float shadow = 0.0;
+	//size
+	Vec2 tex_size = Vec2(1.0, 1.0) / textureSize2DArray(direction_shadow_map, 0).xy;
+	//size kernel
+	const int kernel_size = 5;
+	const int kenrel_hsize = kernel_size / 2;
+	//pcf
+	[unroll]
+	for (int x = -kenrel_hsize; x <= kenrel_hsize; ++x)
+	{
+		[unroll]
+		for (int y = -kenrel_hsize; y <= kenrel_hsize; ++y)
+		{
+			Vec2 coord = proj_coords.xy + Vec2(x, y) * tex_size;
+			float pcf_depth = shadow2DArray(direction_shadow_map, Vec3(coord, id)).r;
+			shadow += (current_depth - bias) <= pcf_depth ? 1.0 : 0.0;
+		}
+	}
+	shadow /= (kernel_size * kernel_size);
+	//return
+	return shadow;
+}
+#else
 float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
 {
 	// depth of shadow map
@@ -30,6 +59,7 @@ float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
 	// shadow
 	return shadow;
 }
+#endif
 
 Vec4 direction_light_compute_shadow(in Vec4 fposition, float bias)
 {
