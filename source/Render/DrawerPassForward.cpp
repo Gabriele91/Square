@@ -174,7 +174,7 @@ namespace Render
 							//is a shadow light
 							if (light->shadow() != shadow) break;
 							//get buffer
-							light->set(&upoint_light);
+;							light->set(&upoint_light);
 							//update buffer
 							Render::update_constant_buffer(&render(), m_cb_point_light.get(), &upoint_light);
 							//shadow
