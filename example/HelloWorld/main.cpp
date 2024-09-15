@@ -374,8 +374,8 @@ public:
 		auto box_left = m_level->actor("box_left");
 		//model + material + position + scale
 		box_left->component<Cube>()->m_material = context().resource<Material>("box");
-		box_left->position({ 6.0f, 0.0f, 10.0f });
-		box_left->scale({ 0.5f, 20.0f, 20.0f });
+		box_left->position({ 6.0f, 10.0f, 10.0f });
+		box_left->scale({ 0.5f, 40.0f, 20.0f });
 		//light
 		auto light0 = m_level->actor("light0");
 		light0->component<DirectionLight>()->diffuse({ 1.0,0.0,0.0 });
@@ -434,6 +434,7 @@ public:
         {
             child->turn(rotate_euler<float>(0.0f,radians(90.0f*float(dt)),0.0f));
         }
+		m_level->actor("box_right")->translation({0,sin(m_acc * Square::Constants::pi<float>() * 0.25) * 20.0f * float(dt),0});
         m_drawer->draw( 
 			  Vec4(0.25,0.5,1.0,1.0)
 			, Vec4(0.1,0.1,0.1,1.0)

@@ -316,7 +316,7 @@ namespace Resource
 				//fail
 				context().logger()->warning("Error to shader compile");
 				context().logger()->warnings(render->get_shader_compiler_errors(m_shader));
-				context().logger()->warning(render->get_shader_liker_error(m_shader));
+				context().logger()->warning(render->get_shader_linker_error(m_shader));
 				return false;
 			}
             //ok
@@ -405,7 +405,7 @@ namespace Resource
 				//fail
 				context().logger()->warning("Error to shader compile");
 				context().logger()->warnings(render->get_shader_compiler_errors(m_shader));
-				context().logger()->warning(render->get_shader_liker_error(m_shader));
+				context().logger()->warning(render->get_shader_linker_error(m_shader));
 				return false;
 			}
             //ok

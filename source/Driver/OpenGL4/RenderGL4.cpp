@@ -1495,6 +1495,7 @@ namespace Render
 
 	void ContextGL4::delete_CB(ConstBuffer*& cb)
 	{
+		square_assert(cb != nullptr);
 		//test
 		if (s_bind_context.m_const_buffer == cb)
 		{
@@ -1508,6 +1509,7 @@ namespace Render
 
 	void ContextGL4::delete_VBO(VertexBuffer*& vbo)
 	{
+		square_assert(vbo != nullptr);
         //test
         if(s_bind_context.m_vertex_buffer == vbo)
         {
@@ -1521,6 +1523,7 @@ namespace Render
 
 	void ContextGL4::delete_IBO(IndexBuffer*& ibo)
     {
+		square_assert(ibo != nullptr);
         //test
         if(s_bind_context.m_index_buffer == ibo)
         {
@@ -1678,6 +1681,7 @@ namespace Render
 
 	void ContextGL4::delete_IL(InputLayout*& layout)
 	{
+		square_assert(layout != nullptr);
 		//is bind?
 		if (s_bind_context.m_input_layout == layout)
 		{
@@ -2258,6 +2262,7 @@ namespace Render
         
 	void ContextGL4::delete_texture(Texture*& ctx_texture)
     {
+		square_assert(ctx_texture != nullptr);
         //bind?
         if(ctx_texture->m_last_bind)
         {
@@ -2436,10 +2441,10 @@ namespace Render
 		m_errors.push_back(std::move(error_log));
 	}
 
-	void Shader::push_liker_error(const std::string& error_log)
+	void Shader::push_linker_error(const std::string& error_log)
 	{
-		m_liker_log += error_log;
-		m_liker_log += "\n";
+		m_linker_log += error_log;
+		m_linker_log += "\n";
 	}
 
 	//help
@@ -2472,7 +2477,7 @@ namespace Render
 		}
 		return info_log;
 	}
-	static std::string liker_shader_error_log(unsigned int program)
+	static std::string linker_shader_error_log(unsigned int program)
 	{
 		//return
 		std::string info_log;
@@ -2531,31 +2536,55 @@ namespace Render
 						//delete and to null
 						glDeleteShader(source_shader); source_shader = 0;
 					}
+					// Fetch warnings
+					else
+					{
+						std::string warnings = compiler_shader_error_log(source_shader);
+						if(!warnings.empty())
+							out_shader->push_compiler_error({ info.m_type, warnings });
+					}
 				}
 			}
 		}
 		//attach
 		for (auto shader : out_shader->m_shaders)
 		{
-			if (shader)  glAttachShader(out_shader->m_shader_id, shader);
+			if (shader)
+			{
+				glAttachShader(out_shader->m_shader_id, shader);
+			}
 		}
 		//liking
 		glLinkProgram(out_shader->m_shader_id);
+		//test
+		{
+			//count liked shaders
+			GLint count_linked_shaders = 0;
+			//get link status
+			glGetProgramiv(out_shader->m_shader_id, GL_ATTACHED_SHADERS, &count_linked_shaders);
+			//if 0 return an error
+			if (!count_linked_shaders)
+			{
+				out_shader->push_linker_error("No shader linked to the program: " + out_shader->m_shader_id);
+			}
+		}
 		//error?
 		{
 			//status
-			int is_linked = false;
+			GLint is_linked = false;
 			//get link status
 			glGetProgramiv(out_shader->m_shader_id, GL_LINK_STATUS, &is_linked);
 			//ok?
 			if (!is_linked)
 			{
 				//get error
-				out_shader->push_liker_error(liker_shader_error_log(out_shader->m_shader_id));
+				out_shader->push_linker_error(linker_shader_error_log(out_shader->m_shader_id));
 			}
 		}
 		//try to find _Global;
 		out_shader->build_global_UBO();
+		//test
+		print_errors();
 		//return shader
 		return out_shader;
 	}
@@ -2567,7 +2596,7 @@ namespace Render
 	
 	bool ContextGL4::shader_linked_with_error(Shader* shader)
 	{
-		return shader->m_liker_log.size() != 0;
+		return shader->m_linker_log.size() != 0;
 	}
 	
 	std::vector< std::string > ContextGL4::get_shader_compiler_errors(Shader* shader)
@@ -2588,9 +2617,9 @@ namespace Render
 		return output;
 	}
 	
-	std::string ContextGL4::get_shader_liker_error(Shader* shader)
+	std::string ContextGL4::get_shader_linker_error(Shader* shader)
 	{
-		return shader->m_liker_log;
+		return shader->m_linker_log;
 	}
 
 	void ContextGL4::bind_shader(Shader* shader)
@@ -2640,6 +2669,7 @@ namespace Render
     
 	void ContextGL4::delete_shader(Shader*& shader)
 	{
+		square_assert(shader != nullptr);
 		if (s_bind_context.m_shader == shader)
 		{
 			unbind_shader(shader);

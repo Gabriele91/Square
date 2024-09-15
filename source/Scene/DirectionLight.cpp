@@ -282,7 +282,7 @@ namespace Scene
 
 		std::tuple<Mat4, Mat4> get_projection( const Render::Camera& camera, 
 											   float near, 
-											   float far, 
+											   float far,
 											   const Vec3& direction,
 											   size_t texture_size)
 		{
@@ -300,6 +300,7 @@ namespace Scene
 
 		void set_uniform(Render::UniformDirectionShadowLight& data, 
 						 const Render::Camera& camera,
+						 const Geometry::AABoundingBox& scene_size,
 						 const Render::ShadowBuffer& buffer,
 						 const Mat3& rotation,
 						 const Vec3& direction)
@@ -410,6 +411,7 @@ namespace Scene
 
 		void set_uniform(Render::UniformDirectionShadowLight& data, 
 						 const Render::Camera& camera,
+						 const Geometry::AABoundingBox& scene_size,
 						 const Render::ShadowBuffer& buffer,
 						 const Mat3& rotation,
 						 const Vec3& direction)
@@ -433,11 +435,133 @@ namespace Scene
 		}
 	}
 	
+	namespace Aux3
+	{
+		CSMCascadeDepth compute_cascade_depth(const Render::Camera& camera)
+		{
+			CSMCascadeDepth  cascade_depth;
+
+			const float cam_near = camera.viewport().near();
+			const float cam_far = camera.viewport().far();
+			const float clip_range = cam_far - cam_near;
+
+			const float min_z = cam_near;
+			const float max_z = cam_near + clip_range;
+
+			const float range = max_z - min_z;
+			const float ratio = max_z / min_z;
+
+			cascade_depth[0] = cam_near;
+			for (uint32_t i = 1; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; i++)
+			{
+				float p = i / static_cast<float>(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
+				float uniform = range * p;
+				cascade_depth[i] = uniform;
+			}
+			cascade_depth[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES] = cam_far;
+
+			return cascade_depth;
+		}
+		
+		template<typename T>
+		T center_ndc(const std::array<T, 8>& NDC)
+		{
+			T center(0.0f);
+			for (const T& vec : NDC)
+			{
+				center += vec;
+			}
+			float div = 1.0f / NDC.size();
+			return center * div;
+		}
+
+		Mat4 get_ortho(const Render::Camera& camera,
+					   const Mat4& camera_inv_view,
+				       float near,
+				       float far,
+				       const Mat4& light_view,
+					   const Geometry::AABoundingBox& scene_size_light_space)
+		{
+			float aspect = camera.viewport().aspect();
+			float FOV = camera.viewport().fov();
+			float tan_half_HFOV = std::tan(FOV / 2.0f);
+			float tan_half_VFOV = std::tan((FOV * aspect) / 2.0f);
+
+			float xn = near * tan_half_HFOV;
+			float xf = far * tan_half_HFOV;
+			float yn = near * tan_half_VFOV;
+			float yf = far * tan_half_VFOV;
+
+			const size_t frustum_corners_size = 8;
+			std::array<Vec4, frustum_corners_size> frustum_corners
+			{
+				// near face
+				Vec4(xn, yn, near, 1.0),
+				Vec4(-xn, yn, near, 1.0),
+				Vec4(xn, -yn, near, 1.0),
+				Vec4(-xn, -yn, near, 1.0),
+
+				// far face
+				Vec4(xf, yf, far, 1.0),
+				Vec4(-xf, yf, far, 1.0),
+				Vec4(xf, -yf, far, 1.0),
+				Vec4(-xf, -yf, far, 1.0)
+			};
+
+			
+			Vec4 center = camera_inv_view * center_ndc(frustum_corners);
+			Vec4 min{ std::numeric_limits<float>::max() };
+			Vec4 max{ std::numeric_limits<float>::lowest() };
+
+			for (size_t j = 0; j < frustum_corners_size; ++j)
+			{
+				// Transform the frustum coordinate from view to world space
+				Vec4 vc_world = camera_inv_view * frustum_corners[j];
+				Vec4 vc_light = light_view * vc_world;
+
+				min = Square::min(min, vc_light);
+				max = Square::max(max, vc_light);
+			}
+
+			min.z = scene_size_light_space.get_min().z;
+			max.z = scene_size_light_space.get_max().z;
+
+			return Square::ortho_ZO(min.x, max.x, min.y, max.y, -max.z, -min.z);
+		}
+
+		void set_uniform(Render::UniformDirectionShadowLight& data, 
+						 const Render::Camera& camera,
+						 const Geometry::AABoundingBox& scene_size,
+						 const Render::ShadowBuffer& buffer,
+						 const Mat3& rotation,
+						 const Vec3& direction)
+		{
+			// Depths
+			auto cascade_vdepths = compute_cascade_depth(camera);
+			Mat4 light_model = Mat4(rotation);
+			Mat4 light_view = inverse(light_model);
+			Mat4 camera_inv_view = inverse(camera.view());
+			auto scene_size_light_space = scene_size * light_view;
+			// Copy values
+			for (unsigned int i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++i)
+			{
+				data.m_projection[i] = get_ortho(camera, 
+												camera_inv_view,
+												cascade_vdepths[i], 
+					                            cascade_vdepths[i+1], 
+					                            light_view,
+												scene_size_light_space);
+				data.m_view[i] = light_view;
+				data.m_depths[i] = cascade_vdepths[i + 1];
+			}
+		}
+	}
+
 	void DirectionLight::set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera) const
 	{
 		if (auto ptr_actor = actor().lock())
 		{
-			Aux1::set_uniform(*data, *camera, m_buffer, m_rotation, m_direction);
+			Aux3::set_uniform(*data, *camera, m_scene_size, m_buffer, m_rotation, m_direction);
 		}
 	}
 
