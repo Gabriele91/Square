@@ -50,10 +50,9 @@ namespace Geometry
 		return 8 * m_extension[0] * m_extension[1] * m_extension[2];
 	}
 
-	std::vector< Vec3 > OBoundingBox::get_bounding_box() const
+	std::array< Vec3, 8 > OBoundingBox::get_bounding_box() const
 	{
-		std::vector< Vec3 > p;
-		p.resize(8);
+		std::array< Vec3, 8 > p;
 		Vec3 r(m_rotation[0][0], m_rotation[1][0], m_rotation[2][0]);
 		Vec3 u(m_rotation[0][1], m_rotation[1][1], m_rotation[2][1]);
 		Vec3 f(m_rotation[0][2], m_rotation[1][2], m_rotation[2][2]);
@@ -68,10 +67,9 @@ namespace Geometry
 		return p;
 	}
 
-	std::vector< Vec3 > OBoundingBox::get_bounding_box(const Mat4& model) const
+	std::array< Vec3, 8 > OBoundingBox::get_bounding_box(const Mat4& model) const
 	{
-		std::vector< Vec3 > p;
-		p.resize(8);
+		std::array< Vec3, 8 > p;
 		Vec3 r(m_rotation[0][0], m_rotation[1][0], m_rotation[2][0]);
 		Vec3 u(m_rotation[0][1], m_rotation[1][1], m_rotation[2][1]);
 		Vec3 f(m_rotation[0][2], m_rotation[1][2], m_rotation[2][2]);
@@ -179,7 +177,7 @@ namespace Geometry
 	AABoundingBox OBoundingBox::to_aabb() const
 	{
 		// Get the 8 vertices of the OBB
-		std::vector<Vec3> obb_vertices = std::move(get_bounding_box());
+		auto obb_vertices = std::move(get_bounding_box());
 
 		// Initialize the min and max points for the AABB
 		Vec3 aabb_min = obb_vertices[0];

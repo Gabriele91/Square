@@ -54,10 +54,9 @@ namespace Geometry
 		return abs(m_max - get_center());
 	}
 
-	std::vector< Vec3 > AABoundingBox::get_bounding_box() const
+	std::array< Vec3, 8 > AABoundingBox::get_bounding_box() const
 	{
-		std::vector< Vec3 > p;
-		p.resize(8);
+		std::array< Vec3, 8 > p;
 		
 		Vec3  r(1, 0, 0);
 		Vec3  u(0, 1, 0);
@@ -78,7 +77,7 @@ namespace Geometry
 
 	}
 
-	std::vector< Vec3 > AABoundingBox::get_bounding_box(const Mat4& model) const
+	std::array< Vec3, 8 > AABoundingBox::get_bounding_box(const Mat4& model) const
 	{
 		auto output = get_bounding_box();
 		for (Vec3& point : output) point = Vec3(model * Vec4(point, 1.0));
@@ -87,6 +86,7 @@ namespace Geometry
 
 	void AABoundingBox::applay(const Mat4& model)
 	{
+#if 0
 		//info aabb
 		Vec3 center     = get_center();
 		Vec3 extension  = m_max - center;
@@ -99,6 +99,17 @@ namespace Geometry
 		//save new aabb
 		m_max = new_center + new_extension;
 		m_min = new_center - new_extension;
+#else
+		Vec3 min{ std::numeric_limits<float>::max() };
+		Vec3 max{ std::numeric_limits<float>::lowest() };
+		for (const Vec3& point : get_bounding_box(model))
+		{
+			min = Square::min(min, point);
+			max = Square::max(max, point);
+		}
+		m_min = min;
+		m_max = max;
+#endif
 	}
 
 	AABoundingBox AABoundingBox::merge(const AABoundingBox& other) const
@@ -113,7 +124,9 @@ namespace Geometry
 
 	AABoundingBox  AABoundingBox::operator*  (const Mat4& model) const
 	{
-		AABoundingBox out; out.applay(model); return out;
+		AABoundingBox out(*this); 
+		out.applay(model); 
+		return out;
 	}
 
 	AABoundingBox& AABoundingBox::operator*= (const Mat4& model)

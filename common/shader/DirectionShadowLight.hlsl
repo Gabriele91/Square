@@ -17,7 +17,7 @@ float bias_depth_driven(in Vec3  view_dir, in Vec3  normal, in float max_bias, i
 {
 	// calculate bias (based on depth map resolution and slope)
 	float bias = max(0.0005 * (1.0 - dot(normal, view_dir)), max_bias);
-	bias *= 1 / (direction_shadow_camera.m_depths[id] * 0.0015f);
+	//bias *= 1 / (direction_shadow_camera.m_depths[id] * 0.001f);
 	return bias;
 }
 

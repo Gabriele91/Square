@@ -366,10 +366,10 @@ namespace Render
             m_errors.push_back(std::move(error_log));
         }
         
-        void push_liker_error(const std::string& error_log)
+        void push_linker_error(const std::string& error_log)
         {
-            m_liker_log += error_log;
-            m_liker_log += "\n";
+            m_linker_log += error_log;
+            m_linker_log += "\n";
         }
 
 		ID3DBlob* binary(ShaderType type)
@@ -425,7 +425,7 @@ namespace Render
 		std::vector < ShaderCompileError > m_errors;
 
 		//linking error
-		std::string m_liker_log;
+		std::string m_linker_log;
         
 	};
     
@@ -579,7 +579,7 @@ namespace Render
 		virtual bool shader_compiled_with_errors(Shader* shader) override;
 		virtual bool shader_linked_with_error(Shader* shader) override;
 		virtual std::vector< std::string > get_shader_compiler_errors(Shader* shader) override;
-		virtual std::string get_shader_liker_error(Shader* shader) override;
+		virtual std::string get_shader_linker_error(Shader* shader) override;
 
 		virtual void bind_shader(Shader* shader) override;
 		virtual void unbind_shader(Shader* shader) override;

@@ -2940,7 +2940,7 @@ namespace Render
 	}
 	bool ContextDX11::shader_linked_with_error(Shader* shader)
 	{
-		return shader->m_liker_log.size() != 0;
+		return shader->m_linker_log.size() != 0;
 	}
 
 	std::vector< std::string > ContextDX11::get_shader_compiler_errors(Shader* shader)
@@ -2960,9 +2960,9 @@ namespace Render
 		}
 		return output;
 	}
-	std::string ContextDX11::get_shader_liker_error(Shader* shader)
+	std::string ContextDX11::get_shader_linker_error(Shader* shader)
 	{
-		return shader->m_liker_log;
+		return shader->m_linker_log;
 	}
 
 	void ContextDX11::bind_shader(Shader* shader)

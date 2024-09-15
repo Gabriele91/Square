@@ -239,7 +239,7 @@ namespace Geometry
 		return obounding_box_from_covariance_matrix(C, points, pos_offset, vertex_size, n_points);
 	}
 	
-    
+  
     AABoundingBox aabounding_from_points(const std::vector< Vec3 >& points)
     {
         return aabounding_from_points((const unsigned char*)points.data(), 0, sizeof(Vec3), points.size());

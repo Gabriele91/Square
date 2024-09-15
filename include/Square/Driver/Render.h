@@ -1047,7 +1047,7 @@ namespace Render
 		virtual bool shader_compiled_with_errors(Shader* shader) = 0;
 		virtual bool shader_linked_with_error(Shader* shader) = 0;
 		virtual std::vector< std::string > get_shader_compiler_errors(Shader* shader) = 0;
-		virtual std::string get_shader_liker_error(Shader* shader) = 0;
+		virtual std::string get_shader_linker_error(Shader* shader) = 0;
 
 		virtual void bind_shader(Shader* shader) = 0;
 		virtual void unbind_shader(Shader* shader) = 0;
