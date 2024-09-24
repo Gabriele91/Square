@@ -67,7 +67,7 @@ namespace Render
 				false,//no mipmap
 				1,	  //mipmap_min
 				1,    //mipmap_max
-				0.0,
+				0,
 				false //no cpu access
 			};
 			//create textures

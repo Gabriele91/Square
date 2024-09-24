@@ -63,6 +63,14 @@ float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
 }
 #endif
 
+static const Vec3 csm_colors[5] = {
+	Vec3(1.0f,0.0f,0.0f),
+	Vec3(0.0f,1.0f,0.0f),
+	Vec3(0.0f,1.0f,0.0f),
+	Vec3(1.0f,1.0f,0.0f),
+	Vec3(0.0f,1.0f,1.0f)
+};
+
 Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3 normal, in float max_bias)
 {
 	// Get cascade id
@@ -82,16 +90,24 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3
 	proj_coords = invY(proj_coords);
 	// Compute bias
 	float bias = bias_depth_driven(view_dir, normal, max_bias, cascade_id);
+	// Shadow
+#ifdef DEBUG
+	float shadow = direction_light_shadow(proj_coords, cascade_id, bias);
+	Vec3  shadow_color = csm_colors[cascade_id] * 0.9 + Vec3(shadow, shadow, shadow) * 0.1f;
+#else
+	float shadow = direction_light_shadow(proj_coords, cascade_id, bias);
+	Vec3  shadow_color = Vec3(shadow, shadow, shadow);
+#endif
 	// return
-	return direction_light_shadow(proj_coords, cascade_id, bias);
+	return Vec4(shadow_color, 1.0f);
 }
 
 void direction_light_apply_shadow(inout LightResult result, in Vec4 fposition, in Vec3  view_dir, in Vec3  normal)
 {
 	//const bias
-	const float max_bias = 0.00001;
+	const float max_bias = 0.000001;
 	//factor
-	float shadow_factor = direction_light_compute_shadow(fposition, view_dir, normal, max_bias);
+	Vec4 shadow_factor = direction_light_compute_shadow(fposition, view_dir, normal, max_bias);
 	//add shadow
 	result.m_diffuse *= shadow_factor;
 	result.m_specular *= shadow_factor;

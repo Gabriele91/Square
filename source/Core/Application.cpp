@@ -383,7 +383,8 @@ namespace Square
 
         //time
         double old_time = 0;
-        double last_time = Time::get_time();
+        double last_time = Time::get_ms_time();
+        m_last_delta_time = 0;
 
         //send event
         {
@@ -397,11 +398,11 @@ namespace Square
         {
             //compute delta time
             old_time = last_time;
-            last_time = Time::get_time();
+            last_time = Time::get_ms_time();
             //print
 			m_render->print_errors();
             //update delta time
-            m_last_delta_time = std::max(last_time - old_time, 0.0001);
+            m_last_delta_time = std::max(last_time - old_time,  1E-16) / 1000.0;
             //update
             if (!m_instance->run(m_last_delta_time)) break;
             //print

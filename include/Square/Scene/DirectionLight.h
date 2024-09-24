@@ -66,7 +66,7 @@ namespace Scene
 
 		//Reg object
 		virtual void set(Render::UniformDirectionLight* data) const override;
-		virtual void set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera) const override;
+		virtual void set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera, bool draw_shadow_map = true) const override;
 
 		virtual void set_scene_size(const Geometry::AABoundingBox& scene) override;
 
@@ -77,6 +77,7 @@ namespace Scene
 		//shadow
 		Render::ShadowBuffer m_buffer;
 		Geometry::AABoundingBox m_scene_size;
+		mutable Render::UniformDirectionShadowLight m_cache_udirectionshadowlight;
 	};
 }
 }

@@ -17,7 +17,7 @@ namespace Geometry
     public:
         
         //planes
-        enum PlaneType
+        enum PlaneType : unsigned char
         {
             TOP = 0,
             BOTTOM,

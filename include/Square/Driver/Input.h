@@ -17,14 +17,14 @@ namespace Video
 	class Window;
 
 	//enums
-	enum ActionEvent
+	enum ActionEvent : unsigned char
 	{
 		PRESS,
 		REPEAT,
-		RELEASE
+		RELEASE,
 	};
 
-	enum KeyboardEvent
+	enum KeyboardEvent : short
 	{
 		KEY_INVALID = -2,
 		KEY_UNKNOWN = -1,
@@ -152,7 +152,7 @@ namespace Video
 		KEY_LAST = KEY_MENU
 	};
 
-	enum KeyboardModEvent
+	enum KeyboardModEvent : unsigned char
 	{
 		SHIFT  = 0b0001,
 		CONTROL= 0b0010,
@@ -160,8 +160,9 @@ namespace Video
 		SUPER  = 0b1000
 	};
 
-	enum MouseButtonEvent
+	enum MouseButtonEvent : char
 	{
+		MOUSE_UNKNOWN  = -1,
 		MOUSE_BUTTON_1 = 0,
 		MOUSE_BUTTON_2 = 1,
 		MOUSE_BUTTON_3 = 2,
@@ -176,7 +177,7 @@ namespace Video
 		MOUSE_BUTTON_LAST   = MOUSE_BUTTON_8,
 	};
 
-	enum FingerEvent
+	enum FingerEvent : unsigned char
 	{
 		FINGER_NULL = 0,
 		FINGER1 = 1,
@@ -192,7 +193,7 @@ namespace Video
 		FINGERMAX
 	};
 
-	enum class WindowEvent
+	enum class WindowEvent : unsigned char
 	{
 		MINIMIZED,
 		MAXIMIZED,

@@ -348,6 +348,9 @@
     <ClInclude Include="..\include\Square\Render\ConstantBuffer.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Render\DrawerPassDebug.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -563,6 +566,9 @@
     <ClCompile Include="..\source\Math\Tangent.cpp">
       <Filter>Source\Math</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\Render\DrawerPassDebug.cpp">
+      <Filter>Source\Render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\source\Driver\Cocoa\Input_private.mm">
@@ -678,5 +684,10 @@
     <Image Include="..\common\texture\none.tga">
       <Filter>Resource\common\texture</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\common\effect\Debug.sqfx">
+      <Filter>Resource\common\effect</Filter>
+    </Text>
   </ItemGroup>
 </Project>

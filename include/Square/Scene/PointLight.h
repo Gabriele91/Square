@@ -71,7 +71,7 @@ namespace Scene
 
 		//Reg object
 		virtual void set(Render::UniformPointLight* data) const override;
-		virtual void set(Render::UniformPointShadowLight* data) const override;
+		virtual void set(Render::UniformPointShadowLight* data, bool draw_shadow_map = true) const override;
 
 	protected:
 		//info

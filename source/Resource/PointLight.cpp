@@ -204,7 +204,7 @@ namespace Scene
 		data->m_position = m_position;
 		this->Render::PointLight::set(data);
 	}
-	void PointLight::set(Render::UniformPointShadowLight* data) const
+	void PointLight::set(Render::UniformPointShadowLight* data, bool draw_shadow_map) const
 	{
 		//projection 
 		data->m_projection = projection();

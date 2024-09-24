@@ -19,7 +19,7 @@ namespace Render
     class QueueIterator;
     class PoolQueues;
 
-    enum QueueType
+    enum QueueType : unsigned char
     {
         RQ_SPOT_LIGHT,
         RQ_POINT_LIGHT,
@@ -28,6 +28,9 @@ namespace Render
         RQ_TRANSLUCENT,
         RQ_UI,
         RQ_BACKGROUND,
+#if defined(_DEBUG)
+        RQ_DEBUG,
+#endif 
         RQ_MAX
     };
 

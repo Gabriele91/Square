@@ -62,6 +62,7 @@
 #include "Square/Render/Renderable.h"
 #include "Square/Render/VertexLayout.h"
 #include "Square/Render/Drawer.h"
+#include "Square/Render/DrawerPassDebug.h"
 #include "Square/Render/DrawerPassForward.h"
 #include "Square/Render/DrawerPassShadow.h"
 /* --- Resource --- */

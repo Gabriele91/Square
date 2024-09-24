@@ -307,10 +307,10 @@ namespace Scene
 		{
 			// Depths
 			auto cascade_vdepths = compute_cascade_depth(camera);
+			auto texture_size = Square::max<size_t>(buffer.width(), buffer.height());
 			// Copy values
 			for (unsigned int i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++i)
 			{
-				auto texture_size = Square::max<size_t>(buffer.width(), buffer.height());
 				auto& [p, v] = get_projection(camera, cascade_vdepths[i], cascade_vdepths[i + 1], direction, texture_size);
 				data.m_projection[i] = p;
 				data.m_view[i] = v;
@@ -526,7 +526,22 @@ namespace Scene
 			min.z = scene_size_light_space.get_min().z;
 			max.z = scene_size_light_space.get_max().z;
 
-			return Square::ortho_ZO(min.x, max.x, min.y, max.y, -max.z, -min.z);
+			return Square::ortho(min.x, max.x, min.y, max.y, -max.z, -min.z);
+		}
+
+		Mat4 get_round_matrix(Mat4 Ortho, const Mat4& View, const size_t texture_size)
+		{
+			Mat4 shadow_mat = Ortho * View;
+			Vec4 shadow_start_Pos(0.0f, 0.0f, 0.0f, 1.0f);
+			shadow_start_Pos = shadow_mat * shadow_start_Pos;
+			shadow_start_Pos = (shadow_start_Pos * texture_size) / 2.0f;
+
+			Vec4 round_start = glm::round(shadow_start_Pos);
+			Vec4 offset = round_start - shadow_start_Pos;
+			offset = Vec4(Vec2(offset * 2.0f / texture_size), 0.0f, 0.0f);
+			Ortho[3] += offset;
+
+			return Ortho;
 		}
 
 		void set_uniform(Render::UniformDirectionShadowLight& data, 
@@ -541,28 +556,30 @@ namespace Scene
 			Mat4 light_model = Mat4(rotation);
 			Mat4 light_view = inverse(light_model);
 			Mat4 camera_inv_view = inverse(camera.view());
-			auto scene_size_light_space = scene_size * light_view;
+			auto scene_size_light_space = scene_size * light_view;			
+			size_t texture_size = Square::max<size_t>(buffer.width(), buffer.height());
 			// Copy values
 			for (unsigned int i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++i)
 			{
-				data.m_projection[i] = get_ortho(camera, 
-												camera_inv_view,
-												cascade_vdepths[i], 
-					                            cascade_vdepths[i+1], 
-					                            light_view,
-												scene_size_light_space);
+				data.m_projection[i] = get_round_matrix(get_ortho(camera,
+																  camera_inv_view,
+																  cascade_vdepths[0], 
+																  cascade_vdepths[i+1], 
+																  light_view,
+																  scene_size_light_space), light_view, texture_size);
 				data.m_view[i] = light_view;
 				data.m_depths[i] = cascade_vdepths[i + 1];
 			}
 		}
 	}
 
-	void DirectionLight::set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera) const
+	void DirectionLight::set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera, bool draw_shadow_map) const
 	{
-		if (auto ptr_actor = actor().lock())
+		if (auto ptr_actor = actor().lock() && draw_shadow_map)
 		{
-			Aux3::set_uniform(*data, *camera, m_scene_size, m_buffer, m_rotation, m_direction);
+			Aux3::set_uniform(m_cache_udirectionshadowlight, *camera, m_scene_size, m_buffer, m_rotation, m_direction);
 		}
+		std::memcpy(data, &m_cache_udirectionshadowlight, sizeof(Render::UniformDirectionShadowLight));
 	}
 
 	void DirectionLight::set_scene_size(const Geometry::AABoundingBox& scene)
