@@ -8,6 +8,7 @@
 #include "Square/Driver/Window.h"
 #include "Square/Driver/Input.h"
 #include "Wrapper_private.h"
+#include <optional>
 #include <unordered_map>
 
 typedef HRESULT(WINAPI * DwmIsCompositionEnabledFunction)(__out BOOL* isEnabled);
@@ -145,11 +146,11 @@ namespace Video
 
 	struct WrapperContext
 	{
-		std::vector<Win32::ScreenWin32>			           m_screens;
+		std::vector<Win32::ScreenWin32>								 m_screens;
 		std::unordered_map<Win32::WindowWin32*, Win32::WindowWin32*> m_windows;
 		std::unordered_map<Win32::InputWin32*, Win32::InputWin32*>   m_input;
 		//key map
-		InputKeyMap						           m_key_map;
+		InputKeyMap m_key_map;
 	};
 
 	static WrapperContext s_os_context;
@@ -843,10 +844,11 @@ namespace Video
 		// The Ctrl keys require special handling (LEFT/RIGHT)
 		if (w_param == VK_CONTROL)
 		{
-			MSG next;
-			DWORD time;
+			MSG next{ 0 };
+			DWORD time{ 0 };
 			// Right side keys have the extended key bit set
-			if (l_param & 0x01000000) return KEY_RIGHT_CONTROL;
+			if ((HIWORD(l_param) & KF_EXTENDED) == KF_EXTENDED) 
+				return KEY_RIGHT_CONTROL;
 
 			// HACK: Alt Gr sends Left Ctrl and then Right Alt in close sequence
 			//       We only want the Right Alt message, so if the next message is
@@ -856,8 +858,7 @@ namespace Video
 			{
 				if (next.message == WM_KEYDOWN || next.message == WM_SYSKEYDOWN || next.message == WM_KEYUP || next.message == WM_SYSKEYUP)
 				{
-					if (next.wParam == VK_MENU &&
-						(next.lParam & 0x01000000) && next.time == time)
+					if (next.wParam == VK_MENU && ((HIWORD(next.lParam) & KF_EXTENDED) == KF_EXTENDED) && next.time == time)
 					{
 						return KeyboardEvent::KEY_INVALID;
 					}
@@ -889,10 +890,70 @@ namespace Video
 		return mods;
 	}
 
+	static inline Win32::InputWin32* win32_get_input(HWND hWnd)
+	{
+		return hWnd ? (Win32::InputWin32*)GetWindowLongPtr(hWnd, GWLP_USERDATA) : nullptr;
+	}
+
+	static inline std::tuple<KeyboardEvent, short, ActionEvent> get_keyboard_mod_action_event(WPARAM wParam, LPARAM lParam)
+	{
+
+		const KeyboardEvent key = win32_translate_key(wParam, lParam);
+		const int  scancode     = (HIWORD(lParam) & (KF_EXTENDED | 0xff));
+		const bool is_repeat    = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
+		const bool is_up        = (HIWORD(lParam) & KF_UP) == KF_UP;
+		const ActionEvent action = is_up
+									? ActionEvent::RELEASE 
+								    : is_repeat
+									? ActionEvent::REPEAT
+								    : ActionEvent::PRESS;
+		const short mod = win32_get_key_mode();
+
+		if (key == KeyboardEvent::KEY_INVALID)
+		{
+			return { key,mod,action };
+		}
+
+		if (action == ActionEvent::RELEASE && wParam == VK_SHIFT)
+		{
+			// Get virtual key
+			UINT wParamEx = MapVirtualKey(scancode, MAPVK_VSC_TO_VK_EX);
+			// Test it
+			if (wParamEx == VK_LSHIFT)
+			{
+				return { KeyboardEvent::KEY_LEFT_SHIFT,mod,action };
+			}
+			else if (wParamEx == VK_RSHIFT)
+			{
+				return { KeyboardEvent::KEY_RIGHT_SHIFT,mod,action };
+			}
+		}
+		// NOTE VK_SNAPSHOT does not report press
+		return { key,mod,action };
+	}
+
+	static inline std::tuple< MouseButtonEvent, ActionEvent> get_mouse_action_event(UINT message, WPARAM wParam)
+	{
+		MouseButtonEvent button{ MouseButtonEvent::MOUSE_UNKNOWN };
+		ActionEvent action{ ActionEvent::RELEASE };
+
+		//button
+		if      (message == WM_LBUTTONDOWN || message == WM_LBUTTONUP) button = MouseButtonEvent::MOUSE_BUTTON_LEFT;
+		else if (message == WM_RBUTTONDOWN || message == WM_RBUTTONUP) button = MouseButtonEvent::MOUSE_BUTTON_RIGHT;
+		else if (message == WM_MBUTTONDOWN || message == WM_MBUTTONUP) button = MouseButtonEvent::MOUSE_BUTTON_MIDDLE;
+		else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)               button = MouseButtonEvent::MOUSE_BUTTON_4;
+		else                                                           button = MouseButtonEvent::MOUSE_BUTTON_5;
+		//action
+		action = ( message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN 
+				|| message == WM_MBUTTONDOWN || message == WM_XBUTTONDOWN) ? ActionEvent::RELEASE : ActionEvent::PRESS;
+
+		return { button,action };
+	}
+
 	LRESULT CALLBACK win32_event_wrapper(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		//window input
-		Win32::InputWin32*  wnd_input = (Win32::InputWin32*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		Win32::InputWin32*  wnd_input = win32_get_input(hWnd);
 
 		if (!wnd_input)
 		{
@@ -909,8 +970,11 @@ namespace Video
 		{ wnd_input->send_window_event(WindowEvent::GET_FOCUS); return 0; }
 
 		case WM_KILLFOCUS:
-		{ wnd_input->send_window_event(WindowEvent::LOST_FOCUS); return 0; }
-
+		{ 
+			wnd_input->send_window_event(WindowEvent::LOST_FOCUS);
+			wnd_input->m_event_pool.clear();
+			return 0; 
+		}
 		case WM_SYSCOMMAND:
 		{
 			switch (wParam & 0xfff0)
@@ -947,29 +1011,9 @@ namespace Video
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
 		{
-			const KeyboardEvent key = win32_translate_key(wParam, lParam);
-			const int scancode = (lParam >> 16) & 0x1ff;
-			const ActionEvent action = ((lParam >> 31) & 1) ? ActionEvent::RELEASE : ActionEvent::PRESS;
-			const short mods = win32_get_key_mode();
-
-			if (key == KeyboardEvent::KEY_INVALID) break;
-
-			if (action == ActionEvent::RELEASE && wParam == VK_SHIFT)
-			{
-				// HACK: Release both Shift keys on Shift up event, as when both
-				//       are pressed the first release does not emit any event
-				// NOTE: The other half of this is in _glfwPlatformPollEvents
-				wnd_input->send_keyboard_event(KeyboardEvent::KEY_LEFT_SHIFT, mods, action);
-				wnd_input->send_keyboard_event(KeyboardEvent::KEY_RIGHT_SHIFT, mods, action);
-			}
-			else if (wParam == VK_SNAPSHOT)
-			{
-				// HACK: Key down is not reported for the Print Screen key
-				wnd_input->send_keyboard_event(key, mods, ActionEvent::RELEASE);
-				wnd_input->send_keyboard_event(key, mods, ActionEvent::PRESS);
-			}
-			else wnd_input->send_keyboard_event(key, mods, action);
-
+			auto [key, mod, action] = get_keyboard_mod_action_event(wParam, lParam);
+			if(key != KeyboardEvent::KEY_INVALID)
+				wnd_input->send_keyboard_event(key, mod, action);
 			break;
 		}
 
@@ -982,43 +1026,10 @@ namespace Video
 		case WM_MBUTTONUP:
 		case WM_XBUTTONUP:
 		{
-			MouseButtonEvent button;
-			ActionEvent action;
-
-			//button
-			if (message == WM_LBUTTONDOWN || message == WM_LBUTTONUP)      button = MouseButtonEvent::MOUSE_BUTTON_LEFT;
-			else if (message == WM_RBUTTONDOWN || message == WM_RBUTTONUP) button = MouseButtonEvent::MOUSE_BUTTON_RIGHT;
-			else if (message == WM_MBUTTONDOWN || message == WM_MBUTTONUP) button = MouseButtonEvent::MOUSE_BUTTON_MIDDLE;
-			else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)               button = MouseButtonEvent::MOUSE_BUTTON_4;
-			else                                                           button = MouseButtonEvent::MOUSE_BUTTON_5;
-			//action
-			action = (message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN ||
-				message == WM_MBUTTONDOWN || message == WM_XBUTTONDOWN) ? ActionEvent::RELEASE : ActionEvent::PRESS;
-
-			//for all keys
-			/*
-			for (int i = 0; i < mouse_button_event::MOUSE_BUTTON_LAST; i++)
-			{
-			if (window->mouseButtons[i] == GLFW_PRESS) break;
-			}
-			if (i == GLFW_MOUSE_BUTTON_LAST) SetCapture(hWnd);
-			*/
-
+			auto [button, action] = get_mouse_action_event(message, wParam);
 			wnd_input->send_mouse_button_event(button, action);
-
-			/*
-			for (i = 0; i < GLFW_MOUSE_BUTTON_LAST; i++)
-			{
-			if (window->mouseButtons[i] == GLFW_PRESS)
-			break;
-			}
-			//relese capture
-			if (i == GLFW_MOUSE_BUTTON_LAST) ReleaseCapture();
-			*/
-
 			//message acceted
 			if (message == WM_XBUTTONDOWN || message == WM_XBUTTONUP) return TRUE;
-
 			//or reject
 			return 0;
 		}
@@ -1111,19 +1122,171 @@ namespace Video
 			m_native = (void*)input;
 		}
 	}
+	// Win 32 Repeat aux
+	namespace Win32RepeatAux
+	{
+		static inline bool is_user_message(const MSG& msg)
+		{
+			return msg.message >= WM_USER;
+		}
+		static inline bool is_keydown_message(const MSG& msg)
+		{
+			return msg.message == WM_KEYDOWN
+				|| msg.message == WM_SYSKEYDOWN;
+		}
+		static inline bool is_keyup_message(const MSG& msg)
+		{
+			return msg.message == WM_KEYUP
+				|| msg.message == WM_SYSKEYUP;
+		}
+		static inline bool is_mousedown_message(const MSG& msg)
+		{
+			return msg.message == WM_LBUTTONDOWN
+				|| msg.message == WM_RBUTTONDOWN
+				|| msg.message == WM_MBUTTONDOWN
+				|| msg.message == WM_XBUTTONDOWN;
+		}
+		static inline bool is_mouseup_message(const MSG& msg)
+		{
+			return msg.message == WM_LBUTTONUP
+				|| msg.message == WM_RBUTTONUP
+				|| msg.message == WM_MBUTTONUP
+				|| msg.message == WM_XBUTTONUP;
+		}
+		static inline bool is_down_message(const MSG& msg)
+		{
+			return is_keydown_message(msg) || is_mousedown_message(msg);
+		}
+		static inline bool is_up_message(const MSG& msg)
+		{
+			return is_keyup_message(msg) || is_mouseup_message(msg);
+		}
+		static std::optional<Win32::InputWin32::EventKey> get_key(const MSG& msg)
+		{
+			Win32::InputWin32::EventKey key {};
+			if (is_mousedown_message(msg) || is_mouseup_message(msg))
+			{
+				auto [button, action] = get_mouse_action_event(msg.message, msg.wParam);
+				if(button != MouseButtonEvent::MOUSE_UNKNOWN)
+					key = button;
+			}
+			else
+			{
+				auto [keyboard, mod, action] = get_keyboard_mod_action_event(msg.wParam, msg.lParam);
+				if (keyboard != KeyboardEvent::KEY_UNKNOWN)
+					key = keyboard;
+			}
+			return key;
+		}
+		static inline bool is_broadcast(HWND wnd)
+		{
+			return wnd == HWND_BROADCAST;
+		}
+		static inline UINT win_message_to_user_message(UINT message)
+		{
+			switch (message)
+			{
+			case WM_KEYDOWN:     return WM_USER + 1;
+			case WM_KEYUP:       return WM_USER + 2;
+			case WM_SYSKEYDOWN:  return WM_USER + 3;
+			case WM_SYSKEYUP:    return WM_USER + 4;
+			case WM_LBUTTONDOWN: return WM_USER + 5;
+			case WM_LBUTTONUP:   return WM_USER + 6;
+			case WM_RBUTTONDOWN: return WM_USER + 7;
+			case WM_RBUTTONUP:   return WM_USER + 8;
+			case WM_XBUTTONDOWN: return WM_USER + 9;
+			case WM_XBUTTONUP:   return WM_USER +10;
+			default: return UINT(~0);  // Return an invalid value for unknown messages
+			}
+		}
+		static inline UINT user_message_to_win_message(UINT userMessage)
+		{
+			switch (userMessage)
+			{
+			case WM_USER + 1: return WM_KEYDOWN;
+			case WM_USER + 2: return WM_KEYUP;
+			case WM_USER + 3: return WM_SYSKEYDOWN;
+			case WM_USER + 4: return WM_SYSKEYUP;
+			case WM_USER + 5: return WM_LBUTTONDOWN;
+			case WM_USER + 6: return WM_LBUTTONUP;
+			case WM_USER + 7: return WM_RBUTTONDOWN;
+			case WM_USER + 8: return WM_RBUTTONUP;
+			case WM_USER + 9: return WM_XBUTTONDOWN;
+			case WM_USER +10: return WM_XBUTTONUP;
+			default: return UINT(~0);  // Return an invalid value for unknown messages
+			}
+		}
+		static inline bool repeat_filter_update(MSG& message)
+		{
+			// Get input
+			Win32::InputWin32* input = is_broadcast(message.hwnd) ? nullptr : win32_get_input(message.hwnd);
+			// Test
+			if (!input) return true;
+			// Is user message?
+			const bool is_user = is_user_message(message);
+			// Restore message
+			if (is_user)
+			{
+				if (UINT msg_id = user_message_to_win_message(message.message); msg_id != UINT(~0))
+				{
+					message.message = msg_id;
+				}
+			}
+			// Repeat?
+			const bool is_repeat         = (HIWORD(message.lParam) & KF_REPEAT) == KF_REPEAT;
+			const bool is_down           = is_down_message(message);
+			const bool is_up             = is_up_message(message);
+			const bool is_os_down_repeat = is_repeat && is_down && !is_user;
+			// Down
+			if (!is_repeat && is_down)
+			{
+				if(auto key = get_key(message); key.has_value())
+					input->m_event_pool[key.value()] = message;
+			}
+			// Up
+			else if (is_up)
+			{
+				if (auto key = get_key(message); key.has_value())
+				{
+					// Remove from pool
+					auto it = input->m_event_pool.find(key.value());
+					// Remove
+					if (it != input->m_event_pool.end())
+						input->m_event_pool.erase(it);
+				}
+			}
+			return !is_os_down_repeat;
+		}
+		static inline void enqueue_repeat_events()
+		{
+			// Now handle repetition messages
+			for (const auto& input_pair : s_os_context.m_input)
+			for (const auto& pair : input_pair.second->m_event_pool)
+			{
+				const MSG& message = pair.second;
+				const UINT user_message = win_message_to_user_message(message.message);
+				const LPARAM repeat_lparam = message.lParam | (1 << 30);
+				PostMessage(message.hwnd, user_message, message.wParam, repeat_lparam);
+			}
+		}
+	}
 	//actions
 	void Input::pull_events()
 	{
-		//message
-		MSG message;
-		//send all windows messages
+		// Message structure
+		MSG message{ 0 };
+
+		// Remove messages from the queue
 		while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE))
 		{
-			TranslateMessage(&message);
-			DispatchMessage(&message);
+			if (Win32RepeatAux::repeat_filter_update(message))
+			{
+				TranslateMessage(&message);
+				DispatchMessage(&message);
+			}
 		}
+		Win32RepeatAux::enqueue_repeat_events();
 	}
-
 	//subscrive events
 	void Input::subscrive_keyboard_listener(std::function<void(KeyboardEvent kevent, short mode, ActionEvent action)> listener)
 	{
