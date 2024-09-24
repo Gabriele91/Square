@@ -9,7 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-// #define MODEL_LOAD // "adamHead" // "drone" // "box" // "crate"
+//#define MODEL_LOAD "adamHead" // "adamHead" // "drone" // "box" // "crate"
 
 
 class Cube : public Square::Scene::Component
@@ -232,6 +232,8 @@ public:
 		//move vel
 		const float velocity = 20.0f  * application().last_delta_time();
 		const auto  level_path = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.sq");
+		context().logger()->info("value: " + std::to_string(key));
+		context().logger()->info("delta: " + std::to_string(application().last_delta_time()));
 		//
 		switch (key)
 		{
@@ -339,6 +341,7 @@ public:
 		m_level = world().level();
         m_drawer = Square::MakeShared<Render::Drawer>(context());
 		m_drawer->add(MakeShared<Render::DrawerPassForward>(context()));
+		m_drawer->add(MakeShared<Render::DrawerPassDebug>(context()));
 		m_drawer->add(MakeShared<Render::DrawerPassShadow>(context()));
 		#ifdef MODEL_LOAD
 		{
@@ -351,7 +354,7 @@ public:
         camera->translation({ 0,0,-5.0 });
         camera->rotation(rotate_euler(0.0f,Square::radians(180.0f),0.0f));
         camera->component<Camera>()->viewport({0,0, 1280, 768});
-        camera->component<Camera>()->perspective(radians(90.0f), 1280.0f / 768.0f, 0.1f, 30.0f);		
+        camera->component<Camera>()->perspective(radians(90.0f), 1280.0f / 768.0f, 0.1f, 60.0f);		
 		//test
 		auto node = m_level->actor("main_node");
 		node->translation({ 0,0, 10.0 });
