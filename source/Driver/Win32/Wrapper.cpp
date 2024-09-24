@@ -146,9 +146,9 @@ namespace Video
 
 	struct WrapperContext
 	{
-		std::vector<Win32::ScreenWin32>								 m_screens;
-		std::unordered_map<Win32::WindowWin32*, Win32::WindowWin32*> m_windows;
-		std::unordered_map<Win32::InputWin32*, Win32::InputWin32*>   m_input;
+		std::vector<Win32::ScreenWin32>  m_screens;
+		std::vector<Win32::WindowWin32*> m_windows;
+		std::vector<Win32::InputWin32*>  m_input;
 		//key map
 		InputKeyMap m_key_map;
 	};
@@ -381,8 +381,10 @@ namespace Video
 	void close()
 	{
 		//remove all inputs/windows 
-		while (s_os_context.m_input.size())   s_os_context.m_input.begin()->second->m_input_ref->destoy();
-		while (s_os_context.m_windows.size()) s_os_context.m_windows.begin()->second->m_window_ref->destoy();
+		for(auto* input : s_os_context.m_input)
+			input->m_input_ref->destoy();
+		for (auto* window : s_os_context.m_windows)
+			window->m_window_ref->destoy();
 		//remove all screen
 		s_os_context.m_screens.clear();
 		//Delete window class
@@ -418,7 +420,7 @@ namespace Video
 	}	
 
 	////////////////////////////////////////////////////////////////////////////////////
-	// Window	
+	// Window
 	static Win32::WindowWin32* gl_window_create(const WindowInfo& info)
 	{
 		//////////////////////////////////////////////////////////////////////
@@ -629,7 +631,7 @@ namespace Video
 			//ref to conteiner
 			out_wnd->m_window_ref = window;
 			//save
-			s_os_context.m_windows[out_wnd] = out_wnd;
+			s_os_context.m_windows.push_back(out_wnd);
 			//show window
 			ShowWindow((HWND)out_wnd->narive(), SW_SHOW);
 		}
@@ -637,17 +639,24 @@ namespace Video
 		return out_wnd;
 	}
 
+	static inline Win32::InputWin32* win32_get_input(HWND hWnd)
+	{
+		return hWnd ? (Win32::InputWin32*)GetWindowLongPtr(hWnd, GWLP_USERDATA) : nullptr;
+	}
+
 	static void	window_delete(Win32::WindowWin32*& window)
 	{
 		//search
-		auto it_wnd = s_os_context.m_windows.find(window);
+		auto it_wnd = std::find(s_os_context.m_windows.begin(),
+								s_os_context.m_windows.end(),
+								window);
 		//remove
 		if (it_wnd != s_os_context.m_windows.end())
 		{
 			s_os_context.m_windows.erase(it_wnd);
 		}
 		//window input
-		Win32::InputWin32*  wnd_input = (Win32::InputWin32*)GetWindowLongPtr((HWND)window->narive(), GWLP_USERDATA);
+		Win32::InputWin32* wnd_input = win32_get_input((HWND)window->narive());
 		//delete input
 		if (wnd_input)
 		{
@@ -815,7 +824,7 @@ namespace Video
 		//set ref to conteiner
 		in->m_input_ref = input;
 		//add to map
-		s_os_context.m_input[in] = in;
+		s_os_context.m_input.push_back(in);
 		//set prob
 		SetWindowLongPtr((HWND)wnd->native(), GWLP_USERDATA, (LONG_PTR)in);
 		//return
@@ -825,7 +834,9 @@ namespace Video
 	static void input_delete(Win32::InputWin32*& in)
 	{
 		//search
-		auto it_in = s_os_context.m_input.find(in);
+		auto it_in = std::find(s_os_context.m_input.begin(),
+							   s_os_context.m_input.end(), 
+							   in);
 		//remove
 		if (it_in != s_os_context.m_input.end())
 		{
@@ -888,11 +899,6 @@ namespace Video
 			mods |= KeyboardModEvent::SUPER;
 
 		return mods;
-	}
-
-	static inline Win32::InputWin32* win32_get_input(HWND hWnd)
-	{
-		return hWnd ? (Win32::InputWin32*)GetWindowLongPtr(hWnd, GWLP_USERDATA) : nullptr;
 	}
 
 	static inline std::tuple<KeyboardEvent, short, ActionEvent> get_keyboard_mod_action_event(WPARAM wParam, LPARAM lParam)
@@ -1261,7 +1267,7 @@ namespace Video
 		{
 			// Now handle repetition messages
 			for (const auto& input_pair : s_os_context.m_input)
-			for (const auto& pair : input_pair.second->m_event_pool)
+			for (const auto& pair : input_pair->m_event_pool)
 			{
 				const MSG& message = pair.second;
 				const UINT user_message = win_message_to_user_message(message.message);

@@ -22,7 +22,7 @@ namespace Scene
 	//declaretion
 	class Actor;
 	class Level;
-	class Message;
+	struct Message;
 	using ActorList = std::vector< Shared<Actor> >;
 	using LevelList = std::vector< Shared<Level> >;
 	//..................
