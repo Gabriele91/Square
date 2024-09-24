@@ -134,7 +134,7 @@ namespace Render
             20, 23, 22
         };
         // Submesh
-        Render::SubMesh sub_mesh{ Render::DrawType::DRAW_TRIANGLES, indexes.size() };
+        Render::SubMesh sub_mesh{ Render::DrawType::DRAW_TRIANGLES, uint32(indexes.size()) };
         // Compute tangent and binomial
         Square::tangent_model_fast(indexes, vertexs);
         //Build mesh
