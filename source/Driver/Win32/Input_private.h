@@ -8,6 +8,8 @@
 #include "Square/Config.h"
 #include "Square/Driver/Window.h"
 #include "Square/Driver/Input.h"
+#include <windows.h>
+#include <Variant>
 
 namespace Square
 {
@@ -36,6 +38,9 @@ namespace Win32
 		void send_touch_event(FingerEvent fevent, ActionEvent action);
 		void send_window_event(WindowEvent wevent);
 		void send_window_move_event(double x, double y);
+
+		using EventKey = std::variant < KeyboardEvent, MouseButtonEvent >;
+		std::unordered_map<EventKey, MSG> m_event_pool;
 	};
 }
 }
