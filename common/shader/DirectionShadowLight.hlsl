@@ -63,6 +63,7 @@ float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
 }
 #endif
 
+#ifdef DEBUG
 static const Vec3 csm_colors[5] = {
 	Vec3(1.0f,0.0f,0.0f),
 	Vec3(0.0f,1.0f,0.0f),
@@ -70,6 +71,7 @@ static const Vec3 csm_colors[5] = {
 	Vec3(1.0f,1.0f,0.0f),
 	Vec3(0.0f,1.0f,1.0f)
 };
+#endif
 
 Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3 normal, in float max_bias)
 {
