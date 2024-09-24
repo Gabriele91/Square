@@ -95,9 +95,8 @@ namespace Render
         camera.set(&ucamera);
         render().update_steam_CB(m_cb_camera.get(), (const unsigned char*)&ucamera, sizeof(ucamera));
         //for each elements of opaque  and translucent queues
-		for(QueueType qtype : {RQ_OPAQUE, RQ_TRANSLUCENT})
-        for(const QueueElement* e_randerable : queues[qtype])
-        if (auto randerable = e_randerable->lock< Render::Renderable >())
+		for(auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
+        if (randerable)
         {
             //jump?
             if(!randerable->can_draw()) continue;
@@ -156,7 +155,7 @@ namespace Render
 							if (shadow)
 							{
 								//get buffer
-								light->set(&udirection_shadow_light, &camera);
+								light->set(&udirection_shadow_light, &camera, false);
 								//update buffer
 								Render::update_constant_buffer(&render(), m_cb_direction_shadow_light.get(), &udirection_shadow_light);
 								//shadow map
@@ -181,7 +180,7 @@ namespace Render
 							if (shadow)
 							{
 								//get buffer
-								light->set(&upoint_shadow_light);
+								light->set(&upoint_shadow_light, false);
 								//update buffer
 								Render::update_constant_buffer(&render(), m_cb_point_shadow_light.get(), &upoint_shadow_light);
 								//shadow map
@@ -206,7 +205,7 @@ namespace Render
 							if (shadow)
 							{
 								//get buffer
-								light->set(&uspot_shadow_light);
+								light->set(&uspot_shadow_light, false);
 								//update buffer
 								Render::update_constant_buffer(&render(), m_cb_spot_shadow_light.get(), &uspot_shadow_light);
 								//shadow map

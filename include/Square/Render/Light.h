@@ -130,11 +130,11 @@ namespace Render
 		virtual void set(UniformSpotLight* data) const;
 
 		//uniform shadow light info
-		virtual void set(UniformDirectionShadowLight* data, const Camera* camera) const;
+		virtual void set(UniformDirectionShadowLight* data, const Camera* camera, bool draw_shadow_map = true) const;
 
-		virtual void set(UniformPointShadowLight* data) const;
+		virtual void set(UniformPointShadowLight* data, bool draw_shadow_map = true) const;
 
-		virtual void set(UniformSpotShadowLight* data) const;
+		virtual void set(UniformSpotShadowLight* data, bool draw_shadow_map = true) const;
 
 		// For CSM
 		virtual void set_scene_size(const Geometry::AABoundingBox& scene);

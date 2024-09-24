@@ -341,7 +341,7 @@ namespace Render
 		int							 m_mipmap_min;
 		int							 m_mipmap_max;
 		bool						 m_build_mipmap;
-		float						 m_anisotropy;
+		int						     m_anisotropy;
 		bool						 m_read_from_cpu;
 		//2d/cude texture
 		TextureGpuDataInformation
@@ -354,7 +354,7 @@ namespace Render
 			bool				         build_mipmap = false,
 			int						     mipmap_min = 0,
 			int							 mipmap_max = 10,
-			float						 anisotropy = 1.0f,
+			int 						 anisotropy = 1,
 			bool						 read_from_cpu = false
 		)
 		{

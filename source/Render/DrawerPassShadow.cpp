@@ -13,6 +13,8 @@
 #include "Square/Render/Viewport.h"
 #include "Square/Render/Renderable.h"
 #include "Square/Render/Transform.h"
+#include "Square/Render/Light.h"
+#include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/DrawerPassShadow.h"
 #include "Square/Resource/Effect.h"
 #include "Square/Geometry/OBoundingBox.h"
@@ -52,6 +54,8 @@ namespace Render
      , const PoolQueues& queues
     )
     {
+		//render target
+		render().enable_render_target(light.shadow_buffer().target());
         //transfor
 		Render::UniformBufferTransform utransform;
 		//names
@@ -121,9 +125,8 @@ namespace Render
 		//get technique name
 		const auto& technique_name = techniques_table[(size_t)light.type()];
         //for each elements of opaque  and translucent queues
-		for(QueueType qtype : {RQ_OPAQUE, RQ_TRANSLUCENT})
-        for(const QueueElement* e_randerable : queues[qtype])
-        if (auto randerable = e_randerable->lock< Render::Renderable >())
+		for(auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
+        if (randerable)
         {
             //jump?
             if(!randerable->can_draw()) continue;
@@ -151,6 +154,8 @@ namespace Render
 				}
 			}
         }
+		// Disabel texture
+		render().disable_render_target(light.shadow_buffer().target());
     }
 }
 }

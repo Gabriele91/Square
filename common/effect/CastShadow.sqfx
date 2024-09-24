@@ -8,7 +8,7 @@ sub_effect
 {	
     technique "SpotShadow"
     {
-        pass 
+        pass
         {
             zbuffer less
             blend off
@@ -19,7 +19,7 @@ sub_effect
     }
     technique "PointShadow"
     {
-        pass 
+        pass
         {
             zbuffer less
             blend off
@@ -30,7 +30,7 @@ sub_effect
     }
     technique "DirectionShadow"
     {
-        pass 
+        pass
         {
             zbuffer less
             blend off

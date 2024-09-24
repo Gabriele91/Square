@@ -154,6 +154,7 @@ namespace Scene
     void Camera::set(Render::UniformBufferCamera *gpubuffer) const
     {
         //info camera
+        gpubuffer->m_viewport = viewport().viewport();
         gpubuffer->m_projection = viewport().projection();
         gpubuffer->m_view = view();
         //invo camera in world space

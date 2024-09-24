@@ -159,6 +159,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Square\Core\Logger.h" />
+    <ClInclude Include="..\include\Square\Render\DrawerPassDebug.h" />
     <ClInclude Include="..\include\Square\SquareMain.h" />
     <ClInclude Include="..\include\Square\Core\Allocator.h" />
     <ClInclude Include="..\include\Square\Core\ShellParser.h" />
@@ -169,6 +170,9 @@
     <ClInclude Include="..\include\Square\Scene\StaticMesh.h" />
     <ClInclude Include="..\include\Square\Render\ConstantBuffer.h" />
     <ClInclude Include="..\source\Resource\ShaderPreprocess.h" />
+    <Text Include="..\common\effect\Debug.sqfx">
+      <FileType>Document</FileType>
+    </Text>
     <None Include="..\common\material\default.mat" />
     <None Include="..\common\shader\PointShadowLight.hlsl">
       <FileType>Document</FileType>
@@ -355,6 +359,7 @@
     <ClCompile Include="..\source\Math\Tangent.cpp" />
     <ClCompile Include="..\source\Render\Collection.cpp" />
     <ClCompile Include="..\source\Render\Drawer.cpp" />
+    <ClCompile Include="..\source\Render\DrawerPassDebug.cpp" />
     <ClCompile Include="..\source\Render\DrawerPassForward.cpp" />
     <ClCompile Include="..\source\Render\DrawerPassShadow.cpp" />
     <ClCompile Include="..\source\Render\Effect.cpp" />

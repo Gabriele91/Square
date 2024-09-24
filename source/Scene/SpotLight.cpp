@@ -225,7 +225,7 @@ namespace Scene
 		data->m_direction = m_direction;
 		this->Render::SpotLight::set(data);
 	}
-	void SpotLight::set(Render::UniformSpotShadowLight* data) const
+	void SpotLight::set(Render::UniformSpotShadowLight* data, bool draw_shadow_map) const
 	{
 		data->m_projection = projection();
 		data->m_view = view();

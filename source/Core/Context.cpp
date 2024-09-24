@@ -80,10 +80,10 @@ namespace Square
     {
         //find resource from file
         auto resource_file_it = m_resources_file.find(name);
+		if (resource_file_it != m_resources_file.end()) return resource_file_it->second.m_filepath;
         //fail
-        if (resource_file_it  == m_resources_file.end()) return "";
-        //ok
-        return resource_file_it->second.m_filepath;
+		static const std::string s_void_name;
+		return s_void_name;
         
     }
     //Get variable
@@ -93,8 +93,8 @@ namespace Square
         auto variable = m_variables.find(name);
         if (variable != m_variables.end()) return &variable->second;
         //none
-        static Variant none;
-        return none;
+        static const Variant s_none;
+        return s_none;
     }
     
     //Object fectory

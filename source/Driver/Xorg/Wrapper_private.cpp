@@ -1163,7 +1163,7 @@ namespace Xorg
                 {
                     //char event
                     const long character = x11_sym_to_unicode(keysym);
-                    if (character != -1)   wnd_input->send_character_event(character, mods, plain);
+                    if (character != -1) wnd_input->send_character_event(character, mods, plain);
                 }
                 //not good case
                 if (key == KeyboardEvent::KEY_INVALID) break;

@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include <limits>
+#include <utility>
 #include <stdexcept> 
 #include <functional>
 #include <unordered_map>
@@ -152,8 +153,118 @@ namespace Square
 		return const_reverse_wrapper<T>(x);
 	}
 
+	template <class T>
+	class reverse_wrapper
+	{
+		T& m_ref;
+	public:
+		reverse_wrapper(T& ref) : m_ref(ref) {}
+		auto begin() -> decltype(this->m_ref.rbegin()) { return m_ref.rbegin(); }
+		auto end()   -> decltype(this->m_ref.rend()) { return m_ref.rend(); }
+	};
+
+	template <class T>
+	inline reverse_wrapper<T> reverse(T& x)
+	{
+		return reverse_wrapper<T>(x);
+	}
+
+	template <class T>
+	class enumerate_wrapper 
+	{
+		T& m_ref;
+
+		struct iterator 
+		{
+			using internal_iterator = decltype(m_ref.begin());
+			using value_type        = typename internal_iterator::value_type;
+			using return_type       = std::pair<size_t, value_type>;
+
+			explicit iterator() = delete;
+			inline iterator(const iterator& other_it) : m_it(other_it.m_it), m_counter(other_it.m_counter) {}
+			inline iterator(internal_iterator it, size_t counter = 0) : m_it(it), m_counter(counter) {}
+
+			inline iterator& operator++()
+			{
+				++m_it;
+				++m_counter;
+				return *this;
+			}
+
+			inline bool operator==(const iterator& other) const { return m_it == other.m_it; }
+			inline bool operator!=(const iterator& other) const { return m_it != other.m_it; }
+
+			inline return_type operator*() const
+			{
+				return return_type( m_counter, *m_it );
+			}
+		private:
+			internal_iterator m_it;
+			size_t m_counter;
+		};
+
+	public:
+
+		enumerate_wrapper(T& ref) : m_ref(ref) {}
+		enumerate_wrapper<T>::iterator begin() const { return enumerate_wrapper<T>::iterator(m_ref.begin(), size_t(0)); }
+		enumerate_wrapper<T>::iterator end()   const { return enumerate_wrapper<T>::iterator(m_ref.end(), size_t(m_ref.size())); }
+	};
+
+	template <class T>
+	inline auto enumerate(T& container)
+	{
+		return enumerate_wrapper<T>(container);
+	}
+    
+	template <class T>
+	class const_enumerate_wrapper 
+	{
+		const T& m_ref;
+
+		struct const_iterator 
+		{
+			using internal_const_iterator = decltype(m_ref.begin());
+			using value_type              = typename internal_const_iterator::value_type;
+			using return_type             = std::pair<size_t, value_type>;
+
+			explicit const_iterator() = delete;
+			inline const_iterator(const const_iterator& other_it) : m_it(other_it.m_it), m_counter(other_it.m_counter) {}
+			inline const_iterator(internal_const_iterator it, size_t counter = 0) : m_it(it), m_counter(counter) {}
+
+			inline const_iterator& operator++()
+			{
+				++m_it;
+				++m_counter;
+				return *this;
+			}
+
+			inline bool operator==(const const_iterator& other) const { return m_it == other.m_it; }
+			inline bool operator!=(const const_iterator& other) const { return m_it != other.m_it; }
+
+			inline return_type operator*() const
+			{
+				return return_type( m_counter, *m_it );
+			}
+		private:
+			internal_const_iterator m_it;
+			size_t m_counter;
+		};
+
+	public:
+
+		const_enumerate_wrapper(const T& ref) : m_ref(ref) {}
+		const_enumerate_wrapper<T>::const_iterator begin() const { return const_enumerate_wrapper<T>::const_iterator(m_ref.begin(), size_t(0)); }
+		const_enumerate_wrapper<T>::const_iterator end() const { return const_enumerate_wrapper<T>::const_iterator(m_ref.end(), size_t(m_ref.size())); }
+	};
+
+	template <class T>
+	inline auto enumerate(const T& container)
+	{
+		return const_enumerate_wrapper<T>(container);
+	}
+
 	template<typename T, typename... Args>
-	inline void init_only_movable_t_vector(std::vector<T>& vector, size_t size, Args&&... args)
+	inline void init_vector(std::vector<T>& vector, size_t size, Args&&... args)
 	{
 		vector.reserve(size);
 		for (size_t i = 0; i < size; ++i) vector.emplace_back(std::forward<Args>(args)...);
