@@ -44,7 +44,7 @@ namespace Square
 		// 8 bytes: Submesh array size
 		// 8 bytes: Submesh element size
 		// N bytes:	Submesh data (N = Submesh array size * Submesh element size)
-		enum class StaticMeshLayoutType : unsigned char
+		enum class StaticMeshLayoutType : char
 		{
 			SMLTYPE_POSITON2D = 0,
 			SMLTYPE_POSITON3D = 1,
@@ -68,7 +68,14 @@ namespace Square
 		{
 			unsigned long long array_size;
 			unsigned long long element_size;
-			T data[0];
+			// Data
+			const T& data() const
+			{
+				const unsigned char* bin_data = (reinterpret_cast<const unsigned char*>(this)
+											  + sizeof(array_size) 
+										      + sizeof(element_size));
+				return *reinterpret_cast<const T*>(bin_data);
+			}
 			// Size in byte
 			size_t content_size() const { return size_t(array_size * element_size); }
 			size_t full_size() const { return sizeof(array_size) + sizeof(element_size) + content_size(); }
@@ -78,7 +85,7 @@ namespace Square
 				// Test
 				if (element_size != sizeof(T)) return {};
 				// Copy
-				return std::vector< T >{ data, data + array_size };
+				return std::vector< T >{ &data(), &data() + array_size };
 			}
 		};
 

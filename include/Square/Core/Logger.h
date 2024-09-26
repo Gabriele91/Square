@@ -30,6 +30,9 @@ namespace Square
 		{
 			for (const auto& value : values) info(value);
 		}
+		
+		virtual void verbose(bool verbose) = 0;
+		virtual bool verbose() const = 0;
 	};
 
 	enum class LoggerType
