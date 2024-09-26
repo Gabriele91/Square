@@ -1681,7 +1681,7 @@ namespace Render
 		return std::move(semantic_type_map);
 	}
 
-	static bool test_input_layout(ID3DBlob* shader, const std::vector<D3D11_INPUT_ELEMENT_DESC>& vals)
+	static bool test_input_layout(ContextDX11* context, ID3DBlob* shader, const std::vector<D3D11_INPUT_ELEMENT_DESC>& vals)
 	{
 		auto map = reflaction_input_layout(shader);
 		for (auto it : map)
@@ -1693,13 +1693,25 @@ namespace Render
 				{
 					if (it.second != val.Format)
 					{
+						if (context)
+						{
+							context->logger()->warning("Input layout attribute: " + it.first + " format does not match.");
+						}
 						return false;
 					}
 					find = true;
 					break;
 				}
 			}
-			if (!find) return false;
+			// Test
+			if (!find)
+			{	
+				if (context)
+				{
+					context->logger()->warning("Input layout, attribute: " + it.first + " not found.");
+				}
+				return false;
+			}
 		}
 		return true;
 	}
@@ -1712,7 +1724,7 @@ namespace Render
 		//debug
 #ifdef _DEBUG
 		//test
-		if (!test_input_layout(shader, m_description)) return nullptr;
+		if (!test_input_layout(context11, shader, m_description)) return nullptr;
 #endif
 		//SUCCEEDED
 		if (context11->dx_op_success(context11->device()->CreateInputLayout(

@@ -497,6 +497,7 @@ static Square::Shell::ParserCommands s_ShellCommands
 	  Square::Shell::Command{ "backend","b", "select backend [ogl, d3d]"  , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("ogl")) }
     , Square::Shell::Command{ "gputype","g", "select gpu type [low, high]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("high")) }
 	, Square::Shell::Command{ "debug",  "d", "enable debug"               , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
+	, Square::Shell::Command{ "verbose","v", "enable verbose"             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 	, Square::Shell::Command{ "help",   "h", "show help"                  , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 };
 
@@ -588,12 +589,15 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
 	}
 	//debug?
 	bool debug = std::get<bool>(args.at("debug"));
-	//gpy type
+	//verbose?
+	app.logger()->verbose(std::get<bool>(args.at("verbose")));
+	//GPU type
 	GpuType gputype = std::get<std::string>(args.at("gputype")) == "low" ? GpuType::GPU_LOW : GpuType::GPU_HIGH;
 	//driver?
 	WindowRenderDriver render_driver = std::get<std::string>(args.at("backend")) == "d3d"
 		? (WindowRenderDriver{ Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, gputype, debug })
 		: (WindowRenderDriver{ Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, gputype, debug });
+	
 	//test
     app.execute
 	(

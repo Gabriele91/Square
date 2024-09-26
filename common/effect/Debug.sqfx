@@ -79,7 +79,7 @@ sub_effect
                     Vec4 m_position : SV_POSITION;
                 };
 
-                VertexShaderOutput vertex(in Position3D input, uint id : SV_VertexID)
+                VertexShaderOutput vertex(in Position3D input)
                 {
                     VertexShaderOutput output;
                     output.m_position = mul_model_view_projection(input.m_position);

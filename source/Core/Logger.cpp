@@ -19,6 +19,7 @@ namespace Square
     class NONELogger : public Logger
     {
     public:
+        NONELogger() = default;
 
         void error(const std::string& value) const override { }
         void warning(const std::string& value) const override { }
@@ -30,7 +31,10 @@ namespace Square
         void debugs(const std::vector< std::string >& values) const override { }
         void infos(const std::vector< std::string >& values) const override { }
 
-    private:
+        virtual void verbose(bool verbose) override { }
+        virtual bool verbose() const override { return false; }
+    
+    protected:
     };
 
     template < bool enable_debug >
@@ -49,7 +53,7 @@ namespace Square
 
         void debug(const std::string& value) const override
         {
-            if (enable_debug)
+            if (enable_debug && m_verbose)
             {
                 print(stdout, TAG_DEBUG, value);
             }
@@ -57,16 +61,40 @@ namespace Square
 
         void info(const std::string& value) const override
         {
-            print(stdout, TAG_INFO, value);
+            if (m_verbose)
+            {
+                print(stdout, TAG_INFO, value);
+            }
         }
 
         virtual void debugs(const std::vector< std::string >& values) const override
         {
-            if (enable_debug)
+            if (enable_debug && m_verbose)
             {
                 for (const auto& value : values) debug(value);
             }
         }
+
+        virtual void infos(const std::vector< std::string >& values) const override
+        {
+            if (m_verbose)
+            {
+                for (const auto& value : values) info(value);
+            }
+        }
+
+        virtual void verbose(bool verbose) override 
+        { 
+            m_verbose = verbose;
+        }
+
+        virtual bool verbose() const override 
+        { 
+            return m_verbose; 
+        }
+
+    protected:
+        bool m_verbose{ true };
 
     private:
         void print(FILE* const stream, const char* tag, const std::string& value) const
@@ -99,7 +127,7 @@ namespace Square
 
         void debug(const std::string& value) const override
         {
-            if (enable_debug)
+            if (enable_debug && m_verbose)
             {
                 print(TAG_DEBUG, value);
             }
@@ -107,16 +135,40 @@ namespace Square
 
         void info(const std::string& value) const override
         {
-            print(TAG_INFO, value);
+            if (m_verbose)
+            {
+                print(TAG_INFO, value);
+            }
         }
 
         virtual void debugs(const std::vector< std::string >& values) const override
         {
-            if (enable_debug)
+            if (enable_debug && m_verbose)
             {
                 for (const auto& value : values) debug(value);
             }
         }
+
+        virtual void infos(const std::vector< std::string >& values) const override
+        {
+            if (m_verbose)
+            {
+                for (const auto& value : values) info(value);
+            }
+        }
+
+        virtual void verbose(bool verbose) override
+        {
+            m_verbose = verbose;
+        }
+
+        virtual bool verbose() const override
+        {
+            return m_verbose;
+        }
+
+    protected:
+        bool m_verbose{ true };
 
     private:
         void print(const char* tag, const std::string& value) const

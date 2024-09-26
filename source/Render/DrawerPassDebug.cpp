@@ -80,38 +80,37 @@ namespace Render
         // Output
         Shared<Render::Mesh> mesh = MakeShared<Render::Mesh>(context);
         // Geometry
-        Render::Mesh::Vertex3DNTBUVList vertexs
+        Render::Mesh::Vertex3DList vertexs
         {
+            { Vec3(-size, size, -size) }, // +Y (top face)
+            { Vec3(size, size, -size) },
+            { Vec3(size, size,  size) },
+            { Vec3(-size, size,  size) },
 
-            { Vec3(-size, size, -size), Vec3(0.0f, 1.0f, 0.0f), Vec2(0.0f, 0.0f) }, // +Y (top face)
-            { Vec3(size, size, -size), Vec3(0.0f, 1.0f, 0.0f), Vec2(1.0f, 0.0f) },
-            { Vec3(size, size,  size), Vec3(0.0f, 1.0f, 0.0f), Vec2(1.0f, 1.0f) },
-            { Vec3(-size, size,  size), Vec3(0.0f, 1.0f, 0.0f), Vec2(0.0f, 1.0f) },
+            { Vec3(-size, -size,  size) }, // -Y (bottom face)
+            { Vec3(size, -size,  size) },
+            { Vec3(size, -size, -size) },
+            { Vec3(-size, -size, -size) },
 
-            { Vec3(-size, -size,  size), Vec3(0.0f, -1.0f, 0.0f), Vec2(0.0f, 0.0f) }, // -Y (bottom face)
-            { Vec3(size, -size,  size), Vec3(0.0f, -1.0f, 0.0f), Vec2(1.0f, 0.0f) },
-            { Vec3(size, -size, -size), Vec3(0.0f, -1.0f, 0.0f), Vec2(1.0f, 1.0f) },
-            { Vec3(-size, -size, -size), Vec3(0.0f, -1.0f, 0.0f), Vec2(0.0f, 1.0f) },
+            { Vec3(size,  size,  size) }, // +X (right face)
+            { Vec3(size,  size, -size) },
+            { Vec3(size, -size, -size) },
+            { Vec3(size, -size,  size) },
 
-            { Vec3(size,  size,  size), Vec3(1.0f, 0.0f, 0.0f), Vec2(0.0f, 0.0f) }, // +X (right face)
-            { Vec3(size,  size, -size), Vec3(1.0f, 0.0f, 0.0f), Vec2(1.0f, 0.0f) },
-            { Vec3(size, -size, -size), Vec3(1.0f, 0.0f, 0.0f), Vec2(1.0f, 1.0f) },
-            { Vec3(size, -size,  size), Vec3(1.0f, 0.0f, 0.0f), Vec2(0.0f, 1.0f) },
+            { Vec3(-size,  size, -size) }, // -X (left face)
+            { Vec3(-size,  size,  size) },
+            { Vec3(-size, -size,  size) },
+            { Vec3(-size, -size, -size) },
 
-            { Vec3(-size,  size, -size), Vec3(-1.0f, 0.0f, 0.0f), Vec2(0.0f, 0.0f) }, // -X (left face)
-            { Vec3(-size,  size,  size), Vec3(-1.0f, 0.0f, 0.0f), Vec2(1.0f, 0.0f) },
-            { Vec3(-size, -size,  size), Vec3(-1.0f, 0.0f, 0.0f), Vec2(1.0f, 1.0f) },
-            { Vec3(-size, -size, -size), Vec3(-1.0f, 0.0f, 0.0f), Vec2(0.0f, 1.0f) },
+            { Vec3(-size,  size, size) }, // +Z (front face)
+            { Vec3(size,  size, size) },
+            { Vec3(size, -size, size) },
+            { Vec3(-size, -size, size) },
 
-            { Vec3(-size,  size, size), Vec3(0.0f, 0.0f, 1.0f), Vec2(0.0f, 0.0f) }, // +Z (front face)
-            { Vec3(size,  size, size), Vec3(0.0f, 0.0f, 1.0f), Vec2(1.0f, 0.0f) },
-            { Vec3(size, -size, size), Vec3(0.0f, 0.0f, 1.0f), Vec2(1.0f, 1.0f) },
-            { Vec3(-size, -size, size), Vec3(0.0f, 0.0f, 1.0f), Vec2(0.0f, 1.0f) },
-
-            { Vec3(size,  size, -size), Vec3(0.0f, 0.0f, -1.0f), Vec2(0.0f, 0.0f) }, // -Z (back face)
-            { Vec3(-size,  size, -size), Vec3(0.0f, 0.0f, -1.0f), Vec2(1.0f, 0.0f) },
-            { Vec3(-size, -size, -size), Vec3(0.0f, 0.0f, -1.0f), Vec2(1.0f, 1.0f) },
-            { Vec3(size, -size, -size), Vec3(0.0f, 0.0f, -1.0f), Vec2(0.0f, 1.0f) },
+            { Vec3(size,  size, -size) }, // -Z (back face)
+            { Vec3(-size,  size, -size) },
+            { Vec3(-size, -size, -size) },
+            { Vec3(size, -size, -size) }
         };
         Render::Mesh::IndexList indexes
         {
@@ -135,8 +134,6 @@ namespace Render
         };
         // Submesh
         Render::SubMesh sub_mesh{ Render::DrawType::DRAW_TRIANGLES, uint32(indexes.size()) };
-        // Compute tangent and binomial
-        Square::tangent_model_fast(indexes, vertexs);
         //Build mesh
         if (mesh->build(vertexs, indexes, { sub_mesh }, false))
             return mesh;
