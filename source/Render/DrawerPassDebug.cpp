@@ -179,15 +179,13 @@ namespace Render
         // Get obb debug technique
         auto* wireframe  = m_debug_effect->technique("wireframe");
         auto* line_color = m_debug_effect->parameter("line_color");
-        auto* line_size  = m_debug_effect->parameter("line_size");
-        if (!wireframe || !line_color || !line_size)
+        if (!wireframe || !line_color)
         {
             context().logger()->warning("Unable to find wireframe debug technique");
             return;
         }
         // Colors / size
         line_color->set(Vec4(1.0, 1.0, 1.0, 1.0));
-        line_size->set(Vec2(1.0f));
         //for each elements of opaque  and translucent queues
 		for(auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
         if (randerable && randerable->can_draw() && randerable->support_culling())
@@ -276,15 +274,13 @@ namespace Render
         {
             technique = m_debug_effect->technique("wireframe");
             auto* line_color = m_debug_effect->parameter("line_color");
-            auto* line_size = m_debug_effect->parameter("line_size");
-            if (!technique || !line_color || !line_size)
+            if (!technique || !line_color)
             {
                 context().logger()->warning("Unable to find wireframe debug technique");
                 return;
             }
             // Colors / size
             line_color->set(color);
-            line_size->set(Vec2(1.0f));
         }
         // Draw wireframe 
         for (auto& pass : *technique)
