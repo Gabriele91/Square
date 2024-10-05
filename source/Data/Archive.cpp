@@ -53,7 +53,17 @@ namespace Data
         ostream.write((const char*)&value.w, sizeof(V));
         return ostream;
     }
-    
+
+    template < typename V >
+    std::ostream& operator < (std::ostream& ostream, const TQuat< V >& value)
+    {
+        ostream.write((const char*)&value.x, sizeof(V));
+        ostream.write((const char*)&value.y, sizeof(V));
+        ostream.write((const char*)&value.z, sizeof(V));
+        ostream.write((const char*)&value.w, sizeof(V));
+        return ostream;
+    }
+
     template < typename V >
     std::ostream& operator < (std::ostream& ostream, const TMat4< V >& value)
     {
@@ -221,6 +231,16 @@ namespace Data
         return istream;
     }
     
+    template < typename V >
+    std::istream& operator > (std::istream& istream, TQuat< V >& value)
+    {
+        istream.read((char*)&value.x, sizeof(V));
+        istream.read((char*)&value.y, sizeof(V));
+        istream.read((char*)&value.z, sizeof(V));
+        istream.read((char*)&value.w, sizeof(V));
+        return istream;
+    }
+
     template < typename V >
     std::istream& operator > (std::istream& istream, TMat4< V >& value)
     {

@@ -185,18 +185,20 @@ namespace Scene
 
 	//object methods
 	//serialize
-	void SpotLight::serialize(Data::Archive& archivie)
+	void SpotLight::serialize(Data::Archive& archive)
 	{
-		Data::serialize(archivie, this);
+		Data::serialize(archive, this);
 	}
-	void SpotLight::serialize_json(Data::Json& archivie)
-	{ }
+	void SpotLight::serialize_json(Data::Json& archive)
+	{
+		Data::serialize_json(archive, this);
+	}
 	//deserialize
-	void SpotLight::deserialize(Data::Archive& archivie)
+	void SpotLight::deserialize(Data::Archive& archive)
 	{
-		Data::deserialize(archivie, this);
+		Data::deserialize(archive, this);
 	}
-	void SpotLight::deserialize_json(Data::Json& archivie)
+	void SpotLight::deserialize_json(Data::Json& archive)
 	{ }
 	//methods
 	const Geometry::Sphere& SpotLight::bounding_sphere() const

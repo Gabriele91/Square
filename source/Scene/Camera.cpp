@@ -79,21 +79,21 @@ namespace Scene
     }
     
     //serialize
-    void Camera::serialize(Data::Archive& archivie)
+    void Camera::serialize(Data::Archive& archive)
     {
-        Data::serialize(archivie, this);
+        Data::serialize(archive, this);
     }
-    void Camera::serialize_json(Data::Json& archivie)
+    void Camera::serialize_json(Data::Json& archive)
     {
-        
+        Data::serialize_json(archive, this);
     }
     
     //deserialize
-    void Camera::deserialize(Data::Archive& archivie)
+    void Camera::deserialize(Data::Archive& archive)
     {
-        Data::deserialize(archivie, this);
+        Data::deserialize(archive, this);
     }
-    void Camera::deserialize_json(Data::Json& archivie)
+    void Camera::deserialize_json(Data::Json& archive)
     {
         
     }

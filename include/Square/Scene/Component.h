@@ -76,11 +76,11 @@ namespace Scene
         virtual void on_message(const Message& msg){}
         
         //virtual
-        virtual void serialize(Data::Archive& archivie) = 0;
-        virtual void serialize_json(Data::Json& archivie) = 0;
+        virtual void serialize(Data::Archive& archive) = 0;
+        virtual void serialize_json(Data::Json& archive) = 0;
         //deserialize
-        virtual void deserialize(Data::Archive& archivie) = 0;
-        virtual void deserialize_json(Data::Json& archivie) = 0;
+        virtual void deserialize(Data::Archive& archive) = 0;
+        virtual void deserialize_json(Data::Json& archive) = 0;
         
         
     protected:

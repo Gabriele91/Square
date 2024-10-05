@@ -56,10 +56,10 @@ namespace Square
         Shared<Object> create(uint64 id);
         
 		//Get attrbutes
-        const std::vector < Attribute >* attributes(const std::string& name);
-        const std::vector < Attribute >* attributes(uint64 object_id);
-        const std::vector < Attribute >* attributes(const Object& object);
-        const std::vector < Attribute >* attributes(const ObjectInfo& info);
+        const std::vector < Attribute >* attributes(const std::string& name) const;
+        const std::vector < Attribute >* attributes(uint64 object_id) const;
+        const std::vector < Attribute >* attributes(const Object& object) const;
+        const std::vector < Attribute >* attributes(const ObjectInfo& info) const;
 
 		//Get resource
         Shared<ResourceObject> resource(const std::string& name);

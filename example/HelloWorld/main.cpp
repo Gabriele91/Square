@@ -9,7 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-//#define MODEL_LOAD "adamHead" // "adamHead" // "drone" // "box" // "crate"
+#define MODEL_LOAD "box" // "adamHead" // "drone" // "box" // "crate"
 
 
 class Cube : public Square::Scene::Component
@@ -209,11 +209,11 @@ public:
 	}
     
     //serialize
-    virtual void serialize(Square::Data::Archive& archivie)  override   {  Square::Data::serialize(archivie, this); }
-    virtual void serialize_json(Square::Data::Json& archivie) override  {  /* none */ }
+    virtual void serialize(Square::Data::Archive& archive)  override   {  Square::Data::serialize(archive, this); }
+    virtual void serialize_json(Square::Data::Json& archive) override  {  Square::Data::serialize_json(archive, this); }
     //deserialize
-    virtual void deserialize(Square::Data::Archive& archivie) override { Square::Data::deserialize(archivie, this); }
-    virtual void deserialize_json(Square::Data::Json& archivie) override {  /* none */ }
+    virtual void deserialize(Square::Data::Archive& archive) override { Square::Data::deserialize(archive, this); }
+    virtual void deserialize_json(Square::Data::Json& archive) override {  /* none */ }
 };
 SQUARE_CLASS_OBJECT_REGISTRATION(Cube);
 
@@ -232,6 +232,7 @@ public:
 		//move vel
 		const float velocity = 20.0f  * application().last_delta_time();
 		const auto  level_path = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.sq");
+		const auto  level_path_json = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.jsq");
 		context().logger()->info("value: " + std::to_string(key));
 		context().logger()->info("delta: " + std::to_string(application().last_delta_time()));
 		//
@@ -241,8 +242,9 @@ public:
 		case Square::Video::KEY_Q: m_loop = false; break;
 		case Square::Video::KEY_W: Square::Application::instance()->fullscreen(false); break;
 		case Square::Video::KEY_F: Square::Application::instance()->fullscreen(true); break;
+		case Square::Video::KEY_B: serialize_json(level_path_json); break;
 		case Square::Video::KEY_N: serialize(level_path); break;
-		case Square::Video::KEY_M: 
+		case Square::Video::KEY_M:
 			if (Square::Filesystem::exists(level_path))
 				deserialize(level_path);
 		break;
@@ -457,7 +459,8 @@ public:
 		//loop event
         return m_loop;
     }
-    bool end()
+   
+	bool end()
     {
         return true;
     }
@@ -471,6 +474,14 @@ public:
 		GZOStream ofile(path);
 		ArchiveBinWrite out(context(), ofile);
 		m_level->serialize(out);
+	}
+	void serialize_json(const std::string& path)
+	{
+		using namespace Square;
+		using namespace Square::Data;
+		Json jout = Json(JsonObject());
+		m_level->serialize_json(jout);
+		std::ofstream(path) << jout;
 	}
 	//level deserialize
 	void deserialize(const std::string& path)

@@ -171,18 +171,20 @@ namespace Scene
 
 	//object methods
 	//serialize
-	void PointLight::serialize(Data::Archive& archivie)
+	void PointLight::serialize(Data::Archive& archive)
 	{
-		Data::serialize(archivie, this);
+		Data::serialize(archive, this);
 	}
-	void PointLight::serialize_json(Data::Json& archivie)
-	{ }
+	void PointLight::serialize_json(Data::Json& archive)
+	{
+		Data::serialize_json(archive, this);
+	}
 	//deserialize
-	void PointLight::deserialize(Data::Archive& archivie)
+	void PointLight::deserialize(Data::Archive& archive)
 	{
-		Data::deserialize(archivie, this);
+		Data::deserialize(archive, this);
 	}
-	void PointLight::deserialize_json(Data::Json& archivie)
+	void PointLight::deserialize_json(Data::Json& archive)
 	{ }
 	//methods
 	const Geometry::Sphere& PointLight::bounding_sphere() const

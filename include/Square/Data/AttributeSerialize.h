@@ -10,48 +10,59 @@
 #include "Square/Core/Object.h"
 #include "Square/Core/Context.h"
 #include "Square/Data/Archive.h"
+#include "Square/Data/Json.h"
 #include "Square/Core/Application.h"
 
 namespace Square
 {
 namespace  Data
 {
-    SQUARE_API bool attribute_serialize(Archive& archivie, const Object* object, const std::vector < Attribute >* attrbutes);
-    SQUARE_API bool attribute_deserialize(Archive& archivie, Object* object, const std::vector < Attribute >* attrbutes);
+    SQUARE_API bool attribute_serialize(Archive& archive, const Object* object, const std::vector < Attribute >* attrbutes);
+    SQUARE_API bool attribute_deserialize(Archive& archive, Object* object, const std::vector < Attribute >* attrbutes);
     
     //from context
     template < class T >
-    inline bool serialize(Archive& archivie,const Shared< T > object)
+    inline bool serialize(Archive& archive,const Shared< T > object)
     {
-        return attribute_serialize(archivie, object.get(), archivie.context().attributes(object->object_id()));
+        return attribute_serialize(archive, object.get(), archive.context().attributes(object->object_id()));
     }
-    inline bool serialize(Archive& archivie,const Object* object)
+    inline bool serialize(Archive& archive,const Object* object)
     {
-        return attribute_serialize(archivie, object, archivie.context().attributes(object->object_id()));
-    }
-    template < class T >
-    inline bool serialize(Archive& archivie,const std::vector< Shared < T > >& objects)
-    {
-        uint64 size = uint64(objects.size());
-        archivie % size;
-        bool success = true;
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        for(Shared < T >& object : objects)
-        {
-            success &= attribute_serialize(archivie, object, archivie.context().attributes(object->object_id()));
-        }
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        return success;
+        return attribute_serialize(archive, object, archive.context().attributes(object->object_id()));
     }
     
     template < class T >
-    inline bool deserialize(Archive& archivie,const Shared< T > object)
+    inline bool deserialize(Archive& archive,const Shared< T > object)
     {
-        return attribute_deserialize(archivie, object.get(), archivie.context().attributes(object->object_id()));
+        return attribute_deserialize(archive, object.get(), archive.context().attributes(object->object_id()));
     }
-    inline bool deserialize(Archive& archivie, Object* object)
+    inline bool deserialize(Archive& archive, Object* object)
     {
-        return attribute_deserialize(archivie, object, archivie.context().attributes(object->object_id()));
+        return attribute_deserialize(archive, object, archive.context().attributes(object->object_id()));
+    }
+
+    SQUARE_API bool attribute_serialize_json(Json& archive, const Object* object, const std::vector < Attribute >* attrbutes);
+    SQUARE_API bool attribute_deserialize_json(Json& archive, Object* object, const std::vector < Attribute >* attrbutes);
+    
+    //from context
+    template < class T >
+    inline bool serialize_json(Json& archive,const Shared< T > object)
+    {
+        return attribute_serialize_json(archive, object.get(), object->context().attributes(object->object_id()));
+    }
+    inline bool serialize_json(Json& archive,const Object* object)
+    {
+        return attribute_serialize_json(archive, object, object->context().attributes(object->object_id()));
+    }
+    
+    template < class T >
+    inline bool deserialize_json(Json& archive,const Shared< T > object)
+    {
+        return attribute_deserialize_json(archive, object.get(), object->context().attributes(object->object_id()));
+    }
+    inline bool deserialize_json(Json& archive, Object* object)
+    {
+        return attribute_deserialize_json(archive, object, object->context().attributes(object->object_id()));
     }
 }
 }

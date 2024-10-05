@@ -29,23 +29,23 @@ namespace Square
         return nullptr;
     }
     //Get attrbutes
-    const std::vector < Attribute >* BaseContext::attributes(const std::string& name)
+    const std::vector < Attribute >* BaseContext::attributes(const std::string& name) const
     {
         auto attributes = m_attributes.find(ObjectInfo::compute_id(name));
         if (attributes != m_attributes.end()) return &attributes->second;
         return nullptr;
     }
-    const std::vector < Attribute >* BaseContext::attributes(uint64 object_id)
+    const std::vector < Attribute >* BaseContext::attributes(uint64 object_id) const
     {
         auto attributes = m_attributes.find(object_id);
         if (attributes != m_attributes.end()) return &attributes->second;
         return nullptr;
     }
-    const std::vector < Attribute >* BaseContext::attributes(const Object& object)
+    const std::vector < Attribute >* BaseContext::attributes(const Object& object) const
     {
         return attributes(object.object_id());
     }
-    const std::vector < Attribute >* BaseContext::attributes(const ObjectInfo& info)
+    const std::vector < Attribute >* BaseContext::attributes(const ObjectInfo& info) const
     {
         return attributes(info.id());
     }
