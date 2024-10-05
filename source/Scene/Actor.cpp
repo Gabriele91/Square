@@ -59,71 +59,100 @@ namespace Scene
     }
 
     //serialize
-    void Actor::serialize(Data::Archive& archivie)
+    void Actor::serialize(Data::Archive& archive)
     {
         //serialize this
-        Data::serialize(archivie, this);
+        Data::serialize(archive, this);
         //serialize components
         {
             uint64 size = m_components.size();
-            archivie % size;
+            archive % size;
             for(auto component : m_components)
             {
                 //serialize name
-                archivie % component->object_name();
+                archive % component->object_name();
                 //serialize component
-                component->serialize(archivie);
+                component->serialize(archive);
             }
         }
         //serialize childs
         {
             uint64 size = m_childs.size();
-            archivie % size;
+            archive % size;
             for(auto child : m_childs)
             {
-                child->serialize(archivie);
+                child->serialize(archive);
             }
         }
     }
-    void Actor::serialize_json(Data::Json& archivie)
+    void Actor::serialize_json(Data::Json& archive)
     {
-        
+         Data::Json json_data = Data::JsonObject();
+         Data::serialize_json(json_data, this);
+         archive["data"] = std::move(json_data);
+         // Components
+         auto json_components = Data::JsonArray();
+         json_components.reserve(m_components.size());
+         for (auto component : m_components)
+         {
+             Data::Json json_component = Data::JsonObject();
+             //serialize component name
+             json_component["name"] = component->object_name();
+             //serialize component data 
+             Data::Json json_component_data = Data::JsonObject();
+             component->serialize_json(json_component_data);
+             json_component["data"] = std::move(json_component_data);
+             // add component
+             json_components.emplace_back(std::move(json_component));
+         }
+         archive["components"] = std::move(json_components);
+         // Children
+         auto json_children = Data::JsonArray();
+         json_children.reserve(m_childs.size());
+         for (auto child : m_childs)
+         {
+             Data::Json json_child = Data::JsonObject();
+             child->serialize_json(json_child);
+             json_children.emplace_back(std::move(json_child));
+         }
+         archive["children"] = std::move(json_children);
+
     }
     //deserialize
-    void Actor::deserialize(Data::Archive& archivie)
+    void Actor::deserialize(Data::Archive& archive)
     {
         ///clear
         m_components.clear(); //todo: call events
         m_childs.clear();     //todo: call events
         //deserialize this
-        Data::deserialize(archivie, this);
+        Data::deserialize(archive, this);
         //deserialize components
         {
             uint64 size = 0;
-            archivie % size;
+            archive % size;
             for(uint64 i = 0; i!=size; ++i)
             {
                 //name of component
                 std::string name;
                 //serialize name
-                archivie % name;
+                archive % name;
                 //new component
                 Shared<Component> component = this->component(name);
                 //deserialize component
-                component->deserialize(archivie);
+                component->deserialize(archive);
             }
         }
         //deserialize childs
         {
             uint64 size = 0;
-            archivie % size;
+            archive % size;
             for(uint64 i = 0; i!=size; ++i)
             {
-                child()->deserialize(archivie);
+                child()->deserialize(archive);
             }
         }
     }
-    void Actor::deserialize_json(Data::Json& archivie)
+    void Actor::deserialize_json(Data::Json& archive)
     {
         
     }

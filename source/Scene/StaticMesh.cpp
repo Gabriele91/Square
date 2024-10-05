@@ -178,17 +178,20 @@ namespace Scene
 	void StaticMesh::on_message(const Square::Scene::Message& msg) { }
 
 	//serialize
-	void StaticMesh::serialize(Square::Data::Archive& archivie)  
+	void StaticMesh::serialize(Square::Data::Archive& archive)  
 	{ 
-		Square::Data::serialize(archivie, this);
+		Data::serialize(archive, this);
 	}
-	void StaticMesh::serialize_json(Square::Data::Json& archivie) { }
+	void StaticMesh::serialize_json(Square::Data::Json& archive)
+	{
+		Data::serialize_json(archive, this);
+	}
 	//deserialize
-	void StaticMesh::deserialize(Square::Data::Archive& archivie) 
+	void StaticMesh::deserialize(Square::Data::Archive& archive) 
 	{ 
-		Square::Data::deserialize(archivie, this); 
+		Square::Data::deserialize(archive, this); 
 	}
-	void StaticMesh::deserialize_json(Square::Data::Json& archivie) { }
+	void StaticMesh::deserialize_json(Square::Data::Json& archive) { }
 
 	// build bbox
 	bool StaticMesh::build_local_obounding_box()

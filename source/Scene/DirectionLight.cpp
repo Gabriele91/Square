@@ -126,18 +126,20 @@ namespace Scene
 
 	//object methods
 	//serialize
-	void DirectionLight::serialize(Data::Archive& archivie)
+	void DirectionLight::serialize(Data::Archive& archive)
 	{
-		Data::serialize(archivie, this);
+		Data::serialize(archive, this);
 	}
-	void DirectionLight::serialize_json(Data::Json& archivie)
-	{ }
+	void DirectionLight::serialize_json(Data::Json& archive)
+	{
+		Data::serialize_json(archive, this);
+	}
 	//deserialize
-	void DirectionLight::deserialize(Data::Archive& archivie)
+	void DirectionLight::deserialize(Data::Archive& archive)
 	{
-		Data::deserialize(archivie, this);
+		Data::deserialize(archive, this);
 	}
-	void DirectionLight::deserialize_json(Data::Json& archivie)
+	void DirectionLight::deserialize_json(Data::Json& archive)
 	{ }
 	//methods
 	const Geometry::Sphere& DirectionLight::bounding_sphere() const

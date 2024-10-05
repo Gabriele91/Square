@@ -68,11 +68,11 @@ namespace Scene
 		void send_message(const Message& msg, bool brodcast = false);
 
 		//serialize
-		void serialize(Data::Archive& archivie);
-		void serialize_json(Data::Json& archivie);
+		void serialize(Data::Archive& archive);
+		void serialize_json(Data::Json& archive);
 		//deserialize
-		void deserialize(Data::Archive& archivie);
-		void deserialize_json(Data::Json& archivie);
+		void deserialize(Data::Archive& archive);
+		void deserialize_json(Data::Json& archive);
 
 
 	protected:

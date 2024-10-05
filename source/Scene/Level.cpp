@@ -42,43 +42,55 @@ namespace Scene
 	{
 	}
 	//serialize
-	void Level::serialize(Data::Archive& archivie)
+	void Level::serialize(Data::Archive& archive)
 	{
 		//serialize this
-		Data::serialize(archivie, this);
+		Data::serialize(archive, this);
 		//serialize actors
 		{
 			uint64 size = m_actors.size();
-			archivie % size;
+			archive % size;
 			for (auto& actor : m_actors)
 			{
-				actor->serialize(archivie);
+				actor->serialize(archive);
 			}
 		}
 	}
-	void Level::serialize_json(Data::Json& archivie)
+	void Level::serialize_json(Data::Json& archive)
 	{
-		//to do
+		Data::Json json_data = Data::JsonObject();
+		Data::serialize_json(json_data, this);
+		archive["data"] = std::move(json_data);
+		// Actors
+		auto json_actors = Data::JsonArray();
+		json_actors.reserve(m_actors.size());
+		for (auto actor : m_actors)
+		{
+			Data::Json json_actor = Data::JsonObject();
+			actor->serialize_json(json_actor);
+			json_actors.emplace_back(std::move(json_actor));
+		}
+		archive["actors"] = std::move(json_actors);
 	}
 	//deserialize
-	void Level::deserialize(Data::Archive& archivie)
+	void Level::deserialize(Data::Archive& archive)
 	{
 		///clear
 		m_rander_collection.clear();
 		m_actors.clear(); //todo: call events
 		//deserialize this
-		Data::deserialize(archivie, this);
+		Data::deserialize(archive, this);
 		//deserialize childs
 		{
 			uint64 size = 0;
-			archivie % size;
+			archive % size;
 			for (uint64 i = 0; i != size; ++i)
 			{
-				actor()->deserialize(archivie);
+				actor()->deserialize(archive);
 			}
 		}
 	}
-	void Level::deserialize_json(Data::Json& archivie)
+	void Level::deserialize_json(Data::Json& archive)
 	{
 		//to do
 	}

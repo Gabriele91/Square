@@ -23,15 +23,15 @@ namespace  Data
 	class SQUARE_API Archive
 	{
 	public:
-		//init archivie
+		//init archive
 		Archive(Context& context) : m_context(context) {}
-		//archivie operator
+		//archive operator
 		virtual Archive& operator % (VariantRef value) = 0;
 		//info
 		Context& context() { return m_context;  }
 
 	protected:
-		//archivie context
+		//archive context
 		Context & m_context;
 	};
 

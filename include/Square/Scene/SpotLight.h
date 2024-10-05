@@ -65,11 +65,11 @@ namespace Scene
 
 		//object methods
 		//serialize
-		virtual void serialize(Data::Archive& archivie)   override;
-		virtual void serialize_json(Data::Json& archivie) override;
+		virtual void serialize(Data::Archive& archive)   override;
+		virtual void serialize_json(Data::Json& archive) override;
 		//deserialize
-		virtual void deserialize(Data::Archive& archivie)   override;
-		virtual void deserialize_json(Data::Json& archivie) override;
+		virtual void deserialize(Data::Archive& archive)   override;
+		virtual void deserialize_json(Data::Json& archive) override;
 
 		//lights methods
 		virtual const Geometry::Sphere& bounding_sphere() const override;
