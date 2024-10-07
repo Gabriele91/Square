@@ -130,7 +130,7 @@ namespace Scene
 	{
 		Data::serialize(archive, this);
 	}
-	void DirectionLight::serialize_json(Data::Json& archive)
+	void DirectionLight::serialize_json(Data::JsonValue& archive)
 	{
 		Data::serialize_json(archive, this);
 	}
@@ -139,8 +139,10 @@ namespace Scene
 	{
 		Data::deserialize(archive, this);
 	}
-	void DirectionLight::deserialize_json(Data::Json& archive)
-	{ }
+	void DirectionLight::deserialize_json(Data::JsonValue& archive)
+	{
+		Data::deserialize_json(archive, this);
+	}
 	//methods
 	const Geometry::Sphere& DirectionLight::bounding_sphere() const
 	{

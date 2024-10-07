@@ -155,7 +155,7 @@ namespace Scene
 			}
 		}
 	}
-	void  World::serialize_json(Data::Json& archive)
+	void  World::serialize_json(Data::JsonValue& archive)
 	{
 		Data::Json json_data = Data::JsonObject();
 		Data::serialize_json(json_data, this);
@@ -188,9 +188,22 @@ namespace Scene
 			}
 		}
 	}
-	void  World::deserialize_json(Data::Json& archive)
+	void  World::deserialize_json(Data::JsonValue& archive)
 	{
-		//todo
+		///clear
+		m_levels.clear(); //todo: call events
+						  //deserialize this
+		if(archive.contains("data") && archive["data"].is_object())
+		{
+			Data::deserialize_json(archive["data"], this);
+		}
+		if (archive.contains("levels") && archive["levels"].is_array())
+		{
+			for (auto& jlevel : archive["levels"].array())
+			{
+				level()->deserialize_json(jlevel);
+			}
+		}
 	}
 
 }

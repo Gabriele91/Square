@@ -56,7 +56,7 @@ namespace Scene
 			}
 		}
 	}
-	void Level::serialize_json(Data::Json& archive)
+	void Level::serialize_json(Data::JsonValue& archive)
 	{
 		Data::Json json_data = Data::JsonObject();
 		Data::serialize_json(json_data, this);
@@ -90,9 +90,23 @@ namespace Scene
 			}
 		}
 	}
-	void Level::deserialize_json(Data::Json& archive)
+	void Level::deserialize_json(Data::JsonValue& archive)
 	{
-		//to do
+		///clear
+		m_rander_collection.clear();
+		m_actors.clear(); //todo: call events
+		//
+		if (archive.contains("data") && archive["data"].is_object())
+		{
+			Data::deserialize_json(archive["data"], this);
+		}
+		if (archive.contains("actors") && archive["actors"].is_array())
+		{
+			for (auto& jactor : archive["actors"].array())
+			{
+				actor()->deserialize_json(jactor);
+			}
+		}
 	}
 	
 	//add an actor

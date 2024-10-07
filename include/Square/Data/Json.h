@@ -84,7 +84,9 @@ namespace Data
 		// move assignment
         JsonValue& operator= (JsonValue&&);
         JsonValue& operator= (const JsonValue&);
-
+		// Contains
+		bool contains(const std::string& key) const;
+		bool contains(size_t index) const;
 	private:
 
 		//Value

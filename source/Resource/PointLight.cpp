@@ -175,7 +175,7 @@ namespace Scene
 	{
 		Data::serialize(archive, this);
 	}
-	void PointLight::serialize_json(Data::Json& archive)
+	void PointLight::serialize_json(Data::JsonValue& archive)
 	{
 		Data::serialize_json(archive, this);
 	}
@@ -184,8 +184,10 @@ namespace Scene
 	{
 		Data::deserialize(archive, this);
 	}
-	void PointLight::deserialize_json(Data::Json& archive)
-	{ }
+	void PointLight::deserialize_json(Data::JsonValue& archive)
+	{
+		Data::deserialize_json(archive, this);
+	}
 	//methods
 	const Geometry::Sphere& PointLight::bounding_sphere() const
 	{
