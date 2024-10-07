@@ -85,9 +85,9 @@ namespace Scene
             }
         }
     }
-    void Actor::serialize_json(Data::Json& archive)
+    void Actor::serialize_json(Data::JsonValue& archive)
     {
-         Data::Json json_data = Data::JsonObject();
+         Data::JsonValue json_data = Data::JsonObject();
          Data::serialize_json(json_data, this);
          archive["data"] = std::move(json_data);
          // Components
@@ -95,7 +95,7 @@ namespace Scene
          json_components.reserve(m_components.size());
          for (auto component : m_components)
          {
-             Data::Json json_component = Data::JsonObject();
+             Data::JsonValue json_component = Data::JsonObject();
              //serialize component name
              json_component["name"] = component->object_name();
              //serialize component data 
@@ -152,9 +152,48 @@ namespace Scene
             }
         }
     }
-    void Actor::deserialize_json(Data::Json& archive)
+    void Actor::deserialize_json(Data::JsonValue& archive)
     {
-        
+        ///clear
+        m_components.clear(); //todo: call events
+        m_childs.clear();     //todo: call events
+        //Data
+        if (archive.contains("data"))
+        {
+            Data::JsonValue& jdata = archive["data"];
+            //deserialize this
+            Data::deserialize_json(jdata, this);
+        }
+        //Components
+        if (archive.contains("components"))
+        {
+            Data::JsonValue& jcomponents = archive["components"];
+            // Get name
+            if (jcomponents.is_array())
+            for(auto& jcomponent : jcomponents.array())
+            if (jcomponent.contains("name") && jcomponent["name"].is_string())
+            {
+                //new component
+                Shared<Component> component = this->component(jcomponent["name"].string());
+                if (jcomponent.contains("data") && jcomponent["data"].is_object())
+                {
+                    //deserialize component
+                    component->deserialize_json(jcomponent["data"]);
+                }
+            }
+        }
+        //Components
+        if (archive.contains("children"))
+        {
+            Data::JsonValue& jchildren = archive["children"];
+            // Get name
+            if (jchildren.is_array())
+            for(auto& jchild : jchildren.array())
+            if (jchild.is_object())
+            {
+                child()->deserialize_json(jchild);
+            }
+        }
     }
     
     //add a child

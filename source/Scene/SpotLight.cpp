@@ -189,7 +189,7 @@ namespace Scene
 	{
 		Data::serialize(archive, this);
 	}
-	void SpotLight::serialize_json(Data::Json& archive)
+	void SpotLight::serialize_json(Data::JsonValue& archive)
 	{
 		Data::serialize_json(archive, this);
 	}
@@ -198,8 +198,10 @@ namespace Scene
 	{
 		Data::deserialize(archive, this);
 	}
-	void SpotLight::deserialize_json(Data::Json& archive)
-	{ }
+	void SpotLight::deserialize_json(Data::JsonValue& archive)
+	{
+		Data::deserialize_json(archive, this);
+	}
 	//methods
 	const Geometry::Sphere& SpotLight::bounding_sphere() const
 	{

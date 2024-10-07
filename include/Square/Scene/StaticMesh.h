@@ -58,10 +58,10 @@ namespace Scene
 
 		//serialize
 		virtual void serialize(Square::Data::Archive& archive)  override;
-		virtual void serialize_json(Square::Data::Json& archive) override;
+		virtual void serialize_json(Square::Data::JsonValue& archive) override;
 		//deserialize
 		virtual void deserialize(Square::Data::Archive& archive) override;
-		virtual void deserialize_json(Square::Data::Json& archive) override;
+		virtual void deserialize_json(Square::Data::JsonValue& archive) override;
 
 		// build bbox
 		bool build_local_obounding_box();

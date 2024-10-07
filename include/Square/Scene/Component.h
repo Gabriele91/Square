@@ -77,10 +77,10 @@ namespace Scene
         
         //virtual
         virtual void serialize(Data::Archive& archive) = 0;
-        virtual void serialize_json(Data::Json& archive) = 0;
+        virtual void serialize_json(Data::JsonValue& archive) = 0;
         //deserialize
         virtual void deserialize(Data::Archive& archive) = 0;
-        virtual void deserialize_json(Data::Json& archive) = 0;
+        virtual void deserialize_json(Data::JsonValue& archive) = 0;
         
         
     protected:

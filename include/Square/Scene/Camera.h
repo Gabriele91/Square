@@ -42,10 +42,10 @@ namespace Scene
         
         //serialize
         virtual void serialize(Data::Archive& archive)   override;
-        virtual void serialize_json(Data::Json& archive) override;
+        virtual void serialize_json(Data::JsonValue& archive) override;
         //deserialize
         virtual void deserialize(Data::Archive& archive)   override;
-        virtual void deserialize_json(Data::Json& archive) override;
+        virtual void deserialize_json(Data::JsonValue& archive) override;
         
         //set
         void viewport(const IVec4& viewport);

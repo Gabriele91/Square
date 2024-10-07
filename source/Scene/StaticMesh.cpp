@@ -182,7 +182,7 @@ namespace Scene
 	{ 
 		Data::serialize(archive, this);
 	}
-	void StaticMesh::serialize_json(Square::Data::Json& archive)
+	void StaticMesh::serialize_json(Square::Data::JsonValue& archive)
 	{
 		Data::serialize_json(archive, this);
 	}
@@ -191,7 +191,10 @@ namespace Scene
 	{ 
 		Square::Data::deserialize(archive, this); 
 	}
-	void StaticMesh::deserialize_json(Square::Data::Json& archive) { }
+	void StaticMesh::deserialize_json(Square::Data::JsonValue& archive)
+	{
+		Data::deserialize_json(archive, this);
+	}
 
 	// build bbox
 	bool StaticMesh::build_local_obounding_box()

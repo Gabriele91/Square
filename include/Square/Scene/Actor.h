@@ -110,10 +110,10 @@ namespace Scene
         
         //serialize
         void serialize(Data::Archive& archive);
-        void serialize_json(Data::Json& archive);
+        void serialize_json(Data::JsonValue& archive);
         //deserialize
         void deserialize(Data::Archive& archive);
-        void deserialize_json(Data::Json& archive);
+        void deserialize_json(Data::JsonValue& archive);
 
 		//get level
 		Weak<Level> level() const;

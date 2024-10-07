@@ -9,7 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#define MODEL_LOAD "box" // "adamHead" // "drone" // "box" // "crate"
+//#define MODEL_LOAD "box" // "adamHead" // "drone" // "box" // "crate"
 
 
 class Cube : public Square::Scene::Component
@@ -210,10 +210,10 @@ public:
     
     //serialize
     virtual void serialize(Square::Data::Archive& archive)  override   {  Square::Data::serialize(archive, this); }
-    virtual void serialize_json(Square::Data::Json& archive) override  {  Square::Data::serialize_json(archive, this); }
+    virtual void serialize_json(Square::Data::JsonValue& archive) override  {  Square::Data::serialize_json(archive, this); }
     //deserialize
     virtual void deserialize(Square::Data::Archive& archive) override { Square::Data::deserialize(archive, this); }
-    virtual void deserialize_json(Square::Data::Json& archive) override {  /* none */ }
+    virtual void deserialize_json(Square::Data::JsonValue& archive) override { Square::Data::deserialize_json(archive, this); }
 };
 SQUARE_CLASS_OBJECT_REGISTRATION(Cube);
 
@@ -242,8 +242,16 @@ public:
 		case Square::Video::KEY_Q: m_loop = false; break;
 		case Square::Video::KEY_W: Square::Application::instance()->fullscreen(false); break;
 		case Square::Video::KEY_F: Square::Application::instance()->fullscreen(true); break;
-		case Square::Video::KEY_B: serialize_json(level_path_json); break;
-		case Square::Video::KEY_N: serialize(level_path); break;
+		case Square::Video::KEY_V: 
+			serialize_json(level_path_json); 
+		break;
+		case Square::Video::KEY_B:			
+			if (Square::Filesystem::exists(level_path_json))
+				deserialize_json(level_path_json); 
+		break;
+		case Square::Video::KEY_N: 
+			serialize(level_path); 
+		break;
 		case Square::Video::KEY_M:
 			if (Square::Filesystem::exists(level_path))
 				deserialize(level_path);
@@ -492,6 +500,16 @@ public:
 		GZIStream ifile(path);
 		ArchiveBinRead in(context(), ifile);
 		m_level->deserialize(in);
+	}
+	void deserialize_json(const std::string& path)
+	{
+		using namespace Square;
+		using namespace Square::Data;
+		Json jin;
+		if (jin.parser(Square::Filesystem::text_file_read_all(path)))
+		{
+			m_level->deserialize_json(jin);
+		}
 	}
 
 private:

@@ -217,6 +217,18 @@ namespace Data
         return *this;
     }
 
+    bool JsonValue::contains(const std::string& key) const
+    {
+        if (!is_object()) return false;
+        auto it = m_object->find(key);
+        return it != m_object->end();
+    }
+    bool JsonValue::contains(size_t index) const
+    {
+        if (!is_array()) return false;
+        return index < m_array->size();
+    }
+
 	//stream
 	inline std::string json_string_dump(const std::string& str)
 	{

@@ -41,26 +41,26 @@ namespace  Data
         return attribute_deserialize(archive, object, archive.context().attributes(object->object_id()));
     }
 
-    SQUARE_API bool attribute_serialize_json(Json& archive, const Object* object, const std::vector < Attribute >* attrbutes);
-    SQUARE_API bool attribute_deserialize_json(Json& archive, Object* object, const std::vector < Attribute >* attrbutes);
+    SQUARE_API bool attribute_serialize_json(JsonValue& archive, const Object* object, const std::vector < Attribute >* attrbutes);
+    SQUARE_API bool attribute_deserialize_json(JsonValue& archive, Object* object, const std::vector < Attribute >* attrbutes);
     
     //from context
     template < class T >
-    inline bool serialize_json(Json& archive,const Shared< T > object)
+    inline bool serialize_json(JsonValue& archive,const Shared< T > object)
     {
         return attribute_serialize_json(archive, object.get(), object->context().attributes(object->object_id()));
     }
-    inline bool serialize_json(Json& archive,const Object* object)
+    inline bool serialize_json(JsonValue& archive,const Object* object)
     {
         return attribute_serialize_json(archive, object, object->context().attributes(object->object_id()));
     }
     
     template < class T >
-    inline bool deserialize_json(Json& archive,const Shared< T > object)
+    inline bool deserialize_json(JsonValue& archive, const Shared< T > object)
     {
         return attribute_deserialize_json(archive, object.get(), object->context().attributes(object->object_id()));
     }
-    inline bool deserialize_json(Json& archive, Object* object)
+    inline bool deserialize_json(JsonValue& archive, Object* object)
     {
         return attribute_deserialize_json(archive, object, object->context().attributes(object->object_id()));
     }
