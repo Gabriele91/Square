@@ -542,11 +542,11 @@ namespace GLTF
         // Function to decode Alpha mode from string
         static Material::AlphaMode decode_alpha_mode(const std::string& alpha_mode)
         {
-            if (Square::scase_insensitive_equal(alpha_mode, "OPQUE"))
+            if (Square::case_insensitive_equal(alpha_mode, "OPQUE"))
                 return Material::AlphaMode::AM_OPAQUE;
-            else if (Square::scase_insensitive_equal(alpha_mode, "BLEND"))
+            else if (Square::case_insensitive_equal(alpha_mode, "BLEND"))
                 return Material::AlphaMode::AM_BLEND;
-            else if (Square::scase_insensitive_equal(alpha_mode, "MASK"))
+            else if (Square::case_insensitive_equal(alpha_mode, "MASK"))
                 return Material::AlphaMode::AM_MASK;
             return Material::AlphaMode::AM_UNKNOWN;
         }
@@ -945,13 +945,13 @@ namespace GLTF
         // Get Type
         auto model_extension = Filesystem::get_extension(path);
         // Model
-        if (scase_insensitive_equal(model_extension, GLB::extension))
+        if (case_insensitive_equal(model_extension, GLB::extension))
         {
             auto glb_model = GLB::decode_glb(path);
             if (glb_model.has_value())
                 return std::move(from_glb(glb_model.value()));
         }
-        else if (scase_insensitive_equal(model_extension, extension))
+        else if (case_insensitive_equal(model_extension, extension))
         {
             return std::move(from_gltf(path));
         }
