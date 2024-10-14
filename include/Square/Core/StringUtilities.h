@@ -52,7 +52,7 @@ namespace Square
 		return std::move(source);
 	}
 
-	inline bool scase_insensitive_equal(const std::string& lstr, const std::string& rstr)
+	inline bool case_insensitive_equal(const std::string& lstr, const std::string& rstr)
 	{
 		//not equal len
 		if (lstr.size() != rstr.size()) return false;

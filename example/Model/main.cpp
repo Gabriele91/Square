@@ -13,24 +13,35 @@
 
 static Square::Shell::ParserCommands s_ShellCommands
 {
-      Square::Shell::Command{ "input",  "i", "input model [gltf]", Square::Shell::ValueType::value_string, true,  Square::Shell::Value_t()      }
-    , Square::Shell::Command{ "output", "o", "output model path" , Square::Shell::ValueType::value_string, true,  Square::Shell::Value_t()      }
-    , Square::Shell::Command{ "name",   "n", "output model name" , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t()      }
-    , Square::Shell::Command{ "debug",  "d", "enable debug"      , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
-    , Square::Shell::Command{ "help",   "h", "show help"         , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
+      Square::Shell::Command{ "input",  "i", "input model [gltf, glb]"                  , Square::Shell::ValueType::value_string, true,  Square::Shell::Value_t()                   }
+    , Square::Shell::Command{ "output", "o", "output model path"                        , Square::Shell::ValueType::value_string, true,  Square::Shell::Value_t()                   }
+    , Square::Shell::Command{ "format", "f", "output model format [bin, bgz, json, jgz]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("bgz")) }
+    , Square::Shell::Command{ "name",   "n", "output model name"                        , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t()                   }
+    , Square::Shell::Command{ "debug",  "d", "enable debug"                             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
+    , Square::Shell::Command{ "help",   "h", "show help"                                , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
 };
 
 class ModelImporter : public Square::AppInterface
 {
 public:
+    enum class OutputFormat
+    {
+        SQ_BIN,
+        SQ_BIN_GZ,
+        SQ_JSON,
+        SQ_JSON_GZ
+    };
+
     std::string m_input_model_path;
     std::string m_output_model_path;
     std::string m_output_model_name;
+    OutputFormat m_output_model_format;
 
-    ModelImporter(const std::string& input_model_path, const std::string& output_model_path, const std::string& output_model_name)
+    ModelImporter(const std::string& input_model_path, const std::string& output_model_path, const std::string& output_model_name, OutputFormat output_model_format)
     : m_input_model_path(input_model_path)
     , m_output_model_path(output_model_path)
     , m_output_model_name(output_model_name)
+    , m_output_model_format(output_model_format)
     {}
 
     virtual void start() 
@@ -167,6 +178,20 @@ public:
                 return actor;
             });
         // Serialize
+        switch (m_output_model_format)
+        {
+        default:
+        case OutputFormat::SQ_BIN:
+        {
+            using namespace Square::Data;
+            using namespace Square::Filesystem::Stream;
+            std::string actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".ac");
+            std::ofstream ofile(actor_model_name);
+            ArchiveBinWrite out(context(), ofile);
+            main_node->serialize(out);
+        }
+        break;
+        case OutputFormat::SQ_BIN_GZ:
         {
             using namespace Square::Data;
             using namespace Square::Filesystem::Stream;
@@ -174,6 +199,29 @@ public:
             GZOStream ofile(actor_model_name);
             ArchiveBinWrite out(context(), ofile);
             main_node->serialize(out);
+        }
+        break;
+        case OutputFormat::SQ_JSON:
+        {
+            using namespace Square;
+            using namespace Square::Data;
+            Json jout = Json(JsonObject());
+            main_node->serialize_json(jout);
+            std::string actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".acj");
+            std::ofstream(actor_model_name) << jout;
+        }
+        break;
+        case OutputFormat::SQ_JSON_GZ:
+        {
+            using namespace Square;
+            using namespace Square::Data;
+            using namespace Square::Filesystem::Stream;
+            Json jout = Json(JsonObject());
+            main_node->serialize_json(jout);
+            std::string actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".acjgz");
+            GZOStream(actor_model_name) << jout;
+        }
+        break;
         }
     }
     virtual bool run(double delta_time) { return false; };
@@ -210,6 +258,28 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
     {
         output_model_name = name;
     }
+    // Get format
+    ModelImporter::OutputFormat output_model_format{ ModelImporter::OutputFormat::SQ_BIN_GZ };
+    if (auto format_it = args.find("format"); format_it != args.end())
+    if (auto format_str = std::get<std::string>(format_it->second); format_str.size())
+    {
+        if (Square::case_insensitive_equal(format_str, "bin"))
+        {
+            output_model_format = ModelImporter::OutputFormat::SQ_BIN;
+        }
+        else if (Square::case_insensitive_equal(format_str, "bgz"))
+        {
+            output_model_format = ModelImporter::OutputFormat::SQ_BIN_GZ;
+        }
+        else if (Square::case_insensitive_equal(format_str, "json"))
+        {
+            output_model_format = ModelImporter::OutputFormat::SQ_JSON;
+        }
+        else if (Square::case_insensitive_equal(format_str, "jgz"))
+        {
+            output_model_format = ModelImporter::OutputFormat::SQ_JSON_GZ;
+        }
+    }
     //test
     app.execute
 	(
@@ -223,7 +293,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
         , false                                // Debug
       }
     , "ModelImporter"
-    , new ModelImporter(input_model_path, output_model_path, output_model_name)
+    , new ModelImporter(input_model_path, output_model_path, output_model_name, output_model_format)
     );
     // End
     return 0;

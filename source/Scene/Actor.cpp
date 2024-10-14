@@ -8,6 +8,7 @@
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/ClassObjectRegistration.h"
+#include "Square/Core/StringUtilities.h"
 #include "Square/Math/Transformation.h"
 #include "Square/Core/Application.h"
 #include "Square/Scene/Component.h"
@@ -28,7 +29,7 @@ namespace Scene
 	void Actor::object_registration(Context& ctx)
 	{
         //factory
-        ctx.add_resource<Actor>({ ".ac", ".acgz" });
+        ctx.add_resource<Actor>({ ".ac", ".acgz", ".acj", ".acjgz" });
 		//factory
 		ctx.add_object<Actor>();
 		//Attributes
@@ -576,6 +577,36 @@ namespace Scene
         gpubuffer->m_scale     = scale(true);
     }
 
+    //Actor format
+    enum class ActorFormat
+    {
+        SQ_BIN,
+        SQ_BIN_GZ,
+        SQ_JSON,
+        SQ_JSON_GZ
+    };
+
+    static ActorFormat get_actor_format_from_extension(const std::string& extension)
+    {
+        ActorFormat actor_format{ ActorFormat::SQ_BIN };
+        if (Square::case_insensitive_equal(extension, ".ac"))
+        {
+            actor_format = ActorFormat::SQ_BIN;
+        }
+        else if (Square::case_insensitive_equal(extension, ".acgz"))
+        {
+            actor_format = ActorFormat::SQ_BIN_GZ;
+        }
+        else if (Square::case_insensitive_equal(extension, ".acj"))
+        {
+            actor_format = ActorFormat::SQ_JSON;
+        }
+        else if (Square::case_insensitive_equal(extension, ".acjgz"))
+        {
+            actor_format = ActorFormat::SQ_JSON_GZ;
+        }
+        return actor_format;
+    }
 
     //load actor
     bool Actor::load(const std::string& path)
@@ -583,20 +614,11 @@ namespace Scene
         using namespace Square;
         using namespace Square::Data;
         using namespace Square::Filesystem::Stream;
-        // Is compress?
-        bool is_compress = Filesystem::get_extension(path) == ".acgz";
-        // cases
-        if (is_compress)
+        // Deserialize, per each format
+        switch (get_actor_format_from_extension(Filesystem::get_extension(path)))
         {
-            GZIStream in_file_stream(path);
-            if(in_file_stream.good())
-            { 
-                ArchiveBinRead in_archive(Object::context(), in_file_stream);
-                deserialize(in_archive);
-                return true;
-            }
-        }
-        else
+        default:
+        case ActorFormat::SQ_BIN:
         {
             std::ifstream in_file_stream(path);
             if (in_file_stream.good())
@@ -605,6 +627,54 @@ namespace Scene
                 deserialize(in_archive);
                 return true;
             }
+        }
+        break;
+        case ActorFormat::SQ_BIN_GZ:
+        {
+            GZIStream in_file_stream(path);
+            if (in_file_stream.good())
+            {
+                ArchiveBinRead in_archive(Object::context(), in_file_stream);
+                deserialize(in_archive);
+                return true;
+            }
+        }
+        break;
+        case ActorFormat::SQ_JSON:
+        {
+            using namespace Square;
+            using namespace Square::Data;
+            Json jin;
+            if (jin.parser(Square::Filesystem::text_file_read_all(path)))
+            {
+                deserialize_json(jin);
+                return true;
+            }
+        }
+        break;
+        case ActorFormat::SQ_JSON_GZ:
+        {
+            using namespace Square;
+            using namespace Square::Data;
+            Json jin;
+            // Decompress string
+            auto bin_vector = Square::Filesystem::binary_compress_file_read_all(path);
+            if (bin_vector.empty())
+            {
+                return false;
+            }
+            // Get string
+            const char* json_cppstr_begin = (const char*)(bin_vector.data());
+            const char* json_cppstr_end = (const char*)(bin_vector.data() + bin_vector.size());
+            std::string json_string(json_cppstr_begin, json_cppstr_end);
+            // Parsing
+            if (jin.parser(json_string))
+            {
+                deserialize_json(jin);
+                return true;
+            }
+        }
+        break;
         }
         return false;
     }
