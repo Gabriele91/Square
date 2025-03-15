@@ -145,6 +145,7 @@ namespace Render
 						for (auto weak_light : queues[RQ_DIRECTION_LIGHT])
 						if (auto light = weak_light->lock< Render::Light >())
 						{
+							if (!light->visible()) continue;
 							//is a shadow light
 							if (light->shadow() != shadow) break;
 							//get buffer
@@ -170,6 +171,7 @@ namespace Render
 						for (auto weak_light : queues[RQ_POINT_LIGHT])
 						if (auto light = weak_light->lock< Render::Light >())
 						{
+							if (!light->visible()) continue;
 							//is a shadow light
 							if (light->shadow() != shadow) break;
 							//get buffer
@@ -195,6 +197,7 @@ namespace Render
 						for (auto weak_light : queues[RQ_SPOT_LIGHT])
 						if (auto light = weak_light->lock< Render::Light >())
 						{
+							if (!light->visible()) continue;
 							//is a shadow light
 							if (light->shadow() != shadow) break;
 							//get buffer

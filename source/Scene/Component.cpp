@@ -15,6 +15,11 @@ namespace Scene
     Component::Component(Context& context) : Object(context), SharedObject_t(context.allocator())
     {
     }
+
+    Component::~Component()
+    {
+
+    }
     
     // utils
     void Component::remove_from_parent()

@@ -17,10 +17,8 @@ namespace Render
         ProjectionInformation projection_info;
 
         // Base values
-        float m22 = -projection[2][2];
-        float m32 = -projection[3][2];
-        float tan_half_val = 1.0 / projection[1][1];
-        float tan_half_val_time_aspect = 1.0 / projection[0][0];
+        const float tan_half_val = 1.0 / projection[1][1];
+        const float tan_half_val_time_aspect = 1.0 / projection[0][0];
 
         // FOV
         projection_info.fov = atan(tan_half_val) * 2.0f;
@@ -29,8 +27,17 @@ namespace Render
         projection_info.aspect = tan_half_val_time_aspect / tan_half_val;
 
         // FAR and NEAR
-        projection_info.far  = (2.0f * m32) / (2.0f * m22 - 2.0f);
-        projection_info.near = (((m22 - 1.0f) * projection_info.far) / (m22 + 1.0)) * 2.0f;
+        #if 0 // -1,+1,  RIGHT HAND
+            const float m22 = -projection[2][2];
+            const float m32 = -projection[3][2];
+            projection_info.far  = (2.0f * m32) / (2.0f * m22 - 2.0f);
+            projection_info.near = (((m22 - 1.0f) * projection_info.far) / (m22 + 1.0)) * 2.0f;
+        #else // 0,+1,  LEFT HAND
+            const float m22 = projection[2][2];
+            const float m32 = projection[3][2];
+            projection_info.near = -m32 / m22; 
+            projection_info.far = (m22 * projection_info.near) / (m22 - 1.0f);
+        #endif
 
         return projection_info;
     }
@@ -127,17 +134,17 @@ namespace Render
         return m_projection_info.far;
     }
 
-    Viewport::operator Vec2 () const
+    Viewport::operator const IVec2& () const
     {
         return viewport_size();
     }
     
-    Viewport::operator Vec4 () const
+    Viewport::operator const IVec4& () const
     {
         return viewport();
     }
     
-    Viewport::operator Mat4 () const
+    Viewport::operator const Mat4& () const
     {
         return projection();
     }

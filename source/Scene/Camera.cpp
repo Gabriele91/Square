@@ -33,7 +33,7 @@ namespace Scene
         ctx.add_attribute_function<Camera, Vec4>
         ("viewport"
         , Vec4(0,0,1,1)
-        , [](const Camera* camera) -> Vec4   { return camera->viewport(); }
+        , [](const Camera* camera) -> Vec4 { return static_cast<const IVec4&>(camera->viewport()); }
         , [](Camera* camera, const Vec4& viewport){ camera->viewport(viewport); });
         
         ctx.add_attribute_function<Camera, Mat4>

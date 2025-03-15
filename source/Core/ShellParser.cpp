@@ -255,5 +255,30 @@ namespace Shell
         
         return ss_help.str();
     }
+
+    const std::string& path(const Square::Shell::ParserValue& args)
+    {
+        if (auto it = args.find(__path__); it != args.end())
+        {
+            return std::get<std::string>(it->second);
+        }
+        return "";
+    }
+    const std::string& filename(const Square::Shell::ParserValue& args)
+    {
+        if (auto it = args.find(__filename__); it != args.end())
+        {
+            return std::get<std::string>(it->second);
+        }
+        return "";
+    }
+    const std::string& basename(const Square::Shell::ParserValue& args)
+    {
+        if (auto it = args.find(__filename__); it != args.end())
+        {
+            return std::get<std::string>(it->second);
+        }
+        return "";
+    }
 }
 }

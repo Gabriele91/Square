@@ -32,9 +32,9 @@ R"HLSLCODE(
 	#define shadow2DArray(name,pos) name.Sample(sempler_ ## name,invY(pos))
 	#define drew2DArray(name,pos) name.Sample(sempler_ ## name,invY(pos))
 	
-	#define shadowCube(name,pos) name.Sample(sempler_ ## name,pos)
-	#define drawCube(name,pos) name.Sample(sempler_ ## name,pos)
-	static uint cube_map_view_id[]={ 0,1,2,3,4,5 };
+	#define shadowCube(name,pos) name.Sample(sempler_ ## name,negY(pos))
+	#define drawCube(name,pos) name.Sample(sempler_ ## name,negY(pos))
+	static uint cube_map_view_id[]={ 0,1,3,2,4,5 };
 
 	#define ONLY_GLSL( x ) x 
 	#define ONLY_HLSL( x )
@@ -45,9 +45,9 @@ R"HLSLCODE(
 	#define shadow2DArray(name,pos) name.Sample(sempler_ ## name, pos)
 	#define drew2DArray(name,pos) name.Sample(sempler_ ## name, pos)
 
-	#define shadowCube(name,pos) name.Sample(sempler_ ## name,negY(pos))
-	#define drawCube(name,pos) name.Sample(sempler_ ## name,negY(pos))
-	static uint cube_map_view_id[]={ 0,1,3,2,4,5 };
+	#define shadowCube(name,pos) name.Sample(sempler_ ## name, pos)
+	#define drawCube(name,pos) name.Sample(sempler_ ## name, pos)
+	static uint cube_map_view_id[]={ 0,1,2,3,4,5 };
 
 	#define ONLY_GLSL( x ) 
 	#define ONLY_HLSL( x ) x

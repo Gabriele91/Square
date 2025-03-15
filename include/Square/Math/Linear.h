@@ -7,11 +7,14 @@
 #pragma once
 #include <cmath>
 
-//DEPTH [0,1] Vulakn / DirectX like//
+//DEPTH [0,1] Vulakn / DirectX 
+//LEFT HEAND  UE / Unity / DirectX
 #define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_FORCE_RIGHT_HANDED 
+#define GLM_FORCE_LEFT_HANDED
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_XYZW_ONLY
+#define GLM_FORCE_QUAT_DATA_XYZW
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -347,5 +350,17 @@ namespace Square
 
         // glm::decompose gives you the rotation as a matrix, so we convert it to a quaternion
         rotation = Square::conjugate(rotation); // Fix for the quaternion's handedness
+    }
+
+    template < class T >
+    inline TQuat<T> angle_axis(const T& angle, const TVec3<T>& axis)
+    {
+        return glm::angleAxis(angle, axis);
+    }
+
+    template < class T >
+    inline TQuat<T> rhs_to_lhs_rotation(const TQuat<T>& q)
+    {
+        return TQuat<T>{ q.x, q.y, -q.z, -q.w };
     }
 }

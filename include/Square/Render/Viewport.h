@@ -44,7 +44,10 @@ namespace Render
     {
     public:
 		//Viewport
-		SQUARE_OBJECT(Viewport)
+        SQUARE_OBJECT(Viewport)
+
+        // Default contructor
+        Viewport() = default;
 
         //update
         void viewport(const IVec4& viewport);
@@ -74,9 +77,9 @@ namespace Render
         const float far() const;
 
         //cast
-        operator Vec2 () const;
-        operator Vec4 () const;
-        explicit operator Mat4 () const;
+        explicit operator const IVec2& () const;
+        explicit operator const IVec4& () const;
+        explicit operator const Mat4& () const;
 
     protected:
         //Attrs

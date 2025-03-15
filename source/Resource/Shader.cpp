@@ -357,7 +357,7 @@ namespace Resource
 		glsl_config.m_fixup_clipspace = true;
 		glsl_config.m_flip_vert_y = source.m_texture_target; //flip y if is a texture target
 		glsl_config.m_enable_420pack_extension = false;
-        glsl_config.m_force_to_remove_query_texture = true;		
+        glsl_config.m_force_to_remove_query_texture = true;
 		//errors
 		HLSL2ALL::TextureSamplerList shader_glsl_tslist;
 		HLSL2ALL::ErrorSpirvShaderList shader_spirv_errors;

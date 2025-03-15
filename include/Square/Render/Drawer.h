@@ -133,6 +133,14 @@ namespace Render
         //add a pass
         void add(Shared<DrawerPass> pass);
 
+        template<class T, typename ...ARGS>
+        Shared<T> create(ARGS&&... args)
+        {
+            auto t_shared_ptr = MakeShared<T>(context(), std::forward(args)...);
+            add(t_shared_ptr);
+            return t_shared_ptr;
+        }
+
     protected:
         
         //CPU DATA

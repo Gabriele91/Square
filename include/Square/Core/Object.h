@@ -7,6 +7,7 @@
 #pragma once
 #include "Square/Config.h"
 #include "Square/Core/SmartPointers.h"
+#include "Square/Core/Variant.h"
 
 namespace Square
 {
@@ -71,15 +72,25 @@ namespace Square
 	//Define Object
     class SQUARE_API Object : public BaseObject
 	{
+	protected:
+
+		using VariantMap = std::unordered_map< std::string, Variant >;
+
 	public:
 		//Resource
 		Object(Context& context) : m_context(context) {}
         Context& context() { return m_context; }
         const Context& context() const { return m_context; }
 
+		// Local variables
+		std::optional<const VariantRef> variable(const std::string& name) const;
+		void set_variable(const std::string& name, const Variant& value);
+
 	protected:
 		//Context
 		Context& m_context;
+		// Variables
+		VariantMap m_variables;
 	};
 
 	//Factory of a object

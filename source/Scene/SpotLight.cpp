@@ -14,7 +14,7 @@
 #include "Square/Scene/SpotLight.h"
 #include "Square/Scene/Camera.h"
 
-#define SPOT_LIGHT_DIR Vec3(0.0,0.0,-1.0)
+#define SPOT_LIGHT_DIR Vec3(0.0,0.0,1.0)
 
 namespace Square
 {

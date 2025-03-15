@@ -189,6 +189,8 @@ namespace Scene
 		std::string name;
 		//pre alloc
 		name.reserve(path_names.size());
+		//bool found!
+		bool actor_found = false;
 		//for all tokens
 		while (true)
 		{
@@ -222,13 +224,19 @@ namespace Scene
 				{
 					c_actor = actor;
 					c_actor_list = &actor->childs();
-					do_continue = true;
+					do_continue = !!*ptr;
+					actor_found = !*ptr;
 					break;
 				}
 			}
 			//continue?
-			if (!do_continue || !*ptr) return c_actor;
+			if (!do_continue) break;
 		}
+		// Return iff it is the right one
+		if (actor_found)
+			return c_actor;
+		else
+			return false;
 	}
 
 	//contains an actor
@@ -294,14 +302,18 @@ namespace Scene
 	//added a component
 	void Level::on_add_a_component(Shared<Actor> actor, Shared<Component> component)
 	{
-		auto renderable = DynamicPointerCast<Render::Renderable, Component>(component);
-		if (renderable) { m_rander_collection.m_renderables.push_back(renderable); return; }
-
-		auto light = DynamicPointerCast<Render::Light, Component>(component);
-		if(light) { m_rander_collection.m_lights.push_back(light); return; }
-        
-        auto camera = DynamicPointerCast<Render::Camera, Component>(component);
-        if (camera) { m_rander_collection.m_cameras.push_back(camera); return; }
+		if (auto renderable = DynamicPointerCast<Render::Renderable, Component>(component);  renderable) 
+		{ 
+			m_rander_collection.m_renderables.push_back(renderable);
+		}
+		else if (auto light = DynamicPointerCast<Render::Light, Component>(component);  light)
+		{
+			m_rander_collection.m_lights.push_back(light);
+		}
+		else if (auto camera = DynamicPointerCast<Render::Camera, Component>(component); camera) 
+		{ 
+			m_rander_collection.m_cameras.push_back(camera);
+		}
 	}
 	//remove a component
 	void Level::on_remove_a_component(Shared<Actor> actor, Shared<Component> component)

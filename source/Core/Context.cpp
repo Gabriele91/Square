@@ -87,14 +87,13 @@ namespace Square
         
     }
     //Get variable
-    const Variant& BaseContext::variable(const std::string& name)
+    std::optional<const VariantRef> BaseContext::variable(const std::string& name) const
     {
         //get var
         auto variable = m_variables.find(name);
         if (variable != m_variables.end()) return &variable->second;
         //none
-        static const Variant s_none;
-        return s_none;
+		return {};
     }
     
     //Object fectory
