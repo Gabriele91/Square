@@ -59,6 +59,17 @@ namespace Scene
     {
     }
 
+    // Load child node from resource
+    Shared<Actor> Actor::load_child(const std::string& resource_name)
+    {
+        Shared<Actor> new_actor = context().resource<Actor>(resource_name);
+        if (new_actor)
+        {
+            add(new_actor);
+        }
+        return new_actor;
+    }
+
     //serialize
     void Actor::serialize(Data::Archive& archive)
     {
@@ -550,9 +561,10 @@ namespace Scene
         if (m_tranform.m_dirty)
         {
             //T*R*S
-            m_model_local  = Square::translate( Constants::identity<Mat4>(), m_tranform.m_position);
-            m_model_local *= Square::to_mat4( m_tranform.m_rotation );
-            m_model_local  = Square::scale(m_model_local, m_tranform.m_scale);
+            m_model_local = Constants::identity<Mat4>();
+            m_model_local = Square::translate(m_model_local, m_tranform.m_position);
+            m_model_local *= Square::to_mat4(m_tranform.m_rotation);
+            m_model_local = Square::scale(m_model_local, m_tranform.m_scale);
             //global
             if (auto parent = m_parent.lock(); parent)
             {

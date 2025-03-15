@@ -54,6 +54,12 @@ namespace Data
         const JsonArray&  array(const JsonArray& value) const;
         const JsonObject& object(const JsonObject& value) const;
 
+		JsonString string(JsonString&& value);
+		double     number(double value);
+		bool       boolean(bool value);
+		JsonArray  array(JsonArray&& value);
+		JsonObject object(JsonObject&& value);
+
         Type              type() const;
 		//info		
 		bool is_null() const;

@@ -44,6 +44,9 @@ namespace Scene
 		//Registration in context
 		static void object_registration(Context& ctx);
 
+        // Load child node from resource
+        Shared<Actor> load_child(const std::string& resource_name);
+
         //constructor
 		Actor(Context& context);
 		Actor(Context& context, const std::string& name);

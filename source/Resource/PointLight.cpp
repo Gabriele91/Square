@@ -75,6 +75,7 @@ namespace Scene
 	// build view matrix
 	static Mat4 cube_view_matrix(const Vec3& pos, size_t i)
 	{
+#if 0 // RHs
 		//(+x -x +y -y +z -z)^-1
 		switch (i)
 		{
@@ -88,6 +89,21 @@ namespace Scene
 		case 5: return look_at(pos, pos + Vec3(0, 0, -1), Vec3(0, -1, 0));
 		default: return  Constants::identity<Mat4>();
 		}
+#else // LHs
+		//(+x -x +y -y +z -z)
+		switch (i)
+		{
+		case 0: return look_at(pos, pos + Vec3(1, 0, 0), Vec3(0, 1, 0)); // Right
+		case 1: return look_at(pos, pos + Vec3(-1, 0, 0), Vec3(0, 1, 0)); // Left
+
+		case 2: return look_at(pos, pos + Vec3(0, 1, 0),  Vec3(0, 0, -1)); // Up
+		case 3: return look_at(pos, pos + Vec3(0, -1, 0), Vec3(0, 0, 1)); // Down
+
+		case 4: return look_at(pos, pos + Vec3(0, 0, 1), Vec3(0, 1, 0)); // Forward
+		case 5: return look_at(pos, pos + Vec3(0, 0, -1), Vec3(0, 1, 0)); // Backward
+		default: return Constants::identity<Mat4>();
+		}
+#endif 
 	}
 	//light
 	PointLight::PointLight(Context& context)

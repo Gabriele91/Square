@@ -160,7 +160,7 @@ namespace Render
         //filter
         auto can_draw_shadow = [&](Light* light) -> bool
         {  
-            return light->shadow() && m_shadows_draw.find(light) == m_shadows_draw.end(); 
+            return light->visible() && light->shadow() && m_shadows_draw.find(light) == m_shadows_draw.end();
         };
         //build queues
         for(auto [camera_index, weak_camera] : enumerate(collection.m_cameras))

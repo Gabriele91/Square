@@ -7,7 +7,6 @@
 //
 #pragma once
 #include <memory>
-#include <string>
 #include "Square/Config.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/SmartPointers.h"

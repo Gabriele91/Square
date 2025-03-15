@@ -61,6 +61,7 @@ namespace Scene
 
         //Init
         Component(Context& context);
+        virtual ~Component();
         
         //utils
         void remove_from_parent();

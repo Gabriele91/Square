@@ -8,6 +8,7 @@
 #include "Square/Config.h"
 #include "Square/Core/Allocator.h"
 #include "Square/Core/Object.h"
+#include "Square/Core/Variant.h"
 #include "Square/Core/Resource.h"
 #include "Square/Core/Attribute.h"
 #include "Square/Core/Logger.h"
@@ -66,7 +67,7 @@ namespace Square
         const std::string& resource_path(const std::string& name);
 
 		//Get variable
-        const Variant& variable(const std::string& name);
+        std::optional<const VariantRef> variable(const std::string& name) const;
         
 		//Object fectory
         void add_object(Shared<ObjectFactory> object_fectory);

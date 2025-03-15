@@ -810,7 +810,7 @@ namespace Render
 		rds.FillMode = D3D11_FILL_SOLID;
 		rds.CullMode = D3D11_CULL_BACK;
 		rds.DepthClipEnable = true;
-		rds.FrontCounterClockwise = true;
+		rds.FrontCounterClockwise = false;
 		rds.DepthBias = false;
 		rds.DepthBiasClamp = 0;
 		rds.SlopeScaledDepthBias = 0;
@@ -2865,8 +2865,8 @@ namespace Render
 					, nullptr
 					, info.m_entry_point.c_str()
 					, shader_version[info.m_type]
-					,  D3DCOMPILE_PACK_MATRIX_ROW_MAJOR
-				     | D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
+					, D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
+				     | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR
 #ifdef _DEBUG
 					 | D3DCOMPILE_OPTIMIZATION_LEVEL0
 					 | D3DCOMPILE_DEBUG

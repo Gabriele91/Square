@@ -93,5 +93,8 @@ namespace Shell
     SQUARE_API extern const char __path__[];
     SQUARE_API extern const char __filename__[];
     SQUARE_API extern const char __basename__[];
+    SQUARE_API const std::string& path(const Square::Shell::ParserValue& args);
+    SQUARE_API const std::string& filename(const Square::Shell::ParserValue& args);
+    SQUARE_API const std::string& basename(const Square::Shell::ParserValue& args);
 }
 }

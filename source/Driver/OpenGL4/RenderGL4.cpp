@@ -812,10 +812,10 @@ namespace Render
 		//DirectX like z buffer
 		glDepthRange(0.0f, 1.0f);
 		//Front face
-		//glFrontFace(GL_CW);
+		glFrontFace(GL_CW);
 		//Coords like direcX
-		//glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE),
-		//glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE),
+		glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE),
+		glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE),
 #endif
 		//clean
 		print_errors();
@@ -887,7 +887,7 @@ namespace Render
 		if (s_render_state.m_clear_color != clear_color)
 		{
 			s_render_state.m_clear_color = clear_color;
-			glClearColor(clear_color.m_color.r, clear_color.m_color.g, clear_color.m_color.b, clear_color.m_color.a);
+			glClearColor(clear_color.m_color.x  /* r */, clear_color.m_color.y /* g */, clear_color.m_color.z /* b */, clear_color.m_color.w /* a */);
 		}
 	}
 

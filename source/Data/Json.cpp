@@ -43,6 +43,12 @@ namespace Data
     const JsonArray&  JsonValue::array(const JsonArray& value) const  { if (is_array())   return *m_array; else return value; }
     const JsonObject& JsonValue::object(const JsonObject& value) const { if (is_object())  return *m_object; else return value; }
 
+    JsonString JsonValue::string(JsonString&& value) { if (is_string()) return *m_string; else return value; }
+    double     JsonValue::number(double value) { if (is_number())  return m_number; else return value; }
+    bool       JsonValue::boolean(bool value) { if (is_boolean()) return m_boolean; else return value; }
+    JsonArray  JsonValue::array(JsonArray&& value) { if (is_array())   return *m_array; else return value; }
+    JsonObject JsonValue::object(JsonObject&& value) { if (is_object())  return *m_object; else return value; }
+
     //info
 	bool JsonValue::is_null()   const { return m_type == Type::IS_NULL;   }
 	bool JsonValue::is_string() const { return m_type == Type::IS_STRING; }
