@@ -309,6 +309,7 @@
     <ClCompile Include="..\source\Core\StringUtilities.cpp" />
     <ClCompile Include="..\source\Core\Time.cpp" />
     <ClCompile Include="..\source\Core\UtfConvert.cpp" />
+    <ClCompile Include="..\source\Core\Variant.cpp" />
     <ClCompile Include="..\source\Data\Archive.cpp" />
     <ClCompile Include="..\source\Data\AttributeSerialize.cpp" />
     <ClCompile Include="..\source\Data\Image.cpp" />
