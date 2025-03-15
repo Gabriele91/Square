@@ -13,13 +13,38 @@ uint find_csm_layer(in float depth)
 	return DIRECTION_SHADOW_CSM_NUMBER_OF_FACES - 1;
 }
 
+#if 0
 float bias_depth_driven(in Vec3  view_dir, in Vec3  normal, in float max_bias, in uint id)
 {
-	// calculate bias (based on depth map resolution and slope)
-	float bias = max(0.0005 * (1.0 - dot(normal, view_dir)), max_bias);
-	//bias *= 1 / (direction_shadow_camera.m_depths[id] * 0.001f);
+	Vec3 normalized_view_dir = normalize(view_dir);
+	Vec3 normalized_normal = normalize(normal);
+	float bias = max(0.001 * (1.0 - dot(normalized_normal, -normalized_view_dir)), max_bias);
 	return bias;
 }
+#elif 1
+float bias_depth_driven(in Vec3 view_dir, in Vec3 normal, in float max_bias, in uint cascade_id)
+{
+	Vec3 normalized_view_dir = normalize(view_dir);
+	Vec3 normalized_normal = normalize(normal);
+
+	float NdotL = saturate(dot(normalized_normal, -normalized_view_dir));
+
+	float angle_factor = 1.0 - NdotL;
+	float slope_bias = 0.0025 * angle_factor * angle_factor;
+
+	float cascade_factor = pow(2.0, cascade_id);
+
+	float depth = direction_shadow_camera.m_depths[cascade_id];
+	float depth_scale = 1.0 / (depth * 0.001f);
+
+	float grazing_correction = lerp(1.0, 5.0, pow(angle_factor, 8.0));
+	float combined_bias = slope_bias * cascade_factor * depth_scale * grazing_correction;
+
+	float min_bias = 0.001 * cascade_factor;
+
+	return clamp(combined_bias, min_bias, max_bias);
+}
+#endif
 
 #ifdef PCF_SHADOW
 float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
@@ -67,7 +92,7 @@ float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
 static const Vec3 csm_colors[5] = {
 	Vec3(1.0f,0.0f,0.0f),
 	Vec3(0.0f,1.0f,0.0f),
-	Vec3(0.0f,1.0f,0.0f),
+	Vec3(0.0f,0.0f,1.0f),
 	Vec3(1.0f,1.0f,0.0f),
 	Vec3(0.0f,1.0f,1.0f)
 };
@@ -95,7 +120,7 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3
 	// Shadow
 #ifdef DEBUG
 	float shadow = direction_light_shadow(proj_coords, cascade_id, bias);
-	Vec3  shadow_color = csm_colors[cascade_id] * 0.9 + Vec3(shadow, shadow, shadow) * 0.1f;
+	Vec3  shadow_color = csm_colors[cascade_id] * 0.6 + Vec3(shadow, shadow, shadow) * 0.4f;
 #else
 	float shadow = direction_light_shadow(proj_coords, cascade_id, bias);
 	Vec3  shadow_color = Vec3(shadow, shadow, shadow);
@@ -107,7 +132,7 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3
 void direction_light_apply_shadow(inout LightResult result, in Vec4 fposition, in Vec3  view_dir, in Vec3  normal)
 {
 	//const bias
-	const float max_bias = 0.000001;
+	const float max_bias = 0.01f;
 	//factor
 	Vec4 shadow_factor = direction_light_compute_shadow(fposition, view_dir, normal, max_bias);
 	//add shadow
