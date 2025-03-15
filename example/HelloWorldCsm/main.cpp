@@ -62,45 +62,36 @@ public:
 				m_turn = !m_turn;
 			}
 		break;
-		case Square::Video::KEY_P:
-			if (action == Square::Video::ActionEvent::RELEASE)
-			{
-				auto plight = m_level->actor("light0")->component<PointLight>();
-				plight->visible(!plight->visible());
-			}
-			break;
 		case Square::Video::KEY_L:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
-				auto plight = m_level->actor("light1")->component<SpotLight>();
+				auto plight = m_level->find_actor("csm_scene.Light")->component<DirectionLight>();
 				plight->visible(!plight->visible());
 			}
 			break;
-		break;
-		break;
 		case Square::Video::KEY_W:
-			m_level->find_actor("base_scene.camera")->move({ 0,0, 10 * application().last_delta_time() });
+			m_level->find_actor("csm_scene.camera")->move({ 0,0, 10 * application().last_delta_time() });
 		break;
 		case Square::Video::KEY_S:
-			m_level->find_actor("base_scene.camera")->move({ 0,0, -10 * application().last_delta_time() });
+			m_level->find_actor("csm_scene.camera")->move({ 0,0, -10 * application().last_delta_time() });
 		break;
 		case Square::Video::KEY_D:
-			m_level->find_actor("base_scene.camera")->move({ 10 * application().last_delta_time(),0,0 });
+			m_level->find_actor("csm_scene.camera")->move({ 10 * application().last_delta_time(),0,0 });
 		break;
 		case Square::Video::KEY_A:
-			m_level->find_actor("base_scene.camera")->move({ -10 * application().last_delta_time(),0,0 });
+			m_level->find_actor("csm_scene.camera")->move({ -10 * application().last_delta_time(),0,0 });
 		break;
 		case Square::Video::KEY_R:
-			m_level->find_actor("base_scene.camera")->move({ 0, 10 * application().last_delta_time(),0 });
+			m_level->find_actor("csm_scene.camera")->move({ 0, 10 * application().last_delta_time(),0 });
 		break;
 		case Square::Video::KEY_F:
-			m_level->find_actor("base_scene.camera")->move({ 0,-10 * application().last_delta_time(),0 });
+			m_level->find_actor("csm_scene.camera")->move({ 0,-10 * application().last_delta_time(),0 });
 		break;
 		case Square::Video::KEY_E:
-			m_level->find_actor("base_scene.camera")->turn(rotate_euler<float>(0,1. * application().last_delta_time(),0 ));
+			m_level->find_actor("csm_scene.camera")->turn(rotate_euler<float>(0,1. * application().last_delta_time(),0 ));
 		break;
 		case Square::Video::KEY_Q:
-			m_level->find_actor("base_scene.camera")->turn(rotate_euler<float>(0, -1. * application().last_delta_time(), 0));
+			m_level->find_actor("csm_scene.camera")->turn(rotate_euler<float>(0, -1. * application().last_delta_time(), 0));
 		break;
 		break;
 		default: break;
@@ -121,20 +112,10 @@ public:
 		// level
 		m_level = world().level("main");
 		// load
-		if (m_level->load_actor("base_scene"))
+		if (m_level->load_actor("csm_scene"))
 		{
-			if (auto node = m_level->find_actor("base_scene.node"))
-			for(const auto& child : node->childs())
-			{
-				child->component<StaticMesh>()->m_material = context().resource<Material>("box");
-			}
-			if (auto box = m_level->find_actor("base_scene.box"))
-			for(const auto& child : box->childs())
-			{
-				child->component<StaticMesh>()->m_material = context().resource<Material>("box");
-			}
-			auto camera = m_level->find_actor("base_scene.camera");
-			camera->component<Camera>()->viewport({0,0, window_width, window_height});
+			auto camera = m_level->find_actor("csm_scene.camera");
+			camera->component<Camera>()->viewport({ 0,0, window_width, window_height });
 		}
 		else
 		{
@@ -153,15 +134,6 @@ public:
 		m_acc += dt;
 		//fps counter
 		m_counter.count_frame();
-		// Turn
-		m_level->find_actor("base_scene.node")->turn(rotate_euler<float>(0, 0, radians(15.0f) * dt));
-		m_level->find_actor("base_scene.cubealone")->turn(rotate_euler<float>(0, 0, radians(15.0f) * dt));
-		
-		if (auto node = m_level->find_actor("base_scene.node"))
-		for(const auto& child : node->childs())
-		{
-			child->turn(rotate_euler<float>(Square::radians(10.0f) * dt, 0.0f, 0.0f));
-		}
 		// draw
 		m_drawer->draw(
 			  Vec4(0.25, 0.5, 1.0, 1.0)

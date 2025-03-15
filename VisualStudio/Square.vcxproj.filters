@@ -569,6 +569,9 @@
     <ClCompile Include="..\source\Render\DrawerPassDebug.cpp">
       <Filter>Source\Render</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\Core\Variant.cpp">
+      <Filter>source\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\source\Driver\Cocoa\Input_private.mm">

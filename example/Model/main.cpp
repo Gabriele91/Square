@@ -49,7 +49,7 @@ public:
     OutputFormat m_output_model_format;
     size_t m_shadow_resoluction;
 
-    static const double blender_calenda_to_power(const double intensity)
+    static const double blender_candela_to_power(const double intensity)
     {
         // Candela to Power, blender: 
         // LUMENS_PER_WATT = 683 (standard value for monochromatic 555nm light)
@@ -311,7 +311,7 @@ public:
                                     }
                                     else
                                     {
-                                        double power = blender_calenda_to_power(gltf_light.m_intensity);
+                                        double power = blender_candela_to_power(gltf_light.m_intensity);
                                         actor->component<SpotLight>()->radius(power);
                                         actor->component<SpotLight>()->inside_radius(power * 0.1);
                                     }
@@ -337,7 +337,7 @@ public:
                                     }
                                     else
                                     {
-                                        double power = blender_calenda_to_power(gltf_light.m_intensity);
+                                        double power = blender_candela_to_power(gltf_light.m_intensity);
                                         actor->component<PointLight>()->radius(power);
                                         actor->component<PointLight>()->inside_radius(power * 0.1);
                                     }
