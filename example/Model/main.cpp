@@ -136,10 +136,17 @@ public:
                             std::swap(vertex.m_binomial.z, vertex.m_binomial.y);
                         }
                     }
+                    // Force indexed
+                    if (indices.empty())
+                    {
+                        indices.reserve(vertexes.size());
+                        for (size_t i = 0; i < vertexes.size(); ++i)
+                            indices.emplace_back(i);
+                    }
                     // to LHs
                     if (m_mode & M_TO_LHS)
                     {
-                        if (0)
+                        // Flip
                         for (auto& vertex : vertexes)
                         {
                             // Flip Z for position and normal
@@ -148,19 +155,15 @@ public:
                             vertex.m_tangent.z *= -1.0;
                             // Flip bitangent to maintain correct handedness
                             vertex.m_binomial = -vertex.m_binomial;
-                            // Swap all
-                            std::swap(vertex.m_position.z, vertex.m_position.y);
-                            std::swap(vertex.m_normal.z, vertex.m_normal.y);
-                            std::swap(vertex.m_tangent.z, vertex.m_tangent.y);
-                            std::swap(vertex.m_binomial.z, vertex.m_binomial.y);
                         }
-                    }
-                    // Force indexed
-                    if (indices.empty())
-                    {
-                        indices.reserve(vertexes.size());
-                        for (size_t i = 0; i < vertexes.size(); ++i)
-                            indices.emplace_back(i);
+                        // Remap indexs
+                        for (size_t i = 0; i < indices.size(); i += 3)
+                        {
+                            if (i + 2 < indices.size())
+                            {
+                                std::swap(indices[i + 1], indices[i + 2]);
+                            }
+                        }
                     }
                     // Add sub mesh
                     static_mesh_context.m_submesh.emplace_back(drawtype, indices.size(), context_index.size());
