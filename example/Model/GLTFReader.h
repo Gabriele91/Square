@@ -182,6 +182,71 @@ namespace GLTF
         }
     };
 
+    // Struct for GLTF Prospective camera
+    struct CameraProspective
+    {
+        double m_aspect_ratio{ 0.0 };
+        double m_yfov{ 0.0 };
+        double m_zfar{ 0.0 };
+        double m_znear{ 0.0 };
+    };
+
+    // Struct for GLTF Orthographic camera
+    struct CameraOrthographic
+    {
+        double m_xmag{ 0.0 };
+        double m_ymag{ 0.0 };
+        double m_zfar{ 0.0 };
+        double m_znear{ 0.0 };
+    };
+
+    // Struct for GLTF Undefined camera
+    struct CameraUndefined
+    {
+    };
+
+    // Struct for GLTF camera
+    using Camera = std::variant< CameraProspective, CameraOrthographic, CameraUndefined >;
+
+    // Light
+    struct Light
+    {
+        enum LightType
+        {
+            LT_DIRECTIONAL,
+            LT_POINT,
+            LT_SPOTLIGHT
+        };
+
+        struct SpotFields
+        {
+            double m_inner_cone_angle{ 0.0 };
+            double m_outer_cone_angle{ Square::Constants::pi<double>() / 4.0 };
+        };
+
+        std::string m_name;
+        Vec3        m_color{ 1.0, 1.0, 1.0 };
+        double      m_intensity{ 1.0 };
+        LightType   m_type;
+        std::optional<double    > m_range;
+        std::optional<SpotFields> m_spotfields;
+
+        Light(const std::string& name,
+              const Vec3&        color,
+              double             intensity,
+              LightType          type,
+              std::optional<double    > range,
+              std::optional<SpotFields> spotfields)
+        : m_name(name)
+        , m_color(color)
+        , m_intensity(intensity)
+        , m_range(range)
+        , m_type(type)
+        , m_spotfields(spotfields)
+        {
+        }
+    };
+
     // Enum for GLTF texture filter types
     enum class TextureFilter : unsigned int
     {
@@ -294,11 +359,24 @@ namespace GLTF
     // Structure for GLTF node
     struct Node
     {
-        std::string name;                // Name of the node
-        NodeList children;               // Indices of child nodes
-        std::optional<size_t> mesh;      // Index of the mesh this node references (if any)
+        enum NodeContentType
+        {
+            NT_MESH,
+            NT_CAMERA,
+            NT_LIGHT
+        };
+
+        struct NodeContent
+        {
+            NodeContentType m_type;
+            size_t m_id;
+        };
+
+        std::string name;                   // Name of the node
+        NodeList children;                  // Indices of child nodes
+        std::optional<NodeContent> content; // Index of the mesh this node references (if any)
         Vec3 translation = { 0,0,0 };
-        Quat rotation = { 0,0,0,0 };
+        Quat rotation = { 0,0,0,1 };
         Vec3 scale = { 1,1,1 };
         Mat4 matrix = Mat4(1);
         TransformType transform_type;    // Type of transformation (enum)
@@ -306,7 +384,7 @@ namespace GLTF
         // Constructor
         Node(std::string name
             , std::vector<size_t>&& children
-            , std::optional<size_t> mesh
+            , std::optional<NodeContent> content
             , Vec3&& translation
             , Quat&& rotation
             , Vec3&& scale
@@ -314,7 +392,7 @@ namespace GLTF
             , TransformType transform_type)
             : name(std::move(name))
             , children(std::forward<std::vector<size_t>>(children))
-            , mesh(mesh)
+            , content(content)
             , translation(std::forward<Vec3>(translation))
             , rotation(std::forward<Quat>(rotation))
             , scale(std::forward<Vec3>(scale))
@@ -340,6 +418,8 @@ namespace GLTF
     using Buffers = std::vector<std::vector<unsigned char>>;
     using Accessors = std::vector<Accessor>;
     using Meshes = std::vector<Mesh>;
+    using Cameras = std::vector<Camera>;
+    using Lights = std::vector<Light>;
     using Textures = std::vector<Texture>;
     using Materials = std::vector<Material>;
     using Nodes = std::vector<Node>;
@@ -352,6 +432,8 @@ namespace GLTF
         Views views;
         Accessors accessors;
         Meshes meshes;
+        Cameras cameras;
+        Lights lights;
         Textures textures;
         Materials materials;
         Nodes nodes;            // List of all nodes in the GLTF model
@@ -360,11 +442,13 @@ namespace GLTF
 
         GLTF() = default;
         GLTF(GLTF&&) = default;
-        GLTF(Buffers&& buffers, Views&& views, Accessors&& accessors, Meshes&& meshes, Textures&& textures, Materials&& materials, Nodes&& nodes, Scenes&& scenes, size_t default_scene)
+        GLTF(Buffers&& buffers, Views&& views, Accessors&& accessors, Meshes&& meshes, Cameras&& cameras, Lights&& lights, Textures&& textures, Materials&& materials, Nodes&& nodes, Scenes&& scenes, size_t default_scene)
             : buffers(std::forward<Buffers>(buffers))
             , views(std::forward<Views>(views))
             , accessors(std::forward<Accessors>(accessors))
             , meshes(std::forward<Meshes>(meshes))
+            , cameras(std::forward<Cameras>(cameras))
+            , lights(std::forward<Lights>(lights))
             , textures(std::forward<Textures>(textures))
             , materials(std::forward<Materials>(materials))
             , nodes(std::forward<Nodes>(nodes))
@@ -520,7 +604,9 @@ namespace GLTF
 
                 // Decode other primitive properties
                 size_t indices = primitive.at("indices").number(0);
-                size_t material = primitive.at("material").number(0);
+                size_t material = primitive.find("material") != primitive.end() 
+                                ? primitive.at("material").number(0) 
+                                : 0;
                 PrimitiveMode mode = PrimitiveMode::TRIANGLES;
                 if (auto mode_it = primitive.find("mode");  mode_it != primitive.end())
                 {
@@ -535,6 +621,108 @@ namespace GLTF
         }
 
         return out_meshes;
+    }
+
+    // Function to decode GLTF cameras from JSON data
+    static Cameras decode_cameras(const JsonValue& cameras)
+    {
+        Cameras out_cameras;
+        auto& jcameras = cameras.array({});
+        out_cameras.reserve(jcameras.size()); // Reserve space in the vector for performance
+
+        for (auto& jcamera : jcameras)
+        {
+            auto& camera = jcamera.object({});
+            std::string type = camera.at("type").string({});
+
+            if (type == "perspective")
+            {
+                auto& prospective = camera.at("perspective").object({});
+                out_cameras.emplace_back(CameraProspective{
+                        prospective.at("aspectRatio").number(0),
+                        prospective.at("yfov").number(0),
+                        prospective.at("zfar").number(0),
+                        prospective.at("znear").number(0)
+                });
+            } 
+            else if (type == "orthographic")
+            {
+                auto& orthographic = camera.at("perspective").object({});
+                out_cameras.emplace_back(CameraOrthographic{
+                        orthographic.at("xmag").number(0),
+                        orthographic.at("ymag").number(0),
+                        orthographic.at("zfar").number(0),
+                        orthographic.at("znear").number(0)
+                });
+            } 
+            else
+            {
+                // Dump camera
+                out_cameras.emplace_back(CameraUndefined{});
+            }
+        }
+        return out_cameras;
+    }
+    
+    // Function to decode GLTF lights from JSON data
+    static Lights decode_lights(const JsonValue& lights)
+    {
+        Lights out_lights;
+        auto& jlights = lights.array({});
+        out_lights.reserve(jlights.size()); // Reserve space in the vector for performance
+
+        for (auto& jlight : jlights)
+        {
+            const auto& light = jlight.object(JsonObject{
+                {"name",""},
+                {"intensity",1.0},
+                {"type",""}
+            });
+            std::string name = light.at("name").string({});
+            double intensity = light.at("intensity").number(1.0);            
+            std::string jstring_type = light.at("type").string({});
+            Light::LightType type = jstring_type == "spot" 
+                                  ? Light::LightType::LT_SPOTLIGHT
+                                  : jstring_type == "point"
+                                  ? Light::LightType::LT_POINT
+                                  : Light::LightType::LT_DIRECTIONAL;
+
+            Vec3 color{ 1.0,1.0,1.0 };
+            if (light.find("color") != light.end())
+            {
+                auto& jcolor_values = light.at("color").array({ 1.0,1.0,1.0 });
+                color = Vec3(jcolor_values[0].number(1.0f), jcolor_values[1].number(1.0f), jcolor_values[2].number(1.0f));
+            }
+
+            std::optional<double> range;
+            if (type != Light::LightType::LT_DIRECTIONAL)
+            if (light.find("range") != light.end())
+            {
+                range = light.at("range").number(std::numeric_limits<double>::max());
+            }
+
+            std::optional<Light::SpotFields> spotfields;
+            if (type == Light::LightType::LT_SPOTLIGHT)
+            if (light.find("spot") != light.end())
+            {
+                auto& spot = light.at("spot").object({});
+                spotfields = Light::SpotFields
+                {
+                    spot.at("innerConeAngle").number(0),
+                    spot.at("outerConeAngle").number(Square::Constants::pi<double>() / 4.0),
+                };
+            }
+
+            out_lights.push_back(Light {
+                name,
+                color,
+                intensity,
+                type,
+                range,
+                spotfields
+            });
+        }
+        return out_lights;
     }
 
     namespace Aux
@@ -754,7 +942,7 @@ namespace GLTF
             auto& node = jnode.object({});
             std::string name = node.at("name").string({});
             NodeList children;
-            std::optional<size_t> mesh = std::nullopt;
+            std::optional<Node::NodeContent> content = std::nullopt;
 
             // Decode children
             const auto& jchildren = node.find("children");
@@ -767,8 +955,38 @@ namespace GLTF
             }
 
             // Decode mesh reference (if present)
-            if (node.find("mesh") != node.end()) 
-                mesh = node.at("mesh").number(0);
+            if (node.find("mesh") != node.end())
+            {
+                content = Node::NodeContent
+                {
+                    Node::NodeContentType::NT_MESH,
+                    static_cast<size_t>(node.at("mesh").number(0))
+                };
+            }
+            else if (node.find("camera") != node.end())
+            {
+                content = Node::NodeContent
+                {
+                    Node::NodeContentType::NT_CAMERA,
+                    static_cast<size_t>(node.at("camera").number(0))
+                };
+            }
+            else if (node.find("extensions") != node.end())
+            {
+                auto& extensions = node.at("extensions").object({});
+                if (extensions.find("KHR_lights_punctual") != extensions.end())
+                {
+                    const auto& jhr_lights_punctual = extensions.at("KHR_lights_punctual").object({});
+                    if (jhr_lights_punctual.find("light") != jhr_lights_punctual.end())
+                    {
+                        content = Node::NodeContent
+                        {
+                            Node::NodeContentType::NT_LIGHT,
+                            static_cast<size_t>(jhr_lights_punctual.at("light").number(0))
+                        };
+                    }
+                }
+            }
 
             // Decode transformation (use variant for translation, rotation, scale, or matrix)
             Vec3 translation(0, 0, 0);
@@ -789,7 +1007,7 @@ namespace GLTF
             if (node.find("rotation") != node.end())
             {
                 auto& rot_values = node.at("rotation").array({});
-                rotation = Quat(rot_values[3].number(1.0f), rot_values[0].number(0.0f), rot_values[1].number(0.0f), rot_values[2].number(0.0f));
+                rotation = Quat(rot_values[0].number(1.0f), rot_values[1].number(0.0f), rot_values[2].number(0.0f), rot_values[3].number(0.0f));
                 transform_type |= TransformType::ROTATION;
             }
 
@@ -823,7 +1041,7 @@ namespace GLTF
             out_nodes.emplace_back(
                   name
                 , std::move(children)
-                , mesh
+                , std::move(content)
                 , std::move(translation)
                 , std::move(rotation)
                 , std::move(scale)
@@ -876,7 +1094,9 @@ namespace GLTF
         static GLTFReturn decode_from_json_and_buffers(Json&& jmodel, Buffers&& buffers)
         {
             // Get document:
-            auto& document = jmodel.document().object();
+            JsonObject& document = jmodel.document().object();
+            JsonObject extensions = document["extensions"].object({});
+            JsonObject KHR_lights_punctual = extensions["KHR_lights_punctual"].object({});
             // Get all components
             return GLTF
             {
@@ -884,6 +1104,8 @@ namespace GLTF
                 , std::move(decode_views(document["bufferViews"]))
                 , std::move(decode_accessors(document["accessors"]))
                 , std::move(decode_meshes(document["meshes"]))
+                , std::move(decode_cameras(document["cameras"]))
+                , std::move(decode_lights(KHR_lights_punctual["lights"]))
                 , std::move(decode_textures(document["textures"]))
                 , std::move(decode_materials(document["materials"]))
                 , std::move(decode_nodes(document["nodes"]))
@@ -914,7 +1136,7 @@ namespace GLTF
         Buffers buffers = load_buffers(path, jmodel.document()["buffers"]);
         // Decode
         return Aux::decode_from_json_and_buffers(std::move(jmodel), std::move(buffers));
-    }    
+    }
     
     // Load GLTF from GLB bin
     static GLTFReturn from_glb(const GLB::GLB& glb)

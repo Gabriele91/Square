@@ -449,7 +449,7 @@ namespace Import
         // Map attribute names to corresponding vertex fields and types
         std::unordered_map<std::string, std::tuple<Vec3Callback, Vec3 Vertex::*, Render::Layout::LayoutFields>> attribute_map_vec3
         {
-                {"POSITION", {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_position, Render::Layout::LayoutFields::LF_POSITION_3D} }
+              {"POSITION", {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_position, Render::Layout::LayoutFields::LF_POSITION_3D} }
             , {"NORMAL",   {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_normal, Render::Layout::LayoutFields::LF_NORMAL}}
             , {"TANGENT",  {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_tangent, Render::Layout::LayoutFields::LF_TANGENT}}
             , {"BINOMIAL", {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_binomial, Render::Layout::LayoutFields::LF_BINOMIAL}}

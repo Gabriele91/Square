@@ -13,12 +13,15 @@
 
 static Square::Shell::ParserCommands s_ShellCommands
 {
-      Square::Shell::Command{ "input",  "i", "input model [gltf, glb]"                  , Square::Shell::ValueType::value_string, true,  Square::Shell::Value_t()                   }
-    , Square::Shell::Command{ "output", "o", "output model path"                        , Square::Shell::ValueType::value_string, true,  Square::Shell::Value_t()                   }
-    , Square::Shell::Command{ "format", "f", "output model format [bin, bgz, json, jgz]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("bgz")) }
-    , Square::Shell::Command{ "name",   "n", "output model name"                        , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t()                   }
-    , Square::Shell::Command{ "debug",  "d", "enable debug"                             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
-    , Square::Shell::Command{ "help",   "h", "show help"                                , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
+      Square::Shell::Command{ "input",   "i", "input model [gltf, glb]"                  , Square::Shell::ValueType::value_string, true,  Square::Shell::Value_t()                   }
+    , Square::Shell::Command{ "output",  "o", "output model path"                        , Square::Shell::ValueType::value_string, true,  Square::Shell::Value_t()                   }
+    , Square::Shell::Command{ "format",  "f", "output model format [bin, bgz, json, jgz]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("bgz")) }
+    , Square::Shell::Command{ "name",    "n", "output model name"                        , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t()                   }
+    , Square::Shell::Command{ "debug",   "d", "enable debug"                             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
+    , Square::Shell::Command{ "swapzy",  "s", "swap z with y coord"                      , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
+    , Square::Shell::Command{ "lhs",     "l", "convert in left hand"                     , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(true)               }
+    , Square::Shell::Command{ "shadow",  "r", "force shadow resolution [size]"           , Square::Shell::ValueType::value_int   , false, Square::Shell::Value_t(0)                  }
+    , Square::Shell::Command{ "help",    "h", "show help"                                , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
 };
 
 class ModelImporter : public Square::AppInterface
@@ -32,16 +35,41 @@ public:
         SQ_JSON_GZ
     };
 
+    enum Modes : unsigned char
+    {
+        M_NONE = 0,
+        M_SWAP_ZY = 0b00000001,
+        M_TO_LHS  = 0b00000010,
+    };
+
+    unsigned char m_mode{ M_NONE };
     std::string m_input_model_path;
     std::string m_output_model_path;
     std::string m_output_model_name;
     OutputFormat m_output_model_format;
+    size_t m_shadow_resoluction;
 
-    ModelImporter(const std::string& input_model_path, const std::string& output_model_path, const std::string& output_model_name, OutputFormat output_model_format)
+    static const double blender_calenda_to_power(const double intensity)
+    {
+        // Candela to Power, blender: 
+        // LUMENS_PER_WATT = 683 (standard value for monochromatic 555nm light)
+        // watts = candela * (4 * PI) / LUMENS_PER_WATT
+        const double LUMENS_PER_WATT = 683;
+        return (intensity * Square::Constants::pi<double>() * 4) / LUMENS_PER_WATT;
+    }
+
+    ModelImporter(const std::string& input_model_path, 
+                  const std::string& output_model_path,
+                  const std::string& output_model_name, 
+                  OutputFormat output_model_format,
+                  unsigned char mode = M_NONE,
+                  size_t shodow_resoluction = 0)
     : m_input_model_path(input_model_path)
     , m_output_model_path(output_model_path)
     , m_output_model_name(output_model_name)
     , m_output_model_format(output_model_format)
+    , m_mode(mode)
+    , m_shadow_resoluction(shodow_resoluction)
     {}
 
     virtual void start() 
@@ -96,6 +124,37 @@ public:
                     // Get data
                     auto indices = std::move(GLTF::Import::get_Index(gltf_model, primitive));
                     auto vertexes = std::move(GLTF::Import::get_Position3DNormalTangetBinomialUV(gltf_model, primitive, indices));
+                    // Swap Z Y
+                    if (m_mode & M_SWAP_ZY)
+                    {
+                        for (auto& vertex : vertexes)
+                        {
+                            // Swap all
+                            std::swap(vertex.m_position.z, vertex.m_position.y);
+                            std::swap(vertex.m_normal.z, vertex.m_normal.y);
+                            std::swap(vertex.m_tangent.z, vertex.m_tangent.y);
+                            std::swap(vertex.m_binomial.z, vertex.m_binomial.y);
+                        }
+                    }
+                    // to LHs
+                    if (m_mode & M_TO_LHS)
+                    {
+                        if (0)
+                        for (auto& vertex : vertexes)
+                        {
+                            // Flip Z for position and normal
+                            vertex.m_position.z *= -1.0;
+                            vertex.m_normal.z *= -1.0;
+                            vertex.m_tangent.z *= -1.0;
+                            // Flip bitangent to maintain correct handedness
+                            vertex.m_binomial = -vertex.m_binomial;
+                            // Swap all
+                            std::swap(vertex.m_position.z, vertex.m_position.y);
+                            std::swap(vertex.m_normal.z, vertex.m_normal.y);
+                            std::swap(vertex.m_tangent.z, vertex.m_tangent.y);
+                            std::swap(vertex.m_binomial.z, vertex.m_binomial.y);
+                        }
+                    }
                     // Force indexed
                     if (indices.empty())
                     {
@@ -144,34 +203,162 @@ public:
             {
                 Shared<Actor> actor = MakeShared<Actor>(context());
                 actor->name(node.name);
-                if (node.transform_type & GLTF::TransformType::TRANSLATION)
-                {
-                    actor->translation(node.translation);
-                }
-                if (node.transform_type & GLTF::TransformType::ROTATION)
-                {
-                    actor->rotation(node.rotation);
-                }
-                if (node.transform_type & GLTF::TransformType::SCALE)
-                {
-                    actor->scale(node.scale);
-                }
+                Vec3 translation{ 0.0f,0.0f,0.0f }, scale{ 1.0f,1.0f,1.0f };
+                Quat rotation(0.0f,0.0f,0.0f,1.0f);
                 if (node.transform_type & GLTF::TransformType::MATRIX)
                 {
-                    Vec3 translation, scale;
-                    Quat rotation;
                     decompose_mat4(node.matrix, translation, rotation, scale);
-                    actor->position(translation);
-                    actor->rotation(rotation);
-                    actor->scale(scale);
                 }
-                // Set static mesh
-                if (node.mesh.has_value())
+                else
                 {
-                    actor->component<StaticMesh>()->m_mesh = context().resource<Resource::Mesh>(mesh_names[*node.mesh]);
-                    actor->component<StaticMesh>()->m_material = context().resource<Resource::Material>("default");
-                    if(!actor->component<StaticMesh>()->build_local_obounding_box())
-                        context().logger()->warning("Faild to compute the OBB: " + mesh_names[*node.mesh]);
+                    if (node.transform_type & GLTF::TransformType::TRANSLATION)
+                    {
+                        translation = node.translation;
+                    }
+                    if (node.transform_type & GLTF::TransformType::ROTATION)
+                    {
+                        rotation = node.rotation;
+                    }
+                    if (node.transform_type & GLTF::TransformType::SCALE)
+                    {
+                        scale = node.scale;
+                    }
+                }
+                if (m_mode & M_SWAP_ZY)
+                {
+                    // Swap Y Z
+                    const Quat swap_zy = angle_axis(radians(90.0f), Vec3(1, 0, 0));
+                    // Swap all
+                    std::swap(translation.z, translation.y);
+                    rotation = swap_zy * rotation * conjugate(swap_zy);
+                    std::swap(scale.z, scale.y);
+                }
+                if (m_mode & M_TO_LHS)
+                {
+                    translation.z = translation.z != 0.0f ? -translation.z : translation.z;
+                    rotation = Quat(rotation.x, rotation.y, -rotation.z, -rotation.w);
+                }
+                actor->position(translation);
+                actor->rotation(rotation);
+                actor->scale(scale);
+                // Set static mesh
+                if (node.content.has_value())
+                {
+                    switch (node.content.value().m_type)
+                    {
+                        case GLTF::Node::NodeContentType::NT_MESH:
+                        {
+                            size_t mesh_id = node.content.value().m_id;
+                            actor->component<StaticMesh>()->m_mesh = context().resource<Resource::Mesh>(mesh_names[mesh_id]);
+                            actor->component<StaticMesh>()->m_material = context().resource<Resource::Material>("default");
+                            if (!actor->component<StaticMesh>()->build_local_obounding_box())
+                                context().logger()->warning("Faild to compute the OBB: " + mesh_names[mesh_id]);
+                        }
+                        break;
+                        case GLTF::Node::NodeContentType::NT_CAMERA:
+                        {
+                            size_t camera_id = node.content.value().m_id;
+                            if (camera_id < gltf_model.cameras.size())
+                            {
+                                auto& gltf_camera = gltf_model.cameras[camera_id];
+                                if (std::holds_alternative<GLTF::CameraProspective>(gltf_camera))
+                                {
+                                    auto& gltf_camera_pro = std::get<GLTF::CameraProspective>(gltf_camera);
+                                    actor->component<Camera>()->perspective(
+                                        gltf_camera_pro.m_yfov,
+                                        gltf_camera_pro.m_aspect_ratio,
+                                        gltf_camera_pro.m_znear,
+                                        gltf_camera_pro.m_zfar
+                                    );
+                                }
+                                else if (std::holds_alternative<GLTF::CameraOrthographic>(gltf_camera))
+                                {
+                                    auto& gltf_camera_ortho = std::get<GLTF::CameraOrthographic>(gltf_camera);
+                                    actor->component<Camera>()->ortogonal(
+                                        0, gltf_camera_ortho.m_xmag, 
+                                        0, gltf_camera_ortho.m_ymag, 
+                                        gltf_camera_ortho.m_znear, 
+                                        gltf_camera_ortho.m_zfar
+                                    );
+                                }
+                                else
+                                {
+                                    actor->component<Camera>();
+                                }
+                            }
+                        }
+                        break;
+                        case GLTF::Node::NodeContentType::NT_LIGHT:
+                        {
+                            size_t light_id = node.content.value().m_id;
+                            if (light_id < gltf_model.lights.size())
+                            {
+                                auto& gltf_light = gltf_model.lights[light_id];
+                                switch (gltf_light.m_type)
+                                {
+                                case GLTF::Light::LightType::LT_SPOTLIGHT:
+                                {
+                                    actor->component<SpotLight>()->diffuse(gltf_light.m_color);
+                                    actor->component<SpotLight>()->specular(gltf_light.m_color);
+                                    actor->component<SpotLight>()->constant(1.0);
+                                    if (m_shadow_resoluction)
+                                        actor->component<SpotLight>()->shadow({ m_shadow_resoluction,m_shadow_resoluction });
+                                    // Range
+                                    if (gltf_light.m_range.has_value())
+                                    {
+                                        actor->component<SpotLight>()->radius(gltf_light.m_range.value());
+                                        actor->component<SpotLight>()->inside_radius(gltf_light.m_range.value());
+                                    }
+                                    else
+                                    {
+                                        double power = blender_calenda_to_power(gltf_light.m_intensity);
+                                        actor->component<SpotLight>()->radius(power);
+                                        actor->component<SpotLight>()->inside_radius(power * 0.1);
+                                    }
+                                    // Cut off
+                                    if (gltf_light.m_spotfields.has_value())
+                                    {
+                                        actor->component<SpotLight>()->inner_cut_off(gltf_light.m_spotfields->m_inner_cone_angle);
+                                        actor->component<SpotLight>()->outer_cut_off(gltf_light.m_spotfields->m_outer_cone_angle);
+                                    }
+                                }
+                                break;
+                                case GLTF::Light::LightType::LT_POINT:
+                                {
+                                    actor->component<PointLight>()->diffuse(gltf_light.m_color);
+                                    actor->component<PointLight>()->specular(gltf_light.m_color);
+                                    actor->component<PointLight>()->constant(1.0);
+                                    if (m_shadow_resoluction)
+                                        actor->component<PointLight>()->shadow({ m_shadow_resoluction,m_shadow_resoluction });
+                                    if (gltf_light.m_range.has_value())
+                                    {
+                                        actor->component<PointLight>()->radius(gltf_light.m_range.value());
+                                        actor->component<PointLight>()->inside_radius(gltf_light.m_range.value()/2);
+                                    }
+                                    else
+                                    {
+                                        double power = blender_calenda_to_power(gltf_light.m_intensity);
+                                        actor->component<PointLight>()->radius(power);
+                                        actor->component<PointLight>()->inside_radius(power * 0.1);
+                                    }
+                                }
+                                break;
+                                case GLTF::Light::LightType::LT_DIRECTIONAL:
+                                {
+                                    actor->component<DirectionLight>()->diffuse(gltf_light.m_color);
+                                    actor->component<DirectionLight>()->specular(gltf_light.m_color);
+                                    if (m_shadow_resoluction)
+                                        actor->component<DirectionLight>()->shadow({ m_shadow_resoluction,m_shadow_resoluction });
+                                }
+                                break;
+                                default: break;
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                    break;
+                    }
 
                 }
                 parent_actor->add(actor);
@@ -280,6 +467,26 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
             output_model_format = ModelImporter::OutputFormat::SQ_JSON_GZ;
         }
     }
+    // Modes
+    unsigned char modes = ModelImporter::M_NONE;
+    // yzswap
+    if (auto yzswap_it = args.find("swapzy"); yzswap_it != args.end())
+    if (std::get<bool>(yzswap_it->second))
+    {
+        modes |= ModelImporter::M_SWAP_ZY;
+    }
+    // convert to lhs
+    if (auto zforward_it = args.find("lhs"); zforward_it != args.end())
+    if (std::get<bool>(zforward_it->second))
+    {
+        modes |= ModelImporter::M_TO_LHS;
+    }
+    // get shadow res
+    int shadow_resoluction = 0;
+    if (auto shadow_it = args.find("shadow"); shadow_it != args.end())
+    {
+        shadow_resoluction = std::get<int>(shadow_it->second);
+    }
     //test
     app.execute
 	(
@@ -289,11 +496,11 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
       { 
          Render::RenderDriver::DR_OPENGL, 4, 1 // DRIVER and Version 
         , 24, 8                                // Colors and depth
-        , GpuType::GPU_HIGH                   // GPU type
+        , GpuType::GPU_HIGH                    // GPU type
         , false                                // Debug
       }
     , "ModelImporter"
-    , new ModelImporter(input_model_path, output_model_path, output_model_name, output_model_format)
+    , new ModelImporter(input_model_path, output_model_path, output_model_name, output_model_format, modes, shadow_resoluction)
     );
     // End
     return 0;
