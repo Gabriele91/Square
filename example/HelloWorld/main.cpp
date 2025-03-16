@@ -65,15 +65,17 @@ public:
 		case Square::Video::KEY_P:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
-				auto plight = m_level->actor("light0")->component<PointLight>();
-				plight->visible(!plight->visible());
+				auto light = m_level->find_actor("base_scene.light")->component<PointLight>();
+				light->visible(!light->visible());
 			}
 			break;
 		case Square::Video::KEY_L:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
-				auto plight = m_level->actor("light1")->component<SpotLight>();
-				plight->visible(!plight->visible());
+				auto llight = m_level->find_actor("base_scene.lightLeft")->component<SpotLight>();
+				llight->visible(!llight->visible());
+				auto rlight = m_level->find_actor("base_scene.lightRight")->component<SpotLight>();
+				rlight->visible(!rlight->visible());
 			}
 			break;
 		break;
