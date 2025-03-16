@@ -14,7 +14,9 @@ class Game01 : public Square::AppInterface
 {
 public:
 
-	bool m_turn{ true };
+	std::string m_scene{"csm_scene"};
+
+	Game01(const std::string& scene) : m_scene(scene) {}
 	
 	void key_event(Square::Video::KeyboardEvent key, short mode, Square::Video::ActionEvent action)
 	{
@@ -56,42 +58,43 @@ public:
 				context().logger()->info("FPS avg: " + std::to_string(m_counter.get()));
 			}
 			break;
-		case Square::Video::KEY_Y:
-			if (action == Square::Video::ActionEvent::RELEASE)
-			{
-				m_turn = !m_turn;
-			}
-		break;
 		case Square::Video::KEY_L:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
-				auto plight = m_level->find_actor("csm_scene.Light")->component<DirectionLight>();
-				plight->visible(!plight->visible());
+				if (m_light)
+				{
+					if(m_light->contains<DirectionLight>())
+						m_light->component<DirectionLight>()->visible(!m_light->component<DirectionLight>()->visible());
+					else if (m_light->contains<PointLight>())
+						m_light->component<PointLight>()->visible(!m_light->component<PointLight>()->visible());
+					else if (m_light->contains<SpotLight>())
+						m_light->component<SpotLight>()->visible(!m_light->component<SpotLight>()->visible());
+				}
 			}
 			break;
 		case Square::Video::KEY_W:
-			m_level->find_actor("csm_scene.camera")->move({ 0,0, 10 * application().last_delta_time() });
+			if(m_camera) m_camera->move({ 0,0, 10 * application().last_delta_time() });
 		break;
 		case Square::Video::KEY_S:
-			m_level->find_actor("csm_scene.camera")->move({ 0,0, -10 * application().last_delta_time() });
+			if(m_camera) m_camera->move({ 0,0, -10 * application().last_delta_time() });
 		break;
 		case Square::Video::KEY_D:
-			m_level->find_actor("csm_scene.camera")->move({ 10 * application().last_delta_time(),0,0 });
+			if(m_camera) m_camera->move({ 10 * application().last_delta_time(),0,0 });
 		break;
 		case Square::Video::KEY_A:
-			m_level->find_actor("csm_scene.camera")->move({ -10 * application().last_delta_time(),0,0 });
+			if(m_camera) m_camera->move({ -10 * application().last_delta_time(),0,0 });
 		break;
 		case Square::Video::KEY_R:
-			m_level->find_actor("csm_scene.camera")->move({ 0, 10 * application().last_delta_time(),0 });
+			if(m_camera) m_camera->move({ 0, 10 * application().last_delta_time(),0 });
 		break;
 		case Square::Video::KEY_F:
-			m_level->find_actor("csm_scene.camera")->move({ 0,-10 * application().last_delta_time(),0 });
+			if(m_camera) m_camera->move({ 0,-10 * application().last_delta_time(),0 });
 		break;
 		case Square::Video::KEY_E:
-			m_level->find_actor("csm_scene.camera")->turn(rotate_euler<float>(0,1. * application().last_delta_time(),0 ));
+			if (m_camera) m_camera->turn(rotate_euler<float>(0,1. * application().last_delta_time(),0 ));
 		break;
 		case Square::Video::KEY_Q:
-			m_level->find_actor("csm_scene.camera")->turn(rotate_euler<float>(0, -1. * application().last_delta_time(), 0));
+			if (m_camera) m_camera->turn(rotate_euler<float>(0, -1. * application().last_delta_time(), 0));
 		break;
 		break;
 		default: break;
@@ -112,10 +115,11 @@ public:
 		// level
 		m_level = world().level("main");
 		// load
-		if (m_level->load_actor("csm_scene"))
+		if (m_level->load_actor(m_scene))
 		{
-			auto camera = m_level->find_actor("csm_scene.camera");
-			camera->component<Camera>()->viewport({ 0,0, window_width, window_height });
+			m_camera = m_level->find_actor(m_scene + ".camera");
+			m_camera->component<Camera>()->viewport({ 0,0, window_width, window_height });
+			m_light = m_level->find_actor(m_scene + ".light");			
 		}
 		else
 		{
@@ -197,6 +201,8 @@ private:
     bool m_loop = true;
 	double m_acc = 0;
 	Square::Time::FPSCounter				   m_counter;
+	Square::Shared<Square::Scene::Actor>       m_camera;
+	Square::Shared<Square::Scene::Actor>       m_light;
 	Square::Shared<Square::Scene::Level>	   m_level;
     Square::Shared<Square::Render::Drawer>     m_drawer;
 };
@@ -207,6 +213,7 @@ static Square::Shell::ParserCommands s_ShellCommands
     , Square::Shell::Command{ "gputype","g", "select gpu type [low, high]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("high")) }
 	, Square::Shell::Command{ "debug",  "d", "enable debug"               , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 	, Square::Shell::Command{ "verbose","v", "enable verbose"             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
+	, Square::Shell::Command{ "scene",  "s", "scene resource to load"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("csm_scene"))}
 	, Square::Shell::Command{ "help",   "h", "show help"                  , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 };
 
@@ -246,7 +253,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
     , WindowMode::NOT_RESIZABLE
 	, render_driver
     , "test"
-    , new Game01()
+    , new Game01(std::get<std::string>(args.at("scene")))
     );
     //End
     return 0;
