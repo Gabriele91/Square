@@ -156,13 +156,37 @@ public:
                             // Flip bitangent to maintain correct handedness
                             vertex.m_binomial = -vertex.m_binomial;
                         }
-                        // Remap indexs
-                        for (size_t i = 0; i < indices.size(); i += 3)
+                        // Remap indices based on draw type
+                        switch (drawtype)
                         {
-                            if (i + 2 < indices.size())
+                            case Render::DrawType::DRAW_TRIANGLES:
                             {
-                                std::swap(indices[i + 1], indices[i + 2]);
+                                // Flip winding order for triangles (swap second and third indices)
+                                for (size_t i = 0; i < indices.size(); i += 3)
+                                {
+                                    if (i + 2 < indices.size())
+                                    {
+                                        std::swap(indices[i + 1], indices[i + 2]);
+                                    }
+                                }
+                                break;
                             }
+                            case Render::DrawType::DRAW_TRIANGLE_STRIP:
+                            {
+                                // For triangle strips, we need to flip every other triangle
+                                // In triangle strips, each new vertex forms a triangle with the previous two
+                                for (size_t i = 0; i < indices.size() - 2; i += 2)
+                                {
+                                    std::swap(indices[i], indices[i + 1]);
+                                }
+                                break;
+                            }
+                            case Render::DrawType::DRAW_LINES:
+                            case Render::DrawType::DRAW_LINE_LOOP:
+                            case Render::DrawType::DRAW_POINTS:
+                            default:
+                                // No need to swap indices for line loops, they don't have winding order
+                                break;
                         }
                     }
                     // Add sub mesh
