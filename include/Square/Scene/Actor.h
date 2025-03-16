@@ -67,6 +67,19 @@ namespace Scene
         //contains an actor
         bool contains(Shared<Actor> child) const;
         bool contains(Shared<Component> component) const;
+
+        template< class T >
+        bool contains() const
+        {
+            for (auto& component : m_components)
+            {
+                if (component->object_id() == T::static_object_id())
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 		
 		//get by type
 		template< class T >
