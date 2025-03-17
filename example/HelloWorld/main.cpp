@@ -49,7 +49,17 @@ public:
 			if (Square::Filesystem::exists(level_path))
 				deserialize(level_path);
 		break;
-
+		
+		case Square::Video::KEY_O:
+			if (action == Square::Video::ActionEvent::PRESS)
+			if (m_render_debug)
+			{
+				if(!m_render_debug->draw_flags())
+					m_render_debug->draw_flags(Render::DF_DRAW_OBB);
+				else
+					m_render_debug->draw_flags(0);
+			}
+		break;
 		case Square::Video::KEY_C:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
@@ -143,10 +153,12 @@ public:
 			context().logger()->info("Error to load base_scene");
 		}
 		//
-        m_drawer = Square::MakeShared<Render::Drawer>(context());
+		m_drawer = Square::MakeShared<Render::Drawer>(context());
 		m_drawer->create<Render::DrawerPassForward>();
-		m_drawer->create<Render::DrawerPassDebug>()->draw_flags(0);
 		m_drawer->create<Render::DrawerPassShadow>();
+		// Draw OBB
+		m_render_debug = m_drawer->create<Render::DrawerPassDebug>();
+		m_render_debug->draw_flags(0);
     }
     
     bool run(double dt)
@@ -229,6 +241,7 @@ private:
 	Square::Time::FPSCounter				   m_counter;
 	Square::Shared<Square::Scene::Level>	   m_level;
     Square::Shared<Square::Render::Drawer>     m_drawer;
+	Square::Shared<Square::Render::DrawerPassDebug> m_render_debug;
 };
 
 static Square::Shell::ParserCommands s_ShellCommands

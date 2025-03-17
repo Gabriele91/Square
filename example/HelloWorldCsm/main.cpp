@@ -130,14 +130,6 @@ public:
 			m_camera = scene_node->child("camera");
 			m_camera->component<Camera>()->viewport({ 0,0, window_width, window_height });
 			m_light = scene_node->child("light");
-			scene_node->visit([&](Square::Shared<Square::Scene::Actor> actor) -> bool
-			{
-				if (actor->contains<StaticMesh>())
-				{
-					//actor->rotation(Quat{ 0,0,0,1 });
-				}
-				return true;
-			});
 		}
 		else
 		{
