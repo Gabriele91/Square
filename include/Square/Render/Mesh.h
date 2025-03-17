@@ -83,6 +83,7 @@ namespace Render
 		bool build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 
 		//info
+		unsigned int layout_type() const;
 		Shared<Render::InputLayout> layout() const;
 		Shared<Render::VertexBuffer> vertex_buffer() const;
 		Shared<Render::IndexBuffer> index_buffer() const;
@@ -111,6 +112,7 @@ namespace Render
 			return build_index_buffer((unsigned int*)indexs.data(), indexs.size(), cpu_access);
 		}
 		//gpu
+		unsigned int				 m_layout_type;
 		Shared<Render::InputLayout>	 m_layout;
 		Shared<Render::VertexBuffer> m_vertex_buffer;
 		Shared<Render::IndexBuffer>  m_index_buffer;

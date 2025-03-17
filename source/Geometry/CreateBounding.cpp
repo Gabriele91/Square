@@ -13,181 +13,116 @@ namespace Square
 {
 namespace Geometry
 {
-	OBoundingBox obounding_box_from_covariance_matrix
-	(
-		Mat3 C,
-		const unsigned char* points,
-		size_t pos_offset,
-		size_t vertex_size,
-		size_t size
-	)
+	namespace OBBAux
 	{
-		Mat3 obounding_box_rotation;
-		Vec3 obounding_box_position;
-		Vec3 obounding_box_extension;
-		// extract the eigenvalues and eigenvectors from C
-		Mat3 eigvec;
-		// Vec3 eigval =
-        eigenvalues_jacobi(C, 100, eigvec);
-
-		// find the right, up and forward vectors from the eigenvectors
-		Vec3  r(eigvec[0][0], eigvec[1][0], eigvec[2][0]);
-		Vec3  u(eigvec[0][1], eigvec[1][1], eigvec[2][1]);
-		Vec3  f(eigvec[0][2], eigvec[1][2], eigvec[2][2]);
-
-		normalize(r);
-		normalize(u);
-		normalize(f);
-
-		// set the rotation matrix using the eigvenvectors
-		obounding_box_rotation[0][0] = r.x; obounding_box_rotation[0][1] = u.x; obounding_box_rotation[0][2] = f.x;
-		obounding_box_rotation[1][0] = r.y; obounding_box_rotation[1][1] = u.y; obounding_box_rotation[1][2] = f.y;
-		obounding_box_rotation[2][0] = r.z; obounding_box_rotation[2][1] = u.z; obounding_box_rotation[2][2] = f.z;
-
-		// now build the bounding box extents in the rotated frame
-		Vec3 minim(1e10, 1e10, 1e10), maxim(-1e10, -1e10, -1e10);
-
-		for (int i = 0; i < (int)size; i++)
+		#define att_vertex(i) (*(const Vec3*)(points+vertex_size*(i)+pos_offset))
+		// Calculate mean of a set of 3D points
+		Vec3 calculate_mean(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points)
 		{
-			#define att_vertex(i) (*(const Vec3*)(points+vertex_size*(i)+pos_offset))
-			Vec3 p_prime(dot(r, att_vertex(i)),
-						 dot(u, att_vertex(i)),
-						 dot(f, att_vertex(i)));
-			#undef att_vertex
-
-			minim = min(minim, p_prime);
-			maxim = max(maxim, p_prime);
+			Vec3 mean(0.0f);
+			for (size_t i = 0; i < n_points; ++i)
+			{
+				mean += att_vertex(i);
+			}
+			return mean / static_cast<float>(n_points);
 		}
 
-		// set the center of the OBB to be the average of the 
-		// minimum and maximum, and the extents be half of the
-		// difference between the minimum and maximum
-		Vec3 center = (maxim + minim) * 0.5f;
-		obounding_box_position[0] = dot(obounding_box_rotation[0], center);
-		obounding_box_position[1] = dot(obounding_box_rotation[1], center);
-		obounding_box_position[2] = dot(obounding_box_rotation[2], center);
-		obounding_box_extension = (maxim - minim) * 0.5f;
-
-		return  OBoundingBox
-				(
-					obounding_box_rotation,
-					obounding_box_position,
-					obounding_box_extension
-				);
-	}
-
-	OBoundingBox obounding_box_from_sequenzial_triangles(const std::vector< Vec3 >& points)
-	{
-		return obounding_box_from_sequenzial_triangles((const unsigned char*)points.data(), 0, sizeof(Vec3), points.size());
-	}
-
-	OBoundingBox obounding_box_from_sequenzial_triangles( const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points)
-	{
-		float Ai = 0.0;
-		float Am = 0.0;
-		Vec3 mu(0.0f, 0.0f, 0.0f), mui;
-		Mat3 C;
-		float cxx = 0.0, cxy = 0.0, cxz = 0.0, cyy = 0.0, cyz = 0.0, czz = 0.0;
-
-		// loop over the triangles this time to find the
-		// mean location
-		for (int i = 0; i < (int)n_points; i += 3)
+		// Calculate covariance matrix for 3D points
+		Mat3 calculate_covariance_matrix(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points, const Vec3& mean)
 		{
-			#define att_vertex(i) (*(const Vec3*)(points+vertex_size*(i)+pos_offset))
-			const Vec3& p = att_vertex(i + 0);
-			const Vec3& q = att_vertex(i + 1);
-			const Vec3& r = att_vertex(i + 2);
-			#undef att_vertex
-			mui = (p + q + r) / 3.0f;
+			Mat3 cov(0.0f);
+			for (size_t i = 0; i < n_points; ++i)
+			{
+				Vec3 diff = att_vertex(i) - mean;
 
-			//compute len( triangle  dir/norm )
-			Ai = length(cross((q - p), (r - p))) / 2.0f;
-
-			//inc
-			mu += mui*Ai;
-			Am += Ai;
-
-			// these bits set the c terms to Am*E[xx], Am*E[xy], Am*E[xz]....
-			cxx += (float)((9.0*mui.x*mui.x + p.x*p.x + q.x*q.x + r.x*r.x)*(Ai / 12.0));
-			cxy += (float)((9.0*mui.x*mui.y + p.x*p.y + q.x*q.y + r.x*r.y)*(Ai / 12.0));
-			cxz += (float)((9.0*mui.x*mui.z + p.x*p.z + q.x*q.z + r.x*r.z)*(Ai / 12.0));
-			cyy += (float)((9.0*mui.y*mui.y + p.y*p.y + q.y*q.y + r.y*r.y)*(Ai / 12.0));
-			cyz += (float)((9.0*mui.y*mui.z + p.y*p.z + q.y*q.z + r.y*r.z)*(Ai / 12.0));
+				// Outer product: diff * diff^T to build covariance matrix
+				cov[0][0] += diff.x * diff.x;
+				cov[0][1] += diff.x * diff.y;
+				cov[0][2] += diff.x * diff.z;
+				cov[1][0] += diff.y * diff.x;
+				cov[1][1] += diff.y * diff.y;
+				cov[1][2] += diff.y * diff.z;
+				cov[2][0] += diff.z * diff.x;
+				cov[2][1] += diff.z * diff.y;
+				cov[2][2] += diff.z * diff.z;
+			}
+			return cov / float(n_points);
 		}
-		// divide out the Am fraction from the average position and 
-		// covariance terms
-		mu /= Am;
-		cxx /= Am; cxy /= Am; cxz /= Am; cyy /= Am; cyz /= Am; czz /= Am;
 
-		// now subtract off the E[x]*E[x], E[x]*E[y], ... terms
-		cxx -= mu.x*mu.x; cxy -= mu.x*mu.y; cxz -= mu.x*mu.z;
-		cyy -= mu.y*mu.y; cyz -= mu.y*mu.z; czz -= mu.z*mu.z;
-
-		// now build the covariance matrix
-		C[0][0] = cxx; C[0][1] = cxy; C[0][2] = cxz;
-		C[1][0] = cxy; C[1][1] = cyy; C[1][2] = cyz;
-		C[2][0] = cxz; C[2][1] = cyz; C[2][2] = czz;
-
-
-		// set the OBB parameters from the covariance matrix
-		return obounding_box_from_covariance_matrix(C, points, pos_offset, vertex_size, n_points);
-	}
-
-	OBoundingBox obounding_box_from_triangles(const std::vector< Vec3 > &points, const std::vector<unsigned int>& triangles)
-	{
-		return obounding_box_from_triangles((const unsigned char*)points.data(), 0, sizeof(Vec3), points.size(), triangles.data(), triangles.size());
-	}
-
-	OBoundingBox obounding_box_from_triangles(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points, const unsigned int* triangles, size_t size)
-	{
-		float Ai = 0.0;
-		float Am = 0.0;
-		Vec3 mu(0.0f, 0.0f, 0.0f), mui;
-		Mat3 C;
-		float cxx = 0.0, cxy = 0.0, cxz = 0.0, cyy = 0.0, cyz = 0.0, czz = 0.0;
-		// access
-		// loop over the triangles this time to find the
-		// mean location
-		for (int i = 0; i < (int)size; i += 3)
+		// Calculate eigenvectors using power iteration method
+		Mat3 calculate_eigenvectors(const Mat3& cov)
 		{
-			#define att_vertex(i) (*(const Vec3*)(points+vertex_size*(i)+pos_offset))
-			const Vec3& p = att_vertex(triangles[i + 0]);
-			const Vec3& q = att_vertex(triangles[i + 1]);
-			const Vec3& r = att_vertex(triangles[i + 2]);
-			#undef att_vertex
-			mui = (p + q + r) / 3.0f;
+			std::vector<Vec3> eigenbasis;
+			eigenbasis.reserve(3);
 
-			//compute len( triangle  dir/norm )
-			Ai = length(cross((q - p), (r - p))) / 2.0f;
+			// Find dominant eigenvector
+			Vec3 v1(1.0f);
+			for (int iter = 0; iter < 10; ++iter) 
+			{
+				v1 = normalize(cov * v1);
+			}
+			eigenbasis.push_back(v1);
 
-			//inc
-			mu += mui*Ai;
-			Am += Ai;
+			// Find second eigenvector in the plane perpendicular to first
+			Vec3 v2;
+			if (std::abs(eigenbasis[0].x) > std::abs(eigenbasis[0].y)) 
+			{
+				v2 = Vec3(0.0f, 1.0f, 0.0f);
+			}
+			else 
+			{
+				v2 = Vec3(1.0f, 0.0f, 0.0f);
+			}
+			v2 = normalize(v2 - glm::dot(v2, eigenbasis[0]) * eigenbasis[0]);
 
-			// these bits set the c terms to Am*E[xx], Am*E[xy], Am*E[xz]....
-			cxx += (float)((9.0*mui.x*mui.x + p.x*p.x + q.x*q.x + r.x*r.x)*(Ai / 12.0));
-			cxy += (float)((9.0*mui.x*mui.y + p.x*p.y + q.x*q.y + r.x*r.y)*(Ai / 12.0));
-			cxz += (float)((9.0*mui.x*mui.z + p.x*p.z + q.x*q.z + r.x*r.z)*(Ai / 12.0));
-			cyy += (float)((9.0*mui.y*mui.y + p.y*p.y + q.y*q.y + r.y*r.y)*(Ai / 12.0));
-			cyz += (float)((9.0*mui.y*mui.z + p.y*p.z + q.y*q.z + r.y*r.z)*(Ai / 12.0));
+			// Refine second eigenvector
+			Mat3 proj = Mat3(1.0f) - glm::outerProduct(eigenbasis[0], eigenbasis[0]);
+			for (int iter = 0; iter < 10; ++iter) 
+			{
+				v2 = normalize(proj * (cov * v2));
+			}
+			eigenbasis.push_back(v2);
+
+			// Third eigenvector is cross product of first two
+			Vec3 v3 = cross(eigenbasis[0], eigenbasis[1]);
+			eigenbasis.push_back(normalize(v3));
+
+			// Build rotation matrix from eigenvectors
+			Mat3 eigenvectors(1.0f);
+			eigenvectors[0] = eigenbasis[0];
+			eigenvectors[1] = eigenbasis[1];
+			eigenvectors[2] = eigenbasis[2];
+
+			return eigenvectors;
 		}
-		// divide out the Am fraction from the average position and 
-		// covariance terms
-		mu /= Am;
-		cxx /= Am; cxy /= Am; cxz /= Am; cyy /= Am; cyz /= Am; czz /= Am;
 
-		// now subtract off the E[x]*E[x], E[x]*E[y], ... terms
-		cxx -= mu.x*mu.x; cxy -= mu.x*mu.y; cxz -= mu.x*mu.z;
-		cyy -= mu.y*mu.y; cyz -= mu.y*mu.z; czz -= mu.z*mu.z;
+		// Rotate points by a rotation matrix
+		std::vector<Vec3> rotate_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points, const Mat3& rot_matrix)
+		{
+			std::vector<Vec3> rotated_points;
+			rotated_points.reserve(n_points);
+			for (size_t i = 0; i < n_points; ++i)
+			{
+				rotated_points.push_back(rot_matrix * att_vertex(i));
+			}
+			return rotated_points;
+		}
 
-		// now build the covariance matrix
-		C[0][0] = cxx; C[0][1] = cxy; C[0][2] = cxz;
-		C[1][0] = cxy; C[1][1] = cyy; C[1][2] = cyz;
-		C[2][0] = cxz; C[2][1] = cyz; C[2][2] = czz;
+		// Find min and max bounds of a set of 3D points
+		std::pair<Vec3, Vec3> find_bounds(const std::vector<Vec3>& points) 
+		{
+			Vec3 min_bound = points[0];
+			Vec3 max_bound = points[0];
 
+			for (const auto& p : points) 
+			{
+				min_bound = (min)(min_bound, p);
+				max_bound = (max)(max_bound, p);
+			}
 
-		// set the obb parameters from the covariance matrix
-		return obounding_box_from_covariance_matrix(C, points, pos_offset, vertex_size, n_points);
+			return { min_bound, max_bound };
+		}
+		#undef att_vertex
 	}
 
 	OBoundingBox obounding_box_from_points(const std::vector< Vec3 >& points)
@@ -197,49 +132,36 @@ namespace Geometry
 
 	OBoundingBox obounding_box_from_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points)
 	{
-		Vec3 mu(0.0, 0.0, 0.0);
-		Mat3 C;
+		// Calculate mean point
+		Vec3 mean = OBBAux::calculate_mean(points, pos_offset, vertex_size, n_points);
 
-		#define att_vertex(i) (*(const Vec3*)(points+vertex_size*(i)+pos_offset))
-		// loop over the points to find the mean point
-		// location
-		for (int i = 0; i < (int)n_points; i++)
-		{
-			mu += att_vertex(i) / float(n_points);
-		}
+		// Calculate covariance matrix
+		Mat3 cov = OBBAux::calculate_covariance_matrix(points, pos_offset, vertex_size, n_points, mean);
 
-		// loop over the points again to build the 
-		// covariance matrix.  Note that we only have
-		// to build terms for the upper trianglular 
-		// portion since the matrix is symmetric
-		float cxx = 0.0,
-			cxy = 0.0,
-			cxz = 0.0,
-			cyy = 0.0,
-			cyz = 0.0,
-			czz = 0.0;
+		// Calculate eigenvectors
+		Mat3 eigenvectors = OBBAux::calculate_eigenvectors(cov);
+		Mat3 rot_matrix = transpose(eigenvectors);
 
-		for (int i = 0; i < (int)n_points; i++)
-		{
-			const Vec3& p = att_vertex(i);
-			cxx += p.x*p.x - mu.x*mu.x;
-			cxy += p.x*p.y - mu.x*mu.y;
-			cxz += p.x*p.z - mu.x*mu.z;
-			cyy += p.y*p.y - mu.y*mu.y;
-			cyz += p.y*p.z - mu.y*mu.z;
-			czz += p.z*p.z - mu.z*mu.z;
-		}
-		#undef att_vertex
-		// now build the covariance matrix
-		C[0][0] = cxx; C[0][1] = cxy; C[0][2] = cxz;
-		C[1][0] = cxy; C[1][1] = cyy; C[1][2] = cyz;
-		C[2][0] = cxz; C[2][1] = cyz; C[2][2] = czz;
+		// Rotate points to align with principal axes
+		std::vector<Vec3> rotated_points = OBBAux::rotate_points(points, pos_offset, vertex_size, n_points, rot_matrix);
 
-		// set the OBB parameters from the covariance matrix
-		return obounding_box_from_covariance_matrix(C, points, pos_offset, vertex_size, n_points);
+		// Find min and max along rotated axes
+		auto [min_bound, max_bound] = OBBAux::find_bounds(rotated_points);
+
+		// Rotation
+		Mat3 world_rotation = transpose(rot_matrix);
+
+		// Calculate half-sizes and center
+		Vec3 half_size = (max_bound - min_bound) * 0.5f;
+		Vec3 center = min_bound + half_size;
+
+		// Transform center back to world space
+		Vec3 world_center = world_rotation * center;
+
+		// Create and return the OBoundingBox
+		return OBoundingBox{ world_rotation, world_center, half_size };
 	}
-	
-  
+
     AABoundingBox aabounding_from_points(const std::vector< Vec3 >& points)
     {
         return aabounding_from_points((const unsigned char*)points.data(), 0, sizeof(Vec3), points.size());

@@ -37,6 +37,7 @@ namespace Square
             Mesh(Context& context, const std::string& path);
 
             //info
+            unsigned int layout_type() const;
             Shared<Render::InputLayout> layout() const;
             Shared<Render::VertexBuffer> vertex_buffer() const;
             Shared<Render::IndexBuffer> index_buffer() const;

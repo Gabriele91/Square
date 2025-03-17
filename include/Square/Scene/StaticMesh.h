@@ -64,7 +64,8 @@ namespace Scene
 		virtual void deserialize_json(Square::Data::JsonValue& archive) override;
 
 		// build bbox
-		bool build_local_obounding_box();
+		bool build_local_obounding_box(bool from_triangles=true);
+		void set_obounding_box(const Square::Geometry::OBoundingBox& obb);
 	};
 }
 }

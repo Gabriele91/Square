@@ -59,6 +59,9 @@ namespace Scene
 		//remove an actor
 		bool remove(Shared<Actor> child);
 
+		// Visit all actors DSF
+		void visit(const std::function<bool(Shared<Actor>)>& callback);
+
 		//name        
 		const std::string& name() const;
 		void name(const std::string&);
