@@ -51,7 +51,16 @@ public:
 			if (Square::Filesystem::exists(level_path))
 				deserialize(level_path);
 		break;
-
+		case Square::Video::KEY_O:
+			if (action == Square::Video::ActionEvent::PRESS)
+			if (m_render_debug)
+			{
+				if(!m_render_debug->draw_flags())
+					m_render_debug->draw_flags(Render::DF_DRAW_OBB);
+				else
+					m_render_debug->draw_flags(0);
+			}
+		break;
 		case Square::Video::KEY_C:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
@@ -109,17 +118,26 @@ public:
 		using namespace Square::Resource;
 		//rs file
 		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "/resources.rs"));
+		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "../Model/resources.rs"));
 		// window size
 		uint32_t window_width, window_height;
 		context().window()->get_size(window_width, window_height);
 		// level
 		m_level = world().level("main");
 		// load
-		if (m_level->load_actor(m_scene))
+		if (auto scene_node = m_level->load_actor(m_scene); scene_node)
 		{
-			m_camera = m_level->find_actor(m_scene + ".camera");
+			m_camera = scene_node->child("camera");
 			m_camera->component<Camera>()->viewport({ 0,0, window_width, window_height });
-			m_light = m_level->find_actor(m_scene + ".light");			
+			m_light = scene_node->child("light");
+			scene_node->visit([&](Square::Shared<Square::Scene::Actor> actor) -> bool
+			{
+				if (actor->contains<StaticMesh>())
+				{
+					//actor->rotation(Quat{ 0,0,0,1 });
+				}
+				return true;
+			});
 		}
 		else
 		{
@@ -128,8 +146,10 @@ public:
 		//
         m_drawer = Square::MakeShared<Render::Drawer>(context());
 		m_drawer->create<Render::DrawerPassForward>();
-		m_drawer->create<Render::DrawerPassDebug>()->draw_flags(0);
 		m_drawer->create<Render::DrawerPassShadow>();
+		// Draw OBB
+		m_render_debug = m_drawer->create<Render::DrawerPassDebug>();
+		m_render_debug->draw_flags(0);
     }
     
     bool run(double dt)
@@ -205,6 +225,7 @@ private:
 	Square::Shared<Square::Scene::Actor>       m_light;
 	Square::Shared<Square::Scene::Level>	   m_level;
     Square::Shared<Square::Render::Drawer>     m_drawer;
+	Square::Shared<Square::Render::DrawerPassDebug> m_render_debug;
 };
 
 static Square::Shell::ParserCommands s_ShellCommands
