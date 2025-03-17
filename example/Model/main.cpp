@@ -91,6 +91,7 @@ public:
         const auto& gltf_model = std::get<GLTF::GLTF>(loaded_model);
         std::unordered_map<std::string, std::string> mesh_name_files;
         std::vector<std::string> mesh_names;
+        std::vector<Square::Geometry::OBoundingBox> mesh_obbs;
         // Get meshes
         size_t mesh_id = 0;
         for (const auto& mesh : gltf_model.meshes)
@@ -208,6 +209,13 @@ public:
                 // Next primitive
                 ++primitive_id;
             }
+            // Compute obb just 1 time
+            {
+                const unsigned char* points = reinterpret_cast<const unsigned char*>( context_mesh.data() );
+                const size_t vertex_size = sizeof(Render::Layout::Position3DNormalTangetBinomialUV);
+                const size_t position_offset = offsetof(Render::Layout::Position3DNormalTangetBinomialUV, m_position);
+                mesh_obbs.push_back(Geometry::obounding_box_from_points(points, position_offset, vertex_size, context_mesh.size()));
+            }
             // Serialize
             std::vector<unsigned char> buffer;
             std::string sm3d_mesh_filename = m_output_model_name + "_mesh" + std::to_string(mesh_id);
@@ -278,8 +286,7 @@ public:
                             size_t mesh_id = node.content.value().m_id;
                             actor->component<StaticMesh>()->m_mesh = context().resource<Resource::Mesh>(mesh_names[mesh_id]);
                             actor->component<StaticMesh>()->m_material = context().resource<Resource::Material>("default");
-                            if (!actor->component<StaticMesh>()->build_local_obounding_box())
-                                context().logger()->warning("Faild to compute the OBB: " + mesh_names[mesh_id]);
+                            actor->component<StaticMesh>()->set_obounding_box(mesh_obbs[mesh_id]);
                         }
                         break;
                         case GLTF::Node::NodeContentType::NT_CAMERA:
