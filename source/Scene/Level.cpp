@@ -127,6 +127,14 @@ namespace Scene
 		return new_actor;
 	}
 	
+	void Level::visit(const std::function<bool(Shared<Actor>)>& callback)
+	{
+		for (auto actor : m_actors)
+		{
+			actor->visit(callback);
+		}
+	}
+
 	//remove an actor
 	bool Level::remove(Shared<Actor> actor)
 	{
@@ -169,6 +177,7 @@ namespace Scene
 		//return
 		return actor;
 	}
+
 	const ActorList& Level::actors() const
 	{
 		return m_actors;
@@ -287,7 +296,7 @@ namespace Scene
 	{
 		for (auto component : actor->components())
 		{
-			on_add_a_component(actor, component);
+			on_add_a_component(actor, component.second);
 		}
 	}
 	//remove an actor
@@ -295,7 +304,7 @@ namespace Scene
 	{
 		for (auto component : actor->components())
 		{
-			on_remove_a_component(actor, component);
+			on_remove_a_component(actor, component.second);
 		}
 	}
 

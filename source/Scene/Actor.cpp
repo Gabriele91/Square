@@ -82,9 +82,9 @@ namespace Scene
             for(auto component : m_components)
             {
                 //serialize name
-                archive % component->object_name();
+                archive % component.second->object_name();
                 //serialize component
-                component->serialize(archive);
+                component.second->serialize(archive);
             }
         }
         //serialize childs
@@ -109,10 +109,10 @@ namespace Scene
          {
              Data::JsonValue json_component = Data::JsonObject();
              //serialize component name
-             json_component["name"] = component->object_name();
+             json_component["name"] = component.second->object_name();
              //serialize component data 
              Data::Json json_component_data = Data::JsonObject();
-             component->serialize_json(json_component_data);
+             component.second->serialize_json(json_component_data);
              json_component["data"] = std::move(json_component_data);
              // add component
              json_components.emplace_back(std::move(json_component));
@@ -207,6 +207,17 @@ namespace Scene
             }
         }
     }
+
+    void Actor::visit(const std::function<bool(Shared<Actor>)>& callback)
+    {
+        if (callback(shared_from_this()))
+        {
+            for (auto child : childs())
+            {
+                child->visit(callback);
+            }
+        }
+    }
     
     //add a child
     void Actor::add(Shared<Actor> child)
@@ -226,7 +237,7 @@ namespace Scene
         //Remove
         component->remove_from_parent();
         //Add
-        m_components.push_back(component);
+        m_components.insert({ component->object_id(), component });
         //submit
         component->submit_add(shared_from_this());
 		//send event to level
@@ -237,6 +248,7 @@ namespace Scene
     //remove a child
     void Actor::remove(Shared<Actor> child)
     {
+        if (child)
         if(auto parent = child->m_parent.lock(); parent.get() == this)
         {
             //remove ref to parent
@@ -254,12 +266,13 @@ namespace Scene
     }
     void Actor::remove(Shared<Component> component)
     {
+        if (!component) return;
         //Is your own
         if(component->actor().lock().get() != this) return;
 		//find 
-		auto it = std::find(m_components.begin(), m_components.end(), component);
+		auto component_it = m_components.find(component->object_id());
         //remove
-		if (it != m_components.end())
+		if (component_it != m_components.end() && component_it->second == component)
 		{
 			//event
 			component->submit_remove();
@@ -267,7 +280,7 @@ namespace Scene
 			if (auto shared_level = level().lock())
 				shared_level->on_add_a_component(shared_from_this(), component);
 			//remove
-			m_components.erase(it);
+			m_components.erase(component_it);
 		}
     }
     void Actor::remove_from_parent()
@@ -306,7 +319,10 @@ namespace Scene
     }
     bool Actor::contains(Shared<Component> component) const
     {
-        return  std::find(m_components.begin(), m_components.end(), component) != m_components.end();
+        if (!component) return false;
+        auto component_it = m_components.find(component->object_id());
+        if (component_it == m_components.end()) return false;
+        return  component_it->second == component;
     }
 
 	Shared<Component> Actor::component(const std::string& name)
@@ -315,13 +331,10 @@ namespace Scene
 	}
 	Shared<Component> Actor::component(uint64 id)
 	{
-		for (auto& component : m_components)
-		{
-			if (component->object_id() == id)
-			{
-				return component;
-			}
-		}
+        if(auto component_it = m_components.find(id);  component_it != m_components.end())
+        {
+            return component_it->second;
+        }
 		//create
 		Shared<Component> new_component = StaticPointerCast<Component>(context().create(id));
 		//test
@@ -334,7 +347,7 @@ namespace Scene
 		//return
 		return new_component;
 	}
-	const ComponentList& Actor::components() const
+	const ComponentMap& Actor::components() const
 	{
 		return m_components;
 	}
@@ -356,7 +369,9 @@ namespace Scene
     Shared<Actor> Actor::child(const std::string& name)
     {
         //search
-        for(auto child : m_childs) if(child->name() == name) return child;
+        for(auto child : m_childs) 
+            if(child->name() == name) 
+                return child;
         //create
         auto actor = MakeShared<Actor>(context(), name);
         //add
@@ -382,7 +397,7 @@ namespace Scene
         //send
         for(auto& component : m_components)
         {
-            component->submit_message(msg);
+            component.second->submit_message(msg);
         }
         //brodcast
         if(brodcast) for(auto& child : m_childs)
@@ -551,7 +566,8 @@ namespace Scene
     void Actor::send_dirty()
     {
         //to components
-        for(auto component : m_components) component->on_transform();
+        for(auto component : m_components) 
+            component.second->on_transform();
         //to childs
         for (auto child : m_childs) child->set_dirty();
     }
