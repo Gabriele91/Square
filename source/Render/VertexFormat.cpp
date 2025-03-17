@@ -72,6 +72,25 @@ namespace Layout
         vertex_list().push_back({ info, attrs, type, vertex_size });
         return true;
     }
+
+    std::optional<AttributeList> Collection::attributes_by_type (unsigned long type)
+    {
+        auto it = std::find_if(vertex_list().begin(), vertex_list().end(), [type](const VertexItem& element) {
+            return element.m_type == type;
+        });
+        if (it == vertex_list().end()) return {};
+        return it->m_attributes;
+    }
+
+    size_t Collection::size_by_type(unsigned long type)
+    {
+        auto it = std::find_if(vertex_list().begin(), vertex_list().end(), [type](const VertexItem& element) {
+            return element.m_type == type;
+        });
+        if (it == vertex_list().end()) return 0;
+        return it->m_size;
+    }
+    
     //index of layout vector
 	Shared< Render::InputLayout > Collection::index_by_type(Render::Context* render, unsigned long type)
     {

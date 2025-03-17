@@ -197,29 +197,53 @@ namespace Scene
 	}
 
 	// build bbox
-	bool StaticMesh::build_local_obounding_box()
+	bool StaticMesh::build_local_obounding_box(bool from_triangles)
 	{
 		if(m_mesh)
 		if(auto render = context().render())
 		if(auto vbuffer = m_mesh->vertex_buffer())
 		if(auto gpuvertex = context().render()->copy_buffer_VBO(vbuffer.get()); gpuvertex.size())
 		{
-			//offset of position:
-			size_t vertex_size = sizeof(Render::Layout::Position3DNormalTangetBinomialUV);
-			size_t offest_position = offsetof(Render::Layout::Position3DNormalTangetBinomialUV, m_position);
-			size_t n_points = render->get_size_VBO(vbuffer.get()) / vertex_size;
-			//cube as obb
-			m_obb_local = Geometry::obounding_box_from_sequenzial_triangles
-			(
-				  gpuvertex.data()
-				, offest_position
-				, vertex_size
-				, n_points
-			);
-			// Ok
-			return m_obb_local.valid();
+			const unsigned int mesh_type = m_mesh->layout_type();
+			// Vertex size
+			size_t vertex_size = Render::Layout::Collection::size_by_type(m_mesh->layout_type());
+			// If 0 
+			if (!vertex_size) return false;
+			// Position offset
+			auto attributes = Render::Layout::Collection::attributes_by_type(m_mesh->layout_type());
+			// Test
+			if (!attributes.has_value()) return false;
+			// Looking for position
+			for (auto& attribute : *attributes)
+			{
+				if (attribute.m_attribute == Render::AttributeType::ATT_POSITION)
+				if (attribute.m_strip == Render::AttributeStripType::AST_FLOAT3)
+				{
+					size_t offest_position = attribute.m_offset;
+					size_t n_points = render->get_size_VBO(vbuffer.get()) / vertex_size;
+					//cube as obb
+					m_obb_local = Geometry::obounding_box_from_points
+					(
+						 gpuvertex.data()
+						, offest_position
+						, vertex_size
+						, n_points
+					);
+					// Set OBB as dirty
+					m_obb_dirty = true;
+					// Return
+					return m_obb_local.valid();
+				}
+			}
 		}
 		return false;
 	}
+
+	void StaticMesh::set_obounding_box(const Square::Geometry::OBoundingBox& obb)
+	{
+		m_obb_dirty = true;
+		m_obb_local = obb;
+	}
+
 }
 }

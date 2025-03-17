@@ -32,6 +32,10 @@ namespace Resource
 	Mesh::Mesh(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_mesh(context) { load(path); }
 
 	//info
+	unsigned int Mesh::layout_type() const
+	{
+		return m_mesh.layout_type();
+	}
 	Shared<Render::InputLayout> Mesh::layout() const
 	{
 		return m_mesh.layout();
