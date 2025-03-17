@@ -276,7 +276,6 @@ namespace Render
                                );
                 }
             }
-#if _DEBUG
             // DEBUG
             if (bool(draw_types & DrawerPassType::RPT_DEBUG))
             {
@@ -295,7 +294,6 @@ namespace Render
                         );
                 }
             }
-#endif
         }
     }
     

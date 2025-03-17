@@ -27,7 +27,7 @@ namespace Render
 	{}
 
 	//init
-	Mesh::Mesh(Square::Context& context) : Object(context), BaseInheritableSharedObject(context.allocator()) {}
+	Mesh::Mesh(Square::Context& context) : Object(context), BaseInheritableSharedObject(context.allocator()), m_layout_type(0) {}
 	Mesh::~Mesh() 
 	{
 	}
@@ -238,6 +238,10 @@ namespace Render
 	}
 
 	//data info
+	unsigned int Mesh::layout_type() const
+	{
+		return m_layout_type;
+	}
 	Shared<Render::InputLayout> Mesh::layout() const
 	{
 		return m_layout;
@@ -291,7 +295,10 @@ namespace Render
 	bool Mesh::build_vertex_layout(Layout::InputLayoutId type)
 	{
 		if (auto render = context().render())
+		{
 			m_layout = Layout::Collection::index_by_type(render, type);
+			if(m_layout) m_layout_type = type;
+		}
 		return m_layout != nullptr;
 	}
 

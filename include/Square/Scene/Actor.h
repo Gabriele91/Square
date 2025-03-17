@@ -52,6 +52,9 @@ namespace Scene
 		Actor(Context& context, const std::string& name);
         virtual ~Actor();
         
+        // Visit
+        void visit(const std::function<bool(Shared<Actor>)>& callback);
+
         //add a child
         void add(Shared<Actor> child);
         void add(Shared<Component> component);
@@ -71,14 +74,7 @@ namespace Scene
         template< class T >
         bool contains() const
         {
-            for (auto& component : m_components)
-            {
-                if (component->object_id() == T::static_object_id())
-                {
-                    return true;
-                }
-            }
-            return false;
+            return m_components.find(T::static_object_id()) != m_components.end();
         }
 		
 		//get by type
@@ -89,7 +85,7 @@ namespace Scene
 		}
 		Shared<Component> component(const std::string& name);
 		Shared<Component> component(uint64 id);		
-		const ComponentList& components() const;
+		const ComponentMap& components() const;
         
         //get child
         Shared<Actor> child();
@@ -175,7 +171,7 @@ namespace Scene
         Weak<Actor> m_parent;
         //child list
         ActorList     m_childs;
-		ComponentList m_components;
+        ComponentMap  m_components;
     };
 }
 }
