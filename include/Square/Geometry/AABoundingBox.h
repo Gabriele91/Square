@@ -65,6 +65,11 @@ namespace Geometry
 
 		Vec3 closest_point(const Vec3& point) const;
 
+		/*
+		* AABB described as transformation matrix
+		*/
+		Mat4 to_matrix() const;
+
 	protected:
 
 		Vec3 m_min;

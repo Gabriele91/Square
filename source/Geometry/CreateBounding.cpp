@@ -132,6 +132,8 @@ namespace Geometry
 
 	OBoundingBox obounding_box_from_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points)
 	{
+		if (!n_points) return OBoundingBox();
+
 		// Calculate mean point
 		Vec3 mean = OBBAux::calculate_mean(points, pos_offset, vertex_size, n_points);
 
