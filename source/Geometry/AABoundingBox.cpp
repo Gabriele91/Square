@@ -153,5 +153,10 @@ namespace Geometry
 		return result;
 
 	}
+
+	Mat4 AABoundingBox::to_matrix() const
+	{
+		return translate(Mat4(1.0f), m_min) * scale(Mat4(1.0f), m_max - m_min);
+	}
 }
 }
