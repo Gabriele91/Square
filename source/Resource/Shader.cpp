@@ -42,14 +42,45 @@ namespace Resource
     }
 
 	//Contructor
-	Shader::Shader(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
+	Shader::Shader(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_glsl_compatible_settings(context)
 	{
 	}
-	Shader::Shader(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
+	Shader::Shader(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_glsl_compatible_settings(context)
 	{
 		load(path);
 	}
 	
+	// Get GLSL settings
+	Shader::GLSLCompatibleSettings::GLSLCompatibleSettings(Context& context)
+		: m_is_glsl_backend(false)
+		, m_shader_version(410)
+		, m_add_GL_ARB_shading_language_420pack(false)
+		, m_add_GL_EXT_control_flow_attributes(false)
+	{
+		if (auto render = context.render(); 
+			render
+			&& render->get_render_driver_info().m_render_driver == Square::Render::DR_OPENGL 
+			&& render->get_render_driver_info().m_shader_language == "GLSL")
+		{
+			m_is_glsl_backend = true;
+			m_shader_version = render->get_render_driver_info().m_shader_version;
+			auto& ext_list = render->get_render_driver_info().m_shader_exts;
+			// test GL_ARB_shading_language_420pack
+			m_add_GL_ARB_shading_language_420pack = std::find_if(ext_list.begin(), ext_list.end(),
+																[](const std::string& ext) -> bool
+																{
+																	return ext == "GL_ARB_shading_language_420pack";
+																}) != ext_list.end();
+			// test GL_EXT_control_flow_attributes
+			m_add_GL_EXT_control_flow_attributes = std::find_if(ext_list.begin(), ext_list.end(), 
+																[](const std::string& ext) -> bool
+																{ 
+																	return ext == "GL_EXT_control_flow_attributes"; 
+																}) != ext_list.end();
+		}
+	}
+
+
 	//Destructor
 	Shader::~Shader()
 	{
@@ -127,7 +158,7 @@ namespace Resource
 	{	
 		//int shader version
 		source.m_hlsl_target = false;
-		source.m_version = 410;
+		source.m_version = m_glsl_compatible_settings.m_shader_version;
 		source.m_texture_target = false;
 		//OpenGL or DirectX
 		if (auto render = context().render())
@@ -356,7 +387,8 @@ namespace Resource
 		glsl_config.m_rename_position_in_position0 = true;
 		glsl_config.m_fixup_clipspace = true;
 		glsl_config.m_flip_vert_y = source.m_texture_target; //flip y if is a texture target
-		glsl_config.m_enable_420pack_extension = false;
+		glsl_config.m_enable_420pack_extension =  glsl_config.m_version < 420 // Add it if and only if the version is less then 420
+											   && m_glsl_compatible_settings.m_add_GL_ARB_shading_language_420pack;
         glsl_config.m_force_to_remove_query_texture = true;
 		//errors
 		HLSL2ALL::TextureSamplerList shader_glsl_tslist;
@@ -383,6 +415,16 @@ namespace Resource
 			}
 			//remove #version
 			shader_extract_glsl_version_line(shader_sources[type], shader_headers[type]);
+			//add GL_EXT_control_flow_attributes
+			if (m_glsl_compatible_settings.m_add_GL_EXT_control_flow_attributes)
+			{
+				shader_headers[type] += "#extension GL_EXT_control_flow_attributes : enable\n";
+			}
+			//add GL_ARB_shading_language_420pack
+			if (glsl_config.m_enable_420pack_extension)
+			{
+				shader_headers[type] += "#extension GL_ARB_shading_language_420pack : enable\n";
+			}
 			//add inf
 			shader_info.push_back
 			(Render::ShaderSourceInformation

@@ -42,8 +42,8 @@ namespace Square
 	{
 
 		// Array size
-		CBAlignedWithPadding() = default;
-		CBAlignedWithPadding(const T& value) : m_value(value) {}
+		CBAlignedWithPadding() { std::memset(m_pad, 0, struct_padding); }
+		CBAlignedWithPadding(const T& value) : m_value(value) { std::memset(m_pad, 0, struct_padding); }
 
 		// Asign operation
 		T& operator = (const T& value) { return (m_value = value); }

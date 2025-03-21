@@ -702,7 +702,117 @@ namespace Render
     ////////////////////
 	//     RENDER     //
 	////////////////////
-
+	static std::string compiler_shader_error_log(unsigned int shader);
+	static bool make_test_to_get_shader_ext_feacture(const std::string& ext)
+	{
+		// Test shader
+		std::string test_shader
+		{
+			"#extension " + ext + " : enable\n"
+			"void main(){}"
+		};
+		const char* const test_shader_cstr = test_shader.c_str();
+		//alloc
+		const GLuint shader = glCreateShader(GL_VERTEX_SHADER);
+		// Test
+		if (!shader) return false;
+		// Test flag
+		GLint is_compiled = GL_FALSE;
+		GLint is_compatible = false;
+		// Compile
+		glShaderSource(shader, 1, &test_shader_cstr, NULL);
+		glCompileShader(shader);
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
+		// First test, compiled?
+		if (is_compiled)
+		{
+			auto errors = compiler_shader_error_log(shader);
+			if (errors.empty())
+			{
+				is_compatible = true;
+			}
+			else if (errors.find(ext) != std::string::npos)
+			{
+				is_compatible = false;
+			}
+			// W/O GL
+			else if (ext.size() > 3 && errors.find(&ext[3]) != std::string::npos)
+			{
+				is_compatible = false;
+			}
+			// W/O GL_XXX_
+			else if (ext.size() > 6 && errors.find(&ext[6]) != std::string::npos)
+			{
+				is_compatible = false;
+			}
+			else
+			{
+				is_compatible = true;
+			}
+		}
+		//
+		glDeleteShader(shader);
+		// Test
+		return is_compatible;
+	}
+	static std::vector<std::string> make_test_all_exts(Logger* logger)
+	{
+		static std::string extensions[] = 
+		{
+			"GL_EXT_device_group",
+			"GL_EXT_multiview",
+			"GL_EXT_post_depth_coverage",
+			"GL_EXT_control_flow_attributes",
+			"GL_EXT_nonuniform_qualifier",
+			"GL_EXT_samplerless_texture_functions",
+			"GL_EXT_scalar_block_layout",
+			"GL_EXT_fragment_invocation_density",
+			"GL_EXT_buffer_reference",
+			"GL_EXT_buffer_reference2",
+			"GL_EXT_buffer_reference_uvec2",
+			"GL_EXT_demote_to_helper_invocation",
+			"GL_EXT_shader_realtime_clock",
+			"GL_EXT_debug_printf",
+			"GL_EXT_ray_tracing",
+			"GL_EXT_ray_query",
+			"GL_EXT_ray_flags_primitive_culling",
+			"GL_EXT_ray_cull_mask",
+			"GL_EXT_blend_func_extended",
+			"GL_EXT_shader_implicit_conversions",
+			"GL_EXT_fragment_shading_rate",
+			"GL_EXT_shader_image_int64",
+			"GL_EXT_null_initializer",
+			"GL_EXT_shared_memory_block",
+			"GL_EXT_subgroup_uniform_control_flow",
+			"GL_EXT_spirv_intrinsics",
+			"GL_EXT_fragment_shader_barycentric",
+			"GL_EXT_mesh_shader",
+			"GL_EXT_opacity_micromap",
+			"GL_EXT_shader_quad_control",
+			"GL_EXT_draw_instanced",
+			"GL_EXT_texture_array",
+			"GL_EXT_maximal_reconvergence",
+			"GL_EXT_expect_assume",
+			"GL_EXT_control_flow_attributes2",
+			"GL_EXT_spec_constant_composites",
+			"GL_EXT_texture_offset_non_const",
+			"GL_EXT_nontemporal_keyword",
+			"GL_ARB_shading_language_420pack"
+		};
+		std::vector<std::string> r_exts;
+		for (const auto& ext : extensions)
+		{
+			if (make_test_to_get_shader_ext_feacture(ext))
+			{
+				r_exts.emplace_back(ext);
+			}
+			else if (logger)
+			{
+				logger->info("Render driver: " + ext + " does not supported");
+			}
+		}
+		return r_exts;
+	}
     ////////////////////
 	// Get Shader Version
     static int make_test_to_get_shader_version(Logger* logger)
@@ -786,6 +896,8 @@ namespace Render
 		context->s_render_driver_info.m_shader_language = "GLSL";
         //shader version
 		context->s_render_driver_info.m_shader_version  = make_test_to_get_shader_version(context->logger());
+		//shader add ests
+		context->s_render_driver_info.m_shader_exts = make_test_all_exts(context->logger());
     }
         
 	bool ContextGL4::init(Video::DeviceResources* resource)
@@ -872,7 +984,7 @@ namespace Render
 		return s_render_driver_info.m_render_driver;
 	}
         
-    RenderDriverInfo ContextGL4::get_render_driver_info()
+    const RenderDriverInfo& ContextGL4::get_render_driver_info() const
     {
         return s_render_driver_info;
     }
