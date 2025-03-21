@@ -449,7 +449,7 @@ namespace Render
 		ContextDX11(Allocator* allocator, Logger* logger) : Context(allocator, logger) {}
 
 		virtual RenderDriver get_render_driver() override;
-		virtual RenderDriverInfo get_render_driver_info() override;
+		virtual const RenderDriverInfo& get_render_driver_info() const override;
 		virtual void print_info() override;
 
 		virtual bool init(Video::DeviceResources* resource) override;

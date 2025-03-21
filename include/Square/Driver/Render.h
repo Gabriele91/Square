@@ -738,12 +738,13 @@ namespace Render
 
     struct RenderDriverInfo
     {
-        RenderDriver  m_render_driver;
-        std::string   m_name;
-        int           m_major_version;
-        int           m_minor_version;
-        std::string   m_shader_language;
-        int           m_shader_version;
+        RenderDriver             m_render_driver;
+        std::string              m_name;
+        int                      m_major_version;
+        int                      m_minor_version;
+        std::string              m_shader_language;
+        int                      m_shader_version;
+		std::vector<std::string> m_shader_exts;
     };
 	/////////////////////////////////
 	//Uniform global //legacy
@@ -917,7 +918,7 @@ namespace Render
 		Context(Allocator* allocator, Logger* logger) : m_allocator(allocator), m_logger(logger) {}
 
 		virtual RenderDriver get_render_driver() = 0;
-		virtual RenderDriverInfo get_render_driver_info() = 0;
+		virtual const RenderDriverInfo& get_render_driver_info() const = 0;
 		virtual void print_info() = 0;
 
 		virtual bool init(Video::DeviceResources* resource) = 0;

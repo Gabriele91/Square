@@ -688,7 +688,7 @@ namespace Render
 		return s_render_driver_info.m_render_driver;
 	}
         
-    RenderDriverInfo ContextDX11::get_render_driver_info()
+    const RenderDriverInfo& ContextDX11::get_render_driver_info() const
     {
         return s_render_driver_info;
     }

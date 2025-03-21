@@ -79,7 +79,18 @@ namespace Resource
 		UnifomMap	    m_uniform_map;
 		CBufferMap	    m_cbuffer_map;
 
-		//help to compile
+		// GLSL Compatible
+		struct GLSLCompatibleSettings
+		{
+			bool m_is_glsl_backend;
+			int  m_shader_version;
+			bool m_add_GL_ARB_shading_language_420pack;
+			bool m_add_GL_EXT_control_flow_attributes;
+			GLSLCompatibleSettings(Context& context);
+		};
+		GLSLCompatibleSettings m_glsl_compatible_settings;
+
+		// help to compile
 		struct PostprocessOutput
 		{
 			size_t	    m_version;
