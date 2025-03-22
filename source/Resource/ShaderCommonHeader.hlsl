@@ -133,38 +133,37 @@ inline Vec4 negW(in Vec4 pos)
 }
 
 ////////////////////////////////////////////////////
-Vec2 _SQUARE_textureSize2D(in Texture2D tex2D, uint Level)
+Vec2 _SQUARE_textureSize2D(Texture2D _tex2D, uint level)
 {
 	uint  param;
 	uint2 ret;
-	tex2D.GetDimensions(Level, ret.x, ret.y, param);
+	_tex2D.GetDimensions(level, ret.x, ret.y, param);
 	return Vec2(ret.x, ret.y);
 }
 #define textureSize2D(name,lod) _SQUARE_textureSize2D(name, lod)
 
-Vec3 _SQUARE_textureSize2DArray(in Texture2DArray tex2DArray, uint Level)
+Vec3 _SQUARE_textureSize2DArray(in Texture2DArray _tex2DArray, uint level)
 {
-	uint param;
-	Vec3 ret;
-	tex2DArray.GetDimensions(Level, ret.x, ret.y, ret.z, param);
-	return ret;
+    uint width, height, elements, num_mip_levels;
+	_tex2DArray.GetDimensions(level, width, height, elements, num_mip_levels);
+	return Vec3(width, height, elements);
 }
 #define textureSize2DArray(name, lod) _SQUARE_textureSize2DArray(name, lod)
 
-Vec3 _SQUARE_textureSize3D(in Texture3D tex3D, uint Level)
+Vec3 _SQUARE_textureSize3D(Texture3D _tex3D, uint level)
 {
 	uint  param;
 	uint3 ret;
-	tex3D.GetDimensions(Level, ret.x, ret.y, ret.z, param);
+	_tex3D.GetDimensions(level, ret.x, ret.y, ret.z, param);
 	return Vec3(ret.x, ret.y, ret.z);
 }
 #define textureSize3D(name,lod) _SQUARE_textureSize3D(name, lod)
 
-Vec2 _SQUARE_textureSizeCube(in TextureCube texCUBE, uint Level)
+Vec2 _SQUARE_textureSizeCube(TextureCube _texCUBE, uint level)
 {
 	uint  param;
 	uint2 ret;
-	texCUBE.GetDimensions(Level, ret.x, ret.y, param);
+	_texCUBE.GetDimensions(level, ret.x, ret.y, param);
 	return Vec2(ret.x, ret.y);
 }
 #define textureSizeCube(name,lod) _SQUARE_textureSizeCube(name, lod)
