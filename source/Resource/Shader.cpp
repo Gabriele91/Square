@@ -237,7 +237,7 @@ namespace Resource
 		spirv_info.m_desktop = true;
 		spirv_info.m_reverse_mul = false;
 		spirv_info.m_vulkan = true;
-		spirv_info.m_upgrade_texture_to_samples = false;
+		spirv_info.m_upgrade_texture_to_samples = true;
 		//SPIRV-Cross currently does not support flattening structs recursively.
 		spirv_info.m_samplerarray_to_flat = false;
 		//build
