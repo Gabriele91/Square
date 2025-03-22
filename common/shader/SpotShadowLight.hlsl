@@ -55,9 +55,11 @@ float spot_light_compute_shadow(in Vec4 fposition, const float bias)
 	//(-1,1)->(0,1)
 	proj_coords.xy = proj_coords.xy * 0.5 + 0.5;
 	//clamp
+#if 0 // defined in the Render\ShadowBuffer.cpp TBO description
 	if (proj_coords.x <= 0.0f || proj_coords.x >= 1.0) return 1.0;
 	if (proj_coords.y <= 0.0f || proj_coords.y >= 1.0) return 1.0;
 	if (proj_coords.z <= 0.0f || proj_coords.z >= 1.0) return 1.0;
+#endif
 	// DirectX y is inv
 	proj_coords = invY(proj_coords);
 	// return

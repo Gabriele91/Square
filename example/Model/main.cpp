@@ -49,13 +49,19 @@ public:
     OutputFormat m_output_model_format;
     size_t m_shadow_resoluction;
 
-    static const double blender_candela_to_power(const double intensity)
+    struct Consts
     {
         // Candela to Power, blender: 
         // LUMENS_PER_WATT = 683 (standard value for monochromatic 555nm light)
-        // watts = candela * (4 * PI) / LUMENS_PER_WATT
-        const double LUMENS_PER_WATT = 683;
-        return (intensity * Square::Constants::pi<double>() * 4) / LUMENS_PER_WATT;
+        static constexpr double LUMENS_PER_WATT = 683;
+        // Inner light factors
+        static constexpr double SOFT_SPOTLIGHT_FACTOR = 0.1;
+        static constexpr double SOFT_POINTLIGHT_FACTOR = 0.5;
+    };
+
+    static const double blender_candela_to_power(const double intensity)
+    {
+        return (intensity * Square::Constants::pi<double>() * 4) / Consts::LUMENS_PER_WATT;
     }
 
     ModelImporter(const std::string& input_model_path, 
@@ -341,13 +347,13 @@ public:
                                     if (gltf_light.m_range.has_value())
                                     {
                                         actor->component<SpotLight>()->radius(gltf_light.m_range.value());
-                                        actor->component<SpotLight>()->inside_radius(gltf_light.m_range.value());
+                                        actor->component<SpotLight>()->inside_radius(gltf_light.m_range.value() * Consts::SOFT_SPOTLIGHT_FACTOR);
                                     }
                                     else
                                     {
                                         double power = blender_candela_to_power(gltf_light.m_intensity);
                                         actor->component<SpotLight>()->radius(power);
-                                        actor->component<SpotLight>()->inside_radius(power * 0.1);
+                                        actor->component<SpotLight>()->inside_radius(power * Consts::SOFT_SPOTLIGHT_FACTOR);
                                     }
                                     // Cut off
                                     if (gltf_light.m_spotfields.has_value())
@@ -367,7 +373,7 @@ public:
                                     if (gltf_light.m_range.has_value())
                                     {
                                         actor->component<PointLight>()->radius(gltf_light.m_range.value());
-                                        actor->component<PointLight>()->inside_radius(gltf_light.m_range.value()/2);
+                                        actor->component<PointLight>()->inside_radius(gltf_light.m_range.value() * Consts::SOFT_POINTLIGHT_FACTOR);
                                     }
                                     else
                                     {

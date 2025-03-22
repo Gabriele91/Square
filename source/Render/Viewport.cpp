@@ -17,8 +17,8 @@ namespace Render
         ProjectionInformation projection_info;
 
         // Base values
-        const float tan_half_val = 1.0 / projection[1][1];
-        const float tan_half_val_time_aspect = 1.0 / projection[0][0];
+        const float tan_half_val = 1.0f / projection[1][1];
+        const float tan_half_val_time_aspect = 1.0f / projection[0][0];
 
         // FOV
         projection_info.fov = atan(tan_half_val) * 2.0f;

@@ -60,9 +60,9 @@ Vec4 mul_point_light_view_projection(in Vec4 position, uint cube_id)
 #define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 4
 struct DirectionShadowCameraStruct
 {
-	Mat4  m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
-	Mat4  m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
-	float m_depths[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+	Mat4 m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+	Mat4 m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+	Vec3 m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 };
 
 cbuffer DirectionShadowCamera

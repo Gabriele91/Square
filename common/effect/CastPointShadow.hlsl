@@ -21,7 +21,7 @@ struct VertexShaderOutput
 };
 
 //draw
-VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
+VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input)
 {
 	VertexShaderOutput output;
 	Vec4 position = Vec4(input.m_position, 1.0);
@@ -38,6 +38,7 @@ struct GeometryShaderOutput
 	uint m_RTIndex        : SV_RenderTargetArrayIndex;
 };
 
+#if 1
 [maxvertexcount(18)]
 void geometry(triangle VertexShaderOutput input[3]
 			, inout TriangleStream<GeometryShaderOutput> output)
@@ -62,6 +63,29 @@ void geometry(triangle VertexShaderOutput input[3]
 		output.RestartStrip();
 	}
 }
+#else
+[maxvertexcount(3)]
+[instance(6)]
+void geometry(triangle VertexShaderOutput input[3]
+			, inout TriangleStream<GeometryShaderOutput> output
+			, uint id : SV_GSInstanceID)
+{
+	GeometryShaderOutput outvertex = (GeometryShaderOutput)0;
+	// set cubeface
+	outvertex.m_RTIndex = id;
+	// for each triangle's vertices
+	[unroll]
+	for (int i = 0; i < 3; ++i)
+	{
+		outvertex.m_world_position = input[i].m_position;
+		outvertex.m_position = mul_point_light_view_projection(input[i].m_position, id);
+		outvertex.m_uv = input[i].m_uv;
+		output.Append(outvertex);
+	}
+	//end primitive
+	output.RestartStrip();
+}
+#endif
 
 struct FragmentShaderinput
 {
@@ -74,7 +98,7 @@ struct FragmentShaderinput
 };
 
 #if 1
-float fragment(FragmentShaderinput input) : SV_Depth
+float fragment(in FragmentShaderinput input) : SV_Depth
 {
 	//diffuse/albedo
 	Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);

@@ -27,10 +27,10 @@ R"HLSLCODE(
 
 #ifdef GLSL_BACKEND
 	#define shadow2D(name,pos) name.Sample(sempler_ ## name,invY(pos))
-	#define drew2D(name,pos) name.Sample(sempler_ ## name,invY(pos))	
+	#define draw2D(name,pos) name.Sample(sempler_ ## name,invY(pos))	
 
 	#define shadow2DArray(name,pos) name.Sample(sempler_ ## name,invY(pos))
-	#define drew2DArray(name,pos) name.Sample(sempler_ ## name,invY(pos))
+	#define draw2DArray(name,pos) name.Sample(sempler_ ## name,invY(pos))
 	
 	#define shadowCube(name,pos) name.Sample(sempler_ ## name,negY(pos))
 	#define drawCube(name,pos) name.Sample(sempler_ ## name,negY(pos))
@@ -40,10 +40,10 @@ R"HLSLCODE(
 	#define ONLY_HLSL( x )
 #else
 	#define shadow2D(name,pos) name.Sample(sempler_ ## name, pos)
-	#define drew2D(name,pos) name.Sample(sempler_ ## name, pos)
+	#define draw2D(name,pos) name.Sample(sempler_ ## name, pos)
 
 	#define shadow2DArray(name,pos) name.Sample(sempler_ ## name, pos)
-	#define drew2DArray(name,pos) name.Sample(sempler_ ## name, pos)
+	#define draw2DArray(name,pos) name.Sample(sempler_ ## name, pos)
 
 	#define shadowCube(name,pos) name.Sample(sempler_ ## name, pos)
 	#define drawCube(name,pos) name.Sample(sempler_ ## name, pos)
@@ -133,7 +133,7 @@ inline Vec4 negW(in Vec4 pos)
 }
 
 ////////////////////////////////////////////////////
-Vec2 _SQUARE_textureSize2D(Texture2D tex2D, uint Level)
+Vec2 _SQUARE_textureSize2D(in Texture2D tex2D, uint Level)
 {
 	uint  param;
 	uint2 ret;
@@ -142,16 +142,16 @@ Vec2 _SQUARE_textureSize2D(Texture2D tex2D, uint Level)
 }
 #define textureSize2D(name,lod) _SQUARE_textureSize2D(name, lod)
 
-Vec3 _SQUARE_textureSize2DArray(Texture2DArray tex2DArray, uint Level)
+Vec3 _SQUARE_textureSize2DArray(in Texture2DArray tex2DArray, uint Level)
 {
-	float  param;
+	uint param;
 	Vec3 ret;
 	tex2DArray.GetDimensions(Level, ret.x, ret.y, ret.z, param);
 	return ret;
 }
 #define textureSize2DArray(name, lod) _SQUARE_textureSize2DArray(name, lod)
 
-Vec3 _SQUARE_textureSize3D(Texture3D tex3D, uint Level)
+Vec3 _SQUARE_textureSize3D(in Texture3D tex3D, uint Level)
 {
 	uint  param;
 	uint3 ret;
@@ -160,7 +160,7 @@ Vec3 _SQUARE_textureSize3D(Texture3D tex3D, uint Level)
 }
 #define textureSize3D(name,lod) _SQUARE_textureSize3D(name, lod)
 
-Vec2 _SQUARE_textureSizeCube(TextureCube texCUBE, uint Level)
+Vec2 _SQUARE_textureSizeCube(in TextureCube texCUBE, uint Level)
 {
 	uint  param;
 	uint2 ret;
