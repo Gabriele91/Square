@@ -56,14 +56,13 @@ namespace Render
 			};
 			Render::TextureGpuDataInformation gpu_data
 			{
-				//TMIN_NEAREST, 
-				TMIN_LINEAR,
-				//TMAG_NEAREST,
-				TMAG_LINEAR,
+				TMIN_NEAREST, 
+				TMAG_NEAREST,
 				//========
 				TEDGE_CLAMP,
 				TEDGE_CLAMP,
 				TEDGE_CLAMP,
+				//========
 				false,//no mipmap
 				1,	  //mipmap_min
 				1,    //mipmap_max

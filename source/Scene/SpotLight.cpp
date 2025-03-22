@@ -14,10 +14,15 @@
 #include "Square/Scene/SpotLight.h"
 #include "Square/Scene/Camera.h"
 
-#define SPOT_LIGHT_DIR Vec3(0.0,0.0,1.0)
-
 namespace Square
 {
+
+namespace Constants
+{
+	const Vec3 SPOT_LIGHT_DIR(0.0, 0.0, 1.0);
+	const float SPOT_LIGHT_CUT_OFF_FACTOR = 1.99f;
+}
+
 namespace Scene
 {
     //Add element to objects
@@ -95,7 +100,7 @@ namespace Scene
 		m_sphere.radius(this->Render::SpotLight::radius());
 		m_sphere.position({ 0,0,0 });
 		m_position = Vec3(0, 0, 0.0);
-		m_direction = SPOT_LIGHT_DIR;
+		m_direction = Constants::SPOT_LIGHT_DIR;
 	}
 
 	//change radius aka change geometry
@@ -123,7 +128,7 @@ namespace Scene
 	{
 		if (auto ptr_actor = actor().lock())
 		{
-			m_direction = to_mat3(ptr_actor->rotation(true)) * SPOT_LIGHT_DIR;
+			m_direction = to_mat3(ptr_actor->rotation(true)) * Constants::SPOT_LIGHT_DIR;
 			m_position = ptr_actor->position(true);
 			m_sphere.position(m_position);
 			m_view_is_dirty = true;
@@ -132,7 +137,7 @@ namespace Scene
 	}
 	void SpotLight::on_deattch()
 	{
-		m_direction = SPOT_LIGHT_DIR;
+		m_direction = Constants::SPOT_LIGHT_DIR;
 		m_position = Vec3(0, 0, 0.0);
 		m_sphere.position({ 0,0,0 });
 		m_view_is_dirty = true;
@@ -142,7 +147,7 @@ namespace Scene
 	{
 		if (auto ptr_actor = actor().lock())
 		{
-			m_direction = to_mat3(ptr_actor->rotation(true)) * SPOT_LIGHT_DIR;
+			m_direction = to_mat3(ptr_actor->rotation(true)) * Constants::SPOT_LIGHT_DIR;
 			m_position = ptr_actor->position(true);
 			m_sphere.position(m_position);
 			m_view_is_dirty = true;
@@ -265,7 +270,7 @@ namespace Scene
 				m_viewport.viewport({ 0,0,size.x,size.y });
 			}
 			//update frustum
-			m_viewport.perspective(m_outer_cut_off*1.99f, aspect, 0.1f, m_radius);
+			m_viewport.perspective(m_outer_cut_off * Constants::SPOT_LIGHT_CUT_OFF_FACTOR, aspect, 0.1f, m_radius);
 			//dirty
 			m_viewport_is_dirty = false;
 		}
