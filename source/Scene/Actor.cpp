@@ -655,6 +655,10 @@ namespace Scene
                 deserialize(in_archive);
                 return true;
             }
+            else
+            {
+                context().logger()->warning("Fail to read data file: " + path);
+            }
         }
         break;
         case ActorFormat::SQ_BIN_GZ:
@@ -665,6 +669,10 @@ namespace Scene
                 ArchiveBinRead in_archive(Object::context(), in_file_stream);
                 deserialize(in_archive);
                 return true;
+            }
+            else
+            {
+                context().logger()->warning("Fail to read data file: " + path);
             }
         }
         break;
@@ -677,6 +685,13 @@ namespace Scene
             {
                 deserialize_json(jin);
                 return true;
+            }
+            else
+            {
+                context().logger()->warnings(
+                { { "Fail to parse json: " + path },
+                    jin.errors()
+                });
             }
         }
         break;
@@ -691,6 +706,10 @@ namespace Scene
             {
                 return false;
             }
+            else
+            {
+                context().logger()->warning("Fail to read json: " + path);
+            }
             // Get string
             const char* json_cppstr_begin = (const char*)(bin_vector.data());
             const char* json_cppstr_end = (const char*)(bin_vector.data() + bin_vector.size());
@@ -700,6 +719,13 @@ namespace Scene
             {
                 deserialize_json(jin);
                 return true;
+            }
+            else
+            {
+                context().logger()->warnings(
+                { { "Fail to parse json: " + path },
+                    jin.errors()
+                });
             }
         }
         break;
