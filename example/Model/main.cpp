@@ -201,7 +201,7 @@ public:
                     // Update indices
                     if (context_mesh.size())
                     {
-                        for (auto& index : context_index)
+                        for (auto& index : indices)
                             index += context_mesh.size();
                     }
                     // Push in context_mesh

@@ -754,7 +754,7 @@ namespace GLTF
         static Material::PbrMetallicRoughness decode_pbr_metallic_roughness(const JsonObject& pbr)
         {
             Vec4 base_color_factor{ 0.0f };
-            if (pbr.find("metallicFactor") != pbr.end())
+            if (pbr.find("baseColorFactor") != pbr.end())
             {
                 auto& base_color = pbr.at("baseColorFactor").array({ 1.0,1.0,1.0,1.0 });
                 base_color_factor = Vec4(
