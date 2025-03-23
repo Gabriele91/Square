@@ -90,9 +90,11 @@ namespace Render
 
 		//get surfaces
 		const SubMeshList& sub_meshs() const;
+		size_t number_of_sub_meshs() const { return sub_meshs().size(); }
 
 		//draw all sub meshs
 		void draw(Render::Context& render) const;
+		void draw(Render::Context& render, size_t sub_mash_id) const;
 
 	protected:
 		//build help

@@ -441,6 +441,11 @@ namespace  Data
                 json_value["value"] = value.get<std::string>();
                 break;
 
+            case Square::VR_STD_VECTOR_STRING:
+                json_value["dtype"] = "STD_VECTOR_STRING";
+                json_value["value"] = serialize_vector(value.get<std::vector<std::string>>());
+                break;
+
             case Square::VR_RESOURCE:
                 json_value["dtype"] = "RESOURCE";
                 if (value.get<Shared<ResourceObject>>())
@@ -614,6 +619,25 @@ namespace  Data
             for (size_t i = 0; i < json_vec.array().size(); ++i)
             {
                 vec[i] = deserialize_mat4<V>(json_vec[i]);
+            }
+            return vec;
+        }
+
+        std::vector< std::string > deserialize_vector_string(const JsonValue& json_vec)
+        {
+            if (!json_vec.is_array())
+            {
+                throw std::runtime_error("deserialize_json: Invalid field type");
+            }
+            std::vector< std::string > vec;
+            vec.resize(json_vec.array().size());
+            for (size_t i = 0; i < json_vec.array().size(); ++i)
+            {
+                if (!json_vec[i].is_string())
+                {
+                    throw std::runtime_error("deserialize_json: Invalid field type");
+                }
+                vec[i] = json_vec[i].string();
             }
             return vec;
         }
@@ -893,6 +917,10 @@ namespace  Data
                     throw std::runtime_error("deserialize_json: Invalid field type");
                 }
                 value = json_value.string();
+            }
+            else if (dtype == "STD_VECTOR_STRING")
+            {
+                value = deserialize_vector_string(json_value);
             }
             else if (dtype == "RESOURCE") 
             {

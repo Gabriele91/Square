@@ -267,7 +267,10 @@ namespace Render
 	{
 		//test
 		if (!layout().get() || !vertex_buffer().get())
+		{
+			context().logger()->debug("Unable to draw mesh: " + std::to_string(size_t(this)));
 			return;
+		}
 		//bind vertex buffer
 		render.bind_VBO(vertex_buffer().get());
 		//draw elements or array
@@ -288,6 +291,39 @@ namespace Render
 			// Draw array
 			for (auto& sub_mesh : m_sub_meshs)
 				render.draw_arrays(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
+		}
+	}
+
+	//draw sub mesh
+	void Mesh::draw(Render::Context& render, size_t sub_mesh_id) const
+	{
+		//test
+		if (!layout().get() || !vertex_buffer().get() || m_sub_meshs.size() <= sub_mesh_id)
+		{
+			context().logger()->debug("Unable to draw mesh: " + std::to_string(size_t(this)) + ", submesh_id: " + std::to_string(sub_mesh_id));
+			return;
+		}
+		//bind vertex buffer
+		render.bind_VBO(vertex_buffer().get());
+		//draw elements or array
+		if (index_buffer().get())
+		{
+			// Bind index buffer
+			render.bind_IBO(index_buffer().get());
+			//bind input layout
+			render.bind_IL(layout().get());
+			// Draw element
+			render.draw_elements(m_sub_meshs[sub_mesh_id].m_draw_type, m_sub_meshs[sub_mesh_id].m_index_offset, m_sub_meshs[sub_mesh_id].m_index_count);
+		}
+		else
+		{
+			//bind input layout
+			render.bind_IL(layout().get());
+			// Draw array
+			for (auto& sub_mesh : m_sub_meshs)
+				render.draw_arrays(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
+			// Draw element
+			render.draw_elements(m_sub_meshs[sub_mesh_id].m_draw_type, m_sub_meshs[sub_mesh_id].m_index_offset, m_sub_meshs[sub_mesh_id].m_index_count);
 		}
 	}
 
