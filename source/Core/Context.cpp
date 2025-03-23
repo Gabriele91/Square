@@ -72,6 +72,8 @@ namespace Square
         if(resource->load(resource_file_it->second.m_filepath)) return resource;
 		//fail
 		m_resources.erase(resource_it);
+		//wrong
+		logger()->warning("Resource: unable to load " + name);
 		//end
         return nullptr;
     }
