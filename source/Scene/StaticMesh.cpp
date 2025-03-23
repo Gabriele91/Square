@@ -19,20 +19,27 @@ namespace Scene
 		// Add StaticMesh
 		ctx.add_object<StaticMesh>();
 		// Material
-		ctx.add_attribute_function<StaticMesh, std::string>
-			("material"
-			, std::string()
-			, [](const StaticMesh* sm) -> std::string
+		ctx.add_attribute_function<StaticMesh, std::vector<std::string> >
+			("materials"
+			, std::vector<std::string>()
+			, [](const StaticMesh* sm) -> std::vector<std::string>
 			{ 
-				if (sm->m_material) 
-				    return sm->m_material->resource_untyped_name(); 
-				else 
-				    return ""; 
+				std::vector< std::string > materials_names;
+				for (auto& material : sm->m_materials)
+				{
+					if (material)
+						materials_names.emplace_back(material->resource_untyped_name() );
+				}
+				return materials_names;
 			}
-			, [](StaticMesh* sm, const std::string& name)
+			, [](StaticMesh* sm, const std::vector<std::string>& vnames)
 			{ 
-				if (name.size())
-					sm->m_material = sm->context().resource<Material>(name); 
+				sm->m_materials.clear();
+				sm->m_materials.reserve(vnames.size());
+				for (auto& material_name : vnames)
+				{
+					sm->m_materials.push_back( sm->context().resource<Material>(material_name) );
+				}
 			});
 		// OBB
 		ctx.add_attribute_function<StaticMesh, std::vector<Vec3> >
@@ -93,12 +100,16 @@ namespace Scene
 
 	size_t StaticMesh::materials_count() const 
 	{ 
-		return 1;
+		return m_materials.size();
 	}
 
 	Weak<Square::Render::Material> StaticMesh::material(size_t i) const
 	{
-		return Square::DynamicPointerCast<Square::Render::Material>(m_material);
+		if (i < m_materials.size())
+		{
+			return Square::DynamicPointerCast<Square::Render::Material>(m_materials[i]);
+		}
+		return {};
 	}
 
 	void StaticMesh::draw
@@ -116,12 +127,24 @@ namespace Scene
 		using namespace Square::Resource;
 		using namespace Square::Render;
 		using namespace Square::Render::Layout;
+		
+		size_t num_sub_meshs_to_draw = (std::min<size_t>)(m_mesh->number_of_sub_meshs(), m_materials.size());
 		//bind
-		pass.bind(render, input, m_material->parameters());
-		//draw
-		m_mesh->draw(render);
-		//unbind
-		pass.unbind();
+		for (size_t i = 0; i < num_sub_meshs_to_draw; ++i)
+		{
+			if (m_materials[i])
+			{
+				pass.bind(render, input, m_materials[i]->parameters());
+				//draw
+				m_mesh->draw(render, i);
+				//unbind
+				pass.unbind();
+			}
+			else
+			{
+				context().logger()->debug("Mesh draw with invalid material: " + std::to_string(i));
+			}
+		}
 	}
 
 	bool StaticMesh::support_culling() const

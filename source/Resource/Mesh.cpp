@@ -61,6 +61,11 @@ namespace Resource
 		m_mesh.draw(render);
 	}
 
+	void Mesh::draw(Render::Context& render, size_t sub_mesh_id) const
+	{
+		m_mesh.draw(render, sub_mesh_id);
+	}
+
 	// for type
 	template < typename T >
 	struct vertex_gpu_build

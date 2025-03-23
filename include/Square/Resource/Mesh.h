@@ -44,9 +44,11 @@ namespace Square
 
             //get surfaces
             const Render::Mesh::SubMeshList& sub_meshs() const;
+            size_t number_of_sub_meshs() const { return sub_meshs().size(); }
 
             //draw all sub meshs
             void draw(Render::Context& render) const;
+            void draw(Render::Context& render, size_t sub_mesh_id) const;
 
             //load mesh
             bool load(const std::string& path) override;

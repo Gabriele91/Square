@@ -26,7 +26,7 @@ namespace Scene
 		SQUARE_OBJECT(StaticMesh)
 
 		Square::Shared< Square::Resource::Mesh >       m_mesh;
-		Square::Shared< Square::Resource::Material >   m_material;
+		std::vector< Square::Shared< Square::Resource::Material > >   m_materials;
 
 		StaticMesh(Square::Context& context);
 
