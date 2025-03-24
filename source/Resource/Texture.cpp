@@ -6,6 +6,7 @@
 #include "Square/Config.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Data/Image.h"
+#include "Square/Data/ParserTexture.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/Application.h"
 #include "Square/Resource/Texture.h"
@@ -22,8 +23,9 @@ namespace Resource
     void Texture::object_registration(Context& ctx)
     {
         //factory
-        ctx.add_resource<Texture>({ ".png", ".jpg", ".jpeg", ".tga" });
+        ctx.add_resource<Texture>({ ".png", ".jpg", ".jpeg", ".tga", ".sqtex" });
         //attributes
+		#if 0
         ctx.add_attribute_function<Texture, unsigned long>
                                   ("width"
                                    , (unsigned long)(0)
@@ -36,81 +38,29 @@ namespace Resource
                                      , [](const Texture* tex) -> unsigned long { return tex->get_height(); }
                                      , [](Texture* actor, const unsigned long& ){ /*none*/ }
                                      );
+		#endif
         //end
     }
     
 	//////////////////////////////////////////////////////////////
 	// Attributes
-	Texture::Attributes::Attributes(
-		Render::TextureType   type_image,
-		Render::TextureFormat format_image,
+
+	Texture::Attributes::Attributes
+	(
 		Render::TextureMinFilterType  min_filter,
 		Render::TextureMagFilterType  mag_filter,
-		bool clamp_to_border,
+		Render::TextureEdgeType  wrap_s,
+		Render::TextureEdgeType  wrap_t,
+		Render::TextureEdgeType  wrap_r,
 		bool build_mipmap
 	)
 	{
-		m_type = type_image;
-		m_format = format_image;
 		m_min_filter = min_filter;
 		m_mag_filter = mag_filter;
-		m_clamp_to_border = clamp_to_border;
+		m_wrap_s = wrap_s;
+		m_wrap_t = wrap_t;
+		m_wrap_r = wrap_r;
 		m_build_mipmap = build_mipmap;
-	}
-
-	bool Texture::Attributes::alpha_channel()
-	{
-		return m_type == Render::TT_RGBA;
-	}
-
-	Texture::Attributes Texture::Attributes::rgba(
-		Render::TextureMinFilterType  min_filter,
-		Render::TextureMagFilterType  mag_filter,
-		bool clamp_to_border,
-		bool build_mipmap
-	)
-	{
-		return
-		{
-			Render::TT_RGBA,
-			Render::TF_RGBA8,
-			min_filter,
-			mag_filter,
-			clamp_to_border,
-			build_mipmap
-		};
-	}
-
-	Texture::Attributes Texture::Attributes::rgba_linear(
-		bool clamp_to_border,
-		bool alpha_channel
-	)
-	{
-		return
-		{
-			Render::TT_RGBA,
-			Render::TF_RGBA8,
-			Render::TMIN_LINEAR,
-			Render::TMAG_LINEAR,
-			clamp_to_border,
-			false
-		};
-	}
-
-	Texture::Attributes Texture::Attributes::rgba_linear_mipmap_linear(
-		bool clamp_to_border,
-		bool alpha_channel
-	)
-	{
-		return
-		{
-			Render::TT_RGBA,
-			Render::TF_RGBA8,
-			Render::TMIN_LINEAR_MIPMAP_LINEAR,
-			Render::TMAG_LINEAR,
-			clamp_to_border,
-			true
-		};
 	}
 	//////////////////////////////////////////////////////////////
 	// Texture
@@ -169,7 +119,47 @@ namespace Resource
 	
 	bool Texture::load(const std::string& path)
 	{
-		return load(Attributes::rgba_linear_mipmap_linear(), path);
+		//get ext
+		std::string ext = Filesystem::get_extension(path);
+		// sqtex
+		if (ext == ".sqtex")
+		{
+			Parser::Texture::Context tex_context;
+			std::string data = Filesystem::text_file_read_all(path);
+			// Set default attrs
+			tex_context.m_attributes =
+			{
+				Render::TMIN_LINEAR_MIPMAP_LINEAR,
+				Render::TMAG_LINEAR,
+				Render::TEDGE_REPEAT,
+				Render::TEDGE_REPEAT,
+				Render::TEDGE_REPEAT,
+				true
+			};
+			// Parse texture data
+			if (Parser::Texture::parse(tex_context, data))
+			{
+				auto image_path = Filesystem::join(Filesystem::get_directory(path), tex_context.m_url);
+				return load(tex_context.m_attributes, image_path);
+			}
+			else
+			{
+				context().logger()->warning("Texture: " + path + "\n" + tex_context.errors_to_string());
+				return false;
+			}
+		}
+		else
+		{
+			return load(
+			{
+				Render::TMIN_LINEAR_MIPMAP_LINEAR,
+				Render::TMAG_LINEAR,
+				Render::TEDGE_REPEAT,
+				Render::TEDGE_REPEAT,
+				Render::TEDGE_REPEAT,
+				true
+			}, path);
+		}
 	}
 	
 	bool Texture::load
@@ -194,12 +184,8 @@ namespace Resource
 		//load
 		if (!Data::Image::load(path, image, image_width, image_height, image_format, image_type))
 			return false;
-		//delete alpha channel from attributes (if needed) :TODO:
-		Attributes modattr = attr;
-		modattr.m_type = image_type;
-		modattr.m_format = image_format;
 		//build
-		return build(modattr, image.data(), image_width, image_height, image_format, image_type);
+		return build(attr, image.data(), image_width, image_height, image_format, image_type);
 	}
 
 	bool Texture::build
@@ -292,6 +278,7 @@ namespace Resource
 		m_height = height;
 		m_format = format;
 		m_type = type;
+		m_attributes = attr;
 		//create texture
 		if (auto render = context().render())
 		{
@@ -308,9 +295,9 @@ namespace Resource
 			{
 				attr.m_min_filter,
 				attr.m_mag_filter,
-				attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
-				attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
-				attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
+				attr.m_wrap_s,
+				attr.m_wrap_t,
+				attr.m_wrap_r,
 				attr.m_build_mipmap
 			});
 		}
@@ -344,6 +331,11 @@ namespace Resource
 		return m_type;
 	}
 
+	const Texture::Attributes& Texture::get_attributes() const
+	{
+		return m_attributes;
+	}
+
 	void Texture::destoy()
 	{
 		if (m_ctx_texture)
@@ -351,5 +343,6 @@ namespace Resource
 				render->delete_texture(m_ctx_texture);
 		m_ctx_texture = nullptr;
 	}
+
 }
 }

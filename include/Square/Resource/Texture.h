@@ -16,54 +16,30 @@ namespace Resource
 	class SQUARE_API Texture : public ResourceObject
                              , public InheritableSharedObject<Texture>
 	{
-
-		Render::Texture*      m_ctx_texture{ nullptr };
-		unsigned long         m_width{ 0 };
-		unsigned long         m_height{ 0 };
-		Render::TextureFormat m_format;
-		Render::TextureType   m_type;
-
 	public:
-
+	
 		struct SQUARE_API Attributes
 		{
-			Render::TextureType   m_type{ Render::TT_RGB };
-			Render::TextureFormat m_format{ Render::TF_RGB8 };
 			Render::TextureMinFilterType m_min_filter{ Render::TMIN_NEAREST };
 			Render::TextureMagFilterType m_mag_filter{ Render::TMAG_NEAREST };
-			bool m_clamp_to_border{ false };
-			bool m_build_mipmap   { false };
-			bool alpha_channel();
+			Render::TextureEdgeType m_wrap_s{ Render::TEDGE_CLAMP };
+			Render::TextureEdgeType m_wrap_t{ Render::TEDGE_CLAMP };
+			Render::TextureEdgeType m_wrap_r{ Render::TEDGE_CLAMP };
+			bool m_build_mipmap { false };
 
 			Attributes(
-				Render::TextureType   type_image,
-				Render::TextureFormat format_image,
 				Render::TextureMinFilterType  min_filter = Render::TMIN_NEAREST,
 				Render::TextureMagFilterType  mag_filter = Render::TMAG_NEAREST,
-				bool clamp_to_border = false,
+				Render::TextureEdgeType  wrap_s = Render::TEDGE_CLAMP,
+				Render::TextureEdgeType  wrap_t = Render::TEDGE_CLAMP,
+				Render::TextureEdgeType  wrap_r = Render::TEDGE_CLAMP,
 				bool build_mipmap = false
-			);
-
-			static Attributes rgba(
-				Render::TextureMinFilterType  min_filter = Render::TMIN_NEAREST,
-				Render::TextureMagFilterType  mag_filter = Render::TMAG_NEAREST,
-				bool clamp_to_border = false,
-				bool build_mipmap = false
-			);
-
-			static Attributes rgba_linear(
-				bool clamp_to_border = false,
-				bool alpha_channel = true
-			);
-
-			static Attributes rgba_linear_mipmap_linear(
-				bool clamp_to_border = false,
-				bool alpha_channel = true
 			);
 		};
 
         //Init object
         SQUARE_OBJECT(Texture)
+
         //Registration in context
         static void object_registration(Context& ctx);
         
@@ -129,9 +105,18 @@ namespace Resource
 		unsigned long    get_height() const;
 		Render::TextureFormat get_format() const;
 		Render::TextureType	  get_type() const;
+		const Attributes& get_attributes() const;
 
 		void destoy();
 
+	protected:
+
+		Render::Texture*      m_ctx_texture{ nullptr };
+		unsigned long         m_width{ 0 };
+		unsigned long         m_height{ 0 };
+		Render::TextureFormat m_format;
+		Render::TextureType   m_type;
+		Attributes		      m_attributes;
 	};
 }
 }

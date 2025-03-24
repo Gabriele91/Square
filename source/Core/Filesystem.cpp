@@ -187,14 +187,25 @@ namespace Filesystem
         return filename;
     }
 
-    std::string get_extension(const std::string& filepath)
+    std::string get_extension(const std::string& filepath, bool to_lower)
     {
         //copy path
         std::string filename = get_filename(filepath);
         //get dot
         auto dot = filename.rfind(".");
         //extract
-        if (dot != std::string::npos) return filename.substr(dot);
+        if (dot != std::string::npos)
+        {
+            // get ext
+            auto ext = filename.substr(dot);
+            // to lower?
+            if (to_lower)
+            {
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+            }
+            // return
+            return ext;
+        }
         //return 0
         return "";
     }
