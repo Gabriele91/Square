@@ -266,6 +266,35 @@ namespace GLTF
         REPEAT = 10497
     };
 
+    // Structure for GLTF Image
+    struct Image
+    {
+        std::string uri;
+        Image(const std::string& uri) : uri(uri) {}
+    };
+
+    // Structure for GLTF sampler
+    struct Sampler
+    {
+        TextureFilter mag_filter;
+        TextureFilter min_filter;
+        TextureWrapMode wrap_t;
+        TextureWrapMode wrap_s;
+        TextureWrapMode wrap_r;
+
+        Sampler( TextureFilter mag_filter,
+                 TextureFilter min_filter,
+                 TextureWrapMode wrap_t,
+                 TextureWrapMode wrap_s,
+                 TextureWrapMode wrap_r = TextureWrapMode::REPEAT)
+       : mag_filter(mag_filter)
+       , min_filter(min_filter)
+       , wrap_t(wrap_t)
+       , wrap_s(wrap_s)
+       , wrap_r(wrap_r)
+        {}
+    };
+
     // Structure for GLTF textures
     struct Texture
     {
@@ -305,7 +334,6 @@ namespace GLTF
             std::optional<TextureInfo> metallic_roughness_texture;
         };
         
-
         // Sub-structure for Specular-Glossiness (Extension)
         struct SpecularGlossiness
         {
@@ -420,6 +448,8 @@ namespace GLTF
     using Meshes = std::vector<Mesh>;
     using Cameras = std::vector<Camera>;
     using Lights = std::vector<Light>;
+    using Images = std::vector<Image>;
+    using Samplers = std::vector<Sampler>;
     using Textures = std::vector<Texture>;
     using Materials = std::vector<Material>;
     using Nodes = std::vector<Node>;
@@ -434,6 +464,8 @@ namespace GLTF
         Meshes meshes;
         Cameras cameras;
         Lights lights;
+        Images images;
+        Samplers samplers;
         Textures textures;
         Materials materials;
         Nodes nodes;            // List of all nodes in the GLTF model
@@ -442,13 +474,15 @@ namespace GLTF
 
         GLTF() = default;
         GLTF(GLTF&&) = default;
-        GLTF(Buffers&& buffers, Views&& views, Accessors&& accessors, Meshes&& meshes, Cameras&& cameras, Lights&& lights, Textures&& textures, Materials&& materials, Nodes&& nodes, Scenes&& scenes, size_t default_scene)
+        GLTF(Buffers&& buffers, Views&& views, Accessors&& accessors, Meshes&& meshes, Cameras&& cameras, Lights&& lights, Images&& images, Samplers&& samplers, Textures&& textures, Materials&& materials, Nodes&& nodes, Scenes&& scenes, size_t default_scene)
             : buffers(std::forward<Buffers>(buffers))
             , views(std::forward<Views>(views))
             , accessors(std::forward<Accessors>(accessors))
             , meshes(std::forward<Meshes>(meshes))
             , cameras(std::forward<Cameras>(cameras))
             , lights(std::forward<Lights>(lights))
+            , images(std::forward<Images>(images))
+            , samplers(std::forward<Samplers>(samplers))
             , textures(std::forward<Textures>(textures))
             , materials(std::forward<Materials>(materials))
             , nodes(std::forward<Nodes>(nodes))
@@ -555,7 +589,52 @@ namespace GLTF
         return out_accessors;
     }
 
-    // Funzione per decodificare le texture dal JSON
+    //  Function to decode GLTF images JSON data
+    static Images decode_images(const JsonValue& images)
+    {
+        Images out_images;
+        auto& jimages = images.array({});
+        out_images.reserve(jimages.size());
+
+        for (auto& jimage : jimages)
+        {
+            auto image = jimage.object({});
+            std::string uri = image["uri"].string("");
+            out_images.emplace_back(uri);
+        }
+
+        return out_images;
+    }
+
+    //  Function to decode GLTF samplers JSON data
+    static Samplers decode_samplers(const JsonValue& samplers)
+    {
+        Samplers out_samplers;
+        auto& jsamplers = samplers.array({});
+        out_samplers.reserve(jsamplers.size());
+
+        for (auto& jsampler : jsamplers)
+        {
+            auto sampler = jsampler.object({});
+            TextureFilter mag_filter = (TextureFilter) sampler["magFilter"].number((float)TextureFilter::NEAREST);
+            TextureFilter min_filter = (TextureFilter) sampler["migFilter"].number((float)TextureFilter::NEAREST);
+            TextureWrapMode wrap_t = (TextureWrapMode) sampler["wrapT"].number((float)TextureWrapMode::REPEAT);
+            TextureWrapMode wrap_s = (TextureWrapMode) sampler["wrapS"].number((float)TextureWrapMode::REPEAT);
+            TextureWrapMode wrap_r = (TextureWrapMode) sampler["wrapR"].number((float)TextureWrapMode::REPEAT);
+            out_samplers.emplace_back
+            (
+                mag_filter,
+                min_filter,
+                wrap_t,
+                wrap_s,
+                wrap_r
+            );
+        }
+
+        return out_samplers;
+    }
+
+    // Function to decode GLTF textures JSON data
     static Textures decode_textures(const JsonValue& textures)
     {
         Textures out_textures;
@@ -564,9 +643,9 @@ namespace GLTF
 
         for (auto& jtexture : jtextures)
         {
-            auto& texture = jtexture.object({});
-            size_t image_index = texture.at("source").number(0);
-            size_t sampler_index = texture.at("sampler").number(0);
+            auto texture = jtexture.object({});
+            size_t image_index = texture["source"].number(0);
+            size_t sampler_index = texture["sampler"].number(0);
 
             out_textures.emplace_back(image_index, sampler_index);
         }
@@ -1106,6 +1185,8 @@ namespace GLTF
                 , std::move(decode_meshes(document["meshes"]))
                 , std::move(decode_cameras(document["cameras"]))
                 , std::move(decode_lights(KHR_lights_punctual["lights"]))
+                , std::move(decode_images(document["images"]))
+                , std::move(decode_samplers(document["samplers"]))
                 , std::move(decode_textures(document["textures"]))
                 , std::move(decode_materials(document["materials"]))
                 , std::move(decode_nodes(document["nodes"]))
