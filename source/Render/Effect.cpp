@@ -399,7 +399,17 @@ namespace Render
 			default:
 			case EffectParameterType::PT_NONE: /* void */ break;
 			//uniform
-			case EffectParameterType::PT_TEXTURE:   m_uniform[i]->set(param->get_texture()->get_context_texture()); break;
+			case EffectParameterType::PT_TEXTURE:  
+				if (param->get_texture())
+				{
+					m_uniform[i]->set(param->get_texture()->get_context_texture());
+				}
+				else
+				{
+					// Failed : TODO use app logger
+					printf("Render: EffectPass::bind(texture): error to set a texture");
+				}
+			break;
 			case EffectParameterType::PT_INT:       m_uniform[i]->set(param->get_int()); break;
 			case EffectParameterType::PT_FLOAT:     m_uniform[i]->set(param->get_float()); break;
 			case EffectParameterType::PT_DOUBLE:    m_uniform[i]->set(param->get_double()); break;

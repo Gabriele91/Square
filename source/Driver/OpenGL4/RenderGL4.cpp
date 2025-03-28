@@ -2089,8 +2089,12 @@ namespace Render
 		switch (type)
 		{
 		default:
-		case TMAG_NEAREST:  return GL_NEAREST;
-		case TMAG_LINEAR:   return GL_LINEAR;
+		case TMAG_NEAREST:                return GL_NEAREST;
+		case TMAG_NEAREST_MIPMAP_NEAREST: return GL_NEAREST;
+		case TMAG_NEAREST_MIPMAP_LINEAR:  return GL_NEAREST;
+		case TMAG_LINEAR:                return GL_LINEAR;
+		case TMAG_LINEAR_MIPMAP_NEAREST: return GL_LINEAR;
+		case TMAG_LINEAR_MIPMAP_LINEAR:  return GL_LINEAR;
 		}
 	}
 
