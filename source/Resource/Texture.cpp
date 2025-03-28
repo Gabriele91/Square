@@ -23,7 +23,7 @@ namespace Resource
     void Texture::object_registration(Context& ctx)
     {
         //factory
-        ctx.add_resource<Texture>({ ".png", ".jpg", ".jpeg", ".tga", ".sqtex" });
+        ctx.add_resource<Texture>({ ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".sqtex", ".sampler" });
         //attributes
 		#if 0
         ctx.add_attribute_function<Texture, unsigned long>
@@ -52,7 +52,8 @@ namespace Resource
 		Render::TextureEdgeType  wrap_s,
 		Render::TextureEdgeType  wrap_t,
 		Render::TextureEdgeType  wrap_r,
-		bool build_mipmap
+		bool build_mipmap,
+		int anisotropic
 	)
 	{
 		m_min_filter = min_filter;
@@ -61,6 +62,7 @@ namespace Resource
 		m_wrap_t = wrap_t;
 		m_wrap_r = wrap_r;
 		m_build_mipmap = build_mipmap;
+		m_anisotropic = anisotropic;
 	}
 	//////////////////////////////////////////////////////////////
 	// Texture
@@ -122,10 +124,10 @@ namespace Resource
 		//get ext
 		std::string ext = Filesystem::get_extension(path);
 		// sqtex
-		if (ext == ".sqtex")
+		if (ext == ".sqtex" || ext == ".sampler")
 		{
 			Parser::Texture::Context tex_context;
-			std::string data = Filesystem::text_file_read_all(path);
+			std::vector<unsigned char> data = Filesystem::binary_file_read_all(path);
 			// Set default attrs
 			tex_context.m_attributes =
 			{
@@ -134,13 +136,26 @@ namespace Resource
 				Render::TEDGE_REPEAT,
 				Render::TEDGE_REPEAT,
 				Render::TEDGE_REPEAT,
-				true
+				true,
+				1
 			};
 			// Parse texture data
-			if (Parser::Texture::parse(tex_context, data))
+			if (Parser::Texture::parse(tex_context, reinterpret_cast<const char*>(data.data()), data.size()))
 			{
-				auto image_path = Filesystem::join(Filesystem::get_directory(path), tex_context.m_url);
-				return load(tex_context.m_attributes, image_path);
+				if (std::holds_alternative<std::string>(tex_context.m_image))
+				{
+					auto image_path = Filesystem::join(Filesystem::get_directory(path), std::get<std::string>(tex_context.m_image));
+					return load(tex_context.m_attributes, image_path);
+				}
+				else if (std::holds_alternative< std::vector<unsigned char> >(tex_context.m_image))
+				{
+					return load(tex_context.m_attributes, std::get< std::vector<unsigned char> >(tex_context.m_image));
+				}
+				else
+				{
+					context().logger()->warning("Texture: " + path + "\nInvalid image");
+					return false;
+				}
 			}
 			else
 			{
@@ -157,7 +172,8 @@ namespace Resource
 				Render::TEDGE_REPEAT,
 				Render::TEDGE_REPEAT,
 				Render::TEDGE_REPEAT,
-				true
+				true,
+				1
 			}, path);
 		}
 	}
@@ -168,13 +184,6 @@ namespace Resource
 		const std::string& path
 	)
 	{
-		//get ext
-		std::string ext = Filesystem::get_extension(path);
-		//test
-		if (ext != ".png"
-		&&  ext != ".jpg"
-		&&  ext != ".jpeg"
-		&&  ext != ".tga") return false;
 		//decode
 		std::vector<unsigned char> image;
 		unsigned long image_width = 0;
@@ -183,6 +192,25 @@ namespace Resource
 		Render::TextureType   image_type;
 		//load
 		if (!Data::Image::load(path, image, image_width, image_height, image_format, image_type))
+			return false;
+		//build
+		return build(attr, image.data(), image_width, image_height, image_format, image_type);
+	}
+
+	bool Texture::load
+	(
+		const Attributes& attr,
+		const std::vector< unsigned char >& data_file
+	)
+	{
+		//decode
+		std::vector<unsigned char> image;
+		unsigned long image_width = 0;
+		unsigned long image_height = 0;
+		Render::TextureFormat image_format;
+		Render::TextureType   image_type;
+		//load
+		if (!Data::Image::load(data_file, image, image_width, image_height, image_format, image_type))
 			return false;
 		//build
 		return build(attr, image.data(), image_width, image_height, image_format, image_type);
@@ -293,12 +321,16 @@ namespace Resource
 				Render::TTF_UNSIGNED_BYTE
 			},
 			{
-				attr.m_min_filter,
-				attr.m_mag_filter,
-				attr.m_wrap_s,
-				attr.m_wrap_t,
-				attr.m_wrap_r,
-				attr.m_build_mipmap
+				attr.m_min_filter,           // min_type
+				attr.m_mag_filter,           // mag_type
+				attr.m_wrap_s,               // edge_s
+				attr.m_wrap_t,               // edge_t
+				attr.m_wrap_r,               // edge_r
+				attr.m_build_mipmap,         // build_mipmap
+				0,                           // mipmap_min
+				attr.m_build_mipmap ? 10:0,  // mipmap_max
+				attr.m_anisotropic,          // anisotropy
+				false                        // read_from_cpu
 			});
 		}
 

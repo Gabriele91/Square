@@ -26,6 +26,7 @@ namespace Resource
 			Render::TextureEdgeType m_wrap_t{ Render::TEDGE_CLAMP };
 			Render::TextureEdgeType m_wrap_r{ Render::TEDGE_CLAMP };
 			bool m_build_mipmap { false };
+			int  m_anisotropic{ 1 };
 
 			Attributes(
 				Render::TextureMinFilterType  min_filter = Render::TMIN_NEAREST,
@@ -33,7 +34,8 @@ namespace Resource
 				Render::TextureEdgeType  wrap_s = Render::TEDGE_CLAMP,
 				Render::TextureEdgeType  wrap_t = Render::TEDGE_CLAMP,
 				Render::TextureEdgeType  wrap_r = Render::TEDGE_CLAMP,
-				bool build_mipmap = false
+				bool build_mipmap = false,
+				int anisotropic = 1
 			);
 		};
 
@@ -79,7 +81,9 @@ namespace Resource
 		bool load(const std::string& path) override;
 
 		bool load(const Attributes& attr, const std::string& path);
-		
+
+		bool load(const Attributes& attr, const std::vector< unsigned char >& data_file);
+
 		bool build
 		(
 			const Attributes& attr,
@@ -110,7 +114,7 @@ namespace Resource
 		void destoy();
 
 	protected:
-
+		
 		Render::Texture*      m_ctx_texture{ nullptr };
 		unsigned long         m_width{ 0 };
 		unsigned long         m_height{ 0 };

@@ -296,8 +296,11 @@ namespace Render
 	enum TextureMagFilterType : unsigned char
 	{
 		TMAG_NEAREST,
+		TMAG_NEAREST_MIPMAP_NEAREST,
+		TMAG_NEAREST_MIPMAP_LINEAR,
 		TMAG_LINEAR,
-
+		TMAG_LINEAR_MIPMAP_NEAREST,
+		TMAG_LINEAR_MIPMAP_LINEAR,
 		TMAG_INVALID = 0xFF
 	};
 
@@ -327,7 +330,7 @@ namespace Render
 		unsigned int		m_width;
 		unsigned int		m_height;
 		const unsigned char*m_bytes;
-		TextureType		m_type;
+		TextureType 		m_type;
 		TextureTypeFormat m_type_format;
 	};
 

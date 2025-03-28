@@ -2033,24 +2033,83 @@ namespace Render
 		default:								   return 0;
 		}
 	}
-
 	static D3D11_FILTER get_texture_min_filter(TextureMinFilterType min, TextureMagFilterType mag)
 	{
 		switch (min)
 		{
+		case TMIN_NEAREST:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_MAG_MIP_POINT;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+		//	case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_POINT_MAG_MIP_POINT;        // Combination does not exist: Mag(Nearest+Mipmap Nearest)
+		//	case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_POINT_MAG_POINT_MIP_LINEAR; // Combination does not exist: Mag(Nearest+Mipmap Linear)
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+		//	case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_LINEAR; // Combination does not exist: Mag(Linear+Mipmap Linear)
+			default:                               return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			}
+		case TMIN_NEAREST_MIPMAP_NEAREST:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_MAG_MIP_POINT;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_MAG_MIP_POINT;
+			case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+			default:                               return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			}
+
+		case TMIN_NEAREST_MIPMAP_LINEAR:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+		//	case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_POINT_MAG_MIP_POINT;        // Combination does not exist: Mag(Nearest+Mipmap Nearest)
+		//	case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_POINT_MAG_POINT_MIP_LINEAR; // Combination does not exist: Mag(Nearest+Mipmap Linear)
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+		//	case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_LINEAR; // Combination does not exist: Mag(Linear+Mipmap Linear)
+			default:                               return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+			}
+
+		case TMIN_LINEAR:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	//		case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_POINT;   // Combination does not exist: Mag(Nearest+Mipmap Nearest)
+			case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+	//		case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_LINEAR_MAG_MIP_LINEAR;        // Combination does not exist: Mag(Linear+Mipmap Linear)
+			default:                               return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+			}
+
+		case TMIN_LINEAR_MIPMAP_NEAREST:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+			//case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_POINT;        // Combination does not exist: Mag(Nearest+Mipmap Nearest)
+			case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+			//case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_LINEAR_MAG_MIP_LINEAR;        // Combination does not exist: Mag(Linear+Mipmap Linear)
+			default:                               return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+			}
+
+		case TMIN_LINEAR_MIPMAP_LINEAR:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		//	case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_POINT;        // Combination does not exist: Mag(Nearest+Mipmap Nearest)
+			case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+		//	case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_LINEAR_MAG_MIP_LINEAR;        // Combination does not exist: Mag(Linear+Mipmap Linear)
+			default:                               return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+			}
+
 		default:
-		case TMIN_NEAREST:                return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_MAG_MIP_POINT 
-																	 : D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
-		case TMIN_NEAREST_MIPMAP_NEAREST: return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_MAG_MIP_POINT
-																	 : D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
-		case TMIN_NEAREST_MIPMAP_LINEAR:  return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR
-																	 : D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
-		case TMIN_LINEAR:                 return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR
-																	 : D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		case TMIN_LINEAR_MIPMAP_NEAREST: return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT
-																    : D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-		case TMIN_LINEAR_MIPMAP_LINEAR:  return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR
-																    : D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+			return D3D11_FILTER_MIN_MAG_MIP_POINT;
 		}
 	}
 

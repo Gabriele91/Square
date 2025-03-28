@@ -160,6 +160,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Square\Core\Logger.h" />
+    <ClInclude Include="..\include\Square\Data\ParserTexture.h" />
     <ClInclude Include="..\include\Square\Render\DrawerPassDebug.h" />
     <ClInclude Include="..\include\Square\SquareMain.h" />
     <ClInclude Include="..\include\Square\Core\Allocator.h" />
@@ -322,6 +323,7 @@
     <ClCompile Include="..\source\Data\ParserParameters.cpp" />
     <ClCompile Include="..\source\Data\ParserResources.cpp" />
     <ClCompile Include="..\source\Data\ParserStaticMesh.cpp" />
+    <ClCompile Include="..\source\Data\ParserTexture.cpp" />
     <ClCompile Include="..\source\Driver\Render.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Input_private.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Screen_private.cpp" />

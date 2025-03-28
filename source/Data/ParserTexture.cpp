@@ -30,32 +30,58 @@ namespace Parser
 	bool Texture::parse(Context& default_context, const std::string& source)
 	{
 		const char* source_ptr = source.c_str();
-		return parse(default_context, source_ptr);
+		return parse(default_context, source_ptr, source.size());
 	}
 
-	bool Texture::parse(Context& context, const char*& ptr)
+	bool Texture::parse(Context& context, const char* ptr, size_t size)
 	{
 		const char* texture_mag[] =
 		{
+			"nearest_mipmap_nearest", // noramly converted in nearest
+			"nearest_mipmap_linear",  // noramly converted in nearest
+			"linear_mipmap_nearest",  // noramly converted in linear
+			"linear_mipmap_linear",   // noramly converted in linear
+			"linear",
 			"nearest",
-			"linear"
+		};
+		const Render::TextureMagFilterType texture_mag_map[]
+		{
+			Render::TextureMagFilterType::TMAG_NEAREST_MIPMAP_NEAREST,
+			Render::TextureMagFilterType::TMAG_NEAREST_MIPMAP_LINEAR,
+			Render::TextureMagFilterType::TMAG_LINEAR_MIPMAP_NEAREST,
+			Render::TextureMagFilterType::TMAG_LINEAR_MIPMAP_LINEAR,
+			Render::TextureMagFilterType::TMAG_NEAREST,
+			Render::TextureMagFilterType::TMAG_LINEAR,
 		};
 		const char* texture_min[] =
 		{
-			"nearest",
 			"nearest_mipmap_nearest",
 			"nearest_mipmap_linear",
-			"linear",
 			"linear_mipmap_nearest",
 			"linear_mipmap_linear",
+			"nearest",
+			"linear",
+		};
+		const Render::TextureMinFilterType texture_min_map[]
+		{
+			Render::TextureMinFilterType::TMIN_NEAREST_MIPMAP_NEAREST,
+			Render::TextureMinFilterType::TMIN_NEAREST_MIPMAP_LINEAR,
+			Render::TextureMinFilterType::TMIN_LINEAR_MIPMAP_NEAREST,
+			Render::TextureMinFilterType::TMIN_LINEAR_MIPMAP_LINEAR,
+			Render::TextureMinFilterType::TMIN_NEAREST,
+			Render::TextureMinFilterType::TMIN_LINEAR,
 		};
 		const char* texture_edge[] =
 		{
 			"clap",
 			"repeat"
 		};
+		//set start line
+		context.m_line = 1;
+		//end of the memory
+		const char* buffer_end = ptr + size;
 		//get type
-		while (*ptr != EOF && *ptr != '\0')
+		while (*ptr != EOF && *ptr != '\0' && ptr < buffer_end)
 		{
 			//skip line and comments
 			skip_space_and_comments(context.m_line, ptr);
@@ -69,7 +95,7 @@ namespace Parser
 				{
 					if (cstr_cmp_skip(ptr, texture_mag[i]))
 					{
-						context.m_attributes.m_mag_filter = (Render::TextureMagFilterType)i;
+						context.m_attributes.m_mag_filter = texture_mag_map[i];
 						break;
 					}
 				}
@@ -83,7 +109,7 @@ namespace Parser
 				{
 					if (cstr_cmp_skip(ptr, texture_min[i]))
 					{
-						context.m_attributes.m_min_filter = (Render::TextureMinFilterType)i;
+						context.m_attributes.m_min_filter = texture_min_map[i];
 						break;
 					}
 				}
@@ -140,10 +166,21 @@ namespace Parser
 					if (cstr_cmp_skip(ptr, texture_edge[i]))
 					{
 						context.m_attributes.m_wrap_s =
-						context.m_attributes.m_wrap_t =
-						context.m_attributes.m_wrap_r = (Render::TextureEdgeType)i;
+							context.m_attributes.m_wrap_t =
+							context.m_attributes.m_wrap_r = (Render::TextureEdgeType)i;
 						break;
 					}
+				}
+			}
+			else if (cstr_cmp_skip(ptr, "anisotropic"))
+			{
+				//skip line and comments
+				skip_space_and_comments(context.m_line, ptr);
+				//read int
+				if (!parse_int(ptr, context.m_attributes.m_anisotropic))
+				{
+					context.m_errors.emplace_back(context.m_line, "Invalid anisotropic value");
+					return false;
 				}
 			}
 			else if (cstr_cmp_skip(ptr, "mipmap") || cstr_cmp_skip(ptr, "build_mipmap"))
@@ -161,12 +198,26 @@ namespace Parser
 			{
 				//skip line and comments
 				skip_space_and_comments(context.m_line, ptr);
-				//set image name
-				if (!parse_string(context.m_line, ptr, context.m_url))
+				// get url
+				std::string url;
+				// set image name
+				if (!parse_string(context.m_line, ptr, url))
 				{
 					context.m_errors.emplace_back(context.m_line, "Invalid image/url/texture value");
 					return false;
 				}
+				else
+				{
+					context.m_image = url;
+				}
+			}
+			else if (cstr_cmp_skip(ptr, "data"))
+			{
+				//copy buffer
+				const unsigned char* data_start = reinterpret_cast<const unsigned char*>(ptr);
+				const unsigned char* data_end = reinterpret_cast<const unsigned char*>(buffer_end);
+				context.m_image = std::vector<unsigned char>{ data_start, data_end };
+				return true;
 			}
 			else
 			{
