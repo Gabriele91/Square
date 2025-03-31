@@ -38,6 +38,11 @@ namespace Filesystem
     SQUARE_API bool binary_file_write_all(const std::string& filepath, const std::vector<unsigned char>& buffer);
     SQUARE_API bool binary_compress_file_write_all(const std::string& filepath, const std::vector<unsigned char>& buffer);
 
+    //shell helps
+    SQUARE_API bool makedir(const std::string& path);
+    SQUARE_API bool copyfile(const std::string& infilepath, const std::string& ofilepath);
+
+
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // template help
     template < class ...Args >
