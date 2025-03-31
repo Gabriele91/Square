@@ -5,6 +5,8 @@
 #include <cstring>
 #include <assert.h>
 #include <zlib.h>
+#include <fstream>
+#include <memory>
 
 #ifdef _WIN32
 	#include <windows.h>
@@ -15,6 +17,7 @@
     #define bswap32 _byteswap_ulong
 	#define getcwd _getcwd
 	#define access _access
+    #define mkdir(x,y) _mkdir(x)
 	#define F_OK 00
 	#define R_OK 04
 	#define W_OK 02
@@ -26,10 +29,14 @@
     #include <dirent.h>
 	#include <unistd.h>
     #include <stdint.h>
+    #if defined(__linux)
+    #include <sys/sendfile.h> // sendfile()
+    #endif
 	#if defined(__APPLE__)
     #include <CoreFoundation/CoreFoundation.h>
 	#include <mach-o/dyld.h>
 	#include <libgen.h>
+    #include <copyfile.h>  // macOS-specific
 	#endif
     #define bswap32 __builtin_bswap32
 	#define SEPARETOR '/'
@@ -337,7 +344,7 @@ namespace Filesystem
     bool text_file_write_all(const std::string& filepath, const std::string& buffer)
     {
         /////////////////////////////////////////////////////////////////////
-        FILE* file = fopen(filepath.c_str(), "w");
+        FILE* file = std::fopen(filepath.c_str(), "w");
         //bad case
         if (!file) return false;
         /////////////////////////////////////////////////////////////////////
@@ -351,7 +358,7 @@ namespace Filesystem
     bool binary_file_write_all(const std::string& filepath, const std::vector<unsigned char>& buffer)
     {
         /////////////////////////////////////////////////////////////////////
-        FILE* file = fopen(filepath.c_str(), "wb");
+        FILE* file = std::fopen(filepath.c_str(), "wb");
         //bad case
         if (!file) return false;
         /////////////////////////////////////////////////////////////////////
@@ -531,6 +538,70 @@ namespace Filesystem
 		if (!path2.size()) return path2;
 		return path1 + SEPARETOR + path2;
 	}
+
+    bool makedir(const std::string& path)
+    {
+        return mkdir(path.c_str(), 0777) == 0;
+    }
+    
+    bool copyfile(const std::string& infilepath, const std::string& ofilepath)
+    {
+        #if defined(_WIN32)
+            return !!CopyFile(infilepath.c_str(), ofilepath.c_str(), false);
+        #elif defined(__APPLE__)
+            return copyfile(infilepath.c_str(), ofilepath.c_str(), NULL, COPYFILE_ALL) != 0;
+        #elif defined(__linux)
+            struct stat src_stat;
+            // Open source file
+            fd_src = open(infilepath.c_str(), O_RDONLY);
+            if (fd_src == -1) 
+            {
+                return false;
+            }
+
+            // Get source file stats
+            if (fstat(fd_src, &src_stat) == -1) 
+            {
+                close(fd_src);
+                return false;
+            }
+
+            // Open destination file
+            fd_dest = open(ofilepath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, src_stat.st_mode);
+            if (fd_dest == -1)
+            {
+                close(fd_src);
+                return false;
+            }
+
+            // Use sendfile to copy
+            off_t offset = 0;
+            if (sendfile(fd_dest, fd_src, &offset, src_stat.st_size) == -1)
+            {
+                close(fd_src);
+                close(fd_dest);
+                return false;
+            }
+
+            // Close files
+            close(fd_src);
+            close(fd_dest);
+            return true;
+        #else
+            std::ifstream ifilestream(infilepath, std::ios::in | std::ios::binary);
+            std::ofstream ofilestream(ofilepath, std::ios::out | std::ios::binary);
+
+            if (ifilestream.good() && ofilestream.good())
+            {
+                std::copy(std::istream_iterator<char>(ifilestream),
+                          std::istream_iterator<char>(),
+                          std::ostream_iterator<char>(ofilestream));
+                return ofilestream.good();
+            }
+            return false;
+        #endif
+    }
+
 
 #ifdef _WIN32
     bool is_directory(const std::string& directory)

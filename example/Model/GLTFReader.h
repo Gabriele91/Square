@@ -267,11 +267,61 @@ namespace GLTF
     };
 
     // Structure for GLTF Image
-    struct Image
+    struct ImageBuffer
+    {
+        size_t buffer_view{ 0 };
+        std::string mime_type;
+        std::string name;
+
+        ImageBuffer() = default;
+
+        explicit ImageBuffer(size_t buffer_view, const std::string& mime_type, const std::string& name)
+        : buffer_view(buffer_view)
+        , mime_type(mime_type)
+        , name(name)
+        {
+        }
+
+        // Copy constructor
+        ImageBuffer(const ImageBuffer& other)
+        : buffer_view(other.buffer_view)
+        , mime_type(other.mime_type)
+        , name(other.name)
+        {
+        }
+
+        // Move constructor
+        ImageBuffer(ImageBuffer&& other) noexcept
+        : buffer_view(other.buffer_view)
+        , mime_type(std::move(other.mime_type))
+        , name(std::move(other.name))
+        {
+            other.buffer_view = 0;
+        }
+    };
+    struct ImagePath
     {
         std::string uri;
-        Image(const std::string& uri) : uri(uri) {}
+
+        ImagePath() = default;
+
+        explicit ImagePath(const std::string& uri)
+        : uri(uri)
+        {
+        }
+
+        // Copy constructor
+        ImagePath(const ImagePath& other) : uri(other.uri)
+        {
+        }
+
+        // Move constructor
+        ImagePath(ImagePath&& other) noexcept : uri(std::move(other.uri))
+        {
+        }
     };
+    using Image = std::variant< ImageBuffer, ImagePath >;
+
 
     // Structure for GLTF sampler
     struct Sampler
@@ -361,7 +411,7 @@ namespace GLTF
             const std::optional<TextureInfo>& normal_texture = std::nullopt,
             const std::optional<TextureInfo>& occlusion_texture = std::nullopt,
             const std::optional<TextureInfo>& emissive_texture = std::nullopt,
-            const Vec3& emissive_factor = Vec3(0.0f, 0.0f, 0.0f),
+            const Vec3& emissive_factor = Vec3(1.0f, 1.0f, 1.0f),
             const AlphaMode alpha_mode = AlphaMode::AM_OPAQUE,
             float alpha_cutoff = 0.5f,
             bool double_sided = false,
@@ -599,8 +649,21 @@ namespace GLTF
         for (auto& jimage : jimages)
         {
             auto image = jimage.object({});
-            std::string uri = image["uri"].string("");
-            out_images.emplace_back(uri);
+            if (jimage.object().find("uri") != jimage.object().end())
+            {
+                std::string uri = image["uri"].string("");
+                out_images.emplace_back(ImagePath{ uri });
+            }
+            else if (image.find("bufferView") != image.end())
+            {
+                ImageBuffer image_buffer
+                {
+                    static_cast<size_t>(image["bufferView"].number(0)),
+                    image["mimeType"].string(""),
+                    image["name"].string("")
+                };
+                out_images.emplace_back(image_buffer);
+            }
         }
 
         return out_images;
@@ -617,7 +680,7 @@ namespace GLTF
         {
             auto sampler = jsampler.object({});
             TextureFilter mag_filter = (TextureFilter) sampler["magFilter"].number((float)TextureFilter::NEAREST);
-            TextureFilter min_filter = (TextureFilter) sampler["migFilter"].number((float)TextureFilter::NEAREST);
+            TextureFilter min_filter = (TextureFilter) sampler["minFilter"].number((float)TextureFilter::NEAREST);
             TextureWrapMode wrap_t = (TextureWrapMode) sampler["wrapT"].number((float)TextureWrapMode::REPEAT);
             TextureWrapMode wrap_s = (TextureWrapMode) sampler["wrapS"].number((float)TextureWrapMode::REPEAT);
             TextureWrapMode wrap_r = (TextureWrapMode) sampler["wrapR"].number((float)TextureWrapMode::REPEAT);
@@ -644,10 +707,10 @@ namespace GLTF
         for (auto& jtexture : jtextures)
         {
             auto texture = jtexture.object({});
-            size_t image_index = texture["source"].number(0);
             size_t sampler_index = texture["sampler"].number(0);
+            size_t image_index = texture["source"].number(0);
 
-            out_textures.emplace_back(image_index, sampler_index);
+            out_textures.emplace_back(sampler_index, image_index);
         }
 
         return out_textures;
@@ -960,10 +1023,10 @@ namespace GLTF
                 emissive_texture = Aux::decode_texture_info(mat.at("emissiveTexture").object({}));
             }
 
-            Vec3 emissive_factor = Vec3(0.0f, 0.0f, 0.0f);
+            Vec3 emissive_factor = Vec3(1.0f, 1.0f, 1.0f);
             if (mat.find("emissiveFactor") != mat.end())
             {
-                auto& factor = mat.at("emissiveFactor").array({0.0f,0.0f,0.0f});
+                auto& factor = mat.at("emissiveFactor").array({1.0f,1.0f,1.0f});
                 emissive_factor = Vec3(
                     factor[0].number(0.0f),
                     factor[1].number(0.0f),
