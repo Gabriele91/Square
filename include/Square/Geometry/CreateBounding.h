@@ -16,26 +16,36 @@ namespace Square
 {
 namespace Geometry
 {
-    SQUARE_API OBoundingBox obounding_box_from_sequenzial_triangles(const std::vector< Vec3 >& points);
-
-    SQUARE_API OBoundingBox obounding_box_from_sequenzial_triangles(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points);
-
-    SQUARE_API OBoundingBox obounding_box_from_triangles(const std::vector< Vec3 > &points, const std::vector<unsigned int>& triangles);
-
-    SQUARE_API OBoundingBox obounding_box_from_triangles(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points, const unsigned int* triangles, size_t size);
-
     SQUARE_API OBoundingBox obounding_box_from_points(const std::vector< Vec3 >& points);
 
     SQUARE_API OBoundingBox obounding_box_from_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points);
-    
+
+    template< size_t N >
+    inline OBoundingBox obounding_box_from_points(const std::array< Vec3, N >& points)
+    {
+        return obounding_box_from_points(reinterpret_cast<const unsigned char*>(points.data()), 0, sizeof(Vec3), N);
+    }
+
     SQUARE_API AABoundingBox aabounding_from_points(const std::vector< Vec3 >& points);
-    
+
     SQUARE_API AABoundingBox aabounding_from_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points);
+
+    template< size_t N >
+    inline AABoundingBox aabounding_from_points(const std::array< Vec3, N >& points)
+    {
+        return aabounding_from_points(reinterpret_cast<const unsigned char*>(points.data()), 0, sizeof(Vec3), N);
+    }
 
     SQUARE_API Sphere sphere_from_points(const std::vector< Vec3 >& points);
 
     SQUARE_API Sphere sphere_from_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points);
-    
+
+    template< size_t N >
+    inline Sphere sphere_from_points(const std::array< Vec3, N >& points)
+    {
+        return sphere_from_points(reinterpret_cast<const unsigned char*>(points.data()), 0, sizeof(Vec3), N);
+    }
+
     //cast
     SQUARE_API OBoundingBox to_obounding(const AABoundingBox& aabb);
     SQUARE_API OBoundingBox to_obounding(const Sphere& sphere);

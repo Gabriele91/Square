@@ -40,9 +40,11 @@ namespace Scene
 		//constructor
 		Level(Context& context);
 		Level(Context& context, const std::string& name);
+		virtual ~Level();
 
 		//add an actor
 		void add(Shared<Actor> child);
+		Shared<Actor> load_actor(const std::string& resource_name);
 
 		//query
 		Shared<Actor> actor();
@@ -57,20 +59,23 @@ namespace Scene
 		//remove an actor
 		bool remove(Shared<Actor> child);
 
+		// Visit all actors DSF
+		void visit(const std::function<bool(Shared<Actor>)>& callback);
+
 		//name        
 		const std::string& name() const;
 		void name(const std::string&);
 
 		//message
-		void send_message(const Variant& value, bool brodcast = false);
+		void send_message(const VariantRef& value, bool brodcast = false);
 		void send_message(const Message& msg, bool brodcast = false);
 
 		//serialize
-		void serialize(Data::Archive& archivie);
-		void serialize_json(Data::Json& archivie);
+		void serialize(Data::Archive& archive);
+		void serialize_json(Data::JsonValue& archive);
 		//deserialize
-		void deserialize(Data::Archive& archivie);
-		void deserialize_json(Data::Json& archivie);
+		void deserialize(Data::Archive& archive);
+		void deserialize_json(Data::JsonValue& archive);
 
 		//get randerable collection
 		const Render::Collection& randerable_collection() const;

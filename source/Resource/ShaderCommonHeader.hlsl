@@ -16,30 +16,38 @@ R"HLSLCODE(
 #define DVec4 double4
 #define DMat3 double3x3
 #define DMat4 double4x4
-#define Sampler2D(name) SamplerState  name; Texture2D name ## _texture_2D;
-#define Sampler3D(name) SamplerState  name; Texture3D name ## _texture_3D;
-#define SamplerCube(name) SamplerState  name; TextureCube name ## _texture_CUBE;
-#define texture2D(name,pos) name ## _texture_2D.Sample(name,pos)
-#define texture3D(name,pos) name ## _texture_3D.Sample(name,pos)
-#define textureCube(name,pos) name ## _texture_CUBE.Sample(name,pos)
+#define Sampler2D(name) Texture2D name; SamplerState sempler_ ## name;
+#define Sampler2DArray(name)  Texture2DArray name; SamplerState sempler_ ## name;
+#define Sampler3D(name)  Texture3D name; SamplerState sempler_ ## name;
+#define SamplerCube(name)  TextureCube name; SamplerState sempler_ ## name;
+#define texture2D(name,pos) name.Sample(sempler_ ## name,pos)
+#define texture2DArray(name,pos) name.Sample(sempler_ ## name,pos)
+#define texture3D(name,pos) name.Sample(sempler_ ## name,pos)
+#define textureCube(name,pos) name.Sample(sempler_ ## name,pos)
 
 #ifdef GLSL_BACKEND
-	#define shadow2D(name,pos) name ## _texture_2D.Sample(name,invY(pos))
-	#define drew2D(name,pos) name ## _texture_2D.Sample(name,invY(pos))	
+	#define shadow2D(name,pos) name.Sample(sempler_ ## name,invY(pos))
+	#define draw2D(name,pos) name.Sample(sempler_ ## name,invY(pos))	
+
+	#define shadow2DArray(name,pos) name.Sample(sempler_ ## name,invY(pos))
+	#define draw2DArray(name,pos) name.Sample(sempler_ ## name,invY(pos))
 	
-	#define shadowCube(name,pos) name ## _texture_CUBE.Sample(name,pos)
-	#define drewCube(name,pos) name ## _texture_CUBE.Sample(name,pos)
-	static uint cube_map_view_id[]={ 0,1,2,3,4,5 };
+	#define shadowCube(name,pos) name.Sample(sempler_ ## name,negY(pos))
+	#define drawCube(name,pos) name.Sample(sempler_ ## name,negY(pos))
+	static uint cube_map_view_id[]={ 0,1,3,2,4,5 };
 
 	#define ONLY_GLSL( x ) x 
 	#define ONLY_HLSL( x )
 #else
-	#define shadow2D(name,pos) name ## _texture_2D.Sample(name,pos)
-	#define drew2D(name,pos) name ## _texture_2D.Sample(name,pos)
+	#define shadow2D(name,pos) name.Sample(sempler_ ## name, pos)
+	#define draw2D(name,pos) name.Sample(sempler_ ## name, pos)
 
-	#define shadowCube(name,pos) name ## _texture_CUBE.Sample(name,negY(pos))
-	#define drewCube(name,pos) name ## _texture_CUBE.Sample(name,negY(pos))
-	static uint cube_map_view_id[]={ 0,1,3,2,4,5 };
+	#define shadow2DArray(name,pos) name.Sample(sempler_ ## name, pos)
+	#define draw2DArray(name,pos) name.Sample(sempler_ ## name, pos)
+
+	#define shadowCube(name,pos) name.Sample(sempler_ ## name, pos)
+	#define drawCube(name,pos) name.Sample(sempler_ ## name, pos)
+	static uint cube_map_view_id[]={ 0,1,2,3,4,5 };
 
 	#define ONLY_GLSL( x ) 
 	#define ONLY_HLSL( x ) x
@@ -125,31 +133,39 @@ inline Vec4 negW(in Vec4 pos)
 }
 
 ////////////////////////////////////////////////////
-Vec2 _SQUARE_textureSize2D(Texture2D tex2D, uint Level)
+Vec2 _SQUARE_textureSize2D(Texture2D _tex2D, uint level)
 {
 	uint  param;
 	uint2 ret;
-	tex2D.GetDimensions(Level, ret.x, ret.y, param);
+	_tex2D.GetDimensions(level, ret.x, ret.y, param);
 	return Vec2(ret.x, ret.y);
 }
-#define textureSize2D(name,lod) _SQUARE_textureSize2D(name ## _texture_2D, lod)
+#define textureSize2D(name,lod) _SQUARE_textureSize2D(name, lod)
 
-Vec3 _SQUARE_textureSize3D(Texture3D tex3D, uint Level)
+Vec3 _SQUARE_textureSize2DArray(in Texture2DArray _tex2DArray, uint level)
+{
+    uint width, height, elements, num_mip_levels;
+	_tex2DArray.GetDimensions(level, width, height, elements, num_mip_levels);
+	return Vec3(width, height, elements);
+}
+#define textureSize2DArray(name, lod) _SQUARE_textureSize2DArray(name, lod)
+
+Vec3 _SQUARE_textureSize3D(Texture3D _tex3D, uint level)
 {
 	uint  param;
 	uint3 ret;
-	tex3D.GetDimensions(Level, ret.x, ret.y, ret.z, param);
+	_tex3D.GetDimensions(level, ret.x, ret.y, ret.z, param);
 	return Vec3(ret.x, ret.y, ret.z);
 }
-#define textureSize3D(name,lod) _SQUARE_textureSize3D(name ## _texture_3D, lod)
+#define textureSize3D(name,lod) _SQUARE_textureSize3D(name, lod)
 
-Vec2 _SQUARE_textureSizeCube(TextureCube texCUBE, uint Level)
+Vec2 _SQUARE_textureSizeCube(TextureCube _texCUBE, uint level)
 {
 	uint  param;
 	uint2 ret;
-	texCUBE.GetDimensions(Level, ret.x, ret.y, param);
+	_texCUBE.GetDimensions(level, ret.x, ret.y, param);
 	return Vec2(ret.x, ret.y);
 }
-#define textureSizeCube(name,lod) _SQUARE_textureSizeCube(name ## _texture_CUBE, lod)
+#define textureSizeCube(name,lod) _SQUARE_textureSizeCube(name, lod)
 //////////////////////////////////////////////////////////////////////////////////////
 )HLSLCODE"

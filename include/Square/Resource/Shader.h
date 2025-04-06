@@ -12,7 +12,7 @@ namespace Square
 namespace Resource
 {
 	class SQUARE_API Shader : public ResourceObject
-                            , public SharedObject<Shader>
+                            , public InheritableSharedObject<Shader>
 	{
 
 	public:
@@ -79,7 +79,18 @@ namespace Resource
 		UnifomMap	    m_uniform_map;
 		CBufferMap	    m_cbuffer_map;
 
-		//help to compile
+		// GLSL Compatible
+		struct GLSLCompatibleSettings
+		{
+			bool m_is_glsl_backend;
+			int  m_shader_version;
+			bool m_add_GL_ARB_shading_language_420pack;
+			bool m_add_GL_EXT_control_flow_attributes;
+			GLSLCompatibleSettings(Context& context);
+		};
+		GLSLCompatibleSettings m_glsl_compatible_settings;
+
+		// help to compile
 		struct PostprocessOutput
 		{
 			size_t	    m_version;
@@ -97,16 +108,15 @@ namespace Resource
 			PostprocessOutput& source
 		);
 
+		bool hlsl_compile
+		(
+			const PostprocessOutput& source
+		);
+
 		bool source_to_spirv
 		(
 			const PostprocessOutput& source,
 			HLSL2ALL::TypeSpirvShaderList& output
-		);
-
-		bool spirv_to_hlsl_compile
-		(
-			const PostprocessOutput& source,
-			const HLSL2ALL::TypeSpirvShaderList& input
 		);
 
 		bool spirv_to_glsl_compile

@@ -12,13 +12,19 @@ namespace Square
 {
 namespace Geometry
 {
+	class AABoundingBox;
+
 	class SQUARE_API OBoundingBox
 	{
 	public:
 		/*		
 		* Constructor of Oriented Bounding Box
 		*/
-		OBoundingBox() {} //default
+		OBoundingBox();
+		OBoundingBox(OBoundingBox&&);
+		OBoundingBox(const OBoundingBox&);
+		OBoundingBox& operator = (OBoundingBox&&) = default;
+		OBoundingBox& operator = (const OBoundingBox&) = default;
 
 		/**
 		* Constructor of obb
@@ -39,12 +45,12 @@ namespace Geometry
 		/**
 		* Return the 8 point of obb
 		*/
-		std::vector< Vec3 > get_bounding_box() const;
+		std::array< Vec3, 8 > get_bounding_box() const;
 
 		/**
 		* Return the 8 points (of obb) multiplied to "model matrix"
 		*/
-		std::vector< Vec3 > get_bounding_box(const Mat4& model) const;
+		std::array< Vec3, 8 > get_bounding_box(const Mat4& model) const;
 
 		// get volume
 		float volume() const;
@@ -67,16 +73,22 @@ namespace Geometry
 		//test
 		Vec3 closest_point(const Vec3& target) const;
 
+		//To AABB
+		AABoundingBox to_aabb() const;
+
 		//get info
 		const Mat3& get_rotation_matrix() const { return m_rotation; }
 		const Vec3& get_position() const { return m_position; }
 		const Vec3& get_extension() const { return m_extension; }
 
+		// Return if it is a valid OBB
+		bool valid() const;
+
 	private:
 
-		Mat3 m_rotation; // rotation matrix for the transformation
-		Vec3 m_position; // translation component of the transformation
-		Vec3 m_extension;// bounding box extents
+		Mat3 m_rotation { 0 };// rotation matrix for the transformation
+		Vec3 m_position { 0 };// translation component of the transformation
+		Vec3 m_extension{ 0 };// bounding box extents
 
 	};
 }

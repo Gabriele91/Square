@@ -31,7 +31,7 @@ namespace Resource
         ctx.add_resource<Shader>({ ".glsl", ".hlsl" });
 		//attributes
         #if 0
-		ctx.add_attributes<Shader>(attribute_function<Shader, void*>
+		ctx.add_attribute_function<Shader>(
 		("constant_buffer"
 		, (void*)(nullptr)
 		, [](const Shader* shader) -> void* { return (void*)shader->constant_buffer(name); }
@@ -42,14 +42,45 @@ namespace Resource
     }
 
 	//Contructor
-	Shader::Shader(Context& context) : ResourceObject(context)
+	Shader::Shader(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_glsl_compatible_settings(context)
 	{
 	}
-	Shader::Shader(Context& context, const std::string& path) : ResourceObject(context)
+	Shader::Shader(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_glsl_compatible_settings(context)
 	{
 		load(path);
 	}
 	
+	// Get GLSL settings
+	Shader::GLSLCompatibleSettings::GLSLCompatibleSettings(Context& context)
+		: m_is_glsl_backend(false)
+		, m_shader_version(410)
+		, m_add_GL_ARB_shading_language_420pack(false)
+		, m_add_GL_EXT_control_flow_attributes(false)
+	{
+		if (auto render = context.render(); 
+			render
+			&& render->get_render_driver_info().m_render_driver == Square::Render::DR_OPENGL 
+			&& render->get_render_driver_info().m_shader_language == "GLSL")
+		{
+			m_is_glsl_backend = true;
+			m_shader_version = render->get_render_driver_info().m_shader_version;
+			auto& ext_list = render->get_render_driver_info().m_shader_exts;
+			// test GL_ARB_shading_language_420pack
+			m_add_GL_ARB_shading_language_420pack = std::find_if(ext_list.begin(), ext_list.end(),
+																[](const std::string& ext) -> bool
+																{
+																	return ext == "GL_ARB_shading_language_420pack";
+																}) != ext_list.end();
+			// test GL_EXT_control_flow_attributes
+			m_add_GL_EXT_control_flow_attributes = std::find_if(ext_list.begin(), ext_list.end(), 
+																[](const std::string& ext) -> bool
+																{ 
+																	return ext == "GL_EXT_control_flow_attributes"; 
+																}) != ext_list.end();
+		}
+	}
+
+
 	//Destructor
 	Shader::~Shader()
 	{
@@ -101,15 +132,22 @@ namespace Resource
 		shader_remove_comments(preprocessed_source);
 		//first pass, compute program
 		if (!source_preprocess(preprocessed_source, defines, postprocessed_source)) return false;
-		//next to spirv
-		if (!source_to_spirv(postprocessed_source, spirv)) return false;
-		//if is hlsl
-		if (postprocessed_source.m_hlsl_target) { if (!spirv_to_hlsl_compile(postprocessed_source, spirv)) return false; }
-		else								    { if (!spirv_to_glsl_compile(postprocessed_source, spirv)) return false; }
+		//if is HLSL
+		if (postprocessed_source.m_hlsl_target) 
+		{ 
+			if (!hlsl_compile(postprocessed_source))  return false; 
+		}
+		//or GLSL
+		else
+		{
+			//next to spirv
+			if (!source_to_spirv(postprocessed_source, spirv)) return false;
+			//to glsl
+			if (!spirv_to_glsl_compile(postprocessed_source, spirv)) return false;
+		}
         //success
         return true;
     }
-
 
 	bool Shader::source_preprocess
 	(
@@ -120,7 +158,7 @@ namespace Resource
 	{	
 		//int shader version
 		source.m_hlsl_target = false;
-		source.m_version = 410;
+		source.m_version = m_glsl_compatible_settings.m_shader_version;
 		source.m_texture_target = false;
 		//OpenGL or DirectX
 		if (auto render = context().render())
@@ -199,7 +237,7 @@ namespace Resource
 		spirv_info.m_desktop = true;
 		spirv_info.m_reverse_mul = false;
 		spirv_info.m_vulkan = true;
-		spirv_info.m_upgrade_texture_to_samples = false;
+		spirv_info.m_upgrade_texture_to_samples = true;
 		//SPIRV-Cross currently does not support flattening structs recursively.
 		spirv_info.m_samplerarray_to_flat = false;
 		//build
@@ -213,22 +251,22 @@ namespace Resource
 			, spirv_info
 		))
 		{
-			context().add_wrong("Error to shader compile");
-			context().add_wrongs(shader_spirv_errors);
+			context().logger()->warning("Error to shader compile");
+			context().logger()->warnings(shader_spirv_errors);
 			return false;
 		}	
 		return true;
 	}
+
 	//SPIRV-Cross HLSL's backend implementation (tessellation, geometry and compute shaders) is unfinished.
 	//So, do not use that backend.
-	bool Shader::spirv_to_hlsl_compile
+	bool Shader::hlsl_compile
 	(
-		const PostprocessOutput& source,
-		const HLSL2ALL::TypeSpirvShaderList& shader_spirv_outputs
+		const PostprocessOutput& source
 	)
 	{
 		////////////////////////////////////////////////////////////////////////////////////////////////////
-		std::string shader_target_name[Render::ST_N_SHADER]
+		static const std::string shader_target_name[Render::ST_N_SHADER]
 		{
 			  "vertex"
 			, "fragment"
@@ -237,24 +275,64 @@ namespace Resource
 			, "tass_eval"
 			, "compute"
 		};
-		////////////////////////////////////////////////////////////////////////////////////////////////////
-		std::vector< Render::ShaderSourceInformation > shader_info;
-		////////////////////////////////////////////////////////////////////////////////////////////////////
-		//to HLSL/GLSL
-		for (const HLSL2ALL::TypeSpirvShader& ssoutput : shader_spirv_outputs)
+		//save types
+		static const HLSL2ALL::InfoSpirvShaderList shader_info
 		{
-			//unpack
-            int   type = ssoutput.m_type;
-            auto& shader_spirv_out = ssoutput.m_shader;
+			{ HLSL2ALL::ST_VERTEX_SHADER, shader_target_name[Render::ST_VERTEX_SHADER] },
+			{ HLSL2ALL::ST_TASSELLATION_CONTROL_SHADER, shader_target_name[Render::ST_TASSELLATION_CONTROL_SHADER] },
+			{ HLSL2ALL::ST_TASSELLATION_EVALUATION_SHADER, shader_target_name[Render::ST_TASSELLATION_EVALUATION_SHADER] },
+			{ HLSL2ALL::ST_GEOMETRY_SHADER, shader_target_name[Render::ST_GEOMETRY_SHADER] },
+			{ HLSL2ALL::ST_FRAGMENT_SHADER, shader_target_name[Render::ST_FRAGMENT_SHADER] },
+			{ HLSL2ALL::ST_COMPUTE_SHADER, shader_target_name[Render::ST_COMPUTE_SHADER] },
+		};
+		HLSL2ALL::ErrorSpirvShaderList shader_errors;
+		//info
+		HLSL2ALL::TargetShaderInfo spirv_info;
+		spirv_info.m_client_version = 100;
+		spirv_info.m_desktop = true;
+		spirv_info.m_reverse_mul = false;
+		spirv_info.m_vulkan = true;
+		spirv_info.m_upgrade_texture_to_samples = false;
+		spirv_info.m_samplerarray_to_flat = false;
+		// Output
+		HLSL2ALL::TypeHLSLShaderList shader_hlsl_outputs;
+		//build
+		if (!HLSL2ALL::hlsl_to_hlsl_preprocessed
+		(
+			  source.m_source
+			, resource_name()
+			, shader_info
+			, shader_hlsl_outputs
+			, shader_errors
+			, spirv_info
+			, true
+		))
+		{
+			context().logger()->warning("Error to shader compile");
+			context().logger()->warnings(shader_errors);
+			return false;
+		}
+		////////////////////////////////////////////////////////////////////////////////////////////////////
+		std::vector< Render::ShaderSourceInformation > render_shader_info;
+		////////////////////////////////////////////////////////////////////////////////////////////////////
+		//as HLSL list
+		for (size_t  idx = 0; idx < shader_hlsl_outputs.size(); ++idx)
+		{			
+			// Unpack
+			Render::ShaderType type   = (Render::ShaderType)shader_hlsl_outputs[idx].m_type;
+			std::string& hlslsource   = (std::string&)shader_hlsl_outputs[idx].m_shader;
+			const std::string& target = shader_target_name[type];
+			// Remove
+			shader_remove_void_lines(hlslsource);
 			//output
-			shader_info.push_back
+			render_shader_info.push_back
 			(Render::ShaderSourceInformation
 			{
-				 (Render::ShaderType)type  //shader type
-				, source.m_header	       //header
-				, source.m_raw_source	   //source output ref
-				, shader_target_name[type] //source output ref
-				, 0						   //line 0
+				  type			     //shader type
+				, ""				 //header
+				, hlslsource         //source output ref
+				, target             //source output ref
+				, 0				     //line 0
 			});
 		}
 		////////////////////////////////////////////////////////////////////////////////
@@ -262,14 +340,14 @@ namespace Resource
 		if (auto render = context().render())
 		{
 			//compile
-			m_shader = render->create_shader(shader_info);
+			m_shader = render->create_shader(render_shader_info);
 			//tests
-			if (!m_shader || render->shader_compiled_with_errors(m_shader) || render->shader_linked_with_error(m_shader))
+			if (!m_shader  || render->shader_compiled_with_errors(m_shader) || render->shader_linked_with_error(m_shader))
 			{
 				//fail
-				context().add_wrong("Error to shader compile");
-				context().add_wrongs(render->get_shader_compiler_errors(m_shader));
-				context().add_wrong(render->get_shader_liker_error(m_shader));
+				context().logger()->warning("Error to shader compile");
+				context().logger()->warnings(render->get_shader_compiler_errors(m_shader));
+				context().logger()->warning(render->get_shader_linker_error(m_shader));
 				return false;
 			}
             //ok
@@ -309,8 +387,9 @@ namespace Resource
 		glsl_config.m_rename_position_in_position0 = true;
 		glsl_config.m_fixup_clipspace = true;
 		glsl_config.m_flip_vert_y = source.m_texture_target; //flip y if is a texture target
-		glsl_config.m_enable_420pack_extension = false;
-        glsl_config.m_force_to_remove_query_texture = true;		
+		glsl_config.m_enable_420pack_extension =  glsl_config.m_version < 420 // Add it if and only if the version is less then 420
+											   && m_glsl_compatible_settings.m_add_GL_ARB_shading_language_420pack;
+        glsl_config.m_force_to_remove_query_texture = true;
 		//errors
 		HLSL2ALL::TextureSamplerList shader_glsl_tslist;
 		HLSL2ALL::ErrorSpirvShaderList shader_spirv_errors;
@@ -330,12 +409,22 @@ namespace Resource
             //compile
 			if (!HLSL2ALL::spirv_to_glsl(shader_spirv_out, shader_sources[type], shader_glsl_tslist, shader_spirv_errors, glsl_config))
 			{
-				context().add_wrong("Error to shader compile");
-				context().add_wrongs(shader_spirv_errors);
+				context().logger()->warning("Error to shader compile");
+				context().logger()->warnings(shader_spirv_errors);
 				return false;
 			}
 			//remove #version
 			shader_extract_glsl_version_line(shader_sources[type], shader_headers[type]);
+			//add GL_EXT_control_flow_attributes
+			if (m_glsl_compatible_settings.m_add_GL_EXT_control_flow_attributes)
+			{
+				shader_headers[type] += "#extension GL_EXT_control_flow_attributes : enable\n";
+			}
+			//add GL_ARB_shading_language_420pack
+			if (glsl_config.m_enable_420pack_extension)
+			{
+				shader_headers[type] += "#extension GL_ARB_shading_language_420pack : enable\n";
+			}
 			//add inf
 			shader_info.push_back
 			(Render::ShaderSourceInformation
@@ -356,9 +445,9 @@ namespace Resource
 			if (!m_shader || render->shader_compiled_with_errors(m_shader) || render->shader_linked_with_error(m_shader))
 			{
 				//fail
-				context().add_wrong("Error to shader compile");
-				context().add_wrongs(render->get_shader_compiler_errors(m_shader));
-				context().add_wrong(render->get_shader_liker_error(m_shader));
+				context().logger()->warning("Error to shader compile");
+				context().logger()->warnings(render->get_shader_compiler_errors(m_shader));
+				context().logger()->warning(render->get_shader_linker_error(m_shader));
 				return false;
 			}
             //ok
@@ -404,15 +493,15 @@ namespace Resource
 	//destoy shader
 	void Shader::destoy()
 	{
+		//clear info
+		m_filepath_map.clear();
+		m_uniform_map.clear();
+		m_cbuffer_map.clear();
 		//delete last shader
 		if (m_shader)
 			if (auto render = context().render())
 				render->delete_shader(m_shader);
 		m_shader = nullptr;
-		//clear info
-		m_filepath_map.clear();
-		m_uniform_map.clear();
-		m_cbuffer_map.clear();
 	}
 }
 }

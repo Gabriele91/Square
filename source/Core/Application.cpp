@@ -10,6 +10,7 @@
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/Core/Application.h"
 #include "Square/Driver/Render.h"
+#include "Square/Scene/World.h"
 
 namespace Square
 {
@@ -51,6 +52,8 @@ namespace Square
 	//help
 	Application&     AppInterface::application() { return *Application::instance(); }
 	Context&		 AppInterface::context()     { return *application().context(); }
+	Allocator&		 AppInterface::allocator()   { return *application().allocator(); }
+	Logger&		     AppInterface::logger()      { return *application().logger(); }
 	Render::Context& AppInterface::render()      { return *application().render(); }
 	Video::Window&   AppInterface::window()      { return *application().window(); }
 	Video::Input&    AppInterface::input()       { return *application().input(); }
@@ -59,30 +62,43 @@ namespace Square
     Application::Application()
     {
         //test
-        assert(s_instance == nullptr);
+        square_assert(s_instance == nullptr);
         //init
         Video::init();
         //registration
         s_instance = this;
+        //Self reg
+        m_context.m_application = this;
+        // Logger
+        m_context.m_logger = get_logger_intance(LoggerType::LOGGER_OS_DEFAULT);
+        // Allocator
+        {
+            static DefaultAllocator s_default_allocator;
+            #if defined(_DEBUG)            
+            static DebugAllocator s_debug_allocator(&s_default_allocator, m_context.m_logger);
+            m_context.m_allocator = &s_debug_allocator;
+            #else 
+            m_context.m_allocator = &s_default_allocator;
+            #endif
+        }
 		//Add static object factory
 		for (const auto& item : ClassObjectRegistration::item_list())
 		{
 			item.m_registration(m_context);
 		}
-		//Self reg
-		m_context.m_application = this;
     }
     
     Application::~Application()
     {
-        //unregister items
+        // Unregister items
         m_context.clear();
-		//Self unregister
-		m_context.m_application = nullptr;
-        //unregister
+        // Unregister
         s_instance = nullptr;
-        //close
+        // Close
         Video::close();
+		// Unregister
+        m_context.m_application = nullptr;
+        m_context.m_allocator = nullptr;
     }
     
     void Application::clear() const
@@ -159,7 +175,17 @@ namespace Square
     {
         return m_instance;
     }
-    
+
+    Allocator* Application::allocator()
+    {
+        return context() ? context()->allocator() : nullptr;
+    }
+
+    Logger* Application::logger()
+    {
+        return context() ? context()->logger() : nullptr;
+    }
+
     Video::Window* Application::window()
     {
         return m_window;
@@ -189,7 +215,17 @@ namespace Square
     {
         return m_instance;
     }
-    
+
+    Allocator* Application::allocator() const
+    {
+        return context() ? context()->allocator() : nullptr;
+    }
+
+    Logger* Application::logger() const
+    {
+        return context() ? context()->logger() : nullptr;
+    }
+
     const Video::Window* Application::window() const
     {
         return m_window;
@@ -229,9 +265,30 @@ namespace Square
 		case Square::Render::DR_DIRECTX:
 			return Video::ContextInfo::CTX_DIRECTX;
 		break;
-		default: break;
+		default: 
+            return Video::ContextInfo::CTX_UNKNOWN;
+        break;
 		}
 	}
+
+    Video::ContextInfo::gpu_type get_gpu_type(GpuType type)
+    {
+        switch (type)
+        {
+        default:
+        case Square::GpuType::GPU_DEFAULT: 
+            return Video::ContextInfo::GPU_TYPE_DEFAULT;
+
+        case Square::GpuType::GPU_HIGH:
+        case Square::GpuType::GPU_AMD:
+        case Square::GpuType::GPU_NV:
+            return Video::ContextInfo::GPU_TYPE_HIGH;
+
+        case Square::GpuType::GPU_INTEL:
+        case Square::GpuType::GPU_LOW:
+            return Video::ContextInfo::GPU_TYPE_LOW;
+        }
+    }
 
     bool Application::execute
     (
@@ -258,14 +315,15 @@ namespace Square
 		winfo.m_context.m_stencil = driver.m_stencil_ctx;
 		winfo.m_context.m_version[0] = driver.m_major_ctx;
 		winfo.m_context.m_version[1] = driver.m_minor_ctx;
-		winfo.m_context.m_debug = driver.m_debug;
+        winfo.m_context.m_gpu_type = get_gpu_type(driver.m_gpu_type);
+        winfo.m_context.m_debug = driver.m_debug;
         winfo.m_size[0] = window_size.x;
         winfo.m_size[1] = window_size.y;
         winfo.m_fullscreen = mode == WindowMode::FULLSCREEN;
         winfo.m_resize     = mode == WindowMode::RESIZABLE;
-        m_window = new Video::Window(winfo);
+        m_window = SQ_NEW(allocator(), Video::Window, AllocType::ALCT_DEFAULT) Video::Window(winfo);
         //input
-        m_input = new Video::Input(m_window);
+        m_input = SQ_NEW(allocator(), Video::Input, AllocType::ALCT_DEFAULT) Video::Input(m_window);
         //save instance
         m_instance = app;
         ////////////////////////////////////////////////////////////////////////        
@@ -275,10 +333,11 @@ namespace Square
         //enable render context and  disable vSync (auto by Video::Window)
         m_window->acquire_context();
 		//Get render
-		m_render = Render::create_render_driver(driver.m_type);
+		m_render = Render::create_render_driver(context()->allocator(), context()->logger(), driver.m_type);
 		//init render
 		if (!m_render || !m_render->init(m_window->device()))
 		{
+            logger()->error("Unable to load render driver");
 			return false;
 		}
         //flush errors
@@ -314,22 +373,36 @@ namespace Square
             //close event?
             if(event == Video::WindowEvent::CLOSE) close_event = true;
         });
+
+        //set world
+        m_world = SQ_NEW(allocator(), Scene::World, AllocType::ALCT_DEFAULT) Scene::World(m_context);
+
         //start
         m_instance->start();
 		m_render->print_errors();
+
         //time
         double old_time = 0;
-        double last_time = Time::get_time();
+        double last_time = Time::get_ms_time();
+        m_last_delta_time = 0;
+
+        //send event
+        {
+            static std::string init_finished ("application::init::finished" );
+            static const VariantRef init_finished_ref(init_finished);
+            m_world->send_message(init_finished_ref, true);
+        }
+
         //loop
         while (!close_event)
         {
             //compute delta time
             old_time = last_time;
-            last_time = Time::get_time();
+            last_time = Time::get_ms_time();
             //print
 			m_render->print_errors();
             //update delta time
-            m_last_delta_time = std::max(last_time - old_time, 0.0001);
+            m_last_delta_time = std::max(last_time - old_time,  1E-16) / 1000.0;
             //update
             if (!m_instance->run(m_last_delta_time)) break;
             //print
@@ -339,27 +412,39 @@ namespace Square
             //swap
             m_window->swap();
         }
+
+        //send event
+        {
+            static std::string loop_finished("application::loop::finished");
+            static const VariantRef loop_finished_ref(loop_finished);
+            m_world->send_message(loop_finished_ref, true);
+        }
+
         //end state
         bool end_state = m_instance->end();
-        
+
+        //dealloc input
+        SQ_DELETE_NAMESPACE(allocator(), Video, Input, m_input);
+        m_input = nullptr;
+
         //clear context
         context()->clear();
-        
-        //dealloc input
-        delete m_input;
-        m_input = nullptr;
-        
+
         //dealloc
         delete m_instance;
         m_instance = nullptr;
+
+        //delete world
+        SQ_DELETE_NAMESPACE(allocator(), Scene, World, m_world);
+        m_world = nullptr;
         
         //delete render context
-		m_render->close();
-		Render::delete_render_driver(m_render);
-        
+        m_render->close();
+        Render::delete_render_driver(m_render);
+
         //dealloc window
-        delete m_window;
-        m_window =nullptr;
+        SQ_DELETE_NAMESPACE(allocator(), Video, Window, m_window);
+        m_window = nullptr;
         
         //return status
         return end_state;

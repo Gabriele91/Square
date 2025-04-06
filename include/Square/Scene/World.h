@@ -7,6 +7,7 @@
 #pragma once
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
+#include "Square/Core/Variant.h"
 #include "Square/Core/Uncopyable.h"
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Object.h"
@@ -21,7 +22,7 @@ namespace Scene
 	//declaretion
 	class Actor;
 	class Level;
-	class World;
+	struct Message;
 	using ActorList = std::vector< Shared<Actor> >;
 	using LevelList = std::vector< Shared<Level> >;
 	//..................
@@ -38,6 +39,7 @@ namespace Scene
 
 		//constructor
 		World(Context& context);
+		virtual ~World();
 
 		//name        
 		const std::string& name() const;
@@ -62,15 +64,15 @@ namespace Scene
 		bool remove(Shared<Level> child);
 			
 		//message
-		void send_message(const Variant& value, bool brodcast = false);
+		void send_message(const VariantRef& value, bool brodcast = false);
 		void send_message(const Message& msg, bool brodcast = false);
 
 		//serialize
-		void serialize(Data::Archive& archivie);
-		void serialize_json(Data::Json& archivie);
+		void serialize(Data::Archive& archive);
+		void serialize_json(Data::JsonValue& archive);
 		//deserialize
-		void deserialize(Data::Archive& archivie);
-		void deserialize_json(Data::Json& archivie);
+		void deserialize(Data::Archive& archive);
+		void deserialize_json(Data::JsonValue& archive);
 
 
 	protected:

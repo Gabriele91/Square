@@ -68,6 +68,68 @@ namespace Resource
 		return version.size() != 0;
 	}
 
+	// Remove void lines
+	bool shader_remove_void_lines(std::string& source) 
+	{
+		// Dec vars
+		const char* source_ptr = source.c_str();
+		const char* ptr = source_ptr;
+		const char* newline_ptr = ptr;
+		const char* start_lines_ptr = nullptr;
+		const char* end_lines_ptr = nullptr;
+		size_t		line_number = 1;
+		bool        is_space_line{ true };
+		// Line to remove info
+		std::vector< std::tuple< size_t, size_t, size_t > > lines_to_remove;
+		// For each row
+		for (; ptr && *ptr; ++ptr)
+		{
+			// Save this pice of lines to remove
+			if (is_space_line && *ptr == '\n')
+			{
+				// If no start lines is not set, set it
+				if (!start_lines_ptr) {
+					start_lines_ptr = newline_ptr;
+				}
+				// Seve current end of lines to removes
+				end_lines_ptr = ptr;
+				// Reset info about this lines
+				is_space_line = true;
+			}
+
+			// Count lines
+			if (*ptr == '\n')
+			{
+				newline_ptr = ptr + 1;
+				is_space_line = true;
+				++line_number;
+			}
+			else if(!std::isspace(*ptr))
+			{
+				// Push last pice of lines to remove
+				if (start_lines_ptr && end_lines_ptr)
+				{
+					lines_to_remove.emplace_back(std::move(std::make_tuple< size_t, size_t >(
+						  size_t(start_lines_ptr - source_ptr)
+						, size_t(end_lines_ptr - source_ptr)
+						, line_number
+					)));
+					start_lines_ptr = nullptr;
+					end_lines_ptr = nullptr;
+				}
+				// It is not a line with only spaces
+				is_space_line = false;
+			}
+		}
+		// Remove lines
+		for (auto&[ start, end, cline ] : Square::reverse(lines_to_remove))
+		{
+			source.erase(start, end - start);
+		}
+		// Ok
+		return true;
+	}
+
 	// Help parser
 	struct ShaderImportLoader
 	{
@@ -143,6 +205,13 @@ namespace Resource
 			//count files
 			size_t  this_file = m_n_files++;
 			std::string source_filename = (m_files_as_name ? "\"" + source_path + "\"" : std::to_string(this_file));
+			// Process path
+			auto relative_path = Filesystem::get_relative_to(Filesystem::working_dir(), source_filename);
+			// is ok?
+			if (relative_path.m_success)
+				source_filename = "\"" + replace_all(relative_path.m_path, "\\", "/") + "\"" ;
+			else
+				source_filename = "\"" + Filesystem::get_filename(source_filename) + "\"";
 			//once? Not reinclude
             auto source_is_once = m_once_map.find(source_filename);
             if(source_is_once != m_once_map.end() && source_is_once->second)
@@ -152,7 +221,9 @@ namespace Resource
             //add into the map
 			filepath_map[this_file] = source_dir;
 			//put line of "all" buffer
-            out = "#line " + std::to_string(line + 1) + " " + source_filename  + "\n";
+			#if !defined( DISABLE_SHARER_PREPROCESS_LINE_SET )
+            out = "\n#line " + std::to_string(line + 1) + " " + source_filename + " \n";
+			#endif
 			//start to parse
 			while (std::getline(source, source_line))
 			{
@@ -193,7 +264,7 @@ namespace Resource
                             }
                             else
                             {
-								context.add_wrong("shader, include path is invalid: " + source_path);
+								context.logger()->warning("shader, include path is invalid: " + source_path);
 								return PS_FAIL;
                             }
                         break;
@@ -204,19 +275,19 @@ namespace Resource
                                 //test path
                                 if(!sourcefile_path.size())
                                 {
-									context.add_wrong("shader, include path is invalid: " + source_path + ", " + sourcefile_name + " not exists");
+									context.logger()->warning("shader, include path is invalid: " + source_path + ", " + sourcefile_name + " not exists");
 									return PS_FAIL;
                                 }
                             }
                             else
                             {
-								context.add_wrong("shader, include path is invalid: " + source_path);
+								context.logger()->warning("shader, include path is invalid: " + source_path);
 								return PS_FAIL;
                             }
                         break;
                         default:
                             //error 3
-							context.add_wrong("shader, include path is invalid: " + source_path);
+							context.logger()->warning("shader, include path is invalid: " + source_path);
 							return PS_FAIL;
                         break;
                     };
@@ -240,8 +311,10 @@ namespace Resource
                         //add file
                         out += inc_output;
                         //lines
-                        std::string current_line = "#line " + std::to_string(line + 1) + " " + source_filename  + "\n";
+						#if !defined( DISABLE_SHARER_PREPROCESS_LINE_SET )
+                        std::string current_line = "\n#line " + std::to_string(line + 1) + " " + source_filename  + " \n";
                         out += current_line;
+						#endif
                         //success
                     }
                     //return if is fail 

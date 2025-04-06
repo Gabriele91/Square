@@ -65,7 +65,7 @@ namespace Render
 	void EffectParameter::set(const std::vector < DMat3 >& m3) {}
 	void EffectParameter::set(const std::vector < DMat4 >& m4) {}
 
-	EffectParameter::EffectParameter() {}
+	EffectParameter::EffectParameter(Allocator* allocator) : m_allocator(allocator) {}
 	EffectParameter::~EffectParameter() {}
 
 	bool EffectParameter::is_valid() { return m_id >= 0; }
@@ -123,12 +123,12 @@ namespace Render
 		//value
 		Shared<Resource::Texture> m_value;
 		//init
-		EffectParameterTexture()
+		EffectParameterTexture(Allocator* allocator) : EffectParameter(allocator)
 		{
 			m_value = Shared<Resource::Texture>(nullptr);
 			m_type = EffectParameterType::PT_TEXTURE;
 		}
-		EffectParameterTexture(Shared<Resource::Texture> value)
+		EffectParameterTexture(Allocator* allocator, Shared<Resource::Texture> value) : EffectParameter(allocator)
 		{
 			m_value = value;
 			m_type = EffectParameterType::PT_TEXTURE;
@@ -144,9 +144,9 @@ namespace Render
 			return m_value;
 		}
 		//copy
-		virtual EffectParameter* copy() const override
+		virtual Unique<EffectParameter> copy() const override
 		{
-			return new EffectParameterTexture(m_value);
+			return std::move(MakeUnique<EffectParameterTexture>(m_allocator, m_allocator, m_value));
 		}
 		virtual void copy_to(EffectParameter* dest) const override
 		{
@@ -160,12 +160,12 @@ namespace Render
 		//value
 		std::vector< Shared<Resource::Texture> > m_value;
 		//init
-		EffectParameterVectorTexture()
+		EffectParameterVectorTexture(Allocator* allocator) : EffectParameter(allocator)
 		{
 			m_value = {};
 			m_type = EffectParameterType::PT_STD_VECTOR_TEXTURE;
 		}
-		EffectParameterVectorTexture(const std::vector< Shared<Resource::Texture> >& value)
+		EffectParameterVectorTexture(Allocator* allocator, const std::vector< Shared<Resource::Texture> >& value) : EffectParameter(allocator)
 		{
 			m_value = value;
 			m_type = EffectParameterType::PT_STD_VECTOR_TEXTURE;
@@ -181,9 +181,9 @@ namespace Render
 			return m_value;
 		}
 		//copy
-		virtual EffectParameter* copy() const override
+		virtual Unique<EffectParameter> copy() const override
 		{
-			return new EffectParameterVectorTexture(m_value);
+			return std::move(MakeUnique<EffectParameterVectorTexture>(m_allocator, m_allocator, m_value));
 		}
 		virtual void copy_to(EffectParameter* dest) const override
 		{
@@ -198,11 +198,11 @@ namespace Render
     struct Classname : public EffectParameter\
     {\
         Type m_value;\
-        Classname(Type value = defval)\
+        Classname(Allocator* allocator, Type value = defval) : EffectParameter(allocator) \
         {m_value = value; m_type = parameter_type_traits<Type>();}\
         virtual void set(Type value) override { m_value = value; }\
         virtual Type get_ ## Type () const override { return m_value; }\
-        virtual EffectParameter* copy() const  override {  return new Classname(m_value); }\
+        virtual Unique<EffectParameter> copy() const  override {  return std::move(MakeUnique< Classname >(m_allocator, m_allocator, m_value)); }\
 	    virtual void copy_to(EffectParameter* dest) const override { *((Classname*)dest) = (*this); }\
         virtual void* value_ptr() override { return (void*)&m_value; }\
     }
@@ -210,11 +210,11 @@ namespace Render
     struct Classname : public EffectParameter\
     {\
         Type m_value;\
-        Classname(Type value = defval)\
+        Classname(Allocator* allocator, Type value = defval) : EffectParameter(allocator) \
         {m_value = value; m_type = parameter_type_traits<Type>();}\
         virtual void set(const Type& value) override { m_value = value; }\
         virtual const Type& get_ ## getname () const override { return m_value; }\
-        virtual EffectParameter* copy() const override {  return new Classname(m_value); }\
+        virtual Unique<EffectParameter> copy() const  override {  return std::move(MakeUnique< Classname >(m_allocator, m_allocator, m_value)); }\
 	    virtual void copy_to(EffectParameter* dest) const override { *((Classname*)dest) = (*this); }\
         virtual void* value_ptr() override { return (void*)&m_value; }\
     }
@@ -222,11 +222,11 @@ namespace Render
     struct Classname : public EffectParameter\
     {\
         std::vector< Type > m_value;\
-        Classname(const std::vector< Type >& value = {})\
+        Classname(Allocator* allocator, const std::vector< Type >& value = {}) : EffectParameter(allocator) \
         {m_value = value; m_type = parameter_type_traits<Type>();}\
         virtual void set(const std::vector< Type >& value) override { m_value = value; }\
         virtual const std::vector< Type >& get_vector_ ## getname () const override { return m_value; }\
-        virtual EffectParameter* copy() const override {  return new Classname(m_value); }\
+        virtual Unique<EffectParameter> copy() const  override {  return std::move(MakeUnique< Classname >(m_allocator, m_allocator, m_value)); }\
 	    virtual void copy_to(EffectParameter* dest) const override { *((Classname*)dest) = (*this); }\
         virtual void* value_ptr() override { return (void*)&m_value; }\
     }
@@ -271,51 +271,51 @@ namespace Render
     DefineVectorObjectParameter(EffectParameterVectorDMat3, DMat3, dmat3);
     DefineVectorObjectParameter(EffectParameterVectorDMat4, DMat4, dmat4);
     //////////////////////////////////////////////////////////////////////////    
-	EffectParameter* EffectParameter::create(EffectParameterType type)
+	Unique<EffectParameter> EffectParameter::create(Allocator* allocator, EffectParameterType type)
 	{
 		switch (type)
 		{
-		case EffectParameterType::PT_TEXTURE:return new EffectParameterTexture();
-		case EffectParameterType::PT_INT:    return new EffectParameterInt();
-		case EffectParameterType::PT_FLOAT:  return new EffectParameterFloat();
-		case EffectParameterType::PT_DOUBLE: return new EffectParameterDouble();
+		case EffectParameterType::PT_TEXTURE:return std::move(MakeUnique< EffectParameterTexture >(allocator, allocator));
+		case EffectParameterType::PT_INT:    return std::move(MakeUnique< EffectParameterInt >(allocator, allocator));
+		case EffectParameterType::PT_FLOAT:  return std::move(MakeUnique< EffectParameterFloat >(allocator, allocator));
+		case EffectParameterType::PT_DOUBLE: return std::move(MakeUnique< EffectParameterDouble >(allocator, allocator));
 
-		case EffectParameterType::PT_IVEC2: return new EffectParameterIVec2();
-		case EffectParameterType::PT_IVEC3: return new EffectParameterIVec3();
-		case EffectParameterType::PT_IVEC4: return new EffectParameterIVec4();
+		case EffectParameterType::PT_IVEC2: return std::move(MakeUnique<EffectParameterIVec2>(allocator, allocator));
+		case EffectParameterType::PT_IVEC3: return std::move(MakeUnique<EffectParameterIVec3>(allocator, allocator));
+		case EffectParameterType::PT_IVEC4: return std::move(MakeUnique<EffectParameterIVec4>(allocator, allocator));
 
-		case EffectParameterType::PT_VEC2: return new EffectParameterVec2();
-		case EffectParameterType::PT_VEC3: return new EffectParameterVec3();
-		case EffectParameterType::PT_VEC4: return new EffectParameterVec4();
-		case EffectParameterType::PT_MAT3: return new EffectParameterMat3();
-		case EffectParameterType::PT_MAT4: return new EffectParameterMat4();
+		case EffectParameterType::PT_VEC2: return std::move(MakeUnique<EffectParameterVec2>(allocator, allocator));
+		case EffectParameterType::PT_VEC3: return std::move(MakeUnique<EffectParameterVec3>(allocator, allocator));
+		case EffectParameterType::PT_VEC4: return std::move(MakeUnique<EffectParameterVec4>(allocator, allocator));
+		case EffectParameterType::PT_MAT3: return std::move(MakeUnique<EffectParameterMat3>(allocator, allocator));
+		case EffectParameterType::PT_MAT4: return std::move(MakeUnique<EffectParameterMat4>(allocator, allocator));
 
-		case EffectParameterType::PT_DVEC2: return new EffectParameterDVec2();
-		case EffectParameterType::PT_DVEC3: return new EffectParameterDVec3();
-		case EffectParameterType::PT_DVEC4: return new EffectParameterDVec4();
-		case EffectParameterType::PT_DMAT3: return new EffectParameterDMat3();
-		case EffectParameterType::PT_DMAT4: return new EffectParameterDMat4();
+		case EffectParameterType::PT_DVEC2: return std::move(MakeUnique<EffectParameterDVec2>(allocator, allocator));
+		case EffectParameterType::PT_DVEC3: return std::move(MakeUnique<EffectParameterDVec3>(allocator, allocator));
+		case EffectParameterType::PT_DVEC4: return std::move(MakeUnique<EffectParameterDVec4>(allocator, allocator));
+		case EffectParameterType::PT_DMAT3: return std::move(MakeUnique<EffectParameterDMat3>(allocator, allocator));
+		case EffectParameterType::PT_DMAT4: return std::move(MakeUnique<EffectParameterDMat4>(allocator, allocator));
 
-		case EffectParameterType::PT_STD_VECTOR_TEXTURE:return new EffectParameterVectorTexture();
-		case EffectParameterType::PT_STD_VECTOR_INT:    return new EffectParameterVectorInt();
-		case EffectParameterType::PT_STD_VECTOR_FLOAT:  return new EffectParameterVectorFloat();
-		case EffectParameterType::PT_STD_VECTOR_DOUBLE: return new EffectParameterVectorDouble();
+		case EffectParameterType::PT_STD_VECTOR_TEXTURE:return std::move(MakeUnique<EffectParameterVectorTexture>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_INT:    return std::move(MakeUnique<EffectParameterVectorInt>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_FLOAT:  return std::move(MakeUnique<EffectParameterVectorFloat>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_DOUBLE: return std::move(MakeUnique<EffectParameterVectorDouble>(allocator, allocator));
 
-		case EffectParameterType::PT_STD_VECTOR_IVEC2: return new EffectParameterVectorIVec2();
-		case EffectParameterType::PT_STD_VECTOR_IVEC3: return new EffectParameterVectorIVec3();
-		case EffectParameterType::PT_STD_VECTOR_IVEC4: return new EffectParameterVectorIVec4();
+		case EffectParameterType::PT_STD_VECTOR_IVEC2: return std::move(MakeUnique<EffectParameterVectorIVec2>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_IVEC3: return std::move(MakeUnique<EffectParameterVectorIVec3>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_IVEC4: return std::move(MakeUnique<EffectParameterVectorIVec4>(allocator, allocator));
 
-		case EffectParameterType::PT_STD_VECTOR_VEC2: return new EffectParameterVectorVec2();
-		case EffectParameterType::PT_STD_VECTOR_VEC3: return new EffectParameterVectorVec3();
-		case EffectParameterType::PT_STD_VECTOR_VEC4: return new EffectParameterVectorVec4();
-		case EffectParameterType::PT_STD_VECTOR_MAT3: return new EffectParameterVectorMat3();
-		case EffectParameterType::PT_STD_VECTOR_MAT4: return new EffectParameterVectorMat4();
+		case EffectParameterType::PT_STD_VECTOR_VEC2: return std::move(MakeUnique<EffectParameterVectorVec2>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_VEC3: return std::move(MakeUnique<EffectParameterVectorVec3>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_VEC4: return std::move(MakeUnique<EffectParameterVectorVec4>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_MAT3: return std::move(MakeUnique<EffectParameterVectorMat3>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_MAT4: return std::move(MakeUnique<EffectParameterVectorMat4>(allocator, allocator));
 
-		case EffectParameterType::PT_STD_VECTOR_DVEC2: return new EffectParameterVectorDVec2();
-		case EffectParameterType::PT_STD_VECTOR_DVEC3: return new EffectParameterVectorDVec3();
-		case EffectParameterType::PT_STD_VECTOR_DVEC4: return new EffectParameterVectorDVec4();
-		case EffectParameterType::PT_STD_VECTOR_DMAT3: return new EffectParameterVectorDMat3();
-		case EffectParameterType::PT_STD_VECTOR_DMAT4: return new EffectParameterVectorDMat4();
+		case EffectParameterType::PT_STD_VECTOR_DVEC2: return std::move(MakeUnique<EffectParameterVectorDVec2>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_DVEC3: return std::move(MakeUnique<EffectParameterVectorDVec3>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_DVEC4: return std::move(MakeUnique<EffectParameterVectorDVec4>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_DMAT3: return std::move(MakeUnique<EffectParameterVectorDMat3>(allocator, allocator));
+		case EffectParameterType::PT_STD_VECTOR_DMAT4: return std::move(MakeUnique<EffectParameterVectorDMat4>(allocator, allocator));
 		default: return nullptr; break;
 		}
 	}
@@ -329,7 +329,7 @@ namespace Render
 
 	//enable pass effect
 	void EffectPass::bind(  Render::Context&  render
-						  , EffectPassInputs  inputs
+						  , const EffectPassInputs& inputs
                           , EffectParameters* params) const
 	{
 		//bind
@@ -399,7 +399,17 @@ namespace Render
 			default:
 			case EffectParameterType::PT_NONE: /* void */ break;
 			//uniform
-			case EffectParameterType::PT_TEXTURE:   m_uniform[i]->set(param->get_texture()->get_context_texture()); break;
+			case EffectParameterType::PT_TEXTURE:  
+				if (param->get_texture())
+				{
+					m_uniform[i]->set(param->get_texture()->get_context_texture());
+				}
+				else
+				{
+					// Failed : TODO use app logger
+					printf("Render: EffectPass::bind(texture): error to set a texture");
+				}
+			break;
 			case EffectParameterType::PT_INT:       m_uniform[i]->set(param->get_int()); break;
 			case EffectParameterType::PT_FLOAT:     m_uniform[i]->set(param->get_float()); break;
 			case EffectParameterType::PT_DOUBLE:    m_uniform[i]->set(param->get_double()); break;
@@ -523,7 +533,10 @@ namespace Render
 	// EffectTechnique
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	//contructor
-	Effect::Effect(){}
+	Effect::Effect(Allocator* allocator)
+	: m_allocator(allocator)
+	{}
+	Effect::~Effect(){}
 
 	//get technique
 	EffectTechnique* Effect::technique(const std::string& technique_name)
@@ -560,16 +573,16 @@ namespace Render
 		return nullptr;
 	}
 	
-	EffectParameters* Effect::copy_all_parameters() const
+	Unique<EffectParameters> Effect::copy_all_parameters() const
 	{
 		//alloc vector
-		auto new_params = new EffectParameters(m_parameters.size());
+		auto new_params = MakeUnique<EffectParameters>(m_allocator, m_parameters.size());
 		//copy all
 		for (size_t i = 0; i != m_parameters.size(); ++i)
 		{
-			(*new_params)[i] = std::move(Unique< EffectParameter >(m_parameters[i]->copy()));
+			(*new_params)[i] = std::move(m_parameters[i]->copy());
 		}
-		return new_params;
+		return std::move(new_params);
 	}
 	
 	const std::string&  Effect::parameter_name(int parameter_id) const
@@ -611,10 +624,10 @@ namespace Render
 	}
 
 	//add
-	int Effect::add_parameter(int id, const std::string& name, EffectParameter* parameter)
+	int Effect::add_parameter(int id, const std::string& name, Unique<EffectParameter>&& parameter)
 	{
 		parameter->m_id = id; 
-		m_parameters[id] = std::move(Unique< EffectParameter >(parameter));
+		m_parameters[id] = std::move(parameter);
 		m_parameters_map[name] = id;
 		return id;
 	}

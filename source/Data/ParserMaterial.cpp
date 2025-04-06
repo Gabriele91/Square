@@ -26,15 +26,16 @@ namespace Parser
 		return sbuffer.str();
 	}
 	//////////////////////////////////////////////////////
-	bool Material::parse(Context& default_context, const std::string& source)
+	bool Material::parse(Allocator* allocator, Context& default_context, const std::string& source)
 	{
 		const char* source_ptr = source.c_str();
-		return parse(default_context, source_ptr);
+		return parse(allocator, default_context, source_ptr);
 	}
-	bool Material::parse(Context& default_context, const char*& ptr)
+	bool Material::parse(Allocator* allocator, Context& default_context, const char*& ptr)
 	{
 		//set context
 		m_context = &default_context;
+		m_allocator = allocator;
 		//skip line and comments
 		skip_space_and_comments(m_context->m_line, ptr);
 		//get type
@@ -76,7 +77,7 @@ namespace Parser
 		Parser::Parameters::Context params;
 		params.m_line = m_context->m_line;
 		Parser::Parameters parser_parameters;
-		bool success = parser_parameters.parse(params, ptr);
+		bool success = parser_parameters.parse(m_allocator, params, ptr);
 		//add errors
 		if (!success)
 		{

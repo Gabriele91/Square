@@ -14,6 +14,26 @@ namespace Square
 {
 namespace Render
 {
+    class QueueElement;
+    class Queue;
+    class QueueIterator;
+    class PoolQueues;
+
+    enum QueueType : unsigned char
+    {
+        RQ_SPOT_LIGHT,
+        RQ_POINT_LIGHT,
+        RQ_DIRECTION_LIGHT,
+        RQ_OPAQUE,
+        RQ_TRANSLUCENT,
+        RQ_UI,
+        RQ_BACKGROUND,
+#if defined(_DEBUG)
+        RQ_DEBUG,
+#endif 
+        RQ_MAX
+    };
+
     class SQUARE_API QueueElement
     {
     public:
@@ -62,10 +82,22 @@ namespace Render
     
     class SQUARE_API Queue
     {
+        friend class PoolQueues;
+        friend class std::array< Queue, RQ_MAX >;
+        //init/delete private
+        Queue() = default;
+        virtual ~Queue() = default;
+
     public:
         
         //init
-        Queue(size_t capacity = 512);
+        Queue(Allocator* allocator, size_t capacity = 512);
+
+        //allow move
+        Queue(Queue&& other) noexcept = default;
+        Queue& operator=(Queue&& other) noexcept = default;
+
+        //no copy
         Queue(const Queue&) = delete;
         Queue& operator=(const Queue&) = delete;
         
@@ -88,12 +120,15 @@ namespace Render
         //clear
         void clear();
         
+        // Allocator
+        Allocator* allocator() const { return m_allocator; };
+
     private:
         //static size
         static const size_t page_capacity = 128;
         
         //pool type
-        using Page  = QueueElement[];
+        using Page  = std::array< QueueElement, page_capacity >;
         using Pages = std::vector< Unique<Page> >;
         
         //pool utilities
@@ -104,31 +139,28 @@ namespace Render
         size_t        m_size{ 0 };
         Pages         m_pages;
         QueueElement* m_first{ nullptr };
+        Allocator*    m_allocator{ nullptr };
     };
-    
-    
-    enum QueueType
-    {
-        RQ_SPOT_LIGHT,
-        RQ_POINT_LIGHT,
-        RQ_DIRECTION_LIGHT,
-        RQ_OPAQUE,
-        RQ_TRANSLUCENT,
-        RQ_UI,
-        RQ_BACKGROUND,
-        RQ_MAX
-    };
-    
     
     //all queue
     class SQUARE_API PoolQueues
     {
     public:
         //queues
-        Queue m_queues[RQ_MAX];
+        std::array< Queue, RQ_MAX > m_queues;
         //get a queue
         Queue& operator[](QueueType type);
         const Queue& operator[](QueueType type) const;
+        //Init
+        explicit PoolQueues(Allocator* allocator);
+        // Allow move
+        PoolQueues(PoolQueues&& other) noexcept = default;
+        PoolQueues& operator=(PoolQueues && other) noexcept = default;
+        //No copy
+        PoolQueues(const PoolQueues&) = delete;
+        PoolQueues& operator=(const PoolQueues&) = delete;
+        //Delete
+        virtual ~PoolQueues() = default;
     };
 }
 }

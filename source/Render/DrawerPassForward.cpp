@@ -21,7 +21,7 @@ namespace Square
 namespace Render
 {
     DrawerPassForward::DrawerPassForward(Square::Context& context)
-    : DrawerPass(RPT_RENDER)
+    : DrawerPass(context.allocator(), RPT_RENDER)
     , m_context(context)
     {
         m_cb_camera    = Render::stream_constant_buffer<Render::UniformBufferCamera>(&render());
@@ -95,9 +95,8 @@ namespace Render
         camera.set(&ucamera);
         render().update_steam_CB(m_cb_camera.get(), (const unsigned char*)&ucamera, sizeof(ucamera));
         //for each elements of opaque  and translucent queues
-		for(QueueType qtype : {RQ_OPAQUE, RQ_TRANSLUCENT})
-        for(const QueueElement* e_randerable : queues[qtype])
-        if (auto randerable = e_randerable->lock< Render::Renderable >())
+		for(auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
+        if (randerable)
         {
             //jump?
             if(!randerable->can_draw()) continue;
@@ -146,6 +145,7 @@ namespace Render
 						for (auto weak_light : queues[RQ_DIRECTION_LIGHT])
 						if (auto light = weak_light->lock< Render::Light >())
 						{
+							if (!light->visible()) continue;
 							//is a shadow light
 							if (light->shadow() != shadow) break;
 							//get buffer
@@ -156,7 +156,7 @@ namespace Render
 							if (shadow)
 							{
 								//get buffer
-								light->set(&udirection_shadow_light);
+								light->set(&udirection_shadow_light, &camera, false);
 								//update buffer
 								Render::update_constant_buffer(&render(), m_cb_direction_shadow_light.get(), &udirection_shadow_light);
 								//shadow map
@@ -171,17 +171,18 @@ namespace Render
 						for (auto weak_light : queues[RQ_POINT_LIGHT])
 						if (auto light = weak_light->lock< Render::Light >())
 						{
+							if (!light->visible()) continue;
 							//is a shadow light
 							if (light->shadow() != shadow) break;
 							//get buffer
-							light->set(&upoint_light);
+;							light->set(&upoint_light);
 							//update buffer
 							Render::update_constant_buffer(&render(), m_cb_point_light.get(), &upoint_light);
 							//shadow
 							if (shadow)
 							{
 								//get buffer
-								light->set(&upoint_shadow_light);
+								light->set(&upoint_shadow_light, false);
 								//update buffer
 								Render::update_constant_buffer(&render(), m_cb_point_shadow_light.get(), &upoint_shadow_light);
 								//shadow map
@@ -196,6 +197,7 @@ namespace Render
 						for (auto weak_light : queues[RQ_SPOT_LIGHT])
 						if (auto light = weak_light->lock< Render::Light >())
 						{
+							if (!light->visible()) continue;
 							//is a shadow light
 							if (light->shadow() != shadow) break;
 							//get buffer
@@ -206,7 +208,7 @@ namespace Render
 							if (shadow)
 							{
 								//get buffer
-								light->set(&uspot_shadow_light);
+								light->set(&uspot_shadow_light, false);
 								//update buffer
 								Render::update_constant_buffer(&render(), m_cb_spot_shadow_light.get(), &uspot_shadow_light);
 								//shadow map

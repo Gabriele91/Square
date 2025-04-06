@@ -10,7 +10,7 @@ namespace Square
 namespace Render
 {
 	using square_render_get_type = Square::Render::RenderDriver(*)();
-	using square_render_create_context = Square::Render::Context* (*)();
+	using square_render_create_context = Square::Render::Context* (*)(Square::Allocator*, Square::Logger*);
 	using square_render_delete_context = void(*)(Square::Render::Context*&);
 
 	//help
@@ -96,7 +96,7 @@ namespace Render
 	}
 
 	//alloc
-	Context* create_render_driver(RenderDriver type)
+	Context* create_render_driver(Allocator* allocator, Logger* logger, RenderDriver type)
 	{		
 		//usings
 		using namespace Square;
@@ -126,7 +126,7 @@ namespace Render
 				if (get_type() == type)
 				if (auto create_context = (square_render_create_context)SharedLibrary::get(lib, "square_render_create_context"))
 				{
-					Context* context = create_context();
+					Context* context = create_context(allocator, logger);
 					get_lib_map()[context] = lib;
 					return context;
 				}

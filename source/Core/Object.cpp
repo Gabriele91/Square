@@ -56,6 +56,21 @@ namespace Square
 		return m_name;
 	}
 
+	// Object
+	std::optional<const VariantRef> Object::variable(const std::string& name) const
+	{
+		//get var
+		auto variable = m_variables.find(name);
+		if (variable != m_variables.end()) return &variable->second;
+		//none
+		return {};
+	}
+
+	void Object::set_variable(const std::string& name, const Variant& value)
+	{
+		m_variables[name] = value;
+	}
+
 	//object factory
 	ObjectFactory::ObjectFactory(const ObjectFactory&) = default;
 

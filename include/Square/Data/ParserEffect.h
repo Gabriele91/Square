@@ -129,14 +129,15 @@ namespace Parser
             std::string errors_to_string() const;
 		};
 
-        bool parse(Context& default_context, const std::string& source);
+        bool parse(Allocator* allocator, Context& default_context, const std::string& source);
 
-        bool parse(Context& default_context, const char*& ptr);
+        bool parse(Allocator* allocator, Context& default_context, const char*& ptr);
 
 
 	protected:
         //////////////////////////////////////////////////////
 		Context* m_context{ nullptr };
+		Allocator* m_allocator{ nullptr };
 		//////////////////////////////////////////////////////
 		bool parse_parameters_block(const char*& ptr);
         //////////////////////////////////////////////////////

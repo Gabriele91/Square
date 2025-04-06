@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{02A92C52-C478-4A2F-AFDB-03C9FBF6832C}</ProjectGuid>
     <RootNamespace>Square</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -91,8 +91,10 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS; _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
@@ -105,8 +107,10 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS; _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\$(Platform)\lib</AdditionalLibraryDirectories>
@@ -121,8 +125,10 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS; _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -139,8 +145,11 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)dependencies\$(Platform)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SQUARE_LIBRARY_EXPORT;HLSL2ALL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS; _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)/void/%(RelativeDir)/</ObjectFileName>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <OmitFramePointers>false</OmitFramePointers>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -150,7 +159,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\Square\Core\Logger.h" />
+    <ClInclude Include="..\include\Square\Data\ParserTexture.h" />
+    <ClInclude Include="..\include\Square\Render\DrawerPassDebug.h" />
+    <ClInclude Include="..\include\Square\SquareMain.h" />
+    <ClInclude Include="..\include\Square\Core\Allocator.h" />
+    <ClInclude Include="..\include\Square\Core\ShellParser.h" />
+    <ClInclude Include="..\include\Square\Data\ParserStaticMesh.h" />
+    <ClInclude Include="..\include\Square\Render\Mesh.h" />
+    <ClInclude Include="..\include\Square\Resource\Actor.h" />
+    <ClInclude Include="..\include\Square\Resource\Mesh.h" />
+    <ClInclude Include="..\include\Square\Scene\StaticMesh.h" />
+    <ClInclude Include="..\include\Square\Render\ConstantBuffer.h" />
     <ClInclude Include="..\source\Resource\ShaderPreprocess.h" />
+    <Text Include="..\common\effect\Debug.sqfx">
+      <FileType>Document</FileType>
+    </Text>
+    <None Include="..\common\material\default.mat" />
     <None Include="..\common\shader\PointShadowLight.hlsl">
       <FileType>Document</FileType>
     </None>
@@ -198,7 +223,6 @@
     <ClInclude Include="..\include\Square\Render\GBuffer.h" />
     <ClInclude Include="..\include\Square\Render\Light.h" />
     <ClInclude Include="..\include\Square\Render\Material.h" />
-    <ClInclude Include="..\include\Square\Render\Mesh.h" />
     <ClInclude Include="..\include\Square\Render\Queue.h" />
     <ClInclude Include="..\include\Square\Render\Renderable.h" />
     <ClInclude Include="..\include\Square\Render\ShadowBuffer.h" />
@@ -273,14 +297,20 @@
   <ItemGroup>
     <ClCompile Include="..\include\Square\Render\DrawerPassShadow.h" />
     <ClCompile Include="..\include\Square\Scene\PointLight.h" />
+    <ClCompile Include="..\source\Core\Allocator.cpp" />
     <ClCompile Include="..\source\Core\Application.cpp" />
     <ClCompile Include="..\source\Core\Context.cpp" />
     <ClCompile Include="..\source\Core\Filesystem.cpp" />
+    <ClCompile Include="..\source\Core\Logger.cpp" />
     <ClCompile Include="..\source\Core\Object.cpp" />
     <ClCompile Include="..\source\Core\ClassObjectRegistration.cpp" />
+    <ClCompile Include="..\source\Core\Resource.cpp" />
     <ClCompile Include="..\source\Core\SharedLibrary.cpp" />
+    <ClCompile Include="..\source\Core\ShellParser.cpp" />
+    <ClCompile Include="..\source\Core\StringUtilities.cpp" />
     <ClCompile Include="..\source\Core\Time.cpp" />
     <ClCompile Include="..\source\Core\UtfConvert.cpp" />
+    <ClCompile Include="..\source\Core\Variant.cpp" />
     <ClCompile Include="..\source\Data\Archive.cpp" />
     <ClCompile Include="..\source\Data\AttributeSerialize.cpp" />
     <ClCompile Include="..\source\Data\Image.cpp" />
@@ -292,6 +322,8 @@
     <ClCompile Include="..\source\Data\ParserMaterial.cpp" />
     <ClCompile Include="..\source\Data\ParserParameters.cpp" />
     <ClCompile Include="..\source\Data\ParserResources.cpp" />
+    <ClCompile Include="..\source\Data\ParserStaticMesh.cpp" />
+    <ClCompile Include="..\source\Data\ParserTexture.cpp" />
     <ClCompile Include="..\source\Driver\Render.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Input_private.cpp" />
     <ClCompile Include="..\source\Driver\Win32\Screen_private.cpp" />
@@ -331,6 +363,7 @@
     <ClCompile Include="..\source\Math\Tangent.cpp" />
     <ClCompile Include="..\source\Render\Collection.cpp" />
     <ClCompile Include="..\source\Render\Drawer.cpp" />
+    <ClCompile Include="..\source\Render\DrawerPassDebug.cpp" />
     <ClCompile Include="..\source\Render\DrawerPassForward.cpp" />
     <ClCompile Include="..\source\Render\DrawerPassShadow.cpp" />
     <ClCompile Include="..\source\Render\Effect.cpp" />
@@ -344,6 +377,7 @@
     <ClCompile Include="..\source\Render\Viewport.cpp" />
     <ClCompile Include="..\source\Resource\Effect.cpp" />
     <ClCompile Include="..\source\Resource\Material.cpp" />
+    <ClCompile Include="..\source\Resource\Mesh.cpp" />
     <ClCompile Include="..\source\Resource\PointLight.cpp" />
     <ClCompile Include="..\source\Resource\Shader.cpp" />
     <ClCompile Include="..\source\Resource\Texture.cpp" />
@@ -353,6 +387,7 @@
     <ClCompile Include="..\source\Scene\DirectionLight.cpp" />
     <ClCompile Include="..\source\Scene\Level.cpp" />
     <ClCompile Include="..\source\Scene\SpotLight.cpp" />
+    <ClCompile Include="..\source\Scene\StaticMesh.cpp" />
     <ClCompile Include="..\source\Scene\World.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -479,6 +514,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\common\effect\CastPointShadow.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\common\effect\CastDirectionShadow.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\common\shader\DirectionShadowLight.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

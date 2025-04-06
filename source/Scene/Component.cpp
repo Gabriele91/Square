@@ -12,8 +12,13 @@ namespace Square
 namespace Scene
 {
     //init
-    Component::Component(Context& context) : Object(context)
+    Component::Component(Context& context) : Object(context), SharedObject_t(context.allocator())
     {
+    }
+
+    Component::~Component()
+    {
+
     }
     
     // utils

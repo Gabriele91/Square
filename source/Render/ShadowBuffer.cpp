@@ -7,6 +7,7 @@
 //
 #include "Square/Core/Context.h"
 #include "Square/Driver/Render.h"
+#include "Square/Render/Light.h"
 #include "Square/Render/ShadowBuffer.h"
 
 namespace Square
@@ -55,18 +56,17 @@ namespace Render
 			};
 			Render::TextureGpuDataInformation gpu_data
 			{
-				//TMIN_NEAREST, 
-				TMIN_LINEAR,
-				//TMAG_NEAREST,
-				TMAG_LINEAR,
+				TMIN_NEAREST, 
+				TMAG_NEAREST,
 				//========
 				TEDGE_CLAMP,
 				TEDGE_CLAMP,
 				TEDGE_CLAMP,
+				//========
 				false,//no mipmap
 				1,	  //mipmap_min
 				1,    //mipmap_max
-				0.0,
+				0,
 				false //no cpu access
 			};
 			//create textures
@@ -84,6 +84,9 @@ namespace Render
 				};
 				m_texture = render->create_cube_texture(raw_cube, gpu_data);
 			}
+			break;
+			case SB_TEXTURE_CSM:
+				m_texture = render->create_texture_array(raw_data, gpu_data, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
 			break;
 			default: return false;
 			}

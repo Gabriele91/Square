@@ -1,0 +1,155 @@
+parameters
+{
+	line_color Vec4(1.0,1.0,1.0,1.0)
+    mesh_color Vec4(1.0,1.0,1.0,1.0)
+    line_size  float(4.0)
+}
+
+sub_effect
+{
+    technique "volume"
+    {
+        pass 
+        {
+            zbuffer on
+            blend one one
+            cullface off
+            lights off
+            shader source
+            {
+                #include <Camera>
+                #include <Transform>
+                #include <Vertex>
+                #include <Support>
+                #include <Matrix>
+                
+                // Global uniforms
+                Vec4 mesh_color;
+                
+                struct VertexShaderOutput
+                {
+                    Vec4 m_position : SV_POSITION;
+                };
+
+                VertexShaderOutput vertex(in Position3D input)
+                {
+                    VertexShaderOutput output;
+                    output.m_position = mul_model_view_projection(input.m_position);
+	                return output;
+                }
+
+                struct FragmentOutput
+                {
+                    Vec4 m_color : SV_TARGET0;
+                };
+
+                FragmentOutput fragment(in VertexShaderOutput input) 
+                {
+                    FragmentOutput output;
+                    output.m_color = mesh_color;
+                    return output;
+                }
+            }
+        }
+    }
+    
+    technique "wireframe"
+    {
+        pass 
+        {
+            zbuffer off
+            blend src_alpha one
+            cullface off
+            lights off
+            shader source
+            {
+                #include <Camera>
+                #include <Transform>
+                #include <Vertex>
+                #include <Support>
+                #include <Matrix>
+
+                // Global uniforms
+                Vec4 line_color;
+                Vec4 fill_color;
+                float line_size;
+
+                struct VertexShaderOutput
+                {
+                    Vec4 m_position : SV_POSITION;
+                };
+
+                // Vertex Shader
+                VertexShaderOutput vertex(in Position3D input)
+                {
+                    VertexShaderOutput output;
+                    output.m_position = mul_model_view_projection(input.m_position);
+                    return output;
+                }
+
+                // Output structure for Geometry Shader
+                struct GeometryShaderOutput
+                {
+                    Vec4 m_position : SV_POSITION;
+                    noperspective Vec3 m_dist : TEXCOORD0;
+                };
+
+                // Geometry Shader
+                [maxvertexcount(3)]
+                void geometry(triangle VertexShaderOutput input[3], inout TriangleStream<GeometryShaderOutput> outputStream)
+                {
+                    Vec2 viewport_size = (camera.m_viewport.zw - camera.m_viewport.xy);
+                    Vec2 window_scale = viewport_size * (1.0 / (2.0 * line_size));
+
+                    // Triangle vertices
+                    Vec2 p0 = window_scale * (input[0].m_position.xy / input[0].m_position.w);
+                    Vec2 p1 = window_scale * (input[1].m_position.xy / input[1].m_position.w);
+                    Vec2 p2 = window_scale * (input[2].m_position.xy / input[2].m_position.w);
+
+                    Vec2 v0 = p2 - p1;
+                    Vec2 v1 = p2 - p0;
+                    Vec2 v2 = p1 - p0;
+                    float area = abs(v1.x * v2.y - v1.y * v2.x);
+
+                    GeometryShaderOutput output;
+
+                    output.m_position = input[0].m_position;
+                    output.m_dist = Vec3(area / length(v0), 0, 0);
+                    outputStream.Append(output);
+                    output.m_position = input[1].m_position;
+                    output.m_dist = Vec3(0, area / length(v1), 0);
+                    outputStream.Append(output);
+                    output.m_position = input[2].m_position;
+                    output.m_dist = Vec3(0, 0, area / length(v2));
+                    outputStream.Append(output);
+
+                    outputStream.RestartStrip();
+                }
+
+                // Fragment Shader
+                struct FragmentOutput
+                {
+                    Vec4 m_color : SV_TARGET0;
+                };
+
+                FragmentOutput fragment(in GeometryShaderOutput input)
+                {
+                    FragmentOutput output;
+
+                    float d = min(input.m_dist.x, min(input.m_dist.y, input.m_dist.z));
+                    float intensity = exp2(-2.0f * d * d);
+
+                    // If the intensity is too low, discard the fragment
+                    if (intensity < 0.5)
+                    {
+                        discard;
+                    }
+
+                    output.m_color = line_color;
+
+                    return output;
+                }
+            }
+      }
+    }
+}

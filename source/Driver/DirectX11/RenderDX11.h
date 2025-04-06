@@ -121,6 +121,7 @@ namespace Render
 		ID3D11ShaderResourceView* m_resource_view{ nullptr };
 		UINT					  m_width{ 0 };
 		UINT					  m_height{ 0 };
+		UINT                      m_size{ 0 };
 		bool					  m_is_cube{ false };
 		bool					  m_is_depth{ false };
 		//more info
@@ -355,7 +356,7 @@ namespace Render
 		static const char* hlsl_shader_names[ST_N_SHADER];
 		/////////////////////////////////////////////////////////////////////////
 		//init
-		Shader();
+		Shader(Allocator* allocator);
 		//delete
 		~Shader();
 
@@ -365,10 +366,10 @@ namespace Render
             m_errors.push_back(std::move(error_log));
         }
         
-        void push_liker_error(const std::string& error_log)
+        void push_linker_error(const std::string& error_log)
         {
-            m_liker_log += error_log;
-            m_liker_log += "\n";
+            m_linker_log += error_log;
+            m_linker_log += "\n";
         }
 
 		ID3DBlob* binary(ShaderType type)
@@ -417,13 +418,14 @@ namespace Render
 		ID3D11GeometryShader* m_geometry{ nullptr };
 		ID3D11HullShader*     m_hull{ nullptr };
 		ID3D11DomainShader*   m_domain{ nullptr };
-		ID3D11ComputeShader*  m_compute{ nullptr };;
+		ID3D11ComputeShader*  m_compute{ nullptr };
+		Allocator*			  m_allocator;
 		
 		//shaders compiler errors
 		std::vector < ShaderCompileError > m_errors;
 
 		//linking error
-		std::string m_liker_log;
+		std::string m_linker_log;
         
 	};
     
@@ -444,9 +446,10 @@ namespace Render
 	class ContextDX11 : public Context
 	{
 	public:
+		ContextDX11(Allocator* allocator, Logger* logger) : Context(allocator, logger) {}
 
 		virtual RenderDriver get_render_driver() override;
-		virtual RenderDriverInfo get_render_driver_info() override;
+		virtual const RenderDriverInfo& get_render_driver_info() const override;
 		virtual void print_info() override;
 
 		virtual bool init(Video::DeviceResources* resource) override;
@@ -500,13 +503,21 @@ namespace Render
 		virtual void unbind_VBO(VertexBuffer*) override;
 		virtual void unbind_IBO(IndexBuffer*) override;
 
+		virtual std::vector<unsigned char> copy_buffer_CB(const ConstBuffer*) override;
+		virtual std::vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) override;
+		virtual std::vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) override;
+
+
 		virtual unsigned char* map_CB(ConstBuffer*, size_t start, size_t n, MappingType type) override;
+		virtual unsigned char* map_CB(ConstBuffer*, MappingType type) override;
 		virtual void unmap_CB(ConstBuffer*) override;
 
 		virtual unsigned char* map_VBO(VertexBuffer*, size_t start, size_t n, MappingType type) override;
+		virtual unsigned char* map_VBO(VertexBuffer*, MappingType type) override;
 		virtual void unmap_VBO(VertexBuffer*) override;
 
-		virtual unsigned int*  map_IBO(IndexBuffer*, size_t start, size_t n, MappingType type) override;
+		virtual unsigned int* map_IBO(IndexBuffer*, size_t start, size_t n, MappingType type) override;
+		virtual unsigned int* map_IBO(IndexBuffer*, MappingType type) override;
 		virtual void unmap_IBO(IndexBuffer*) override;
 
 		virtual unsigned char* map_TBO(Texture*, MappingType type) override;
@@ -544,6 +555,12 @@ namespace Render
 			const TextureRawDataInformation& data,
 			const TextureGpuDataInformation& info
 		) override;
+		virtual Texture* create_texture_array
+		(
+			const TextureRawDataInformation& data,
+			const TextureGpuDataInformation& info,
+			int   size
+		) override;
 		virtual Texture* create_cube_texture
 		(
 			const TextureRawDataInformation  data[6],
@@ -562,7 +579,7 @@ namespace Render
 		virtual bool shader_compiled_with_errors(Shader* shader) override;
 		virtual bool shader_linked_with_error(Shader* shader) override;
 		virtual std::vector< std::string > get_shader_compiler_errors(Shader* shader) override;
-		virtual std::string get_shader_liker_error(Shader* shader) override;
+		virtual std::string get_shader_linker_error(Shader* shader) override;
 
 		virtual void bind_shader(Shader* shader) override;
 		virtual void unbind_shader(Shader* shader) override;

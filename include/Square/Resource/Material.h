@@ -18,10 +18,9 @@ namespace Square
 namespace Resource
 {
     class SQUARE_API Material :   public ResourceObject
-								, public SharedObject<Material>
-								, public Uncopyable
+								, public InheritableSharedObject<Material>
 								, public Render::Material
-		{
+	{
         
     public:
         

@@ -8,8 +8,8 @@
 #include <string>
 #include <functional>
 #include <type_traits>
-#include "Square/Core/Object.h"
 #include "Square/Core/Variant.h"
+#include "Square/Core/Object.h"
 #include "Square/Core/SmartPointers.h"
 
 namespace Square
@@ -18,8 +18,9 @@ namespace Square
 	class SQUARE_API AttributeAccess : public SharedObject<AttributeAccess>
 	{
 	public:
-		virtual void get(const Object* serializable, VariantRef& ret) const =0;
-		virtual void set(Object* serializable, const VariantRef& set) =0;
+		explicit AttributeAccess(Allocator* alloc=nullptr) : SharedObject_t(alloc) {}
+		virtual bool get(const Object* serializable, VariantRef& ret) const =0;
+		virtual bool set(Object* serializable, const VariantRef& set) =0;
         virtual ~AttributeAccess()  { /* none */ }
 	};
 
@@ -29,20 +30,20 @@ namespace Square
 	public:
 
 		//type of Attribute
-		enum Type
+		enum Type : unsigned char
 		{
 			NETWORK           = 0b0001,  //replicate on network
 			FILE              = 0b0010,  //serializable/deserializable
 			FILE_READONLY     = 0b0100,  //deserializable only
 			EDITOR			  = 0b1000,  //used by editor (no serializable)
-			//Composition
-			DEFAULT = FILE | NETWORK     //default serializable/deserializable/network
+			// Composition
+			DEFAULT = FILE | NETWORK,     //default serializable/deserializable/network
 		};
 
 		//Default
 		Attribute()
 		{
-			m_type = DEFAULT;
+			m_type = Type::DEFAULT;
 			m_value_type = VariantType::VR_INT;
 			m_offset = 0;
 			m_wrapper = nullptr;
@@ -80,7 +81,7 @@ namespace Square
 			VariantType     value_type,
             Variant&&       default_value,
 			size_t          offset,
-			Type			type = DEFAULT
+			Type			type = Type::DEFAULT
 		)
         :m_default(std::forward<Variant>(default_value))
 		{
@@ -99,7 +100,7 @@ namespace Square
 			VariantType             value_type,
             Variant&&               default_value,
 			Shared<AttributeAccess> access,
-			Type			        type = DEFAULT
+			Type			        type = Type::DEFAULT
 		)
         :m_default(std::forward<Variant>(default_value))
 		{
@@ -119,7 +120,7 @@ namespace Square
 			VariantType     value_type,
             Variant&&       default_value,
 			const char**    enum_names,
-			Type			type = DEFAULT
+			Type			type = Type::DEFAULT
 		)
         :m_default(std::forward<Variant>(default_value))
 		{
@@ -155,18 +156,20 @@ namespace Square
 		}
         
         //helper
-        void get(const Object* serializable, VariantRef& retvalue) const
+        bool get(const Object* serializable, VariantRef& retvalue) const
         {
             //wrapper?
-            if(m_wrapper) m_wrapper->get(serializable, retvalue);
+            if(m_wrapper) return m_wrapper->get(serializable, retvalue);
             //is a field
             else retvalue = VariantRef(m_value_type, (void*)((const char*)serializable+m_offset));
+			// Ok
+			return true;
         }
-        void set(Object* serializable, const VariantRef& setvalue) const
+        bool set(Object* serializable, const VariantRef& setvalue) const
         {
             //wrapper?
             if(m_wrapper)
-				m_wrapper->set(serializable, setvalue);
+				return m_wrapper->set(serializable, setvalue);
 			//is a field
 			else
 			{
@@ -175,6 +178,8 @@ namespace Square
 				//value copy
 				field_as_variant.copy_from(setvalue);
 			}
+			// Ok
+			return true;
         }
         
 	protected:
@@ -238,24 +243,34 @@ namespace Square
 		: m_get(get_function)
 		, m_set(set_function)
 		{
-			assert(m_get);
-			assert(m_set);
+			square_assert_or_release(m_get);
+			square_assert_or_release(m_set);
 		}
 
 		// Invoke getter function.
-		virtual void get(const Object* serializable, VariantRef& ret) const override
+		virtual bool get(const Object* serializable, VariantRef& ret) const override
 		{
-			assert(serializable);
-			const T* self = static_cast<const T*>(serializable);
+			square_assert_or_release(serializable);
+			const T* self = dynamic_cast<const T*>(serializable);
+			// Test
+			if (!self) return false;
+			// Call
 			ret = (self->*m_get)();
+			// Ok 
+			return true;
 		}
 
 		// Invoke setter function.
-		virtual void set(Object* serializable, const VariantRef& value) override
+		virtual bool set(Object* serializable, const VariantRef& value) override
 		{
-			assert(serializable);
-			T* self = static_cast<T*>(serializable);
+			square_assert_or_release(serializable);
+			T* self = dynamic_cast<T*>(serializable);
+			// Test
+			if (!self) return false;
+			// Call
 			(self->*m_set)(value.get<U>());
+			// Ok 
+			return true;
 		}
 
 		// Pointer to getter function.
@@ -280,27 +295,36 @@ namespace Square
 		: m_get(get_function)
 		, m_set(set_function)
 		{
-			assert(m_get);
-			assert(m_set);
+			square_assert_or_release(m_get);
+			square_assert_or_release(m_set);
 		}
 
 		// Invoke getter function.
-		virtual void get(const Object* serializable, VariantRef& ret) const override
+		virtual bool get(const Object* serializable, VariantRef& ret) const override
 		{
-			assert(serializable);
-			const T* self = static_cast<const T*>(serializable);
+			square_assert_or_release(serializable);
+			const T* self = dynamic_cast<const T*>(serializable);
+			// Test
+			if (!self) return false;
 			// Save into buffer
 			m_return_data = (*m_get)(self);
 			// Return ref
 			ret = m_return_data;
+			// Ok
+			return true;
 		}
 
 		// Invoke setter function.
-		virtual void set(Object* serializable, const VariantRef& value) override
+		virtual bool set(Object* serializable, const VariantRef& value) override
 		{
-			assert(serializable);
-			T* self = static_cast<T*>(serializable);
+			square_assert_or_release(serializable);
+			T* self = dynamic_cast<T*>(serializable);
+			// Test
+			if (!self) return false;
+			// Call set
 			(*m_set)(self, value.get<U>());
+			// Ok
+			return true;
 		}
 
 		// Pointer to getter function.
@@ -319,7 +343,8 @@ namespace Square
 	//helper
 	template<typename T, typename U, typename Trait = AttributeTrain<U> >
 	static Attribute attribute_method(
-		  const std::string& attribute_name
+		  Allocator* allocator
+		, const std::string& attribute_name
 		, const U& default_value
 		, typename AttributeAccessMethod< T, U, Trait >::GetFunction get_method
 		, typename AttributeAccessMethod< T, U, Trait >::SetFunction set_method
@@ -334,7 +359,7 @@ namespace Square
 			, variant_traits<U>()
 			, default_value
 			, StaticPointerCast<AttributeAccess>(
-                Shared<AAMethod>(new AAMethod(get_method, set_method))
+				MakeShared<AAMethod>(allocator, get_method, set_method)
               )
 			, type
 		));
@@ -343,11 +368,12 @@ namespace Square
 	template<typename T, typename U, typename Trait = AttributeFunctionTrain<U> >
 	static Attribute attribute_function
 	(
-		  const std::string& attribute_name
+		  Allocator* allocator
+		, const std::string& attribute_name
 		, const U& default_value
 		, typename AttributeAccessFunction< T, U, Trait >::GetFunction get_function
 		, typename AttributeAccessFunction< T, U, Trait >::SetFunction set_function
-		, Attribute::Type type = Attribute::DEFAULT
+		, Attribute::Type type = Attribute::Type::DEFAULT
 	)
 	{
         //alias
@@ -358,7 +384,7 @@ namespace Square
 			, variant_traits<U>()
 			, default_value
             , StaticPointerCast<AttributeAccess>(
-                Shared<AAFunction>(new AAFunction(get_function, set_function))
+                MakeShared<AAFunction>(allocator, get_function, set_function)
               )
 			, type
 		));
@@ -367,7 +393,8 @@ namespace Square
 	template<typename T, typename U >
 	static Attribute attribute_field
 	(
-		  const std::string& field_name
+		  Allocator* allocator
+		, const std::string& field_name
 		, const U& default_value
 		, U T::*member
 		, Attribute::Type type = Attribute::DEFAULT
@@ -378,7 +405,26 @@ namespace Square
 			, variant_traits<U>()
 			, default_value
 			, //(char*)&((T*)nullptr->*member) - (char*)nullptr
-			 (size_t)((char*)&(((T*)nullptr)->*member) - (char*)nullptr)
+			  (size_t)((char*)&(((T*)nullptr)->*member) - (char*)nullptr)
+			, type
+		));
+	}	
+	
+	template<typename T, typename U >
+	static Attribute attribute_field
+	(
+		  Allocator* allocator
+		, const std::string& field_name
+		, const U& default_value
+		, size_t member_offset
+		, Attribute::Type type = Attribute::DEFAULT
+	)
+	{
+		return std::move(Attribute(
+			  field_name
+			, variant_traits<U>()
+			, default_value
+			, member_offset
 			, type
 		));
 	}

@@ -28,58 +28,85 @@ namespace Scene
 		//factory
 		ctx.add_object<Level>();
 		//Attributes
-		ctx.add_attributes<Level>(attribute_field("name", std::string(), &Level::m_name));
+		ctx.add_attribute_field<Level, std::string>("name", std::string(), offsetof(Level,m_name));
 	}
 
 	//constructor
-	Level::Level(Context& context) : Object(context)
+	Level::Level(Context& context) : Object(context), SharedObject_t(context.allocator())
 	{
 	}
-	Level::Level(Context& context, const std::string& name) : Object(context), m_name(name)
+	Level::Level(Context& context, const std::string& name) : Object(context), SharedObject_t(context.allocator()), m_name(name)
 	{
 	}
-
-
+	Level::~Level()
+	{
+	}
 	//serialize
-	void Level::serialize(Data::Archive& archivie)
+	void Level::serialize(Data::Archive& archive)
 	{
 		//serialize this
-		Data::serialize(archivie, this);
+		Data::serialize(archive, this);
 		//serialize actors
 		{
 			uint64 size = m_actors.size();
-			archivie % size;
-			for (auto actor : m_actors)
+			archive % size;
+			for (auto& actor : m_actors)
 			{
-				actor->serialize(archivie);
+				actor->serialize(archive);
 			}
 		}
 	}
-	void Level::serialize_json(Data::Json& archivie)
+	void Level::serialize_json(Data::JsonValue& archive)
 	{
-		//to do
+		Data::Json json_data = Data::JsonObject();
+		Data::serialize_json(json_data, this);
+		archive["data"] = std::move(json_data);
+		// Actors
+		auto json_actors = Data::JsonArray();
+		json_actors.reserve(m_actors.size());
+		for (auto actor : m_actors)
+		{
+			Data::Json json_actor = Data::JsonObject();
+			actor->serialize_json(json_actor);
+			json_actors.emplace_back(std::move(json_actor));
+		}
+		archive["actors"] = std::move(json_actors);
 	}
 	//deserialize
-	void Level::deserialize(Data::Archive& archivie)
+	void Level::deserialize(Data::Archive& archive)
 	{
 		///clear
 		m_rander_collection.clear();
 		m_actors.clear(); //todo: call events
 		//deserialize this
-		Data::deserialize(archivie, this);
+		Data::deserialize(archive, this);
 		//deserialize childs
 		{
 			uint64 size = 0;
-			archivie % size;
+			archive % size;
 			for (uint64 i = 0; i != size; ++i)
 			{
-				actor()->deserialize(archivie);
+				actor()->deserialize(archive);
 			}
 		}
 	}
-	void Level::deserialize_json(Data::Json& archivie)
+	void Level::deserialize_json(Data::JsonValue& archive)
 	{
-		//to do
+		///clear
+		m_rander_collection.clear();
+		m_actors.clear(); //todo: call events
+		//
+		if (archive.contains("data") && archive["data"].is_object())
+		{
+			Data::deserialize_json(archive["data"], this);
+		}
+		if (archive.contains("actors") && archive["actors"].is_array())
+		{
+			for (auto& jactor : archive["actors"].array())
+			{
+				actor()->deserialize_json(jactor);
+			}
+		}
 	}
 	
 	//add an actor
@@ -90,11 +117,28 @@ namespace Scene
 		m_actors.push_back(actor);
 		actor->level(this->shared_from_this());
 	}
+	Shared<Actor> Level::load_actor(const std::string& resource_name)
+	{
+		Shared<Actor> new_actor = context().resource<Actor>(resource_name);
+		if (new_actor)
+		{
+			add(new_actor);
+		}
+		return new_actor;
+	}
 	
+	void Level::visit(const std::function<bool(Shared<Actor>)>& callback)
+	{
+		for (auto actor : m_actors)
+		{
+			actor->visit(callback);
+		}
+	}
+
 	//remove an actor
 	bool Level::remove(Shared<Actor> actor)
 	{
-		if (!actor->parent())
+		if (auto parent = actor->parent().lock(); !parent)
 		{
 			//remove child from list
 			auto it = std::find(m_actors.begin(), m_actors.end(), actor);
@@ -133,6 +177,7 @@ namespace Scene
 		//return
 		return actor;
 	}
+
 	const ActorList& Level::actors() const
 	{
 		return m_actors;
@@ -153,6 +198,8 @@ namespace Scene
 		std::string name;
 		//pre alloc
 		name.reserve(path_names.size());
+		//bool found!
+		bool actor_found = false;
 		//for all tokens
 		while (true)
 		{
@@ -186,13 +233,19 @@ namespace Scene
 				{
 					c_actor = actor;
 					c_actor_list = &actor->childs();
-					do_continue = true;
+					do_continue = !!*ptr;
+					actor_found = !*ptr;
 					break;
 				}
 			}
 			//continue?
-			if (!do_continue || !*ptr) return c_actor;
+			if (!do_continue) break;
 		}
+		// Return iff it is the right one
+		if (actor_found)
+			return c_actor;
+		else
+			return false;
 	}
 
 	//contains an actor
@@ -217,7 +270,7 @@ namespace Scene
 	}
 
 	//message to actors
-	void Level::send_message(const Variant& variant, bool brodcast)
+	void Level::send_message(const VariantRef& variant, bool brodcast)
 	{
 		//create message
 		Message msg(nullptr, variant);
@@ -243,7 +296,7 @@ namespace Scene
 	{
 		for (auto component : actor->components())
 		{
-			on_add_a_component(actor, component);
+			on_add_a_component(actor, component.second);
 		}
 	}
 	//remove an actor
@@ -251,21 +304,25 @@ namespace Scene
 	{
 		for (auto component : actor->components())
 		{
-			on_remove_a_component(actor, component);
+			on_remove_a_component(actor, component.second);
 		}
 	}
 
 	//added a component
 	void Level::on_add_a_component(Shared<Actor> actor, Shared<Component> component)
 	{
-		auto renderable = DynamicPointerCast<Render::Renderable, Component>(component);
-		if (renderable) { m_rander_collection.m_renderables.push_back(renderable); return; }
-
-		auto light = DynamicPointerCast<Render::Light, Component>(component);
-		if(light) { m_rander_collection.m_lights.push_back(light); return; }
-        
-        auto camera = DynamicPointerCast<Render::Camera, Component>(component);
-        if (camera) { m_rander_collection.m_cameras.push_back(camera); return; }
+		if (auto renderable = DynamicPointerCast<Render::Renderable, Component>(component);  renderable) 
+		{ 
+			m_rander_collection.m_renderables.push_back(renderable);
+		}
+		else if (auto light = DynamicPointerCast<Render::Light, Component>(component);  light)
+		{
+			m_rander_collection.m_lights.push_back(light);
+		}
+		else if (auto camera = DynamicPointerCast<Render::Camera, Component>(component); camera) 
+		{ 
+			m_rander_collection.m_cameras.push_back(camera);
+		}
 	}
 	//remove a component
 	void Level::on_remove_a_component(Shared<Actor> actor, Shared<Component> component)

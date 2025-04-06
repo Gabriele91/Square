@@ -29,23 +29,23 @@ namespace Square
         return nullptr;
     }
     //Get attrbutes
-    const std::vector < Attribute >* BaseContext::attributes(const std::string& name)
+    const std::vector < Attribute >* BaseContext::attributes(const std::string& name) const
     {
         auto attributes = m_attributes.find(ObjectInfo::compute_id(name));
         if (attributes != m_attributes.end()) return &attributes->second;
         return nullptr;
     }
-    const std::vector < Attribute >* BaseContext::attributes(uint64 object_id)
+    const std::vector < Attribute >* BaseContext::attributes(uint64 object_id) const
     {
         auto attributes = m_attributes.find(object_id);
         if (attributes != m_attributes.end()) return &attributes->second;
         return nullptr;
     }
-    const std::vector < Attribute >* BaseContext::attributes(const Object& object)
+    const std::vector < Attribute >* BaseContext::attributes(const Object& object) const
     {
         return attributes(object.object_id());
     }
-    const std::vector < Attribute >* BaseContext::attributes(const ObjectInfo& info)
+    const std::vector < Attribute >* BaseContext::attributes(const ObjectInfo& info) const
     {
         return attributes(info.id());
     }
@@ -72,6 +72,8 @@ namespace Square
         if(resource->load(resource_file_it->second.m_filepath)) return resource;
 		//fail
 		m_resources.erase(resource_it);
+		//wrong
+		logger()->warning("Resource: unable to load " + name);
 		//end
         return nullptr;
     }
@@ -80,29 +82,28 @@ namespace Square
     {
         //find resource from file
         auto resource_file_it = m_resources_file.find(name);
+		if (resource_file_it != m_resources_file.end()) return resource_file_it->second.m_filepath;
         //fail
-        if (resource_file_it  == m_resources_file.end()) return "";
-        //ok
-        return resource_file_it->second.m_filepath;
+		static const std::string s_void_name;
+		return s_void_name;
         
     }
     //Get variable
-    const Variant& BaseContext::variable(const std::string& name)
+    std::optional<const VariantRef> BaseContext::variable(const std::string& name) const
     {
         //get var
         auto variable = m_variables.find(name);
         if (variable != m_variables.end()) return &variable->second;
         //none
-        static Variant none;
-        return none;
+		return {};
     }
     
     //Object fectory
-    void BaseContext::add_object(ObjectFactory* object_fectory)
+    void BaseContext::add_object(Shared<ObjectFactory> object_fectory)
     {
-        m_object_factories[object_fectory->info().id()] = Unique<ObjectFactory>(object_fectory);
+        m_object_factories[object_fectory->info().id()] = object_fectory;
     }
-    void BaseContext::add_resource(ObjectFactory* object_fectory,const std::vector< std::string >& exts)
+    void BaseContext::add_resource(Shared<ObjectFactory> object_fectory,const std::vector< std::string >& exts)
     {
         add_object(object_fectory);
         m_resources_info[object_fectory->info().id()] = exts;
@@ -117,8 +118,8 @@ namespace Square
 		//do parsing
 		if (!r_parser.parse(r_context, Filesystem::text_file_read_all(file_of_resources)))
 		{
-			add_wrong("Faild to read resources file: " + file_of_resources);
-			add_wrong(r_context.errors_to_string());
+			logger()->warning("Faild to read resources file: " + file_of_resources);
+			logger()->warning(r_context.errors_to_string());
 			return false;
 		}
 		//Base path
@@ -141,11 +142,18 @@ namespace Square
     void BaseContext::add_resource_path(const std::string& path, bool recursive)
     {
         //for all sub path
-        if(recursive)
-        for(const std::string& directorypath : Filesystem::get_sub_directories(path))
-        {
-            add_resource_path(directorypath, recursive);
-        }
+		if (recursive)
+		{
+			for (const std::string& directorypath : Filesystem::get_sub_directories(path))
+			{
+				std::string subdirfullpath = Filesystem::join(path, directorypath);
+				if (auto canonical_path = Filesystem::get_canonical(subdirfullpath); canonical_path.m_success)
+				{
+					subdirfullpath = canonical_path.m_path;
+				}
+				add_resource_path(subdirfullpath, recursive);
+			}
+		}
         //for all files
         for(const std::string& filename : Filesystem::get_files(path))
         {
@@ -170,8 +178,8 @@ namespace Square
 		}
 		catch (std::regex_error& e)
 		{
-			add_wrong("Faild to generate regexp \""+ filter +"\" of resources file: " + path);
-			add_wrong(e.what());
+			logger()->warning("Faild to generate regexp \""+ filter +"\" of resources file: " + path);
+			logger()->warning(e.what());
 		}
         //end
     }
@@ -233,23 +241,32 @@ namespace Square
 			}
 		}
 		return false;
+	}	
+	bool BaseContext::add_resource_map(uint64 object_factory_id,const std::unordered_map<std::string, std::string>& name_files)
+	{
+		for (const auto& name_file : name_files)
+		{
+			auto class_name = m_object_factories[object_factory_id]->info().name();
+			auto name = class_name + ":" + name_file.first;
+			m_resources_file[name] = ResourceFile(object_factory_id, name_file.second);
+		}
+		return false;
 	}
-
     
     //Add an attrbute
-    void BaseContext::add_attributes(const std::string& name, Attribute&& attribute)
+    void BaseContext::add_attribute(const std::string& name, Attribute&& attribute)
     {
         m_attributes[ObjectInfo::compute_id(name)].push_back(std::forward<Attribute>(attribute));
     }
-    void BaseContext::add_attributes(uint64 object_id, Attribute&& attribute)
+    void BaseContext::add_attribute(uint64 object_id, Attribute&& attribute)
     {
         m_attributes[object_id].push_back(std::forward<Attribute>(attribute));
     }
-    void BaseContext::add_attributes(const Object& object, Attribute&& attribute)
+    void BaseContext::add_attribute(const Object& object, Attribute&& attribute)
     {
         m_attributes[object.object_id()].push_back(std::forward<Attribute>(attribute));
     }
-    void BaseContext::add_attributes(const ObjectInfo& info, Attribute&& attribute)
+    void BaseContext::add_attribute(const ObjectInfo& info, Attribute&& attribute)
     {
         m_attributes[info.id()].push_back(std::forward<Attribute>(attribute));
     }
@@ -275,43 +292,20 @@ namespace Square
 	{
 	}
 
-
-	//context errors/wrongs
-	void BaseContext::add_wrong(const std::string& wrong)
-	{
-		m_wrongs.push_back(wrong);
-	}
-
-	void BaseContext::add_wrongs(const BaseContext::StringList& wrongs)
-	{
-		for (const std::string& wrong : wrongs)
-		{
-			m_wrongs.push_back(wrong);
-		}
-	}
-
-	const BaseContext::StringList& BaseContext::wrongs() const
-	{
-		return m_wrongs;
-	}
-
-	void BaseContext::show_wrongs() const
-	{
-		show_wrongs(std::cerr);
-	}
-
-	void BaseContext::show_wrongs(std::ostream& output) const
-	{
-		for (const std::string& wrong : wrongs())
-		{
-			output << wrong << std::endl;
-		}
-	}
-
 	//get application
 	Application* BaseContext::application()
 	{
 		return m_application;
+	}
+	//get allocator
+	Allocator* BaseContext::allocator()
+	{
+		return m_allocator;
+	}
+	//get logger
+	Logger* BaseContext::logger()
+	{
+		return m_logger;
 	}
 	//get render
 	Render::Context* BaseContext::render()
@@ -338,6 +332,16 @@ namespace Square
     {
         return m_application;
     }
+	//get allocator
+	Allocator* BaseContext::allocator() const
+	{
+		return m_allocator;
+	}
+	//get logger
+	Logger* BaseContext::logger() const
+	{
+		return m_logger;
+	}
     //get render
     const Render::Context* BaseContext::render() const
     {
@@ -362,13 +366,12 @@ namespace Square
 	void BaseContext::clear()
 	{
         //
-        m_wrongs.clear();
 		m_variables.clear();
 		m_attributes.clear();
 		m_object_factories.clear();
         //
+		m_resources.clear();
         m_resources_file.clear();
         m_resources_info.clear();
-        m_resources.clear();
 	}
 }
