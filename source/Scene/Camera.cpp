@@ -24,29 +24,30 @@ namespace Scene
         //factory
         ctx.add_object<Camera>();
         //Attributes
-		ctx.add_attributes<Camera>(attribute_function<Camera, bool>
+		ctx.add_attribute_function<Camera, bool>
 		("enable"
 		, bool(0)
 		, [](const Camera* plight) -> bool      { return plight->enable(); }
-		, [](Camera* plight, const bool& enable){ plight->enable(enable); }));
+		, [](Camera* plight, const bool& enable){ plight->enable(enable); });
 
-        ctx.add_attributes<Camera>(attribute_function<Camera, Vec4>
+        ctx.add_attribute_function<Camera, Vec4>
         ("viewport"
         , Vec4(0,0,1,1)
-        , [](const Camera* camera) -> Vec4   { return camera->viewport(); }
-        , [](Camera* camera, const Vec4& viewport){ camera->viewport(viewport); }));
+        , [](const Camera* camera) -> Vec4 { return static_cast<const IVec4&>(camera->viewport()); }
+        , [](Camera* camera, const Vec4& viewport){ camera->viewport(viewport); });
         
-        ctx.add_attributes<Camera>(attribute_function<Camera, Mat4>
+        ctx.add_attribute_function<Camera, Mat4>
         ("projection"
         , Mat4(1)
         , [](const Camera* camera) -> Mat4  { return camera->viewport().projection(); }
-        , [](Camera* camera, const Mat4& sc){ camera->projection(sc); }));
+        , [](Camera* camera, const Mat4& sc){ camera->projection(sc); });
     }
     
     
     //init
     Camera::Camera(Context& context)
     : Component(context)
+    , SharedObject<Camera>(context.allocator())
     , m_is_dirty(true)
     {
     }
@@ -78,23 +79,23 @@ namespace Scene
     }
     
     //serialize
-    void Camera::serialize(Data::Archive& archivie)
+    void Camera::serialize(Data::Archive& archive)
     {
-        Data::serialize(archivie, this);
+        Data::serialize(archive, this);
     }
-    void Camera::serialize_json(Data::Json& archivie)
+    void Camera::serialize_json(Data::JsonValue& archive)
     {
-        
+        Data::serialize_json(archive, this);
     }
     
     //deserialize
-    void Camera::deserialize(Data::Archive& archivie)
+    void Camera::deserialize(Data::Archive& archive)
     {
-        Data::deserialize(archivie, this);
+        Data::deserialize(archive, this);
     }
-    void Camera::deserialize_json(Data::Json& archivie)
+    void Camera::deserialize_json(Data::JsonValue& archive)
     {
-        
+        Data::deserialize_json(archive, this);
     }
     
     //camera info
@@ -106,6 +107,7 @@ namespace Scene
         }
         return Constants::identity<Mat4>();
     }
+
     const Mat4& Camera::view() const
     {
         if(m_is_dirty)
@@ -119,11 +121,20 @@ namespace Scene
             {
                 m_view = Constants::identity<Mat4>();
             }
-            //dirty, not anymore
+            // Dirty, not anymore
             m_is_dirty = false;
+            // But frustum still
+            m_frustum_is_dirty = true;
+
         }
         return m_view;
     }
+    
+    const Mat4& Camera::projection() const
+    {
+        return viewport().projection();
+    }
+
     const Geometry::Frustum& Camera::frustum() const
     {
         if(m_frustum_is_dirty)
@@ -133,6 +144,7 @@ namespace Scene
         }
         return m_frustum;
     }
+
     const Render::Viewport& Camera::viewport() const
     {
         return m_viewport;
@@ -142,6 +154,7 @@ namespace Scene
     void Camera::set(Render::UniformBufferCamera *gpubuffer) const
     {
         //info camera
+        gpubuffer->m_viewport = viewport().viewport();
         gpubuffer->m_projection = viewport().projection();
         gpubuffer->m_view = view();
         //invo camera in world space

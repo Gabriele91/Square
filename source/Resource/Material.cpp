@@ -31,8 +31,8 @@ namespace Resource
 	}
 	//////////////////////////////////////////////////////////////
 	//constructor
-	Material::Material(Context& context) :ResourceObject(context) {}
-	Material::Material(Context& context, const std::string& path) : ResourceObject(context) { load(path); }
+	Material::Material(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) {}
+	Material::Material(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) { load(path); }
 	//help
 	static void save_default_parameter(int id_param, const std::string& name, int default_parameters[])
 	{
@@ -52,9 +52,9 @@ namespace Resource
 		Parser::Material mat_parser;
 		Parser::Material::Context mat_context;
 		//do parsing
-		if (!mat_parser.parse(mat_context, Filesystem::text_file_read_all(path)))
+		if (!mat_parser.parse(context().allocator(), mat_context, Filesystem::text_file_read_all(path)))
 		{
-			context().add_wrong("Material: " + path + "\n" + mat_context.errors_to_string());
+			context().logger()->warning("Material: " + path + "\n" + mat_context.errors_to_string());
 			return false;
 		}
 		//load effect
@@ -79,13 +79,18 @@ namespace Resource
 				switch (ctx_param.m_type)
 				{
 				//textures
-				case Render::EffectParameterType::PT_TEXTURE: param->set(context().resource<Resource::Texture>(ctx_param.m_resources[0])); break;
+				case Render::EffectParameterType::PT_TEXTURE: 
+					param->set(context().resource<Resource::Texture>(ctx_param.m_resources[0])); 
+				break;
 				case Render::EffectParameterType::PT_STD_VECTOR_TEXTURE:
 				{
 					//vector of texture
 					std::vector< Shared<Resource::Texture> > textures;
 					//get all texture
-					for (const std::string& tex_name : ctx_param.m_resources) textures.push_back(context().resource<Resource::Texture>(tex_name));
+					for (const std::string& tex_name : ctx_param.m_resources)
+					{
+						textures.push_back(context().resource<Resource::Texture>(tex_name));
+					}
 					//set
 					param->set(textures);
 				}

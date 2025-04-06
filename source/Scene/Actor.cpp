@@ -5,14 +5,17 @@
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Core/Object.h"
+#include "Square/Core/Filesystem.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/ClassObjectRegistration.h"
+#include "Square/Core/StringUtilities.h"
 #include "Square/Math/Transformation.h"
 #include "Square/Core/Application.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Level.h"
 #include <algorithm>
+#include <fstream>
 
 
 namespace Square
@@ -25,100 +28,195 @@ namespace Scene
 	//Registration in context
 	void Actor::object_registration(Context& ctx)
 	{
+        //factory
+        ctx.add_resource<Actor>({ ".ac", ".acgz", ".acj", ".acjgz" });
 		//factory
 		ctx.add_object<Actor>();
 		//Attributes
-        ctx.add_attributes<Actor>(attribute_field("name", std::string(), &Actor::m_name));
-		ctx.add_attributes<Actor>(attribute_function<Actor, Vec3>
+        ctx.add_attribute_field<Actor, std::string>("name", std::string(), offsetof(Actor,m_name));
+		ctx.add_attribute_function<Actor, Vec3>
 		("position"
 		, Vec3(0)
 		, [](const Actor* actor) -> Vec3   { return actor->position(); }
-		, [](Actor* actor, const Vec3& pos){ actor->position(pos);     }));
+		, [](Actor* actor, const Vec3& pos){ actor->position(pos);     });
 
-		ctx.add_attributes<Actor>(attribute_function<Actor, Vec3>
+		ctx.add_attribute_function<Actor, Vec3>
 		("scale"
 		, Vec3(0)
 		, [](const Actor* actor) -> Vec3  { return actor->scale(); }
-		, [](Actor* actor, const Vec3& sc){ actor->scale(sc);      }));
+		, [](Actor* actor, const Vec3& sc){ actor->scale(sc);      });
 
-		ctx.add_attributes<Actor>(attribute_function<Actor, Quat>
+		ctx.add_attribute_function<Actor, Quat>
 		("rotation"
 		, Quat()
 		, [](const Actor* actor) -> Quat  { return actor->rotation(); }
-		, [](Actor* actor,const Quat& rot){ actor->rotation(rot);     }));
+		, [](Actor* actor,const Quat& rot){ actor->rotation(rot);     });
 	}
 
-	Actor::Actor(Context& context) : Object(context) {}
-	Actor::Actor(Context& context, const std::string& name) : Object(context), m_name(name) {}
+	Actor::Actor(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) {}
+	Actor::Actor(Context& context, const std::string& name) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_name(name) {}
+    Actor::~Actor()
+    {
+    }
+
+    // Load child node from resource
+    Shared<Actor> Actor::load_child(const std::string& resource_name)
+    {
+        Shared<Actor> new_actor = context().resource<Actor>(resource_name);
+        if (new_actor)
+        {
+            add(new_actor);
+        }
+        return new_actor;
+    }
 
     //serialize
-    void Actor::serialize(Data::Archive& archivie)
+    void Actor::serialize(Data::Archive& archive)
     {
         //serialize this
-        Data::serialize(archivie, this);
+        Data::serialize(archive, this);
         //serialize components
         {
             uint64 size = m_components.size();
-            archivie % size;
+            archive % size;
             for(auto component : m_components)
             {
                 //serialize name
-                archivie % component->object_name();
+                archive % component.second->object_name();
                 //serialize component
-                component->serialize(archivie);
+                component.second->serialize(archive);
             }
         }
         //serialize childs
         {
             uint64 size = m_childs.size();
-            archivie % size;
+            archive % size;
             for(auto child : m_childs)
             {
-                child->serialize(archivie);
+                child->serialize(archive);
             }
         }
     }
-    void Actor::serialize_json(Data::Json& archivie)
+    void Actor::serialize_json(Data::JsonValue& archive)
     {
-        
+         Data::JsonValue json_data = Data::JsonObject();
+         Data::serialize_json(json_data, this);
+         archive["data"] = std::move(json_data);
+         // Components
+         auto json_components = Data::JsonArray();
+         json_components.reserve(m_components.size());
+         for (auto component : m_components)
+         {
+             Data::JsonValue json_component = Data::JsonObject();
+             //serialize component name
+             json_component["name"] = component.second->object_name();
+             //serialize component data 
+             Data::Json json_component_data = Data::JsonObject();
+             component.second->serialize_json(json_component_data);
+             json_component["data"] = std::move(json_component_data);
+             // add component
+             json_components.emplace_back(std::move(json_component));
+         }
+         archive["components"] = std::move(json_components);
+         // Children
+         auto json_children = Data::JsonArray();
+         json_children.reserve(m_childs.size());
+         for (auto child : m_childs)
+         {
+             Data::Json json_child = Data::JsonObject();
+             child->serialize_json(json_child);
+             json_children.emplace_back(std::move(json_child));
+         }
+         archive["children"] = std::move(json_children);
+
     }
     //deserialize
-    void Actor::deserialize(Data::Archive& archivie)
+    void Actor::deserialize(Data::Archive& archive)
     {
         ///clear
         m_components.clear(); //todo: call events
         m_childs.clear();     //todo: call events
         //deserialize this
-        Data::deserialize(archivie, this);
+        Data::deserialize(archive, this);
         //deserialize components
         {
             uint64 size = 0;
-            archivie % size;
+            archive % size;
             for(uint64 i = 0; i!=size; ++i)
             {
                 //name of component
                 std::string name;
                 //serialize name
-                archivie % name;
+                archive % name;
                 //new component
                 Shared<Component> component = this->component(name);
                 //deserialize component
-                component->deserialize(archivie);
+                component->deserialize(archive);
             }
         }
         //deserialize childs
         {
             uint64 size = 0;
-            archivie % size;
+            archive % size;
             for(uint64 i = 0; i!=size; ++i)
             {
-                child()->deserialize(archivie);
+                child()->deserialize(archive);
             }
         }
     }
-    void Actor::deserialize_json(Data::Json& archivie)
+    void Actor::deserialize_json(Data::JsonValue& archive)
     {
-        
+        ///clear
+        m_components.clear(); //todo: call events
+        m_childs.clear();     //todo: call events
+        //Data
+        if (archive.contains("data"))
+        {
+            Data::JsonValue& jdata = archive["data"];
+            //deserialize this
+            Data::deserialize_json(jdata, this);
+        }
+        //Components
+        if (archive.contains("components"))
+        {
+            Data::JsonValue& jcomponents = archive["components"];
+            // Get name
+            if (jcomponents.is_array())
+            for(auto& jcomponent : jcomponents.array())
+            if (jcomponent.contains("name") && jcomponent["name"].is_string())
+            {
+                //new component
+                Shared<Component> component = this->component(jcomponent["name"].string());
+                if (jcomponent.contains("data") && jcomponent["data"].is_object())
+                {
+                    //deserialize component
+                    component->deserialize_json(jcomponent["data"]);
+                }
+            }
+        }
+        //Components
+        if (archive.contains("children"))
+        {
+            Data::JsonValue& jchildren = archive["children"];
+            // Get name
+            if (jchildren.is_array())
+            for(auto& jchild : jchildren.array())
+            if (jchild.is_object())
+            {
+                child()->deserialize_json(jchild);
+            }
+        }
+    }
+
+    void Actor::visit(const std::function<bool(Shared<Actor>)>& callback)
+    {
+        if (callback(shared_from_this()))
+        {
+            for (auto child : childs())
+            {
+                child->visit(callback);
+            }
+        }
     }
     
     //add a child
@@ -139,7 +237,7 @@ namespace Scene
         //Remove
         component->remove_from_parent();
         //Add
-        m_components.push_back(component);
+        m_components.insert({ component->object_id(), component });
         //submit
         component->submit_add(shared_from_this());
 		//send event to level
@@ -150,10 +248,11 @@ namespace Scene
     //remove a child
     void Actor::remove(Shared<Actor> child)
     {
-        if(child->m_parent.get() == this)
+        if (child)
+        if(auto parent = child->m_parent.lock(); parent.get() == this)
         {
             //remove ref to parent
-            child->m_parent = nullptr;
+            child->m_parent.reset();
             //remove child from list
             auto it = std::find(m_childs.begin(), m_childs.end(), child);
 			if (it != m_childs.end())
@@ -167,12 +266,13 @@ namespace Scene
     }
     void Actor::remove(Shared<Component> component)
     {
+        if (!component) return;
         //Is your own
         if(component->actor().lock().get() != this) return;
 		//find 
-		auto it = std::find(m_components.begin(), m_components.end(), component);
+		auto component_it = m_components.find(component->object_id());
         //remove
-		if (it != m_components.end())
+		if (component_it != m_components.end() && component_it->second == component)
 		{
 			//event
 			component->submit_remove();
@@ -180,16 +280,19 @@ namespace Scene
 			if (auto shared_level = level().lock())
 				shared_level->on_add_a_component(shared_from_this(), component);
 			//remove
-			m_components.erase(it);
+			m_components.erase(component_it);
 		}
     }
     void Actor::remove_from_parent()
     {
-        if(m_parent) m_parent->remove(shared_from_this());
+        if (auto parent = m_parent.lock())
+        {
+            parent->remove(shared_from_this());
+        }
     }
     
     //get parent
-    Shared<Actor> Actor::parent() const
+    Weak<Actor> Actor::parent() const
     {
         return m_parent;
     }
@@ -216,7 +319,10 @@ namespace Scene
     }
     bool Actor::contains(Shared<Component> component) const
     {
-        return  std::find(m_components.begin(), m_components.end(), component) != m_components.end();
+        if (!component) return false;
+        auto component_it = m_components.find(component->object_id());
+        if (component_it == m_components.end()) return false;
+        return  component_it->second == component;
     }
 
 	Shared<Component> Actor::component(const std::string& name)
@@ -225,13 +331,10 @@ namespace Scene
 	}
 	Shared<Component> Actor::component(uint64 id)
 	{
-		for (auto& component : m_components)
-		{
-			if (component->object_id() == id)
-			{
-				return component;
-			}
-		}
+        if(auto component_it = m_components.find(id);  component_it != m_components.end())
+        {
+            return component_it->second;
+        }
 		//create
 		Shared<Component> new_component = StaticPointerCast<Component>(context().create(id));
 		//test
@@ -244,7 +347,7 @@ namespace Scene
 		//return
 		return new_component;
 	}
-	const ComponentList& Actor::components() const
+	const ComponentMap& Actor::components() const
 	{
 		return m_components;
 	}
@@ -266,7 +369,9 @@ namespace Scene
     Shared<Actor> Actor::child(const std::string& name)
     {
         //search
-        for(auto child : m_childs) if(child->name() == name) return child;
+        for(auto child : m_childs) 
+            if(child->name() == name) 
+                return child;
         //create
         auto actor = MakeShared<Actor>(context(), name);
         //add
@@ -280,22 +385,22 @@ namespace Scene
 	}
 
     //message to components
-    void Actor::send_message(const Variant& variant, bool brodcast)
+    void Actor::send_message(const VariantRef& variant, bool brodcast)
     {
         //create message
-        Message msg(this,variant);
+        Message msg(this, variant);
         //send
         send_message(msg, brodcast);
     }
     void Actor::send_message(const Message& msg, bool brodcast)
     {
         //send
-        for(auto component : m_components)
+        for(auto& component : m_components)
         {
-            component->submit_message(msg);
+            component.second->submit_message(msg);
         }
         //brodcast
-        if(brodcast) for(auto child : m_childs)
+        if(brodcast) for(auto& child : m_childs)
         {
             child->send_message(msg, brodcast);
         }
@@ -310,7 +415,7 @@ namespace Scene
 
 	bool Actor::is_root_of_level() const
 	{
-		return !parent() && m_level.lock();
+		return !parent().lock() && m_level.lock();
 	}
 
 	bool Actor::remove_from_level()
@@ -335,12 +440,12 @@ namespace Scene
 		//ref to level
 		//..
 		if (current_level)
-			current_level->on_remove_a_actor(this->shared_from_this());
+			current_level->on_remove_a_actor(shared_from_this());
 		//..
 		m_level = level;
 		//..
 		if (new_level)
-			new_level->on_add_a_actor(this->shared_from_this());
+			new_level->on_add_a_actor(shared_from_this());
 		//event
 		dirty();
 		//same for each chils
@@ -461,7 +566,8 @@ namespace Scene
     void Actor::send_dirty()
     {
         //to components
-        for(auto component : m_components) component->on_transform();
+        for(auto component : m_components) 
+            component.second->on_transform();
         //to childs
         for (auto child : m_childs) child->set_dirty();
     }
@@ -471,13 +577,14 @@ namespace Scene
         if (m_tranform.m_dirty)
         {
             //T*R*S
-            m_model_local  = Square::translate( Constants::identity<Mat4>(), m_tranform.m_position);
-            m_model_local *= Square::to_mat4( m_tranform.m_rotation );
-            m_model_local  = Square::scale(m_model_local, m_tranform.m_scale);
+            m_model_local = Constants::identity<Mat4>();
+            m_model_local = Square::translate(m_model_local, m_tranform.m_position);
+            m_model_local *= Square::to_mat4(m_tranform.m_rotation);
+            m_model_local = Square::scale(m_model_local, m_tranform.m_scale);
             //global
-            if (parent())
+            if (auto parent = m_parent.lock(); parent)
             {
-                m_model_global = parent()->model_matrix() * m_model_local;
+                m_model_global = parent->model_matrix() * m_model_local;
             }
             else
             {
@@ -496,6 +603,134 @@ namespace Scene
 		gpubuffer->m_rotation  = mat4_cast(rotation(true));
         gpubuffer->m_position  = position(true);
         gpubuffer->m_scale     = scale(true);
+    }
+
+    //Actor format
+    enum class ActorFormat
+    {
+        SQ_BIN,
+        SQ_BIN_GZ,
+        SQ_JSON,
+        SQ_JSON_GZ
+    };
+
+    static ActorFormat get_actor_format_from_extension(const std::string& extension)
+    {
+        ActorFormat actor_format{ ActorFormat::SQ_BIN };
+        if (Square::case_insensitive_equal(extension, ".ac"))
+        {
+            actor_format = ActorFormat::SQ_BIN;
+        }
+        else if (Square::case_insensitive_equal(extension, ".acgz"))
+        {
+            actor_format = ActorFormat::SQ_BIN_GZ;
+        }
+        else if (Square::case_insensitive_equal(extension, ".acj"))
+        {
+            actor_format = ActorFormat::SQ_JSON;
+        }
+        else if (Square::case_insensitive_equal(extension, ".acjgz"))
+        {
+            actor_format = ActorFormat::SQ_JSON_GZ;
+        }
+        return actor_format;
+    }
+
+    //load actor
+    bool Actor::load(const std::string& path)
+    {
+        using namespace Square;
+        using namespace Square::Data;
+        using namespace Square::Filesystem::Stream;
+        // Deserialize, per each format
+        switch (get_actor_format_from_extension(Filesystem::get_extension(path)))
+        {
+        default:
+        case ActorFormat::SQ_BIN:
+        {
+            std::ifstream in_file_stream(path);
+            if (in_file_stream.good())
+            {
+                ArchiveBinRead in_archive(Object::context(), in_file_stream);
+                deserialize(in_archive);
+                return true;
+            }
+            else
+            {
+                context().logger()->warning("Fail to read data file: " + path);
+            }
+        }
+        break;
+        case ActorFormat::SQ_BIN_GZ:
+        {
+            GZIStream in_file_stream(path);
+            if (in_file_stream.good())
+            {
+                ArchiveBinRead in_archive(Object::context(), in_file_stream);
+                deserialize(in_archive);
+                return true;
+            }
+            else
+            {
+                context().logger()->warning("Fail to read data file: " + path);
+            }
+        }
+        break;
+        case ActorFormat::SQ_JSON:
+        {
+            using namespace Square;
+            using namespace Square::Data;
+            Json jin;
+            if (jin.parser(Square::Filesystem::text_file_read_all(path)))
+            {
+                deserialize_json(jin);
+                return true;
+            }
+            else
+            {
+                context().logger()->warnings(
+                { { "Fail to parse json: " + path },
+                    jin.errors()
+                });
+            }
+        }
+        break;
+        case ActorFormat::SQ_JSON_GZ:
+        {
+            using namespace Square;
+            using namespace Square::Data;
+            Json jin;
+            // Decompress string
+            auto bin_vector = Square::Filesystem::binary_compress_file_read_all(path);
+            if (bin_vector.empty())
+            {
+                return false;
+            }
+            else
+            {
+                context().logger()->warning("Fail to read json: " + path);
+            }
+            // Get string
+            const char* json_cppstr_begin = (const char*)(bin_vector.data());
+            const char* json_cppstr_end = (const char*)(bin_vector.data() + bin_vector.size());
+            std::string json_string(json_cppstr_begin, json_cppstr_end);
+            // Parsing
+            if (jin.parser(json_string))
+            {
+                deserialize_json(jin);
+                return true;
+            }
+            else
+            {
+                context().logger()->warnings(
+                { { "Fail to parse json: " + path },
+                    jin.errors()
+                });
+            }
+        }
+        break;
+        }
+        return false;
     }
 }
 }

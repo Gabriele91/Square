@@ -72,7 +72,7 @@ namespace Parser
             case DT_GREATER_EQUAL:  return "greater_equal";
             case DT_NOT_EQUAL:  return "not_equal";
             case DT_ALWAYS: return "always";
-            default: break;
+            default: square_assert_debug(0); return "less";
         }
     }
 
@@ -104,7 +104,7 @@ namespace Parser
             case CF_BACK: return "back";
             case CF_FRONT: return "front";
             case CF_FRONT_AND_BACK: return "front_and_back";
-            default: return "";
+            default: square_assert_debug(0); return "front_and_back";
         }
     }
     
@@ -153,16 +153,17 @@ namespace Parser
     }
     // // // // // // // // // // // // // // // // // // // // // // // // // //
     // Parser
-    bool Effect::parse(Context& default_context, const std::string& source)
+    bool Effect::parse(Allocator* allocator, Context& default_context, const std::string& source)
     {
         const char* c_ptr = source.c_str();
-        return parse(default_context, c_ptr);
+        return parse(allocator, default_context, c_ptr);
     }
     
-    bool Effect::parse(Context& default_context, const char*& ptr)
+    bool Effect::parse(Allocator* allocator, Context& default_context, const char*& ptr)
     {
 		//set context
         m_context = &default_context;
+        m_allocator = allocator;
         //get type
         while (*ptr != EOF && *ptr != '\0')
         {
@@ -186,7 +187,7 @@ namespace Parser
 		Parser::Parameters::Context params;
 		params.m_line = m_context->m_line;
 		Parser::Parameters parser_parameters;
-		bool success = parser_parameters.parse(params, ptr);
+		bool success = parser_parameters.parse(m_allocator, params, ptr);
 		//add errors
 		if (!success)
 		{

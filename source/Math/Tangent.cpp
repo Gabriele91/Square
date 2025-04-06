@@ -36,7 +36,14 @@
 
 namespace Square
 {
-
+	// Reimplement binary_function for C++17
+	template <class ARG1, class ARG2, class RESULT>
+	struct binary_function
+	{
+		using first_argument_type = ARG1;
+		using second_argument_type = ARG2;
+		using result_type = RESULT;
+	};
 	// derive your proxy from this class
 	// not virtual to save the call overhead
 	struct ITriangleInputProxy
@@ -153,7 +160,7 @@ namespace Square
 		};
 
 		// helper to get order for CVertexLoadHelper
-		struct CBaseIndexOrder: public std::binary_function< CBaseIndex, CBaseIndex, bool>
+		struct CBaseIndexOrder: public binary_function< CBaseIndex, CBaseIndex, bool >
 		{
 			bool operator() ( const CBaseIndex &a, const CBaseIndex &b ) const
 			{
@@ -237,13 +244,13 @@ namespace Square
 
 				inInput.GetTriangleIndices(b,dwBPos,dwBNorm,dwBUV);
 
-				assert(!(  dwAPos[0]==dwBPos[0] && dwAPos[1]==dwBPos[1] && dwAPos[2]==dwBPos[2] ));
-				assert(!(  dwAPos[1]==dwBPos[0] && dwAPos[2]==dwBPos[1] && dwAPos[0]==dwBPos[2] ));
-				assert(!(  dwAPos[2]==dwBPos[0] && dwAPos[0]==dwBPos[1] && dwAPos[1]==dwBPos[2] ));
+				square_assert(!(  dwAPos[0]==dwBPos[0] && dwAPos[1]==dwBPos[1] && dwAPos[2]==dwBPos[2] ));
+				square_assert(!(  dwAPos[1]==dwBPos[0] && dwAPos[2]==dwBPos[1] && dwAPos[0]==dwBPos[2] ));
+				square_assert(!(  dwAPos[2]==dwBPos[0] && dwAPos[0]==dwBPos[1] && dwAPos[1]==dwBPos[2] ));
 
-				assert(!(  dwAPos[1]==dwBPos[0] && dwAPos[0]==dwBPos[1] && dwAPos[2]==dwBPos[2] ));
-				assert(!(  dwAPos[2]==dwBPos[0] && dwAPos[1]==dwBPos[1] && dwAPos[0]==dwBPos[2] ));
-				assert(!(  dwAPos[0]==dwBPos[0] && dwAPos[2]==dwBPos[1] && dwAPos[1]==dwBPos[2] ));
+				square_assert(!(  dwAPos[1]==dwBPos[0] && dwAPos[0]==dwBPos[1] && dwAPos[2]==dwBPos[2] ));
+				square_assert(!(  dwAPos[2]==dwBPos[0] && dwAPos[1]==dwBPos[1] && dwAPos[0]==dwBPos[2] ));
+				square_assert(!(  dwAPos[0]==dwBPos[0] && dwAPos[2]==dwBPos[1] && dwAPos[1]==dwBPos[2] ));
 			}
 		}
 	}
@@ -259,8 +266,8 @@ namespace Square
 		m_BaseVectors.clear();
 		m_TriBaseAssigment.clear();
 		m_TriBaseAssigment.reserve(dwTriCount);
-		assert(m_BaseVectors.empty());
-		assert(m_TriBaseAssigment.empty());
+		square_assert(m_BaseVectors.empty());
+		square_assert(m_TriBaseAssigment.empty());
 
 		std::multimap<CBaseIndex,unsigned int,CBaseIndexOrder> mBaseMap;	// second=index into m_BaseVectors, generated output data
 		std::vector<CBase33> vTriangleBase;									// base vectors per triangle
@@ -410,15 +417,15 @@ namespace Square
 
 					ref.u=normalize(vUout);ref.v=normalize(vVout);ref.n=vNout;
 				
-					//assert(ref.u.x>=-1 && ref.u.x<=1);
-					//assert(ref.u.y>=-1 && ref.u.y<=1);
-					//assert(ref.u.z>=-1 && ref.u.z<=1);
-					//assert(ref.v.x>=-1 && ref.v.x<=1);
-					//assert(ref.v.y>=-1 && ref.v.y<=1);
-					//assert(ref.v.z>=-1 && ref.v.z<=1);
-					//assert(ref.n.x>=-1 && ref.n.x<=1);
-					//assert(ref.n.y>=-1 && ref.n.y<=1);
-					//assert(ref.n.z>=-1 && ref.n.z<=1);
+					//square_assert(ref.u.x>=-1 && ref.u.x<=1);
+					//square_assert(ref.u.y>=-1 && ref.u.y<=1);
+					//square_assert(ref.u.z>=-1 && ref.u.z<=1);
+					//square_assert(ref.v.x>=-1 && ref.v.x<=1);
+					//square_assert(ref.v.y>=-1 && ref.v.y<=1);
+					//square_assert(ref.v.z>=-1 && ref.v.z<=1);
+					//square_assert(ref.n.x>=-1 && ref.n.x<=1);
+					//square_assert(ref.n.y>=-1 && ref.n.y<=1);
+					//square_assert(ref.n.z>=-1 && ref.n.z<=1);
 				}
 			}
 		}
@@ -431,7 +438,7 @@ namespace Square
 		const unsigned int indwPosNo, const unsigned int indwNormNo, const CVec3 &inU, const CVec3 &inV, const CVec3 &inNormN )
 	{
 		// no mesh is perfect
-	//	assert(IsNormalized(inNormN));
+	//	square_assert(IsNormalized(inNormN));
 
 		CBaseIndex Indx;
 
@@ -442,7 +449,7 @@ namespace Square
 		
 		iFind = inMap.lower_bound(Indx);
 
-		assert(iFind!=inMap.end());
+		square_assert(iFind!=inMap.end());
 
 		CVec3 vNormal=m_BaseVectors[(*iFind).second].n;
 
@@ -498,10 +505,10 @@ namespace Square
 
 		//no mesh is perfect 
 		if(inU.x!=0.0f || inU.y!=0.0f || inU.z!=0.0f)
-			assert(refBaseUV.u.x!=0.0f || refBaseUV.u.y!=0.0f || refBaseUV.u.z!=0.0f);
+			square_assert(refBaseUV.u.x!=0.0f || refBaseUV.u.y!=0.0f || refBaseUV.u.z!=0.0f);
 		// no mesh is perfect
 		if(inV.x!=0.0f || inV.y!=0.0f || inV.z!=0.0f)
-			assert(refBaseUV.v.x!=0.0f || refBaseUV.v.y!=0.0f || refBaseUV.v.z!=0.0f);
+			square_assert(refBaseUV.v.x!=0.0f || refBaseUV.v.y!=0.0f || refBaseUV.v.z!=0.0f);
 
 		return dwBaseUVIndex;
 	}
@@ -563,7 +570,7 @@ namespace Square
 	template <class InputProxy>
 	void CTangentSpaceCalculation<InputProxy>::GetTriangleBaseIndices( const unsigned int indwTriNo, unsigned int outdwBase[3] )
 	{
-		assert(indwTriNo<m_TriBaseAssigment.size());
+		square_assert(indwTriNo<m_TriBaseAssigment.size());
 		CTriBaseIndex &indx=m_TriBaseAssigment[indwTriNo];
 
 		for(unsigned int i=0;i<3;i++)

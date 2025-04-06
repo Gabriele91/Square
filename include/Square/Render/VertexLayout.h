@@ -44,12 +44,14 @@ namespace Layout
     using InputLayoutList = std::vector< Shared< Render::InputLayout > >;
     
     //collections
-    class Collection
+    class SQUARE_API Collection
     {
     public:
         //Add a vertex as commond vertex
         static bool append(const ObjectInfo& info, const AttributeList& attrs, unsigned long type, size_t vertex_size);
         //index of layout vector
+        static std::optional<AttributeList> attributes_by_type(unsigned long type);                                  //O(N)
+        static size_t size_by_type(unsigned long type);                                                              //O(N)
         static Shared< Render::InputLayout > index_by_type(Render::Context* render, unsigned long type);             //O(N)
         static Shared< Render::InputLayout > index_by_object_id(Render::Context* render, ::Square::uint64 id);       //O(N)
         static Shared< Render::InputLayout > index_by_object_name(Render::Context* render, const std::string& name); //O(N + |name|)

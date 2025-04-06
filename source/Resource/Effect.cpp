@@ -56,8 +56,8 @@ namespace Resource
 	};
 
     //constructor
-    Effect::Effect(Context& context):ResourceObject(context) {}
-    Effect::Effect(Context& context, const std::string& path):ResourceObject(context){ load(path); }
+    Effect::Effect(Context& context): ResourceObject(context), BaseInheritableSharedObject(context.allocator()), Render::Effect(context.allocator()) {}
+    Effect::Effect(Context& context, const std::string& path): ResourceObject(context), BaseInheritableSharedObject(context.allocator()), Render::Effect(context.allocator()) { load(path); }
     
     //load effect
     bool Effect::load(const std::string& path)
@@ -71,9 +71,9 @@ namespace Resource
         Parser::Effect          e_parser;
         Parser::Effect::Context e_context;
         //do parsing
-        if(!e_parser.parse(e_context, Filesystem::text_file_read_all(path)))
+        if(!e_parser.parse(context().allocator(), e_context, Filesystem::text_file_read_all(path)))
         {
-            context().add_wrong("Effect: " +  path + "\n" + e_context.errors_to_string());
+            context().logger()->warning("Effect: " +  path + "\n" + e_context.errors_to_string());
             return false;
         }
         //alloc params
@@ -85,7 +85,7 @@ namespace Resource
             switch (e_context.m_parameters[i].m_type)
             {
                 case EffectParameterType::PT_TEXTURE:
-					add_parameter((int)i, e_context.m_parameters[i].m_name, EffectParameter::create(context().resource<Texture>(e_context.m_parameters[i].m_resources[0])));
+					add_parameter((int)i, e_context.m_parameters[i].m_name, std::move(EffectParameter::create(context().allocator(), context().resource<Texture>(e_context.m_parameters[i].m_resources[0]))));
                 break;
                 case EffectParameterType::PT_STD_VECTOR_TEXTURE:
                 {
@@ -95,7 +95,7 @@ namespace Resource
                     for(const std::string& tex_name : e_context.m_parameters[i].m_resources)
                         v_textures.push_back( context().resource<Texture>(tex_name) );
 					//add
-					add_parameter((int)i, e_context.m_parameters[i].m_name, EffectParameter::create(v_textures));
+					add_parameter((int)i, e_context.m_parameters[i].m_name, std::move(EffectParameter::create(context().allocator(), v_textures)));
                 }
                 break;
                 default:
@@ -117,7 +117,7 @@ namespace Resource
         //fail
         if(!ptr_sub_effect)
         {
-            context().add_wrong("Effect: " + path +", All sub effects unsupported.");
+            context().logger()->warning("Effect: " + path +", All sub effects unsupported.");
             return false;
         }
         //set queue
@@ -199,9 +199,9 @@ namespace Resource
 							//NONE
 							case Parser::Effect::ShaderField::S_NONE:
 							{
-								context().add_wrong("Effect: " + path);
-								context().add_wrong("Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
-								context().add_wrong("Error pass: shader source is required");
+								context().logger()->warning("Effect: " + path);
+								context().logger()->warning("Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
+								context().logger()->warning("Error pass: shader source is required");
 								return false;
 							}
 							default:
@@ -245,9 +245,9 @@ namespace Resource
 										debug_preproc += "#" + std::get<0>(preproc) + " " + std::get<1>(preproc) + "\t";
 									}
 									//output
-									context().add_wrong("Effect: " + path);
-									context().add_wrong("Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
-									context().add_wrong("Error technique preproces: " + debug_preproc);
+									context().logger()->warning("Effect: " + path);
+									context().logger()->warning("Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
+									context().logger()->warning("Error technique preproces: " + debug_preproc);
 									return false;
 								}
 							}
@@ -273,7 +273,7 @@ namespace Resource
 							this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("AmbientLight");
 							if (!this_pass.m_uniform_ambient_light) this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("Light");
 							if (!this_pass.m_uniform_ambient_light) this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("light");
-							if (!this_pass.m_uniform_ambient_light) context().add_wrongs({ "Effect: " + path, "Wrong: not found AmbientLight" });
+							if (!this_pass.m_uniform_ambient_light) context().logger()->warnings({ "Effect: " + path, "Wrong: not found AmbientLight" });
 							this_pass.m_support_light = EffectPass::LT_AMBIENT;
 							break;
 						case DEF_RENDERING_DIRECTION_LIGHT:
@@ -281,7 +281,7 @@ namespace Resource
 							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("Light");
 							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("direction_light");
 							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("light");
-							if (!this_pass.m_uniform_direction) context().add_wrongs({ "Effect: " + path, "Wrong: not found DirectionLight" });
+							if (!this_pass.m_uniform_direction) context().logger()->warnings({ "Effect: " + path, "Wrong: not found DirectionLight" });
 							this_pass.m_support_light = EffectPass::LT_DIRECTION;
 							break;
 						case DEF_RENDERING_POINT_LIGHT:
@@ -289,7 +289,7 @@ namespace Resource
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("Light");
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("point_light");
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("light");
-							if (!this_pass.m_uniform_point) context().add_wrongs({ "Effect: " + path, "Wrong: not found PointLight" });
+							if (!this_pass.m_uniform_point) context().logger()->warnings({ "Effect: " + path, "Wrong: not found PointLight" });
 							this_pass.m_support_light = EffectPass::LT_POINT;
 							break;
 						case DEF_RENDERING_SPOT_LIGHT:
@@ -297,7 +297,7 @@ namespace Resource
 							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("Light");
 							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("spot_light");
 							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("light");
-							if (!this_pass.m_uniform_spot) context().add_wrongs({ "Effect: " + path, "Wrong: not found SpotLight" });
+							if (!this_pass.m_uniform_spot) context().logger()->warnings({ "Effect: " + path, "Wrong: not found SpotLight" });
 							this_pass.m_support_light = EffectPass::LT_SPOT;
 							break;
 						default:
@@ -316,7 +316,7 @@ namespace Resource
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("direction_shadow_map");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("ShadowMap");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("shadow_map");
-								if (!this_pass.m_uniform_shadow_map) context().add_wrongs({ "Effect: " + path, "Wrong: not found direction shadow map" });
+								if (!this_pass.m_uniform_shadow_map) context().logger()->warnings({ "Effect: " + path, "Wrong: not found direction shadow map" });
 								this_pass.m_support_shadow = EffectPass::LT_DIRECTION;
 								this_pass.m_support_light = EffectPass::LT_NONE;
 							break;
@@ -326,7 +326,7 @@ namespace Resource
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("point_shadow_map");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("ShadowMap");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("shadow_map");
-								if (!this_pass.m_uniform_shadow_map) context().add_wrongs({ "Effect: " + path, "Wrong: not found point shadow map" });
+								if (!this_pass.m_uniform_shadow_map) context().logger()->warnings({ "Effect: " + path, "Wrong: not found point shadow map" });
 								this_pass.m_support_shadow = EffectPass::LT_POINT;
 								this_pass.m_support_light = EffectPass::LT_NONE;
 							break;
@@ -336,7 +336,7 @@ namespace Resource
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("spot_shadow_map");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("ShadowMap");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("shadow_map");
-								if (!this_pass.m_uniform_shadow_map) context().add_wrongs({ "Effect: " + path, "Wrong: not found spot shadow map" });
+								if (!this_pass.m_uniform_shadow_map) context().logger()->warnings({ "Effect: " + path, "Wrong: not found spot shadow map" });
 								this_pass.m_support_shadow = EffectPass::LT_SPOT;
 								this_pass.m_support_light = EffectPass::LT_NONE;
 							break;
@@ -366,7 +366,7 @@ namespace Resource
 				//test
 				if (!effect || !import_techniques(*effect))
 				{
-					context().add_wrong("Effect: " + path + ", can't import techniques from " + import_field.m_data);
+					context().logger()->warning("Effect: " + path + ", can't import techniques from " + import_field.m_data);
 				}
 			}
 			break;
@@ -377,12 +377,12 @@ namespace Resource
 				//test
 				if (!effect || !import_technique(*effect, import_field.m_technique_name))
 				{
-					context().add_wrong("Effect: " + path + ", can't import technique "+ import_field.m_technique_name +" from " + import_field.m_data);
+					context().logger()->warning("Effect: " + path + ", can't import technique "+ import_field.m_technique_name +" from " + import_field.m_data);
 				}
 			}
 			break;
 			default: 
-				context().add_wrong("Effect: " + path + ", unsupported import from local file");
+				context().logger()->warning("Effect: " + path + ", unsupported import from local file");
 			break;
 			}
 		}

@@ -41,11 +41,11 @@ namespace Scene
         virtual void on_message(const Message& msg)override;
         
         //serialize
-        virtual void serialize(Data::Archive& archivie)   override;
-        virtual void serialize_json(Data::Json& archivie) override;
+        virtual void serialize(Data::Archive& archive)   override;
+        virtual void serialize_json(Data::JsonValue& archive) override;
         //deserialize
-        virtual void deserialize(Data::Archive& archivie)   override;
-        virtual void deserialize_json(Data::Json& archivie) override;
+        virtual void deserialize(Data::Archive& archive)   override;
+        virtual void deserialize_json(Data::JsonValue& archive) override;
         
         //set
         void viewport(const IVec4& viewport);
@@ -56,6 +56,7 @@ namespace Scene
         //get
         const Mat4& model() const override;
         const Mat4& view() const override;
+        const Mat4& projection() const override;
         const Render::Viewport& viewport() const override;
         const Geometry::Frustum& frustum() const override;
         

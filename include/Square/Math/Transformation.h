@@ -88,12 +88,12 @@ namespace Square
 		return glm::perspective<T>(fovy, aspect, near, far);
 	}    
 	template < class T >
-	inline auto perspectiveZO(const T& fovy, const T& aspect, const T& near, const T& far) -> decltype(glm::perspective<T>(fovy, aspect, near, far))
+	inline auto perspective_ZO(const T& fovy, const T& aspect, const T& near, const T& far) -> decltype(glm::perspective<T>(fovy, aspect, near, far))
 	{
 		return glm::perspectiveZO<T>(fovy, aspect, near, far);
 	}    
 	template < class T >
-	inline auto perspectiveNO(const T& fovy, const T& aspect, const T& near, const T& far) -> decltype(glm::perspective<T>(fovy, aspect, near, far))
+	inline auto perspective_NO(const T& fovy, const T& aspect, const T& near, const T& far) -> decltype(glm::perspective<T>(fovy, aspect, near, far))
 	{
 		return glm::perspectiveNO<T>(fovy, aspect, near, far);
 	}
@@ -102,6 +102,18 @@ namespace Square
     inline auto ortho(const T& left,const T& right,const T& top,const T& bottom,const T& zNear, const T& zFar) -> decltype( glm::ortho(left, right, bottom, top, zNear, zFar) )
     {
         return glm::ortho(left, right, bottom, top, zNear, zFar);
+    }
+
+    template < class T >
+    inline auto ortho_ZO(const T& left, const T& right, const T& top, const T& bottom, const T& zNear, const T& zFar) -> decltype(glm::ortho(left, right, bottom, top, zNear, zFar))
+    {
+        return glm::orthoZO(left, right, bottom, top, zNear, zFar);
+    }
+
+    template < class T >
+    inline auto ortho_NO(const T& left, const T& right, const T& top, const T& bottom, const T& zNear, const T& zFar) -> decltype(glm::ortho(left, right, bottom, top, zNear, zFar))
+    {
+        return glm::orthoNO(left, right, bottom, top, zNear, zFar);
     }
     
     template < class T >

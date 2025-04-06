@@ -11,6 +11,7 @@
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/Context.h"
+#include "Square/Core/Resource.h"
 #include "Square/Scene/Component.h"
 #include "Square/Data/AttributeSerialize.h"
 #include "Square/Data/Json.h"
@@ -28,22 +29,32 @@ namespace Scene
 	using ActorList = std::vector< Shared<Actor> >;
 	using LevelList = std::vector< Shared<Level> >;
 	//..................
-    class SQUARE_API Actor : public Object
-                           , public SharedObject<Actor>
-                           , public Uncopyable
+    class SQUARE_API Actor : public ResourceObject
+                           , public InheritableSharedObject<Actor>
 						   , public Render::Transform
     {
     public:
+
+        using InheritableSharedObject<Actor>::shared_from_this;
+        using InheritableSharedObject<Actor>::weak_from_this;
         
 		//Init object
 		SQUARE_OBJECT(Actor)
+
 		//Registration in context
 		static void object_registration(Context& ctx);
+
+        // Load child node from resource
+        Shared<Actor> load_child(const std::string& resource_name);
 
         //constructor
 		Actor(Context& context);
 		Actor(Context& context, const std::string& name);
+        virtual ~Actor();
         
+        // Visit
+        void visit(const std::function<bool(Shared<Actor>)>& callback);
+
         //add a child
         void add(Shared<Actor> child);
         void add(Shared<Component> component);
@@ -54,11 +65,17 @@ namespace Scene
         void remove_from_parent();
         
         //get parent
-        Shared<Actor> parent() const;
+        Weak<Actor> parent() const;
         
         //contains an actor
         bool contains(Shared<Actor> child) const;
         bool contains(Shared<Component> component) const;
+
+        template< class T >
+        bool contains() const
+        {
+            return m_components.find(T::static_object_id()) != m_components.end();
+        }
 		
 		//get by type
 		template< class T >
@@ -68,7 +85,7 @@ namespace Scene
 		}
 		Shared<Component> component(const std::string& name);
 		Shared<Component> component(uint64 id);		
-		const ComponentList& components() const;
+		const ComponentMap& components() const;
         
         //get child
         Shared<Actor> child();
@@ -81,7 +98,7 @@ namespace Scene
         void name(const std::string&);
 
         //message
-        void send_message(const Variant& value, bool brodcast = false);
+        void send_message(const VariantRef& value, bool brodcast = false);
         void send_message(const Message& msg, bool brodcast = false);
         
         //matrix op
@@ -104,25 +121,27 @@ namespace Scene
 		void dirty();
         
         //serialize
-        void serialize(Data::Archive& archivie);
-        void serialize_json(Data::Json& archivie);
+        void serialize(Data::Archive& archive);
+        void serialize_json(Data::JsonValue& archive);
         //deserialize
-        void deserialize(Data::Archive& archivie);
-        void deserialize_json(Data::Json& archivie);
+        void deserialize(Data::Archive& archive);
+        void deserialize_json(Data::JsonValue& archive);
 
 		//get level
 		Weak<Level> level() const;
+        void   level(Weak<Level> level);
 		bool   is_root_of_level() const;
 		bool   remove_from_level();
         
         //set
         void set(Render::UniformBufferTransform* gpubuffer) const override;
 
+        //load actor
+        bool load(const std::string& path) override;
+
     protected:
 		//friend class
 		friend class Level;
-		//set a level
-		void level(Weak<Level> level);
 		//level events
 		Weak<Level> m_level;
         //fake const
@@ -149,10 +168,10 @@ namespace Scene
         //node name
         std::string m_name;
         //parent
-        Shared<Actor> m_parent;
+        Weak<Actor> m_parent;
         //child list
         ActorList     m_childs;
-		ComponentList m_components;
+        ComponentMap  m_components;
     };
 }
 }

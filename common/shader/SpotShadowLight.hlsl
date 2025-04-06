@@ -3,13 +3,6 @@
 #include <ShadowCamera>
 Sampler2D(spot_shadow_map)
 
-Vec4 spot_light_shadow_position(Vec4 fposition)
-{
-	fposition = mul(fposition, spot_shadow_camera.m_view);
-	fposition = mul(fposition, spot_shadow_camera.m_projection);
-	return fposition;
-}
-
 #ifdef PCF_SHADOW
 float spot_light_shadow(in Vec3 proj_coords, const float bias)
 {
@@ -46,7 +39,7 @@ float spot_light_shadow(in Vec3 proj_coords, const float bias)
 	// depth of current pos
 	float current_depth = proj_coords.z;
 	// check whether current frag pos is in shadow
-	float shadow = (current_depth - bias) <= closest_depth ? 1.0 : 0.0;
+	float shadow = (current_depth + bias) <= closest_depth ? 1.0 : 0.0;
 	// shadow
 	return shadow;
 }
@@ -56,15 +49,17 @@ float spot_light_shadow(in Vec3 proj_coords, const float bias)
 float spot_light_compute_shadow(in Vec4 fposition, const float bias)
 {
 	// compute pos 
-	Vec4 fposition_light_space = spot_light_shadow_position(fposition);
+	Vec4 fposition_light_space = mul_spot_light_view_projection(fposition);
 	// perform perspective divide (homogenize position)
 	Vec3 proj_coords = fposition_light_space.xyz / fposition_light_space.w;
 	//(-1,1)->(0,1)
 	proj_coords.xy = proj_coords.xy * 0.5 + 0.5;
 	//clamp
+#if 0 // defined in the Render\ShadowBuffer.cpp TBO description
 	if (proj_coords.x <= 0.0f || proj_coords.x >= 1.0) return 1.0;
 	if (proj_coords.y <= 0.0f || proj_coords.y >= 1.0) return 1.0;
 	if (proj_coords.z <= 0.0f || proj_coords.z >= 1.0) return 1.0;
+#endif
 	// DirectX y is inv
 	proj_coords = invY(proj_coords);
 	// return
@@ -74,7 +69,7 @@ float spot_light_compute_shadow(in Vec4 fposition, const float bias)
 void spot_light_apply_shadow(inout LightResult result, in Vec4 fposition)
 {
 	//const bias
-	const float bias = 0.00001;
+	const float bias = 0.0000001;
 	//factor
 	float shadow_factor = spot_light_compute_shadow(fposition, bias);
 	//add shadow

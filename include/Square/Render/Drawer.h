@@ -18,16 +18,53 @@ namespace Square
 {
 namespace Render
 {
+    class SQUARE_API RenderableIterator
+    {
+    public:
+        RenderableIterator& operator++();
+
+        bool operator == (const RenderableIterator& other) const;
+        bool operator != (const RenderableIterator& other) const;
+
+        Shared<Render::Renderable> operator*();
+        Shared<Render::Renderable> operator*() const;
+
+    private:
+        RenderableIterator(const PoolQueues& queues, const std::array<bool, RQ_MAX>& queues_types, QueueType queue_current);
+        void test_it_or_queue_next();
+
+        const PoolQueues&               m_queues;
+        const std::array<bool, RQ_MAX>& m_queues_types;
+        QueueType                       m_queue_current;
+        QueueIterator                   m_queue_it;
+        
+        friend class  RenderableQuery;
+    };
+
+    class SQUARE_API RenderableQuery
+    {
+    public:
+        RenderableQuery(const PoolQueues& queues, const std::vector<QueueType>& select_queues);
+        const RenderableIterator& begin() const;
+        const RenderableIterator& end() const;
+    private:
+        std::array<bool, RQ_MAX> m_queues_types{ false };
+        RenderableIterator m_begin;
+        RenderableIterator m_end;
+    };
+
     //Class/enum declare
     class Drawer;
     class DrawerPass;
     //define types
-    enum DrawerPassType
+    enum DrawerPassType : unsigned char
     {
-        RPT_SHADOW,
-        RPT_RENDER,
-        RPT_UI,
-        RPT_MAX
+        RPT_RENDER = 0b0001, // 0
+        RPT_SHADOW = 0b0010, // 1
+        RPT_UI     = 0b0100, // 2
+        RPT_DEBUG  = 0b1000, // 3
+        RPT_ALL    = 0b1111, // -
+        RPT_MAX    = 4       // ARRAY SIZE
     };
     //define interface
     class SQUARE_API DrawerPass : public BaseObject
@@ -36,7 +73,7 @@ namespace Render
     public:
         SQUARE_OBJECT(DrawerPass)
 
-        DrawerPass(DrawerPassType type) : m_type(type) {}
+        DrawerPass(Allocator* allocator, DrawerPassType type) : SharedObject_t(allocator), m_type(type) {}
         
 		virtual void draw
 		(
@@ -55,6 +92,7 @@ namespace Render
 			, int               num_of_pass
 			, const Vec4&       clear_color
 			, const Vec4&       ambient_color
+            , const Camera&     camera
 			, const Light&      light
 			, const Collection& collection
 			, const PoolQueues& queues
@@ -86,24 +124,28 @@ namespace Render
         const Render::Context& render() const;
         
         //draw
-        void draw( const Collection& collection );
-        void draw( const Vec4& clear_color, const Vec4& ambient_color, const Collection& collection);
+        void draw( const Collection& collection, unsigned char pass_types = DrawerPassType::RPT_ALL);
+        void draw( const Vec4& clear_color, 
+                   const Vec4& ambient_color, 
+                   const Collection& collection,
+                   unsigned char pass_types = DrawerPassType::RPT_ALL);
         
         //add a pass
         void add(Shared<DrawerPass> pass);
-        
-        //gpu buffer
-        Shared<Render::ConstBuffer>& transform_buffer();
-        Shared<Render::ConstBuffer>& camera_buffer();
+
+        template<class T, typename ...ARGS>
+        Shared<T> create(ARGS&&... args)
+        {
+            auto t_shared_ptr = MakeShared<T>(context(), std::forward(args)...);
+            add(t_shared_ptr);
+            return t_shared_ptr;
+        }
 
     protected:
         
         //CPU DATA
         Square::Context& m_context;
         std::vector< Shared<DrawerPass> > m_rendering_pass[RPT_MAX];
-        //GPU DATA
-        Shared<Render::ConstBuffer> m_transform;
-        Shared<Render::ConstBuffer> m_camera;
 
     };
 }

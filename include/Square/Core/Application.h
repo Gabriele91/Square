@@ -62,6 +62,8 @@ namespace Square
 		//help
 		static Application&     application();
 		static Context&		    context();
+		static Allocator&       allocator();
+		static Logger&		    logger();
 		static Render::Context& render();
 		static Video::Window&   window();
 		static Video::Input&    input();
@@ -75,6 +77,16 @@ namespace Square
         FULLSCREEN
     };
 
+    enum class GpuType 
+    {
+        GPU_DEFAULT,
+        GPU_AMD,
+        GPU_NV,
+        GPU_INTEL,
+        GPU_HIGH,
+        GPU_LOW
+    };
+
 	struct SQUARE_API WindowRenderDriver
 	{
 		Render::RenderDriver m_type{ Render::DR_OPENGL };
@@ -82,6 +94,7 @@ namespace Square
 		int m_minor_ctx{ 1 };
 		int m_depth_ctx  { 24 };
 		int m_stencil_ctx{ 8  };
+        GpuType m_gpu_type{ GpuType::GPU_DEFAULT };
 		bool m_debug{ false };
 	};
         
@@ -110,6 +123,8 @@ namespace Square
         void   window_position(const IVec2& size) const;
         //get attr
         AppInterface*    app_instance();
+        Allocator*       allocator();
+        Logger*          logger();
         Video::Window*   window();
 		Video::Input*    input();
 		Scene::World*    world();
@@ -118,6 +133,8 @@ namespace Square
 		Render::Context* render();
         //get attr (const)
         const AppInterface*   app_instance() const;
+        Allocator*            allocator() const;
+        Logger*               logger() const;
         const Video::Window*  window() const;
 		const Video::Input*   input() const;
 		const Scene::World*   world() const;

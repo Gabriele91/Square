@@ -27,47 +27,55 @@ namespace Scene
         //factory
         ctx.add_object<PointLight>();
         //Attributes
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, bool>
+		ctx.add_attribute_function<PointLight, bool>
 		("visible"
 		, bool(0)
 		, [](const PointLight* plight) -> bool       { return plight->visible(); }
-		, [](PointLight* plight, const bool& visible){ plight->visible(visible); }));
+		, [](PointLight* plight, const bool& visible){ plight->visible(visible); });
 
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, Vec3>
+		ctx.add_attribute_function<PointLight, Vec3>
 		("diffuse"
 		, Vec3(1.0)
 		, [](const PointLight* plight) -> Vec3       { return plight->diffuse(); }
-		, [](PointLight* plight, const Vec3& diffuse){ plight->diffuse(diffuse); }));
+		, [](PointLight* plight, const Vec3& diffuse){ plight->diffuse(diffuse); });
 
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, Vec3>
+		ctx.add_attribute_function<PointLight, Vec3>
 		("specular"
 		, Vec3(1.0)
 		, [](const PointLight* plight) -> Vec3        { return plight->specular(); }
-		, [](PointLight* plight, const Vec3& specular){ plight->specular(specular); }));
+		, [](PointLight* plight, const Vec3& specular){ plight->specular(specular); });
 
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, float>
+		ctx.add_attribute_function<PointLight, float>
 		("constant"
 		, float(1.0)
 		, [](const PointLight* plight) -> float        { return plight->constant(); }
-		, [](PointLight* plight, const float& constant){ plight->constant(constant); }));
+		, [](PointLight* plight, const float& constant){ plight->constant(constant); });
 
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, float>
+		ctx.add_attribute_function<PointLight, float>
 		("radius"
 		, float(1.0)
 		, [](const PointLight* plight) -> float        { return plight->radius(); }
-		, [](PointLight* plight, const float& radius)  { plight->radius(radius);  }));
+		, [](PointLight* plight, const float& radius)  { plight->radius(radius);  });
 
-		ctx.add_attributes<PointLight>(attribute_function<PointLight, float>
+		ctx.add_attribute_function<PointLight, float>
 		("inside_radius"
 		, float(1.0)
 		, [](const PointLight* plight) -> float               { return plight->inside_radius(); }
-		, [](PointLight* plight, const float& inside_radius)  { plight->inside_radius(inside_radius);  }));
+		, [](PointLight* plight, const float& inside_radius)  { plight->inside_radius(inside_radius);  });
+		
+		ctx.add_attribute_function<PointLight, IVec2>
+		("shadow"
+		, IVec2(0)
+		, [](const PointLight* plight) -> IVec2 { return plight->shadow_size(); }
+		, [](PointLight* plight, const IVec2& shadow_size)  { plight->shadow(shadow_size);  });
+		
     }
 
 	////////////////////////////////////////
 	// build view matrix
 	static Mat4 cube_view_matrix(const Vec3& pos, size_t i)
 	{
+#if 0 // RHs
 		//(+x -x +y -y +z -z)^-1
 		switch (i)
 		{
@@ -81,10 +89,26 @@ namespace Scene
 		case 5: return look_at(pos, pos + Vec3(0, 0, -1), Vec3(0, -1, 0));
 		default: return  Constants::identity<Mat4>();
 		}
+#else // LHs
+		//(+x -x +y -y +z -z)
+		switch (i)
+		{
+		case 0: return look_at(pos, pos + Vec3(1, 0, 0), Vec3(0, 1, 0)); // Right
+		case 1: return look_at(pos, pos + Vec3(-1, 0, 0), Vec3(0, 1, 0)); // Left
+
+		case 2: return look_at(pos, pos + Vec3(0, 1, 0),  Vec3(0, 0, -1)); // Up
+		case 3: return look_at(pos, pos + Vec3(0, -1, 0), Vec3(0, 0, 1)); // Down
+
+		case 4: return look_at(pos, pos + Vec3(0, 0, 1), Vec3(0, 1, 0)); // Forward
+		case 5: return look_at(pos, pos + Vec3(0, 0, -1), Vec3(0, 1, 0)); // Backward
+		default: return Constants::identity<Mat4>();
+		}
+#endif 
 	}
 	//light
 	PointLight::PointLight(Context& context)
 	: Component(context)
+	, SharedObject<PointLight>(context.allocator())
 	, m_buffer(context)
 	{
 		m_sphere.radius(this->Render::PointLight::radius());
@@ -163,19 +187,23 @@ namespace Scene
 
 	//object methods
 	//serialize
-	void PointLight::serialize(Data::Archive& archivie)
+	void PointLight::serialize(Data::Archive& archive)
 	{
-		Data::serialize(archivie, this);
+		Data::serialize(archive, this);
 	}
-	void PointLight::serialize_json(Data::Json& archivie)
-	{ }
+	void PointLight::serialize_json(Data::JsonValue& archive)
+	{
+		Data::serialize_json(archive, this);
+	}
 	//deserialize
-	void PointLight::deserialize(Data::Archive& archivie)
+	void PointLight::deserialize(Data::Archive& archive)
 	{
-		Data::deserialize(archivie, this);
+		Data::deserialize(archive, this);
 	}
-	void PointLight::deserialize_json(Data::Json& archivie)
-	{ }
+	void PointLight::deserialize_json(Data::JsonValue& archive)
+	{
+		Data::deserialize_json(archive, this);
+	}
 	//methods
 	const Geometry::Sphere& PointLight::bounding_sphere() const
 	{
@@ -196,7 +224,7 @@ namespace Scene
 		data->m_position = m_position;
 		this->Render::PointLight::set(data);
 	}
-	void PointLight::set(Render::UniformPointShadowLight* data) const
+	void PointLight::set(Render::UniformPointShadowLight* data, bool draw_shadow_map) const
 	{
 		//projection 
 		data->m_projection = projection();
@@ -236,7 +264,7 @@ namespace Scene
 			if (shadow())
 			{
 				auto size = m_buffer.size();
-				float aspect = size.x / size.y;
+				float aspect = float(size.x) / size.y;
 			}
 			//update projection
 			m_projection = perspective(Constants::pi<float>() / 2.0f, aspect, 0.1f, m_radius);

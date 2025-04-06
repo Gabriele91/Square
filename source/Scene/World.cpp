@@ -29,14 +29,16 @@ namespace Scene
 		//factory
 		ctx.add_object<World>();
 		//Attributes
-		ctx.add_attributes<World>(attribute_field("name", std::string(), &World::m_name));
+		ctx.add_attribute_field<World, std::string>("name", std::string(), offsetof(World,m_name));
 	}
 
-	World::World(Context& context) : Object(context)
+	World::World(Context& context) : Object(context), SharedObject_t(context.allocator())
 	{
-
 	}
-	//name        
+	World::~World()
+	{
+	}
+	//name
 	const std::string& World::name() const
 	{
 		return m_name;
@@ -49,7 +51,7 @@ namespace Scene
 	//add an level	
 	Shared<Level> World::level()
 	{
-		m_levels.push_back(std::make_shared<Level>(context()));
+		m_levels.push_back(MakeShared<Level>(context()));
 		return m_levels.back();
 	}
 	void  World::add(Shared<Level> level)
@@ -65,7 +67,7 @@ namespace Scene
 	Shared<Level> World::level(const std::string& name)
 	{
 		//search
-		for (Shared<Level> level : m_levels) if (level->name() == name) return level;
+		for (const Shared<Level>& level : m_levels) if (level->name() == name) return level;
 		//create
 		auto level = MakeShared<Level>(context(), name);
 		//add
@@ -80,8 +82,8 @@ namespace Scene
 	Shared<Actor> World::find_actor(const std::string& name)
 	{
 		//search
-		for (Shared<Level> level : m_levels)
-			if (auto actor=level->find_actor(name)) 
+		for (const Shared<Level>& level : m_levels)
+			if (auto& actor = level->find_actor(name)) 
 				return actor;
 		//return
 		return nullptr;
@@ -91,7 +93,7 @@ namespace Scene
 	bool World::contains(Shared<Actor> child) const
 	{
 		//search
-		for (Shared<Level> level : m_levels)
+		for (const Shared<Level>& level : m_levels)
 			if (level->contains(child))
 				return true;
 		//return
@@ -100,7 +102,7 @@ namespace Scene
 	bool World::contains(Shared<Level> level_) const
 	{
 		//search
-		for (Shared<Level> level : m_levels)
+		for (const Shared<Level>& level : m_levels)
 			if (level == level_)
 				return true;
 		//return
@@ -111,7 +113,7 @@ namespace Scene
 	bool World::remove(Shared<Actor> child)
 	{
 		//search
-		for (Shared<Level> level : m_levels)
+		for (Shared<Level>& level : m_levels)
 			if (level->remove(child))
 				return true;
 		//return
@@ -127,56 +129,81 @@ namespace Scene
 	}
 
 	//message
-	void World::send_message(const Variant& value, bool brodcast)
+	void World::send_message(const VariantRef& value, bool brodcast)
 	{
-		for (Shared<Level> level : m_levels)
+		for (Shared<Level>& level : m_levels)
 			level->send_message(value, brodcast);
 	}
 	void World::send_message(const Message& msg, bool brodcast)
 	{
-		for (Shared<Level> level : m_levels)
+		for (Shared<Level>& level : m_levels)
 			level->send_message(msg, brodcast);
 	}
 
 	//serialize
-	void World::serialize(Data::Archive& archivie)
+	void World::serialize(Data::Archive& archive)
 	{
 		//serialize this
-		Data::serialize(archivie, this);
+		Data::serialize(archive, this);
 		//serialize actors
 		{
 			uint64 size = m_levels.size();
-			archivie % size;
-			for (auto actor : m_levels)
+			archive % size;
+			for (auto& level : m_levels)
 			{
-				actor->serialize(archivie);
+				level->serialize(archive);
 			}
 		}
 	}
-	void  World::serialize_json(Data::Json& archivie)
+	void  World::serialize_json(Data::JsonValue& archive)
 	{
-		//todo
+		Data::Json json_data = Data::JsonObject();
+		Data::serialize_json(json_data, this);
+		archive["data"] = std::move(json_data);
+		// Actors
+		auto json_levels = Data::JsonArray();
+		json_levels.reserve(m_levels.size());
+		for (auto level : m_levels)
+		{
+			Data::Json json_level = Data::JsonObject();
+			level->serialize_json(json_level);
+			json_levels.emplace_back(std::move(json_level));
+		}
+		archive["levels"] = std::move(json_levels);
 	}
 	//deserialize
-	void  World::deserialize(Data::Archive& archivie)
+	void  World::deserialize(Data::Archive& archive)
 	{
 		///clear
 		m_levels.clear(); //todo: call events
 						  //deserialize this
-		Data::deserialize(archivie, this);
+		Data::deserialize(archive, this);
 		//deserialize childs
 		{
 			uint64 size = 0;
-			archivie % size;
+			archive % size;
 			for (uint64 i = 0; i != size; ++i)
 			{
-				level()->deserialize(archivie);
+				level()->deserialize(archive);
 			}
 		}
 	}
-	void  World::deserialize_json(Data::Json& archivie)
+	void  World::deserialize_json(Data::JsonValue& archive)
 	{
-		//todo
+		///clear
+		m_levels.clear(); //todo: call events
+						  //deserialize this
+		if(archive.contains("data") && archive["data"].is_object())
+		{
+			Data::deserialize_json(archive["data"], this);
+		}
+		if (archive.contains("levels") && archive["levels"].is_array())
+		{
+			for (auto& jlevel : archive["levels"].array())
+			{
+				level()->deserialize_json(jlevel);
+			}
+		}
 	}
 
 }

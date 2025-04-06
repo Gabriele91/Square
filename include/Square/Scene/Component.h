@@ -25,25 +25,25 @@ namespace Scene
     class  Component;
 	struct Message;
 	//Alias
-	using ComponentList = std::vector< Shared<Component> >;
+    using ComponentMap = std::unordered_map< uint64, Shared<Component> >;
     //..................
     struct SQUARE_API Message
     {
         Actor* m_sender;
-        Variant m_value;
+        VariantRef m_value;
         
         Message()
         {
             m_sender = nullptr;
         }
         
-        Message(const Variant& value)
+        Message(const VariantRef& value)
         {
             m_sender = nullptr;
             m_value = value;
         }
         
-        Message(Actor* sender, const Variant& value)
+        Message(Actor* sender, const VariantRef& value)
         {
             m_sender = sender;
             m_value  = value;
@@ -61,6 +61,7 @@ namespace Scene
 
         //Init
         Component(Context& context);
+        virtual ~Component();
         
         //utils
         void remove_from_parent();
@@ -76,11 +77,11 @@ namespace Scene
         virtual void on_message(const Message& msg){}
         
         //virtual
-        virtual void serialize(Data::Archive& archivie) = 0;
-        virtual void serialize_json(Data::Json& archivie) = 0;
+        virtual void serialize(Data::Archive& archive) = 0;
+        virtual void serialize_json(Data::JsonValue& archive) = 0;
         //deserialize
-        virtual void deserialize(Data::Archive& archivie) = 0;
-        virtual void deserialize_json(Data::Json& archivie) = 0;
+        virtual void deserialize(Data::Archive& archive) = 0;
+        virtual void deserialize_json(Data::JsonValue& archive) = 0;
         
         
     protected:

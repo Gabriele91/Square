@@ -7,7 +7,6 @@
 //
 #pragma once
 #include <memory>
-#include <string>
 #include "Square/Config.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/SmartPointers.h"
@@ -32,13 +31,13 @@ namespace Square
 	//resource interface
 	class SQUARE_API ResourceObject 
 	: public Object
-	, public SharedObject<ResourceObject>
+	, public InheritableSharedObject<ResourceObject>
 	, public Uncopyable
 	{
 	public:
 		SQUARE_OBJECT(ResourceObject)
 		//Resource
-		ResourceObject(Context& context) : Object(context) {}
+		ResourceObject(Context& context) ;
 		//load from file
 		virtual bool         load(const std::string& path) = 0;
         virtual ResourceType resource_type()               { return ResourceType::UNKNOWN;                  }

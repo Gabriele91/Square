@@ -13,15 +13,19 @@
 #include "Square/Render/Viewport.h"
 #include "Square/Render/Renderable.h"
 #include "Square/Render/Transform.h"
+#include "Square/Render/Light.h"
+#include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/DrawerPassShadow.h"
 #include "Square/Resource/Effect.h"
+#include "Square/Geometry/OBoundingBox.h"
+#include "Square/Geometry/AABoundingBox.h"
 
 namespace Square
 {
 namespace Render
 {
 	DrawerPassShadow::DrawerPassShadow(Square::Context& context)
-    : DrawerPass(RPT_SHADOW)
+    : DrawerPass(context.allocator(),RPT_SHADOW)
     , m_context(context)
     {
 		m_cb_camera = Render::stream_constant_buffer<Render::UniformBufferCamera>(&render());
@@ -44,11 +48,14 @@ namespace Render
      , int               num_of_pass
      , const Vec4&       clear_color
      , const Vec4&       ambient_light
+	 , const Camera&     camera
 	 , const Light&      light
      , const Collection& collection
      , const PoolQueues& queues
     )
     {
+		//render target
+		render().enable_render_target(light.shadow_buffer().target());
         //transfor
 		Render::UniformBufferTransform utransform;
 		//names
@@ -102,8 +109,10 @@ namespace Render
 		{
 			Render::UniformDirectionShadowLight udirectionshadow;
 			//update camera
-			light.set(&udirectionshadow);
+			light.set(&udirectionshadow, &camera);
 			render().update_steam_CB(m_cb_direction_light.get(), (const unsigned char*)&udirectionshadow, sizeof(udirectionshadow));
+			//set viewport
+			render().set_viewport_state(light.shadow_viewport());
 		}
 		break;
 		default:
@@ -116,9 +125,8 @@ namespace Render
 		//get technique name
 		const auto& technique_name = techniques_table[(size_t)light.type()];
         //for each elements of opaque  and translucent queues
-		for(QueueType qtype : {RQ_OPAQUE, RQ_TRANSLUCENT})
-        for(const QueueElement* e_randerable : queues[qtype])
-        if (auto randerable = e_randerable->lock< Render::Renderable >())
+		for(auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
+        if (randerable)
         {
             //jump?
             if(!randerable->can_draw()) continue;
@@ -146,6 +154,8 @@ namespace Render
 				}
 			}
         }
+		// Disabel texture
+		render().disable_render_target(light.shadow_buffer().target());
     }
 }
 }

@@ -478,9 +478,10 @@ namespace Render
 	bool ContextDX11::get_view_target(Video::DeviceResources* resource)
 	{
 		//delete last view target
-		if (m_view_target) delete m_view_target;
+		if (m_view_target) SQ_DELETE(allocator(), Target, m_view_target);
+
 		//target
-		m_view_target = new Target(false);
+		m_view_target = SQ_NEW(allocator(), Target, AllocType::ALCT_DEFAULT) Target(false);
 
 		m_view_target->m_views.push_back((ID3D11RenderTargetView*)resource->get_render_target());
 		m_view_target->m_depth = (ID3D11DepthStencilView*)resource->get_depth_stencil_target();
@@ -506,7 +507,7 @@ namespace Render
 			D3D11_CPU_ACCESS_READ,         //UINT CPUAccessFlags;
 			0					           //UINT MiscFlags;
 		};
-		m_query_buffer[0] = new Texture2D();
+		m_query_buffer[0] = SQ_NEW(allocator(), Texture2D, AllocType::ALCT_DEFAULT) Texture2D();
 		if (!SUCCEEDED(device()->CreateTexture2D(&scd, NULL, &m_query_buffer[0]->m_texture2D))) return false;
 		//default format
 		DXGI_FORMAT depth_format = DXGI_FORMAT_D32_FLOAT;
@@ -531,7 +532,7 @@ namespace Render
 			D3D11_CPU_ACCESS_READ,  //UINT CPUAccessFlags;
 			0					    //UINT MiscFlags;
 		};
-		m_query_buffer[1] = new Texture2D();
+		m_query_buffer[1] = SQ_NEW(allocator(), Texture2D, AllocType::ALCT_DEFAULT) Texture2D();
 		if (!SUCCEEDED(device()->CreateTexture2D(&sdd, NULL, &m_query_buffer[1]->m_texture2D))) return false;
 		return true;
 	}
@@ -631,12 +632,11 @@ namespace Render
 
 	void ContextDX11::print_info()
 	{
-		std::cout << "Renderer: " << s_render_driver_info.m_name << std::endl;
-		std::cout << "DirectX version supported: " 
-			<< s_render_driver_info.m_major_version
-			<< '.'  
-			<< s_render_driver_info.m_minor_version 
-			<< std::endl;
+		logger()->debug("Renderer: " + s_render_driver_info.m_name);
+		logger()->debug("DirectX version supported: "
+			         + std::to_string(s_render_driver_info.m_major_version) 
+			         + '.'
+					 + std::to_string(s_render_driver_info.m_minor_version));
 	}
 
 	void ContextDX11::close()
@@ -649,9 +649,9 @@ namespace Render
 		if (m_render_state_cullface_back_and_front) m_render_state_cullface_back_and_front->Release();
 		if (m_render_state_cullface_disable) m_render_state_cullface_disable->Release();
 		
-		if (m_view_target) delete m_view_target;
-		if (m_query_buffer[0]) delete m_query_buffer[0];
-		if (m_query_buffer[1]) delete m_query_buffer[1];
+		if (m_view_target) SQ_DELETE(allocator(), Target, m_view_target);
+		if (m_query_buffer[0]) SQ_DELETE(allocator(), Texture2D, m_query_buffer[0]);
+		if (m_query_buffer[1]) SQ_DELETE(allocator(), Texture2D, m_query_buffer[1]);
 
 		/* Resource managed by window device
 		if (m_device_context) m_device_context->Release();
@@ -688,7 +688,7 @@ namespace Render
 		return s_render_driver_info.m_render_driver;
 	}
         
-    RenderDriverInfo ContextDX11::get_render_driver_info()
+    const RenderDriverInfo& ContextDX11::get_render_driver_info() const
     {
         return s_render_driver_info;
     }
@@ -810,7 +810,7 @@ namespace Render
 		rds.FillMode = D3D11_FILL_SOLID;
 		rds.CullMode = D3D11_CULL_BACK;
 		rds.DepthClipEnable = true;
-		rds.FrontCounterClockwise = true;
+		rds.FrontCounterClockwise = false;
 		rds.DepthBias = false;
 		rds.DepthBiasClamp = 0;
 		rds.SlopeScaledDepthBias = 0;
@@ -982,7 +982,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&cbd, subresource, &buffer)))
 		{
-			return new ConstBuffer(buffer, size);
+			return SQ_NEW(allocator(), ConstBuffer, AllocType::ALCT_DEFAULT) ConstBuffer(buffer, size);
 		}
 		return nullptr;
 	}
@@ -1007,7 +1007,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&vbd, vbo ? &init_data : nullptr, &buffer)))
 		{
-			return new VertexBuffer(buffer, stride, n);
+			return SQ_NEW(allocator(), VertexBuffer, AllocType::ALCT_DEFAULT) VertexBuffer(buffer, stride, n);
 		}
 		return nullptr;
 	}
@@ -1032,7 +1032,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&ibd, ibo ? &init_data : nullptr, &buffer)))
 		{
-			return new IndexBuffer(buffer, size);
+			return SQ_NEW(allocator(), IndexBuffer, AllocType::ALCT_DEFAULT) IndexBuffer(buffer, size);
 		}
 		return nullptr;
 	}
@@ -1057,7 +1057,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&cbd, subresource, &buffer)))
 		{
-			return new ConstBuffer(buffer, size);
+			return SQ_NEW(allocator(), ConstBuffer, AllocType::ALCT_DEFAULT) ConstBuffer(buffer, size);
 		}
 		return nullptr;
 	}
@@ -1081,7 +1081,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&vbd, vbo ? &init_data : nullptr, &buffer)))
 		{
-			return new VertexBuffer(buffer, stride, n);
+			return SQ_NEW(allocator(), VertexBuffer, AllocType::ALCT_DEFAULT) VertexBuffer(buffer, stride, n);
 		}		
 		return nullptr;
 	}
@@ -1105,7 +1105,7 @@ namespace Render
 		//success
 		if (dx_op_success(device()->CreateBuffer(&ibd, ibo ? &init_data : nullptr, &buffer)))
 		{
-			return new IndexBuffer(buffer, size);
+			return SQ_NEW(allocator(), IndexBuffer, AllocType::ALCT_DEFAULT) IndexBuffer(buffer, size);
 		}
 		return nullptr;
 	}
@@ -1216,7 +1216,7 @@ namespace Render
 	{
 		if (cb)
 		{
-			assert(s_bind_context.m_const_buffer == cb);
+			square_assert(s_bind_context.m_const_buffer == cb);
 			/* not use */
 			s_bind_context.m_const_buffer = nullptr;
 		}
@@ -1226,7 +1226,7 @@ namespace Render
 	{
         if(vbo)
         {
-            assert(s_bind_context.m_vertex_buffer == vbo);
+            square_assert(s_bind_context.m_vertex_buffer == vbo);
 			device_context()->IASetVertexBuffers(0, 0, nullptr, 0, 0);
             s_bind_context.m_vertex_buffer = nullptr;
         }
@@ -1236,7 +1236,7 @@ namespace Render
     {
         if(ibo)
         {
-            assert(s_bind_context.m_index_buffer == ibo);
+            square_assert(s_bind_context.m_index_buffer == ibo);
 			device_context()->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0);
             s_bind_context.m_index_buffer = nullptr;
         }
@@ -1259,14 +1259,113 @@ namespace Render
 		}
 	}
 
+	std::vector<unsigned char> ContextDX11::copy_buffer_CB(const ConstBuffer* cb)
+	{
+		D3D11_BUFFER_DESC sbd = {};
+		sbd.Usage = D3D11_USAGE_STAGING;
+		sbd.ByteWidth = cb->get_size();
+		sbd.BindFlags = 0;
+		sbd.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		ID3D11Buffer* sb = nullptr;
+
+		if (dx_op_success(device()->CreateBuffer(&sbd, nullptr, &sb)))
+		{
+			std::vector<unsigned char> result;
+			device_context()->CopyResource(sb, *cb);
+			D3D11_MAPPED_SUBRESOURCE mapping;
+
+			if (dx_op_success(device_context()->Map(sb, 0, D3D11_MAP_READ, 0, &mapping)))
+			{
+				auto data_start_ptr = static_cast<unsigned char*>(mapping.pData);
+				auto data_end_ptr = data_start_ptr + cb->get_size();
+				result = std::vector<unsigned char>{ data_start_ptr, data_end_ptr };
+				device_context()->Unmap(sb, 0);
+			}
+
+			sb->Release();
+			return result;
+		}
+
+		return {};
+	}
+
+	std::vector<unsigned char> ContextDX11::copy_buffer_VBO(const VertexBuffer* vbo)
+	{
+		D3D11_BUFFER_DESC sbd = {};
+		sbd.Usage = D3D11_USAGE_STAGING;
+		sbd.ByteWidth = vbo->get_size();
+		sbd.BindFlags = 0;
+		sbd.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		ID3D11Buffer* sb = nullptr;
+
+		if (dx_op_success(device()->CreateBuffer(&sbd, nullptr, &sb)))
+		{
+			std::vector<unsigned char> result;
+			device_context()->CopyResource(sb, *vbo);
+			D3D11_MAPPED_SUBRESOURCE mapping;
+
+			if (dx_op_success(device_context()->Map(sb, 0, D3D11_MAP_READ, 0, &mapping)))
+			{
+				auto data_start_ptr = static_cast<unsigned char*>(mapping.pData);
+				auto data_end_ptr = data_start_ptr + vbo->get_size();
+				result = std::move(std::vector<unsigned char>{ data_start_ptr, data_end_ptr });
+				device_context()->Unmap(sb, 0);
+			}
+
+			sb->Release();
+			return result;
+		}
+		return {};
+	}
+
+	std::vector<unsigned char> ContextDX11::copy_buffer_IBO(const IndexBuffer* ibo)
+	{
+		D3D11_BUFFER_DESC sbd = {};
+		sbd.Usage = D3D11_USAGE_STAGING;
+		sbd.ByteWidth = ibo->get_size();
+		sbd.BindFlags = 0;
+		sbd.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		ID3D11Buffer* sb = nullptr;
+
+		if (dx_op_success(device()->CreateBuffer(&sbd, nullptr, &sb)))
+		{
+			std::vector<unsigned char> result;
+			device_context()->CopyResource(sb, *ibo);
+			D3D11_MAPPED_SUBRESOURCE mapping;
+
+			if (dx_op_success(device_context()->Map(sb, 0, D3D11_MAP_READ, 0, &mapping)))
+			{
+				auto data_start_ptr = static_cast<unsigned char*>(mapping.pData);
+				auto data_end_ptr = data_start_ptr + ibo->get_size();
+				result = std::vector<unsigned char>{ data_start_ptr, data_end_ptr };
+				device_context()->Unmap(sb, 0);
+			}
+
+			sb->Release();
+			return result;
+		}
+
+		return {};
+	}
+
 	unsigned char* ContextDX11::map_CB(ConstBuffer* cb, size_t start, size_t n, MappingType type)
 	{
 		D3D11_MAPPED_SUBRESOURCE source;
-		device_context()->Map(cb->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source);
+		dx_op_success(device_context()->Map(cb->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
 		//get ptr
 		unsigned char* ptr = (unsigned char*)source.pData;
 		//add offset
 		ptr += start;
+		//return
+		return ptr;
+	}
+	
+	unsigned char* ContextDX11::map_CB(ConstBuffer* cb, MappingType type)
+	{
+		D3D11_MAPPED_SUBRESOURCE source;
+		dx_op_success(device_context()->Map(cb->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
+		//get ptr
+		unsigned char* ptr = (unsigned char*)source.pData;
 		//return
 		return ptr;
 	}
@@ -1279,11 +1378,21 @@ namespace Render
 	unsigned char* ContextDX11::map_VBO(VertexBuffer* vbo, size_t start, size_t n, MappingType type)
 	{
 		D3D11_MAPPED_SUBRESOURCE source;
-		device_context()->Map(vbo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source);
+		dx_op_success(device_context()->Map(vbo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
 		//get ptr
 		unsigned char* ptr = (unsigned char*)source.pData;
 		//add offset
 		ptr += start;
+		//return
+		return ptr;
+	}
+
+	unsigned char* ContextDX11::map_VBO(VertexBuffer* vbo, MappingType type)
+	{
+		D3D11_MAPPED_SUBRESOURCE source;
+		dx_op_success(device_context()->Map(vbo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
+		//get ptr
+		unsigned char* ptr = (unsigned char*)source.pData;
 		//return
 		return ptr;
 	}
@@ -1296,11 +1405,21 @@ namespace Render
 	unsigned int* ContextDX11::map_IBO(IndexBuffer* ibo, size_t start, size_t n, MappingType type)
 	{
 		D3D11_MAPPED_SUBRESOURCE source;
-		device_context()->Map(ibo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source);
+		dx_op_success(device_context()->Map(ibo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
 		//get ptr
 		unsigned char* ptr = (unsigned char*)source.pData;
 		//add offset
 		ptr += start * sizeof(unsigned int);
+		//return
+		return (unsigned int*)ptr;
+	}
+
+	unsigned int* ContextDX11::map_IBO(IndexBuffer* ibo, MappingType type)
+	{
+		D3D11_MAPPED_SUBRESOURCE source;
+		dx_op_success(device_context()->Map(ibo->m_buffer, 0, get_mapping_type_map_buff_range(type), 0, &source));
+		//get ptr
+		unsigned char* ptr = (unsigned char*)source.pData;
 		//return
 		return (unsigned int*)ptr;
 	}
@@ -1340,7 +1459,7 @@ namespace Render
 	{
 		if (tbo)
 		{
-			assert(s_bind_context.m_texture_buffer == tbo);
+			square_assert(s_bind_context.m_texture_buffer == tbo);
 			//unmap
 			switch (tbo->m_type)
 			{
@@ -1362,7 +1481,7 @@ namespace Render
 			unbind_CB(s_bind_context.m_const_buffer);
 		}
 		//safe delete
-		delete cb;
+		SQ_DELETE(allocator(), ConstBuffer, cb);
 		cb = nullptr;
 	}
 
@@ -1374,7 +1493,7 @@ namespace Render
             unbind_VBO(s_bind_context.m_vertex_buffer);
         }
         //safe delete
-		delete vbo;
+		SQ_DELETE(allocator(), VertexBuffer, vbo);
 		vbo = nullptr;
 	}
 
@@ -1386,7 +1505,7 @@ namespace Render
             unbind_IBO(s_bind_context.m_index_buffer);
         }
         //safe delete
-		delete ibo;
+		SQ_DELETE(allocator(), IndexBuffer, ibo);
 		ibo = nullptr;
 	}
 	/*
@@ -1562,7 +1681,7 @@ namespace Render
 		return std::move(semantic_type_map);
 	}
 
-	static bool test_input_layout(ID3DBlob* shader, const std::vector<D3D11_INPUT_ELEMENT_DESC>& vals)
+	static bool test_input_layout(ContextDX11* context, ID3DBlob* shader, const std::vector<D3D11_INPUT_ELEMENT_DESC>& vals)
 	{
 		auto map = reflaction_input_layout(shader);
 		for (auto it : map)
@@ -1574,13 +1693,25 @@ namespace Render
 				{
 					if (it.second != val.Format)
 					{
+						if (context)
+						{
+							context->logger()->warning("Input layout attribute: " + it.first + " format does not match.");
+						}
 						return false;
 					}
 					find = true;
 					break;
 				}
 			}
-			if (!find) return false;
+			// Test
+			if (!find)
+			{	
+				if (context)
+				{
+					context->logger()->warning("Input layout, attribute: " + it.first + " not found.");
+				}
+				return false;
+			}
 		}
 		return true;
 	}
@@ -1593,7 +1724,7 @@ namespace Render
 		//debug
 #ifdef _DEBUG
 		//test
-		if (!test_input_layout(shader, m_description)) return nullptr;
+		if (!test_input_layout(context11, shader, m_description)) return nullptr;
 #endif
 		//SUCCEEDED
 		if (context11->dx_op_success(context11->device()->CreateInputLayout(
@@ -1653,7 +1784,7 @@ namespace Render
 			layouts.push_back(layout);
 		}
 		//success
-		return new InputLayout(atl, layouts);
+		return SQ_NEW(allocator(), InputLayout, AllocType::ALCT_DEFAULT) InputLayout(atl, layouts);
 	}
 
 	size_t ContextDX11::size_IL(const InputLayout* layout)
@@ -1706,7 +1837,7 @@ namespace Render
         if(layout)
         {
             //test
-            assert(s_bind_context.m_input_layout==layout);
+            square_assert(s_bind_context.m_input_layout==layout);
             //unbind
 			device_context()->IASetInputLayout(nullptr);
             //safe
@@ -1716,7 +1847,7 @@ namespace Render
 
 	void ContextDX11::delete_IL(InputLayout*& il)
 	{
-		delete  il;
+		SQ_DELETE(allocator(), InputLayout, il);
 		il = nullptr;
 	}
 
@@ -1902,24 +2033,83 @@ namespace Render
 		default:								   return 0;
 		}
 	}
-
 	static D3D11_FILTER get_texture_min_filter(TextureMinFilterType min, TextureMagFilterType mag)
 	{
 		switch (min)
 		{
+		case TMIN_NEAREST:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_MAG_MIP_POINT;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+		//	case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_POINT_MAG_MIP_POINT;        // Combination does not exist: Mag(Nearest+Mipmap Nearest)
+		//	case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_POINT_MAG_POINT_MIP_LINEAR; // Combination does not exist: Mag(Nearest+Mipmap Linear)
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+		//	case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_LINEAR; // Combination does not exist: Mag(Linear+Mipmap Linear)
+			default:                               return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			}
+		case TMIN_NEAREST_MIPMAP_NEAREST:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_MAG_MIP_POINT;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_MAG_MIP_POINT;
+			case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+			default:                               return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			}
+
+		case TMIN_NEAREST_MIPMAP_LINEAR:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+		//	case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_POINT_MAG_MIP_POINT;        // Combination does not exist: Mag(Nearest+Mipmap Nearest)
+		//	case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_POINT_MAG_POINT_MIP_LINEAR; // Combination does not exist: Mag(Nearest+Mipmap Linear)
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+		//	case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_LINEAR; // Combination does not exist: Mag(Linear+Mipmap Linear)
+			default:                               return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+			}
+
+		case TMIN_LINEAR:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	//		case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_POINT;   // Combination does not exist: Mag(Nearest+Mipmap Nearest)
+			case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+	//		case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_LINEAR_MAG_MIP_LINEAR;        // Combination does not exist: Mag(Linear+Mipmap Linear)
+			default:                               return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+			}
+
+		case TMIN_LINEAR_MIPMAP_NEAREST:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+			//case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_POINT;        // Combination does not exist: Mag(Nearest+Mipmap Nearest)
+			case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+			//case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_LINEAR_MAG_MIP_LINEAR;        // Combination does not exist: Mag(Linear+Mipmap Linear)
+			default:                               return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+			}
+
+		case TMIN_LINEAR_MIPMAP_LINEAR:
+			switch (mag)
+			{
+			case TMAG_NEAREST:                     return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR:                      return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		//	case TMAG_NEAREST_MIPMAP_NEAREST:      return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_POINT;        // Combination does not exist: Mag(Nearest+Mipmap Nearest)
+			case TMAG_NEAREST_MIPMAP_LINEAR:       return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case TMAG_LINEAR_MIPMAP_NEAREST:       return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+		//	case TMAG_LINEAR_MIPMAP_LINEAR:        return D3D11_FILTER_MIN_LINEAR_MAG_MIP_LINEAR;        // Combination does not exist: Mag(Linear+Mipmap Linear)
+			default:                               return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+			}
+
 		default:
-		case TMIN_NEAREST:                return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_MAG_MIP_POINT 
-																	 : D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
-		case TMIN_NEAREST_MIPMAP_NEAREST: return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_MAG_MIP_POINT
-																	 : D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
-		case TMIN_NEAREST_MIPMAP_LINEAR:  return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR
-																	 : D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
-		case TMIN_LINEAR:                 return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR
-																	 : D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		case TMIN_LINEAR_MIPMAP_NEAREST: return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT
-																    : D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-		case TMIN_LINEAR_MIPMAP_LINEAR:  return mag == TMAG_NEAREST ? D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR
-																    : D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+			return D3D11_FILTER_MIN_MAG_MIP_POINT;
 		}
 	}
 
@@ -1933,9 +2123,9 @@ namespace Render
 		}
 	}
 
-	static const unsigned char* add_alpha_to_image(const unsigned char* rgb, size_t w, size_t h, size_t t_size,void* value_alpha)
+	static const unsigned char* add_alpha_to_image(Allocator* allocator, const unsigned char* rgb, size_t w, size_t h, size_t t_size,void* value_alpha)
 	{
-		unsigned char* rgba = new unsigned char[w*h*(4*t_size)];
+		unsigned char* rgba = (unsigned char*)allocator->alloc(w*h*(4*t_size), "static Square::Render::add_alpha_to_image", AllocType::ALCT_DEFAULT);
 		for (size_t y = 0; y != w; ++y)
 		for (size_t x = 0; x != w; ++x)
 		{
@@ -1949,7 +2139,7 @@ namespace Render
 		return rgba;
 	}
 
-	static const unsigned char* add_alpha_if_need(const unsigned char* data, size_t w, size_t h, TextureFormat type)
+	static const unsigned char* add_alpha_if_need(Allocator* allocator, const unsigned char* data, size_t w, size_t h, TextureFormat type)
 	{
 		//select
 		switch (type)
@@ -1959,33 +2149,33 @@ namespace Render
 		case TF_RGB8:
 		{
 			unsigned char value = 0xFF;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break;
 		//uint
 		case TF_RGB16UI:
 		{
 			unsigned __int16 value = 0xFFFF;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break; 
 		case TF_RGB32UI:
 		{
 			unsigned __int32 value = 0xFFFFFFF;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break;
 		//int
 		case TF_RGB16I:
 		{
 			__int16 value = 0x7FFF;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break;
 		case TF_RGB32I:
 		{
 			__int32 value = 0x7FFFFFFF;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break;
 		//float
@@ -2006,12 +2196,12 @@ namespace Render
 			value.IEEE.exp  = 31-1;
 			value.IEEE.frac = ~0;
 			value.IEEE.sign = 0x0;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		break;
 		case TF_RGB32F:
 		{
 			float value = 340282346638528859811704183484516925440.0;
-			return add_alpha_to_image(data, w, h, sizeof(value), &value);
+			return add_alpha_to_image(allocator, data, w, h, sizeof(value), &value);
 		}
 		break;
 		////////////////////////////////////////////////////////////////////////////////
@@ -2072,7 +2262,7 @@ namespace Render
 		if (depth_target) bind_flags |= D3D11_BIND_DEPTH_STENCIL;
 		else              bind_flags |= D3D11_BIND_RENDER_TARGET;
 		//new image if need
-		auto new_image = Unique<const unsigned char[]> (add_alpha_if_need(data.m_bytes, data.m_width, data.m_height, data.m_format));
+		auto new_image = Unique<const unsigned char[]> (add_alpha_if_need(allocator(), data.m_bytes, data.m_width, data.m_height, data.m_format), DefaultDelete(allocator()));
 		//if new image alloc, point to new image
 		if (new_image.get())
 		{
@@ -2103,7 +2293,7 @@ namespace Render
 				device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes, (data.m_width * pixel_size), 0);
 			}
 			//declare
-			auto* texture2D = new Texture2D();
+			auto* texture2D = SQ_NEW(allocator(), Texture2D, AllocType::ALCT_DEFAULT) Texture2D();
 			texture2D->m_texture2D = d11_texture;			
 			texture2D->m_width = data.m_width;
 			texture2D->m_height = data.m_height;
@@ -2111,6 +2301,7 @@ namespace Render
 			texture2D->m_format_raw = texture_format_raw;
 			texture2D->m_format_data = texture_format_data;
 			texture2D->m_format_shader_resource = texture_format_resource;
+			texture2D->m_size = 1;
 			//view
 			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
 			s_resource_view.Format = texture_format_resource;
@@ -2140,8 +2331,118 @@ namespace Render
 			sampler_desc.BorderColor[2] = 0;
 			sampler_desc.BorderColor[3] = 0;
 			sampler_desc.MaxAnisotropy = info.m_anisotropy;
-			sampler_desc.MinLOD = info.m_mipmap_min;
-			sampler_desc.MaxLOD = info.m_mipmap_max;
+			sampler_desc.MinLOD = (FLOAT)info.m_mipmap_min;
+			sampler_desc.MaxLOD = (FLOAT)info.m_mipmap_max;
+			//try
+			if (!dx_op_success(device()->CreateSamplerState(&sampler_desc, &texture2D->m_sempler)))
+			{
+				//wrong
+				m_errors.push_back({ "create_texture: wrong to generate texture sampler" });
+			}
+			//wrong
+			return texture2D;
+		}
+		//test
+		print_errors();
+		//return texture
+		return nullptr;
+	}
+	
+	Texture* ContextDX11::create_texture_array
+	(
+		const TextureRawDataInformation& data,
+		const TextureGpuDataInformation& info,
+		int   size
+	)
+	{
+		const unsigned char* texture_bytes = data.m_bytes; 
+		UINT pixel_size = get_textut_pixel_size(data.m_format);
+		D3D11_USAGE usage = info.m_read_from_cpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
+		UINT cpu_access_flags = info.m_read_from_cpu ? D3D11_CPU_ACCESS_READ : 0;
+		UINT mip_levels = info.m_build_mipmap ? 0 : info.m_mipmap_max;
+		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
+		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
+		//format
+		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format);
+		bool	    depth_target        = is_depth_texture(texture_format_raw);
+		DXGI_FORMAT texture_format_data = texture_depth_to_typeless_texture(texture_format_raw);
+		DXGI_FORMAT texture_format_resource = texture_depth_to_resource_format(texture_format_raw);
+		//render target
+		if (depth_target) bind_flags |= D3D11_BIND_DEPTH_STENCIL;
+		else              bind_flags |= D3D11_BIND_RENDER_TARGET;
+		//new image if need
+		auto new_image = Unique<const unsigned char[]> (add_alpha_if_need(allocator(), data.m_bytes, data.m_width, data.m_height, data.m_format), DefaultDelete(allocator()));
+		//if new image alloc, point to new image
+		if (new_image.get())
+		{
+			texture_bytes = new_image.get();
+			pixel_size += 1; //alpha channel
+		}
+		//TEXTURE2D
+		D3D11_TEXTURE2D_DESC texture_desc
+		{
+			data.m_width,		//UINT Width;
+			data.m_height,		//UINT Height;
+			mip_levels,			//UINT MipLevels;
+			size,		        //UINT ArraySize;
+			texture_format_data,//DXGI_FORMAT Format;
+			1, 0,				//DXGI_SAMPLE_DESC SampleDesc;
+			usage,				//D3D11_USAGE Usage;
+			bind_flags,			//UINT BindFlags;
+			cpu_access_flags,	//UINT CPUAccessFlags;
+			misc_flags	        //UINT MiscFlags;
+		};
+		//build
+		ID3D11Texture2D* d11_texture;
+		if (dx_op_success(device()->CreateTexture2D(&texture_desc, nullptr, &d11_texture)))
+		{
+			//upload
+			if (texture_bytes)
+			{
+				device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes, (data.m_width * pixel_size), 0);
+			}
+			//declare
+			auto* texture2D = SQ_NEW(allocator(), Texture2D, AllocType::ALCT_DEFAULT) Texture2D();
+			texture2D->m_texture2D = d11_texture;			
+			texture2D->m_width = data.m_width;
+			texture2D->m_height = data.m_height;
+			texture2D->m_is_depth = depth_target;
+			texture2D->m_format_raw = texture_format_raw;
+			texture2D->m_format_data = texture_format_data;
+			texture2D->m_format_shader_resource = texture_format_resource;
+			texture2D->m_size = size;
+			//view
+			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
+			s_resource_view.Format = texture_format_resource;
+			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+			s_resource_view.Texture2DArray.ArraySize = size;
+			s_resource_view.Texture2DArray.MostDetailedMip = 0;
+			s_resource_view.Texture2DArray.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
+			//try
+			if (!dx_op_success(device()->CreateShaderResourceView(d11_texture, &s_resource_view, &texture2D->m_resource_view)))
+			{
+				m_errors.push_back({ "create_texture: wrong to generate shader resource view" });
+				//wrong
+				return texture2D;
+			}
+			//build
+			if (info.m_build_mipmap)
+			{
+				device_context()->GenerateMips(texture2D->m_resource_view);
+			}
+			//build sampler
+			D3D11_SAMPLER_DESC sampler_desc = {};
+			sampler_desc.AddressU = get_texture_edge_type(info.m_edge_s);
+			sampler_desc.AddressV = get_texture_edge_type(info.m_edge_t);
+			sampler_desc.AddressW = get_texture_edge_type(info.m_edge_r);
+			sampler_desc.Filter = get_texture_min_filter(info.m_min_type, info.m_mag_type);
+			sampler_desc.BorderColor[0] = 0;
+			sampler_desc.BorderColor[1] = 0;
+			sampler_desc.BorderColor[2] = 0;
+			sampler_desc.BorderColor[3] = 0;
+			sampler_desc.MaxAnisotropy = (UINT)info.m_anisotropy;
+			sampler_desc.MinLOD = (FLOAT)info.m_mipmap_min;
+			sampler_desc.MaxLOD = (FLOAT)info.m_mipmap_max;
 			//try
 			if (!dx_op_success(device()->CreateSamplerState(&sampler_desc, &texture2D->m_sempler)))
 			{
@@ -2185,12 +2486,12 @@ namespace Render
 		if (depth_target) bind_flags |= D3D11_BIND_DEPTH_STENCIL;
 		else              bind_flags |= D3D11_BIND_RENDER_TARGET;
 		//new image if need
-		auto new_image0 = Unique<const unsigned char[]>(add_alpha_if_need(data[0].m_bytes, data[0].m_width, data[0].m_height, data[0].m_format));
-		auto new_image1 = Unique<const unsigned char[]>(add_alpha_if_need(data[1].m_bytes, data[1].m_width, data[1].m_height, data[1].m_format));
-		auto new_image2 = Unique<const unsigned char[]>(add_alpha_if_need(data[2].m_bytes, data[2].m_width, data[2].m_height, data[2].m_format));
-		auto new_image3 = Unique<const unsigned char[]>(add_alpha_if_need(data[3].m_bytes, data[3].m_width, data[3].m_height, data[3].m_format));
-		auto new_image4 = Unique<const unsigned char[]>(add_alpha_if_need(data[4].m_bytes, data[4].m_width, data[4].m_height, data[4].m_format));
-		auto new_image5 = Unique<const unsigned char[]>(add_alpha_if_need(data[5].m_bytes, data[5].m_width, data[5].m_height, data[5].m_format));
+		auto new_image0 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[0].m_bytes, data[0].m_width, data[0].m_height, data[0].m_format), DefaultDelete(allocator()));
+		auto new_image1 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[1].m_bytes, data[1].m_width, data[1].m_height, data[1].m_format), DefaultDelete(allocator()));
+		auto new_image2 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[2].m_bytes, data[2].m_width, data[2].m_height, data[2].m_format), DefaultDelete(allocator()));
+		auto new_image3 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[3].m_bytes, data[3].m_width, data[3].m_height, data[3].m_format), DefaultDelete(allocator()));
+		auto new_image4 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[4].m_bytes, data[4].m_width, data[4].m_height, data[4].m_format), DefaultDelete(allocator()));
+		auto new_image5 = Unique<const unsigned char[]>(add_alpha_if_need(allocator(), data[5].m_bytes, data[5].m_width, data[5].m_height, data[5].m_format), DefaultDelete(allocator()));
 		//if new image alloc, point to new image
 		if (new_image0.get())
 		{
@@ -2227,7 +2528,7 @@ namespace Render
 					device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes[i], (data[i].m_width * pixel_size), 0);
 			}
 			//declare
-			auto* texture2D = new Texture2D();
+			auto* texture2D = SQ_NEW(allocator(), Texture2D, AllocType::ALCT_DEFAULT) Texture2D();
 			texture2D->m_texture2D = d11_texture;
 			texture2D->m_width = data[0].m_width;
 			texture2D->m_height = data[0].m_height;
@@ -2236,6 +2537,7 @@ namespace Render
 			texture2D->m_format_raw = texture_format_raw;
 			texture2D->m_format_data = texture_format_data;
 			texture2D->m_format_shader_resource = texture_format_resource;
+			texture2D->m_size = 6;
 			//view
 			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
 			s_resource_view.Format = texture_format_resource;
@@ -2264,9 +2566,9 @@ namespace Render
 			sampler_desc.BorderColor[1] = 0;
 			sampler_desc.BorderColor[2] = 0;
 			sampler_desc.BorderColor[3] = 0;
-			sampler_desc.MaxAnisotropy = info.m_anisotropy;
-			sampler_desc.MinLOD = info.m_mipmap_min;
-			sampler_desc.MaxLOD = info.m_mipmap_max;
+			sampler_desc.MaxAnisotropy = (UINT)info.m_anisotropy;
+			sampler_desc.MinLOD = (FLOAT)info.m_mipmap_min;
+			sampler_desc.MaxLOD = (FLOAT)info.m_mipmap_max;
 			//try
 			if (!SUCCEEDED(device()->CreateSamplerState(&sampler_desc, &texture2D->m_sempler)))
 			{
@@ -2390,14 +2692,14 @@ namespace Render
             unbind_texture(ctx_texture);
         }
         //safe delete
-		delete ctx_texture;
+		SQ_DELETE(allocator(), Texture, ctx_texture);
 		ctx_texture = nullptr;
 	}
 
 	/*
 	Shader
 	*/
-	Shader::Shader()
+	Shader::Shader(Allocator* allocator) : m_allocator(allocator)
 	{
 		for (auto& shader_binary : m_shader_binaries) shader_binary = nullptr;
 	}
@@ -2407,7 +2709,7 @@ namespace Render
 		//release shader bitecode
 		for (auto& shader_binary : m_shader_binaries) if(shader_binary) shader_binary->Release();
 		//release global context
-		if(m_global_buffer_gpu) delete m_global_buffer_gpu;
+		if (m_global_buffer_gpu) SQ_DELETE(m_allocator, ConstBuffer, m_global_buffer_gpu);
 		//release shaders
 		if (m_vertex)   m_vertex->Release();
 		if (m_pixel)    m_pixel->Release();
@@ -2572,7 +2874,7 @@ namespace Render
 			if (SUCCEEDED(reflector->GetResourceBindingDesc(i, &bind_desc)))
 			{
 				//if is a texture // WIP, (D3D_SIT_TEXTURE) same location of texture                           
-				if (bind_desc.Type == D3D_SIT_SAMPLER)
+				if (bind_desc.Type == D3D_SIT_TEXTURE /* D3D_SIT_SAMPLER */)
 				{
 					info.m_fields_uniforms[std::string(bind_desc.Name)] = UniformDX11(context, shader, nullptr, bind_desc.BindPoint);
 				}
@@ -2584,7 +2886,7 @@ namespace Render
 	Shader* ContextDX11::create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
-		Shader* oshader = new Shader();
+		Shader* oshader = SQ_NEW(allocator(), Shader, AllocType::ALCT_DEFAULT) Shader(allocator());
 		//
 		static const char* shader_version[ST_N_SHADER]
 		{
@@ -2622,8 +2924,14 @@ namespace Render
 					, nullptr
 					, info.m_entry_point.c_str()
 					, shader_version[info.m_type]
-					,   D3DCOMPILE_OPTIMIZATION_LEVEL3  
-				  /*  | D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY */ 
+					, D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
+				     | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR
+#ifdef _DEBUG
+					 | D3DCOMPILE_OPTIMIZATION_LEVEL0
+					 | D3DCOMPILE_DEBUG
+#else // Release
+					| D3DCOMPILE_OPTIMIZATION_LEVEL3
+#endif 
 					, 0
 					, 0
 					, NULL
@@ -2703,7 +3011,7 @@ namespace Render
 	}
 	bool ContextDX11::shader_linked_with_error(Shader* shader)
 	{
-		return shader->m_liker_log.size() != 0;
+		return shader->m_linker_log.size() != 0;
 	}
 
 	std::vector< std::string > ContextDX11::get_shader_compiler_errors(Shader* shader)
@@ -2723,9 +3031,9 @@ namespace Render
 		}
 		return output;
 	}
-	std::string ContextDX11::get_shader_liker_error(Shader* shader)
+	std::string ContextDX11::get_shader_linker_error(Shader* shader)
 	{
-		return shader->m_liker_log;
+		return shader->m_linker_log;
 	}
 
 	void ContextDX11::bind_shader(Shader* shader)
@@ -2756,7 +3064,7 @@ namespace Render
 	{
 		if (shader)
 		{
-			assert(s_bind_context.m_shader == shader);
+			square_assert(s_bind_context.m_shader == shader);
 			//disable textures
 			for (auto texture_ptr : s_bind_context.m_textures)
 			{
@@ -2809,7 +3117,7 @@ namespace Render
 		{
 			unbind_shader(shader);
 		}
-		delete shader;
+		SQ_DELETE(allocator(), Shader, shader);
 		shader = nullptr;
 	}
 
@@ -2837,7 +3145,7 @@ namespace Render
         //if find
         if (uit != shader->m_uniform_const_buffer_map.end()) return uit->second.get();
 		//valid?
-		auto ucbuffer = MakeUnique<UniformConstBufferDX11>((ContextDX11*)this, shader, uname);
+		auto ucbuffer = MakeUnique<UniformConstBufferDX11>(allocator(),(ContextDX11*)this, shader, uname);
 		//is valid?
 		if (!ucbuffer->is_valid()) return nullptr;
         //add and return
@@ -2854,7 +3162,7 @@ namespace Render
 	Target* ContextDX11::create_render_target(const std::vector< TargetField >& textures)
 	{
 		//create FBO
-		auto target = new Target();
+		auto target = SQ_NEW(allocator(), Target, AllocType::ALCT_DEFAULT) Target();
 		//attach
 		for (const TargetField& t_field : textures)
 		{
@@ -2882,6 +3190,12 @@ namespace Render
 						desc_dsv.Format = t_field.m_texture->m_format_raw;
 						desc_dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
 						desc_dsv.Texture2DArray.ArraySize = 6;
+					}
+					else if (t_field.m_texture->m_size > 1)
+					{
+						desc_dsv.Format = t_field.m_texture->m_format_raw;
+						desc_dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+						desc_dsv.Texture2DArray.ArraySize = t_field.m_texture->m_size;
 					}
 					else
 					{
@@ -2921,7 +3235,7 @@ namespace Render
 	{
         if(r_target)
         {
-            assert(s_bind_context.m_render_target == r_target);
+            square_assert(s_bind_context.m_render_target == r_target);
 			device_context()->OMSetRenderTargets(0, nullptr, nullptr);
             s_bind_context.m_render_target = nullptr;
 			//default target
@@ -2937,7 +3251,7 @@ namespace Render
             disable_render_target(r_target);
         }
         //safe delete
-		delete r_target;
+		SQ_DELETE(allocator(), Target, r_target);
 		r_target = nullptr;
 	}
 
@@ -2983,16 +3297,13 @@ namespace Render
 
 	bool ContextDX11::print_errors() const
 	{
-		std::stringstream output;
 		if (m_errors.size())
 		{
-			for (auto& err : m_errors)
+			for (auto& error : m_errors)
 			{
-				output << "DX11 error: " << err << std::endl;
+				logger()->warning(error);
 			}
 			m_errors.clear();
-			//print
-			std::cout << output.str() << std::endl;
 			return true;
 		}
 		return false;
@@ -3007,11 +3318,11 @@ namespace Render
 			output << "At file: " << source_file_name << " (" << line << ")" << ":" << std::endl;
 			for(auto& err : m_errors) 
 			{
-					output << "DX11 error: " << err << std::endl;
+					output << err << std::endl;
 			}
 			m_errors.clear();
 			//print
-			std::cout << output.str() << std::endl;
+			logger()->warning(output.str());
 			return true;
 		}
 		return false;

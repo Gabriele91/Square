@@ -30,33 +30,67 @@ namespace Layout
         unsigned long m_type;
         size_t        m_size;
 		//layout 
-		Shared< Render::InputLayout > m_layout;
+#if 0
+        Shared< Render::InputLayout > m_layout;
+#endif 
 		//get input layout
 		Shared< Render::InputLayout > layout(Render::Context* render)
 		{
+#if 0
 			//test
 			if (m_layout) return m_layout;
 			//build
 			m_layout = Render::input_layout(render, m_attributes);
 			//return
 			return m_layout;
+#else
+            return  Render::input_layout(render, m_attributes);
+#endif 
 		}
     };
     
     //map
-    
     static std::vector < VertexItem >& vertex_list()
     {
         static std::vector < VertexItem > list;
         return list;
     };
     
+    static void clean_up_gpu_layouts()
+    {
+#if 0
+        for (auto& item : vertex_list())
+        {
+            item.m_layout = nullptr;
+        }
+#endif 
+    }
+
     //Add a vertex as commond vertex
     bool Collection::append(const ObjectInfo& info, const AttributeList& attrs, unsigned long type, size_t vertex_size)
     {
         vertex_list().push_back({ info, attrs, type, vertex_size });
         return true;
     }
+
+    std::optional<AttributeList> Collection::attributes_by_type (unsigned long type)
+    {
+        auto it = std::find_if(vertex_list().begin(), vertex_list().end(), [type](const VertexItem& element) {
+            return element.m_type == type;
+        });
+        if (it == vertex_list().end()) return {};
+        return it->m_attributes;
+    }
+
+    size_t Collection::size_by_type(unsigned long type)
+    {
+        auto it = std::find_if(vertex_list().begin(), vertex_list().end(), [type](const VertexItem& element) {
+            return element.m_type == type;
+        });
+        if (it == vertex_list().end()) return 0;
+        return it->m_size;
+    }
+    
     //index of layout vector
 	Shared< Render::InputLayout > Collection::index_by_type(Render::Context* render, unsigned long type)
     {

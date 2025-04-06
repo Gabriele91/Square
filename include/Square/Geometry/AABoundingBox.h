@@ -16,10 +16,13 @@ namespace Geometry
 	{
 	public:
 
-		AABoundingBox(){}
-
+		AABoundingBox();
+		AABoundingBox(AABoundingBox&&);
+		AABoundingBox(const AABoundingBox&);
 		AABoundingBox(const Vec3& min, const Vec3& max);
-		
+		AABoundingBox& operator = (AABoundingBox&&) = default;
+		AABoundingBox& operator = (const AABoundingBox&) = default;
+
 		const Vec3& get_min() const;
 
 		const Vec3& get_max() const;
@@ -29,19 +32,26 @@ namespace Geometry
 		Vec3 get_extension() const;
 
 		/**
-		* Return the 8 point of obb
+		* Return the 8 point of aabb
 		*/
-		std::vector< Vec3 > get_bounding_box() const;
+		std::array< Vec3, 8 > get_bounding_box() const;
 
 		/**
-		* Return the 8 points (of obb) multiplied to "model matrix"
+		* Return the 8 points (of aabb) multiplied to "model matrix"
 		*/
-		std::vector< Vec3 > get_bounding_box(const Mat4& model) const;
+		std::array< Vec3, 8 > get_bounding_box(const Mat4& model) const;
 
 		/*
 		* Applay a matrix to aabb
 		*/
 		void applay(const Mat4& model);
+
+		/**
+		* Create an AABB that contains this AABB and another AABB
+		* @param other, the other AABB
+		* @return A new AABoundingBox that encloses both AABBs
+		*/
+		AABoundingBox merge(const AABoundingBox& other) const;
 
 		/*
 		* Applay a matrix to aabb and return the new aabb
@@ -54,6 +64,11 @@ namespace Geometry
 		AABoundingBox& operator*= (const Mat4& model);
 
 		Vec3 closest_point(const Vec3& point) const;
+
+		/*
+		* AABB described as transformation matrix
+		*/
+		Mat4 to_matrix() const;
 
 	protected:
 

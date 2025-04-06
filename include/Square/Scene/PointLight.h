@@ -58,11 +58,11 @@ namespace Scene
 
 		//object methods
 		//serialize
-		virtual void serialize(Data::Archive& archivie)   override;
-		virtual void serialize_json(Data::Json& archivie) override;
+		virtual void serialize(Data::Archive& archive)   override;
+		virtual void serialize_json(Data::JsonValue& archive) override;
 		//deserialize
-		virtual void deserialize(Data::Archive& archivie)   override;
-		virtual void deserialize_json(Data::Json& archivie) override;
+		virtual void deserialize(Data::Archive& archive)   override;
+		virtual void deserialize_json(Data::JsonValue& archive) override;
 
 		//lights methods
 		virtual const Geometry::Sphere& bounding_sphere() const override;
@@ -71,7 +71,7 @@ namespace Scene
 
 		//Reg object
 		virtual void set(Render::UniformPointLight* data) const override;
-		virtual void set(Render::UniformPointShadowLight* data) const override;
+		virtual void set(Render::UniformPointShadowLight* data, bool draw_shadow_map = true) const override;
 
 	protected:
 		//info

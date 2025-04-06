@@ -18,7 +18,7 @@ float shadow_mask;
 Sampler2D(diffuse_map);
 
 //draw
-VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
+VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input)
 {
 	VertexShaderOutput output;
 	output.m_position = mul_model_spot_light_view_projection(input.m_position);
@@ -26,7 +26,7 @@ VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
 	return output;
 }
 
-void fragment(VertexShaderOutput input)
+void fragment(in VertexShaderOutput input)
 {
 	//diffuse/albedo
 	Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);

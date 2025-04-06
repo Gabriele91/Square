@@ -1,4 +1,5 @@
 #include "Square/Render/Light.h"
+#include "Square/Geometry/AABoundingBox.h"
 
 namespace Square
 {
@@ -22,14 +23,15 @@ namespace Render
 
 	void Light::set(UniformSpotLight* data) const {};
 
-	void Light::set(UniformDirectionShadowLight* data) const {}
+	void Light::set(UniformDirectionShadowLight* data, const Camera* camera, bool draw_shadow_map) const {}
 
-	void Light::set(UniformPointShadowLight* data) const {}
+	void Light::set(UniformPointShadowLight* data, bool draw_shadow_map) const {}
 
-	void Light::set(UniformSpotShadowLight* data) const {}
+	void Light::set(UniformSpotShadowLight* data, bool draw_shadow_map) const {}
 
 	void Light::type(LightType type) { m_type = type; }
 
+	void Light::set_scene_size(const Geometry::AABoundingBox& scene) {}
 	//////////////////////
 	// DIRECTION LIGHTS //
 	//////////////////////
@@ -97,13 +99,13 @@ namespace Render
 	SpotLight::SpotLight()
 	{ 
 		type(LightType::SPOT); 
-		radius(1.0);
-		inside_radius(1.0);
-		diffuse(Vec3{ 1.0,1.0,1.0 });
-		specular(Vec3{ 1.0,1.0,1.0 });
-		constant(1.0);
-		inner_cut_off(radians(22.5));
-		outer_cut_off(radians(45.0));
+		radius(1.0f);
+		inside_radius(1.0f);
+		diffuse(Vec3{ 1.0f,1.0f,1.0f });
+		specular(Vec3{ 1.0f,1.0f,1.0f });
+		constant(1.0f);
+		inner_cut_off(radians(22.5f));
+		outer_cut_off(radians(45.0f));
 	}
 
 	float SpotLight::inner_cut_off() const { return m_inner_cut_off; }

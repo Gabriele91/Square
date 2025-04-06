@@ -9,6 +9,7 @@
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
 #include "Square/Core/Object.h"
+#include "Square/Render/ConstantBuffer.h"
 
 namespace Square
 {
@@ -27,7 +28,7 @@ namespace Square
 namespace Render
 {
     //Camera uniform buffer
-    PACKED(ConstantBufferStruct UniformBufferCamera
+    CBStruct UniformBufferCamera
     {
         //viewport info
         Vec4 m_viewport;
@@ -36,8 +37,8 @@ namespace Render
         Mat4 m_view;
         Mat4 m_model;
         //position
-        Vec3 m_position; float __PADDING0__; //alignas(16)
-    });
+        CBAlignas Vec3 m_position;
+    };
     //Camera info
     class SQUARE_API Camera : public BaseObject
     {
@@ -51,8 +52,9 @@ namespace Render
         //get
         virtual const Mat4& model() const = 0;
         virtual const Mat4& view() const  = 0;
+        virtual const Mat4& projection() const = 0;
         virtual const Render::Viewport& viewport() const = 0;
-        virtual const Geometry::Frustum& frustum() const= 0;
+        virtual const Geometry::Frustum& frustum() const = 0;
         
         //set values to constant buffer
         virtual void set(UniformBufferCamera* gpubuffer) const = 0;

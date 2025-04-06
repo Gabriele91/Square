@@ -29,7 +29,7 @@ namespace Render
     QueueElement* QueueIterator::operator*() { return m_ref; }
     const QueueElement* QueueIterator::operator* () const { return m_ref; }
     /////////////////////////////////////////////////////////////////////
-    Queue::Queue(size_t capacity)
+    Queue::Queue(Allocator* allocator, size_t capacity) : m_allocator(allocator)
     {
         //get page size
         size_t npage = capacity / page_capacity;
@@ -41,7 +41,7 @@ namespace Render
     //pages
     void Queue::new_page()
     {
-        m_pages.push_back( Unique<Page> (new QueueElement[page_capacity]) );
+        m_pages.push_back(MakeUnique<Page>(allocator()));
     }
     
     QueueElement* Queue::get_new_element()
@@ -53,7 +53,7 @@ namespace Render
         //alloc
         if (page == m_pages.size()) new_page();
         //get
-        return &(m_pages[page][element]);
+        return &(m_pages[page]->operator[](element));
     }
     
     //info
@@ -143,6 +143,14 @@ namespace Render
     const Queue& PoolQueues::operator[](QueueType type) const
     {
         return m_queues[type];
+    }
+    //Init
+    PoolQueues::PoolQueues(Allocator* allocator)
+    {
+        for (Queue& queue : m_queues)
+        {
+            new (&queue) Queue(allocator);
+        }
     }
 }
 }

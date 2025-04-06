@@ -19,7 +19,7 @@ namespace Square
 		class Material;
 		class Transform;
 		class EffectPass;
-		class EffectPassInputs;
+		struct EffectPassInputs;
 	}
 	namespace Geometry
 	{
@@ -58,9 +58,9 @@ namespace Render
 
 		virtual Weak<Transform> transform() const = 0;
         
-		bool visible() const { return m_visible; }
+		virtual bool visible() const { return m_visible; }
 
-		void visible(bool enable)  { m_visible = enable; }
+		virtual void visible(bool enable)  { m_visible = enable; }
 
 		virtual bool can_draw() const { return visible() && material().lock() && transform().lock(); }
 

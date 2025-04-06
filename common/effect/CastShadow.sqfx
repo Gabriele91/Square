@@ -8,7 +8,7 @@ sub_effect
 {	
     technique "SpotShadow"
     {
-        pass 
+        pass
         {
             zbuffer less
             blend off
@@ -19,13 +19,24 @@ sub_effect
     }
     technique "PointShadow"
     {
-        pass 
+        pass
         {
             zbuffer less
             blend off
             cullface front
 		    lights off
             shader "CastPointShadow.hlsl"
+        }
+    }
+    technique "DirectionShadow"
+    {
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface front
+		    lights off
+            shader "CastDirectionShadow.hlsl"
         }
     }
 }

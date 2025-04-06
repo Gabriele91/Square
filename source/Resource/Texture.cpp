@@ -6,6 +6,7 @@
 #include "Square/Config.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Data/Image.h"
+#include "Square/Data/ParserTexture.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/Application.h"
 #include "Square/Resource/Texture.h"
@@ -22,99 +23,50 @@ namespace Resource
     void Texture::object_registration(Context& ctx)
     {
         //factory
-        ctx.add_resource<Texture>({ ".png", ".jpg", ".jpeg", ".tga" });
+        ctx.add_resource<Texture>({ ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".sqtex", ".sampler" });
         //attributes
-        ctx.add_attributes<Texture>(attribute_function<Texture, unsigned long>
+		#if 0
+        ctx.add_attribute_function<Texture, unsigned long>
                                   ("width"
                                    , (unsigned long)(0)
                                    , [](const Texture* tex) -> unsigned long{ return tex->get_width(); }
                                    , [](Texture* tex, const unsigned long& ){ /*none*/ }
-                                   ));
-        ctx.add_attributes<Texture>(attribute_function<Texture, unsigned long>
+                                   );
+        ctx.add_attribute_function<Texture, unsigned long>
                                     ("height"
                                      , (unsigned long)(0)
                                      , [](const Texture* tex) -> unsigned long { return tex->get_height(); }
                                      , [](Texture* actor, const unsigned long& ){ /*none*/ }
-                                     ));
+                                     );
+		#endif
         //end
     }
     
 	//////////////////////////////////////////////////////////////
 	// Attributes
-	Texture::Attributes::Attributes(
-		Render::TextureType   type_image,
-		Render::TextureFormat format_image,
+
+	Texture::Attributes::Attributes
+	(
 		Render::TextureMinFilterType  min_filter,
 		Render::TextureMagFilterType  mag_filter,
-		bool clamp_to_border,
-		bool build_mipmap
+		Render::TextureEdgeType  wrap_s,
+		Render::TextureEdgeType  wrap_t,
+		Render::TextureEdgeType  wrap_r,
+		bool build_mipmap,
+		int anisotropic
 	)
 	{
-		m_type = type_image;
-		m_format = format_image;
 		m_min_filter = min_filter;
 		m_mag_filter = mag_filter;
-		m_clamp_to_border = clamp_to_border;
+		m_wrap_s = wrap_s;
+		m_wrap_t = wrap_t;
+		m_wrap_r = wrap_r;
 		m_build_mipmap = build_mipmap;
-	}
-
-	bool Texture::Attributes::alpha_channel()
-	{
-		return m_type == Render::TT_RGBA;
-	}
-
-	Texture::Attributes Texture::Attributes::rgba(
-		Render::TextureMinFilterType  min_filter,
-		Render::TextureMagFilterType  mag_filter,
-		bool clamp_to_border,
-		bool build_mipmap
-	)
-	{
-		return
-		{
-			Render::TT_RGBA,
-			Render::TF_RGBA8,
-			min_filter,
-			mag_filter,
-			clamp_to_border,
-			build_mipmap
-		};
-	}
-
-	Texture::Attributes Texture::Attributes::rgba_linear(
-		bool clamp_to_border,
-		bool alpha_channel
-	)
-	{
-		return
-		{
-			Render::TT_RGBA,
-			Render::TF_RGBA8,
-			Render::TMIN_LINEAR,
-			Render::TMAG_LINEAR,
-			clamp_to_border,
-			false
-		};
-	}
-
-	Texture::Attributes Texture::Attributes::rgba_linear_mipmap_linear(
-		bool clamp_to_border,
-		bool alpha_channel
-	)
-	{
-		return
-		{
-			Render::TT_RGBA,
-			Render::TF_RGBA8,
-			Render::TMIN_LINEAR_MIPMAP_LINEAR,
-			Render::TMAG_LINEAR,
-			clamp_to_border,
-			true
-		};
+		m_anisotropic = anisotropic;
 	}
 	//////////////////////////////////////////////////////////////
 	// Texture
-	Texture::Texture(Context& context) : ResourceObject(context)
+	Texture::Texture(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
 	{
 	}
 
@@ -123,7 +75,7 @@ namespace Resource
 		destoy();
 	}
 
-	Texture::Texture(Context& context, const std::string& path) : ResourceObject(context)
+	Texture::Texture(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
 
 	{
 		load(path);
@@ -134,7 +86,7 @@ namespace Resource
 		Context& context,
 		const Attributes& attr,
 		const std::string& path
-	) : ResourceObject(context)
+	) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
 	{
 		load(attr, path);
 	}
@@ -148,7 +100,7 @@ namespace Resource
 		unsigned long height,
 		Render::TextureFormat format,
 		Render::TextureType   type
-	) : ResourceObject(context)
+	) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
 	{
 		build(attr, buffer, width, height, format, type);
 	}
@@ -162,14 +114,68 @@ namespace Resource
 		unsigned long height,
 		Render::TextureFormat format,
 		Render::TextureType   type
-	) : ResourceObject(context)
+	) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
 	{
 		build(attr, buffer, width, height, format, type);
 	}
 	
 	bool Texture::load(const std::string& path)
 	{
-		return load(Attributes::rgba_linear_mipmap_linear(), path);
+		//get ext
+		std::string ext = Filesystem::get_extension(path);
+		// sqtex
+		if (ext == ".sqtex" || ext == ".sampler")
+		{
+			Parser::Texture::Context tex_context;
+			std::vector<unsigned char> data = Filesystem::binary_file_read_all(path);
+			// Set default attrs
+			tex_context.m_attributes =
+			{
+				Render::TMIN_LINEAR_MIPMAP_LINEAR,
+				Render::TMAG_LINEAR,
+				Render::TEDGE_REPEAT,
+				Render::TEDGE_REPEAT,
+				Render::TEDGE_REPEAT,
+				true,
+				1
+			};
+			// Parse texture data
+			if (Parser::Texture::parse(tex_context, reinterpret_cast<const char*>(data.data()), data.size()))
+			{
+				if (std::holds_alternative<std::string>(tex_context.m_image))
+				{
+					auto image_path = Filesystem::join(Filesystem::get_directory(path), std::get<std::string>(tex_context.m_image));
+					return load(tex_context.m_attributes, image_path);
+				}
+				else if (std::holds_alternative< std::vector<unsigned char> >(tex_context.m_image))
+				{
+					return load(tex_context.m_attributes, std::get< std::vector<unsigned char> >(tex_context.m_image));
+				}
+				else
+				{
+					context().logger()->warning("Texture: " + path + "\nInvalid image");
+					return false;
+				}
+			}
+			else
+			{
+				context().logger()->warning("Texture: " + path + "\n" + tex_context.errors_to_string());
+				return false;
+			}
+		}
+		else
+		{
+			return load(
+			{
+				Render::TMIN_LINEAR_MIPMAP_LINEAR,
+				Render::TMAG_LINEAR,
+				Render::TEDGE_REPEAT,
+				Render::TEDGE_REPEAT,
+				Render::TEDGE_REPEAT,
+				true,
+				1
+			}, path);
+		}
 	}
 	
 	bool Texture::load
@@ -178,13 +184,6 @@ namespace Resource
 		const std::string& path
 	)
 	{
-		//get ext
-		std::string ext = Filesystem::get_extension(path);
-		//test
-		if (ext != ".png"
-		&&  ext != ".jpg"
-		&&  ext != ".jpeg"
-		&&  ext != ".tga") return false;
 		//decode
 		std::vector<unsigned char> image;
 		unsigned long image_width = 0;
@@ -194,12 +193,27 @@ namespace Resource
 		//load
 		if (!Data::Image::load(path, image, image_width, image_height, image_format, image_type))
 			return false;
-		//delete alpha channel from attributes (if needed) :TODO:
-		Attributes modattr = attr;
-		modattr.m_type = image_type;
-		modattr.m_format = image_format;
 		//build
-		return build(modattr, image.data(), image_width, image_height, image_format, image_type);
+		return build(attr, image.data(), image_width, image_height, image_format, image_type);
+	}
+
+	bool Texture::load
+	(
+		const Attributes& attr,
+		const std::vector< unsigned char >& data_file
+	)
+	{
+		//decode
+		std::vector<unsigned char> image;
+		unsigned long image_width = 0;
+		unsigned long image_height = 0;
+		Render::TextureFormat image_format;
+		Render::TextureType   image_type;
+		//load
+		if (!Data::Image::load(data_file, image, image_width, image_height, image_format, image_type))
+			return false;
+		//build
+		return build(attr, image.data(), image_width, image_height, image_format, image_type);
 	}
 
 	bool Texture::build
@@ -292,6 +306,7 @@ namespace Resource
 		m_height = height;
 		m_format = format;
 		m_type = type;
+		m_attributes = attr;
 		//create texture
 		if (auto render = context().render())
 		{
@@ -306,12 +321,16 @@ namespace Resource
 				Render::TTF_UNSIGNED_BYTE
 			},
 			{
-				attr.m_min_filter,
-				attr.m_mag_filter,
-				attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
-				attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
-				attr.m_clamp_to_border ? Render::TEDGE_CLAMP : Render::TEDGE_REPEAT,
-				attr.m_build_mipmap
+				attr.m_min_filter,           // min_type
+				attr.m_mag_filter,           // mag_type
+				attr.m_wrap_s,               // edge_s
+				attr.m_wrap_t,               // edge_t
+				attr.m_wrap_r,               // edge_r
+				attr.m_build_mipmap,         // build_mipmap
+				0,                           // mipmap_min
+				attr.m_build_mipmap ? 10:0,  // mipmap_max
+				attr.m_anisotropic,          // anisotropy
+				false                        // read_from_cpu
 			});
 		}
 
@@ -344,6 +363,11 @@ namespace Resource
 		return m_type;
 	}
 
+	const Texture::Attributes& Texture::get_attributes() const
+	{
+		return m_attributes;
+	}
+
 	void Texture::destoy()
 	{
 		if (m_ctx_texture)
@@ -351,5 +375,6 @@ namespace Resource
 				render->delete_texture(m_ctx_texture);
 		m_ctx_texture = nullptr;
 	}
+
 }
 }

@@ -85,6 +85,12 @@
     <Filter Include="Source\Driver\Cocoa">
       <UniqueIdentifier>{7cd310e0-fb91-4fe7-b3e6-490930b0aade}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource\common\material">
+      <UniqueIdentifier>{d2943880-7911-42e3-bfe7-60ada0eb4fb5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Math">
+      <UniqueIdentifier>{678ef197-f289-4bac-b177-3fc9c569d678}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Square\Math\Linear.h">
@@ -309,11 +315,44 @@
     <ClInclude Include="..\include\Square\Render\ShadowBuffer.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\Resource\ShaderPreprocess.h">
+      <Filter>source\Resource</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\Square\Render\Mesh.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\Resource\ShaderPreprocess.h">
-      <Filter>source\Resource</Filter>
+    <ClInclude Include="..\include\Square\Resource\Mesh.h">
+      <Filter>Include\Square\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Data\ParserStaticMesh.h">
+      <Filter>include\Square\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Core\Allocator.h">
+      <Filter>include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Core\ShellParser.h">
+      <Filter>include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Scene\StaticMesh.h">
+      <Filter>include\Square\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Resource\Actor.h">
+      <Filter>Include\Square\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\SquareMain.h">
+      <Filter>Include\Square</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Core\Logger.h">
+      <Filter>include\Square\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Render\ConstantBuffer.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Render\DrawerPassDebug.h">
+      <Filter>Include\Square\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Square\Data\ParserTexture.h">
+      <Filter>include\Square\Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -452,9 +491,6 @@
     <ClCompile Include="..\source\Data\ParserMaterial.cpp">
       <Filter>source\Data</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\Math\Tangent.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\Render\GBuffer.cpp">
       <Filter>Source\Render</Filter>
     </ClCompile>
@@ -505,6 +541,42 @@
     </ClCompile>
     <ClCompile Include="..\source\Render\Mesh.cpp">
       <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Resource\Mesh.cpp">
+      <Filter>source\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Data\ParserStaticMesh.cpp">
+      <Filter>source\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Core\Allocator.cpp">
+      <Filter>source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Core\Resource.cpp">
+      <Filter>source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Core\ShellParser.cpp">
+      <Filter>source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Core\StringUtilities.cpp">
+      <Filter>source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Scene\StaticMesh.cpp">
+      <Filter>source\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Core\Logger.cpp">
+      <Filter>source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Math\Tangent.cpp">
+      <Filter>Source\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Render\DrawerPassDebug.cpp">
+      <Filter>Source\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Core\Variant.cpp">
+      <Filter>source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Data\ParserTexture.cpp">
+      <Filter>source\Data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -586,6 +658,15 @@
     <None Include="..\common\effect\Solid.hlsl">
       <Filter>Resource\common\effect</Filter>
     </None>
+    <None Include="..\common\material\default.mat">
+      <Filter>Resource\common\material</Filter>
+    </None>
+    <None Include="..\common\effect\CastDirectionShadow.hlsl">
+      <Filter>Resource\common\effect</Filter>
+    </None>
+    <None Include="..\common\shader\DirectionShadowLight.hlsl">
+      <Filter>Resource\common\shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\common\texture\black.tga">
@@ -612,5 +693,10 @@
     <Image Include="..\common\texture\none.tga">
       <Filter>Resource\common\texture</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\common\effect\Debug.sqfx">
+      <Filter>Resource\common\effect</Filter>
+    </Text>
   </ItemGroup>
 </Project>
