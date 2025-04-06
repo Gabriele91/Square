@@ -351,6 +351,9 @@
     <ClInclude Include="..\include\Square\Render\DrawerPassDebug.h">
       <Filter>Include\Square\Render</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Square\Data\ParserTexture.h">
+      <Filter>include\Square\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\Core\Filesystem.cpp">
@@ -571,6 +574,9 @@
     </ClCompile>
     <ClCompile Include="..\source\Core\Variant.cpp">
       <Filter>source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Data\ParserTexture.cpp">
+      <Filter>source\Data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
