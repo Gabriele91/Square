@@ -127,6 +127,8 @@ public:
 		using namespace Square::Resource;
 		//rs file
 		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "/resources.rs"));
+		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "common/resources.rs"));
+		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "example/HelloWorld/resources.rs"));
 		// window size
 		uint32_t window_width, window_height;
 		context().window()->get_size(window_width, window_height);
