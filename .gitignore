@@ -539,3 +539,6 @@ reports/**/*.synctex.gz
 
 #window 64
 !**/dependencies/x64/lib/*.lib
+
+#Install directory
+[Ii]nstall/**

@@ -3,6 +3,10 @@
 //  Created by Gabriele on 15/08/16.
 //  Copyright � 2016 Gabriele. All rights reserved.
 //
+//compiler HLSL2ALL
+#define SQUARE_SHADER_COMPILER_FUNCTION_IMPL
+#include <HLSL2ALL/HLSL2ALL.h>
+//Square includes
 #include "Square/Config.h"
 #include "Square/Core/Application.h"
 #include "Square/Core/Filesystem.h"
@@ -14,8 +18,6 @@
 #include "Square/Core/ClassObjectRegistration.h"
 //Preprocess
 #include "ShaderPreprocess.h"
-//compiler HLSL2ALL
-#include <HLSL2ALL/HLSL2ALL.h>
 
 namespace Square
 {

@@ -1,0 +1,12 @@
+[submodule "dependencies/HLSL2ALL"]
+	path = dependencies/HLSL2ALL
+	url = git@github.com:Gabriele91/HLSL2ALL.git
+[submodule "dependencies/glm"]
+	path = dependencies/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "dependencies/zlib"]
+	path = dependencies/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "dependencies/glad"]
+	path = dependencies/glad
+	url = https://github.com/Dav1dde/glad.git

@@ -899,23 +899,63 @@ namespace Render
 		//shader add ests
 		context->s_render_driver_info.m_shader_exts = make_test_all_exts(context->logger());
     }
-        
+    
+#if defined( WIN32 )
+	// A proper loader function for Windows OpenGL
+	static void* square_gl_GetProcAddress(const char* name)
+	{
+		void* proc = (void*)wglGetProcAddress(name);
+
+		// If the function address is NULL or one of these special values,
+		// try loading it from OpenGL32.dll
+		if (proc == NULL || proc == (void*)0x1 || proc == (void*)0x2 || proc == (void*)0x3 || proc == (void*)-1)
+		{
+			static HMODULE module = LoadLibraryA("opengl32.dll");
+			proc = (void*)GetProcAddress(module, name);
+		}
+
+		return proc;
+	}
+#elif defined( __linux )
+	void* square_gl_GetProcAddress(const char* name) {
+		// Try using glXGetProcAddress first
+		void* proc = (void*)glXGetProcAddress((const GLubyte*)name);
+		
+		// If that fails, fall back to glXGetProcAddressARB
+		if (!proc) {
+			proc = (void*)glXGetProcAddressARB((const GLubyte*)name);
+		}
+		
+		// If both fail, try loading from libGL.so directly
+		if (!proc) {
+			static void* handle = dlopen("libGL.so.1", RTLD_LAZY | RTLD_GLOBAL);
+			if (handle) {
+				proc = dlsym(handle, name);
+				// Note: normally you'd want to dlclose(handle), but 
+				// that could unload the library while it's still needed
+			}
+		}
+		
+		return proc;
+	}
+#endif
+
 	bool ContextGL4::init(Video::DeviceResources* resource)
 	{
 		//disable vsync
 		resource->set_vsync(false);
-		//init glew
-#ifdef _WIN32
-		//enable glew experimental (OpenGL3/4)
-		glewExperimental = GL_TRUE;
-		//try to init glew (get OpenGL calls)
-		if (glewInit() != GLEW_OK)
+		//init glad
+#if defined( _WIN32 ) ||  defined( __linux )
+		int gl_loaded_version = gladLoadGL((GLADloadfunc)square_gl_GetProcAddress);
+		if (!gl_loaded_version) 
 		{
-			logger()->error("Glew init fail");
+			logger()->error("GLAD init fail");
 			return false;
 		}
-		//clear OpenGL error by Glew init
+		//clear OpenGL error by GLAD init
 		else while ((glGetError()) != GL_NO_ERROR);
+		// log info
+		logger()->info("GLAD OGL loaded: " + std::to_string(GLAD_VERSION_MAJOR(gl_loaded_version)) + "." + std::to_string(GLAD_VERSION_MINOR(gl_loaded_version)));
 #endif
 
 #if defined(DIRECTX_MODE)
