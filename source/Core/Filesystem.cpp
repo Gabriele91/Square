@@ -229,7 +229,11 @@ namespace Filesystem
         size_t size = std::ftell(file);
         std::fseek(file, 0, SEEK_SET);
         //no size:
-        if(!size) std::fclose(file);
+        if (!size)
+        {
+            std::fclose(file);
+            return out;
+        }
         /////////////////////////////////////////////////////////////////////
         out.resize(size, 0);
 		square_assert_or_release(std::fread(&out[0], size, 1, file));
@@ -251,7 +255,11 @@ namespace Filesystem
         size_t size = std::ftell(file);
         std::fseek(file, 0, SEEK_SET);
         //no size:
-        if (!size) std::fclose(file);
+        if (!size)
+        {
+            std::fclose(file);
+            return out;
+        }
         /////////////////////////////////////////////////////////////////////
         out.resize(size);
         square_assert_or_release(std::fread(&out[0], 1, size, file));
@@ -273,7 +281,11 @@ namespace Filesystem
         size_t size = std::ftell(file);
         std::fseek(file, 0, SEEK_SET);
         //no size:
-        if (!size) std::fclose(file);
+        if (!size)
+        {
+            std::fclose(file);
+            return out;
+        }
         /////////////////////////////////////////////////////////////////////
         out.resize(size, 0);
         square_assert_or_release(std::fread(&out[0], size, 1, file));

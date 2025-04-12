@@ -5,7 +5,6 @@
 #include "Square/Core/Resource.h"
 #include "Square/Driver/Render.h"
 #include "Square/Render/VertexLayout.h"
-#include <HLSL2ALL/HLSL2ALL.h>
 
 namespace Square
 {
@@ -108,11 +107,12 @@ namespace Resource
 			PostprocessOutput& source
 		);
 
+		#ifdef SQUARE_SHADER_COMPILER_FUNCTION_IMPL
 		bool hlsl_compile
 		(
 			const PostprocessOutput& source
 		);
-
+		
 		bool source_to_spirv
 		(
 			const PostprocessOutput& source,
@@ -124,6 +124,7 @@ namespace Resource
 			const PostprocessOutput& source,
 			const HLSL2ALL::TypeSpirvShaderList& input
 		);
+		#endif
 	};
 }
 }

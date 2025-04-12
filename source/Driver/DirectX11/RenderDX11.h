@@ -634,7 +634,7 @@ namespace Render
 		bool get_devices(Video::DeviceResources* resource);
 		///////////////////////////////////////////////////////////////////////////////////
 		//Depth buffer
-		Target*	m_view_target;
+		Target*	m_view_target{ nullptr };
 		bool get_view_target(Video::DeviceResources* resource);
 		///////////////////////////////////////////////////////////////////////////////////
 		//query
@@ -642,10 +642,10 @@ namespace Render
 		bool build_query_buffer();
 		///////////////////////////////////////////////////////////////////////////////////
 		//render states
-		ID3D11RasterizerState*	m_render_state_cullface_back;
-		ID3D11RasterizerState*	m_render_state_cullface_front;
-		ID3D11RasterizerState*	m_render_state_cullface_back_and_front;
-		ID3D11RasterizerState*	m_render_state_cullface_disable;
+		ID3D11RasterizerState*	m_render_state_cullface_back{ nullptr };
+		ID3D11RasterizerState*	m_render_state_cullface_front{ nullptr };
+		ID3D11RasterizerState*	m_render_state_cullface_back_and_front{ nullptr };
+		ID3D11RasterizerState*	m_render_state_cullface_disable{ nullptr };
 		bool build_cullface_states();
 		ID3D11RasterizerState* cullface_state(CullfaceState);
 		///////////////////////////////////////////////////////////////////////////////////
