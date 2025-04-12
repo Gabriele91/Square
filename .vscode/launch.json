@@ -2,6 +2,32 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Win32 HelloWorld Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Debug/HelloWorld.exe",
+            "args": [
+                "-v",
+                "-d",
+                "-b", "ogl",
+                "-g", "high"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;${workspaceRoot}/build/bin/Debug/;${workspaceRoot}/build/source/Debug/;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/"
+                }
+            ],
+            "console": "internalConsole",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/Debug;${workspaceRoot}/build/source/Debug;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        },
+        {
             "name": "Win32 HelloWorldCSM Debug",
             "type": "cppvsdbg",
             "request": "launch",
