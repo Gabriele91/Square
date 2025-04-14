@@ -181,9 +181,9 @@
                         {
                             "name": "StaticMesh",
                             "data": {
-                                "material": {
-                                    "dtype": "STD_STRING",
-                                    "value": "default"
+                                "materials": {
+                                    "dtype": "STD_VECTOR_STRING",
+                                    "value": ["default"]
                                 },
                                 "obb": {
                                     "dtype": "STD_VECTOR_VEC3",
@@ -260,9 +260,9 @@
                         {
                             "name": "StaticMesh",
                             "data": {
-                                "material": {
-                                    "dtype": "STD_STRING",
-                                    "value": "default"
+                                "materials": {
+                                    "dtype": "STD_VECTOR_STRING",
+                                    "value": ["default"]
                                 },
                                 "obb": {
                                     "dtype": "STD_VECTOR_VEC3",
@@ -339,9 +339,9 @@
                         {
                             "name": "StaticMesh",
                             "data": {
-                                "material": {
-                                    "dtype": "STD_STRING",
-                                    "value": "default"
+                                "materials": {
+                                    "dtype": "STD_VECTOR_STRING",
+                                    "value": ["default"]
                                 },
                                 "obb": {
                                     "dtype": "STD_VECTOR_VEC3",
@@ -418,9 +418,9 @@
                         {
                             "name": "StaticMesh",
                             "data": {
-                                "material": {
-                                    "dtype": "STD_STRING",
-                                    "value": "default"
+                                "materials": {
+                                    "dtype": "STD_VECTOR_STRING",
+                                    "value": ["default"]
                                 },
                                 "obb": {
                                     "dtype": "STD_VECTOR_VEC3",
@@ -574,9 +574,9 @@
                 {
                     "name": "StaticMesh",
                     "data": {
-                        "material": {
-                            "dtype": "STD_STRING",
-                            "value": "default"
+                        "materials": {
+                            "dtype": "STD_VECTOR_STRING",
+                            "value": ["default"]
                         },
                         "obb": {
                             "dtype": "STD_VECTOR_VEC3",
@@ -687,9 +687,9 @@
                         {
                             "name": "StaticMesh",
                             "data": {
-                                "material": {
-                                    "dtype": "STD_STRING",
-                                    "value": "default"
+                                "materials": {
+                                    "dtype": "STD_VECTOR_STRING",
+                                    "value": ["default"]
                                 },
                                 "obb": {
                                     "dtype": "STD_VECTOR_VEC3",
@@ -766,9 +766,9 @@
                         {
                             "name": "StaticMesh",
                             "data": {
-                                "material": {
-                                    "dtype": "STD_STRING",
-                                    "value": "default"
+                                "materials": {
+                                    "dtype": "STD_VECTOR_STRING",
+                                    "value": ["default"]
                                 },
                                 "obb": {
                                     "dtype": "STD_VECTOR_VEC3",
@@ -845,9 +845,9 @@
                         {
                             "name": "StaticMesh",
                             "data": {
-                                "material": {
-                                    "dtype": "STD_STRING",
-                                    "value": "default"
+                                "materials": {
+                                    "dtype": "STD_VECTOR_STRING",
+                                    "value": ["default"]
                                 },
                                 "obb": {
                                     "dtype": "STD_VECTOR_VEC3",
@@ -924,9 +924,9 @@
                         {
                             "name": "StaticMesh",
                             "data": {
-                                "material": {
-                                    "dtype": "STD_STRING",
-                                    "value": "default"
+                                "materials": {
+                                    "dtype": "STD_VECTOR_STRING",
+                                    "value": ["default"]
                                 },
                                 "obb": {
                                     "dtype": "STD_VECTOR_VEC3",
