@@ -49,7 +49,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 )
 
 # Set compiler options
-target_compile_options(${PROJECT_NAME} PRIVATE /arch:AVX)
+if(WIN32)
+    target_compile_options(${PROJECT_NAME} PRIVATE /arch:AVX)
+endif()
 
 # Set include directories
 target_include_directories(
