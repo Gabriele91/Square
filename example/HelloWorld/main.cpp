@@ -137,15 +137,20 @@ public:
 		// load
 		if (m_level->load_actor("base_scene"))
 		{
-			if (auto node = m_level->find_actor("base_scene.node"))
-			for(const auto& child : node->childs())
+			for (auto node : { m_level->find_actor("base_scene.node"), m_level->find_actor("base_scene.box") })
 			{
-				child->component<StaticMesh>()->m_materials.push_back(context().resource<Material>("box"));
-			}
-			if (auto box = m_level->find_actor("base_scene.box"))
-			for(const auto& child : box->childs())
-			{
-				child->component<StaticMesh>()->m_materials.push_back(context().resource<Material>("box"));
+				for(const auto& child : node->childs())
+				{
+					auto& materials = child->component<StaticMesh>()->m_materials;
+					if (materials.empty())
+					{
+						materials.push_back(context().resource<Material>("box"));
+					} 
+					else
+					{
+						materials[0] = context().resource<Material>("box");
+					}
+				}
 			}
 			auto camera = m_level->find_actor("base_scene.camera");
 			camera->component<Camera>()->viewport({0,0, window_width, window_height});
