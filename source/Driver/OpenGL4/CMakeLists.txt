@@ -22,17 +22,29 @@ set(HEADER_FILES
 set(GLAD_SOURCES_DIR "${CMAKE_SOURCE_DIR}/dependencies/glad/")
 # install jinja2
 find_package(Python REQUIRED COMPONENTS Interpreter)
+
+# Check if jinja2 is already installed
 execute_process(
-    COMMAND ${Python_EXECUTABLE} -m pip install jinja2==3.1
-    RESULT_VARIABLE install_jinja2_result
-    OUTPUT_VARIABLE install_jinja2_output
-    ERROR_VARIABLE install_jinja2_error
+    COMMAND ${Python_EXECUTABLE} -c "import jinja2"
+    RESULT_VARIABLE jinja2_installed
 )
-if(NOT install_jinja2_result EQUAL 0)
-    message(FATAL_ERROR "Failed to install jinja2: ${install_jinja2_error}")
+
+# If not installed, install it
+if(NOT jinja2_installed EQUAL 0)
+    message(STATUS "Jinja2 not found, installing via pip...")
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -m pip install jinja2==3.1
+        RESULT_VARIABLE install_jinja2_result
+        OUTPUT_VARIABLE install_jinja2_output
+        ERROR_VARIABLE install_jinja2_error
+    )
+    if(NOT install_jinja2_result EQUAL 0)
+        message(FATAL_ERROR "Failed to install Jinja2: ${install_jinja2_error}")
+    endif()
 else()
-    message(STATUS "Successfully installed jinja2: ${install_jinja2_output}")
+    message(STATUS "Jinja2 already installed.")
 endif()
+
 # Path to glad cmake files
 add_subdirectory("${GLAD_SOURCES_DIR}/cmake" glad_cmake)
 
