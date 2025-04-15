@@ -1213,7 +1213,7 @@ namespace Xorg
             {
                 wnd_input->send_mouse_move_event(event.xmotion.x, event.xmotion.y);
             }
-            
+            break;
             
             case ClientMessage:
             if (strcmp(XGetAtomName(s_os_context.m_xdisplay, event.xclient.message_type), "WM_PROTOCOLS") == 0)
