@@ -16,8 +16,8 @@ elseif(APPLE)
   set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 else()
-  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fPIC -pthread")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fPIC -pthread")
+  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fPIC -pthread -DDISABLE_SHARER_PREPROCESS_LINE_SET")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fPIC -pthread -DDISABLE_SHARER_PREPROCESS_LINE_SET")
 endif()
 
 # Square project
