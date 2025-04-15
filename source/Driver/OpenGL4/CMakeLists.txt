@@ -98,7 +98,6 @@ if(WIN32)
 elseif(UNIX AND NOT APPLE)
     target_link_libraries(${PROJECT_NAME} PRIVATE 
         glad_gl_core_41
-        GLEW
         GLU
         GL
         xcb
@@ -107,7 +106,6 @@ elseif(UNIX AND NOT APPLE)
 elseif(APPLE)
     target_link_libraries(${PROJECT_NAME} PRIVATE 
         glad_gl_core_41
-        GLEW
         GLU
         GL
         xcb

@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 27/04/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #include <array>
 #include "Square/Core/Object.h"
@@ -387,12 +387,12 @@ namespace Scene
 				Mat4 cascade_cam = inverse(cam_projection * cam_view);
 				float fs_size = 0;
 				float fs_depth = 0;
-				auto& [l_proj,l_view] = fit_light_proj_mat_to_camera_frustum(cascade_cam,
-																			 light_space_transform, 
-																			 shadow_map_size.x, 
-																			 scene_matrix,
-																			 fs_size, 
-																			 fs_depth);
+				const auto& [l_proj,l_view] = fit_light_proj_mat_to_camera_frustum(cascade_cam,
+                                                                                   light_space_transform, 
+                                                                                   shadow_map_size.x, 
+                                                                                   scene_matrix,
+                                                                                   fs_size, 
+                                                                                   fs_depth);
 				data.m_projection[i] = l_proj;
 				data.m_view[i] = l_view;
 				data.m_data[i] = Vec3(cascade_vdepths[i + 1],
