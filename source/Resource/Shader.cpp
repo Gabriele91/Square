@@ -344,13 +344,20 @@ namespace Resource
 			//compile
 			m_shader = render->create_shader(render_shader_info);
 			//tests
-			if (!m_shader  || render->shader_compiled_with_errors(m_shader) || render->shader_linked_with_error(m_shader))
+			if (!m_shader || render->shader_linked_with_error(m_shader))
 			{
 				//fail
-				context().logger()->warning("Error to shader compile");
+				context().logger()->error("Error to shader compile");
+				context().logger()->errors(render->get_shader_compiler_errors(m_shader));
+				context().logger()->error(render->get_shader_linker_error(m_shader));
+				return false;
+			}
+			else if (render->shader_compiled_with_errors(m_shader))
+			{
+				//maybe it is just a warning
+				context().logger()->warning("Wrong shader compile");
 				context().logger()->warnings(render->get_shader_compiler_errors(m_shader));
 				context().logger()->warning(render->get_shader_linker_error(m_shader));
-				return false;
 			}
             //ok
 			return true;
@@ -444,13 +451,20 @@ namespace Resource
 			//compile
 			m_shader = render->create_shader(shader_info);
 			//tests
-			if (!m_shader || render->shader_compiled_with_errors(m_shader) || render->shader_linked_with_error(m_shader))
+			if (!m_shader || render->shader_linked_with_error(m_shader))
 			{
 				//fail
-				context().logger()->warning("Error to shader compile");
+				context().logger()->error("Error to shader compile");
+				context().logger()->errors(render->get_shader_compiler_errors(m_shader));
+				context().logger()->error(render->get_shader_linker_error(m_shader));
+				return false;
+			}
+			else if (render->shader_compiled_with_errors(m_shader))
+			{
+				//maybe it is just a warning
+				context().logger()->warning("Wrong shader compile");
 				context().logger()->warnings(render->get_shader_compiler_errors(m_shader));
 				context().logger()->warning(render->get_shader_linker_error(m_shader));
-				return false;
 			}
             //ok
             return true;
