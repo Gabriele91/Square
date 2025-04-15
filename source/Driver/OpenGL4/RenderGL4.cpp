@@ -943,7 +943,14 @@ namespace Render
 	bool ContextGL4::init(Video::DeviceResources* resource)
 	{
 		//disable vsync
-		resource->set_vsync(false);
+		if(resource != nullptr)
+		{
+			resource->set_vsync(false);
+		}
+		else
+		{
+			logger()->warning("VSync cannot be disable");
+		}
 		//init glad
 #if defined( _WIN32 ) ||  defined( __linux )
 		int gl_loaded_version = gladLoadGL((GLADloadfunc)square_gl_GetProcAddress);

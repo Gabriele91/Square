@@ -245,7 +245,7 @@ namespace Scene
 		if (actor_found)
 			return c_actor;
 		else
-			return false;
+			return nullptr;
 	}
 
 	//contains an actor

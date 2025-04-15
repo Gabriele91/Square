@@ -231,7 +231,7 @@ namespace Square
 
 		template < class T > inline void add_attribute(Attribute& attribute)
 		{
-			BaseContext::add_attribute(T::static_object_id(), std::move<Attribute>(attribute));
+			BaseContext::add_attribute(T::static_object_id(), std::forward<Attribute>(attribute));
 		}
 
 		template < class T > inline void add_attribute(Attribute&& attribute)

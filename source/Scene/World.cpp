@@ -4,7 +4,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 20/10/17.
-//  Copyright © 2017 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2017 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Core/Context.h"
 #include "Square/Core/Application.h"
@@ -83,7 +83,7 @@ namespace Scene
 	{
 		//search
 		for (const Shared<Level>& level : m_levels)
-			if (auto& actor = level->find_actor(name)) 
+			if (const auto& actor = level->find_actor(name)) 
 				return actor;
 		//return
 		return nullptr;

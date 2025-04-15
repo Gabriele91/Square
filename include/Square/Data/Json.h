@@ -71,12 +71,16 @@ namespace Data
 		//init
 		JsonValue() noexcept;
 		JsonValue(JsonValue&& v) noexcept;
+		JsonValue(JsonArray&& v) noexcept;
+		JsonValue(JsonObject&& v) noexcept;
 		JsonValue(const JsonValue& v);
         JsonValue(const char* value);
 		JsonValue(const std::string& value);
 		JsonValue(double);
 		JsonValue(int);
 		JsonValue(unsigned int);
+		JsonValue(long);
+		JsonValue(unsigned long);
 		JsonValue(bool);
 		JsonValue(const JsonArray&);
 		JsonValue(const JsonObject&);
@@ -116,6 +120,8 @@ namespace Data
         //parse
 		Json() = default;
 		Json(Json&& json) = default;
+		Json(JsonArray&& json_array);
+		Json(JsonObject&& json_object);
 		Json(const JsonValue& document);
 		Json(const std::string& source);
 		Json(const char* source, std::size_t n);

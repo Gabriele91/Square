@@ -16,11 +16,13 @@
 #else
     #ifdef _WIN32
         #include <windows.h>
+        #include <glad/gl.h>
     #endif
     #ifdef __linux
+        #include <glad/gl.h>
         #include <GL/glx.h>
+        #include <dlfcn.h>
     #endif
-	#include <glad/gl.h>
     #include <GL/gl.h>
 #endif
 

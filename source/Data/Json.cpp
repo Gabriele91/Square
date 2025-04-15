@@ -97,6 +97,16 @@ namespace Data
         v.m_type = Type::IS_NULL;
         v.m_ptr = nullptr;
     }
+    JsonValue::JsonValue(JsonArray&& v) noexcept
+    {
+        m_type = Type::IS_ARRAY;
+        m_array = new JsonArray(std::move(v));
+    }
+    JsonValue::JsonValue(JsonObject&& v) noexcept
+    {
+        m_type = Type::IS_OBJECT;
+        m_object = new JsonObject(std::move(v));
+    }
 	JsonValue::JsonValue(const JsonValue& v)
 	{
 		//move type
@@ -133,6 +143,16 @@ namespace Data
 		m_number = double(value);
 	}
 	JsonValue::JsonValue(unsigned int value)
+	{
+		m_type = Type::IS_NUMBER;
+		m_number = double(value);
+	}
+	JsonValue::JsonValue(long value)
+	{
+		m_type = Type::IS_NUMBER;
+		m_number = double(value);
+	}
+	JsonValue::JsonValue(unsigned long value)
 	{
 		m_type = Type::IS_NUMBER;
 		m_number = double(value);
@@ -325,6 +345,8 @@ namespace Data
 	}
     ////////////////////////////////////////////////////////////////////////////////////
     //parse
+	Json::Json(JsonArray&& json_array):m_document(std::move(json_array)) {}
+	Json::Json(JsonObject&& json_object):m_document(std::move(json_object)) {}
 	Json::Json(const JsonValue& document) :m_document(document) {}
     Json::Json(const std::string& source) { parser(source); }
     Json::Json(const char* source, std::size_t n) { parser(source, n); }
