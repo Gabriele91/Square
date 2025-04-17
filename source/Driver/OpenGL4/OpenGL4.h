@@ -16,9 +16,18 @@
 #else
     #ifdef _WIN32
         #include <windows.h>
+        #include <glad/gl.h>
     #endif
-	#include <GL/glew.h>
+    #ifdef __linux
+        #include <glad/gl.h>
+        #include <GL/glx.h>
+        #include <dlfcn.h>
+    #endif
     #include <GL/gl.h>
+#endif
+
+#if !defined(GL_TABLE_TOO_LARGE)
+	#define GL_TABLE_TOO_LARGE 0x8031
 #endif
 
 namespace Square

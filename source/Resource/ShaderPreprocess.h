@@ -227,6 +227,11 @@ namespace Resource
 			//start to parse
 			while (std::getline(source, source_line))
 			{
+				// Remove wrong values at end of a file
+				for(auto& c : source_line) 
+				{
+					if(c == '\0') c = ' ';
+				}
 				//line count
 				++line;
 				//ptr to line
@@ -326,6 +331,7 @@ namespace Resource
 					out += source_line;
 					out += "\n";
 				}
+				source_line.clear();
 			}
 			return PS_OK;
 		}

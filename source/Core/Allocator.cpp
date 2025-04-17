@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 09/08/2024.
-//  Copyright © 2024 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2024 Gabriele Di Bari. All rights reserved.
 //
 #include <stdlib.h>
 #include <string>
@@ -43,22 +43,23 @@ namespace Square
 #else
 	void* DefaultAllocator::alloc(size_t size, const char* name, uint8 flag)
 	{
-		return aligned_alloc(size, s_default_align);
+		return aligned_alloc(s_default_align, size);
 	}
 
 	void* DefaultAllocator::alloc(size_t size, const char* name, uint8 flag, uint16 align, uint16 align_offset)
 	{
-		return aligned_alloc(size, align, align_offset);
+		// TODO(find another way to do this)
+		return aligned_alloc(align, size);
 	}
 
 	void  DefaultAllocator::free(void* ptr, size_t size)
 	{
-		free(ptr);
+		::free(ptr);
 	}
 
 	void  DefaultAllocator::free(void* ptr)
 	{
-		free(ptr);
+		::free(ptr);
 	}
 #endif
 

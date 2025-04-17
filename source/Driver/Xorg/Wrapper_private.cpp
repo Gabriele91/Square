@@ -1213,7 +1213,7 @@ namespace Xorg
             {
                 wnd_input->send_mouse_move_event(event.xmotion.x, event.xmotion.y);
             }
-            
+            break;
             
             case ClientMessage:
             if (strcmp(XGetAtomName(s_os_context.m_xdisplay, event.xclient.message_type), "WM_PROTOCOLS") == 0)
@@ -1300,8 +1300,11 @@ namespace Xorg
     // VIDEO
 	void init()
 	{
+        // Init object
+        new (&Xorg::s_os_context) Xorg::WrapperContext();
 		//to 0
 		std::memset(&Xorg::s_os_context.m_xcontext, 0, sizeof(XContext));
+        new (&Xorg::s_os_context.m_xcontext) XContext();
 		//ini key map
         Xorg::helper_input_init();
 		//init screen
@@ -1311,8 +1314,16 @@ namespace Xorg
 	void close()
 	{
 		//remove all inputs/windows 
-		for (auto inp_it : Xorg::s_os_context.m_input)   inp_it.second->m_input_ref->destoy();
-		for (auto wnd_it : Xorg::s_os_context.m_windows) wnd_it.second->m_window_ref->destoy();
+		if(!Xorg::s_os_context.m_input.empty()) 
+        {
+            for (auto inp_it : Xorg::s_os_context.m_input)  
+                inp_it.second->m_input_ref->destoy();
+        }
+		if(!Xorg::s_os_context.m_windows.empty())
+        {
+            for (auto wnd_it : Xorg::s_os_context.m_windows) 
+                wnd_it.second->m_window_ref->destoy();
+        }
 		Xorg::s_os_context.m_input.clear();
 		Xorg::s_os_context.m_windows.clear();
 		//clear all
@@ -1321,6 +1332,8 @@ namespace Xorg
 		XCloseDisplay(Xorg::s_os_context.m_xdisplay);
 		//to null
 		Xorg::s_os_context.m_xdisplay = nullptr;
+        //dealloc fields
+        Xorg::s_os_context.~WrapperContext();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////

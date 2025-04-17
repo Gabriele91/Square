@@ -22,6 +22,7 @@
 	#define R_OK 04
 	#define W_OK 02
 	#define SEPARETOR '\\'
+	#define SEPARETOR_STR "\\"
     #define OS_MAX_PATH MAX_PATH
 #else
 	#include <sys/types.h>
@@ -31,6 +32,8 @@
     #include <stdint.h>
     #if defined(__linux)
     #include <sys/sendfile.h> // sendfile()
+    #include <fcntl.h>
+    #include <sys/sendfile.h> // for sendfile
     #endif
 	#if defined(__APPLE__)
     #include <CoreFoundation/CoreFoundation.h>
@@ -40,6 +43,7 @@
 	#endif
     #define bswap32 __builtin_bswap32
 	#define SEPARETOR '/'
+	#define SEPARETOR_STR "/"
     #define OS_MAX_PATH _POSIX_PATH_MAX
 #endif
 
@@ -47,7 +51,40 @@ namespace Square
 {
 namespace Filesystem
 {
-
+    std::vector<std::string> get_shared_lib_env_paths()
+    {
+        std::string raw;
+        
+        #ifdef _WIN32
+            const char* env_var = std::getenv("PATH");
+            raw = env_var ? env_var : "";
+            const char delimiter = ';';
+        #elif defined(__linux)
+            const char* env_var = std::getenv("LD_LIBRARY_PATH");
+            raw = env_var ? env_var : "";
+            const char delimiter = ':';
+        #elif defined(__APPLE__)
+            const char* env_var = std::getenv("DYLD_LIBRARY_PATH");
+            raw = env_var ? env_var : "";
+            const char delimiter = ':';
+        #else
+            #error "OS not supported"
+        #endif
+    
+        // Splitting the path into parts
+        std::vector<std::string> paths;
+        std::stringstream ss(raw);
+        std::string path;
+    
+        while (std::getline(ss, path, delimiter)) {
+            if (!path.empty()) {
+                paths.push_back(path);
+            }
+        }
+    
+        return paths;
+    }
+	
 	std::string program_dir()
 	{
 		#ifdef _WIN32
@@ -229,7 +266,11 @@ namespace Filesystem
         size_t size = std::ftell(file);
         std::fseek(file, 0, SEEK_SET);
         //no size:
-        if(!size) std::fclose(file);
+        if (!size)
+        {
+            std::fclose(file);
+            return out;
+        }
         /////////////////////////////////////////////////////////////////////
         out.resize(size, 0);
 		square_assert_or_release(std::fread(&out[0], size, 1, file));
@@ -251,7 +292,11 @@ namespace Filesystem
         size_t size = std::ftell(file);
         std::fseek(file, 0, SEEK_SET);
         //no size:
-        if (!size) std::fclose(file);
+        if (!size)
+        {
+            std::fclose(file);
+            return out;
+        }
         /////////////////////////////////////////////////////////////////////
         out.resize(size);
         square_assert_or_release(std::fread(&out[0], 1, size, file));
@@ -273,7 +318,11 @@ namespace Filesystem
         size_t size = std::ftell(file);
         std::fseek(file, 0, SEEK_SET);
         //no size:
-        if (!size) std::fclose(file);
+        if (!size)
+        {
+            std::fclose(file);
+            return out;
+        }
         /////////////////////////////////////////////////////////////////////
         out.resize(size, 0);
         square_assert_or_release(std::fread(&out[0], size, 1, file));
@@ -502,7 +551,7 @@ namespace Filesystem
         std::string output_path;
 
         //split
-        std::string separetor(SEPARETOR);
+        std::string separetor(SEPARETOR_STR);
         std::vector< std::string > base_directories = split(absolute_base.m_path, separetor);
         std::vector< std::string > path_directories = split(absolute_path.m_path, separetor);
 
@@ -550,22 +599,21 @@ namespace Filesystem
             return !!CopyFile(infilepath.c_str(), ofilepath.c_str(), false);
         #elif defined(__APPLE__)
             return copyfile(infilepath.c_str(), ofilepath.c_str(), NULL, COPYFILE_ALL) != 0;
-        #elif defined(__linux)
+            #elif defined(__linux__)
+            int fd_src, fd_dest;  // Declare file descriptors at the beginning
             struct stat src_stat;
             // Open source file
             fd_src = open(infilepath.c_str(), O_RDONLY);
-            if (fd_src == -1) 
+            if (fd_src == -1)
             {
                 return false;
             }
-
             // Get source file stats
-            if (fstat(fd_src, &src_stat) == -1) 
+            if (fstat(fd_src, &src_stat) == -1)
             {
                 close(fd_src);
                 return false;
             }
-
             // Open destination file
             fd_dest = open(ofilepath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, src_stat.st_mode);
             if (fd_dest == -1)
@@ -573,7 +621,6 @@ namespace Filesystem
                 close(fd_src);
                 return false;
             }
-
             // Use sendfile to copy
             off_t offset = 0;
             if (sendfile(fd_dest, fd_src, &offset, src_stat.st_size) == -1)
@@ -582,7 +629,6 @@ namespace Filesystem
                 close(fd_dest);
                 return false;
             }
-
             // Close files
             close(fd_src);
             close(fd_dest);

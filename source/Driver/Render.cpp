@@ -103,13 +103,15 @@ namespace Render
 		using namespace Square::Filesystem;
 		using namespace Square::SharedLibrary;
 		//locs
-		const std::string locations[] =
-		{
-			program_dir(),
-			working_dir(),
-            resource_dir(),
-			home_dir(),
-		};
+        #if defined(WIN32)
+            std::vector<std::string> locations;
+        #else
+            std::vector<std::string> locations = get_shared_lib_env_paths();
+        #endif
+        locations.push_back(program_dir());
+        locations.push_back(working_dir());
+        locations.push_back(resource_dir());
+        locations.push_back(home_dir());
 		//context
 		Context* context = nullptr;
 		//try

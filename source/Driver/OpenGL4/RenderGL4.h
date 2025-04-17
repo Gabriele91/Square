@@ -247,9 +247,9 @@ namespace Render
         virtual ~UniformGL4();
         
     protected:
-        ContextGL4* m_context;
-        Shader*     m_shader;
-        GLint       m_id;
+        ContextGL4* m_context { nullptr };
+        Shader*     m_shader { nullptr };
+        GLint       m_id{ 0 };
         
     };
     
@@ -363,11 +363,11 @@ namespace Render
         
     protected:
 		friend class Shader;
-        const ConstBuffer* m_const_buffer;
-        ContextGL4*        m_context;
-        Shader*            m_shader;
-		GLint              m_id;
-		GLuint             m_bind;
+        const ConstBuffer* m_const_buffer { nullptr };
+        ContextGL4*        m_context { nullptr };
+        Shader*            m_shader{ nullptr };
+		GLint              m_id{ 0 };
+		GLuint             m_bind{ 0 };
     };
 	
 	//Shader
