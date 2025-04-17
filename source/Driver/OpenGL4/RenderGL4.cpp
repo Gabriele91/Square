@@ -973,7 +973,7 @@ namespace Render
 		//Front face
 		glFrontFace(GL_CW);
 		//Coords like direcX
-		#if defined( _WIN32 ) ||  defined( __linux )
+		#if defined( _WIN32 ) || defined( __linux )
 		if(GLAD_VERSION_MAJOR(gl_loaded_version) >= 4 
 		&& GLAD_VERSION_MINOR(gl_loaded_version) >= 5
 		&& glClipControl)
@@ -981,11 +981,7 @@ namespace Render
 			glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE);
 			glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
 		}
-		else
 		#endif
-		{
-			glDepthRange(0.0, 1.0);
-		}
 #endif
 		//clean
 		print_errors();
