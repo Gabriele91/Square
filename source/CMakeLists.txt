@@ -49,19 +49,20 @@ if(WIN32)
     # Add DX11 Driver
     add_subdirectory(Driver/DirectX11)
     list(APPEND INSTALL_DY_LIBS SqDX11)
-    
-elseif(LINUX)
-    file(GLOB LINUX_SRC Driver/Xorg/*.cpp)
-    list(APPEND OS_SOURCES ${LINUX_SRC})
-    list(APPEND OS_LIBS X11
-                        Xxf86vm
-                        GLU
-                        GL
-                        xcb
-                        dl)
+
 elseif(APPLE)
     file(GLOB APPLE_SRC Driver/Cocoa/*.mm)
     list(APPEND OS_SOURCES ${APPLE_SRC})
+
+elseif(UNIX AND NOT APPLE)
+  file(GLOB LINUX_SRC Driver/Xorg/*.cpp)
+  list(APPEND OS_SOURCES ${LINUX_SRC})
+  list(APPEND OS_LIBS X11
+                      Xxf86vm
+                      GLU
+                      GL
+                      xcb
+                      dl)
 endif()
 
 # Add OGL Driver
