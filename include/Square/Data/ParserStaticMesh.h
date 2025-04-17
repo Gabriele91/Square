@@ -10,6 +10,18 @@ namespace Square
 {
 namespace Parser
 {
+	namespace StaticMeshAux
+	{
+		// Helper visitor (namespace-scope)
+		template<class... Ts>
+		struct vertex_visit : Ts... 
+		{
+			using Ts::operator()...;
+		};
+		template<class... Ts>
+		vertex_visit(Ts...) -> vertex_visit<Ts...>; // Deduction guide (MUST be at namespace scope)
+	}
+
 	class SQUARE_API StaticMesh
 	{
 	public:
@@ -31,17 +43,11 @@ namespace Parser
 			template < class... Ts >
 			void visit(Ts... args)
 			{
-				std::visit(vertex_visit 
+				std::visit(StaticMeshAux::vertex_visit 
 				{
 					std::forward<Ts>(args)...
 				}, m_vertex);
 			}
-
-		private:
-			// Helper type for the visitor 
-			template<class... Ts> struct vertex_visit : Ts... { using Ts::operator()...; };
-			// Explicit deduction guide 
-			template<class... Ts> vertex_visit(Ts...)-> vertex_visit<Ts...>;
 		};
 
 		bool parse(Context& default_context, const std::vector<unsigned char>& binary);
