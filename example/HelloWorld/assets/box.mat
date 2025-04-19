@@ -2,7 +2,7 @@ effect "Solid"
 {
     mask float(-1.0)
 	color Vec4(1.0,1.0,1.0,1.0)
-    diffuse_map  texture("box")
+    albedo_map  texture("box")
     normal_map   texture("box_normal_x")
     specular_map texture("box_specular")
     occlusion_map texture("box_occlusion")
