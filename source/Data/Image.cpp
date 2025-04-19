@@ -184,6 +184,14 @@ namespace  Data
 		//dealloc
 		delete[] line;
 	}
+
+	void Image::normal_inv_y()
+	{
+		apply_kernel([](Image& thiz,ImagePixel& pixel,unsigned long x,unsigned long y)
+		{
+			pixel.m_g = 255 - pixel.m_g;
+		});
+	}
 	
 	std::vector< unsigned char > Image::to_rgb()
 	{

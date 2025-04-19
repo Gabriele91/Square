@@ -47,6 +47,7 @@ namespace  Data
 		void apply_kernel(ImageKernel kernel);
 		void flip_vertical();
 		void flip_horizontal();
+		void normal_inv_y();
     
 		unsigned long get_width() const  { return m_width; }
 		unsigned long get_height() const { return m_height; }
