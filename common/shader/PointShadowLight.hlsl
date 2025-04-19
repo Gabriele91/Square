@@ -58,13 +58,12 @@ float point_light_compute_shadow(in Vec4 fposition, const float bias)
 	return point_light_shadow(fposition_to_light, bias);
 }
 
-void point_light_apply_shadow(inout LightResult result, in Vec4 fposition)
+float point_light_apply_shadow(in Vec4 fposition)
 {
 	//const bias
 	const float bias = 0.001;
 	//factor
 	float shadow_factor = point_light_compute_shadow(fposition, bias);
-	//add shadow
-	result.m_diffuse *= shadow_factor;
-	result.m_specular *= shadow_factor;
+	//return
+	return shadow_factor;
 }

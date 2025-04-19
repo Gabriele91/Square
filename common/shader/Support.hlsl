@@ -35,8 +35,8 @@ Mat3 compute_tbn(in Mat3 normal_matrix,
 
 Vec3 normal_from_texture(in Vec4 normal_color)
 {
-	//inv x axis (todo:try)
-	normal_color.x = 1.0f - normal_color.x;
+	// Inv G (Dx like)
+	normal_color.g = 1.0f - normal_color.g;
 	//return
 	return normalize(normal_color.rgb * 2.0f - 1.0f);
 }

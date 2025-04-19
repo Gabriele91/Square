@@ -3,7 +3,6 @@
 #define DEPTH 0
 #define BIAS 1
 #define SLOPE_BIAS 2
-#define DEBUG 0
 #include <ShadowCamera>
 Sampler2DArray(direction_shadow_map)
 
@@ -79,24 +78,12 @@ float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
 }
 #endif
 
-#if defined( DEBUG ) && DEBUG == 1
-static const Vec3 csm_colors[7] = {
-	Vec3(1.0f,0.0f,0.0f),
-	Vec3(0.0f,1.0f,0.0f),
-	Vec3(0.0f,0.0f,1.0f),
-	Vec3(1.0f,1.0f,0.0f),
-	Vec3(0.0f,1.0f,1.0f),
-	Vec3(1.0f,0.0f,1.0f),
-	Vec3(1.0f,1.0f,1.0f)
-};
-#endif
-
 Vec4 rh_mul_direction_light_view_projection(in Vec4 position, uint id)
 {
 	// Applicazione della vista
 	Vec4 position_new = mul(position, direction_shadow_camera.m_view[id]);
 
-	// Modifica la matrice ortografica per RH (se questo non è già fatto altrove)
+	// Modifica la matrice ortografica per RH (se questo non ï¿½ giï¿½ fatto altrove)
 	Mat4 rh_projection = direction_shadow_camera.m_projection[id];
 
 	// Applicazione della proiezione
@@ -125,22 +112,15 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3
 	// Compute bias
 	float bias = bias_depth_driven(view_dir, normal, cascade_id);
 	// Shadow
-#if defined( DEBUG ) && DEBUG == 1
 	float shadow = direction_light_shadow(proj_coords, cascade_id, bias);
-	Vec3  shadow_color = csm_colors[cascade_id] * 0.6 + Vec3(shadow, shadow, shadow) * 0.4f;
-#else
-	float shadow = direction_light_shadow(proj_coords, cascade_id, bias);
-	Vec3  shadow_color = Vec3(shadow, shadow, shadow);
-#endif
 	// return
-	return Vec4(shadow_color, 1.0f);
+	return shadow;
 }
 
-void direction_light_apply_shadow(inout LightResult result, in Vec4 fposition, in Vec3 view_dir, in Vec3 normal)
+float direction_light_apply_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3 normal)
 {
 	//factor
-	Vec4 shadow_factor = direction_light_compute_shadow(fposition, view_dir, normal);
+	float shadow_factor = direction_light_compute_shadow(fposition, view_dir, normal);
 	//add shadow
-	result.m_diffuse *= shadow_factor;
-	result.m_specular *= shadow_factor;
+	return shadow_factor;
 }

@@ -1,0 +1,47 @@
+parameters
+{
+    albedo_map    texture("white")
+    metallic_map  texture("black")
+    emmisive_map  texture("black")
+    roughness_map texture("white")
+    occlusion_map texture("white")    
+    normal_map    texture("normal_up")
+
+    mask         float(-1.0)
+    mask_shadow  float(-1.0)
+}
+
+sub_effect
+{	
+	//import shadow forward
+    technique "forward"
+    {
+        pass 
+        {
+            zbuffer less
+            blend off
+            cullface back
+            lights only_ambient
+            shader source 
+            {
+				#define FORWARD_RENDERING
+				#include "PBR.hlsl"
+            }
+        }
+        pass 
+        {
+            zbuffer equal
+            blend one one  
+            cullface back
+            lights spot_point_direction
+			shadows spot_point_direction
+            shader source 
+            {
+                #define FORWARD_RENDERING
+				#include "PBR.hlsl"
+            }
+		}
+    }
+	//import shadow caster
+	import <CastShadow> 
+}

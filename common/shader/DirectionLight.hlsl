@@ -21,8 +21,9 @@ cbuffer Light
 #ifdef RENDERING_SHADOW_ENABLE
 #include <DirectionShadowLight>
 #else
-void direction_light_apply_shadow(inout LightResult result, in Vec4 fposition, in Vec3  view_dir, in Vec3  normal)
+float direction_light_apply_shadow(in Vec4 fposition, in Vec3  view_dir, in Vec3  normal)
 {
+    return 1.0;
 }
 #endif
 
@@ -43,12 +44,12 @@ LightResult compute_light
     // Specular shading
     Vec3  halfway_dir = normalize(light_dir + view_dir);
     float spec = pow(max(dot(normal, halfway_dir), 0.0), shininess);
+    // Apply shadow
+    float shadow_factor = direction_light_apply_shadow(fposition, light_dir, normal);
     // Combine results
     LightResult result;
-    result.m_diffuse  = light.m_diffuse  * diff;
-    result.m_specular = light.m_specular * spec;
-    //apply shadow
-    direction_light_apply_shadow(result, fposition, light_dir, normal);
+    result.m_diffuse  = light.m_diffuse  * diff * shadow_factor;
+    result.m_specular = light.m_specular * spec * shadow_factor;
     //return
     return result;
 }
