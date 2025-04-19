@@ -6,9 +6,9 @@ Vec3 calculate_PBR(in Vec3 albedo,
                    in Vec3 light_relative, 
                    in Vec3 light_color) 
 {
-    const float PRB_EPSILON = 0.0001;
-    const float PRB_PLASTIC = 0.04;
-    const float PRB_MIN_ROUGHNESS = 0.01;
+    static const float PRB_EPSILON = NDF_MIN_EPSION;
+    static const float PRB_PLASTIC = 0.04;
+    static const float PRB_MIN_ROUGHNESS = 0.01;
 
     // Clamp roughness
     roughness = clamp(roughness, PRB_MIN_ROUGHNESS, 1.0);
@@ -46,8 +46,10 @@ Vec3 calculate_PBR(in Vec3 albedo,
     // multiply kD by the inverse metalness such that only non-metals
     // have diffuse lighting
     kD *= (1.0 - metallic);
+    // Final color
+    Vec3 color = kD * albedo / NDF_PI;
     
     // Radiance Lo
     // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
-    return (kD * albedo / NDF_PI + specular) * light_color * n_dot_l; 
+    return (color + specular) * light_color * n_dot_l; 
 }

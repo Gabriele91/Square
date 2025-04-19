@@ -1,6 +1,6 @@
 // PI
-const float NDF_PI = 3.14159265359;
-const float NDF_MIN_EPSION = 0.001;
+static const float NDF_PI = 3.14159265359;
+static const float NDF_MIN_EPSION = 0.0001;
 // ----------------------------------------------------------------------------
 Vec3 fresnel_schlick(float cos_theta, in Vec3 F0)
 {
