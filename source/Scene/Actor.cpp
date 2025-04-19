@@ -185,9 +185,15 @@ namespace Scene
             for(auto& jcomponent : jcomponents.array())
             if (jcomponent.contains("name") && jcomponent["name"].is_string())
             {
+                const std::string& component_name = jcomponent["name"].string();
                 //new component
-                Shared<Component> component = this->component(jcomponent["name"].string());
-                if (jcomponent.contains("data") && jcomponent["data"].is_object())
+                Shared<Component> component = this->component(component_name);
+                //test component
+                if (!component)
+                {
+                    context().logger()->warning("Invalid component:" + component_name);
+                }
+                else if (jcomponent.contains("data") && jcomponent["data"].is_object())
                 {
                     //deserialize component
                     component->deserialize_json(jcomponent["data"]);
