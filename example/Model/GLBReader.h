@@ -7,7 +7,7 @@ namespace Data
 {
 namespace GLB
 {
-	static constexpr const char extension[4]{ '.','g','l','b' };
+	static constexpr const char extension[5]{ '.','g','l','b', '\0' };
 
 	enum class ChunkType : uint32
 	{

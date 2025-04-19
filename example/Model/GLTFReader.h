@@ -8,7 +8,7 @@ namespace Data
 {
 namespace GLTF 
 {
-    static constexpr const char extension[5]{ '.','g','l','T','F' };
+    static constexpr const char extension[6]{ '.','g','l','T','F', '\0' };
 
     // Enum for GLTF component types
     enum class ComponentType : unsigned int
