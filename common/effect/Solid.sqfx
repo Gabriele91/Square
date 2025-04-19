@@ -1,6 +1,6 @@
 parameters
 {
-    diffuse_map  texture("white")
+    albedo_map  texture("white")
     normal_map   texture("normal_up")
     specular_map texture("black")
     occlusion_map texture("white")

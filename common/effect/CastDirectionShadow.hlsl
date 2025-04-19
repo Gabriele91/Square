@@ -8,7 +8,7 @@
 //global uniform
 float shadow_mask;
 //texture
-Sampler2D(diffuse_map);
+Sampler2D(albedo_map);
 ////////////////
 // REFERENCES:
 // DirectX http://developers-club.com/posts/259679/
@@ -97,7 +97,7 @@ struct FragmentShaderinput
 
 void fragment(in FragmentShaderinput input)
 {
-	//diffuse/albedo
-	Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);
-    if (diffuse_color.a <= shadow_mask) discard;
+	//albedo/albedo
+	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
+    if (albedo_color.a <= shadow_mask) discard;
 }

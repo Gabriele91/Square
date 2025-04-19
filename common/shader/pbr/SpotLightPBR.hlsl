@@ -68,10 +68,13 @@ LightResult compute_light
     float epsilon = light.m_inner_cut_off - light.m_outer_cut_off;
     float penumbra_intensity = clamp((theta - light.m_outer_cut_off) / epsilon, 0.0, 1.0);
 
-    // Spotlight Radiance
-    Vec3 light_color = light.m_diffuse * attenuation * penumbra_intensity;
+    // Shadow
+    float shadow_factor = spot_light_apply_shadow(data.m_position);
 
-    // PBR
+    // Spotlight Radiance
+    Vec3 light_color = light.m_diffuse * (attenuation * penumbra_intensity * shadow_factor);
+
+    // Compute PBR material
     result.m_radiance = calculate_PBR(data.m_albedo, 
                                       data.m_metallic,
                                       data.m_roughness, 
@@ -79,12 +82,6 @@ LightResult compute_light
                                       view_direction, 
                                       light_relative, 
                                       light_color);
-
-    // Shadow
-    float shadow_factor = spot_light_apply_shadow(data.m_position);
-    // Shadow
-    result.m_radiance *= shadow_factor;
-
     //return
     return result;
 }

@@ -25,7 +25,7 @@ float smoothness;
 Vec4 color;
 
 //texture
-Sampler2D(diffuse_map);
+Sampler2D(albedo_map);
 Sampler2D(normal_map);
 Sampler2D(specular_map);
 Sampler2D(occlusion_map);
@@ -47,9 +47,9 @@ VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
 
 surface(VertexShaderOutput input)
 {
-	//diffuse/albedo
-	Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);
-	if (diffuse_color.a <= mask) discard;
+	//Albedo
+	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
+	if (albedo_color.a <= mask) discard;
 	//material info
 	Vec4 normal_color = texture2D(normal_map, input.m_uv);
 	Vec4 specular_color = texture2D(specular_map, input.m_uv);
@@ -58,8 +58,8 @@ surface(VertexShaderOutput input)
 	SurfaceData data = DefaultSurfaceData();
 	data.m_position = input.m_world_position;
 	//color
-	data.m_albedo = color.rgb * diffuse_color.rgb;
-	data.m_alpha = color.a * diffuse_color.a;
+	data.m_albedo = color.rgb * albedo_color.rgb;
+	data.m_alpha = color.a * albedo_color.a;
 	//norm info
 	Mat3 TBN = Mat3(input.m_tangent, input.m_binomial, input.m_normal);
 	data.m_normal = normalize(mul(normal_from_texture(normal_color), TBN));

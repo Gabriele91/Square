@@ -15,7 +15,7 @@ struct VertexShaderOutput
 float shadow_mask;
 
 //texture
-Sampler2D(diffuse_map);
+Sampler2D(albedo_map);
 
 //draw
 VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input)
@@ -28,7 +28,7 @@ VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input)
 
 void fragment(in VertexShaderOutput input)
 {
-	//diffuse/albedo
-	Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);
-	if (diffuse_color.a <= shadow_mask) discard;
+	//albedo/albedo
+	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
+	if (albedo_color.a <= shadow_mask) discard;
 }

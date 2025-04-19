@@ -1,6 +1,6 @@
 parameters
 {
-    diffuse_map  texture("white")
+    albedo_map  texture("white")
     shadow_mask  float(-1.0)
 }
 

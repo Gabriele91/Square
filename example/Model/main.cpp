@@ -225,7 +225,7 @@ class MaterialManager
             "{\n"
                 "\tmask float(%f)\n"
                 "\tcolor Vec4(%f,%f,%f,%f)\n"
-                "\tdiffuse_map  texture(\"%s\")\n"
+                "\talbedo_map  texture(\"%s\")\n"
                 "\tnormal_map   texture(\"%s\")\n"
                 "\tspecular_map texture(\"%s\")\n"
                 "\tocclusion_map texture(\"%s\")\n"
@@ -233,7 +233,7 @@ class MaterialManager
         };
         float tmask = material.alpha_cutoff;
         Square::Vec4 tcolor ( material.emissive_factor, 1.0f );
-        std::string diffuse_map = material.pbr_metallic_roughness.has_value() && material.pbr_metallic_roughness.value().base_color_texture.has_value()
+        std::string albedo_map = material.pbr_metallic_roughness.has_value() && material.pbr_metallic_roughness.value().base_color_texture.has_value()
                                 ? texture_manager.at(material.pbr_metallic_roughness.value().base_color_texture.value().index).value_or("default") 
                                 : "default";
         std::string normal_map = material.normal_texture.has_value() ?
@@ -250,7 +250,7 @@ class MaterialManager
         std::snprintf(&output_template[0], 255, solit_material_template, 
             tmask,
             tcolor.x, tcolor.y, tcolor.z, tcolor.w,
-            diffuse_map.c_str(),
+            albedo_map.c_str(),
             normal_map.c_str(),
             specular_map.c_str(),
             occlusion_map.c_str()

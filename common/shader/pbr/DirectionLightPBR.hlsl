@@ -37,19 +37,20 @@ LightResult compute_light
     // Combine results
     LightResult result;
 
-    // PBR
+    // Shadow
+    float shadow_factor = direction_light_apply_shadow(data.m_position, view_direction, data.m_normal);
+
+    // Lgiht final color
+    Vec3 light_color = light.m_diffuse * shadow_factor;
+
+    // Compute PBR material
     result.m_radiance = calculate_PBR(data.m_albedo, 
                                       data.m_metallic,
                                       data.m_roughness, 
                                       data.m_normal, 
                                       view_direction, 
                                       -light.m_direction, 
-                                      light.m_diffuse);
-
-    // Shadow
-    float shadow_factor = direction_light_apply_shadow(data.m_position, view_direction, data.m_normal);
-    result.m_radiance *= shadow_factor;
-
+                                      light_color);
     //return
     return result;
 }
