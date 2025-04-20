@@ -30,6 +30,7 @@ namespace GLB
 	
 	struct GLB
 	{
+		std::string path;
 		std::string json;
 		std::vector<unsigned char> bin;
 		GLB() = default;
@@ -57,6 +58,8 @@ namespace GLB
 		const unsigned char* ptr = buffer.data() + sizeof(Header);
 		// Output GLB
 		GLB glb_output;
+		// Set path
+		glb_output.path = path;
 		// Each Chunk
 		while(ptr < file_end && ptr < &buffer.back())
 		{ 

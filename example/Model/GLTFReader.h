@@ -348,11 +348,11 @@ namespace GLTF
     // Structure for GLTF textures
     struct Texture
     {
-        size_t sampler;     // Sampler index
-        size_t source;      // Image index
+        std::optional< size_t > sampler; // Sampler index
+        size_t source;                   // Image index
 
-        Texture(size_t sampler, size_t source)
-            : sampler(sampler), source(source) {}
+        Texture(size_t source) : source(source) {}
+        Texture(std::optional< size_t > sampler, size_t source) : sampler(sampler), source(source) {}
     };
 
     // Structure for Material
@@ -377,7 +377,7 @@ namespace GLTF
         // Structure for PBR Metallic Roughness
         struct PbrMetallicRoughness 
         {
-            Vec4 baseColorFactor = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            Vec4 base_color_factor = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
             std::optional<TextureInfo> base_color_texture;
             float metallic_factor = 1.0f;
             float roughness_factor = 1.0f;
@@ -508,6 +508,7 @@ namespace GLTF
     // GLTF Loader
     struct GLTF
     {
+        std::string path;
         Buffers buffers;
         Views views;
         Accessors accessors;
@@ -524,8 +525,9 @@ namespace GLTF
 
         GLTF() = default;
         GLTF(GLTF&&) = default;
-        GLTF(Buffers&& buffers, Views&& views, Accessors&& accessors, Meshes&& meshes, Cameras&& cameras, Lights&& lights, Images&& images, Samplers&& samplers, Textures&& textures, Materials&& materials, Nodes&& nodes, Scenes&& scenes, size_t default_scene)
-            : buffers(std::forward<Buffers>(buffers))
+        GLTF(const std::string& path, Buffers&& buffers, Views&& views, Accessors&& accessors, Meshes&& meshes, Cameras&& cameras, Lights&& lights, Images&& images, Samplers&& samplers, Textures&& textures, Materials&& materials, Nodes&& nodes, Scenes&& scenes, size_t default_scene)
+            : path(path)
+            , buffers(std::forward<Buffers>(buffers))
             , views(std::forward<Views>(views))
             , accessors(std::forward<Accessors>(accessors))
             , meshes(std::forward<Meshes>(meshes))
@@ -707,7 +709,14 @@ namespace GLTF
         for (auto& jtexture : jtextures)
         {
             auto texture = jtexture.object({});
-            size_t sampler_index = texture["sampler"].number(0);
+            // Looking for sampler
+            std::optional<size_t> sampler_index;
+            auto it_texture_sampler = texture.find("sampler");
+            if(it_texture_sampler != texture.end())
+            {
+                sampler_index = it_texture_sampler->second.number(0);
+            }
+            // Get source
             size_t image_index = texture["source"].number(0);
 
             out_textures.emplace_back(sampler_index, image_index);
@@ -895,7 +904,7 @@ namespace GLTF
         // Function to decode PBR Metallic-Roughness from JSON data
         static Material::PbrMetallicRoughness decode_pbr_metallic_roughness(const JsonObject& pbr)
         {
-            Vec4 base_color_factor{ 0.0f };
+            Vec4 base_color_factor{ 1.0f };
             if (pbr.find("baseColorFactor") != pbr.end())
             {
                 auto& base_color = pbr.at("baseColorFactor").array({ 1.0,1.0,1.0,1.0 });
@@ -1233,7 +1242,7 @@ namespace GLTF
     namespace Aux
     {
         // Decode GLTF from json and bins
-        static GLTFReturn decode_from_json_and_buffers(Json&& jmodel, Buffers&& buffers)
+        static GLTFReturn decode_from_json_and_buffers(const std::string& path, Json&& jmodel, Buffers&& buffers)
         {
             // Get document:
             JsonObject& document = jmodel.document().object();
@@ -1241,8 +1250,9 @@ namespace GLTF
             JsonObject KHR_lights_punctual = extensions["KHR_lights_punctual"].object({});
             // Get all components
             return GLTF
-            {
-                  std::move(buffers)
+            {   
+                path
+                , std::move(buffers)
                 , std::move(decode_views(document["bufferViews"]))
                 , std::move(decode_accessors(document["accessors"]))
                 , std::move(decode_meshes(document["meshes"]))
@@ -1279,7 +1289,7 @@ namespace GLTF
         // Get buffers:
         Buffers buffers = load_buffers(path, jmodel.document()["buffers"]);
         // Decode
-        return Aux::decode_from_json_and_buffers(std::move(jmodel), std::move(buffers));
+        return Aux::decode_from_json_and_buffers(path, std::move(jmodel), std::move(buffers));
     }
     
     // Load GLTF from GLB bin
@@ -1302,7 +1312,7 @@ namespace GLTF
         // As a vector
         Buffers buffers{ std::move(glb.bin) };
         // Decode
-        return Aux::decode_from_json_and_buffers(std::move(jmodel), std::move(buffers));
+        return Aux::decode_from_json_and_buffers(glb.path, std::move(jmodel), std::move(buffers));
     }
 
     // Load GLTF

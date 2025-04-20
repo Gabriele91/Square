@@ -26,6 +26,10 @@ Sampler2D(roughness_map);
 Sampler2D(occlusion_map);
 Sampler2D(normal_map);
 //global uniform
+Vec4  color;
+float metallic;
+float roughness;
+Vec3 emmisive;
 float mask;
 
 VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
@@ -51,11 +55,11 @@ surface(VertexShaderOutput input)
 	// Diffuse/albedo
 	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
 	if (albedo_color.a <= mask) discard;
-	data.m_albedo = albedo_color.rgb;
+	data.m_albedo = albedo_color.rgb * color.rgb;
 	// Alpha
-	data.m_alpha = albedo_color.a;
+	data.m_alpha = albedo_color.a * color.a;
 	// Emmisive
-	data.m_emmisive = texture2D(emmisive_map, input.m_uv).rgb;
+	data.m_emmisive = texture2D(emmisive_map, input.m_uv).rgb * emmisive;
 	// Normal
 	Vec4 normal_color = texture2D(normal_map, input.m_uv);
 	Mat3 TBN = Mat3(input.m_tangent, input.m_binomial, input.m_normal);
@@ -63,9 +67,9 @@ surface(VertexShaderOutput input)
 	// AO
 	data.m_occlusion = texture2D(occlusion_map, input.m_uv).r;
 	// Metallic
-	data.m_metallic = texture2D(metallic_map, input.m_uv).r;
+	data.m_metallic = texture2D(metallic_map, input.m_uv).b * metallic; // glTF uses B channel for the metallic
 	// Roughness
-	data.m_roughness = texture2D(roughness_map, input.m_uv).r;
+	data.m_roughness = texture2D(roughness_map, input.m_uv).g * roughness; // glTF uses G channel for the roughness
 	//return
 	surface_return(data);
 }

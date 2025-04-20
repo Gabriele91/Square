@@ -90,7 +90,7 @@ public:
     {
         for (auto& image : gltf.images)
         {
-            add_image(image);
+            add_image(image, gltf.path);
         }
         for (auto& sempler : gltf.samplers)
         {
@@ -102,7 +102,7 @@ public:
         }
     }
 
-    size_t add_image(const Square::Data::GLTF::Image& in_image)
+    size_t add_image(const Square::Data::GLTF::Image& in_image, const std::string& gltfpath)
     {
         if (std::holds_alternative<Square::Data::GLTF::ImagePath>(in_image))
         {
@@ -113,8 +113,11 @@ public:
                          + "_" + std::to_string(index)
                          + Square::Filesystem::get_extension(image_path.uri);
             auto outputpath = Square::Filesystem::join(m_output, newname);
+            // Real image path
+            auto gltfwd = Square::Filesystem::get_directory(gltfpath);
+            auto imagepath = Square::Filesystem::join(gltfwd, image_path.uri);
             // Copy
-            if (!Square::Filesystem::copyfile(image_path.uri, outputpath))
+            if (!Square::Filesystem::copyfile(imagepath, outputpath))
             {
                 m_context.logger()->warning("unable to copy: " + image_path.uri);
             }
@@ -152,50 +155,36 @@ public:
         m_samplers.push_back(output_template);
         return m_samplers.size();
     }
+
     size_t add_texture(const Square::Data::GLTF::Texture& texture, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers)
     {
-        if (texture.sampler < m_samplers.size() && texture.source < m_images.size())
+        if (texture.sampler.has_value() && texture.sampler < m_samplers.size() && texture.source < m_images.size())
         {
             const auto& in_image = m_images[texture.source];
-            const auto& sampler = m_samplers[texture.sampler];
-            std::string texture_id = "_" + std::to_string(m_textures.size());
-            if (std::holds_alternative<std::string>(in_image))
-            {
-                std::string image_uri = std::get<std::string>(in_image);
-                std::string texture_sampler_body = sampler + "url " + Square::Filesystem::get_filename(image_uri) + "\n";
-                std::string texture_sampler_path = Square::Filesystem::join(m_output, Square::Filesystem::get_basename(image_uri) + texture_id + ".sqtex");
-
-                Square::Filesystem::text_file_write_all(texture_sampler_path, texture_sampler_body);
-                m_textures.push_back(texture_sampler_path);
-                return m_textures.size();
-            }
-            else if (std::holds_alternative<TextureBufferDescription>(in_image))
-            {
-                const TextureBufferDescription& image_buffer_description = std::get<TextureBufferDescription>(in_image);
-                std::string texture_path = Square::Filesystem::join(m_output, image_buffer_description.m_name + texture_id + ".sqtex");
-                std::string texture_body = sampler + "data";
-                // Get buffer
-                if (image_buffer_description.m_index < views.size())
-                {
-                    const auto& image_data_view = views[image_buffer_description.m_index];
-                    const auto& image_buffer = buffers[image_data_view.buffer];
-                    /////////////////////////////////////////////////////////////////////
-                    FILE* texture_pfile = std::fopen(texture_path.c_str(), "wb");
-                    //bad case
-                    if (texture_pfile)
-                    {
-                        std::fwrite(texture_body.data(), texture_body.size(), 1, texture_pfile);
-                        std::fwrite(&image_buffer[image_data_view.offset], image_data_view.length, 1, texture_pfile);
-                        /////////////////////////////////////////////////////////////////////
-                        std::fclose(texture_pfile);
-                        /////////////////////////////////////////////////////////////////////
-                        m_textures.push_back(texture_path);
-                        return m_textures.size();
-                    }
-                }
-            }
+            const auto& sampler = m_samplers[texture.sampler.value()];
+            return add_texture_internal(in_image, sampler, views, buffers);
         }
-        m_context.logger()->warning("Invalid texture");
+        else if (!texture.sampler.has_value() && texture.source < m_images.size())
+        {           
+            const auto& in_image = m_images[texture.source];
+            std::string texture_id = "_" + std::to_string(m_textures.size());
+            const std::string sampler = "mag_filter linear\n"
+                                         "min_filter linear_mipmap_linear\n"
+                                         "wrap_s repeat\n"
+                                         "wrap_t repeat\n"
+                                         "wrap_r repeat\n";
+            return add_texture_internal(in_image, sampler, views, buffers);
+        }
+        // Output
+        if (texture.sampler.has_value())
+        {
+            m_context.logger()->warning("Invalid texture(" +  std::to_string(texture.sampler.value()) + ", " +  std::to_string(texture.source) + ")");
+        }
+        else
+        {
+            m_context.logger()->warning("Invalid texture(NONE, " +  std::to_string(texture.source) + ")");
+        }
+        // Return invalid id
         return ~size_t(0);
     }
 
@@ -208,6 +197,48 @@ public:
         }
         return texture;
     }
+
+private:
+
+    size_t add_texture_internal(const TextureType& in_image, const std::string& sampler, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers)
+    {
+        std::string texture_id = "_" + std::to_string(m_textures.size());
+        if (std::holds_alternative<std::string>(in_image))
+        {
+            std::string image_uri = std::get<std::string>(in_image);
+            std::string texture_sampler_body = sampler + "url " + Square::Filesystem::get_filename(image_uri) + "\n";
+            std::string texture_sampler_path = Square::Filesystem::join(m_output, Square::Filesystem::get_basename(image_uri) + texture_id + ".sqtex");
+
+            Square::Filesystem::text_file_write_all(texture_sampler_path, texture_sampler_body);
+            m_textures.push_back(texture_sampler_path);
+            return m_textures.size();
+        }
+        else if (std::holds_alternative<TextureBufferDescription>(in_image))
+        {
+            const TextureBufferDescription& image_buffer_description = std::get<TextureBufferDescription>(in_image);
+            std::string texture_path = Square::Filesystem::join(m_output, image_buffer_description.m_name + texture_id + ".sqtex");
+            std::string texture_body = sampler + "data";
+            // Get buffer
+            if (image_buffer_description.m_index < views.size())
+            {
+                const auto& image_data_view = views[image_buffer_description.m_index];
+                const auto& image_buffer = buffers[image_data_view.buffer];
+                /////////////////////////////////////////////////////////////////////
+                FILE* texture_pfile = std::fopen(texture_path.c_str(), "wb");
+                //bad case
+                if (texture_pfile)
+                {
+                    std::fwrite(texture_body.data(), texture_body.size(), 1, texture_pfile);
+                    std::fwrite(&image_buffer[image_data_view.offset], image_data_view.length, 1, texture_pfile);
+                    /////////////////////////////////////////////////////////////////////
+                    std::fclose(texture_pfile);
+                    /////////////////////////////////////////////////////////////////////
+                    m_textures.push_back(texture_path);
+                    return m_textures.size();
+                }
+            }
+        }
+    }
 };
 
 class MaterialManager
@@ -217,7 +248,7 @@ class MaterialManager
     Square::Context& m_context;
     std::string m_output;
 
-    static inline std::string template_material(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
+    static inline std::string template_material_standard(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
     {
         const char solit_material_template[] =
         {
@@ -257,6 +288,64 @@ class MaterialManager
         );
         return output_template;
     }
+    
+    static inline std::string template_material_pbr(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
+    {
+        
+        const char pbr_material_template[] =
+        {
+            "effect \"PBR\"\n"
+            "{\n"
+                "\talbedo_map    texture(\"%s\")\n"
+                "\tmetallic_map  texture(\"%s\")\n"
+                "\troughness_map texture(\"%s\")\n"
+                "\temmisive_map  texture(\"%s\")\n"
+                "\tocclusion_map texture(\"%s\")\n"   
+                "\tnormal_map    texture(\"%s\")\n"
+
+                "\tcolor Vec4(%f,%f,%f,%f)\n"
+                "\tmetallic float(%f)\n"
+                "\troughness float(%f)\n"
+                "\temmisive Vec3(%f,%f,%f)\n"
+                
+                "\tmask float(%f)\n"
+            "}"
+        };
+
+        auto get_texture = [&](const std::optional<Square::Data::GLTF::Material::TextureInfo>& texture, const std::string& default_name)
+        {
+            return texture.has_value() ?  texture_manager.at(texture.value().index).value_or(default_name) : default_name;
+        };
+
+        std::string albedo_map = material.pbr_metallic_roughness.has_value() ? get_texture(material.pbr_metallic_roughness.value().base_color_texture, "default") : "default";
+        std::string metallic_map = material.pbr_metallic_roughness.has_value() ? get_texture(material.pbr_metallic_roughness.value().metallic_roughness_texture, "black") : "black";
+        std::string roughness_map = material.pbr_metallic_roughness.has_value() ? get_texture(material.pbr_metallic_roughness.value().metallic_roughness_texture, "white") : "white";
+        std::string emmisive_map = get_texture(material.emissive_texture, "black");
+        std::string occlusion_map = get_texture(material.occlusion_texture, "white");
+        std::string normal_map = get_texture(material.normal_texture, "normal_up");
+
+        const Square::Vec4 color = material.pbr_metallic_roughness.value_or(Square::Data::GLTF::Material::PbrMetallicRoughness()).base_color_factor;
+        const float metallic = material.pbr_metallic_roughness.value_or(Square::Data::GLTF::Material::PbrMetallicRoughness()).metallic_factor;
+        const float roughness = material.pbr_metallic_roughness.value_or(Square::Data::GLTF::Material::PbrMetallicRoughness()).roughness_factor;
+        const Square::Vec3 emissive = material.emissive_factor;
+        const float mask = material.alpha_cutoff;
+
+        char output_template[2048] = { '\0' };
+        std::snprintf(&output_template[0], 2048, pbr_material_template, 
+            albedo_map.c_str(),
+            metallic_map.c_str(),
+            roughness_map.c_str(),
+            emmisive_map.c_str(),
+            occlusion_map.c_str(),
+            normal_map.c_str(),
+            color.x, color.y, color.z, color.w,
+            metallic,
+            roughness,
+            emissive.x, emissive.y, emissive.z,
+            mask
+        );
+        return output_template;
+    }
 
 public:
     MaterialManager(Square::Context& context, const std::string& output)
@@ -288,7 +377,7 @@ public:
 
     size_t add_material(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
     {
-        const std::string material_data = template_material(material, texture_manager);
+        const std::string material_data = template_material_pbr(material, texture_manager);
         const std::string material_name = material.name + "_" + std::to_string(m_materials.size());
         const std::string material_path = Square::Filesystem::join(m_output, material_name + ".mat");
         Square::Filesystem::text_file_write_all(material_path, material_data);
@@ -532,6 +621,7 @@ public:
         using namespace Square::Scene;
         // Add common resources
         context().add_resources(Filesystem::join(Filesystem::resource_dir(), "/resources.rs"));
+        context().add_resources(Filesystem::join(Filesystem::resource_dir(), "/common/common.rs"));
         // Load
         auto loaded_model = GLTF::load(m_input_model_path);
         // Test

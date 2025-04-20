@@ -7,6 +7,11 @@ parameters
     occlusion_map texture("white")    
     normal_map    texture("normal_up")
 
+    color Vec4(1.0,1.0,1.0,1.0)
+    metallic float(1.0)
+    roughness float(1.0)
+    emmisive Vec3(1.0,1.0,1.0)
+
     mask         float(-1.0)
     mask_shadow  float(-1.0)
 }
