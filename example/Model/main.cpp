@@ -705,7 +705,7 @@ public:
                                     {
                                         // Get material id
                                         size_t mat_id = mesh_mats->at(i);
-                                        std::string name = material_manager.at(i).value_or("default");
+                                        std::string name = material_manager.at(mat_id).value_or("default");
                                         actor->component<StaticMesh>()->m_materials.push_back(context().resource<Resource::Material>(name));
                                     }
                                     for (; i < mesh->number_of_sub_meshs(); ++i)
