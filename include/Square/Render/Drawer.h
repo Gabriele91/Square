@@ -6,6 +6,7 @@
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
+#include <set>
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
 #include "Square/Core/Object.h"
@@ -146,6 +147,15 @@ namespace Render
         //CPU DATA
         Square::Context& m_context;
         std::vector< Shared<DrawerPass> > m_rendering_pass[RPT_MAX];
+
+        //Cache objects to draw
+        PoolQueues m_camera_queue;
+        PoolQueues m_light_queue;   
+        std::set<Light*> m_drawn_shadow_lights;
+
+        bool can_draw_shadow(Light* light);
+        Geometry::AABoundingBox scene_size(PoolQueues& queues);
+        void camera_draw( const Vec4& clear_color, const Vec4& ambient_color, size_t camera_index, const Collection& collection, unsigned char pass_types = DrawerPassType::RPT_ALL);
 
     };
 }

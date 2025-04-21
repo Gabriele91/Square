@@ -153,6 +153,8 @@ namespace Render
         const Queue& operator[](QueueType type) const;
         //Init
         explicit PoolQueues(Allocator* allocator);
+        // Clear
+        void clear();
         // Allow move
         PoolQueues(PoolQueues&& other) noexcept = default;
         PoolQueues& operator=(PoolQueues && other) noexcept = default;

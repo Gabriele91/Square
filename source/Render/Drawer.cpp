@@ -133,7 +133,11 @@ namespace Render
     }
 
     //Init
-    Drawer::Drawer(Square::Context& context):m_context(context){}
+    Drawer::Drawer(Square::Context& context)
+    :m_context(context)
+    ,m_camera_queue(context.allocator())
+    ,m_light_queue(context.allocator())
+    {}
     
     //context
     Square::Context& Drawer::context(){ return m_context; }
@@ -152,88 +156,95 @@ namespace Render
                       const Collection& collection, 
                       unsigned char draw_types)
     {
-        //objects queues
-        std::vector<PoolQueues> queues;
-        init_vector(queues, collection.m_cameras.size(), context().allocator());
-        //shadow rendered
-        std::set<Light*> m_shadows_draw;
-        //filter
-        auto can_draw_shadow = [&](Light* light) -> bool
-        {  
-            return light->visible() && light->shadow() && m_shadows_draw.find(light) == m_shadows_draw.end();
-        };
-        //build queues
-        for(auto [camera_index, weak_camera] : enumerate(collection.m_cameras))
-        if (auto camera = weak_camera.lock())
+        // Reset the lights drawn
+        m_drawn_shadow_lights.clear();
+        // For each camera
+        for(size_t camera_index = 0; camera_index < collection.m_cameras.size(); ++camera_index)
         {
-            CollectionQuery::lights(collection, queues[camera_index], *camera);
-            CollectionQuery::renderables(collection, queues[camera_index], *camera);
+            // Reset object queue
+            m_camera_queue.clear();
+            // Draw!
+            camera_draw(clear_color, ambient_color,  camera_index, collection, draw_types);
         }
+    }
+    
+    bool Drawer::can_draw_shadow(Light* light)
+    {
+        return light->visible() && light->shadow() && m_drawn_shadow_lights.find(light) == m_drawn_shadow_lights.end();
+    }
+
+    Geometry::AABoundingBox Drawer::scene_size(PoolQueues& queues)
+    {
         //compute scene size
-        auto scene_size = [](PoolQueues& queues) -> Geometry::AABoundingBox
+        Geometry::AABoundingBox scene_aabb
+        (
+            Vec3{ std::numeric_limits<float>::max() },
+            Vec3{ std::numeric_limits<float>::lowest() }
+        );
+        //for each elements of opaque and translucent queues
+        for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
         {
-            //compute scene size
-            Geometry::AABoundingBox scene_aabb
-            (
-                Vec3{ std::numeric_limits<float>::max() },
-                Vec3{ std::numeric_limits<float>::lowest() }
-            );
-            //for each elements of opaque and translucent queues
-            for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
+            if (randerable)
             {
-                if (randerable)
-                {
-                    //jump?
-                    if (!randerable->can_draw()) continue;
-                    //get box
-                    scene_aabb = scene_aabb.merge(randerable->bounding_box().to_aabb());
-                }
+                //jump?
+                if (!randerable->can_draw()) continue;
+                //get box
+                scene_aabb = scene_aabb.merge(randerable->bounding_box().to_aabb());
             }
-            return scene_aabb;
-        };
+        }
+        return scene_aabb;
+    }
+
+    void Drawer::camera_draw(const Vec4& clear_color, const Vec4& ambient_color, size_t camera_index, const Collection& collection, unsigned char draw_types)
+    {
+        //Test index
+        if ( collection.m_cameras.size() <= camera_index ) return;
+        //Init queue
+        auto camera = collection.m_cameras[camera_index].lock();
+        // Test camera pointer
+        if (!camera) return;
+        //build queues
+        CollectionQuery::lights(collection, m_camera_queue, *camera);
+        CollectionQuery::renderables(collection, m_camera_queue, *camera);
         //shadow caster
         if(bool(draw_types & DrawerPassType::RPT_SHADOW))
         {
-            for(auto [camera_index, weak_camera] : enumerate(collection.m_cameras))
-            if (auto camera = weak_camera.lock())
+            //pass counter
+            int pass_shadow_count { 0 };
+            //for each pass
+            for(auto& pass : m_rendering_pass[draw_pass_type_to_index(RPT_SHADOW)])
             {
-                //pass counter
-                int pass_shadow_count { 0 };
-                //for each pass
-                for(auto& pass : m_rendering_pass[draw_pass_type_to_index(RPT_SHADOW)])
+                //draw a shadow map
+                auto draw_shadow = [&](const Shared<Light>& light, QueueType queue_type)
                 {
-                    //draw a shadow map
-                    auto draw_shadow = [&](const Shared<Light>& light, QueueType queue_type)
+                    if (light)
+                    if (can_draw_shadow(light.get()))
                     {
-                        if (light)
-                        if (can_draw_shadow(light.get()))
-                        {
-						    //opaque queue
-						    PoolQueues queues(context().allocator());
-						    //compute queue
-						    CollectionQuery::renderables(collection, queues, *light);
-                            //set scene size
-                            if(queue_type == RQ_DIRECTION_LIGHT)
-                                light->set_scene_size(scene_size(queues));
-                            //draw
-                            pass->draw(  *this
-                                        , pass_shadow_count++
-                                        , clear_color
-                                        , ambient_color
-                                        , *camera
-                                        , *light
-                                        , collection
-                                        , queues
-                                        );
-						    //drawed
-                            m_shadows_draw.insert(light.get());
-                        }
-                    };
-                    //for spot light objects
-                    for(auto e_light : queues[camera_index][RQ_SPOT_LIGHT]) draw_shadow(e_light->lock<Light>(), RQ_SPOT_LIGHT);
-                    for(auto e_light : queues[camera_index][RQ_POINT_LIGHT]) draw_shadow(e_light->lock<Light>(), RQ_POINT_LIGHT);
-                    for(auto e_light : queues[camera_index][RQ_DIRECTION_LIGHT]) draw_shadow(e_light->lock<Light>(), RQ_DIRECTION_LIGHT);
-                }
+                        // Clear
+                        m_light_queue.clear();
+                        //compute queue
+                        CollectionQuery::renderables(collection, m_light_queue, *light);
+                        //set scene size
+                        if(queue_type == RQ_DIRECTION_LIGHT)
+                            light->set_scene_size(scene_size(m_light_queue));
+                        //draw
+                        pass->draw(  *this
+                                    , pass_shadow_count++
+                                    , clear_color
+                                    , ambient_color
+                                    , *camera
+                                    , *light
+                                    , collection
+                                    , m_light_queue
+                                    );
+                        //drawed
+                        m_drawn_shadow_lights.insert(light.get());
+                    }
+                };
+                //for spot light objects
+                for(auto e_light : m_camera_queue[RQ_SPOT_LIGHT]) draw_shadow(e_light->lock<Light>(), RQ_SPOT_LIGHT);
+                for(auto e_light : m_camera_queue[RQ_POINT_LIGHT]) draw_shadow(e_light->lock<Light>(), RQ_POINT_LIGHT);
+                for(auto e_light : m_camera_queue[RQ_DIRECTION_LIGHT]) draw_shadow(e_light->lock<Light>(), RQ_DIRECTION_LIGHT);
             }
         }
         //for each cameras
@@ -254,7 +265,7 @@ namespace Render
                                , ambient_color
                                , *camera
                                , collection
-                               , queues[camera_index]
+                               , m_camera_queue
                                );
                 }
             }
@@ -272,7 +283,7 @@ namespace Render
                                , ambient_color
                                , *camera
                                , collection
-                               , queues[camera_index]
+                               , m_camera_queue
                                );
                 }
             }
@@ -290,13 +301,13 @@ namespace Render
                             , ambient_color
                             , *camera
                             , collection
-                            , queues[camera_index]
+                            , m_camera_queue
                         );
                 }
             }
         }
     }
-    
+
     //add a pass
     void Drawer::add(Shared<Square::Render::DrawerPass> pass)
     {

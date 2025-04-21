@@ -152,5 +152,13 @@ namespace Render
             new (&queue) Queue(allocator);
         }
     }
+    
+    void PoolQueues::clear()
+    {
+        for (Queue& queue : m_queues)
+        {
+            queue.clear();
+        }
+    }
 }
 }
