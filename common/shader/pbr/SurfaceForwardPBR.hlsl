@@ -1,5 +1,6 @@
 #pragma once
 #include <Camera>
+#include <GammaCorrection>
 #include <NDF>
 #include <UtilsPBR>
 #include <LightPBR>
@@ -21,6 +22,7 @@ SurfaceOutput compute_surface_output(in SurfaceData data)
 
 	//output
 	SurfaceOutput output;
-	output.m_color =  Vec4(light_results.m_radiance, data.m_alpha);
+	output.m_color = to_srgb_space(Vec4(light_results.m_radiance, data.m_alpha));
+
 	return output;
 }

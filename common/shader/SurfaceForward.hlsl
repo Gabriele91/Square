@@ -1,6 +1,7 @@
 #pragma once
 #include <Light>
 #include <Camera>
+#include <GammaCorrection>
 
 //shader output
 struct SurfaceOutput
@@ -27,9 +28,9 @@ SurfaceOutput compute_surface_output(in SurfaceData data)
 
 	//output
 	SurfaceOutput output;
-	output.m_color =  Vec4(
+	output.m_color = to_srgb_space(Vec4(
 		  data.m_albedo * (light_results.m_diffuse + light_results.m_specular * data.m_specular)
 		, data.m_alpha
-	);
+	));
 	return output;
 }

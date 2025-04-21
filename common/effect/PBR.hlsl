@@ -6,6 +6,7 @@
 #include <Support>
 #include <Matrix>
 #include <SurfacePBR>
+#include <GammaCorrection>
 ////////////////
 struct VertexShaderOutput
 {
@@ -53,13 +54,13 @@ surface(VertexShaderOutput input)
 	// World position
 	data.m_position = input.m_world_position;
 	// Diffuse/albedo
-	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
+	Vec4 albedo_color = to_rgb_space(texture2D(albedo_map, input.m_uv));
 	if (albedo_color.a <= mask) discard;
 	data.m_albedo = albedo_color.rgb * color.rgb;
 	// Alpha
 	data.m_alpha = albedo_color.a * color.a;
 	// Emmisive
-	data.m_emmisive = texture2D(emmisive_map, input.m_uv).rgb * emmisive;
+	data.m_emmisive = to_rgb_space(texture2D(emmisive_map, input.m_uv).rgb) * emmisive;
 	// Normal
 	Vec4 normal_color = texture2D(normal_map, input.m_uv);
 	Mat3 TBN = Mat3(input.m_tangent, input.m_binomial, input.m_normal);

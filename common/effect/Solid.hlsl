@@ -6,6 +6,7 @@
 #include <Support>
 #include <Matrix>
 #include <Surface>
+#include <GammaCorrection>
 ////////////////
 struct VertexShaderOutput
 {
@@ -48,12 +49,12 @@ VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
 surface(VertexShaderOutput input)
 {
 	//Albedo
-	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
+	Vec4 albedo_color = to_rgb_space(texture2D(albedo_map, input.m_uv));
 	if (albedo_color.a <= mask) discard;
 	//material info
 	Vec4 normal_color = texture2D(normal_map, input.m_uv);
-	Vec4 specular_color = texture2D(specular_map, input.m_uv);
-	Vec4 occlusion_color = texture2D(occlusion_map, input.m_uv);
+	Vec4 specular_color = to_rgb_space(texture2D(specular_map, input.m_uv));
+	Vec4 occlusion_color = to_rgb_space(texture2D(occlusion_map, input.m_uv));
 	//output data
 	SurfaceData data = DefaultSurfaceData();
 	data.m_position = input.m_world_position;
