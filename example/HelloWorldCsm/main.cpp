@@ -81,23 +81,59 @@ public:
 				}
 			}
 			break;
+		case Square::Video::KEY_UP:
+			if (m_light)
+			{
+				m_light->translation({0, 0, 5.0 * application().last_delta_time()});
+			}
+			break;
+		case Square::Video::KEY_DOWN:
+			if (m_light)
+			{
+				m_light->translation({0, 0, -5.0 * application().last_delta_time()});
+			}
+			break;
+		case Square::Video::KEY_ENTER:
+			if (m_light)
+			{
+				m_light->translation({0, 5.0 * application().last_delta_time(), 0 });
+			}
+			break;
+		case Square::Video::KEY_RIGHT_SHIFT:
+			if (m_light)
+			{
+				m_light->translation({0, -5.0 * application().last_delta_time(), 0 });
+			}
+			break;
+		case Square::Video::KEY_LEFT:
+			if (m_light)
+			{
+				m_light->translation({-5.0 * application().last_delta_time(), 0, 0 });
+			}
+			break;
+		case Square::Video::KEY_RIGHT:
+			if (m_light)
+			{
+				m_light->translation({5.0 * application().last_delta_time(), 0, 0 });
+			}
+			break;
 		case Square::Video::KEY_W:
-			if(m_camera) m_camera->move({ 0,0, 10 * application().last_delta_time() });
+			if(m_camera) m_camera->move({ 0,0, 5 * application().last_delta_time() });
 		break;
 		case Square::Video::KEY_S:
-			if(m_camera) m_camera->move({ 0,0, -10 * application().last_delta_time() });
+			if(m_camera) m_camera->move({ 0,0, -5 * application().last_delta_time() });
 		break;
 		case Square::Video::KEY_D:
-			if(m_camera) m_camera->move({ 10 * application().last_delta_time(),0,0 });
+			if(m_camera) m_camera->move({ 5 * application().last_delta_time(),0,0 });
 		break;
 		case Square::Video::KEY_A:
-			if(m_camera) m_camera->move({ -10 * application().last_delta_time(),0,0 });
+			if(m_camera) m_camera->move({ -5 * application().last_delta_time(),0,0 });
 		break;
 		case Square::Video::KEY_R:
-			if(m_camera) m_camera->move({ 0, 10 * application().last_delta_time(),0 });
+			if(m_camera) m_camera->move({ 0, 5 * application().last_delta_time(),0 });
 		break;
 		case Square::Video::KEY_F:
-			if(m_camera) m_camera->move({ 0,-10 * application().last_delta_time(),0 });
+			if(m_camera) m_camera->move({ 0,-5 * application().last_delta_time(),0 });
 		break;
 		case Square::Video::KEY_E:
 			if (m_camera) m_camera->turn(rotate_euler<float>(0,1. * application().last_delta_time(),0 ));
