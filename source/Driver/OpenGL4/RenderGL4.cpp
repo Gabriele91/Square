@@ -945,11 +945,18 @@ namespace Render
 		//disable vsync
 		if(resource != nullptr)
 		{
+			// VSync
 			resource->set_vsync(false);
+			// SRGB?
+			if(resource->get_context_info().m_srgb)
+			{
+				glEnable( GL_FRAMEBUFFER_SRGB );
+			}
 		}
 		else
 		{
 			logger()->warning("VSync cannot be disable");
+			logger()->warning("SRGB cannot be enable");
 		}
 		//init glad
 #if defined( _WIN32 ) ||  defined( __linux )
@@ -2027,12 +2034,12 @@ namespace Render
 	}
 	
 	//Textures
-	inline const GLenum get_texture_format(TextureFormat type)
+	inline const GLenum get_texture_format(TextureFormat type, bool sRGB)
 	{
 		switch (type)
 		{
 			//RGBA
-		case TF_RGBA8: return GL_RGBA8; break;
+		case TF_RGBA8: return sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8 ; break;
 			//uint
 		case TF_RGBA16UI: return GL_RGBA16UI; break;
 		case TF_RGBA32UI: return GL_RGBA32UI; break;
@@ -2044,7 +2051,7 @@ namespace Render
 		case TF_RGBA32F: return GL_RGBA32F; break;
 			////////////////////
 			//RGB
-		case TF_RGB8: return GL_RGBA8; break;
+		case TF_RGB8: return sRGB ? GL_SRGB8 : GL_RGBA8; break;
 			//uint
 		case TF_RGB16UI: return GL_RGB16UI; break;
 		case TF_RGB32UI: return GL_RGB32UI; break;
@@ -2096,14 +2103,14 @@ namespace Render
 		}
 	}
 
-	inline const GLenum get_texture_type(TextureType type)
+	inline const GLenum get_texture_type(TextureType type, bool sRGB)
 	{
 		switch (type)
 		{
 		case TT_R:             return GL_RED;
 		case TT_RG:            return GL_RG;
-		case TT_RGB:           return GL_RGB;
-		case TT_RGBA:          return GL_RGBA;
+		case TT_RGB:           return sRGB ? GL_SRGB : GL_RGB;
+		case TT_RGBA:          return sRGB ? GL_SRGB_ALPHA : GL_RGBA;
 		case TT_DEPTH:         return GL_DEPTH_COMPONENT;
 		case TT_DEPTH_STENCIL: return GL_DEPTH_STENCIL;
 		default: return GL_ZERO; break;
@@ -2174,8 +2181,8 @@ namespace Render
 		//create a texture id
 		ctx_texture->create_TBO();
 		//format
-		GLenum gl_format = get_texture_format(data.m_format);
-		GLenum gl_type = get_texture_type(data.m_type);
+		GLenum gl_format = get_texture_format(data.m_format, data.m_is_srgb);
+		GLenum gl_type = get_texture_type(data.m_type, data.m_is_srgb);
 		GLenum gl_type_format = get_texture_type_format(data.m_type_format);
 		//enable texture
 		glBindTexture(ctx_texture->m_type_texture, ctx_texture->m_tbo);
@@ -2228,8 +2235,8 @@ namespace Render
 		//create a texture id
 		ctx_texture->create_TBO();
 		//format
-		GLenum gl_format = get_texture_format(data.m_format);
-		GLenum gl_type = get_texture_type(data.m_type);
+		GLenum gl_format = get_texture_format(data.m_format, data.m_is_srgb);
+		GLenum gl_type = get_texture_type(data.m_type, data.m_is_srgb);
 		GLenum gl_type_format = get_texture_type_format(data.m_type_format);
 		//set type
 		ctx_texture->m_type_texture = GL_TEXTURE_2D_ARRAY;
@@ -2290,8 +2297,8 @@ namespace Render
 		for (int i = 0; i != 6; ++i)
 		{
 			//format
-			GLenum gl_format = get_texture_format(data[i].m_format);
-			GLenum gl_type = get_texture_type(data[i].m_type);
+			GLenum gl_format = get_texture_format(data[i].m_format, data[i].m_is_srgb);
+			GLenum gl_type = get_texture_type(data[i].m_type, data[i].m_is_srgb);
 			GLenum gl_type_format = get_texture_type_format(data[i].m_type_format);
 			//enable texture
 			glBindTexture(ctx_texture->m_type_texture, ctx_texture->m_tbo);
@@ -2349,7 +2356,9 @@ namespace Render
 		case GL_R8:   output.resize(width*height * 1); image_ret_format = GL_R;     break;
 		case GL_RG8:  output.resize(width*height * 2); image_ret_format = GL_RG;    break;
 		case GL_RGB8: output.resize(width*height * 3); image_ret_format = GL_RGB;   break;
+		case GL_SRGB8: output.resize(width*height * 3); image_ret_format = GL_SRGB;   break;
 		case GL_RGBA8:output.resize(width*height * 4); image_ret_format = GL_RGBA;  break;
+		case GL_SRGB8_ALPHA8:output.resize(width*height * 4); image_ret_format = GL_SRGB_ALPHA;  break;
 		default: return output; break;
 		}
 		// get
@@ -2386,7 +2395,9 @@ namespace Render
 		case GL_R8:   output.resize(width*height * 1); image_ret_format = GL_R;     break;
 		case GL_RG8:  output.resize(width*height * 2); image_ret_format = GL_RG;    break;
 		case GL_RGB8: output.resize(width*height * 3); image_ret_format = GL_RGB;   break;
-		case GL_RGBA8:output.resize(width*height * 4); image_ret_format = GL_RGBA;  break;
+		case GL_SRGB8: output.resize(width*height * 3); image_ret_format = GL_SRGB;   break;
+		case GL_RGBA8: output.resize(width*height * 4); image_ret_format = GL_RGBA;  break;
+		case GL_SRGB8_ALPHA8: output.resize(width*height * 4); image_ret_format = GL_SRGB_ALPHA;  break;
 		default: return output; break;
 		}
 		// get

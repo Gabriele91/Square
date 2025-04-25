@@ -50,6 +50,9 @@ VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
 
 surface(VertexShaderOutput input)
 {
+	// Note, in glTF 
+    // RGB (metallic, norma maps)
+    // SRGB (emmisive, albedo)
 	SurfaceData data = DefaultSurfaceData();
 	// World position
 	data.m_position = input.m_world_position;

@@ -1905,13 +1905,13 @@ namespace Render
 	/*
 		Textures
 	*/
-	inline const DXGI_FORMAT get_texture_format(TextureFormat type)
+	inline const DXGI_FORMAT get_texture_format(TextureFormat type, bool sRGB)
 	{
 		//select
 		switch (type)
 		{
 		//RGBA
-		case TF_RGBA8: return DXGI_FORMAT_R8G8B8A8_UNORM; break;
+		case TF_RGBA8: return sRGB ? DXGI_FORMAT_R8G8B8A8_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM; break;
 		//uint
 		case TF_RGBA16UI: return DXGI_FORMAT_R16G16B16A16_UINT; break;
 		case TF_RGBA32UI: return DXGI_FORMAT_R32G32B32A32_UINT; break;
@@ -1923,7 +1923,7 @@ namespace Render
 		case TF_RGBA32F: return DXGI_FORMAT_R32G32B32A32_FLOAT; break;
 		////////////////////
 		//RGB
-		case TF_RGB8: return DXGI_FORMAT_R8G8B8A8_UNORM; /*add_alpha = true;*/ break;
+		case TF_RGB8: return  sRGB ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM; /*add_alpha = true;*/ break;
 		//uint
 		case TF_RGB16UI: return DXGI_FORMAT_R16G16B16A16_UINT; /*add_alpha = true;*/ break;
 		case TF_RGB32UI: return DXGI_FORMAT_R32G32B32A32_UINT; /*add_alpha = true;*/ break;
@@ -2254,7 +2254,7 @@ namespace Render
 		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
 		//format
-		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format);
+		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format, data.m_is_srgb);
 		bool	    depth_target        = is_depth_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_data = texture_depth_to_typeless_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_resource = texture_depth_to_resource_format(texture_format_raw);
@@ -2363,7 +2363,7 @@ namespace Render
 		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
 		//format
-		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format);
+		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format, data.m_is_srgb);
 		bool	    depth_target        = is_depth_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_data = texture_depth_to_typeless_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_resource = texture_depth_to_resource_format(texture_format_raw);
@@ -2478,7 +2478,7 @@ namespace Render
 		//is a cubemap
 		misc_flags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
 		//format
-		DXGI_FORMAT texture_format_raw = get_texture_format(data[0].m_format);
+		DXGI_FORMAT texture_format_raw = get_texture_format(data[0].m_format, data[0].m_is_srgb);
 		bool	    depth_target = is_depth_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_data = texture_depth_to_typeless_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_resource = texture_depth_to_resource_format(texture_format_raw);

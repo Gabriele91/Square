@@ -44,7 +44,8 @@ namespace Render
                      height(),
                      nullptr,
                      buffer_list[i].m_type,
-                     buffer_list[i].m_type_format
+                     buffer_list[i].m_type_format,
+                     false
                  },
                  {
                      TMIN_NEAREST,

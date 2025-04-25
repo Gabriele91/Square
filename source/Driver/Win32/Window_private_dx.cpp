@@ -39,6 +39,10 @@ namespace Win32
 		{
 			m_callback = callback;
 		}
+		virtual const ContextInfo& get_context_info() override
+		{
+			return m_info.m_context;
+		}
 
 		virtual bool get_vsync() { return m_vsync; }
 		virtual void set_vsync(bool vsync) { m_vsync = vsync; }
@@ -163,8 +167,11 @@ namespace Win32
 
 		//color format
 		DXGI_FORMAT format = DXGI_FORMAT_B8G8R8A8_UNORM;
-
-		if (m_info.m_context.m_color >= 32)
+		
+		// Select format
+		if (m_info.m_context.m_color >= 32 && m_info.m_context.m_srgb)
+			format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+		else if (m_info.m_context.m_color >= 32)
 			format = DXGI_FORMAT_B8G8R8A8_UNORM;
 		else if (m_info.m_context.m_color >= 24)
 			format = DXGI_FORMAT_B8G8R8X8_TYPELESS;

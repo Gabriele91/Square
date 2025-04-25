@@ -95,6 +95,7 @@ namespace Square
 		int m_depth_ctx  { 24 };
 		int m_stencil_ctx{ 8  };
         GpuType m_gpu_type{ GpuType::GPU_DEFAULT };
+		bool m_srgb{ true };
 		bool m_debug{ false };
 	};
         

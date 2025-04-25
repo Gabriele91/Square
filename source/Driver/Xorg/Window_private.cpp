@@ -369,6 +369,7 @@ namespace Xorg
         m_xinfo = xinfo;
         m_xwindow = xwindow;
         m_gl_xcontext = gl_xcontext;
+        m_gl_device  = new DeviceResourcesXGL(info.m_context);
         //save
         XSaveContext(s_os_context.m_xdisplay, m_xwindow, s_os_context.m_xcontext, (XPointer)this);
     }
@@ -389,6 +390,7 @@ namespace Xorg
         m_xwindow = xwindow;
         m_desktop_info = desktop_info;
         m_gl_xcontext  = gl_xcontext;
+        m_gl_device  = new DeviceResourcesXGL(info.m_context);
         //save
         XSaveContext(s_os_context.m_xdisplay, m_xwindow, s_os_context.m_xcontext, (XPointer)this);
     }
@@ -414,7 +416,18 @@ namespace Xorg
         XDestroyWindow(s_os_context.m_xdisplay, m_xwindow);
         // Free the visual info
         XFree(m_xinfo);
+		// remove device
+		if (m_gl_device)
+		{
+			delete m_gl_device;
+			m_gl_device = nullptr;
+		}
     }
+
+	DeviceResourcesXGL* WindowXorg::get_device_wrapper() const
+	{
+		return m_gl_device;
+	}
 
     void WindowXorg::swap() const
     {

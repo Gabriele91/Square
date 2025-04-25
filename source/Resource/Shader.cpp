@@ -171,6 +171,14 @@ namespace Resource
 		std::string               shader_commond_header = "#pragma pack_matrix( row_major )\n";
 		if (source.m_hlsl_target) shader_commond_header+= "#define HLSL_BACKEND\n";
 		else		              shader_commond_header+= "#define GLSL_BACKEND\n";
+		// sRGB?
+		if (auto window = context().window())
+		if (auto device = window->device())
+		if (auto srgb = device->get_context_info().m_srgb; srgb == true)
+		{
+			shader_commond_header+= "#define ENABLE_GAMMA_CORRECTION 1\n";
+			shader_commond_header+= "#define ENABLE_TARGET_SRGB 1\n";
+		}
         //add commond header
 		shader_commond_header +=
 		#include "ShaderCommonHeader.hlsl"

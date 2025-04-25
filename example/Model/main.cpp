@@ -84,6 +84,7 @@ public:
     : m_context(context)
     , m_output(output) 
     {}
+
     TextureManager(Square::Context& context, const std::string& output, const Square::Data::GLTF::GLTF& gltf)
     : m_context(context)
     , m_output(output) 
@@ -134,6 +135,7 @@ public:
         m_context.logger()->warning("Invalid image");
         return ~size_t(0);
     }
+
     size_t add_sampler(const Square::Data::GLTF::Sampler& sampler)
     {
         const char _template[] =
@@ -291,7 +293,8 @@ class MaterialManager
     
     static inline std::string template_material_pbr(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
     {
-        
+        // RGB (metallic, norma maps)
+        // SRGB (emmisive, albedo)
         const char pbr_material_template[] =
         {
             "effect \"PBR\"\n"
@@ -950,6 +953,8 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
     {
         shadow_resoluction = std::get<int>(shadow_it->second);
     }
+    //srgb on
+    const bool srgb = true;
     //test
     app.execute
 	(
@@ -960,6 +965,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
          Render::RenderDriver::DR_OPENGL, 4, 1 // DRIVER and Version 
         , 24, 8                                // Colors and depth
         , GpuType::GPU_HIGH                    // GPU type
+        , srgb                                 // SRGB
         , false                                // Debug
       }
     , "ModelImporter"

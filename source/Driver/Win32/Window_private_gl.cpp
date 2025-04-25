@@ -19,7 +19,7 @@ namespace Win32
 	{
 	public:
 
-		DeviceResourcesGL(const HWND& hWnd, const HGLRC& hRC): m_hWnd(hWnd), m_hRC(hRC) {}
+		DeviceResourcesGL(const HWND& hWnd, const HGLRC& hRC, const ContextInfo& info_context): m_hWnd(hWnd), m_hRC(hRC), m_info_context(info_context) {}
 		virtual ~DeviceResourcesGL() {}
 		//implement
 		virtual unsigned int width() override 
@@ -34,7 +34,11 @@ namespace Win32
 			GetClientRect(m_hWnd, &window_box);
 			return window_box.bottom - window_box.top;
 		}
-		
+		virtual const ContextInfo& get_context_info() override
+		{
+			return m_info_context;
+		}
+
 		virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
 		{
 			//none
@@ -71,6 +75,7 @@ namespace Win32
 
 		const HWND&  m_hWnd;
 		const HGLRC& m_hRC;
+		const ContextInfo& m_info_context;
 		bool  m_vsync{ true };
 	};
 
@@ -83,7 +88,7 @@ namespace Win32
 		m_hWnd = hWnd;
 		m_info = info;
 		//alloc wrapper device
-		m_device = new DeviceResourcesGL(m_hWnd, m_hRC);
+		m_device = new DeviceResourcesGL(m_hWnd, m_hRC, m_info.m_context);
 		//set
 		enable_resize(info.m_resize);
 		//get info

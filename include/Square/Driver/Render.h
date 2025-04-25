@@ -331,7 +331,8 @@ namespace Render
 		unsigned int		m_height;
 		const unsigned char*m_bytes;
 		TextureType 		m_type;
-		TextureTypeFormat m_type_format;
+		TextureTypeFormat   m_type_format;
+		bool                m_is_srgb;
 	};
 
 	struct TextureGpuDataInformation

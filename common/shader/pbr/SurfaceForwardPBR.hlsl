@@ -22,7 +22,10 @@ SurfaceOutput compute_surface_output(in SurfaceData data)
 
 	//output
 	SurfaceOutput output;
-	output.m_color = to_srgb_space(Vec4(light_results.m_radiance, data.m_alpha));
-
+	// Noramly the input is in linear RGB, while the target buffer is in sRGB
+	output.m_color = Vec4(light_results.m_radiance, data.m_alpha);
+#if !defined(ENABLE_TARGET_SRGB)
+	output.m_color = to_srgb_space(output.m_color);
+#endif
 	return output;
 }

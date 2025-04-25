@@ -59,9 +59,10 @@ namespace Cocoa
     {
     public:
         
-        DeviceResourcesGL(NSSquareView* view = nullptr, NSOpenGLContext* glcontext = nullptr)
+        DeviceResourcesGL(NSSquareView* view, NSOpenGLContext* glcontext, const ContextInfo& info_context)
         : m_view(view)
         , m_glcontext(glcontext)
+        , m_info_context(info_context)
         {
         }
         virtual ~DeviceResourcesGL() {}
@@ -74,7 +75,11 @@ namespace Cocoa
         {
             return m_view.frame.size.height;
         }
-        
+        virtual const ContextInfo& get_context_info() override
+		{
+			return m_info_context;
+		}
+
         
         virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
         {
@@ -107,6 +112,7 @@ namespace Cocoa
         NSOpenGLContext* m_glcontext;
         NSSquareView*  m_view;
 		bool  m_vsync{ true };
+		const ContextInfo& m_info_context;
     };
     
     WindowCocoa::WindowCocoa()
@@ -114,7 +120,7 @@ namespace Cocoa
         m_window = nullptr;
         m_view   = nullptr;
         m_context= nullptr;
-        m_device = new DeviceResourcesGL();
+        m_device = new DeviceResourcesGL(m_view,m_context,m_info.m_context);
     }
     
     WindowCocoa::WindowCocoa
@@ -128,7 +134,7 @@ namespace Cocoa
         m_window = window;
         m_view   = view;
         m_context= context;
-        m_device = new DeviceResourcesGL(view,context);
+        m_device = new DeviceResourcesGL(view,context,m_info.m_context);
     }
     
     WindowCocoa::~WindowCocoa()

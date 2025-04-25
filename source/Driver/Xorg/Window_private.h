@@ -18,6 +18,7 @@ namespace Video
 {
 namespace Xorg
 {
+	struct DeviceResourcesXGL;
 	struct WindowXorg
 	{
 		enum WindowType
@@ -35,6 +36,7 @@ namespace Xorg
 		GLXContext          m_gl_xcontext{ nullptr };
 		InputXorg*	        m_input_ref  { nullptr };
 		Window*    	        m_window_ref { nullptr };
+		DeviceResourcesXGL* m_gl_device  { nullptr };
 		
 		WindowXorg(const WindowInfo& info);
 
@@ -58,6 +60,8 @@ namespace Xorg
 		);
 
 		virtual ~WindowXorg();
+
+		DeviceResourcesXGL* get_device_wrapper() const;
 
 		void swap() const;
 

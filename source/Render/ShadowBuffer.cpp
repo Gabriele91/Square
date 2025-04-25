@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 15/06/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Core/Context.h"
 #include "Square/Driver/Render.h"
@@ -52,7 +52,8 @@ namespace Render
 				height(),
 				nullptr,
 				TT_DEPTH,
-				TTF_FLOAT
+				TTF_FLOAT,
+				false
 			};
 			Render::TextureGpuDataInformation gpu_data
 			{

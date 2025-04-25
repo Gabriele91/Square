@@ -318,7 +318,8 @@ namespace Resource
 				(unsigned int)m_height,
 				buffer,
 				type,
-				Render::TTF_UNSIGNED_BYTE
+				Render::TTF_UNSIGNED_BYTE,
+				false
 			},
 			{
 				attr.m_min_filter,           // min_type

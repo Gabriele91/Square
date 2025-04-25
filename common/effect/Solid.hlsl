@@ -48,13 +48,16 @@ VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
 
 surface(VertexShaderOutput input)
 {
+	// Note, in glTF 
+    // RGB (metallic, norma maps)
+    // SRGB (emmisive, albedo)
 	//Albedo
-	Vec4 albedo_color = to_rgb_space(texture2D(albedo_map, input.m_uv));
+	Vec4 albedo_color = to_rgb_space(texture2D(albedo_map, input.m_uv)); // sRGB
 	if (albedo_color.a <= mask) discard;
 	//material info
 	Vec4 normal_color = texture2D(normal_map, input.m_uv);
-	Vec4 specular_color = to_rgb_space(texture2D(specular_map, input.m_uv));
-	Vec4 occlusion_color = to_rgb_space(texture2D(occlusion_map, input.m_uv));
+	Vec4 specular_color = to_rgb_space(texture2D(specular_map, input.m_uv)); // sRGB
+	Vec4 occlusion_color = texture2D(occlusion_map, input.m_uv); // RGB
 	//output data
 	SurfaceData data = DefaultSurfaceData();
 	data.m_position = input.m_world_position;
