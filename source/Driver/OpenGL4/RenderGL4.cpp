@@ -942,6 +942,19 @@ namespace Render
 
 	bool ContextGL4::init(Video::DeviceResources* resource)
 	{
+		//init glad
+#if defined( _WIN32 ) ||  defined( __linux )
+		int gl_loaded_version = gladLoadGL((GLADloadfunc)square_gl_GetProcAddress);
+		if (!gl_loaded_version) 
+		{
+			logger()->error("GLAD init fail");
+			return false;
+		}
+		//clear OpenGL error by GLAD init
+		else while ((glGetError()) != GL_NO_ERROR);
+		// log info
+		logger()->info("GLAD OGL loaded: " + std::to_string(GLAD_VERSION_MAJOR(gl_loaded_version)) + "." + std::to_string(GLAD_VERSION_MINOR(gl_loaded_version)));
+#endif
 		//disable vsync
 		if(resource != nullptr)
 		{
@@ -958,19 +971,6 @@ namespace Render
 			logger()->warning("VSync cannot be disable");
 			logger()->warning("SRGB cannot be enable");
 		}
-		//init glad
-#if defined( _WIN32 ) ||  defined( __linux )
-		int gl_loaded_version = gladLoadGL((GLADloadfunc)square_gl_GetProcAddress);
-		if (!gl_loaded_version) 
-		{
-			logger()->error("GLAD init fail");
-			return false;
-		}
-		//clear OpenGL error by GLAD init
-		else while ((glGetError()) != GL_NO_ERROR);
-		// log info
-		logger()->info("GLAD OGL loaded: " + std::to_string(GLAD_VERSION_MAJOR(gl_loaded_version)) + "." + std::to_string(GLAD_VERSION_MINOR(gl_loaded_version)));
-#endif
 
 #if defined(DIRECTX_MODE)
 		//DirectX like topology
