@@ -40,25 +40,6 @@ namespace Xorg
 		
 		WindowXorg(const WindowInfo& info);
 
-		WindowXorg
-		(
-			WindowType  type,
-			WindowInfo  info,
-			XVisualInfo* xinfo,
-			XWindow      xwindow,
-			GLXContext   gl_xcontext
-		);
-
-		WindowXorg
-		(
-			WindowType  type,
-			WindowInfo  info,
-			XVisualInfo* xinfo,
-			XWindow             xwindow,
-			XF86VidModeModeInfo desktop_info,
-			GLXContext          gl_xcontext
-		);
-
 		virtual ~WindowXorg();
 
 		DeviceResourcesXGL* get_device_wrapper() const;

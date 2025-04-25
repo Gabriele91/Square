@@ -16,6 +16,49 @@ namespace Video
 {
 namespace Xorg
 {
+    struct SQUARE_API DeviceResourcesXGL : public DeviceResources
+	{
+	public:
+
+    DeviceResourcesXGL(const ContextInfo& info_context): m_info_context(info_context) {}
+		virtual ~DeviceResourcesXGL() {}
+		//implement
+		virtual unsigned int width() override 
+		{
+            return -1;
+		}
+		virtual unsigned int height() override 
+		{
+            return -1;
+		}
+		virtual const ContextInfo& get_context_info() override
+		{
+			return m_info_context;
+		}
+
+		virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
+		{
+			//none
+		}
+
+		virtual bool get_vsync() { return false; }
+		virtual void set_vsync(bool vsync) { }
+
+		virtual void* get_device()					   override { return (void*)nullptr; }
+		virtual void* get_device_context(size_t i = 0) override { return (void*)nullptr; }
+		virtual void* get_swap_chain()				   override { return (void*)nullptr; }
+
+		virtual void* get_render_target()        override { return (void*)nullptr; }
+		virtual void* get_depth_stencil_target() override { return (void*)nullptr; }
+
+		virtual void* get_render_resource()        override { return (void*)nullptr; }
+		virtual void* get_depth_stencil_resource() override { return (void*)nullptr; }
+
+		virtual size_t number_of_device_context()  override { return 0; }
+
+	protected:
+		const ContextInfo& m_info_context;
+	};
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	static bool x11_create_visual(const WindowInfo& wnd_info, XVisualInfo*& visual)
 	{
@@ -337,6 +380,7 @@ namespace Xorg
 			m_xwindow = wnd;
 			m_desktop_info = desktop_info;
 			m_gl_xcontext = xgl_ctx;
+			m_gl_device  = new DeviceResourcesXGL(m_info.m_context);
 		}
 		else 
 		{
@@ -347,53 +391,13 @@ namespace Xorg
 			m_xinfo = visual_info;
 			m_xwindow = wnd;
 			m_gl_xcontext = xgl_ctx;
+			m_gl_device  = new DeviceResourcesXGL(m_info.m_context);
 		}
 		//get context
 		acquire_context();
         //save
         XSaveContext(s_os_context.m_xdisplay, m_xwindow, s_os_context.m_xcontext, (XPointer)this);
 	}
-
-	
-    WindowXorg::WindowXorg
-    (
-        WindowType  type,
-        WindowInfo  info,
-        XVisualInfo* xinfo,
-        XWindow      xwindow,
-        GLXContext   gl_xcontext
-    )
-    {
-        m_type = type;
-        m_info = info;
-        m_xinfo = xinfo;
-        m_xwindow = xwindow;
-        m_gl_xcontext = gl_xcontext;
-        m_gl_device  = new DeviceResourcesXGL(info.m_context);
-        //save
-        XSaveContext(s_os_context.m_xdisplay, m_xwindow, s_os_context.m_xcontext, (XPointer)this);
-    }
-
-    WindowXorg::WindowXorg
-    (
-        WindowType  type,
-        WindowInfo  info,
-        XVisualInfo* xinfo,
-        XWindow             xwindow,
-        XF86VidModeModeInfo desktop_info,
-        GLXContext          gl_xcontext
-    )
-    {
-        m_type = type;
-        m_info = info;
-        m_xinfo = xinfo;
-        m_xwindow = xwindow;
-        m_desktop_info = desktop_info;
-        m_gl_xcontext  = gl_xcontext;
-        m_gl_device  = new DeviceResourcesXGL(info.m_context);
-        //save
-        XSaveContext(s_os_context.m_xdisplay, m_xwindow, s_os_context.m_xcontext, (XPointer)this);
-    }
 
     WindowXorg::~WindowXorg()
     {

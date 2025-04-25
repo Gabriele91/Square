@@ -21,50 +21,6 @@ namespace Xorg
     ////////////////////////////////////////////////////////////////////////////////////
 	WrapperContext s_os_context;
 
-    struct SQUARE_API DeviceResourcesXGL : public DeviceResources
-	{
-	public:
-
-    DeviceResourcesXGL(const ContextInfo& info_context): m_info_context(info_context) {}
-		virtual ~DeviceResourcesXGL() {}
-		//implement
-		virtual unsigned int width() override 
-		{
-            return -1;
-		}
-		virtual unsigned int height() override 
-		{
-            return -1;
-		}
-		virtual const ContextInfo& get_context_info() override
-		{
-			return m_info_context;
-		}
-
-		virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
-		{
-			//none
-		}
-
-		virtual bool get_vsync() { return false; }
-		virtual void set_vsync(bool vsync) { }
-
-		virtual void* get_device()					   override { return (void*)nullptr; }
-		virtual void* get_device_context(size_t i = 0) override { return (void*)nullptr; }
-		virtual void* get_swap_chain()				   override { return (void*)nullptr; }
-
-		virtual void* get_render_target()        override { return (void*)nullptr; }
-		virtual void* get_depth_stencil_target() override { return (void*)nullptr; }
-
-		virtual void* get_render_resource()        override { return (void*)nullptr; }
-		virtual void* get_depth_stencil_resource() override { return (void*)nullptr; }
-
-		virtual size_t number_of_device_context()  override { return 0; }
-
-	protected:
-		const ContextInfo& m_info_context;
-	};
-
 	////////////////////////////////////////////////////////////////////////////////////
 	// this is the main message handler for the program	
 	static InputXorg* input_create(WindowXorg* wnd, Input* input);
