@@ -1,6 +1,7 @@
-effect "Solid"
+effect "Legacy"
 {
     mask float(-1.0)
+    shininess float(16.0)
 	color Vec4(1.0,1.0,1.0,1.0)
     albedo_map  texture("box")
     normal_map   texture("box_normal_x")

@@ -254,9 +254,10 @@ class MaterialManager
     {
         const char solit_material_template[] =
         {
-            "effect \"Solid\"\n"
+            "effect \"Legacy\"\n"
             "{\n"
                 "\tmask float(%f)\n"
+                "\tshininess float(%f)\t"
                 "\tcolor Vec4(%f,%f,%f,%f)\n"
                 "\talbedo_map  texture(\"%s\")\n"
                 "\tnormal_map   texture(\"%s\")\n"
@@ -265,6 +266,7 @@ class MaterialManager
             "}"
         };
         float tmask = material.alpha_cutoff;
+        float tshininess = 16.0f;
         Square::Vec4 tcolor ( material.emissive_factor, 1.0f );
         std::string albedo_map = material.pbr_metallic_roughness.has_value() && material.pbr_metallic_roughness.value().base_color_texture.has_value()
                                 ? texture_manager.at(material.pbr_metallic_roughness.value().base_color_texture.value().index).value_or("default") 
@@ -282,6 +284,7 @@ class MaterialManager
         char output_template[255] = { '\0' };
         std::snprintf(&output_template[0], 255, solit_material_template, 
             tmask,
+            tshininess,
             tcolor.x, tcolor.y, tcolor.z, tcolor.w,
             albedo_map.c_str(),
             normal_map.c_str(),

@@ -29,11 +29,11 @@ LightResult compute_light
 	return result;
 }
 #elif defined(RENDERING_AMBIENT_LIGHT)
-#include <AmbientLight>
+#include <AmbientLightLegacy>
 #elif defined(RENDERING_DIRECTION_LIGHT)
-#include <DirectionLight>
+#include <DirectionLightLegacy>
 #elif defined(RENDERING_POINT_LIGHT)
-#include <PointLight>
+#include <PointLightLegacy>
 #elif defined(RENDERING_SPOT_LIGHT)
-#include <SpotLight>
+#include <SpotLightLegacy>
 #endif

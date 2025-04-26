@@ -4,12 +4,11 @@ parameters
     normal_map   texture("normal_up")
     specular_map texture("black")
     occlusion_map texture("white")
-
 	color        Vec4(1.0,1.0,1.0,1.0)
+    shininess    float(16.0)
+    
     mask         float(-1.0)
     mask_shadow  float(-1.0)
-	metallic     float(0.0)
-	smoothness   float(0.0)
 }
 
 sub_effect
@@ -26,7 +25,7 @@ sub_effect
             shader source 
             {
 				#define FORWARD_RENDERING
-				#include "Solid.hlsl"
+				#include "Legacy.hlsl"
             }
         }
         pass 
@@ -39,7 +38,7 @@ sub_effect
             shader source 
             {
                 #define FORWARD_RENDERING
-				#include "Solid.hlsl"
+				#include "Legacy.hlsl"
             }
 		}
     }

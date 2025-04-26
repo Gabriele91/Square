@@ -1,5 +1,5 @@
 #pragma once
-#include <Light>
+#include <LightLegacy>
 #include <Camera>
 #include <GammaCorrection>
 
@@ -11,9 +11,6 @@ struct SurfaceOutput
 //function shader
 SurfaceOutput compute_surface_output(in SurfaceData data)
 {
-	//todo: material
-	float shininess = 16.0f;
-
 	//view dir
 	Vec3 view_dir = normalize(camera.m_position - data.m_position.xyz);
 
@@ -23,7 +20,7 @@ SurfaceOutput compute_surface_output(in SurfaceData data)
 		, view_dir
 		, data.m_normal
 		, data.m_occlusion
-		, shininess
+		, data.m_shininess
 	);
 
 	//output

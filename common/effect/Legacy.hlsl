@@ -5,7 +5,7 @@
 #include <Vertex>
 #include <Support>
 #include <Matrix>
-#include <Surface>
+#include <SurfaceLegacy>
 #include <GammaCorrection>
 ////////////////
 struct VertexShaderOutput
@@ -21,9 +21,8 @@ struct VertexShaderOutput
 
 //global uniform
 float mask;
-float metallic;
-float smoothness;
 Vec4 color;
+float shininess;
 
 //texture
 Sampler2D(albedo_map);
@@ -50,7 +49,8 @@ surface(VertexShaderOutput input)
 {
 	// Note, in glTF 
     // RGB (metallic, norma maps)
-    // SRGB (emmisive, albedo)
+    // SRGB (albedo)
+    // SRGB (specular)
 	//Albedo
 	Vec4 albedo_color = to_rgb_space(texture2D(albedo_map, input.m_uv)); // sRGB
 	if (albedo_color.a <= mask) discard;
@@ -68,11 +68,9 @@ surface(VertexShaderOutput input)
 	Mat3 TBN = Mat3(input.m_tangent, input.m_binomial, input.m_normal);
 	data.m_normal = normalize(mul(normal_from_texture(normal_color), TBN));
 	//material info
+	data.m_shininess = shininess;
 	data.m_specular = specular_color.rgb;
 	data.m_occlusion = occlusion_color.r;
-	//physics render info
-	data.m_metallic = metallic;
-	data.m_smoothness = smoothness;
 	//return
 	surface_return(data);
 }
