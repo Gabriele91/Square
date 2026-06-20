@@ -111,7 +111,7 @@ namespace Square
             output << " [" << tag << "] ";
             output << value;
             output << std::endl;
-            fprintf(stream, output.str().c_str());
+            fprintf(stream, "%s", output.str().c_str());
         }
     };
 

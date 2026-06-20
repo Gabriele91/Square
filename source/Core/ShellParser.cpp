@@ -262,7 +262,8 @@ namespace Shell
         {
             return std::get<std::string>(it->second);
         }
-        return "";
+        static const std::string empty;
+        return empty;
     }
     const std::string& filename(const Square::Shell::ParserValue& args)
     {
@@ -270,7 +271,8 @@ namespace Shell
         {
             return std::get<std::string>(it->second);
         }
-        return "";
+        static const std::string empty;
+        return empty;
     }
     const std::string& basename(const Square::Shell::ParserValue& args)
     {
@@ -278,7 +280,8 @@ namespace Shell
         {
             return std::get<std::string>(it->second);
         }
-        return "";
+        static const std::string empty;
+        return empty;
     }
 }
 }

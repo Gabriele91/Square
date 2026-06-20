@@ -2746,7 +2746,7 @@ namespace Render
 			//if 0 return an error
 			if (!count_linked_shaders)
 			{
-				out_shader->push_linker_error("No shader linked to the program: " + out_shader->m_shader_id);
+				out_shader->push_linker_error("No shader linked to the program: " + std::to_string(out_shader->m_shader_id));
 			}
 		}
 		//error?

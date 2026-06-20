@@ -4,7 +4,6 @@
 //  Created by Gabriele on 09/07/176.
 //  Copyright ? 2017 Gabriele. All rights reserved.
 //
-#pragma once
 #include <optional>
 #include "Square/Config.h"
 #include "Square/Core/Variant.h"
