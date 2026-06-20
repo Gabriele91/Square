@@ -1,0 +1,14 @@
+effect "PBR"
+{
+	albedo_map    texture("Image_0_3")
+	metallic_map  texture("Image_2")
+	roughness_map texture("Image_2")
+	emmisive_map  texture("Image_3_0")
+	occlusion_map texture("Image_2")
+	normal_map    texture("Image_2_1")
+	color Vec4(1.000000,1.000000,1.000000,1.000000)
+	metallic float(1.000000)
+	roughness float(1.000000)
+	emmisive Vec3(1.000000,1.000000,1.000000)
+	mask float(0.500000)
+}

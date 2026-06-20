@@ -59,9 +59,95 @@
             "args": [
                 "-v",
                 "-d",
-                "-b", "ogl",
+                "-b", "d3d",
                 "-g", "high",
                 "-s", "csm_scene"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;${workspaceRoot}/build/bin/Debug/;${workspaceRoot}/build/source/Debug/;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/"
+                }
+            ],
+            "console": "internalConsole",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/Debug;${workspaceRoot}/build/source/Debug;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        },
+        {
+            "name": "Win32 HelloWorldCSM sphere_scene Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Debug/HelloWorldCSM.exe",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "false",
+                "-b", "ogl",
+                "-g", "high",
+                "-s", "sphere_scene"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;${workspaceRoot}/build/bin/Debug/;${workspaceRoot}/build/source/Debug/;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/"
+                }
+            ],
+            "console": "internalConsole",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/Debug;${workspaceRoot}/build/source/Debug;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        },
+        {
+            "name": "Win32 HelloWorldCSM bottle_scene Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Debug/HelloWorldCSM.exe",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "true",
+                "-b", "ogl",
+                "-g", "high",
+                "-s", "bottle_scene"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;${workspaceRoot}/build/bin/Debug/;${workspaceRoot}/build/source/Debug/;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/"
+                }
+            ],
+            "console": "internalConsole",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/Debug;${workspaceRoot}/build/source/Debug;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        },
+        {
+            "name": "Win32 Model Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Debug/Model.exe",
+            "args": [
+             //   "-i", "C:/Users/gabri/Documents/Models/sphere_scene.glb",
+             //   "-i", "C:/Users/gabri/Documents/Models/adamHead/adamHead.gltf",
+                "-i", "C:/Users/gabri/Documents/Models/bottle_scene.glb",
+                "-f", "json",
+             //   "-o", "sphere_scene",
+                "-o", "bottle_scene",
+                "-r", "2048",
+                "-d"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

@@ -1,0 +1,353 @@
+{
+    "data": {
+        "name": {
+            "dtype": "STD_STRING",
+            "value": "sphere_scene"
+        },
+        "position": {
+            "dtype": "VEC3",
+            "value": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        },
+        "scale": {
+            "dtype": "VEC3",
+            "value": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+            }
+        },
+        "rotation": {
+            "dtype": "QUAT",
+            "value": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+            }
+        }
+    },
+    "components": [],
+    "children": [
+        {
+            "data": {
+                "name": {
+                    "dtype": "STD_STRING",
+                    "value": "light"
+                },
+                "position": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -10
+                    }
+                },
+                "scale": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                    }
+                },
+                "rotation": {
+                    "dtype": "QUAT",
+                    "value": {
+                        "x": -0.707107,
+                        "y": 0,
+                        "z": -0,
+                        "w": -0.707107
+                    }
+                }
+            },
+            "components": [
+                {
+                    "name": "PointLight",
+                    "data": {
+                        "shadow": {
+                            "dtype": "IVEC2",
+                            "value": {
+                                "x": 2048,
+                                "y": 2048
+                            }
+                        },
+                        "visible": {
+                            "dtype": "BOOL",
+                            "value": true
+                        },
+                        "constant": {
+                            "dtype": "FLOAT",
+                            "value": 1
+                        },
+                        "diffuse": {
+                            "dtype": "VEC3",
+                            "value": {
+                                "x": 1,
+                                "y": 1,
+                                "z": 1
+                            }
+                        },
+                        "specular": {
+                            "dtype": "VEC3",
+                            "value": {
+                                "x": 1,
+                                "y": 1,
+                                "z": 1
+                            }
+                        },
+                        "radius": {
+                            "dtype": "FLOAT",
+                            "value": 20
+                        },
+                        "inside_radius": {
+                            "dtype": "FLOAT",
+                            "value": 5
+                        }
+                    }
+                }
+            ],
+            "children": []
+        },
+        {
+            "data": {
+                "name": {
+                    "dtype": "STD_STRING",
+                    "value": "camera"
+                },
+                "position": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -10
+                    }
+                },
+                "scale": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                    }
+                },
+                "rotation": {
+                    "dtype": "QUAT",
+                    "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -0,
+                        "w": -1
+                    }
+                }
+            },
+            "components": [
+                {
+                    "name": "Camera",
+                    "data": {
+                        "enable": {
+                            "dtype": "BOOL",
+                            "value": true
+                        },
+                        "viewport": {
+                            "dtype": "VEC4",
+                            "value": {
+                                "x": -8.4215e+08,
+                                "y": -8.4215e+08,
+                                "z": -8.4215e+08,
+                                "w": -8.4215e+08
+                            }
+                        },
+                        "projection": {
+                            "dtype": "FLOAT_MATRIX",
+                            "value": [
+                                2.77778,
+                                0,
+                                0,
+                                0,
+                                0,
+                                4.93827,
+                                0,
+                                0,
+                                0,
+                                0,
+                                1.001,
+                                -0.1001,
+                                0,
+                                0,
+                                1,
+                                0
+                            ]
+                        }
+                    }
+                }
+            ],
+            "children": []
+        },
+        {
+            "data": {
+                "name": {
+                    "dtype": "STD_STRING",
+                    "value": "sphere"
+                },
+                "position": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0
+                    }
+                },
+                "scale": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                    }
+                },
+                "rotation": {
+                    "dtype": "QUAT",
+                    "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -0,
+                        "w": -1
+                    }
+                }
+            },
+            "components": [
+                {
+                    "name": "StaticMesh",
+                    "data": {
+                        "materials": {
+                            "dtype": "STD_VECTOR_STRING",
+                            "value": [
+                                "sphere_scene_rust"
+                            ]
+                        },
+                        "obb": {
+                            "dtype": "STD_VECTOR_VEC3",
+                            "value": [
+                                {
+                                    "x": 0.577453,
+                                    "y": 0.577315,
+                                    "z": 0.577282
+                                },
+                                {
+                                    "x": -0.408359,
+                                    "y": 0.816521,
+                                    "z": -0.408089
+                                },
+                                {
+                                    "x": -0.706959,
+                                    "y": -8.58903e-05,
+                                    "z": 0.707255
+                                },
+                                {
+                                    "x": -1.00788e-08,
+                                    "y": -8.30791e-08,
+                                    "z": -1.00847e-08
+                                },
+                                {
+                                    "x": 0.999943,
+                                    "y": 0.999971,
+                                    "z": 0.999993
+                                }
+                            ]
+                        },
+                        "mesh": {
+                            "dtype": "STD_STRING",
+                            "value": "sphere_scene_mesh0"
+                        }
+                    }
+                }
+            ],
+            "children": []
+        },
+        {
+            "data": {
+                "name": {
+                    "dtype": "STD_STRING",
+                    "value": "cube"
+                },
+                "position": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 2.5
+                    }
+                },
+                "scale": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 4,
+                        "y": 1,
+                        "z": 4
+                    }
+                },
+                "rotation": {
+                    "dtype": "QUAT",
+                    "value": {
+                        "x": 0.707107,
+                        "y": 0,
+                        "z": -0,
+                        "w": -0.707107
+                    }
+                }
+            },
+            "components": [
+                {
+                    "name": "StaticMesh",
+                    "data": {
+                        "materials": {
+                            "dtype": "STD_VECTOR_STRING",
+                            "value": [
+                                "sphere_scene_floor"
+                            ]
+                        },
+                        "obb": {
+                            "dtype": "STD_VECTOR_VEC3",
+                            "value": [
+                                {
+                                    "x": 0.57735,
+                                    "y": 0.57735,
+                                    "z": 0.57735
+                                },
+                                {
+                                    "x": 0.816497,
+                                    "y": -0.408248,
+                                    "z": -0.408248
+                                },
+                                {
+                                    "x": -1.49012e-08,
+                                    "y": 0.707107,
+                                    "z": -0.707107
+                                },
+                                {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0
+                                },
+                                {
+                                    "x": 1.73205,
+                                    "y": 1.63299,
+                                    "z": 1.41421
+                                }
+                            ]
+                        },
+                        "mesh": {
+                            "dtype": "STD_STRING",
+                            "value": "sphere_scene_mesh1"
+                        }
+                    }
+                }
+            ],
+            "children": []
+        }
+    ]
+}
