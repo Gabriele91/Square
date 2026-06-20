@@ -165,6 +165,97 @@
             }
         },
         {
+            "name": "macOS HelloWorld Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorld",
+            "args": [
+                "-v",
+                "-d",
+                "-b", "ogl",
+                "-g", "high"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "DYLD_LIBRARY_PATH": "${workspaceRoot}/build/lib:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+            }
+        },
+        {
+            "name": "macOS HelloWorldCSM Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorldCSM",
+            "args": [
+                "-v",
+                "-d",
+                "-b", "ogl",
+                "-g", "high",
+                "-s", "csm_scene"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "DYLD_LIBRARY_PATH": "${workspaceRoot}/build/lib:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+            }
+        },
+        {
+            "name": "macOS HelloWorldCSM sphere_scene Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorldCSM",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "false",
+                "-b", "ogl",
+                "-g", "high",
+                "-s", "sphere_scene"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "DYLD_LIBRARY_PATH": "${workspaceRoot}/build/lib:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+            }
+        },
+        {
+            "name": "macOS HelloWorldCSM bottle_scene Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorldCSM",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "true",
+                "-b", "ogl",
+                "-g", "high",
+                "-s", "bottle_scene"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "DYLD_LIBRARY_PATH": "${workspaceRoot}/build/lib:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+            }
+        },
+        {
+            "name": "macOS Model Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Model",
+            "args": [
+                "-i", "/Users/iclake2/Documents/Models/bottle_scene.glb",
+                "-f", "json",
+                "-o", "bottle_scene",
+                "-r", "2048",
+                "-d"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "DYLD_LIBRARY_PATH": "${workspaceRoot}/build/lib:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+            }
+        },
+        {
             "name": "Linux HelloWorldCSM Debug",
             "type": "cppdbg",
             "request": "launch",

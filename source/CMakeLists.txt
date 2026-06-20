@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.14...3.31)
 project(Square VERSION 1.0.0 DESCRIPTION "Square render engine")
 
 # C++17
@@ -13,8 +13,8 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG " /Zi /Od /MDd")
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "MSVC Runtime Library")
 elseif(APPLE)
-  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDISABLE_SHARER_PREPROCESS_LINE_SET")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DDISABLE_SHARER_PREPROCESS_LINE_SET")
 else()
   set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fPIC -pthread -DDISABLE_SHARER_PREPROCESS_LINE_SET")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fPIC -pthread -DDISABLE_SHARER_PREPROCESS_LINE_SET")
@@ -53,6 +53,18 @@ if(WIN32)
 elseif(APPLE)
     file(GLOB APPLE_SRC Driver/Cocoa/*.mm)
     list(APPEND OS_SOURCES ${APPLE_SRC})
+    list(APPEND OS_FLAGS GL_SILENCE_DEPRECATION)
+    set_source_files_properties(${APPLE_SRC} PROPERTIES
+        COMPILE_OPTIONS "-Wno-deprecated-declarations;-Wno-incompatible-pointer-types"
+    )
+    list(APPEND OS_LIBS
+        "-framework Cocoa"
+        "-framework OpenGL"
+        "-framework CoreVideo"
+        "-framework QuartzCore"
+        "-framework CoreGraphics"
+        "-framework CoreFoundation"
+    )
 
 elseif(UNIX AND NOT APPLE)
   file(GLOB LINUX_SRC Driver/Xorg/*.cpp)
@@ -74,6 +86,14 @@ add_library(Square SHARED ${SOURCES} ${OS_SOURCES})
 
 # Flags
 target_compile_definitions(Square PRIVATE ${OS_FLAGS})
+
+if(NOT MSVC)
+    target_compile_options(Square PRIVATE
+        -Wno-unused-value
+        -Wno-unused-but-set-variable
+        -Wno-braced-scalar-init
+    )
+endif()
 
 # Include directories
 target_include_directories(Square PRIVATE

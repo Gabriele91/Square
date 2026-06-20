@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.14...3.31)
 
 # Add examples HelloWorld
 add_subdirectory(HelloWorld)

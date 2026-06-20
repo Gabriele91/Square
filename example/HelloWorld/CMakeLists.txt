@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.14...3.31)
 project(HelloWorld VERSION 1.0.0 LANGUAGES CXX)
 
 # Set C++ standard
@@ -61,6 +61,7 @@ endif()
 
 # Assets target
 add_custom_target(HelloWorldAssets ALL COMMENT "Target for assets installation")
+
 
 # Install targets
 install(TARGETS HelloWorld

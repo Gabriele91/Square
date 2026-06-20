@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14...3.31)
 project(SqDX11 VERSION 1.0.0 LANGUAGES CXX DESCRIPTION "Square backend DirectX")
 
 # Set C++ standard

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14...3.31)
 project(SqOpenGL VERSION 1.0.0 LANGUAGES CXX DESCRIPTION "Square backend DirectX")
 
 # Set C++ standard
@@ -33,7 +33,7 @@ execute_process(
 if(NOT jinja2_installed EQUAL 0)
     message(STATUS "Jinja2 not found, installing via pip...")
     execute_process(
-        COMMAND ${Python_EXECUTABLE} -m pip install jinja2==3.1
+        COMMAND ${Python_EXECUTABLE} -m pip install jinja2==3.1 --break-system-packages
         RESULT_VARIABLE install_jinja2_result
         OUTPUT_VARIABLE install_jinja2_output
         ERROR_VARIABLE install_jinja2_error
@@ -55,9 +55,10 @@ glad_add_library(glad_gl_core_41 REPRODUCIBLE API gl:core=4.1)
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${HEADER_FILES})
 
 # Set preprocessor definitions
-target_compile_definitions(${PROJECT_NAME} PRIVATE 
+target_compile_definitions(${PROJECT_NAME} PRIVATE
     _CRT_SECURE_NO_WARNINGS
     _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+    $<$<PLATFORM_ID:Darwin>:GL_SILENCE_DEPRECATION>
 )
 
 # Set compiler options
@@ -104,14 +105,9 @@ elseif(UNIX AND NOT APPLE)
         dl
     )
 elseif(APPLE)
-    target_link_libraries(${PROJECT_NAME} PRIVATE 
+    target_link_libraries(${PROJECT_NAME} PRIVATE
         glad_gl_core_41
-        GLU
-        GL
-        xcb
-    )
-    set_target_properties(${PROJECT_NAME} PRIVATE 
-        LINK_FLAGS "-dynamiclib"
+        "-framework OpenGL"
     )
 endif()
 
