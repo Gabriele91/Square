@@ -160,8 +160,8 @@ namespace Filesystem
             {
                 return bundle_path + SEPARETOR + resources_path + SEPARETOR;
             }
-            //or return executable path
-            return  program_dir();
+            // Not in a bundle: use working directory (set by cwd in debugger / launch script)
+            return working_dir();
         #else
             return working_dir();
         #endif
@@ -598,7 +598,7 @@ namespace Filesystem
         #if defined(_WIN32)
             return !!CopyFile(infilepath.c_str(), ofilepath.c_str(), false);
         #elif defined(__APPLE__)
-            return copyfile(infilepath.c_str(), ofilepath.c_str(), NULL, COPYFILE_ALL) != 0;
+            return ::copyfile(infilepath.c_str(), ofilepath.c_str(), NULL, COPYFILE_ALL) != 0;
             #elif defined(__linux__)
             int fd_src, fd_dest;  // Declare file descriptors at the beginning
             struct stat src_stat;
