@@ -364,7 +364,7 @@ namespace Cocoa
                                   backing:NSBackingStoreBuffered
                                   defer:NO];
         //test
-        if (window == nil) return nullptr;
+        if (window == nil) return false;
         //forground
         
         if (info.m_fullscreen)
@@ -397,6 +397,7 @@ namespace Cocoa
         
         //View
         NSSquareView* view = [[NSSquareView alloc] initWithFrame:content_rect];
+        [view setWantsBestResolutionOpenGLSurface:NO];
         [window setContentView: view];
         [window makeFirstResponder: view];
         
@@ -738,6 +739,21 @@ namespace Cocoa
                                                   dequeue:YES];
             if (event == nil)  break;
             [NSApp sendEvent:event];
+        }
+        // Re-fire REPEAT for all held keys every frame (mirrors Windows behavior)
+        for (auto& pair : Cocoa::s_os_context.m_input)
+        {
+            Cocoa::InputCocoa* input_cocoa = pair.second;
+            if (!input_cocoa->m_keyboard) continue;
+            for (int key = 0; key < KeyboardEvent::KEY_LAST; ++key)
+            {
+                ActionEvent& state = input_cocoa->m_action_keyboard_state[key];
+                if (state == ActionEvent::PRESS || state == ActionEvent::REPEAT)
+                {
+                    state = ActionEvent::REPEAT;
+                    input_cocoa->m_keyboard((KeyboardEvent)key, 0, ActionEvent::REPEAT);
+                }
+            }
         }
     }
     
