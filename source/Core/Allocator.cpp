@@ -46,13 +46,14 @@ namespace Square
 #else
 	void* DefaultAllocator::alloc(size_t size, const char* name, uint8 flag)
 	{
-		return aligned_alloc(s_default_align, size);
+		size_t aligned_size = (size + s_default_align - 1) & ~(s_default_align - 1);
+		return aligned_alloc(s_default_align, aligned_size);
 	}
 
 	void* DefaultAllocator::alloc(size_t size, const char* name, uint8 flag, uint16 align, uint16 align_offset)
 	{
-		// TODO(find another way to do this)
-		return aligned_alloc(align, size);
+		size_t aligned_size = (size + align - 1) & ~(size_t(align) - 1);
+		return aligned_alloc(align, aligned_size);
 	}
 
 	void  DefaultAllocator::free(void* ptr, size_t size)
