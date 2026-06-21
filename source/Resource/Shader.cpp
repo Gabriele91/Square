@@ -171,13 +171,19 @@ namespace Resource
 		std::string               shader_commond_header = "#pragma pack_matrix( row_major )\n";
 		if (source.m_hlsl_target) shader_commond_header+= "#define HLSL_BACKEND\n";
 		else		              shader_commond_header+= "#define GLSL_BACKEND\n";
-		// sRGB?
+		// sRGB / gamma correction
 		if (auto window = context().window())
 		if (auto device = window->device())
-		if (auto srgb = device->get_context_info().m_srgb; srgb == true)
+		if (device->get_context_info().m_srgb)
 		{
-			shader_commond_header+= "#define ENABLE_GAMMA_CORRECTION 1\n";
-			shader_commond_header+= "#define ENABLE_TARGET_SRGB 1\n";
+			// Texture decode (sRGB→linear) is always done by the shader via to_rgb_space().
+			shader_commond_header += "#define ENABLE_GAMMA_CORRECTION 1\n";
+			// Output encode (linear→sRGB): let the hardware do it only when the
+			// framebuffer is actually sRGB-capable (DX UNORM_SRGB or GL with sRGB FB).
+			// Otherwise the shader handles it via to_srgb_space() as a fallback.
+			if (auto render = context().render())
+			if (render->is_srgb_framebuffer())
+				shader_commond_header += "#define ENABLE_TARGET_SRGB 1\n";
 		}
         //add commond header
 		shader_commond_header +=

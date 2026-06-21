@@ -486,6 +486,7 @@ namespace Render
 
 		virtual bool init(Video::DeviceResources* resource) override;
 		virtual void close() override;
+		virtual bool is_srgb_framebuffer() const override;
 
 		virtual const ClearColorState& get_clear_color_state() override;
 		virtual void set_clear_color_state(const ClearColorState& cf) override;
@@ -648,6 +649,7 @@ namespace Render
 		State			   s_render_state;
 		GLuint             s_vao_attributes;
 		RenderDriverInfo   s_render_driver_info;
+		bool               m_srgb_fb{ false };
 	};
 }
 }

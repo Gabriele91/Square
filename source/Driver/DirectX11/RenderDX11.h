@@ -454,6 +454,7 @@ namespace Render
 
 		virtual bool init(Video::DeviceResources* resource) override;
 		virtual void close() override;
+		virtual bool is_srgb_framebuffer() const override;
 
 		virtual const ClearColorState& get_clear_color_state() override;
 		virtual void set_clear_color_state(const ClearColorState& cf) override;

@@ -9,6 +9,10 @@
 #include "Window_private.h"
 #include "Input_private.h"
 
+#ifndef GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB
+#define GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB 0x20B2
+#endif
+
 
 namespace Square
 {
@@ -104,28 +108,31 @@ namespace Xorg
 		//SET BUFFERS
 		int buffer_OpenGL[] =
 		{
-			GLX_DRAWABLE_TYPE,   GLX_WINDOW_BIT,          //[0]  [1]
-			GLX_RENDER_TYPE,     GLX_RGBA_BIT,		      //[1]  [2]
-			GLX_RED_SIZE,        red_bits,			      //[3]  [4]
-			GLX_GREEN_SIZE,      green_bits,		      //[5]  [6]
-			GLX_BLUE_SIZE,       blue_bits,			      //[7]  [8]
-			GLX_ALPHA_SIZE,      alpha_bits,		      //[9]  [10]
-			GLX_DEPTH_SIZE,      depth_bits,		      //[11] [12]
-			GLX_STENCIL_SIZE,    stencil_bits,		      //[13] [14]
-		    GLX_DOUBLEBUFFER,	 True, 				      //[15] [16]
-			GLX_SAMPLE_BUFFERS,  True,					  //[17] [18] // <-- MSAA
-			GLX_SAMPLES,         ctx_info.m_anti_aliasing,//[19] [20] // <-- MSAA
+			GLX_DRAWABLE_TYPE,            GLX_WINDOW_BIT,           //[0]  [1]
+			GLX_RENDER_TYPE,              GLX_RGBA_BIT,	           //[2]  [3]
+			GLX_RED_SIZE,                 red_bits,		           //[4]  [5]
+			GLX_GREEN_SIZE,               green_bits,	           //[6]  [7]
+			GLX_BLUE_SIZE,                blue_bits,	           //[8]  [9]
+			GLX_ALPHA_SIZE,               alpha_bits,	           //[10] [11]
+			GLX_DEPTH_SIZE,               depth_bits,	           //[12] [13]
+			GLX_STENCIL_SIZE,             stencil_bits,	           //[14] [15]
+		    GLX_DOUBLEBUFFER,             True,                     //[16] [17]
+			GLX_SAMPLE_BUFFERS,           True,		               //[18] [19] // <-- MSAA
+			GLX_SAMPLES,                  ctx_info.m_anti_aliasing, //[20] [21] // <-- MSAA
+			GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB, True,                 //[22] [23] // <-- sRGB
 			X11None
 		};
-		//tests
+		//tests — tried in order when glXChooseFBConfig returns no configs
 		int try_to_disable[][2] =
 		{
+			//Disable sRGB (most common fallback; shader will do gamma instead)
+			{ 22, X11None },
 			//disable double buffer
 			{ 16, False },
 			//Disable MSAA
-			{ 17, X11None },
+			{ 18, X11None },
 			//Disable stencil
-			{ 14, 0 }
+			{ 15, 0 }
 		};
 		//number of tests
 		int n_test = sizeof(try_to_disable) / sizeof(int[2]);

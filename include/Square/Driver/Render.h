@@ -927,6 +927,7 @@ namespace Render
 
 		virtual bool init(Video::DeviceResources* resource) = 0;
 		virtual void close() = 0;
+		virtual bool is_srgb_framebuffer() const = 0;
 
 		virtual const ClearColorState& get_clear_color_state() = 0;
 		virtual void set_clear_color_state(const ClearColorState& cf) = 0;

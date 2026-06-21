@@ -390,6 +390,11 @@ namespace Cocoa
         //screen title
         [window setFrameAutosaveName: [NSString stringWithUTF8String:info.m_title.c_str()]];
         [window setTitle: [NSString stringWithUTF8String:info.m_title.c_str()]];
+        // Tell the compositor that this window lives in sRGB space so that
+        // GL_FRAMEBUFFER_SRGB can take effect. NSOpenGL has no PFA for sRGB,
+        // but setting the window colorspace achieves the same result.
+        if (info.m_context.m_srgb)
+            [window setColorSpace:[NSColorSpace sRGBColorSpace]];
         
         //Force show
         [window makeKeyAndOrderFront: s_os_context.m_application];

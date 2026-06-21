@@ -683,6 +683,13 @@ namespace Render
 		}
 	}
 
+	bool ContextDX11::is_srgb_framebuffer() const
+	{
+		// On DX, when m_srgb is true we always create a UNORM_SRGB swapchain,
+		// so the framebuffer IS sRGB-capable whenever the user requested it.
+		return m_device_resouces != nullptr && m_device_resouces->get_context_info().m_srgb;
+	}
+
 	RenderDriver ContextDX11::get_render_driver()
 	{
 		return s_render_driver_info.m_render_driver;
