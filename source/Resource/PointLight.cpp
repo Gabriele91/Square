@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 27/04/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Core/Object.h"
 #include "Square/Core/Context.h"
@@ -212,7 +212,8 @@ namespace Scene
 	}
 	const Geometry::Frustum& PointLight::frustum() const
 	{
-		return {};
+		static const Geometry::Frustum empty{};
+		return empty;
 	}
 	Weak<Render::Transform> PointLight::transform() const
 	{

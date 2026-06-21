@@ -22,11 +22,12 @@
 #include <CoreVideo/CVBase.h>
 #include <CoreVideo/CVDisplayLink.h>
 
+NS_ASSUME_NONNULL_BEGIN
 ///////////////////////////////////////////////////////////////////////////////
 // COCOA APPLICATION CLASS
 @interface NSSquareApplication : NSApplication
 {
-    NSArray *__autoreleasing  _Nullable * _Nullable nibObjects;
+    NSArray *__autoreleasing _Nullable * _Nullable nibObjects;
 }
 @end
 
@@ -59,7 +60,7 @@ namespace Cocoa
     //Context
     struct SQUARE_API WrapperContext
     {
-        NSSquareApplication*                           m_application;
+        NSSquareApplication* _Nullable                 m_application;
         std::vector < ScreenCocoa >                    m_screens;
         std::unordered_map<WindowCocoa*, WindowCocoa*> m_windows;
         std::unordered_map<InputCocoa*, InputCocoa*>   m_input;
@@ -73,7 +74,6 @@ namespace Cocoa
     // DECLARE
     InputCocoa* create_input(WindowCocoa* window, Input* input);
     bool cocoa_create_window(WindowCocoa& wnd_cocoa,const WindowInfo& info);
-    InputCocoa* create_input(WindowCocoa* window, Input* input);
     void cocoa_move_listener(WindowCocoa* wnd_cocoa, InputCocoa* ln_cocoa);
     void cocoa_send_close_event_to_all_windows();
 }
@@ -108,8 +108,8 @@ namespace Cocoa
 // COCOA INPUT DELEGATE
 @interface NSCocoaListener : NSResponder <NSWindowDelegate>
 {
-    NSWindow*                         m_window;
-    Square::Video::Cocoa::InputCocoa* m_input;
+    NSWindow* _Nullable                         m_window;
+    Square::Video::Cocoa::InputCocoa* _Nullable m_input;
 }
 
 - (id) init;
@@ -140,3 +140,5 @@ namespace Cocoa
 
 
 @end
+
+NS_ASSUME_NONNULL_END

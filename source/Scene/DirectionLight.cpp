@@ -156,12 +156,14 @@ namespace Scene
 	//methods
 	const Geometry::Sphere& DirectionLight::bounding_sphere() const
 	{
-		return {};
+		static const Geometry::Sphere emptry;
+		return emptry;
 	}
 	
 	const Geometry::Frustum& DirectionLight::frustum() const
 	{
-		return {};
+		static const Geometry::Frustum emptry{};
+		return emptry;
 	}
 
 	Weak<Render::Transform> DirectionLight::transform() const

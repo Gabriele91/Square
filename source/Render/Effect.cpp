@@ -587,8 +587,9 @@ namespace Render
 	
 	const std::string&  Effect::parameter_name(int parameter_id) const
 	{
-		for (auto element : m_parameters_map) if (element.second == parameter_id) return element.first;
-		return std::string();
+		for (const auto& element : m_parameters_map) if (element.second == parameter_id) return element.first;
+		static const std::string emptry;
+		return emptry;
 	}
 	//get id
 	int Effect::parameter_id(const std::string& parameter_name)
