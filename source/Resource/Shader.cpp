@@ -518,7 +518,7 @@ namespace Resource
 		HLSL2ALL::MSLConfig msl_config;
 		msl_config.m_ios   = false;
 		msl_config.m_macos = true;
-		msl_config.m_msl_version = 20000; // MSL 2.0
+		msl_config.m_msl_version = 30000; // MSL 3.0
 		// SPIR-V uses Vulkan/DX Z [0,w] == Metal Z; fixup_clipspace would wrongly re-remap it, releasing behind-camera vertices.
 		msl_config.m_fixup_clipspace = false;
 
