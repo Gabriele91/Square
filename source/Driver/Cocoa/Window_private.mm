@@ -160,7 +160,7 @@ namespace Cocoa
         id<MTLDevice>   m_metal_device { nil };
         CAMetalLayer*   m_layer        { nil };
         NSView*         m_view         { nil };
-        bool            m_vsync        { true };
+        bool            m_vsync        { false }; // matches metal_layer.displaySyncEnabled = NO
         const ContextInfo& m_info_context;
         std::function<void()> m_swap_fn;
     };
@@ -355,6 +355,13 @@ namespace Cocoa
                                     : MTLPixelFormatBGRA8Unorm;
         metal_layer.framebufferOnly = YES;
         metal_layer.drawableSize    = CGSizeMake(info.m_size[0], info.m_size[1]);
+        // Present without waiting on the display refresh. With vsync enabled,
+        // macOS throttles the CAMetalLayer presentation to the (power-saving)
+        // idle refresh rate when there is no user interaction — the app drops to
+        // ~10 FPS while idle and jumps back up only when the mouse/camera moves.
+        // Decoupling presentation from vsync (as the OpenGL path does) keeps a
+        // steady high frame rate. Re-enable via set_vsync(true) if vsync is wanted.
+        metal_layer.displaySyncEnabled = NO;
 
         // Attach layer to the NSView
         [wnd->m_view setWantsLayer:YES];
