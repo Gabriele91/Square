@@ -138,7 +138,8 @@ namespace Render
 						//no shadow light
 						if (shadow) break;
 						//draw
-						randerable->draw(render(), material_id, inputs, pass);
+						for (size_t draw_id = 0; draw_id < pass.m_draw_count; ++draw_id)
+							randerable->draw(render(), material_id, inputs, pass, draw_id);
 						break;
 						//update constant buffer
 					case EffectPass::LT_DIRECTION:
@@ -163,7 +164,8 @@ namespace Render
 								inputs.m_shadow_map = light->shadow_buffer().texture();
 							}
 							//draw
-							randerable->draw(render(), material_id, inputs, pass);
+							for (size_t draw_id = 0; draw_id < pass.m_draw_count; ++draw_id)
+								randerable->draw(render(), material_id, inputs, pass, draw_id);
 						}
 						break;
 						//update constant buffer
@@ -189,7 +191,8 @@ namespace Render
 								inputs.m_shadow_map = light->shadow_buffer().texture();
 							}
 							//draw
-							randerable->draw(render(), material_id, inputs, pass);
+							for (size_t draw_id = 0; draw_id < pass.m_draw_count; ++draw_id)
+								randerable->draw(render(), material_id, inputs, pass, draw_id);
 						}
 						break;
 						//update constant buffer
@@ -215,7 +218,8 @@ namespace Render
 								inputs.m_shadow_map = light->shadow_buffer().texture();
 							}
 							//draw
-							randerable->draw(render(), material_id, inputs, pass);
+							for (size_t draw_id = 0; draw_id < pass.m_draw_count; ++draw_id)
+								randerable->draw(render(), material_id, inputs, pass, draw_id);
 						}
 						break;
 						/* not support */

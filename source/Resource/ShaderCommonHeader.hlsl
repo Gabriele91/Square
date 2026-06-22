@@ -37,8 +37,23 @@ R"HLSLCODE(
 	static uint cube_map_view_id[]={ 0,1,3,2,4,5 };
 
 	#define ONLY_GLSL( x ) x 
+	#define ONLY_MTL( x )
 	#define ONLY_HLSL( x )
-#else
+#elif defined(MTL_BACKEND)
+	#define shadow2D(name,pos) name.Sample(sempler_ ## name, pos)
+	#define draw2D(name,pos) name.Sample(sempler_ ## name, pos)
+
+	#define shadow2DArray(name,pos) name.Sample(sempler_ ## name, pos)
+	#define draw2DArray(name,pos) name.Sample(sempler_ ## name, pos)
+
+	#define shadowCube(name,pos) name.Sample(sempler_ ## name, pos)
+	#define drawCube(name,pos) name.Sample(sempler_ ## name, pos)
+	static uint cube_map_view_id[]={ 0,1,2,3,4,5 };
+
+	#define ONLY_GLSL( x )
+	#define ONLY_MTL( x ) x
+	#define ONLY_HLSL( x )
+#elif defined(HLSL_BACKEND)
 	#define shadow2D(name,pos) name.Sample(sempler_ ## name, pos)
 	#define draw2D(name,pos) name.Sample(sempler_ ## name, pos)
 
@@ -50,7 +65,10 @@ R"HLSLCODE(
 	static uint cube_map_view_id[]={ 0,1,2,3,4,5 };
 
 	#define ONLY_GLSL( x ) 
+	#define ONLY_MTL( x )
 	#define ONLY_HLSL( x ) x
+#else 
+	#error Shader language not supported
 #endif
 
 ////////////////////////////////////////////////////

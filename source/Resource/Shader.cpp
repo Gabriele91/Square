@@ -177,9 +177,10 @@ namespace Resource
 			source.m_msl_target  = (lang == "MSL");
 		}
         //commond header
-		std::string               shader_commond_header = "#pragma pack_matrix( row_major )\n";
-		if (source.m_hlsl_target) shader_commond_header+= "#define HLSL_BACKEND\n";
-		else		              shader_commond_header+= "#define GLSL_BACKEND\n";
+		std::string                    shader_commond_header = "#pragma pack_matrix( row_major )\n";
+		     if (source.m_hlsl_target) shader_commond_header+= "#define HLSL_BACKEND\n";
+		else if (source.m_msl_target)  shader_commond_header+= "#define MTL_BACKEND\n";
+		else		              	   shader_commond_header+= "#define GLSL_BACKEND\n";
 		// sRGB / gamma correction
 		if (auto window = context().window())
 		if (auto device = window->device())

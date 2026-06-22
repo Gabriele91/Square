@@ -421,6 +421,37 @@ namespace Render
 		EffectPass& back();
 		const EffectPass& back() const;
 
+		// by draw
+		class IteratorByDraw 
+		{
+		public:
+			IteratorByDraw(PassListIt pass_it, size_t draw_id = 0);
+			IteratorByDraw(const IteratorByDraw& pass_it_by_draw) = default;
+
+			IteratorByDraw& operator++();
+			std::tuple<EffectPass&,size_t> operator * () const;
+			bool operator!=(const IteratorByDraw& other) const;
+
+			private:
+				PassListIt m_pass_it;
+				size_t m_pass_draw_id = 0;
+		};
+
+		class ContainerByDraw
+		{
+		public:
+			ContainerByDraw(EffectTechnique& effect_technique);
+			ContainerByDraw(const ContainerByDraw&) = default;
+
+			IteratorByDraw begin();
+			IteratorByDraw end();
+
+		private:
+			EffectTechnique& m_effect_technique;
+		};
+
+		ContainerByDraw iterate_draws();
+
 	protected:
 
 		PastList m_passes;

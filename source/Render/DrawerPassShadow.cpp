@@ -143,8 +143,7 @@ namespace Render
 				if (!technique) continue;
 				//draw for each pass; multi-pass passes are drawn draw_count times,
 				//one per cube face / cascade (the shader routes via the pass index).
-				for (auto& pass : *technique)
-				for (int draw_id = 0; draw_id < pass.m_draw_count; ++draw_id)
+				for (auto[pass,draw_id] : technique->iterate_draws())
 					randerable->draw(render(), material_id, inputs, pass, draw_id);
 			}
 		}

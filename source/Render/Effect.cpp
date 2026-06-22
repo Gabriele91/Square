@@ -541,6 +541,56 @@ namespace Render
 	{
 		return m_passes.back();
 	}
+
+	EffectTechnique::IteratorByDraw::IteratorByDraw(EffectTechnique::PassListIt pass_it, size_t draw_id)
+	: m_pass_it(pass_it)
+	, m_pass_draw_id(draw_id)
+	{
+
+	}
+
+	EffectTechnique::IteratorByDraw& EffectTechnique::IteratorByDraw::operator++() 
+	{
+		if ((m_pass_draw_id+1) < m_pass_it->m_draw_count)
+		{
+			++m_pass_draw_id;
+		}
+		else 
+		{
+			++m_pass_it;
+			m_pass_draw_id = 0;
+		}
+		return *this;
+	}
+
+	std::tuple<EffectPass&,size_t> EffectTechnique::IteratorByDraw::operator * () const
+	{
+		return std::tuple<EffectPass&, size_t>(*m_pass_it, m_pass_draw_id);
+	}
+
+	bool EffectTechnique::IteratorByDraw::operator!=(const EffectTechnique::IteratorByDraw& other) const 
+	{
+		return m_pass_it != other.m_pass_it || m_pass_draw_id != other.m_pass_draw_id;
+	}
+
+	EffectTechnique::ContainerByDraw::ContainerByDraw(EffectTechnique& effect_technique)
+	: m_effect_technique(effect_technique)
+	{}
+
+	EffectTechnique::IteratorByDraw EffectTechnique::ContainerByDraw::begin()
+	{
+		return IteratorByDraw(m_effect_technique.begin());
+	}
+
+	EffectTechnique::IteratorByDraw EffectTechnique::ContainerByDraw::end()
+	{
+		return IteratorByDraw(m_effect_technique.end());
+	}
+
+	EffectTechnique::ContainerByDraw EffectTechnique::iterate_draws() 
+	{
+		return ContainerByDraw(*this);
+	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// EffectTechnique
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
