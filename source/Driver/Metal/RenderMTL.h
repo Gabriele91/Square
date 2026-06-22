@@ -507,6 +507,7 @@ namespace Render
         void ensure_depth_texture(uint32_t w, uint32_t h);
 
         id<MTLBuffer> make_buffer(const void* data, size_t size);
+        void generate_mipmaps(id<MTLTexture> tex);
     };
 
 } // Render

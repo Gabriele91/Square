@@ -992,6 +992,9 @@ static id<MTLTexture> upload_texture(id<MTLDevice> dev,
 
     td.usage = MTLTextureUsageShaderRead;
     if (is_depth_format(raw.m_format)) td.usage |= MTLTextureUsageRenderTarget;
+    // generateMipmapsForTexture renders into the mip levels, so the texture must
+    // also be usable as a render target.
+    if (gpu.m_build_mipmap) td.usage |= MTLTextureUsageRenderTarget;
 
     id<MTLTexture> tex = [dev newTextureWithDescriptor:td];
     if (!tex || !raw.m_bytes) return tex;
@@ -1089,10 +1092,25 @@ static id<MTLSamplerState> create_sampler(id<MTLDevice> dev, const TextureGpuDat
     return [dev newSamplerStateWithDescriptor:sd];
 }
 
+// Metal does not auto-generate mipmaps: only level 0 is uploaded, so the higher
+// levels stay uninitialised (black) unless we fill them with a blit. Without this
+// distant samples read black mips → dark surfaces + broken alpha-test at range.
+void ContextMTL::generate_mipmaps(id<MTLTexture> tex)
+{
+    if (!tex || tex.mipmapLevelCount <= 1) return;
+    id<MTLCommandBuffer>      cb   = [m_queue commandBuffer];
+    id<MTLBlitCommandEncoder> blit = [cb blitCommandEncoder];
+    [blit generateMipmapsForTexture:tex];
+    [blit endEncoding];
+    [cb commit];
+    [cb waitUntilCompleted];
+}
+
 Texture* ContextMTL::create_texture(const TextureRawDataInformation& raw, const TextureGpuDataInformation& gpu)
 {
     auto* t = new Texture();
     t->m_texture = upload_texture(m_device, raw, gpu);
+    if (gpu.m_build_mipmap) generate_mipmaps(t->m_texture);
     t->m_sampler = create_sampler(m_device, gpu);
     return t;
 }
@@ -1101,6 +1119,7 @@ Texture* ContextMTL::create_texture_array(const TextureRawDataInformation& raw, 
 {
     auto* t = new Texture();
     t->m_texture = upload_texture(m_device, raw, gpu, n);
+    if (gpu.m_build_mipmap) generate_mipmaps(t->m_texture);
     t->m_sampler = create_sampler(m_device, gpu);
     return t;
 }
@@ -1109,6 +1128,7 @@ Texture* ContextMTL::create_cube_texture(const TextureRawDataInformation data[6]
 {
     auto* t = new Texture();
     t->m_texture = upload_texture(m_device, data[0], gpu, 1, true);
+    if (gpu.m_build_mipmap) generate_mipmaps(t->m_texture);
     t->m_sampler = create_sampler(m_device, gpu);
     return t;
 }
