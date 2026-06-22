@@ -179,7 +179,7 @@ namespace Resource
         //commond header
 		std::string                    shader_commond_header = "#pragma pack_matrix( row_major )\n";
 		     if (source.m_hlsl_target) shader_commond_header+= "#define HLSL_BACKEND\n";
-		else if (source.m_msl_target)  shader_commond_header+= "#define MTL_BACKEND\n";
+		else if (source.m_msl_target)  shader_commond_header+= "#define MSL_BACKEND\n";
 		else		              	   shader_commond_header+= "#define GLSL_BACKEND\n";
 		// sRGB / gamma correction
 		if (auto window = context().window())
@@ -518,7 +518,14 @@ namespace Resource
 		HLSL2ALL::MSLConfig msl_config;
 		msl_config.m_ios   = false;
 		msl_config.m_macos = true;
-		msl_config.m_msl_version = 30000; // MSL 3.0
+		if (const auto render = context().render(); render != nullptr)
+		{
+			msl_config.m_msl_version = render->get_render_driver_info().m_shader_version; // MSL 2.0
+		}
+		else 
+		{
+			msl_config.m_msl_version = 2000; // MSL 2.0
+		}
 		// SPIR-V uses Vulkan/DX Z [0,w] == Metal Z; fixup_clipspace would wrongly re-remap it, releasing behind-camera vertices.
 		msl_config.m_fixup_clipspace = false;
 

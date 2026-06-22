@@ -20,11 +20,12 @@ set(HEADER_FILES
     Interface.h
     RenderMTL.h
 )
-
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${HEADER_FILES})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     _CRT_SECURE_NO_WARNINGS
+    $<$<CONFIG:Debug>:SQ_MTL_DEBUG_LOG=1>
+    $<$<CONFIG:Debug>:SQ_MTL_DEBUG_FRAMES=3>
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

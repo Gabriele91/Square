@@ -14,15 +14,6 @@
 using namespace Square;
 using namespace Square::Render;
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Diagnostic logging
-//   Set SQ_MTL_DEBUG_LOG to 0 to compile it all out once the issue is solved.
-//   SQMTL_LOG only emits during the first few frames (see m_frame_index) so the
-//   captured output stays small and readable.
-// ──────────────────────────────────────────────────────────────────────────────
-#define SQ_MTL_DEBUG_LOG 1
-#define SQ_MTL_DEBUG_FRAMES 3
-
 #if SQ_MTL_DEBUG_LOG
     #define SQMTL_LOG(MSG)                                                       \
         do {                                                                     \

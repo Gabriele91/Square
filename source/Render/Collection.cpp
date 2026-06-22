@@ -344,6 +344,7 @@ namespace Render
 					opaque_renderables(collection, queues, transform->position());
                 }
             break;
+            default: break;
         }
         
     }
