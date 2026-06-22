@@ -135,9 +135,15 @@ namespace Resource
 		//first pass, compute program
 		if (!source_preprocess(preprocessed_source, defines, postprocessed_source)) return false;
 		//if is HLSL
-		if (postprocessed_source.m_hlsl_target) 
-		{ 
-			if (!hlsl_compile(postprocessed_source))  return false; 
+		if (postprocessed_source.m_hlsl_target)
+		{
+			if (!hlsl_compile(postprocessed_source)) return false;
+		}
+		//or MSL (Metal)
+		else if (postprocessed_source.m_msl_target)
+		{
+			if (!source_to_spirv(postprocessed_source, spirv)) return false;
+			if (!spirv_to_msl_compile(postprocessed_source, spirv)) return false;
 		}
 		//or GLSL
 		else
@@ -160,12 +166,15 @@ namespace Resource
 	{	
 		//int shader version
 		source.m_hlsl_target = false;
+		source.m_msl_target  = false;
 		source.m_version = m_glsl_compatible_settings.m_shader_version;
 		source.m_texture_target = false;
-		//OpenGL or DirectX
+		//OpenGL or DirectX or Metal
 		if (auto render = context().render())
 		{
-			source.m_hlsl_target = render->get_render_driver_info().m_shader_language == "HLSL";
+			const auto& lang = render->get_render_driver_info().m_shader_language;
+			source.m_hlsl_target = (lang == "HLSL");
+			source.m_msl_target  = (lang == "MSL");
 		}
         //commond header
 		std::string               shader_commond_header = "#pragma pack_matrix( row_major )\n";
@@ -484,6 +493,77 @@ namespace Resource
             return true;
 		}
         return false;
+	}
+
+	bool Shader::spirv_to_msl_compile
+	(
+		const PostprocessOutput& source,
+		const HLSL2ALL::TypeSpirvShaderList& shader_spirv_outputs
+	)
+	{
+		std::string shader_target_name[Render::ST_N_SHADER]
+		{
+			  "vertex"
+			, "fragment"
+			, "geometry"
+			, "tass_control"
+			, "tass_eval"
+			, "compute"
+		};
+
+		std::vector< Render::ShaderSourceInformation > shader_info;
+		std::string shader_sources[Render::ST_N_SHADER];
+
+		HLSL2ALL::MSLConfig msl_config;
+		msl_config.m_ios   = false;
+		msl_config.m_macos = true;
+		msl_config.m_msl_version = 20000; // MSL 2.0
+		// SPIR-V uses Vulkan/DX Z [0,w] == Metal Z; fixup_clipspace would wrongly re-remap it, releasing behind-camera vertices.
+		msl_config.m_fixup_clipspace = false;
+
+		HLSL2ALL::ErrorSpirvShaderList spirv_errors;
+
+		for (const HLSL2ALL::TypeSpirvShader& ssoutput : shader_spirv_outputs)
+		{
+			int  type            = ssoutput.m_type;
+			auto& shader_spirv   = const_cast<HLSL2ALL::SpirvShader&>(ssoutput.m_shader);
+
+			if (!HLSL2ALL::spirv_to_msl(shader_spirv, shader_sources[type], spirv_errors, msl_config))
+			{
+				context().logger()->warning("Error converting SPIR-V to MSL");
+				context().logger()->warnings(spirv_errors);
+				return false;
+			}
+
+			shader_info.push_back
+			(Render::ShaderSourceInformation
+			{
+				  (Render::ShaderType)type
+				, ""
+				, shader_sources[type]
+				, shader_target_name[type]
+				, 0
+			});
+		}
+
+		if (auto render = context().render())
+		{
+			m_shader = render->create_shader(shader_info);
+			if (!m_shader || render->shader_linked_with_error(m_shader))
+			{
+				context().logger()->error("Error to MSL shader compile");
+				context().logger()->errors(render->get_shader_compiler_errors(m_shader));
+				context().logger()->error(render->get_shader_linker_error(m_shader));
+				return false;
+			}
+			else if (render->shader_compiled_with_errors(m_shader))
+			{
+				context().logger()->warning("Wrong MSL shader compile");
+				context().logger()->warnings(render->get_shader_compiler_errors(m_shader));
+			}
+			return true;
+		}
+		return false;
 	}
 
     //get buffer

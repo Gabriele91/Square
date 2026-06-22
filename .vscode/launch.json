@@ -172,7 +172,7 @@
             "args": [
                 "-v",
                 "-d",
-                "-b", "ogl",
+                "-b", "mtl",
                 "-g", "high"
             ],
             "stopAtEntry": false,
@@ -189,7 +189,7 @@
             "args": [
                 "-v",
                 "-d",
-                "-b", "ogl",
+                "-b", "mtl",
                 "-g", "high",
                 "-s", "csm_scene"
             ],
@@ -208,7 +208,7 @@
                 "-v",
                 "-d",
                 "-c", "false",
-                "-b", "ogl",
+                "-b", "mtl",
                 "-g", "high",
                 "-s", "sphere_scene"
             ],
@@ -227,7 +227,7 @@
                 "-v",
                 "-d",
                 "-c", "true",
-                "-b", "ogl",
+                "-b", "mtl",
                 "-g", "high",
                 "-s", "bottle_scene"
             ],

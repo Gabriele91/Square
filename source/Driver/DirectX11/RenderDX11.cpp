@@ -465,6 +465,8 @@ namespace Render
 		//DX11 version
 		context->s_render_driver_info.m_major_version = 11;
 		context->s_render_driver_info.m_minor_version = 0;
+		//DirectX 11 supports geometry shaders
+		context->s_render_driver_info.m_geometry_shader = true;
 	}
 	
 	bool ContextDX11::get_devices(Video::DeviceResources* resource)

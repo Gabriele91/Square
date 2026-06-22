@@ -94,6 +94,7 @@ namespace Resource
 		{
 			size_t	    m_version;
 			bool	    m_hlsl_target;
+			bool	    m_msl_target;
 			bool	    m_texture_target;
 			std::string m_header;
 			std::string m_source;
@@ -112,7 +113,7 @@ namespace Resource
 		(
 			const PostprocessOutput& source
 		);
-		
+
 		bool source_to_spirv
 		(
 			const PostprocessOutput& source,
@@ -120,6 +121,12 @@ namespace Resource
 		);
 
 		bool spirv_to_glsl_compile
+		(
+			const PostprocessOutput& source,
+			const HLSL2ALL::TypeSpirvShaderList& input
+		);
+
+		bool spirv_to_msl_compile
 		(
 			const PostprocessOutput& source,
 			const HLSL2ALL::TypeSpirvShaderList& input

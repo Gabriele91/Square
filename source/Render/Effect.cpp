@@ -1,4 +1,5 @@
 #include "Square/Render/Effect.h"
+#include "Square/Render/MultiPass.h"
 #include "Square/Resource/Shader.h"
 #include "Square/Resource/Texture.h"
 
@@ -330,7 +331,8 @@ namespace Render
 	//enable pass effect
 	void EffectPass::bind(  Render::Context&  render
 						  , const EffectPassInputs& inputs
-                          , EffectParameters* params) const
+                          , EffectParameters* params
+                          , int draw_id) const
 	{
 		//bind
 		bind(render, params);
@@ -376,6 +378,16 @@ namespace Render
 		if (inputs.m_spot_shadow_light && m_uniform_spot_shadow && m_uniform_spot_shadow->is_valid())
 		{
 			m_uniform_spot_shadow->bind(inputs.m_spot_shadow_light);
+		}
+		//multi-pass index (cube face / cascade): write the draw_id into our own
+		//buffer and bind it. The shader routes the draw to the matching layer via
+		//SV_RenderTargetArrayIndex.
+		if (m_cb_multipass && m_uniform_multipass && m_uniform_multipass->is_valid())
+		{
+			Render::UniformMultiPass umultipass;
+			umultipass.m_id = (uint32)draw_id;
+			render.update_steam_CB(m_cb_multipass.get(), (const unsigned char*)&umultipass, sizeof(umultipass));
+			m_uniform_multipass->bind(m_cb_multipass.get());
 		}
 	}
 

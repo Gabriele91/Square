@@ -130,6 +130,9 @@ namespace Parser
 		//test name
         if (!all_drivers && m_driver_name != Render::render_driver_str[info.m_render_driver]) return false;
         if (!all_shader  && m_shader_name != info.m_shader_language)                          return false;
+        //test capability: geometry shader
+        if (m_geometry_shader == CAP_REQUIRE && !info.m_geometry_shader) return false;
+        if (m_geometry_shader == CAP_EXCLUDE &&  info.m_geometry_shader) return false;
         //test version
         if (all_drivers || (m_driver_major_version <= info.m_major_version && m_driver_minor_version <= info.m_minor_version))
 		if (all_shader || (m_shader_version <= info.m_shader_version))
@@ -400,6 +403,29 @@ namespace Parser
                     //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
+                else if (cstr_cmp_skip(ptr, "geometry"))
+                {
+                    //skip spaces
+                    skip_space_and_comments(m_context->m_line, ptr);
+                    //parse on/off capability gate
+                    std::string value;
+                    if (!parse_name(ptr, value))
+                    {
+                        push_error("Requirement: geometry value not valid");
+                        return false;
+                    }
+                    if (value == "on" || value == "true" || value == "yes")
+                        r_field.m_geometry_shader = CAP_REQUIRE;
+                    else if (value == "off" || value == "false" || value == "no")
+                        r_field.m_geometry_shader = CAP_EXCLUDE;
+                    else
+                    {
+                        push_error("Requirement: geometry expects on/off");
+                        return false;
+                    }
+                    //skip spaces
+                    skip_space_and_comments(m_context->m_line, ptr);
+                }
                 else
                 {
                     push_error("Keyword not valid");
@@ -603,12 +629,13 @@ namespace Parser
 		//table
 		struct { PKeys m_keys; PFunction m_funtion; } keys_function_table[]
 		{
-			{ { "blend" },            &Effect::parse_blend },
-			{ { "depth", "zbuffer" }, &Effect::parse_depth },
-			{ { "cullface" },         &Effect::parse_cullface },
-			{ { "lights" },           &Effect::parse_lights },
-			{ { "shadows" },          &Effect::parse_shadows },
-			{ { "shader" },           &Effect::parse_shader },
+			{ { "blend" },                  &Effect::parse_blend },
+			{ { "depth", "zbuffer" },       &Effect::parse_depth },
+			{ { "cullface" },               &Effect::parse_cullface },
+			{ { "lights" },                 &Effect::parse_lights },
+			{ { "shadows" },                &Effect::parse_shadows },
+			{ { "draw_count", "ndrawcall" },&Effect::parse_draw_count },
+			{ { "shader" },                 &Effect::parse_shader },
 		};
 
         //parse table
@@ -864,6 +891,20 @@ namespace Parser
         //end
         return false;
     }
+	bool Effect::parse_draw_count(const char*& ptr, PassField& pass)
+	{
+		//skip "line" space
+		skip_line_space(m_context->m_line, ptr);
+		//parse the integer count (number of times the pass is drawn)
+		if (!parse_int(ptr, pass.m_draw_count))
+		{
+			push_error("draw_count: integer value expected");
+			return false;
+		}
+		if (pass.m_draw_count < 1) pass.m_draw_count = 1;
+		return true;
+	}
+
 	bool Effect::parse_shadows(const char*& ptr, PassField& pass)
 	{
 		//skip "line" space

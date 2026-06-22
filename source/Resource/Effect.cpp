@@ -10,6 +10,7 @@
 #include "Square/Core/Filesystem.h"
 #include "Square/Data/ParserEffect.h"
 #include "Square/Resource/Effect.h"
+#include "Square/Render/MultiPass.h"
 #include "Square/Resource/Texture.h"
 #include "Square/Resource/Shader.h"
 #include "Square/Core/ClassObjectRegistration.h"
@@ -193,6 +194,7 @@ namespace Resource
 						this_pass.m_blend = parser_pass.m_blend;
 						this_pass.m_cullface = parser_pass.m_cullface;
 						this_pass.m_depth = parser_pass.m_depth;
+						this_pass.m_draw_count = parser_pass.m_draw_count;
 						//shader
 						switch (parser_pass.m_shader.m_type)
 						{
@@ -266,6 +268,12 @@ namespace Resource
 						if (!this_pass.m_uniform_direction_shadow) this_pass.m_uniform_direction_shadow = this_pass.m_shader->constant_buffer("direction_shadow_camera");
 						if (!this_pass.m_uniform_point_shadow) this_pass.m_uniform_point_shadow = this_pass.m_shader->constant_buffer("point_shadow_camera");
 						if (!this_pass.m_uniform_spot_shadow) this_pass.m_uniform_spot_shadow = this_pass.m_shader->constant_buffer("spot_shadow_camera");
+						//multi-pass index buffer
+						this_pass.m_uniform_multipass = this_pass.m_shader->constant_buffer("MultiPass");
+						if (!this_pass.m_uniform_multipass) this_pass.m_uniform_multipass = this_pass.m_shader->constant_buffer("multi_pass");
+						//create its backing buffer only when the shader declares it
+						if (this_pass.m_uniform_multipass)
+							this_pass.m_cb_multipass = Render::stream_constant_buffer<Render::UniformMultiPass>(context().render());
 						//lights uniforms
 						switch (current_shader_def)
 						{

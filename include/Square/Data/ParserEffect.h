@@ -36,13 +36,23 @@ namespace Parser
         
         static Render::CullfaceType cullface_from_string(const std::string& cullface, Render::CullfaceType cullface_default);
         
+		// Capability gate: ANY ignores the capability, REQUIRE matches only drivers
+		// that have it, EXCLUDE matches only drivers that lack it.
+		enum CapabilityTest
+		{
+			CAP_ANY = 0,
+			CAP_REQUIRE,
+			CAP_EXCLUDE
+		};
+
 		struct RequirementField
 		{
-			std::string m_driver_name{ "ALL" };
-			int         m_driver_major_version;
-			int         m_driver_minor_version;
-			std::string m_shader_name{ "ALL" };
-			int         m_shader_version;
+			std::string    m_driver_name{ "ALL" };
+			int            m_driver_major_version;
+			int            m_driver_minor_version;
+			std::string    m_shader_name{ "ALL" };
+			int            m_shader_version;
+			CapabilityTest m_geometry_shader{ CAP_ANY };
 
             bool test(Render::Context* render) const;
 		};
@@ -86,6 +96,7 @@ namespace Parser
 			ShaderField              m_shader;
 			LightsField	             m_lights{ LT_COLOR }; //enable lights
 			LightsField				 m_shadows{ LT_NONE  }; //enable shadows
+			int                      m_draw_count{ 1 };    //multi-pass: times to draw
 		};
 
 		struct TechniqueField
@@ -161,6 +172,7 @@ namespace Parser
         bool parse_cullface(const char*& ptr, PassField& pass);
         bool parse_lights(const char*& ptr, PassField& pass);
 		bool parse_shadows(const char*& ptr, PassField& pass);
+        bool parse_draw_count(const char*& ptr, PassField& pass);
         bool parse_shader(const char*& ptr, PassField& pass);
 		//////////////////////////////////////////////////////
         bool parse_queue_type(const char*& inout, Render::QueueType& type);

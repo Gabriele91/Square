@@ -4,8 +4,15 @@ parameters
     shadow_mask  float(-1.0)
 }
 
+// ── Backends WITH geometry shaders (OpenGL, DirectX) ────────────────────────────
+// Point and CSM shadows render every cube face / cascade in a single pass via a
+// geometry shader (SV_RenderTargetArrayIndex).
 sub_effect
-{	
+{
+    requirement
+    {
+        geometry on
+    }
     technique "SpotShadow"
     {
         pass
@@ -13,7 +20,7 @@ sub_effect
             zbuffer less
             blend off
             cullface front
-		    lights off
+            lights off
             shader "CastSpotShadow.hlsl"
         }
     }
@@ -24,7 +31,7 @@ sub_effect
             zbuffer less
             blend off
             cullface front
-		    lights off
+            lights off
             shader "CastPointShadow.hlsl"
         }
     }
@@ -35,8 +42,54 @@ sub_effect
             zbuffer less
             blend off
             cullface front
-		    lights off
+            lights off
             shader "CastDirectionShadow.hlsl"
+        }
+    }
+}
+
+// ── Backends WITHOUT geometry shaders (Metal, GLES, Vulkan-without-GS) ───────────
+// The host renders the casters once per cube face / cascade (multi-pass); the
+// "cube_face" uniform selects the slice. SpotShadow is single-pass either way.
+sub_effect
+{
+    requirement
+    {
+        geometry off
+    }
+    technique "SpotShadow"
+    {
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface front
+            lights off
+            shader "CastSpotShadow.hlsl"
+        }
+    }
+    technique "PointShadow"
+    {
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface front
+            lights off
+            draw_count 6
+            shader "CastPointShadowMP.hlsl"
+        }
+    }
+    technique "DirectionShadow"
+    {
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface front
+            lights off
+            draw_count 4
+            shader "CastDirectionShadowMP.hlsl"
         }
     }
 }

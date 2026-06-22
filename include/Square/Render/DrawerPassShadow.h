@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 25/07/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Config.h"
 #include "Square/Render/Effect.h"

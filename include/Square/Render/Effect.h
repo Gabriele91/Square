@@ -337,9 +337,17 @@ namespace Render
 		Shared<Resource::Shader>           m_shader;
 		std::vector< int >                 m_param_id;
 		std::vector< Render::Uniform* >    m_uniform;
+		//Number of times this pass is drawn (multi-pass techniques). 1 = normal.
+		//Declared in the .sqfx with "draw_count N"; the drawer iterates the pass
+		//that many times, advancing the MultiPass index each step.
+		int                                m_draw_count{ 1 };
 		//default uniform
 		Render::UniformConstBuffer*        m_uniform_camera{ nullptr };
 		Render::UniformConstBuffer*        m_uniform_transform{ nullptr };
+		//multi-pass index buffer ("MultiPass") — owned by the pass, written with the
+		//current draw_id on each bind.
+		Render::UniformConstBuffer*        m_uniform_multipass{ nullptr };
+		Shared<Render::ConstBuffer>        m_cb_multipass;
 		//all light uniform
 		enum LightsType : unsigned int
 		{
@@ -371,6 +379,7 @@ namespace Render
 		void bind(  Render::Context&        render
                   , const EffectPassInputs&	inputs = EffectPassInputs()
                   , EffectParameters*       params = nullptr
+                  , int                     draw_id = 0   //multi-pass index
                   ) const;
 
 		void bind(  Render::Context& render

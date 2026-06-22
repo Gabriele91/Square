@@ -265,7 +265,10 @@ namespace Square
 		case Square::Render::DR_DIRECTX:
 			return Video::ContextInfo::CTX_DIRECTX;
 		break;
-		default: 
+		case Square::Render::DR_METAL:
+			return Video::ContextInfo::CTX_METAL;
+		break;
+		default:
             return Video::ContextInfo::CTX_UNKNOWN;
         break;
 		}

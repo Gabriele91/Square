@@ -898,6 +898,8 @@ namespace Render
 		context->s_render_driver_info.m_shader_version  = make_test_to_get_shader_version(context->logger());
 		//shader add ests
 		context->s_render_driver_info.m_shader_exts = make_test_all_exts(context->logger());
+		//desktop OpenGL 4 supports geometry shaders
+		context->s_render_driver_info.m_geometry_shader = true;
     }
     
 #if defined( WIN32 )

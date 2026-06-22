@@ -39,6 +39,7 @@ namespace Scene
 			, size_t material_id
 			, Square::Render::EffectPassInputs& input
 			, Square::Render::EffectPass& pass
+			, int draw_id = 0
 		) override;
 
 		virtual bool support_culling() const override;

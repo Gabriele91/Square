@@ -74,6 +74,7 @@ namespace Cocoa
     // DECLARE
     InputCocoa* create_input(WindowCocoa* window, Input* input);
     bool cocoa_create_window(WindowCocoa& wnd_cocoa,const WindowInfo& info);
+    WindowCocoa* cocoa_create_metal_window(const WindowInfo& info, Window* window);
     void cocoa_move_listener(WindowCocoa* wnd_cocoa, InputCocoa* ln_cocoa);
     void cocoa_send_close_event_to_all_windows();
 }

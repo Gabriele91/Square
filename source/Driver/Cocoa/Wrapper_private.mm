@@ -9,6 +9,8 @@
 #include "Screen_private.h"
 #include "Window_private.h"
 #include "Input_private.h"
+#import <Metal/Metal.h>
+#import <QuartzCore/CAMetalLayer.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -422,6 +424,7 @@ namespace Cocoa
     WindowCocoa* window_create(const WindowInfo& info, Window* window)
     {
         if (info.m_context.m_type == ContextInfo::CTX_DIRECTX) return nullptr;
+        if (info.m_context.m_type == ContextInfo::CTX_METAL)   return cocoa_create_metal_window(info, window);
         //alloc
         WindowCocoa* window_cocoa = new WindowCocoa();
         //window

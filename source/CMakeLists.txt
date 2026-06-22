@@ -60,6 +60,7 @@ elseif(APPLE)
     list(APPEND OS_LIBS
         "-framework Cocoa"
         "-framework OpenGL"
+        "-framework Metal"
         "-framework CoreVideo"
         "-framework QuartzCore"
         "-framework CoreGraphics"
@@ -80,6 +81,16 @@ endif()
 # Add OGL Driver
 add_subdirectory(Driver/OpenGL4)
 list(APPEND INSTALL_DY_LIBS SqOpenGL)
+
+# Add Metal Driver (Apple only)
+if(APPLE)
+    # Enable OBJCXX here in the parent scope so the Metal subproject
+    # can inherit it. Without this the subproject's enable_language(OBJCXX)
+    # fails because CMAKE_OBJCXX_COMPILE_OBJECT is not yet in the cache.
+    enable_language(OBJCXX)
+    add_subdirectory(Driver/Metal)
+    list(APPEND INSTALL_DY_LIBS SqMetal)
+endif()
 
 # Executable
 add_library(Square SHARED ${SOURCES} ${OS_SOURCES})

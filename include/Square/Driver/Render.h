@@ -728,6 +728,7 @@ namespace Render
 		DR_OPENGL_ES,
 		DR_VULKAN,
 		DR_DIRECTX,
+		DR_METAL,
 
 		DR_INVALID = 0xFF
 	};
@@ -737,7 +738,8 @@ namespace Render
 		"OpenGL",
 		"OpenGLES",
 		"Vulkan",
-		"DirectX"
+		"DirectX",
+		"Metal"
 	};
 
     struct RenderDriverInfo
@@ -749,6 +751,10 @@ namespace Render
         std::string              m_shader_language;
         int                      m_shader_version;
 		std::vector<std::string> m_shader_exts;
+		// Capabilities: backends that can run geometry shaders (OpenGL, DirectX)
+		// use the single-pass layered shadow techniques; backends without them
+		// (Metal, GLES, Vulkan-without-GS) fall back to the multi-pass variants.
+		bool                     m_geometry_shader{ false };
     };
 	/////////////////////////////////
 	//Uniform global //legacy

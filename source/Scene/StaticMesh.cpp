@@ -118,6 +118,7 @@ namespace Scene
 		, size_t material_id
 		, Square::Render::EffectPassInputs& input
 		, Square::Render::EffectPass& pass
+		, int draw_id
 	)
 	{
 
@@ -134,7 +135,7 @@ namespace Scene
 		{
 			if (m_materials[i])
 			{
-				pass.bind(render, input, m_materials[i]->parameters());
+				pass.bind(render, input, m_materials[i]->parameters(), draw_id);
 				//draw
 				m_mesh->draw(render, i);
 				//unbind

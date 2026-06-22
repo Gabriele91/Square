@@ -50,6 +50,7 @@ namespace Render
 			, size_t material_id
 			, EffectPassInputs& current_input
 			, EffectPass& current_pass
+			, int draw_id = 0   //multi-pass index (cube face / cascade); 0 = normal
 		) = 0;
 
 		virtual bool support_culling() const = 0;

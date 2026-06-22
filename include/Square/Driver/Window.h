@@ -55,6 +55,7 @@ namespace Video
 			CTX_OPENGL,
 			CTX_OPENGL_ES,
 			CTX_DIRECTX,
+			CTX_METAL,
 			CTX_UNKNOWN
 		};
 		enum gpu_type
