@@ -24,9 +24,14 @@ add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${HEADER_FILES})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     _CRT_SECURE_NO_WARNINGS
-    $<$<CONFIG:Debug>:SQ_MTL_DEBUG_LOG=1>
-    $<$<CONFIG:Debug>:SQ_MTL_DEBUG_FRAMES=3>
 )
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC
+        SQ_MTL_DEBUG_LOG=1
+        SQ_MTL_DEBUG_FRAMES=3
+    )
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/include

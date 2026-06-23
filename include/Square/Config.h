@@ -86,6 +86,7 @@ template class SQUARE_API std::vector< std::string >;
 #define square_assert_debug(x) assert(x)
 #define square_assert_or_release(x) assert(x)
 #define square_assert(x) assert(x)
+#define SQUARE_DEBUG
 #else 
 #define square_assert_debug(x)
 #define square_assert_or_release(x) x

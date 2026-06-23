@@ -14,6 +14,11 @@
 using namespace Square;
 using namespace Square::Render;
 
+#if defined(_DEBUG) || defined(NDEBUG)
+    #define SQ_MTL_DEBUG_LOG 1
+    #define SQ_MTL_DEBUG_FRAMES 3
+#endif
+
 #if SQ_MTL_DEBUG_LOG
     #define SQMTL_LOG(MSG)                                                       \
         do {                                                                     \
@@ -525,25 +530,54 @@ void ContextMTL::commit_frame()
 // PSO and depth-stencil state cache
 // ──────────────────────────────────────────────────────────────────────────────
 
+// SPIRV-Cross emits MSL [[attribute(N)]] where N is the SPIR-V input location,
+// which follows the HLSL struct DECLARATION order. The Vertex.hlsl structs always
+// declare fields as POSITION, NORMAL, TANGENT, BINORMAL, TEXCOORD (per set), but
+// the engine's AttributeType enum is NOT in that order (TEXCOORD0=2 sits before
+// TANGENT0=3/BINORMAL0=4). DX11 sidesteps this by matching on semantic name; for
+// Metal we assign the attribute index by declaration rank so each semantic lands
+// on the location the shader expects — regardless of the mesh's byte layout
+// (sorting by byte offset only works when memory order == declaration order, which
+// is not guaranteed across different meshes).
+static int attr_decl_rank(AttributeType a)
+{
+    switch (a)
+    {
+    case ATT_POSITION0: return 0;  // ATT_POSITION alias
+    case ATT_NORMAL0:   return 1;
+    case ATT_TANGENT0:  return 2;
+    case ATT_BINORMAL0: return 3;
+    case ATT_TEXCOORD0: return 4;
+    case ATT_COLOR0:    return 5;
+    case ATT_POSITION1: return 6;
+    case ATT_NORMAL1:   return 7;
+    case ATT_TANGENT1:  return 8;
+    case ATT_BINORMAL1: return 9;
+    case ATT_TEXCOORD1: return 10;
+    case ATT_COLOR1:    return 11;
+    case ATT_NORMAL2:   return 12;
+    case ATT_TANGENT2:  return 13;
+    case ATT_BINORMAL2: return 14;
+    case ATT_TEXCOORD2: return 15;
+    case ATT_COLOR2:    return 16;
+    default:            return 100 + (int)a;
+    }
+}
+
 MTLVertexDescriptor* ContextMTL::build_vertex_desc(InputLayout* il)
 {
     if (il->m_vertex_desc) return il->m_vertex_desc;
 
     MTLVertexDescriptor* vd = [MTLVertexDescriptor vertexDescriptor];
 
-    // SPIRV-Cross emits MSL [[attribute(N)]] where N is the SPIR-V input
-    // location, which follows the HLSL struct declaration order — i.e. the
-    // attributes in order of increasing byte offset. The engine's AttributeType
-    // enum is NOT offset-ordered (TEXCOORD0=2 is declared after TANGENT0=3 /
-    // BINORMAL0=4 in the vertex struct), so using the enum value as the Metal
-    // attribute index scrambles UV vs tangent/binormal. DX11 dodges this by
-    // matching on semantic name; for Metal we must assign the attribute index
-    // by offset rank so it lines up with the shader's [[attribute(N)]].
+    // Order attributes by HLSL declaration rank (the SPIR-V/MSL location order),
+    // then assign sequential [[attribute(N)]] indices. This is robust to meshes
+    // whose memory layout differs from the declaration order.
     std::vector<const Attribute*> sorted;
     sorted.reserve(il->m_list.count_attribute());
     for (const auto& attr : il->m_list) sorted.push_back(&attr);
     std::sort(sorted.begin(), sorted.end(),
-              [](const Attribute* a, const Attribute* b){ return a->m_offset < b->m_offset; });
+              [](const Attribute* a, const Attribute* b){ return attr_decl_rank(a->m_attribute) < attr_decl_rank(b->m_attribute); });
 
     NSUInteger loc = 0;
     for (const Attribute* attr : sorted)
@@ -1221,6 +1255,15 @@ Shader* ContextMTL::create_shader(const std::vector<ShaderSourceInformation>& in
         NSString* msl   = [NSString stringWithUTF8String:src.c_str()];
         MTLCompileOptions* opts = [[MTLCompileOptions alloc] init];
         opts.languageVersion    = MTLLanguageVersion2_0;
+        // Metal enables fast-math by default, which permits NaN/Inf and aggressive
+        // reordering. At grazing angles the PBR specular (numerator/denominator with
+        // n·l → 0) is numerically unstable, and fast-math turns that into coloured
+        // artefacts that OpenGL/DirectX (strict math) don't show. Disable it so the
+        // lighting matches the other backends.
+        if (@available(macOS 15.0, iOS 18.0, *))
+            opts.mathMode = MTLMathModeSafe;
+        else
+            opts.fastMathEnabled = NO;
 
         NSError* err = nil;
         id<MTLLibrary> lib = [m_device newLibraryWithSource:msl options:opts error:&err];
@@ -1464,7 +1507,35 @@ void ContextMTL::log_draw_state(const char* fn, unsigned int n)
                           << " slot=" << slot << " bound=" << bound);
             }
             for (auto& b : sh->m_refl[stage].buffers)
-                SQMTL_LOG("  cbuf stage=" << stage << " name=" << b.first << " slot=" << b.second);
+            {
+                int cbslot = b.second;
+                const ConstBuffer* cb = (cbslot >= 0 && cbslot < Shader::MAX_BUFFERS)
+                                      ? sh->m_bound_cb_per_stage[stage][cbslot] : nullptr;
+                std::ostringstream vals;
+                if (cb && cb->m_buffer && cb->m_size >= sizeof(float))
+                {
+                    const float* f = (const float*)cb->m_buffer.contents;
+                    size_t nf = std::min<size_t>(cb->m_size / sizeof(float), 12);
+                    for (size_t i = 0; i < nf; ++i) vals << (i ? "," : "") << f[i];
+                }
+                SQMTL_LOG("  cbuf stage=" << stage << " name=" << b.first
+                          << " slot=" << cbslot << " size=" << (cb ? (int)cb->m_size : -1)
+                          << " [" << vals.str() << "]");
+            }
+            // Auto buffer (_Global loose uniforms): material color/metallic/etc.
+            if (!sh->m_auto_cpu[stage].empty())
+            {
+                for (auto& m : sh->m_refl[stage].members)
+                    SQMTL_LOG("    member stage=" << stage << " name=" << m.first
+                              << " off=" << m.second.offset << " size=" << m.second.size);
+                const auto& cpu = sh->m_auto_cpu[stage];
+                std::ostringstream vals;
+                const float* f = (const float*)cpu.data();
+                size_t nf = std::min<size_t>(cpu.size() / sizeof(float), 16);
+                for (size_t i = 0; i < nf; ++i) vals << (i ? "," : "") << f[i];
+                SQMTL_LOG("    _AUTO stage=" << stage << " bytes=" << cpu.size()
+                          << " [" << vals.str() << "]");
+            }
         }
     }
 #endif

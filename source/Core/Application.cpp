@@ -74,7 +74,7 @@ namespace Square
         // Allocator
         {
             static DefaultAllocator s_default_allocator;
-            #if defined(_DEBUG)            
+            #if defined(_DEBUG) || defined(NDEBUG)        
             static DebugAllocator s_debug_allocator(&s_default_allocator, m_context.m_logger);
             m_context.m_allocator = &s_debug_allocator;
             #else 

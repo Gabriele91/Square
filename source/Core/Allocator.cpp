@@ -9,7 +9,7 @@
 #include <algorithm>
 #include "Square/Core/Allocator.h"
 // Enable verbose allocator in debug mode
-#if defined(_DEBUG)
+#if defined(_DEBUG) || defined(NDEBUG)
 	#define DEBUG_ALLOCATOR_SUPER_VERBOSE 1
 #endif
 
