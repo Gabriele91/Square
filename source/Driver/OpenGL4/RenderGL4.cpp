@@ -985,14 +985,18 @@ namespace Render
 			// SRGB?
 			if(resource->get_context_info().m_srgb)
 			{
-				glEnable( GL_FRAMEBUFFER_SRGB );
 				// Detect whether the default framebuffer is actually sRGB-capable.
 				// GL_FRAMEBUFFER_SRGB is a no-op on non-sRGB buffers, so we check
 				// the real encoding to decide if the shader needs to do gamma itself.
 				GLint encoding = GL_LINEAR;
-				glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_BACK_LEFT,
-					GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, &encoding);
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				glGetFramebufferAttachmentParameteriv( GL_FRAMEBUFFER, GL_BACK_LEFT, GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, &encoding);
 				m_srgb_fb = (encoding == GL_SRGB);
+
+				if (m_srgb_fb)
+					glEnable(GL_FRAMEBUFFER_SRGB);
+				else
+					glDisable(GL_FRAMEBUFFER_SRGB);
 			}
 		}
 		else

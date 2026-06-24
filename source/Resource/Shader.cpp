@@ -458,6 +458,18 @@ namespace Resource
 			{
 				shader_headers[type] += "#extension GL_ARB_shading_language_420pack : enable\n";
 			}
+			// Replace layout(binding = x,...) with layout(binding = 0, ...)
+			{
+				static const std::regex re_shader_layout(
+					R"(layout\s*\(\s*binding\s*=\s*\d+\s*,\s*std140\s*\))"
+				);
+
+				shader_sources[type] = std::regex_replace(
+					shader_sources[type],
+					re_shader_layout,
+					"layout(binding = 0, std140)"
+				);
+			}
 			//add inf
 			shader_info.push_back
 			(Render::ShaderSourceInformation
@@ -468,6 +480,8 @@ namespace Resource
 				, 0						 //line 0
 			});
 		}
+
+		
 		////////////////////////////////////////////////////////////////////////////////
 		// load shaders from files
 		if (auto render = context().render())
