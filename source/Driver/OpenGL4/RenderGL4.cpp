@@ -7,8 +7,11 @@
 #include "RenderGL4.h"
 #include "Square/Driver/Window.h"
 //--------------------------------------------------
+#include <cstddef>
 #include <iostream>
+#include <string>
 #include <unordered_map>
+#include <algorithm>
 //RIGHT HEAND
 #define DIRECTX_MODE
 //--------------------------------------------------
@@ -797,9 +800,15 @@ namespace Render
 			"GL_EXT_spec_constant_composites",
 			"GL_EXT_texture_offset_non_const",
 			"GL_EXT_nontemporal_keyword",
-			"GL_ARB_shading_language_420pack"
+			"GL_ARB_shading_language_420pack",
+			// Allows writing gl_Layer / gl_ViewportIndex from the vertex shader
+			// (SV_RenderTargetArrayIndex without a geometry shader).
+			"GL_ARB_shader_viewport_layer_array"
 		};
+		const size_t extensions_len = sizeof(extensions)/sizeof(std::string);
+		// Test
 		std::vector<std::string> r_exts;
+		r_exts.reserve(extensions_len);
 		for (const auto& ext : extensions)
 		{
 			if (make_test_to_get_shader_ext_feacture(ext))
@@ -900,6 +909,13 @@ namespace Render
 		context->s_render_driver_info.m_shader_exts = make_test_all_exts(context->logger());
 		//desktop OpenGL 4 supports geometry shaders
 		context->s_render_driver_info.m_geometry_shader = true;
+		//writing gl_Layer from the vertex shader requires GL_ARB_shader_viewport_layer_array
+		//(absent e.g. on macOS desktop GL 4.1)
+		{
+			const auto& exts = context->s_render_driver_info.m_shader_exts;
+			context->s_render_driver_info.m_vertex_viewport_index =
+				std::find(exts.begin(), exts.end(), "GL_ARB_shader_viewport_layer_array") != exts.end();
+		}
     }
     
 #if defined( WIN32 )

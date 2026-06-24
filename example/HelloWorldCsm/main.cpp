@@ -28,8 +28,8 @@ public:
 		const float velocity = 20.0f  * application().last_delta_time();
 		const auto  level_path = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.sq");
 		const auto  level_path_json = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.jsq");
-		context().logger()->info("value: " + std::to_string(key));
-		context().logger()->info("delta: " + std::to_string(application().last_delta_time()));
+		//context().logger()->info("value: " + std::to_string(key));
+		//context().logger()->info("delta: " + std::to_string(application().last_delta_time()));
 		//
 		switch (key)
 		{

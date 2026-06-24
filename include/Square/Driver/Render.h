@@ -755,6 +755,11 @@ namespace Render
 		// use the single-pass layered shadow techniques; backends without them
 		// (Metal, GLES, Vulkan-without-GS) fall back to the multi-pass variants.
 		bool                     m_geometry_shader{ false };
+		// Capability: the backend can write the render-target-array-index / viewport
+		// index from the vertex shader (SV_RenderTargetArrayIndex -> gl_Layer without
+		// a geometry shader). On OpenGL this maps to GL_ARB_shader_viewport_layer_array
+		// (not available e.g. on macOS desktop GL 4.1); on Metal it is always available.
+		bool                     m_vertex_viewport_index{ false };
     };
 	/////////////////////////////////
 	//Uniform global //legacy

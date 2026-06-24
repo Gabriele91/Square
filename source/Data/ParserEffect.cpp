@@ -133,6 +133,9 @@ namespace Parser
         //test capability: geometry shader
         if (m_geometry_shader == CAP_REQUIRE && !info.m_geometry_shader) return false;
         if (m_geometry_shader == CAP_EXCLUDE &&  info.m_geometry_shader) return false;
+        //test capability: write render-target-array-index / viewport index from the vertex shader
+        if (m_vertex_viewport_index == CAP_REQUIRE && !info.m_vertex_viewport_index) return false;
+        if (m_vertex_viewport_index == CAP_EXCLUDE &&  info.m_vertex_viewport_index) return false;
         //test version
         if (all_drivers || (m_driver_major_version <= info.m_major_version && m_driver_minor_version <= info.m_minor_version))
 		if (all_shader || (m_shader_version <= info.m_shader_version))
@@ -421,6 +424,29 @@ namespace Parser
                     else
                     {
                         push_error("Requirement: geometry expects on/off");
+                        return false;
+                    }
+                    //skip spaces
+                    skip_space_and_comments(m_context->m_line, ptr);
+                }
+                else if (cstr_cmp_skip(ptr, "vertex_viewport_index"))
+                {
+                    //skip spaces
+                    skip_space_and_comments(m_context->m_line, ptr);
+                    //parse on/off capability gate
+                    std::string value;
+                    if (!parse_name(ptr, value))
+                    {
+                        push_error("Requirement: vertex_viewport_index value not valid");
+                        return false;
+                    }
+                    if (value == "on" || value == "true" || value == "yes")
+                        r_field.m_vertex_viewport_index = CAP_REQUIRE;
+                    else if (value == "off" || value == "false" || value == "no")
+                        r_field.m_vertex_viewport_index = CAP_EXCLUDE;
+                    else
+                    {
+                        push_error("Requirement: vertex_viewport_index expects on/off");
                         return false;
                     }
                     //skip spaces

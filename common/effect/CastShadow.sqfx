@@ -55,7 +55,7 @@ sub_effect
 {
     requirement
     {
-        geometry off
+        vertex_viewport_index on
     }
     technique "SpotShadow"
     {
@@ -77,7 +77,7 @@ sub_effect
             cullface front
             lights off
             draw_count 6
-            shader "CastPointShadowMP.hlsl"
+            shader "CastPointShadowMultiPass.hlsl"
         }
     }
     technique "DirectionShadow"
@@ -89,7 +89,7 @@ sub_effect
             cullface front
             lights off
             draw_count 4
-            shader "CastDirectionShadowMP.hlsl"
+            shader "CastDirectionShadowMultiPass.hlsl"
         }
     }
 }

@@ -757,6 +757,7 @@ bool ContextMTL::init(Video::DeviceResources* resource)
     m_driver_info.m_shader_language = "MSL";
     m_driver_info.m_shader_version  = 20000;
     m_driver_info.m_geometry_shader = false; // Metal has no geometry shaders → multipass shadows
+    m_driver_info.m_vertex_viewport_index = true; // Metal can write [[render_target_array_index]] from the vertex shader
 
     return true;
 }

@@ -53,6 +53,7 @@ namespace Parser
 			std::string    m_shader_name{ "ALL" };
 			int            m_shader_version;
 			CapabilityTest m_geometry_shader{ CAP_ANY };
+			CapabilityTest m_vertex_viewport_index{ CAP_ANY };
 
             bool test(Render::Context* render) const;
 		};

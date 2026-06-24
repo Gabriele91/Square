@@ -467,6 +467,19 @@ namespace Render
 		context->s_render_driver_info.m_minor_version = 0;
 		//DirectX 11 supports geometry shaders
 		context->s_render_driver_info.m_geometry_shader = true;
+		//Writing SV_RenderTargetArrayIndex from the vertex shader (without a GS) requires
+		//VPAndRTArrayIndexFromAnyShaderFeedingRasterizer (D3D11.3 / feature level 11.1+);
+		//otherwise the geometry-shader techniques are used to route the layered shadows.
+		context->s_render_driver_info.m_vertex_viewport_index = false;
+		if (auto* device = context->device())
+		{
+			D3D11_FEATURE_DATA_D3D11_OPTIONS3 options3 = {};
+			if (SUCCEEDED(device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS3, &options3, sizeof(options3))))
+			{
+				context->s_render_driver_info.m_vertex_viewport_index =
+					options3.VPAndRTArrayIndexFromAnyShaderFeedingRasterizer != FALSE;
+			}
+		}
 	}
 	
 	bool ContextDX11::get_devices(Video::DeviceResources* resource)
