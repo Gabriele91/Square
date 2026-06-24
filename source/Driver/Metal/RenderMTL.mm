@@ -758,6 +758,7 @@ bool ContextMTL::init(Video::DeviceResources* resource)
     m_driver_info.m_shader_version  = 20000;
     m_driver_info.m_geometry_shader = false; // Metal has no geometry shaders → multipass shadows
     m_driver_info.m_vertex_viewport_index = true; // Metal can write [[render_target_array_index]] from the vertex shader
+    m_driver_info.m_draw_instanced = true; // Metal supports instanced draw calls
 
     return true;
 }
@@ -1591,6 +1592,58 @@ void ContextMTL::draw_elements(DrawType dt, unsigned int start, unsigned int n)
                            indexType:MTLIndexTypeUInt32
                          indexBuffer:m_bind.index_buffer->m_buffer
                    indexBufferOffset:start * sizeof(unsigned int)];
+}
+
+void ContextMTL::draw_arrays_instanced(DrawType dt, unsigned int start, unsigned int n, unsigned int instances)
+{
+    ensure_encoder();
+    if (!m_encoder) { SQMTL_LOG("draw_arrays_instanced: NO ENCODER -> skipped"); return; }
+
+    apply_state_to_encoder();
+    log_draw_state("draw_arrays_instanced", n);
+
+    if (m_bind.vertex_buffer)
+        [m_encoder setVertexBuffer:m_bind.vertex_buffer->m_buffer offset:0 atIndex:VERTEX_BUFFER_BINDING];
+
+    if (m_bind.shader)
+    {
+        flush_auto_buffers(m_encoder, m_bind.shader);
+        flush_bound_cbs(m_encoder, m_bind.shader);
+        flush_textures(m_encoder, m_bind.shader);
+    }
+
+    [m_encoder drawPrimitives:to_mtl_primitive(dt) vertexStart:start vertexCount:n instanceCount:instances];
+}
+
+void ContextMTL::draw_elements_instanced(DrawType dt, unsigned int start, unsigned int n, unsigned int instances)
+{
+    ensure_encoder();
+    if (!m_encoder || !m_bind.index_buffer)
+    {
+        SQMTL_LOG("draw_elements_instanced: SKIPPED (encoder=" << (void*)m_encoder
+                  << " IBO=" << (void*)(m_bind.index_buffer ? (void*)m_bind.index_buffer->m_buffer : nullptr) << ")");
+        return;
+    }
+
+    apply_state_to_encoder();
+    log_draw_state("draw_elements_instanced", n);
+
+    if (m_bind.vertex_buffer)
+        [m_encoder setVertexBuffer:m_bind.vertex_buffer->m_buffer offset:0 atIndex:VERTEX_BUFFER_BINDING];
+
+    if (m_bind.shader)
+    {
+        flush_auto_buffers(m_encoder, m_bind.shader);
+        flush_bound_cbs(m_encoder, m_bind.shader);
+        flush_textures(m_encoder, m_bind.shader);
+    }
+
+    [m_encoder drawIndexedPrimitives:to_mtl_primitive(dt)
+                          indexCount:n
+                           indexType:MTLIndexTypeUInt32
+                         indexBuffer:m_bind.index_buffer->m_buffer
+                   indexBufferOffset:start * sizeof(unsigned int)
+                       instanceCount:instances];
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

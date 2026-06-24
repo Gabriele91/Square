@@ -195,6 +195,7 @@ namespace Resource
 						this_pass.m_cullface = parser_pass.m_cullface;
 						this_pass.m_depth = parser_pass.m_depth;
 						this_pass.m_draw_count = parser_pass.m_draw_count;
+						this_pass.m_instances = parser_pass.m_instances;
 						//shader
 						switch (parser_pass.m_shader.m_type)
 						{

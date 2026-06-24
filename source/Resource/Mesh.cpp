@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 09/04/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Config.h"
 #include "Square/Core/Context.h"
@@ -56,14 +56,14 @@ namespace Resource
 	}
 
 	//draw all sub meshs
-	void Mesh::draw(Render::Context& render) const
+	void Mesh::draw(Render::Context& render, unsigned int instances) const
 	{
-		m_mesh.draw(render);
+		m_mesh.draw(render, instances);
 	}
 
-	void Mesh::draw(Render::Context& render, size_t sub_mesh_id) const
+	void Mesh::draw(Render::Context& render, size_t sub_mesh_id, unsigned int instances) const
 	{
-		m_mesh.draw(render, sub_mesh_id);
+		m_mesh.draw(render, sub_mesh_id, instances);
 	}
 
 	// for type

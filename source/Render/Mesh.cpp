@@ -263,7 +263,7 @@ namespace Render
 
 
 	//draw sub mesh
-	void Mesh::draw(Render::Context& render) const
+	void Mesh::draw(Render::Context& render, unsigned int instances) const
 	{
 		//test
 		if (!layout().get() || !vertex_buffer().get())
@@ -282,7 +282,10 @@ namespace Render
 			render.bind_IL(layout().get());
 			// Draw elements
 			for (auto& sub_mesh : m_sub_meshs)
-				render.draw_elements(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
+				if (instances > 1)
+					render.draw_elements_instanced(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count, instances);
+				else
+					render.draw_elements(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
 		}
 		else
 		{
@@ -290,12 +293,15 @@ namespace Render
 			render.bind_IL(layout().get());
 			// Draw array
 			for (auto& sub_mesh : m_sub_meshs)
-				render.draw_arrays(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
+				if (instances > 1)
+					render.draw_arrays_instanced(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count, instances);
+				else
+					render.draw_arrays(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
 		}
 	}
 
 	//draw sub mesh
-	void Mesh::draw(Render::Context& render, size_t sub_mesh_id) const
+	void Mesh::draw(Render::Context& render, size_t sub_mesh_id, unsigned int instances) const
 	{
 		//test
 		if (!layout().get() || !vertex_buffer().get() || m_sub_meshs.size() <= sub_mesh_id)
@@ -303,6 +309,8 @@ namespace Render
 			context().logger()->debug("Unable to draw mesh: " + std::to_string(size_t(this)) + ", submesh_id: " + std::to_string(sub_mesh_id));
 			return;
 		}
+		//ref sub mesh
+		const SubMesh& sub_mesh = m_sub_meshs[sub_mesh_id];
 		//bind vertex buffer
 		render.bind_VBO(vertex_buffer().get());
 		//draw elements or array
@@ -313,17 +321,20 @@ namespace Render
 			//bind input layout
 			render.bind_IL(layout().get());
 			// Draw element
-			render.draw_elements(m_sub_meshs[sub_mesh_id].m_draw_type, m_sub_meshs[sub_mesh_id].m_index_offset, m_sub_meshs[sub_mesh_id].m_index_count);
+			if (instances > 1)
+				render.draw_elements_instanced(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count, instances);
+			else
+				render.draw_elements(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
 		}
 		else
 		{
 			//bind input layout
 			render.bind_IL(layout().get());
 			// Draw array
-			for (auto& sub_mesh : m_sub_meshs)
+			if (instances > 1)
+				render.draw_arrays_instanced(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count, instances);
+			else
 				render.draw_arrays(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
-			// Draw element
-			render.draw_elements(m_sub_meshs[sub_mesh_id].m_draw_type, m_sub_meshs[sub_mesh_id].m_index_offset, m_sub_meshs[sub_mesh_id].m_index_count);
 		}
 	}
 

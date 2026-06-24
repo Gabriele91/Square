@@ -54,6 +54,7 @@ namespace Parser
 			int            m_shader_version;
 			CapabilityTest m_geometry_shader{ CAP_ANY };
 			CapabilityTest m_vertex_viewport_index{ CAP_ANY };
+			CapabilityTest m_draw_instanced{ CAP_ANY };
 
             bool test(Render::Context* render) const;
 		};
@@ -98,6 +99,7 @@ namespace Parser
 			LightsField	             m_lights{ LT_COLOR }; //enable lights
 			LightsField				 m_shadows{ LT_NONE  }; //enable shadows
 			int                      m_draw_count{ 1 };    //multi-pass: times to draw
+			int                      m_instances{ 1 };     //instanced draw: instance count per draw
 		};
 
 		struct TechniqueField
@@ -174,6 +176,7 @@ namespace Parser
         bool parse_lights(const char*& ptr, PassField& pass);
 		bool parse_shadows(const char*& ptr, PassField& pass);
         bool parse_draw_count(const char*& ptr, PassField& pass);
+        bool parse_instances(const char*& ptr, PassField& pass);
         bool parse_shader(const char*& ptr, PassField& pass);
 		//////////////////////////////////////////////////////
         bool parse_queue_type(const char*& inout, Render::QueueType& type);

@@ -136,6 +136,9 @@ namespace Parser
         //test capability: write render-target-array-index / viewport index from the vertex shader
         if (m_vertex_viewport_index == CAP_REQUIRE && !info.m_vertex_viewport_index) return false;
         if (m_vertex_viewport_index == CAP_EXCLUDE &&  info.m_vertex_viewport_index) return false;
+        //test capability: instanced draw calls
+        if (m_draw_instanced == CAP_REQUIRE && !info.m_draw_instanced) return false;
+        if (m_draw_instanced == CAP_EXCLUDE &&  info.m_draw_instanced) return false;
         //test version
         if (all_drivers || (m_driver_major_version <= info.m_major_version && m_driver_minor_version <= info.m_minor_version))
 		if (all_shader || (m_shader_version <= info.m_shader_version))
@@ -452,6 +455,29 @@ namespace Parser
                     //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
+                else if (cstr_cmp_skip(ptr, "instanced_draw"))
+                {
+                    //skip spaces
+                    skip_space_and_comments(m_context->m_line, ptr);
+                    //parse on/off capability gate
+                    std::string value;
+                    if (!parse_name(ptr, value))
+                    {
+                        push_error("Requirement: instanced_draw value not valid");
+                        return false;
+                    }
+                    if (value == "on" || value == "true" || value == "yes")
+                        r_field.m_draw_instanced = CAP_REQUIRE;
+                    else if (value == "off" || value == "false" || value == "no")
+                        r_field.m_draw_instanced = CAP_EXCLUDE;
+                    else
+                    {
+                        push_error("Requirement: instanced_draw expects on/off");
+                        return false;
+                    }
+                    //skip spaces
+                    skip_space_and_comments(m_context->m_line, ptr);
+                }
                 else
                 {
                     push_error("Keyword not valid");
@@ -661,6 +687,7 @@ namespace Parser
 			{ { "lights" },                 &Effect::parse_lights },
 			{ { "shadows" },                &Effect::parse_shadows },
 			{ { "draw_count", "ndrawcall" },&Effect::parse_draw_count },
+			{ { "instances", "instance_count" }, &Effect::parse_instances },
 			{ { "shader" },                 &Effect::parse_shader },
 		};
 
@@ -928,6 +955,20 @@ namespace Parser
 			return false;
 		}
 		if (pass.m_draw_count < 1) pass.m_draw_count = 1;
+		return true;
+	}
+
+	bool Effect::parse_instances(const char*& ptr, PassField& pass)
+	{
+		//skip "line" space
+		skip_line_space(m_context->m_line, ptr);
+		//parse the integer count (number of instances drawn per draw call)
+		if (!parse_int(ptr, pass.m_instances))
+		{
+			push_error("instances: integer value expected");
+			return false;
+		}
+		if (pass.m_instances < 1) pass.m_instances = 1;
 		return true;
 	}
 

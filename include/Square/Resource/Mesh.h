@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 07/01/2024.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 
@@ -46,9 +46,9 @@ namespace Square
             const Render::Mesh::SubMeshList& sub_meshs() const;
             size_t number_of_sub_meshs() const { return sub_meshs().size(); }
 
-            //draw all sub meshs
-            void draw(Render::Context& render) const;
-            void draw(Render::Context& render, size_t sub_mesh_id) const;
+            //draw all sub meshs (instances > 1 issues an instanced draw call)
+            void draw(Render::Context& render, unsigned int instances = 1) const;
+            void draw(Render::Context& render, size_t sub_mesh_id, unsigned int instances = 1) const;
 
             //load mesh
             bool load(const std::string& path) override;

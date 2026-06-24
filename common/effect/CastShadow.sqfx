@@ -48,9 +48,58 @@ sub_effect
     }
 }
 
+// ── Backends with INSTANCED draw + vertex layer output (Metal, GL with the ext) ──
+// A single instanced draw (6 cube faces / N cascades) renders the whole array:
+// SV_InstanceID selects the view-projection AND the destination layer, so it is one
+// draw call instead of the multi-pass loop. SpotShadow is single-pass either way.
+sub_effect
+{
+    requirement
+    {
+        vertex_viewport_index on
+        instanced_draw on
+    }
+    technique "SpotShadow"
+    {
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface front
+            lights off
+            shader "CastSpotShadow.hlsl"
+        }
+    }
+    technique "PointShadow"
+    {
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface front
+            lights off
+            instances 6
+            shader "CastPointShadowInstanced.hlsl"
+        }
+    }
+    technique "DirectionShadow"
+    {
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface front
+            lights off
+            instances 4
+            shader "CastDirectionShadowInstanced.hlsl"
+        }
+    }
+}
+
 // ── Backends WITHOUT geometry shaders (Metal, GLES, Vulkan-without-GS) ───────────
-// The host renders the casters once per cube face / cascade (multi-pass); the
-// "cube_face" uniform selects the slice. SpotShadow is single-pass either way.
+// Fallback when instanced draw is unavailable: the host renders the casters once per
+// cube face / cascade (multi-pass); multi_pass.m_id selects the slice. SpotShadow is
+// single-pass either way.
 sub_effect
 {
     requirement

@@ -341,6 +341,10 @@ namespace Render
 		//Declared in the .sqfx with "draw_count N"; the drawer iterates the pass
 		//that many times, advancing the MultiPass index each step.
 		int                                m_draw_count{ 1 };
+		//Instance count for instanced techniques (declared in the .sqfx with
+		//"instances N"). 1 = normal draw; >1 issues an instanced draw and the
+		//shader distinguishes the copies via SV_InstanceID / gl_InstanceID.
+		int                                m_instances{ 1 };
 		//default uniform
 		Render::UniformConstBuffer*        m_uniform_camera{ nullptr };
 		Render::UniformConstBuffer*        m_uniform_transform{ nullptr };

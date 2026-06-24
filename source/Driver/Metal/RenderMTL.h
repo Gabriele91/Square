@@ -405,6 +405,8 @@ namespace Render
         virtual void draw_arrays(DrawType, unsigned int, unsigned int) override;
         virtual void draw_elements(DrawType, unsigned int) override;
         virtual void draw_elements(DrawType, unsigned int, unsigned int) override;
+        virtual void draw_arrays_instanced(DrawType, unsigned int start, unsigned int size, unsigned int instances) override;
+        virtual void draw_elements_instanced(DrawType, unsigned int start, unsigned int n, unsigned int instances) override;
 
         virtual InputLayout* create_IL(const AttributeList&) override;
         virtual void delete_IL(InputLayout*&) override;

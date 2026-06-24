@@ -916,6 +916,10 @@ namespace Render
 			context->s_render_driver_info.m_vertex_viewport_index =
 				std::find(exts.begin(), exts.end(), "GL_ARB_shader_viewport_layer_array") != exts.end();
 		}
+		//instanced draw (glDraw*Instanced) is core since OpenGL 3.1 (available on macOS GL 4.1)
+		context->s_render_driver_info.m_draw_instanced =
+			(context->s_render_driver_info.m_major_version > 3) ||
+			(context->s_render_driver_info.m_major_version == 3 && context->s_render_driver_info.m_minor_version >= 1);
     }
     
 #if defined( WIN32 )
@@ -1770,6 +1774,15 @@ namespace Render
 	void ContextGL4::draw_elements(DrawType type, unsigned int start, unsigned int n)
 	{
 		glDrawElements(get_draw_type(type), n, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * start));
+	}
+
+	void ContextGL4::draw_arrays_instanced(DrawType type, unsigned int start, unsigned int size, unsigned int instances)
+	{
+		glDrawArraysInstanced(get_draw_type(type), start, size, instances);
+	}
+	void ContextGL4::draw_elements_instanced(DrawType type, unsigned int start, unsigned int n, unsigned int instances)
+	{
+		glDrawElementsInstanced(get_draw_type(type), n, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * start), instances);
 	}
 
 	/*

@@ -760,6 +760,9 @@ namespace Render
 		// a geometry shader). On OpenGL this maps to GL_ARB_shader_viewport_layer_array
 		// (not available e.g. on macOS desktop GL 4.1); on Metal it is always available.
 		bool                     m_vertex_viewport_index{ false };
+		// Capability: the backend can issue instanced draw calls (draw_*_instanced).
+		// Core since OpenGL 3.1 / available on Metal and DirectX 11.
+		bool                     m_draw_instanced{ false };
     };
 	/////////////////////////////////
 	//Uniform global //legacy
@@ -1015,6 +1018,10 @@ namespace Render
 		virtual void draw_arrays(DrawType type, unsigned int start, unsigned int size) = 0;
 		virtual void draw_elements(DrawType type, unsigned int n) = 0;
 		virtual void draw_elements(DrawType type, unsigned int start, unsigned int n) = 0;
+		//draw instanced (the same geometry is drawn "instances" times; the shader
+		//distinguishes the copies via SV_InstanceID / gl_InstanceID)
+		virtual void draw_arrays_instanced(DrawType type, unsigned int start, unsigned int size, unsigned int instances) = 0;
+		virtual void draw_elements_instanced(DrawType type, unsigned int start, unsigned int n, unsigned int instances) = 0;
 
 		//IL=Input Layaut
 		virtual InputLayout* create_IL(const AttributeList& atl) = 0;

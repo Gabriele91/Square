@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele on 02/07/16.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -92,9 +92,9 @@ namespace Render
 		const SubMeshList& sub_meshs() const;
 		size_t number_of_sub_meshs() const { return sub_meshs().size(); }
 
-		//draw all sub meshs
-		void draw(Render::Context& render) const;
-		void draw(Render::Context& render, size_t sub_mash_id) const;
+		//draw all sub meshs (instances > 1 issues an instanced draw call)
+		void draw(Render::Context& render, unsigned int instances = 1) const;
+		void draw(Render::Context& render, size_t sub_mash_id, unsigned int instances = 1) const;
 
 	protected:
 		//build help

@@ -467,6 +467,8 @@ namespace Render
 		context->s_render_driver_info.m_minor_version = 0;
 		//DirectX 11 supports geometry shaders
 		context->s_render_driver_info.m_geometry_shader = true;
+		//DirectX 11 supports instanced draw calls (DrawInstanced / DrawIndexedInstanced)
+		context->s_render_driver_info.m_draw_instanced = true;
 		//Writing SV_RenderTargetArrayIndex from the vertex shader (without a GS) requires
 		//VPAndRTArrayIndexFromAnyShaderFeedingRasterizer (D3D11.3 / feature level 11.1+);
 		//otherwise the geometry-shader techniques are used to route the layered shadows.
@@ -1577,6 +1579,22 @@ namespace Render
 			s_bind_context.m_shader->bind_global_buffer(this);
 		device_context()->IASetPrimitiveTopology(get_draw_type(type));
 		device_context()->DrawIndexed(n, start, 0);
+	}
+
+	void ContextDX11::draw_arrays_instanced(DrawType type, unsigned int start, unsigned int size, unsigned int instances)
+	{
+		if (s_bind_context.m_shader)
+			s_bind_context.m_shader->bind_global_buffer(this);
+		device_context()->IASetPrimitiveTopology(get_draw_type(type));
+		device_context()->DrawInstanced(size, instances, start, 0);
+	}
+
+	void ContextDX11::draw_elements_instanced(DrawType type, unsigned int start, unsigned int n, unsigned int instances)
+	{
+		if (s_bind_context.m_shader)
+			s_bind_context.m_shader->bind_global_buffer(this);
+		device_context()->IASetPrimitiveTopology(get_draw_type(type));
+		device_context()->DrawIndexedInstanced(n, instances, start, 0, 0);
 	}
 	/*
 		InputLayout

@@ -136,8 +136,8 @@ namespace Scene
 			if (m_materials[i])
 			{
 				pass.bind(render, input, m_materials[i]->parameters(), draw_id);
-				//draw
-				m_mesh->draw(render, i);
+				//draw (instanced when the pass declares "instances N")
+				m_mesh->draw(render, i, (unsigned int)pass.m_instances);
 				//unbind
 				pass.unbind();
 			}
