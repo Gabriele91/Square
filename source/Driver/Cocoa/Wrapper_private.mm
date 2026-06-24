@@ -396,7 +396,9 @@ namespace Cocoa
         // GL_FRAMEBUFFER_SRGB can take effect. NSOpenGL has no PFA for sRGB,
         // but setting the window colorspace achieves the same result.
         if (info.m_context.m_srgb)
+        {
             [window setColorSpace:[NSColorSpace sRGBColorSpace]];
+        }
         
         //Force show
         [window makeKeyAndOrderFront: s_os_context.m_application];
