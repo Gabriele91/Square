@@ -423,6 +423,8 @@ namespace Resource
 		glsl_config.m_enable_420pack_extension =  glsl_config.m_version < 420 // Add it if and only if the version is less then 420
 											   && m_glsl_compatible_settings.m_add_GL_ARB_shading_language_420pack;
         glsl_config.m_force_to_remove_query_texture = true;
+		//force all uniform-buffer bindings to 0 (blocks are re-bound by name on the host)
+		glsl_config.m_force_uniform_buffer_binding_zero = true;
 		//errors
 		HLSL2ALL::TextureSamplerList shader_glsl_tslist;
 		HLSL2ALL::ErrorSpirvShaderList shader_spirv_errors;
@@ -457,18 +459,6 @@ namespace Resource
 			if (glsl_config.m_enable_420pack_extension)
 			{
 				shader_headers[type] += "#extension GL_ARB_shading_language_420pack : enable\n";
-			}
-			// Replace layout(binding = x,...) with layout(binding = 0, ...)
-			{
-				static const std::regex re_shader_layout(
-					R"(layout\s*\(\s*binding\s*=\s*\d+\s*,\s*std140\s*\))"
-				);
-
-				shader_sources[type] = std::regex_replace(
-					shader_sources[type],
-					re_shader_layout,
-					"layout(binding = 0, std140)"
-				);
 			}
 			//add inf
 			shader_info.push_back
