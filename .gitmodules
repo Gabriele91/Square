@@ -1,6 +1,6 @@
 [submodule "dependencies/HLSL2ALL"]
 	path = dependencies/HLSL2ALL
-	url = git@github.com:Gabriele91/HLSL2ALL.git
+	url = https://github.com/Gabriele91/HLSL2ALL.git
 [submodule "dependencies/glm"]
 	path = dependencies/glm
 	url = https://github.com/g-truc/glm.git
