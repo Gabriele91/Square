@@ -66,8 +66,10 @@ namespace Render
     public:
         struct Attachment { Texture* texture; TargetType type; };
         std::vector<Attachment> m_attachments;
-        MTLPixelFormat m_color_fmt { MTLPixelFormatBGRA8Unorm };
-        MTLPixelFormat m_depth_fmt { MTLPixelFormatDepth32Float_Stencil8 };
+        // Invalid until a RT_COLOR attachment sets it: a depth-only target (e.g. CSM
+        // shadow pass) must leave this Invalid so the PSO declares no color attachment.
+        MTLPixelFormat m_color_fmt { MTLPixelFormatInvalid };
+        MTLPixelFormat m_depth_fmt { MTLPixelFormatInvalid };
     };
 
     // ── Reflection data (parsed from the MSL header comment) ─────────────────

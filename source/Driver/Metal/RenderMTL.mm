@@ -639,16 +639,22 @@ id<MTLRenderPipelineState> ContextMTL::get_or_create_pso()
     if (sh->m_writes_layer)
         pd.inputPrimitiveTopology = MTLPrimitiveTopologyClassTriangle;
 
-    pd.colorAttachments[0].pixelFormat = key.color_fmt;
-
-    const BlendState& bs = m_render_state.m_blend;
-    if (bs.m_enable)
+    // Depth-only passes (e.g. CSM shadow maps) have no color attachment: leave
+    // colorAttachments[0] at MTLPixelFormatInvalid so the PSO matches the render
+    // pass, otherwise Metal API validation asserts in setRenderPipelineState.
+    if (key.color_fmt != MTLPixelFormatInvalid)
     {
-        pd.colorAttachments[0].blendingEnabled             = YES;
-        pd.colorAttachments[0].sourceRGBBlendFactor        = to_mtl_blend(bs.m_src);
-        pd.colorAttachments[0].destinationRGBBlendFactor   = to_mtl_blend(bs.m_dst);
-        pd.colorAttachments[0].sourceAlphaBlendFactor      = to_mtl_blend(bs.m_src);
-        pd.colorAttachments[0].destinationAlphaBlendFactor = to_mtl_blend(bs.m_dst);
+        pd.colorAttachments[0].pixelFormat = key.color_fmt;
+
+        const BlendState& bs = m_render_state.m_blend;
+        if (bs.m_enable)
+        {
+            pd.colorAttachments[0].blendingEnabled             = YES;
+            pd.colorAttachments[0].sourceRGBBlendFactor        = to_mtl_blend(bs.m_src);
+            pd.colorAttachments[0].destinationRGBBlendFactor   = to_mtl_blend(bs.m_dst);
+            pd.colorAttachments[0].sourceAlphaBlendFactor      = to_mtl_blend(bs.m_src);
+            pd.colorAttachments[0].destinationAlphaBlendFactor = to_mtl_blend(bs.m_dst);
+        }
     }
 
     if (key.depth_fmt != MTLPixelFormatInvalid)

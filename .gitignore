@@ -69,6 +69,7 @@ Temporary Items
 
 ## Build generated
 build/
+build-xcode/**
 DerivedData/
 
 ## Various settings
