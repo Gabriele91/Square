@@ -216,11 +216,12 @@ namespace Win32
 			DEVMODE fullscreen_settings;
 			fullscreen_settings.dmSize = sizeof(fullscreen_settings);
 
+			// TODO: check MSAA and ALPHA channel and bits
 			auto* screen = (ScreenWin32*)(m_info.m_screen->conteiner());
 			EnumDisplaySettings(screen->m_display_name, 0, &fullscreen_settings);
 			fullscreen_settings.dmPelsWidth = m_info.m_size[0];
 			fullscreen_settings.dmPelsHeight = m_info.m_size[1];
-			fullscreen_settings.dmBitsPerPel = m_info.m_context.m_color;
+			fullscreen_settings.dmBitsPerPel = m_info.m_context.m_color ;
 			fullscreen_settings.dmFields = 
 			  DM_PELSWIDTH
 			| DM_PELSHEIGHT 

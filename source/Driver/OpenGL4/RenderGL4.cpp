@@ -996,13 +996,16 @@ namespace Render
 					// the real encoding to decide if the shader needs to do gamma itself.
 					GLint encoding = GL_LINEAR;
 					glBindFramebuffer(GL_FRAMEBUFFER, 0);
+					// Enable SRGB
+					glEnable(GL_FRAMEBUFFER_SRGB);
+					// Test it
 					glGetFramebufferAttachmentParameteriv( GL_FRAMEBUFFER, GL_BACK_LEFT, GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, &encoding);
 					m_srgb_fb = (encoding == GL_SRGB);
-
-					if (m_srgb_fb)
-						glEnable(GL_FRAMEBUFFER_SRGB);
-					else
+					// Disable it if does not supported
+					if (!m_srgb_fb)
+					{
 						glDisable(GL_FRAMEBUFFER_SRGB);
+					}
 				#endif
 			}
 		}
@@ -1025,8 +1028,8 @@ namespace Render
 		&& GLAD_VERSION_MINOR(gl_loaded_version) >= 5
 		&& glClipControl)
 		{
-			glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE);
-			glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
+			glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE); // DirectX/Vulkan like
+			// glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // OGL standard
 		}
 		#endif
 #endif
