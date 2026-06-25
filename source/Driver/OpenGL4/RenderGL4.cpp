@@ -1005,6 +1005,7 @@ namespace Render
 					if (!m_srgb_fb)
 					{
 						glDisable(GL_FRAMEBUFFER_SRGB);
+						logger()->warning("SRGB cannot be enable");
 					}
 				#endif
 			}
