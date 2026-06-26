@@ -209,9 +209,13 @@ namespace Data
 	{ 
 		return object()[key];
 	}
-	const JsonValue& JsonValue::operator[] (const size_t& key) const      
-	{ 
-		return (*m_array)[key]; 
+	const JsonValue& JsonValue::operator[] (const size_t& key) const
+	{
+		//A const lookup cannot grow the array, so an out-of-range index returns a
+		//shared null value instead of indexing past the end (vector::operator[] is
+		//unchecked → UB).
+		static const JsonValue null_value;
+		return key < m_array->size() ? (*m_array)[key] : null_value;
 	}
 	const JsonValue& JsonValue::operator[] (const std::string& key) const
 	{
