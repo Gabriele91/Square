@@ -6,6 +6,7 @@
 //
 #include "Square/Data/Json.h"
 #include "Square/Data/ParserUtils.h"
+#include <charconv>
 #include <cstring>
 #include <sstream>
 #include <stack>
@@ -17,7 +18,7 @@ namespace Parser
 {
 	static inline bool is_delim(char c)
 	{
-		return c == ',' || c == ':' || c == ']' || c == '}' || isspace(c) || !c;
+		return c == ',' || c == ':' || c == ']' || c == '}' || isspace((unsigned char)c) || !c;
 	}
 }
 namespace Data
@@ -172,7 +173,7 @@ namespace Data
 		m_type   = Type::IS_OBJECT;
 		m_object = new JsonObject(value);
 	}
-	JsonValue::~JsonValue()
+	void JsonValue::destroy()
 	{
 		switch (m_type)
 		{
@@ -181,6 +182,12 @@ namespace Data
 		case Type::IS_OBJECT: delete m_object; break;
 		default: /* none */ break;
 		}
+		m_type = Type::IS_NULL;
+		m_ptr  = nullptr;
+	}
+	JsonValue::~JsonValue()
+	{
+		destroy();
 	}
 	// operators
 	size_t JsonValue::size() const
@@ -201,15 +208,23 @@ namespace Data
 	{ 
 		return (*m_array)[key]; 
 	}
-	const JsonValue& JsonValue::operator[] (const std::string& key) const 
-	{ 
-		return (*m_object).find(key)->second;
+	const JsonValue& JsonValue::operator[] (const std::string& key) const
+	{
+		//A const lookup cannot insert (unlike the non-const overload), so on a
+		//missing key return a shared null value instead of dereferencing end().
+		static const JsonValue null_value;
+		auto it = m_object->find(key);
+		return it != m_object->end() ? it->second : null_value;
 	}
 	// move
 	JsonValue& JsonValue::operator= (JsonValue&& v)
 	{
+		//self-assignment
+		if (this == &v) return *this;
+		//free the payload we currently hold before overwriting it
+		destroy();
 		//move type
-		m_type = std::move(v.m_type);
+		m_type = v.m_type;
 		//move value
 		switch (m_type)
 		{
@@ -228,7 +243,11 @@ namespace Data
 	}
     JsonValue& JsonValue::operator= (const JsonValue& v)
     {
-        //move type
+        //self-assignment
+        if (this == &v) return *this;
+        //free the payload we currently hold before overwriting it
+        destroy();
+        //copy type
         m_type = v.m_type;
         //move value
         switch (m_type)
@@ -262,48 +281,47 @@ namespace Data
 		const char *tmp = str.c_str();
 		//start '"'
 		std::string out = "\"";
-		//push all chars
+		//push all chars. Only emit escapes valid per RFC 8259: the named ones
+		//below, and \uXXXX for any remaining control character (< 0x20). \a, \?
+		//and \' are NOT valid JSON and must never be produced.
 		while (*tmp)
 		{
-			switch (*tmp)
+			unsigned char c = (unsigned char)*tmp;
+			switch (c)
 			{
-			case '\n':
-				out += "\\n";
-				break;
-			case '\t':
-				out += "\\t";
-				break;
-			case '\b':
-				out += "\\b";
-				break;
-			case '\r':
-				out += "\\r";
-				break;
-			case '\f':
-				out += "\\f";
-				break;
-			case '\a':
-				out += "\\a";
-				break;
-			case '\\':
-				out += "\\\\";
-				break;
-			case '\?':
-				out += "\\?";
-				break;
-			case '\'':
-				out += "\\\'";
-				break;
-			case '\"':
-				out += "\\\"";
-				break;
+			case '\n': out += "\\n";  break;
+			case '\t': out += "\\t";  break;
+			case '\b': out += "\\b";  break;
+			case '\r': out += "\\r";  break;
+			case '\f': out += "\\f";  break;
+			case '\\': out += "\\\\"; break;
+			case '\"': out += "\\\""; break;
 			default:
-				out += *tmp;
+				if (c < 0x20)
+				{
+					static const char* hex = "0123456789abcdef";
+					out += "\\u00";
+					out += hex[(c >> 4) & 0xF];
+					out += hex[c & 0xF];
+				}
+				else
+				{
+					out += (char)c;
+				}
 				break;
 			}
 			++tmp;
 		}
 		return out + "\"";
+	}
+	//Serialize a double with the shortest representation that round-trips back to
+	//the exact same value (e.g. 0.1 -> "0.1", not "0.10000000000000001"). The
+	//default ostream formatting only keeps ~6 significant digits, losing precision.
+	inline std::string json_number_dump(double value)
+	{
+		char   buffer[32];
+		auto   res = std::to_chars(buffer, buffer + sizeof(buffer), value);
+		return std::string(buffer, res.ptr);
 	}
 	std::ostream& operator<< (std::ostream& stream, const Json& value)
 	{
@@ -315,7 +333,7 @@ namespace Data
 		{
 			case JsonValue::Type::IS_NULL:   stream << "null"; break;
 			case JsonValue::Type::IS_BOOL:   stream << (value.boolean() ? "true" : "false"); break;
-			case JsonValue::Type::IS_NUMBER: stream << value.number(); break;
+			case JsonValue::Type::IS_NUMBER: stream << json_number_dump(value.number()); break;
 			case JsonValue::Type::IS_STRING: stream << json_string_dump(value.string()); break;
 			case JsonValue::Type::IS_ARRAY:
 			{

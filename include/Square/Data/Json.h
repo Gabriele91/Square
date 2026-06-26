@@ -98,6 +98,8 @@ namespace Data
 		bool contains(const std::string& key) const;
 		bool contains(size_t index) const;
 	private:
+		//Free the held string/array/object (if any) and become null
+		void destroy();
 
 		//Value
 		union
