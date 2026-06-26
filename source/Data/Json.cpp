@@ -108,6 +108,11 @@ namespace Data
         m_type = Type::IS_OBJECT;
         m_object = new JsonObject(std::move(v));
     }
+    JsonValue::JsonValue(std::string&& value) noexcept
+    {
+        m_type   = Type::IS_STRING;
+        m_string = new JsonString(std::move(value));
+    }
 	JsonValue::JsonValue(const JsonValue& v)
 	{
 		//move type
@@ -416,9 +421,9 @@ namespace Data
                     m_list_errors.push_back({line, "JSON_BAD_KEY"});
                     return nullptr;
                 }
-                key = value.string();
+                key = std::move(value.string());
                 added_key = true;
-                return (JsonValue*)&value;
+                return nullptr;
             }
             else switch (stack.top()->type())
             {
@@ -428,10 +433,8 @@ namespace Data
                 break;
                 case JsonValue::Type::IS_OBJECT:
                 {
-                    //---
-                    stack.top()->object()[key] = std::move(value);
-                    //--
-                    auto& ref = stack.top()->object()[key];
+                    //--- single hash lookup: insert (or overwrite) and keep the ref
+                    auto& ref = stack.top()->object().insert_or_assign(key, std::move(value)).first->second;
                     //--- into stack
                     if(ref.is_object() || ref.is_array())
                     {
@@ -516,7 +519,7 @@ namespace Data
                         m_list_errors.emplace_back(line, get_line_character(source, start_source),"JSON_BAD_STRING");
                         return false;
                     }
-                    push(JsonValue{ str_out });
+                    push(JsonValue{ std::move(str_out) });
                 }
                 break;
 				////////////////////////////////////////////////////////////////////////////////////

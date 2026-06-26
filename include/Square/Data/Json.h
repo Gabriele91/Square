@@ -73,6 +73,7 @@ namespace Data
 		JsonValue(JsonValue&& v) noexcept;
 		JsonValue(JsonArray&& v) noexcept;
 		JsonValue(JsonObject&& v) noexcept;
+		JsonValue(std::string&& value) noexcept;
 		JsonValue(const JsonValue& v);
         JsonValue(const char* value);
 		JsonValue(const std::string& value);
