@@ -235,7 +235,7 @@ namespace Resource
 								break;
 								case Parser::Effect::ShaderField::S_RESOUCE:
 									this_pass.m_shader = context().resource<Shader>(parser_pass.m_shader.m_data); 
-									success = !this_pass.m_shader;
+									success = !!this_pass.m_shader;
 								break;
 								}
 								//load effect
