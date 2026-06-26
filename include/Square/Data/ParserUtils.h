@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <string_view>
+#include <cstring>
 #include "Square/Config.h"
 #include "Square/Core/Variant.h"
 
@@ -34,10 +36,25 @@ namespace Parser
 	static inline bool cstr_cmp_skip(const char*& x, const char key[])
 	{
 		if (cstr_cmp(x, key))
-		{ 
+		{
 			x += std::strlen(key);
-			return true; 
-		} 
+			return true;
+		}
+		return false;
+	}
+	
+	static inline bool cstr_cmp(const char* x, std::string_view key)
+	{
+		return std::strncmp(x, key.data(), key.size()) == 0;
+	}
+	
+	static inline bool cstr_cmp_skip(const char*& x, std::string_view key)
+	{
+		if (cstr_cmp(x, key))
+		{
+			x += key.size();
+			return true;
+		}
 		return false;
 	}
 
@@ -216,6 +233,15 @@ namespace Parser
 		if (cstr_cmp_skip(inout, "false")){ out = false; return true; };
 		return false;
 	}
+
+	// Boolean-ish keyword sets shared by all the text parsers, so the "enabled"
+	// spellings (on/true/yes) and the "disabled" ones (off/false/no) are accepted
+	// consistently everywhere instead of being re-listed per call site.
+	static inline bool is_true_keyword (std::string_view s) { return s == "on"  || s == "true"  || s == "yes"; }
+	static inline bool is_false_keyword(std::string_view s) { return s == "off" || s == "false" || s == "no";  }
+	// Stream-consuming variants: advance the cursor past the token on match.
+	static inline bool cstr_cmp_skip_true (const char*& x) { return cstr_cmp_skip(x, "on")  || cstr_cmp_skip(x, "true")  || cstr_cmp_skip(x, "yes"); }
+	static inline bool cstr_cmp_skip_false(const char*& x) { return cstr_cmp_skip(x, "off") || cstr_cmp_skip(x, "false") || cstr_cmp_skip(x, "no");  }
 
 	static inline bool parse_short(const char*& inout, short& out)
 	{
