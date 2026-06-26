@@ -27,30 +27,48 @@ namespace Parser
 		}
 	};
 	//////////////////////////////////////////////////////
+	// Identifier character classes (defined here so the keyword matchers below can
+	// enforce a word boundary).
+	static inline bool is_start_name(char c)
+	{
+		return 	 (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+	}
+
+	static inline bool is_char_name(char c)
+	{
+		return 	 (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
+	}
+
+	//////////////////////////////////////////////////////
 	// KEYWORD UTILS
 	static inline bool cstr_cmp(const char* x, const char key[])
 	{
 		return std::strncmp(x, key, std::strlen(key)) == 0;
 	}
 
+	// Match key and require a word boundary: the char right after the key must not
+	// continue an identifier, so "point" does NOT match "point_light" (the longer
+	// keyword is matched on its own). This makes keyword matching order-independent
+	// and immune to accidental prefix matches.
 	static inline bool cstr_cmp_skip(const char*& x, const char key[])
 	{
-		if (cstr_cmp(x, key))
+		const size_t len = std::strlen(key);
+		if (std::strncmp(x, key, len) == 0 && !is_char_name(x[len]))
 		{
-			x += std::strlen(key);
+			x += len;
 			return true;
 		}
 		return false;
 	}
-	
+
 	static inline bool cstr_cmp(const char* x, std::string_view key)
 	{
 		return std::strncmp(x, key.data(), key.size()) == 0;
 	}
-	
+
 	static inline bool cstr_cmp_skip(const char*& x, std::string_view key)
 	{
-		if (cstr_cmp(x, key))
+		if (std::strncmp(x, key.data(), key.size()) == 0 && !is_char_name(x[key.size()]))
 		{
 			x += key.size();
 			return true;
@@ -68,16 +86,6 @@ namespace Parser
 	static inline bool is_space(char c)
 	{
 		return 	 c == ' ' || c == '\t' || c == '\r' || c == '\n';
-	}
-
-	static inline bool is_start_name(char c)
-	{
-		return 	 (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-	}
-
-	static inline bool is_char_name(char c)
-	{
-		return 	 (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
 	}
 
 	static inline bool is_digit(char c)

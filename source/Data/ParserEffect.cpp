@@ -130,7 +130,7 @@ namespace Parser
             { "dst_alpha",           Render::BLEND_DST_ALPHA },
             { "src_color",           Render::BLEND_SRC_COLOR },
             { "src_alpha",           Render::BLEND_SRC_ALPHA },
-            { "src_apha_sature",     Render::BLEND_SRC_ALPHA_SATURATE }, // (sic) legacy spelling
+            { "src_alpha_saturate",  Render::BLEND_SRC_ALPHA_SATURATE },
         };
         constexpr DepthName g_depth_table[]
         {
