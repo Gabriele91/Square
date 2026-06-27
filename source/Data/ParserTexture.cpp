@@ -1,9 +1,9 @@
 //
-//  ParserMaterial.cpp
+//  ParserTexture.cpp
 //  Square
 //
 //  Created by Gabriele Di Bari on 24/03/25.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Data/ParserUtils.h"
 #include "Square/Data/ParserTexture.h"
@@ -50,8 +50,8 @@ namespace Parser
 			Render::TextureMagFilterType::TMAG_NEAREST_MIPMAP_LINEAR,
 			Render::TextureMagFilterType::TMAG_LINEAR_MIPMAP_NEAREST,
 			Render::TextureMagFilterType::TMAG_LINEAR_MIPMAP_LINEAR,
-			Render::TextureMagFilterType::TMAG_NEAREST,
 			Render::TextureMagFilterType::TMAG_LINEAR,
+			Render::TextureMagFilterType::TMAG_NEAREST,
 		};
 		const char* texture_min[] =
 		{
@@ -73,7 +73,7 @@ namespace Parser
 		};
 		const char* texture_edge[] =
 		{
-			"clap",
+			"clamp",
 			"repeat"
 		};
 		//set start line
