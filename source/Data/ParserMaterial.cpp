@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 03/05/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Data/ParserUtils.h"
 #include "Square/Data/ParserMaterial.h"
@@ -12,6 +12,15 @@ namespace Square
 {
 namespace Parser
 {
+	// // // // // // // // // // // // // // // // // // // // // // // // // //
+	// Keyword constants for the .material grammar. Centralised so the spelling
+	// lives in one place (like ParserEffect).
+	namespace keyword
+	{
+		constexpr std::string_view effect     = "effect";
+		constexpr std::string_view parameters = "parameters";
+		constexpr std::string_view material   = "material";
+	}
 	//////////////////////////////////////////////////////
 	// Context
 	std::string Material::Context::errors_to_string() const
@@ -36,21 +45,41 @@ namespace Parser
 		//set context
 		m_context = &default_context;
 		m_allocator = allocator;
-		//skip line and comments
-		skip_space_and_comments(m_context->m_line, ptr);
-		//get type
-		if (*ptr != EOF && *ptr != '\0')
+		//top-level commands: the three keywords are synonyms that introduce the same
+		//'<keyword> "name" { parameters }' block.
+		struct Command { std::string_view keyword; bool (Material::*handle)(const char*&); };
+		static const Command commands[]
 		{
-			//parsing a block
-			     if (cstr_cmp_skip(ptr, "effect"))     { if (!parse_effect(ptr))  return false; }
-			else if (cstr_cmp_skip(ptr, "parameters")) { if (!parse_effect(ptr))  return false; }
-			else if (cstr_cmp_skip(ptr, "material"))   { if (!parse_effect(ptr))  return false; }
-			else { push_error("Not found a valid command"); return false; }
+			{ keyword::effect,     &Material::parse_effect },
+			{ keyword::material,   &Material::parse_effect },
+			{ keyword::parameters, &Material::parse_effect },
+		};
+		//get type
+		while (*ptr != EOF && *ptr != '\0')
+		{
+			//skip line and comments
+			skip_space_and_comments(m_context->m_line, ptr);
+			//nothing left but trailing space/comments
+			if (*ptr == EOF || *ptr == '\0') break;
+			//dispatch to the command that matches the keyword
+			bool handled = false;
+			for (const auto& command : commands)
+			{
+				if (!cstr_cmp_skip(ptr, command.keyword)) continue;
+				if (!(this->*command.handle)(ptr)) return false;
+				handled = true;
+				break;
+			}
+			if (!handled)
+			{
+				push_error("Not found a valid command");
+				return false;
+			}
 			//skip line and comments
 			skip_space_and_comments(m_context->m_line, ptr);
 		}
 		return true;
-	}	
+	}
 	//////////////////////////////////////////////////////
 	bool Material::parse_effect(const char*& ptr)
 	{
