@@ -3,12 +3,12 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 07/01/24.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #include <optional>
 #include <vector>
+#include <limits>
 #include "Square/Config.h"
-#include "Square/Data/ParserUtils.h"
 #include "Square/Data/ParserUtils.h"
 #include "Square/Data/ParserStaticMesh.h"
 #include "Square/Driver/Render.h"
@@ -116,7 +116,7 @@ namespace Square
 
 		#pragma endregion
 
-		#pragma region Perser
+		#pragma region Parser
 		Render::DrawType as_render_type(StaticMeshDrawType type)
 		{
 			switch (type)
@@ -128,6 +128,34 @@ namespace Square
 			case StaticMeshDrawType::SMDTYPE_TRIANGLES:		  return Render::DrawType::DRAW_TRIANGLES;
 			case StaticMeshDrawType::SMDTYPE_TRIANGLE_STRIP:  return Render::DrawType::DRAW_TRIANGLE_STRIP;
 			}
+		}
+
+		// Bounds-checked read of a StaticMeshArray<T> stored at 'offset'. Validates the
+		// header, the element size and the (overflow-safe) content size against 'size'
+		// before copying. On success fills 'out' and advances 'offset' past the block.
+		// NOTE: reads exactly the same bytes as before, it only validates them first.
+		template<typename T>
+		static bool read_static_mesh_array(const unsigned char* ptr, size_t size, size_t& offset, std::vector<T>& out)
+		{
+			// the array starts with two unsigned long long: array_size + element_size
+			constexpr size_t array_header_size = sizeof(unsigned long long) * 2;
+			// the header fields must fit in the buffer
+			if (offset > size || size - offset < array_header_size) return false;
+			// now it is safe to look at the array view
+			const StaticMeshArray<T>& array = *reinterpret_cast<const StaticMeshArray<T>*>(&ptr[offset]);
+			const unsigned long long array_size   = array.array_size;
+			const unsigned long long element_size = array.element_size;
+			// the element must match T exactly (sizeof(T) is never zero)
+			if (element_size != sizeof(T)) return false;
+			// content size = array_size * element_size, guarded against overflow
+			if (array_size > (std::numeric_limits<unsigned long long>::max() / element_size)) return false;
+			const unsigned long long content_size = array_size * element_size;
+			// the whole block (header + content) must fit in the buffer
+			if (size - offset - array_header_size < content_size) return false;
+			// safe to copy and advance
+			out = array.as_vector();
+			offset += array_header_size + (size_t)content_size;
+			return true;
 		}
 
 		bool StaticMesh::parse(Context& default_context, const std::vector<unsigned char>& binary)
@@ -150,42 +178,42 @@ namespace Square
 			if (header.offset >= size) return false;
 			// Offset
 			size_t offset = header.offset;
-			// Read body
+			// Read body (vertex array)
 			switch (header.type)
 			{
 				case StaticMeshLayoutType::SMLTYPE_POSITON2D:
 				{
-					auto& p2 = *reinterpret_cast<const StaticMeshArray<Render::Layout::Position2D>*>(&ptr[offset]);
-					context.m_vertex = p2.as_vector();
-					offset += p2.full_size();
+					std::vector<Render::Layout::Position2D> vertex;
+					if (!read_static_mesh_array(ptr, size, offset, vertex)) return false;
+					context.m_vertex = std::move(vertex);
 				}
 				break;
 				case StaticMeshLayoutType::SMLTYPE_POSITON3D:
 				{
-					auto& p3 = *reinterpret_cast<const StaticMeshArray<Render::Layout::Position3D>*>(&ptr[offset]);
-					context.m_vertex = p3.as_vector();
-					offset += p3.full_size();
+					std::vector<Render::Layout::Position3D> vertex;
+					if (!read_static_mesh_array(ptr, size, offset, vertex)) return false;
+					context.m_vertex = std::move(vertex);
 				}
 				break;
 				case StaticMeshLayoutType::SMLTYPE_POSITON2DUV:
 				{
-					auto& p2uv = *reinterpret_cast<const StaticMeshArray<Render::Layout::Position2DUV>*>(&ptr[offset]);
-					context.m_vertex = p2uv.as_vector();
-					offset += p2uv.full_size();
+					std::vector<Render::Layout::Position2DUV> vertex;
+					if (!read_static_mesh_array(ptr, size, offset, vertex)) return false;
+					context.m_vertex = std::move(vertex);
 				}
 				break;
 				case StaticMeshLayoutType::SMLTYPE_POSITON3DUV:
 				{
-					auto& p3uv = *reinterpret_cast<const StaticMeshArray<Render::Layout::Position3DUV>*>(&ptr[offset]);
-					context.m_vertex = p3uv.as_vector();
-					offset += p3uv.full_size();
+					std::vector<Render::Layout::Position3DUV> vertex;
+					if (!read_static_mesh_array(ptr, size, offset, vertex)) return false;
+					context.m_vertex = std::move(vertex);
 				}
 				break;
 				case StaticMeshLayoutType::SMLTYPE_POSITON3DTANGENTBINOMIALUV:
 				{
-					auto& p3nbuv = *reinterpret_cast<const StaticMeshArray<Render::Layout::Position3DNormalTangetBinomialUV>*>(&ptr[offset]);
-					context.m_vertex = p3nbuv.as_vector();
-					offset += p3nbuv.full_size();
+					std::vector<Render::Layout::Position3DNormalTangetBinomialUV> vertex;
+					if (!read_static_mesh_array(ptr, size, offset, vertex)) return false;
+					context.m_vertex = std::move(vertex);
 				}
 				break;
 				default: return false;
@@ -193,21 +221,21 @@ namespace Square
 			// Index
 			if (header.index)
 			{
-				auto& index = *reinterpret_cast<const StaticMeshArray<unsigned int>*>(&ptr[offset]);
-				context.m_index = index.as_vector();
-				offset += index.full_size();
+				std::vector<unsigned int> index;
+				if (!read_static_mesh_array(ptr, size, offset, index)) return false;
+				context.m_index = std::move(index);
 			}
 			// SubMesh
 			if (header.submesh)
 			{
-				auto& submesh = *reinterpret_cast<const StaticMeshArray<StaticSubMesh>*>(&ptr[offset]);
-				auto memory_submesh = std::move(submesh.as_vector());
-				for (auto& submesh : memory_submesh)
+				std::vector<StaticSubMesh> submesh_array;
+				if (!read_static_mesh_array(ptr, size, offset, submesh_array)) return false;
+				for (auto& sub_mesh : submesh_array)
 					context.m_submesh.push_back
 					({
-						as_render_type(submesh.type),
-						(unsigned int)submesh.index_count,
-						(unsigned int)submesh.index_offset,
+						as_render_type(sub_mesh.type),
+						(unsigned int)sub_mesh.index_count,
+						(unsigned int)sub_mesh.index_offset,
 					});
 			}
 			return true;
