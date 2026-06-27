@@ -173,8 +173,10 @@ namespace Win32
 			format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 		else if (m_info.m_context.m_color >= 32)
 			format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		else if (m_info.m_context.m_color >= 24 && m_info.m_context.m_srgb)
+			format = DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
 		else if (m_info.m_context.m_color >= 24)
-			format = DXGI_FORMAT_B8G8R8X8_TYPELESS;
+			format = DXGI_FORMAT_B8G8R8X8_UNORM;
 		else if (m_info.m_context.m_color <= 16)
 			format = DXGI_FORMAT_B5G6R5_UNORM;
 
