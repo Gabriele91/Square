@@ -70,6 +70,7 @@ namespace Parser
 		if (value.m_paramter)
 		{
 			m_paramter = value.m_paramter->copy();
+			m_allocator = value.m_allocator;
 		}
 	}
 	Parameters::ParameterField::~ParameterField()
@@ -123,7 +124,7 @@ namespace Parser
             //skip spaces
             skip_space_and_comments(m_context->m_line, ptr);
             //read all values
-            while (!is_end_table(*ptr) && *ptr != EOF && *ptr != '\0')
+            while (!is_end_table(*ptr) && *ptr != '\0')
             {
                 //alloc uniform field
                 ParameterField field;
@@ -170,7 +171,11 @@ namespace Parser
         //space
         skip_space_and_comments(m_context->m_line, ptr);
         //alloc
-        field.alloc(m_allocator, field.m_type);
+        if (!field.alloc(m_allocator, field.m_type))
+        {
+            push_error("Cannot alloc parameter");
+            return false;
+        }
         //parse by type
         switch (field.m_type)
         {
@@ -194,13 +199,7 @@ namespace Parser
             case ParameterType::PT_DMAT3:    if(!parse_dmat3(ptr, *field.m_paramter->value_ptr<DMat3>())) return false; break;
             case ParameterType::PT_DMAT4:    if(!parse_dmat4(ptr, *field.m_paramter->value_ptr<DMat4>())) return false;  break;
 
-			case ParameterType::PT_TEXTURE: 
-			{
-				std::string value_name;
-				if (!parse_string(m_context->m_line, ptr, value_name))  return false;
-				field.add(value_name);
-			}
-			break;
+			case ParameterType::PT_TEXTURE: if (!parse_texture(ptr, field)) return false; break;
             default: return false; break;
         }
         //jump space
@@ -280,7 +279,7 @@ namespace Parser
             return false;
         }
         //save texture name
-        field.m_resources.push_back(texture_name);
+        field.add(texture_name);
         //ok
         return true;
     }
@@ -450,7 +449,7 @@ namespace Parser
         
         { "double2", ParameterType::PT_DVEC2 },
         { "double3", ParameterType::PT_DVEC3 },
-        { "double4x4", ParameterType::PT_DVEC4 },
+        { "double4", ParameterType::PT_DVEC4 },
         { "double3x3", ParameterType::PT_DMAT3 },
         { "double4x4", ParameterType::PT_DMAT4 },
 		};

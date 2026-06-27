@@ -20,7 +20,7 @@ namespace Parser
 		{
             //info
 			std::string       m_name;
-            ParameterType     m_type;
+            ParameterType     m_type{ ::Square::Render::EffectParameterType::PT_NONE };
             Unique<Parameter> m_paramter{ nullptr };
             Allocator*        m_allocator{ nullptr };
 
