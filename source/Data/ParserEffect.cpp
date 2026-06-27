@@ -64,7 +64,7 @@ namespace Parser
         // Ordered LONGEST-FIRST: cstr_cmp_skip matches a prefix, so a longer keyword
         // must be tested before any keyword that is a prefix of it (e.g. "spot_point"
         // before "spot"). Reordering this table can silently break parsing.
-        constexpr LightSelector g_light_selectors[]
+        constexpr LightSelector s_light_selectors[]
         {
             { keyword::spot_point_direction, Effect::LT_SPOT_POINT_DIRECTION },
             { keyword::point_direction_spot, Effect::LT_SPOT_POINT_DIRECTION },
@@ -83,7 +83,7 @@ namespace Parser
         // Consume a light/shadow selector keyword; false if none matched.
         inline bool match_light_selector(const char*& ptr, Effect::LightsField& out)
         {
-            for (const auto& e : g_light_selectors)
+            for (const auto& e : s_light_selectors)
                 if (cstr_cmp_skip(ptr, e.name)) { out = e.value; return true; }
             return false;
         }
@@ -91,7 +91,7 @@ namespace Parser
         // -- requirement capability gates ------------------------------------------
         // Map a requirement keyword to the CapabilityTest field it drives.
         struct CapabilityGate { std::string_view name; Effect::CapabilityTest Effect::RequirementField::* field; };
-        constexpr CapabilityGate g_capability_gates[]
+        constexpr CapabilityGate s_capability_gates[]
         {
             { keyword::geometry,              &Effect::RequirementField::m_geometry_shader },
             { keyword::vertex_viewport_index, &Effect::RequirementField::m_vertex_viewport_index },
@@ -101,7 +101,7 @@ namespace Parser
         // Consume a capability-gate keyword from the stream; nullptr if none matched.
         inline const CapabilityGate* capability_gate(const char*& ptr)
         {
-            for (const auto& gate : g_capability_gates)
+            for (const auto& gate : s_capability_gates)
                 if (cstr_cmp_skip(ptr, gate.name)) return &gate;
             return nullptr;
         }
@@ -118,7 +118,7 @@ namespace Parser
         struct DepthName    { std::string_view name; Render::DepthFuncType value; };
         struct CullfaceName { std::string_view name; Render::CullfaceType  value; };
 
-        constexpr BlendName g_blend_table[]
+        constexpr BlendName s_blend_table[]
         {
             { "one",                 Render::BLEND_ONE },
             { "zero",                Render::BLEND_ZERO },
@@ -132,7 +132,7 @@ namespace Parser
             { "src_alpha",           Render::BLEND_SRC_ALPHA },
             { "src_alpha_saturate",  Render::BLEND_SRC_ALPHA_SATURATE },
         };
-        constexpr DepthName g_depth_table[]
+        constexpr DepthName s_depth_table[]
         {
             { "never",         Render::DT_NEVER },
             { "less",          Render::DT_LESS },
@@ -143,7 +143,7 @@ namespace Parser
             { "not_equal",     Render::DT_NOT_EQUAL },
             { "always",        Render::DT_ALWAYS },
         };
-        constexpr CullfaceName g_cullface_table[]
+        constexpr CullfaceName s_cullface_table[]
         {
             { "back",           Render::CF_BACK },
             { "front",          Render::CF_FRONT },
@@ -153,21 +153,21 @@ namespace Parser
     // // // // // // // // // // // // // // // // // // // // // // // // // //
     std::string Effect::blend_to_string(Render::BlendType blend)
     {
-        for (const auto& e : g_blend_table)
+        for (const auto& e : s_blend_table)
             if (e.value == blend) return std::string(e.name);
         return "";
     }
 
     Render::BlendType Effect::blend_from_string(const std::string& blend, Render::BlendType blend_default)
     {
-        for (const auto& e : g_blend_table)
+        for (const auto& e : s_blend_table)
             if (e.name == std::string_view(blend)) return e.value;
         return blend_default;
     }
     
     std::string Effect::depth_to_string(Render::DepthFuncType depth)
     {
-        for (const auto& e : g_depth_table)
+        for (const auto& e : s_depth_table)
             if (e.value == depth) return std::string(e.name);
         square_assert_debug(0);
         return "less";
@@ -175,14 +175,14 @@ namespace Parser
 
     Render::DepthFuncType Effect::depth_from_string(const std::string& depth, Render::DepthFuncType depth_default)
     {
-        for (const auto& e : g_depth_table)
+        for (const auto& e : s_depth_table)
             if (e.name == std::string_view(depth)) return e.value;
         return depth_default;
     }
     
     std::string Effect::cullface_to_string(Render::CullfaceType cullface)
     {
-        for (const auto& e : g_cullface_table)
+        for (const auto& e : s_cullface_table)
             if (e.value == cullface) return std::string(e.name);
         square_assert_debug(0);
         return "front_and_back";
@@ -190,7 +190,7 @@ namespace Parser
 
     Render::CullfaceType Effect::cullface_from_string(const std::string& cullface, Render::CullfaceType cullface_default)
     {
-        for (const auto& e : g_cullface_table)
+        for (const auto& e : s_cullface_table)
             if (e.name == std::string_view(cullface)) return e.value;
         return cullface_default;
     }
