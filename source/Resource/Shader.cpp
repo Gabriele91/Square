@@ -279,13 +279,6 @@ namespace Resource
 		{
 			context().logger()->warning("Error to shader compile");
 			context().logger()->warnings(shader_spirv_errors);
-			//TEMP DEBUG: dump the fully expanded source of the failing shader
-			{
-				static int s_dump_id = 0;
-				std::string dump_path = "/tmp/square_shader_fail_" + std::to_string(s_dump_id++) + ".hlsl";
-				Filesystem::text_file_write_all(dump_path, source.m_source);
-				context().logger()->warning("Shader source dumped to: " + dump_path);
-			}
 			return false;
 		}
 		return true;

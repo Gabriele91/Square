@@ -3,11 +3,8 @@
 //  Square
 //
 //  Deferred directional light pass (full-screen).
-//
-//  NOTE: <SurfacePBR> is NOT included on purpose: it would expand the forward
-//  branch too (the include preprocessor does not evaluate #if) and swallow
-//  <LightPBR>/<GammaCorrection> inside a discarded branch. The needed pieces
-//  are included explicitly instead.
+//  NOTE: <SurfacePBR> is not included: the include preprocessor does not
+//  evaluate #if, its forward branch would swallow <LightPBR>/<GammaCorrection>.
 //
 #define RENDERING_DIRECTION_LIGHT
 #include <Camera>
