@@ -5,8 +5,12 @@
 #include <Vertex>
 #include <Support>
 #include <Matrix>
-#include <SurfaceLegacy>
+// NOTE: GammaCorrection must be included BEFORE SurfaceLegacy: the include
+// preprocessor expands #include inside dead #if branches too, and marks the
+// files as already-included (pragma once); including it afterwards would leave
+// its code only inside the discarded rendering branch.
 #include <GammaCorrection>
+#include <SurfaceLegacy>
 ////////////////
 struct VertexShaderOutput
 {

@@ -64,6 +64,7 @@
 #include "Square/Render/Drawer.h"
 #include "Square/Render/DrawerPassDebug.h"
 #include "Square/Render/DrawerPassForward.h"
+#include "Square/Render/DrawerPassDeferred.h"
 #include "Square/Render/DrawerPassShadow.h"
 /* --- Resource --- */
 #include "Square/Resource/Texture.h"

@@ -61,14 +61,19 @@ namespace Render
     };
 
     // ── Render target ────────────────────────────────────────────────────────
+    //Max color attachments of a render target (MRT, e.g. deferred G-Buffer)
+    static constexpr int MTL_MAX_COLOR_ATTACHMENTS = 4;
+
     class Target
     {
     public:
         struct Attachment { Texture* texture; TargetType type; };
         std::vector<Attachment> m_attachments;
         // Invalid until a RT_COLOR attachment sets it: a depth-only target (e.g. CSM
-        // shadow pass) must leave this Invalid so the PSO declares no color attachment.
-        MTLPixelFormat m_color_fmt { MTLPixelFormatInvalid };
+        // shadow pass) must leave every entry Invalid so the PSO declares no color
+        // attachment. Multiple RT_COLOR attachments fill the slots in order (MRT).
+        MTLPixelFormat m_color_fmts[MTL_MAX_COLOR_ATTACHMENTS]
+        { MTLPixelFormatInvalid, MTLPixelFormatInvalid, MTLPixelFormatInvalid, MTLPixelFormatInvalid };
         MTLPixelFormat m_depth_fmt { MTLPixelFormatInvalid };
     };
 
@@ -254,13 +259,16 @@ namespace Render
         Shader*        shader       { nullptr };
         InputLayout*   input_layout { nullptr };
         BlendState     blend;
-        MTLPixelFormat color_fmt    { MTLPixelFormatBGRA8Unorm };
+        MTLPixelFormat color_fmts[MTL_MAX_COLOR_ATTACHMENTS]
+        { MTLPixelFormatBGRA8Unorm, MTLPixelFormatInvalid, MTLPixelFormatInvalid, MTLPixelFormatInvalid };
         MTLPixelFormat depth_fmt    { MTLPixelFormatDepth32Float_Stencil8 };
 
         bool operator==(const PSOKey& o) const
         {
+            for (int i = 0; i != MTL_MAX_COLOR_ATTACHMENTS; ++i)
+                if (color_fmts[i] != o.color_fmts[i]) return false;
             return shader == o.shader && input_layout == o.input_layout
-                && blend == o.blend && color_fmt == o.color_fmt
+                && blend == o.blend
                 && depth_fmt == o.depth_fmt;
         }
     };
@@ -270,9 +278,10 @@ namespace Render
         {
             size_t h = std::hash<void*>()(k.shader);
             h ^= std::hash<void*>()(k.input_layout) << 1;
-            h ^= std::hash<int>()(k.color_fmt) << 2;
-            h ^= std::hash<int>()(k.depth_fmt) << 3;
-            h ^= std::hash<bool>()(k.blend.m_enable) << 4;
+            for (int i = 0; i != MTL_MAX_COLOR_ATTACHMENTS; ++i)
+                h ^= std::hash<int>()(k.color_fmts[i]) << (2 + i);
+            h ^= std::hash<int>()(k.depth_fmt) << 6;
+            h ^= std::hash<bool>()(k.blend.m_enable) << 7;
             return h;
         }
     };

@@ -433,12 +433,13 @@ MTLRenderPassDescriptor* ContextMTL::make_target_rp(Target* t)
 
     MTLLoadAction color_load = m_pending_clear_color ? MTLLoadActionClear : MTLLoadActionLoad;
     MTLLoadAction depth_load = m_pending_clear_depth ? MTLLoadActionClear : MTLLoadActionLoad;
-    m_pending_clear_color = false;
-    m_pending_clear_depth = false;
 
     SQMTL_LOG("make_target_rp: target=" << (void*)t
               << " clear_color=" << m_pending_clear_color
               << " clear_depth=" << m_pending_clear_depth);
+
+    m_pending_clear_color = false;
+    m_pending_clear_depth = false;
 
     // Number of layers for layered rendering (cube faces / array slices). When a
     // target is layered the whole texture is bound (no per-slice binding) and the
@@ -611,8 +612,19 @@ id<MTLRenderPipelineState> ContextMTL::get_or_create_pso()
     key.shader       = sh;
     key.input_layout = m_bind.input_layout;
     key.blend        = m_render_state.m_blend;
-    key.color_fmt    = m_bind.render_target ? m_bind.render_target->m_color_fmt : m_color_fmt;
-    key.depth_fmt    = m_bind.render_target ? m_bind.render_target->m_depth_fmt : m_depth_fmt;
+    if (m_bind.render_target)
+    {
+        for (int i = 0; i != MTL_MAX_COLOR_ATTACHMENTS; ++i)
+            key.color_fmts[i] = m_bind.render_target->m_color_fmts[i];
+        key.depth_fmt = m_bind.render_target->m_depth_fmt;
+    }
+    else
+    {
+        key.color_fmts[0] = m_color_fmt;
+        for (int i = 1; i != MTL_MAX_COLOR_ATTACHMENTS; ++i)
+            key.color_fmts[i] = MTLPixelFormatInvalid;
+        key.depth_fmt = m_depth_fmt;
+    }
 
     auto it = m_pso_cache.find(key);
     if (it != m_pso_cache.end()) return it->second;
@@ -621,7 +633,7 @@ id<MTLRenderPipelineState> ContextMTL::get_or_create_pso()
               << " has_VS=" << (sh->m_functions[ST_VERTEX_SHADER] != nil)
               << " has_FS=" << (sh->m_functions[ST_FRAGMENT_SHADER] != nil)
               << " has_IL=" << (m_bind.input_layout != nullptr)
-              << " color_fmt=" << (int)key.color_fmt
+              << " color_fmt0=" << (int)key.color_fmts[0]
               << " depth_fmt=" << (int)key.depth_fmt);
 
     MTLRenderPipelineDescriptor* pd = [[MTLRenderPipelineDescriptor alloc] init];
@@ -640,20 +652,22 @@ id<MTLRenderPipelineState> ContextMTL::get_or_create_pso()
         pd.inputPrimitiveTopology = MTLPrimitiveTopologyClassTriangle;
 
     // Depth-only passes (e.g. CSM shadow maps) have no color attachment: leave
-    // colorAttachments[0] at MTLPixelFormatInvalid so the PSO matches the render
+    // colorAttachments at MTLPixelFormatInvalid so the PSO matches the render
     // pass, otherwise Metal API validation asserts in setRenderPipelineState.
-    if (key.color_fmt != MTLPixelFormatInvalid)
+    // Multiple attachments (MRT, e.g. the deferred G-Buffer) are declared in order.
+    for (int i = 0; i != MTL_MAX_COLOR_ATTACHMENTS; ++i)
     {
-        pd.colorAttachments[0].pixelFormat = key.color_fmt;
+        if (key.color_fmts[i] == MTLPixelFormatInvalid) continue;
+        pd.colorAttachments[i].pixelFormat = key.color_fmts[i];
 
         const BlendState& bs = m_render_state.m_blend;
         if (bs.m_enable)
         {
-            pd.colorAttachments[0].blendingEnabled             = YES;
-            pd.colorAttachments[0].sourceRGBBlendFactor        = to_mtl_blend(bs.m_src);
-            pd.colorAttachments[0].destinationRGBBlendFactor   = to_mtl_blend(bs.m_dst);
-            pd.colorAttachments[0].sourceAlphaBlendFactor      = to_mtl_blend(bs.m_src);
-            pd.colorAttachments[0].destinationAlphaBlendFactor = to_mtl_blend(bs.m_dst);
+            pd.colorAttachments[i].blendingEnabled             = YES;
+            pd.colorAttachments[i].sourceRGBBlendFactor        = to_mtl_blend(bs.m_src);
+            pd.colorAttachments[i].destinationRGBBlendFactor   = to_mtl_blend(bs.m_dst);
+            pd.colorAttachments[i].sourceAlphaBlendFactor      = to_mtl_blend(bs.m_src);
+            pd.colorAttachments[i].destinationAlphaBlendFactor = to_mtl_blend(bs.m_dst);
         }
     }
 
@@ -1175,12 +1189,39 @@ Texture* ContextMTL::create_cube_texture(const TextureRawDataInformation data[6]
     return t;
 }
 
+static size_t mtl_pixel_format_size(MTLPixelFormat format)
+{
+    switch (format)
+    {
+    case MTLPixelFormatR8Unorm:               return 1;
+    case MTLPixelFormatR16Float:
+    case MTLPixelFormatR16Uint:
+    case MTLPixelFormatRG8Unorm:
+    case MTLPixelFormatDepth16Unorm:          return 2;
+    case MTLPixelFormatR32Float:
+    case MTLPixelFormatR32Uint:
+    case MTLPixelFormatRG16Float:
+    case MTLPixelFormatRGBA8Unorm:
+    case MTLPixelFormatRGBA8Unorm_sRGB:
+    case MTLPixelFormatBGRA8Unorm:
+    case MTLPixelFormatBGRA8Unorm_sRGB:
+    case MTLPixelFormatDepth32Float:          return 4;
+    case MTLPixelFormatDepth32Float_Stencil8: return 5;
+    case MTLPixelFormatRG32Float:
+    case MTLPixelFormatRGBA16Float:
+    case MTLPixelFormatRGBA16Uint:            return 8;
+    case MTLPixelFormatRGBA32Float:
+    case MTLPixelFormatRGBA32Uint:            return 16;
+    default:                                  return 4;
+    }
+}
+
 std::vector<unsigned char> ContextMTL::get_texture(Texture* t, int level)
 {
     if (!t || !t->m_texture) return {};
     NSUInteger w = std::max<NSUInteger>(1, t->m_texture.width  >> level);
     NSUInteger h = std::max<NSUInteger>(1, t->m_texture.height >> level);
-    size_t bpr = w * 4;
+    size_t bpr = w * mtl_pixel_format_size(t->m_texture.pixelFormat);
     std::vector<unsigned char> buf(bpr * h);
     [t->m_texture getBytes:buf.data() bytesPerRow:bpr
                 fromRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:level];
@@ -1192,7 +1233,7 @@ std::vector<unsigned char> ContextMTL::get_texture(Texture* t, int face, int lev
     if (!t || !t->m_texture) return {};
     NSUInteger w = std::max<NSUInteger>(1, t->m_texture.width  >> level);
     NSUInteger h = std::max<NSUInteger>(1, t->m_texture.height >> level);
-    size_t bpr = w * 4;
+    size_t bpr = w * mtl_pixel_format_size(t->m_texture.pixelFormat);
     std::vector<unsigned char> buf(bpr * h);
     [t->m_texture getBytes:buf.data() bytesPerRow:bpr bytesPerImage:bpr * h
                 fromRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:level slice:face];
@@ -1679,6 +1720,7 @@ void ContextMTL::draw_elements_instanced(DrawType dt, unsigned int start, unsign
 Target* ContextMTL::create_render_target(const std::vector<TargetField>& fields)
 {
     auto* t = new Target();
+    int color_idx = 0;
     for (const auto& f : fields)
     {
         Target::Attachment att;
@@ -1686,8 +1728,8 @@ Target* ContextMTL::create_render_target(const std::vector<TargetField>& fields)
         att.type    = f.m_type;
         t->m_attachments.push_back(att);
 
-        if (f.m_type == RT_COLOR && att.texture)
-            t->m_color_fmt = att.texture->m_texture.pixelFormat;
+        if (f.m_type == RT_COLOR && att.texture && color_idx < MTL_MAX_COLOR_ATTACHMENTS)
+            t->m_color_fmts[color_idx++] = att.texture->m_texture.pixelFormat;
         else if ((f.m_type == RT_DEPTH || f.m_type == RT_DEPTH_STENCIL) && att.texture)
             t->m_depth_fmt = att.texture->m_texture.pixelFormat;
     }

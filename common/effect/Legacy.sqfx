@@ -42,6 +42,22 @@ sub_effect
             }
 		}
     }
+	//deferred: single geometry pass, fills the G-Buffer (lighting done later)
+	technique "deferred"
+	{
+		pass
+		{
+			zbuffer less
+			blend off
+			cullface back
+			lights off
+			shader source
+			{
+				#define DEFERRED_RENDERING
+				#include "Legacy.hlsl"
+			}
+		}
+	}
 	//import shadow caster
-	import <CastShadow> 
+	import <CastShadow>
 }

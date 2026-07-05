@@ -40,13 +40,29 @@ sub_effect
             cullface back
             lights spot_point_direction
 			shadows spot_point_direction
-            shader source 
+            shader source
             {
                 #define FORWARD_RENDERING
 				#include "PBR.hlsl"
             }
 		}
     }
+	//deferred: single geometry pass, fills the G-Buffer (lighting done later)
+	technique "deferred"
+	{
+		pass
+		{
+			zbuffer less
+			blend off
+			cullface back
+			lights off
+			shader source
+			{
+				#define DEFERRED_RENDERING
+				#include "PBR.hlsl"
+			}
+		}
+	}
 	//import shadow caster
-	import <CastShadow> 
+	import <CastShadow>
 }

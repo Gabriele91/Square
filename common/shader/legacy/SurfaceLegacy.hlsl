@@ -33,7 +33,7 @@ SurfaceData DefaultSurfaceData()
 #if defined( FORWARD_RENDERING )
 #include <SurfaceForwardLegacy>
 #elif  defined( DEFERRED_RENDERING )
-
+#include <SurfaceDeferredLegacy>
 #else
 #error define type of rendering (FORWARD_RENDERING|DEFERRED_RENDERING)
 #endif

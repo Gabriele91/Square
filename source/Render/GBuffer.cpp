@@ -15,15 +15,15 @@ namespace Render
     GBuffer::GBuffer(Square::Context& context)
     : Object(context) {}
     
-    GBuffer::GBuffer(Square::Context& context, const IVec2& size, const std::vector<BufferFormat>& buffer_list)
+    GBuffer::GBuffer(Square::Context& context, const IVec2& size, const std::vector<BufferFormat>& buffer_list, bool cpu_access)
     : Object(context)
     {
-        build(size, buffer_list);
+        build(size, buffer_list, cpu_access);
     }
-    
+
     GBuffer::~GBuffer(){ destoy(); }
-    
-    bool GBuffer::build( const IVec2& size, const std::vector<BufferFormat>& buffer_list )
+
+    bool GBuffer::build( const IVec2& size, const std::vector<BufferFormat>& buffer_list, bool cpu_access )
     {
         //delete if target
         if(m_target) destoy();
@@ -53,7 +53,11 @@ namespace Render
                      TEDGE_CLAMP,
 					 TEDGE_CLAMP,
 					 TEDGE_CLAMP,
-                     false
+                     false,      //no mipmap
+                     0,          //mipmap min
+                     10,         //mipmap max
+                     1,          //anisotropy
+                     cpu_access  //cpu read back (debug)
                  }
                  ));
                 targets.push_back({m_textures.back(), buffer_list[i].m_type_target});

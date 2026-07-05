@@ -175,7 +175,18 @@ public:
 		}
 		//
         m_drawer = Square::MakeShared<Render::Drawer>(context());
-		m_drawer->create<Render::DrawerPassForward>();
+		//rendering pipeline: SQUARE_RENDERING=forward|deferred (default: forward)
+		const char* rendering_type = std::getenv("SQUARE_RENDERING");
+		if (rendering_type && Square::case_insensitive_equal(rendering_type, "deferred"))
+		{
+			context().logger()->info("Rendering: deferred");
+			m_drawer->create<Render::DrawerPassDeferred>();
+		}
+		else
+		{
+			context().logger()->info("Rendering: forward");
+			m_drawer->create<Render::DrawerPassForward>();
+		}
 		m_drawer->create<Render::DrawerPassShadow>();
 		// Draw OBB
 		m_render_debug = m_drawer->create<Render::DrawerPassDebug>();
