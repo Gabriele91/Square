@@ -66,7 +66,7 @@ namespace Render
 
 	////////////////////////////////////////////////
 	//interface: the backends notify the resource lifetime events
-	class RenderInspector
+	class SQUARE_API RenderInspector
 	{
 	public:
 		using TextureRegistry = std::vector< std::pair<Texture*, TextureInfo> >;
