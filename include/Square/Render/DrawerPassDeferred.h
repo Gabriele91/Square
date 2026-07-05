@@ -82,8 +82,6 @@ namespace Render
 		void present_pass(const Camera& camera);
 		//bind the four G-Buffer textures on a light shader
 		void bind_gbuffer(Resource::Shader* shader);
-		//debug: save the G-Buffer and light buffer as TGA files (SQUARE_DEFERRED_DUMP=1)
-		void dump_buffers();
 
 		//CPU DATA
 		Square::Context& m_context;
@@ -116,16 +114,6 @@ namespace Render
 		Shared<Resource::Shader> m_shader_point_shadow;
 		Shared<Resource::Shader> m_shader_spot_shadow;
 		Shared<Resource::Shader> m_shader_present;
-
-		//debug dump (SQUARE_DEFERRED_DUMP=1)
-		bool m_dump_enabled{ false };
-		int  m_frame_counter{ 0 };
-		//debug view (SQUARE_DEFERRED_VIEW=position|normal|albedo|emissive|light):
-		//the present pass shows the selected buffer instead of the final image
-		int  m_debug_view{ -1 };
-		//debug: draw point/spot lights with a fullscreen quad instead of
-		//sphere/cone volumes (SQUARE_DEFERRED_NO_VOLUMES=1)
-		bool m_no_volumes{ false };
 
 		//light volume meshes
 		Shared<Mesh> m_quad;

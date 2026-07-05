@@ -23,6 +23,11 @@ if(UNIX AND NOT APPLE)
 endif()
 add_subdirectory(${PROJECT_SOURCE_DIR}/dependencies/zlib EXCLUDE_FROM_ALL)
 
+# Driver texture/render target introspection (debug texture panel):
+# defined here so EVERY target in the tree inherits it (Square, the render
+# backends — C++ and Objective-C++ — and the examples/game), only in Debug.
+add_compile_definitions($<$<CONFIG:Debug>:TEXTURE_INTROSPECTION>)
+
 # Add square
 add_subdirectory(source)
 # Add examples

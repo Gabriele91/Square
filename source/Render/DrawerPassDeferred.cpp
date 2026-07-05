@@ -17,9 +17,6 @@
 #include "Square/Render/DrawerPassDeferred.h"
 #include "Square/Resource/Shader.h"
 #include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 
 namespace Square
 {
@@ -132,25 +129,6 @@ namespace Render
 		m_shader_point_shadow     = context.resource<Resource::Shader>("DeferredPointShadowLight");
 		m_shader_spot_shadow      = context.resource<Resource::Shader>("DeferredSpotShadowLight");
 		m_shader_present   = context.resource<Resource::Shader>("DeferredPresent");
-		//debug: dump the buffers to disk
-		if (const char* dump_enabled_env = std::getenv("SQUARE_DEFERRED_DUMP"))
-		{
-			m_dump_enabled = dump_enabled_env[0] != '0';
-		}
-		//debug: show a single buffer on screen
-		if (const char* debug_view_env = std::getenv("SQUARE_DEFERRED_VIEW"))
-		{
-			     if (!std::strcmp(debug_view_env, "position")) m_debug_view = GB_POSITION;
-			else if (!std::strcmp(debug_view_env, "normal"))   m_debug_view = GB_NORMAL;
-			else if (!std::strcmp(debug_view_env, "albedo"))   m_debug_view = GB_ALBEDO;
-			else if (!std::strcmp(debug_view_env, "emissive")) m_debug_view = GB_EMISSIVE;
-			else if (!std::strcmp(debug_view_env, "light"))    m_debug_view = GB_COUNT; //light buffer
-		}
-		//debug: fullscreen quads instead of light volumes
-		if (const char* no_volumes_env = std::getenv("SQUARE_DEFERRED_NO_VOLUMES"))
-		{
-			m_no_volumes = no_volumes_env[0] != '0';
-		}
 		//volume meshes
 		m_quad   = build_fullscreen_quad(context);
 		m_sphere = build_sphere(context);
@@ -188,14 +166,14 @@ namespace Render
 			GBuffer::BufferFormat(),                                                   // GB_EMISSIVE
 			GBuffer::BufferFormat(TF_DEPTH_COMPONENT32, TT_DEPTH, TTF_FLOAT, RT_DEPTH) // GB_DEPTH
 		};
-		m_gbuffer = MakeShared<GBuffer>(context(), size, formats, m_dump_enabled);
+		m_gbuffer = MakeShared<GBuffer>(context(), size, formats);
 		if (!m_gbuffer->target()) return false;
 		//light accumulation texture (HDR, linear) sharing the G-Buffer depth
 		if (m_light_target)  render().delete_render_target(m_light_target);
 		if (m_light_texture) render().delete_texture(m_light_texture);
 		m_light_texture = render().create_texture(
 			{ TF_RGBA16F, (unsigned int)size.x, (unsigned int)size.y, nullptr, TT_RGBA, TTF_FLOAT, false },
-			{ TMIN_NEAREST, TMAG_NEAREST, TEDGE_CLAMP, TEDGE_CLAMP, TEDGE_CLAMP, false, 0, 10, 1, m_dump_enabled }
+			{ TMIN_NEAREST, TMAG_NEAREST, TEDGE_CLAMP, TEDGE_CLAMP, TEDGE_CLAMP }
 		);
 		m_light_target = render().create_render_target(
 		{
@@ -290,8 +268,8 @@ namespace Render
 		render().set_viewport_state({ camera.viewport().viewport() });
 		render().set_clear_color_state({ Vec4(0.0f, 0.0f, 0.0f, 1.0f) });
 		render().clear(Render::CLEAR_COLOR);
-		//additive blending; no culling: winding differs between backends, the
-		//volume passes rely on the GREATER_EQUAL depth test to avoid double lighting
+		//additive blending; the volume passes rely on the GREATER_EQUAL depth
+		//test to light each pixel exactly once
 		render().set_blend_state({ BLEND_ONE, BLEND_ONE });
 		render().set_depth_buffer_state({ DM_DISABLE });
 		render().set_cullface_state({ CF_BACK });
@@ -372,14 +350,8 @@ namespace Render
 		//////////////////////////////////////////////////////////////////
 		if (queues[RQ_POINT_LIGHT].size())
 		{
-			//debug (SQUARE_DEFERRED_NO_VOLUMES): fullscreen quad instead of the
-			//volume, the model matrix turns the NDC quad into clip space
-			const Mat4 fullscreen_model = m_no_volumes ? inverse(camera.projection() * camera.view()) : Mat4(1.0f);
 			//only the volume back faces behind the shaded geometry pass the test
-			if (!m_no_volumes)
-			{
-				render().set_depth_buffer_state({ DT_GREATER_EQUAL, DM_ENABLE_ONLY_READ });
-			}
+			render().set_depth_buffer_state({ DT_GREATER_EQUAL, DM_ENABLE_ONLY_READ });
 			for (bool with_shadow : { false, true })
 			{
 				auto& shader = with_shadow ? m_shader_point_shadow : m_shader_point;
@@ -424,14 +396,11 @@ namespace Render
 					//sphere volume: translate to the light, scale to radius (+10% margin)
 					const float sphere_scale = light->radius() * 1.1f;
 					UniformLightVolume ulight_volume;
-					ulight_volume.m_model = m_no_volumes
-					                      ? fullscreen_model
-					                      : glm::translate(Mat4(1.0f), upoint_light.m_position)
+					ulight_volume.m_model = glm::translate(Mat4(1.0f), upoint_light.m_position)
 					                      * glm::scale(Mat4(1.0f), Vec3(sphere_scale, sphere_scale, sphere_scale));
 					Render::update_constant_buffer(&render(), m_cb_light_volume.get(), &ulight_volume);
 					//draw
-					if (m_no_volumes) m_quad->draw(render());
-					else              m_sphere->draw(render());
+					m_sphere->draw(render());
 				}
 				if (shader_bound)
 				{
@@ -446,14 +415,8 @@ namespace Render
 		//////////////////////////////////////////////////////////////////
 		if (queues[RQ_SPOT_LIGHT].size())
 		{
-			//debug (SQUARE_DEFERRED_NO_VOLUMES): fullscreen quad instead of the
-			//volume, the model matrix turns the NDC quad into clip space
-			const Mat4 fullscreen_model = m_no_volumes ? inverse(camera.projection() * camera.view()) : Mat4(1.0f);
 			//only the volume back faces behind the shaded geometry pass the test
-			if (!m_no_volumes)
-			{
-				render().set_depth_buffer_state({ DT_GREATER_EQUAL, DM_ENABLE_ONLY_READ });
-			}
+			render().set_depth_buffer_state({ DT_GREATER_EQUAL, DM_ENABLE_ONLY_READ });
 			for (bool with_shadow : { false, true })
 			{
 				auto& shader = with_shadow ? m_shader_spot_shadow : m_shader_spot;
@@ -513,15 +476,12 @@ namespace Render
 						rotation = to_mat4(angle_axis(std::acos(cos_angle), normalize(cross(z_axis, light_direction))));
 					}
 					UniformLightVolume ulight_volume;
-					ulight_volume.m_model = m_no_volumes
-					                      ? fullscreen_model
-					                      : glm::translate(Mat4(1.0f), Vec3(uspot_light.m_position))
+					ulight_volume.m_model = glm::translate(Mat4(1.0f), Vec3(uspot_light.m_position))
 					                      * rotation
 					                      * glm::scale(Mat4(1.0f), Vec3(base_radius, base_radius, cone_height));
 					Render::update_constant_buffer(&render(), m_cb_light_volume.get(), &ulight_volume);
 					//draw
-					if (m_no_volumes) m_quad->draw(render());
-					else              m_cone->draw(render());
+					m_cone->draw(render());
 				}
 				if (shader_bound)
 				{
@@ -564,8 +524,6 @@ namespace Render
 		//4) copy depth for later passes (no-op on backends without blit support)
 		const IVec4 area(0, 0, size.x, size.y);
 		render().copy_target_to_target(area, m_gbuffer->target(), area, nullptr, RT_DEPTH);
-		//debug: dump the buffers once, a few frames in
-		if (m_dump_enabled && ++m_frame_counter == 3) dump_buffers();
 	}
 
 	void DrawerPassDeferred::present_pass(const Camera& camera)
@@ -576,22 +534,16 @@ namespace Render
 			context().logger()->warning("DrawerPassDeferred: missing present shader, present pass skipped");
 			return;
 		}
-		//draw on the default (screen) target, no culling: quad winding is backend-dependent
+		//draw on the default (screen) target
 		render().set_viewport_state({ camera.viewport().viewport() });
 		render().set_depth_buffer_state({ DM_DISABLE });
 		render().set_blend_state({});
 		render().set_cullface_state({ CF_BACK });
-		//debug view: show one of the internal buffers instead of the final image
-		Render::Texture* source_texture = m_light_texture;
-		if (0 <= m_debug_view && m_debug_view < GB_COUNT)
-		{
-			source_texture = m_gbuffer->texture(m_debug_view);
-		}
 		//draw
 		m_shader_present->bind();
 		if (auto uniform_light = m_shader_present->uniform("g_light"))
 		{
-			uniform_light->set(source_texture);
+			uniform_light->set(m_light_texture);
 		}
 		else
 		{
@@ -602,91 +554,6 @@ namespace Render
 		//restore state for the passes that follow (UI/debug)
 		render().set_depth_buffer_state({ DM_ENABLE_AND_WRITE });
 		render().set_cullface_state({ CF_BACK });
-	}
-
-	//////////////////////////////////////////////////////////////////////
-	// Debug dump (SQUARE_DEFERRED_DUMP=1): save each buffer as a TGA in /tmp
-	//////////////////////////////////////////////////////////////////////
-	static void dump_write_tga(const char* path, int width, int height, const std::vector<unsigned char>& bgra)
-	{
-		FILE* file = std::fopen(path, "wb");
-		if (!file) return;
-		unsigned char header[18] = { 0 };
-		header[2]  = 2; //uncompressed true-color
-		header[12] = width & 0xFF;  header[13] = (width >> 8) & 0xFF;
-		header[14] = height & 0xFF; header[15] = (height >> 8) & 0xFF;
-		header[16] = 32;   //bpp
-		header[17] = 0x20; //origin: top-left
-		std::fwrite(header, sizeof(header), 1, file);
-		std::fwrite(bgra.data(), bgra.size(), 1, file);
-		std::fclose(file);
-	}
-
-	static float dump_half_to_float(unsigned short half_bits)
-	{
-		const unsigned int sign     = (half_bits >> 15) & 0x1;
-		const unsigned int exponent = (half_bits >> 10) & 0x1F;
-		const unsigned int mantissa = half_bits & 0x3FF;
-		float value;
-		if (exponent == 0)       value = mantissa * (1.0f / 16777216.0f); //subnormal: mantissa * 2^-24
-		else if (exponent == 31) value = mantissa ? 0.0f : (sign ? -65504.0f : 65504.0f);
-		else                     value = std::ldexp(float(mantissa | 0x400), int(exponent) - 25);
-		return sign ? -value : value;
-	}
-
-	void DrawerPassDeferred::dump_buffers()
-	{
-		//convert a float/half RGBA buffer to a clamped BGRA8 image and save it
-		auto save_texture = [&](const char* name, Render::Texture* texture, bool is_half)
-		{
-			if (!texture) return;
-			//the (face, level) overload avoids ambiguity with get_texture(Texture*, int level)
-			auto texture_bytes = render().get_texture(texture, 0, 0);
-			const size_t pixel_size  = is_half ? 8 : 16;
-			const size_t pixel_count = texture_bytes.size() / pixel_size;
-			if (!pixel_count)
-			{
-				context().logger()->warning(std::string("Deferred dump: no data for ") + name);
-				return;
-			}
-			auto to_byte = [](float value) -> unsigned char
-			{
-				return (unsigned char)(std::fmin(std::fmax(value, 0.0f), 1.0f) * 255.0f + 0.5f);
-			};
-			std::vector<unsigned char> bgra(pixel_count * 4);
-			for (size_t pixel_id = 0; pixel_id < pixel_count; ++pixel_id)
-			{
-				float rgba[4];
-				if (is_half)
-				{
-					auto* half_pixel = reinterpret_cast<const unsigned short*>(texture_bytes.data()) + pixel_id * 4;
-					for (int channel = 0; channel < 4; ++channel)
-					{
-						rgba[channel] = dump_half_to_float(half_pixel[channel]);
-					}
-				}
-				else
-				{
-					auto* float_pixel = reinterpret_cast<const float*>(texture_bytes.data()) + pixel_id * 4;
-					for (int channel = 0; channel < 4; ++channel)
-					{
-						rgba[channel] = float_pixel[channel];
-					}
-				}
-				bgra[pixel_id * 4 + 0] = to_byte(rgba[2]);
-				bgra[pixel_id * 4 + 1] = to_byte(rgba[1]);
-				bgra[pixel_id * 4 + 2] = to_byte(rgba[0]);
-				bgra[pixel_id * 4 + 3] = 255;
-			}
-			std::string path = std::string("/tmp/square_deferred_") + name + ".tga";
-			dump_write_tga(path.c_str(), m_size.x, m_size.y, bgra);
-			context().logger()->info("Deferred dump: " + path);
-		};
-		save_texture("position", m_gbuffer->texture(GB_POSITION), false);
-		save_texture("normal",   m_gbuffer->texture(GB_NORMAL),   false);
-		save_texture("albedo",   m_gbuffer->texture(GB_ALBEDO),   false);
-		save_texture("emissive", m_gbuffer->texture(GB_EMISSIVE), false);
-		save_texture("light",    m_light_texture,                 true);
 	}
 }
 }

@@ -2276,10 +2276,17 @@ namespace Render
 		glBindTexture(ctx_texture->m_type_texture, 0);
 		//test
 		print_errors();
+		//register
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_create_texture(ctx_texture, { TS_TEXTURE_2D, data.m_format, data.m_width, data.m_height, 1 });
+		}
+#endif
 		//return texture
 		return ctx_texture;
 	}
-	
+
 	Texture* ContextGL4::create_texture_array
 	(
 		const TextureRawDataInformation& data,
@@ -2334,6 +2341,13 @@ namespace Render
 		glBindTexture(ctx_texture->m_type_texture, 0);
 		//test
 		print_errors();
+		//register
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_create_texture(ctx_texture, { TS_TEXTURE_ARRAY, data.m_format, data.m_width, data.m_height, size });
+		}
+#endif
 		//return texture
 		return ctx_texture;
 	}
@@ -2386,6 +2400,13 @@ namespace Render
 		glBindTexture(ctx_texture->m_type_texture, 0);
 		//test
 		print_errors();
+		//register
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_create_texture(ctx_texture, { TS_TEXTURE_CUBE, data[0].m_format, data[0].m_width, data[0].m_height, 6 });
+		}
+#endif
 		//return texture
 		return ctx_texture;
 	}
@@ -2507,6 +2528,13 @@ namespace Render
         {
             unbind_texture(ctx_texture);
         }
+        //unregister
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_delete_texture(ctx_texture);
+		}
+#endif
         //safe delete
 		SQ_DELETE(allocator(), Texture, ctx_texture);
 		ctx_texture = nullptr;
@@ -3004,6 +3032,13 @@ namespace Render
 		}
 		//disable
 		fbo->disable_FBO();
+		//register
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_create_target(fbo, textures);
+		}
+#endif
 		//return
 		return fbo;
 	}
@@ -3034,6 +3069,13 @@ namespace Render
         {
             disable_render_target(r_target);
         }
+        //unregister
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_delete_target(r_target);
+		}
+#endif
         //safe delete
 		SQ_DELETE(allocator(), Target, r_target);
 		r_target = nullptr;

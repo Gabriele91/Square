@@ -1168,6 +1168,12 @@ Texture* ContextMTL::create_texture(const TextureRawDataInformation& raw, const 
     t->m_texture = upload_texture(m_device, raw, gpu);
     if (gpu.m_build_mipmap) generate_mipmaps(t->m_texture);
     t->m_sampler = create_sampler(m_device, gpu);
+#if defined(TEXTURE_INTROSPECTION)
+	if (auto render_inspector = inspector())
+    {
+        render_inspector->on_create_texture(t, { TS_TEXTURE_2D, raw.m_format, raw.m_width, raw.m_height, 1 });
+    }
+#endif
     return t;
 }
 
@@ -1177,6 +1183,12 @@ Texture* ContextMTL::create_texture_array(const TextureRawDataInformation& raw, 
     t->m_texture = upload_texture(m_device, raw, gpu, n);
     if (gpu.m_build_mipmap) generate_mipmaps(t->m_texture);
     t->m_sampler = create_sampler(m_device, gpu);
+#if defined(TEXTURE_INTROSPECTION)
+	if (auto render_inspector = inspector())
+    {
+        render_inspector->on_create_texture(t, { TS_TEXTURE_ARRAY, raw.m_format, raw.m_width, raw.m_height, n });
+    }
+#endif
     return t;
 }
 
@@ -1186,6 +1198,12 @@ Texture* ContextMTL::create_cube_texture(const TextureRawDataInformation data[6]
     t->m_texture = upload_texture(m_device, data[0], gpu, 1, true);
     if (gpu.m_build_mipmap) generate_mipmaps(t->m_texture);
     t->m_sampler = create_sampler(m_device, gpu);
+#if defined(TEXTURE_INTROSPECTION)
+	if (auto render_inspector = inspector())
+    {
+        render_inspector->on_create_texture(t, { TS_TEXTURE_CUBE, data[0].m_format, data[0].m_width, data[0].m_height, 6 });
+    }
+#endif
     return t;
 }
 
@@ -1260,7 +1278,16 @@ void ContextMTL::unbind_texture(int n)
         m_bind.shader->m_bound_textures[n] = nullptr;
 }
 
-void ContextMTL::delete_texture(Texture*& t) { delete t; t = nullptr; }
+void ContextMTL::delete_texture(Texture*& t)
+{
+#if defined(TEXTURE_INTROSPECTION)
+	if (auto render_inspector = inspector())
+    {
+        render_inspector->on_delete_texture(t);
+    }
+#endif
+    delete t; t = nullptr;
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Shader
@@ -1733,6 +1760,12 @@ Target* ContextMTL::create_render_target(const std::vector<TargetField>& fields)
         else if ((f.m_type == RT_DEPTH || f.m_type == RT_DEPTH_STENCIL) && att.texture)
             t->m_depth_fmt = att.texture->m_texture.pixelFormat;
     }
+#if defined(TEXTURE_INTROSPECTION)
+    if (auto render_inspector = inspector())
+    {
+        render_inspector->on_create_target(t, fields);
+    }
+#endif
     return t;
 }
 
@@ -1751,6 +1784,15 @@ void ContextMTL::disable_render_target(Target*)
     m_bind.render_target = nullptr;
 }
 
-void ContextMTL::delete_render_target(Target*& t) { delete t; t = nullptr; }
+void ContextMTL::delete_render_target(Target*& t)
+{
+#if defined(TEXTURE_INTROSPECTION)
+	if (auto render_inspector = inspector())
+    {
+        render_inspector->on_delete_target(t);
+    }
+#endif
+    delete t; t = nullptr;
+}
 
 void ContextMTL::copy_target_to_target(const IVec4&, Target*, const IVec4&, Target*, TargetType) {}

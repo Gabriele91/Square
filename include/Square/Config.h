@@ -36,6 +36,14 @@
 #endif
 #define SqareArrayLangth(x) (sizeof(x)/sizeof(x[0]))
 /////////////////////////////////////////////////////////////////////////////
+// FEATURES
+// Driver texture/render target introspection (debug texture panel):
+// off by default, on in debug builds. When it is off the drivers never
+// notify the render inspector (see Driver/RenderInspector.h), for performance.
+#if !defined(TEXTURE_INTROSPECTION) && (defined(_DEBUG) || defined(DEBUG))
+	#define TEXTURE_INTROSPECTION
+#endif
+/////////////////////////////////////////////////////////////////////////////
 // EXPORT/IMPOT
 #ifdef _WIN32
 	#define DLL_EXPORT __declspec(dllexport)

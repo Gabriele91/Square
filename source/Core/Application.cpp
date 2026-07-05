@@ -10,6 +10,7 @@
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/Core/Application.h"
 #include "Square/Driver/Render.h"
+#include "Square/Render/RegistryInspector.h"
 #include "Square/Scene/World.h"
 
 namespace Square
@@ -344,6 +345,14 @@ namespace Square
             logger()->error("Unable to load render driver");
 			return false;
 		}
+        // If debug enable, set inspector
+        #if defined(TEXTURE_INTROSPECTION)
+        if(driver.m_debug)
+        {
+            m_inspector = SQ_NEW(allocator(), Render::RegistryInspector, AllocType::ALCT_DEFAULT) Render::RegistryInspector();
+            m_render->set_inspector(m_inspector);
+        }
+        #endif
         //flush errors
 		m_render->print_errors();
         //show info
@@ -446,6 +455,16 @@ namespace Square
         m_render->close();
         Render::delete_render_driver(m_render);
 
+        //delete inspector
+        #if defined(TEXTURE_INTROSPECTION)
+        if(m_inspector)
+        {
+            auto* texture_inspector = dynamic_cast<Render::RegistryInspector*>(m_inspector);
+            SQ_DELETE_NAMESPACE(allocator(), Render, RegistryInspector, texture_inspector);
+            m_inspector = nullptr;
+        }
+        #endif
+        
         //dealloc window
         SQ_DELETE_NAMESPACE(allocator(), Video, Window, m_window);
         m_window = nullptr;

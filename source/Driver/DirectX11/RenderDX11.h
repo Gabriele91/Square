@@ -11,6 +11,7 @@
 #include "DirectX11.h"
 #include "Square/Config.h"
 #include "Square/Driver/Render.h"
+#include "Square/Driver/RenderInspector.h"
 
 
 namespace Square

@@ -10,6 +10,7 @@
 #include <functional>
 #include "Square/Config.h"
 #include "Square/Driver/Render.h"
+#include "Square/Driver/RenderInspector.h"
 
 namespace Square
 {

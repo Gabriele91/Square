@@ -167,7 +167,8 @@ namespace Square
         double              m_last_delta_time{ 0 };
 		//context (application context)
 		Context				m_context;
-		Render::Context*	m_render;
+		Render::Context*	m_render{ nullptr };
+        Render::RenderInspector* m_inspector{ nullptr };
         //global
         static Application* s_instance;
     };

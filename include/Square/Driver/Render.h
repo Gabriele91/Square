@@ -40,6 +40,7 @@ namespace Render
     class Uniform;
     class UniformConstBuffer;
     class MapConstBuffer;
+    class RenderInspector;
 	// POINTERS
 	using TextureSPtr	   = Shared< Texture >;
 	using TargetSPtr	   = Shared< Target >;
@@ -1103,13 +1104,20 @@ namespace Render
 		virtual bool print_errors() const = 0;
 		//Output file name and line
         virtual bool print_errors(const char* source_file_name, int line) const = 0;
-	
+
+		//inspector (see Driver/RenderInspector.h): the backends notify it about
+		//texture/render target lifetime events, but only when TEXTURE_INTROSPECTION
+		//is enabled (debug builds by default) — a release driver never calls it
+		void set_inspector(RenderInspector* inspector) { m_inspector = inspector; }
+		RenderInspector* inspector() const { return m_inspector; }
+
 		Allocator* allocator() const { return m_allocator; }
 		Logger* logger() const { return m_logger; }
 
 	private:
 		Allocator* m_allocator;
 		Logger* m_logger;
+		RenderInspector* m_inspector{ nullptr };
 	};
 	/////////////////////////////////
 	// Buffer smart pointer	
