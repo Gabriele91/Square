@@ -43,7 +43,7 @@ namespace Render
 			{ Vec3( 1.0f,  1.0f, 0.0f) },
 			{ Vec3(-1.0f,  1.0f, 0.0f) },
 		};
-		Mesh::IndexList indices{ 0, 1, 2, 0, 2, 3 };
+		Mesh::IndexList indices{ 0, 2, 1, 0, 3, 2 };
 		auto mesh = MakeShared<Mesh>(context);
 		mesh->build(vertices, indices);
 		return mesh;
@@ -294,7 +294,7 @@ namespace Render
 		//volume passes rely on the GREATER_EQUAL depth test to avoid double lighting
 		render().set_blend_state({ BLEND_ONE, BLEND_ONE });
 		render().set_depth_buffer_state({ DM_DISABLE });
-		render().set_cullface_state({ CF_DISABLE });
+		render().set_cullface_state({ CF_BACK });
 
 		//////////////////////////////////////////////////////////////////
 		// AMBIENT (+ emissive), full-screen
@@ -580,7 +580,7 @@ namespace Render
 		render().set_viewport_state({ camera.viewport().viewport() });
 		render().set_depth_buffer_state({ DM_DISABLE });
 		render().set_blend_state({});
-		render().set_cullface_state({ CF_DISABLE });
+		render().set_cullface_state({ CF_BACK });
 		//debug view: show one of the internal buffers instead of the final image
 		Render::Texture* source_texture = m_light_texture;
 		if (0 <= m_debug_view && m_debug_view < GB_COUNT)
