@@ -543,3 +543,6 @@ reports/**/*.synctex.gz
 
 #Install directory
 [Ii]nstall/**
+
+# Force to include debug shaders
+!common/shader/[Dd]ebug/
