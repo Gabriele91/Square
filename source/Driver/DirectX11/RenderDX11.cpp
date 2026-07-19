@@ -3345,6 +3345,10 @@ namespace Render
 		TargetType	mask
 	)
 	{
+		//nullptr means "default target" (the swap chain back buffer), same convention as enable_render_target
+		from = from ? from : m_view_target;
+		to   = to   ? to   : m_view_target;
+		if (!from || !to) return;
 
 		D3D11_BOX from_box;
 		from_box.left = from_area.x;
@@ -3354,7 +3358,16 @@ namespace Render
 		from_box.front = 0;
 		from_box.back = 1;
 		//copy
-		if (mask != RT_DEPTH_STENCIL)
+		if (mask == RT_DEPTH || mask == RT_STENCIL || mask == RT_DEPTH_STENCIL)
+		{
+			device_context()->CopySubresourceRegion(
+				  from->m_depth_texture, 0
+				, to_area.x, to_area.y, 0
+				, to->m_depth_texture, 0
+				, &from_box
+			);
+		}
+		else
 		{
 			for (size_t i = 0; i < from->m_view_textures.size() && i < to->m_view_textures.size(); ++i)
 			{
@@ -3365,15 +3378,6 @@ namespace Render
 					, &from_box
 				);
 			}
-		}
-		else
-		{
-			device_context()->CopySubresourceRegion(
-				  from->m_depth_texture, 0
-				, to_area.x, to_area.y, 0
-				, to->m_depth_texture, 0
-				, &from_box
-			);
         }
 	}
 
