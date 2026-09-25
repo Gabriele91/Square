@@ -3357,14 +3357,32 @@ namespace Render
 		from_box.bottom = from_area.w;
 		from_box.front = 0;
 		from_box.back = 1;
-		//copy
+		//copy (CopySubresourceRegion takes the destination first, the source last)
 		if (mask == RT_DEPTH || mask == RT_STENCIL || mask == RT_DEPTH_STENCIL)
 		{
+			if (!from->m_depth_texture || !to->m_depth_texture) return;
+			//depth-stencil resources can only be copied whole (no box, destination at 0,0,0),
+			//between textures of the same size and of castable formats
+			D3D11_TEXTURE2D_DESC from_desc, to_desc;
+			from->m_depth_texture->GetDesc(&from_desc);
+			to->m_depth_texture->GetDesc(&to_desc);
+			if (from_desc.Width != to_desc.Width
+			||  from_desc.Height != to_desc.Height
+			||  texture_depth_to_typeless_texture(from_desc.Format) != texture_depth_to_typeless_texture(to_desc.Format))
+			{
+				static bool s_warned = false;
+				if (!s_warned)
+				{
+					logger()->warning("copy_target_to_target: depth buffers of different size or format, depth not copied");
+					s_warned = true;
+				}
+				return;
+			}
 			device_context()->CopySubresourceRegion(
-				  from->m_depth_texture, 0
-				, to_area.x, to_area.y, 0
-				, to->m_depth_texture, 0
-				, &from_box
+				  to->m_depth_texture, 0
+				, 0, 0, 0
+				, from->m_depth_texture, 0
+				, nullptr
 			);
 		}
 		else
@@ -3372,9 +3390,9 @@ namespace Render
 			for (size_t i = 0; i < from->m_view_textures.size() && i < to->m_view_textures.size(); ++i)
 			{
 				device_context()->CopySubresourceRegion(
-					  from->m_view_textures[i], 0
+					  to->m_view_textures[i], 0
 					, to_area.x, to_area.y, 0
-					, to->m_view_textures[i], 0
+					, from->m_view_textures[i], 0
 					, &from_box
 				);
 			}
