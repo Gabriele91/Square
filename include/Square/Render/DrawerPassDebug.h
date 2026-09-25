@@ -78,6 +78,9 @@ namespace Render
 		Shared<Render::ConstBuffer> m_cb_transform;
         Shared<Resource::Effect>    m_debug_effect;
         Shared<Render::Mesh>        m_mesh_box;
+        Shared<Render::Mesh>        m_mesh_frustum; //box with z in [0,1], the clip space depth range
+        Shared<Render::Mesh>        m_mesh_sphere;  //point light volume (shared with the deferred pass)
+        Shared<Render::Mesh>        m_mesh_cone;    //spot light volume (shared with the deferred pass)
         //texture panel
         Shared<Resource::Shader>    m_shader_texture_2D;
         Shared<Resource::Shader>    m_shader_texture_cube;
@@ -103,6 +106,13 @@ namespace Render
             , const Mat4& projection
             , const Vec4& color
             , bool volume = false
+        );
+        void draw_light_volume
+        (
+              const Camera& camera
+            , const Mat4& model
+            , const Shared<Render::Mesh>& mesh
+            , const Vec4& color
         );
         //texture panel: images/TBO/RBO taken from the driver registries,
         //drawn as thumbnails in a scrollable side box

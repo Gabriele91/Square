@@ -15,6 +15,7 @@
 #include "Square/Geometry/OBoundingBox.h"
 #include "Square/Math/Transformation.h"
 #include "Square/Math/Tangent.h"
+#include "Square/Render/LightVolume.h"
 #include <algorithm>
 
 namespace Square
@@ -143,6 +144,35 @@ namespace Render
         return nullptr;
     }
 
+    //box of the clip space volume: x,y in [-1,1], z in [0,1] (GLM_FORCE_DEPTH_ZERO_TO_ONE);
+    //mapped through inverse(projection * view) it is exactly the frustum
+    static Shared<Render::Mesh> create_frustum_box(Square::Context& context)
+    {
+        Render::Mesh::Vertex3DList vertexs
+        {
+            { Vec3(-1,  1, 0) }, { Vec3( 1,  1, 0) }, { Vec3( 1,  1, 1) }, { Vec3(-1,  1, 1) }, // +Y
+            { Vec3(-1, -1, 1) }, { Vec3( 1, -1, 1) }, { Vec3( 1, -1, 0) }, { Vec3(-1, -1, 0) }, // -Y
+            { Vec3( 1,  1, 1) }, { Vec3( 1,  1, 0) }, { Vec3( 1, -1, 0) }, { Vec3( 1, -1, 1) }, // +X
+            { Vec3(-1,  1, 0) }, { Vec3(-1,  1, 1) }, { Vec3(-1, -1, 1) }, { Vec3(-1, -1, 0) }, // -X
+            { Vec3(-1,  1, 1) }, { Vec3( 1,  1, 1) }, { Vec3( 1, -1, 1) }, { Vec3(-1, -1, 1) }, // far
+            { Vec3( 1,  1, 0) }, { Vec3(-1,  1, 0) }, { Vec3(-1, -1, 0) }, { Vec3( 1, -1, 0) }  // near
+        };
+        Render::Mesh::IndexList indexes
+        {
+            0, 2, 1,    0, 3, 2,
+            4, 6, 5,    4, 7, 6,
+            8, 10, 9,   8, 11, 10,
+            12, 14, 13, 12, 15, 14,
+            16, 18, 17, 16, 19, 18,
+            20, 22, 21, 20, 23, 22
+        };
+        Render::SubMesh sub_mesh{ Render::DrawType::DRAW_TRIANGLES, uint32(indexes.size()) };
+        auto mesh = MakeShared<Render::Mesh>(context);
+        if (mesh->build(vertexs, indexes, { sub_mesh }, false))
+            return mesh;
+        return nullptr;
+    }
+
     //screen quad in NDC, wound clockwise (engine front-face convention)
     static Shared<Render::Mesh> create_screen_quad(Square::Context& context)
     {
@@ -242,7 +272,7 @@ namespace Render
         , bool volume
     )
     {
-        if(!m_mesh_box)
+        if(!m_mesh_frustum)
         {
             context().logger()->warning("Debug mesh does not exist");
             return;
@@ -302,11 +332,57 @@ namespace Render
             // Colors / size
             line_color->set(color);
         }
-        // Draw wireframe 
+        // Draw wireframe
         for (auto& pass : *technique)
         {
             pass.bind(render(), inputs, m_debug_effect->parameters());
-            m_mesh_box->draw(render());
+            m_mesh_frustum->draw(render());
+            pass.unbind();
+        }
+    }
+
+    void DrawerPassDebug::draw_light_volume
+    (
+          const Camera& camera
+        , const Mat4& model
+        , const Shared<Render::Mesh>& mesh
+        , const Vec4& color
+    )
+    {
+        if (!mesh) return;
+        auto* wireframe  = m_debug_effect->technique("wireframe");
+        auto* line_color = m_debug_effect->parameter("line_color");
+        if (!wireframe || !line_color)
+        {
+            context().logger()->warning("Unable to find wireframe debug technique");
+            return;
+        }
+        //camera + transform only
+        EffectPassInputs inputs
+        {
+              m_cb_camera.get()
+            , m_cb_transform.get()
+            , Vec4()
+            , nullptr
+            , nullptr
+            , nullptr
+            , nullptr
+            , nullptr
+            , nullptr
+            , nullptr
+        };
+        Render::UniformBufferCamera ucamera;
+        camera.set(&ucamera);
+        render().update_steam_CB(m_cb_camera.get(), (const unsigned char*)&ucamera, sizeof(ucamera));
+        Render::UniformBufferTransform utransform;
+        utransform.m_model     = model;
+        utransform.m_inv_model = Square::inverse(model);
+        render().update_steam_CB(m_cb_transform.get(), (const unsigned char*)&utransform, sizeof(utransform));
+        line_color->set(color);
+        for (auto& pass : *wireframe)
+        {
+            pass.bind(render(), inputs, m_debug_effect->parameters());
+            mesh->draw(render());
             pass.unbind();
         }
     }
@@ -320,7 +396,10 @@ namespace Render
         m_cb_camera    = Render::stream_constant_buffer<Render::UniformBufferCamera>(&render());
 		m_cb_transform = Render::stream_constant_buffer<Render::UniformBufferTransform>(&render());
         m_mesh_box     = create_cube(context);
-        if (!m_mesh_box)
+        m_mesh_frustum = create_frustum_box(context);
+        m_mesh_sphere  = LightVolume::build_sphere(context);
+        m_mesh_cone    = LightVolume::build_cone(context);
+        if (!m_mesh_box || !m_mesh_frustum)
         {
             context.logger()->warning("Unable to build debug mesh");
         }
@@ -377,36 +456,24 @@ namespace Render
 
         if (bool(m_flags & DebugFlags::DF_DRAW_SPOT_LIGHT))
         {
+            //the same cone the deferred light pass rasterizes
             for (auto weak_light : queues[RQ_SPOT_LIGHT])
-                if (auto light = weak_light->lock< Render::Light >())
+                if (auto light = weak_light->lock< Render::SpotLight >())
                 {
-                    Render::UniformSpotShadowLight spot_light_info;
-                    light->set(&spot_light_info, false);
-                    draw_fustrum(drawer,
-                        camera,
-                        spot_light_info.m_view,
-                        spot_light_info.m_projection,
-                        debug_colors(DB_BLUE),
-                        false);
+                    Render::UniformSpotLight uspot_light;
+                    light->set(&uspot_light);
+                    draw_light_volume(camera, LightVolume::spot_light_model(uspot_light), m_mesh_cone, debug_colors(DB_YELLOW));
                 }
         }
         if (bool(m_flags & DebugFlags::DF_DRAW_POINT_LIGHT))
         {
+            //the same sphere the deferred light pass rasterizes
             for (auto weak_light : queues[RQ_POINT_LIGHT])
-                if (auto light = weak_light->lock< Render::Light >())
+                if (auto light = weak_light->lock< Render::PointLight >())
                 {
-                    Render::UniformPointShadowLight point_light_info;
-                    light->set(&point_light_info, false);
-                    const uint8_t cude_size = 6;
-                    for (int i = 0; i < cude_size; ++i)
-                    {
-                        draw_fustrum(drawer,
-                            camera,
-                            point_light_info.m_view[i],
-                            point_light_info.m_projection,
-                            debug_colors(DebugColor(i)),
-                            false);
-                    }
+                    Render::UniformPointLight upoint_light;
+                    light->set(&upoint_light);
+                    draw_light_volume(camera, LightVolume::point_light_model(upoint_light), m_mesh_sphere, debug_colors(DB_ORANGE));
                 }
         }
         if (bool(m_flags & DebugFlags::DF_DRAW_DIRECTIONAL_LIGHT))

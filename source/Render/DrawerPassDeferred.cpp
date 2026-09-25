@@ -16,6 +16,7 @@
 #include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/DrawerPassDeferred.h"
 #include "Square/Resource/Shader.h"
+#include "Square/Render/LightVolume.h"
 #include <cmath>
 
 namespace Square
@@ -46,63 +47,6 @@ namespace Render
 		return mesh;
 	}
 
-	static Shared<Mesh> build_sphere(Square::Context& context, unsigned int rings = 12, unsigned int sectors = 24)
-	{
-		Mesh::Vertex3DList vertices;
-		Mesh::IndexList    indices;
-		const float ring_step   = 1.0f / (float)(rings - 1);
-		const float sector_step = 1.0f / (float)(sectors - 1);
-		for (unsigned int ring = 0; ring < rings; ++ring)
-		for (unsigned int sector = 0; sector < sectors; ++sector)
-		{
-			const float y = std::sin(-Constants::pi<float>() * 0.5f + Constants::pi<float>() * ring * ring_step);
-			const float x = std::cos(2.0f * Constants::pi<float>() * sector * sector_step) * std::sin(Constants::pi<float>() * ring * ring_step);
-			const float z = std::sin(2.0f * Constants::pi<float>() * sector * sector_step) * std::sin(Constants::pi<float>() * ring * ring_step);
-			vertices.push_back({ Vec3(x, y, z) });
-		}
-		for (unsigned int ring = 0; ring + 1 < rings; ++ring)
-		for (unsigned int sector = 0; sector + 1 < sectors; ++sector)
-		{
-			unsigned int index_bottom_left  = ring * sectors + sector;
-			unsigned int index_bottom_right = ring * sectors + (sector + 1);
-			unsigned int index_top_right    = (ring + 1) * sectors + (sector + 1);
-			unsigned int index_top_left     = (ring + 1) * sectors + sector;
-			indices.insert(indices.end(), { index_bottom_left, index_bottom_right, index_top_right,
-			                                index_bottom_left, index_top_right,    index_top_left });
-		}
-		auto mesh = MakeShared<Mesh>(context);
-		mesh->build(vertices, indices);
-		return mesh;
-	}
-
-	//cone: apex at origin, base circle of radius 1 at z=+1
-	static Shared<Mesh> build_cone(Square::Context& context, unsigned int sectors = 24)
-	{
-		Mesh::Vertex3DList vertices;
-		Mesh::IndexList    indices;
-		//apex (0) and base center (1)
-		vertices.push_back({ Vec3(0.0f, 0.0f, 0.0f) });
-		vertices.push_back({ Vec3(0.0f, 0.0f, 1.0f) });
-		//base ring
-		const unsigned int base_start = 2;
-		for (unsigned int sector = 0; sector < sectors; ++sector)
-		{
-			const float angle = 2.0f * Constants::pi<float>() * (float)sector / (float)sectors;
-			vertices.push_back({ Vec3(std::cos(angle), std::sin(angle), 1.0f) });
-		}
-		//sides and base cap
-		for (unsigned int sector = 0; sector < sectors; ++sector)
-		{
-			unsigned int index_current = base_start + sector;
-			unsigned int index_next    = base_start + (sector + 1) % sectors;
-			indices.insert(indices.end(), { 0u, index_current, index_next });
-			indices.insert(indices.end(), { 1u, index_next, index_current });
-		}
-		auto mesh = MakeShared<Mesh>(context);
-		mesh->build(vertices, indices);
-		return mesh;
-	}
-
 	
 	//////////////////////////////////////////////////////////////////////
 	// Draw volume meshes 
@@ -112,11 +56,8 @@ namespace Render
 								Shared<Mesh> sphere, 
 								const Render::UniformPointLight& upoint_light)
 	{
-		//sphere volume: translate to the light, scale to radius (+10% margin)
-		const float sphere_scale = upoint_light.m_radius * 1.1f;
 		UniformLightVolume ulight_volume;
-		ulight_volume.m_model = glm::translate(Mat4(1.0f), upoint_light.m_position)
-								* glm::scale(Mat4(1.0f), Vec3(sphere_scale, sphere_scale, sphere_scale));
+		ulight_volume.m_model = LightVolume::point_light_model(upoint_light);
 		Render::update_constant_buffer(&render, cb_volume.get(), &ulight_volume);
 		//draw
 		sphere->draw(render);
@@ -127,29 +68,8 @@ namespace Render
 								Shared<Mesh> cone, 
 								const Render::UniformSpotLight& uspot_light)
 	{
-		static constexpr float cone_rotation_epsilon{ 0.9999f };
-		static constexpr float cone_size_epsilon{  1e-3f };
-		static constexpr Square::Vec3 cone_z_axis{ 0.0f, 0.0f, 1.0f };
-		//cone volume: orient +z to the light direction, scale by cone size
-		const Vec3  light_direction = normalize(uspot_light.m_direction);
-		const float cone_height     = uspot_light.m_radius * 1.1f;
-		const float cos_outer       = clamp(uspot_light.m_outer_cut_off, -1.0f, 1.0f);
-		const float base_radius     = cone_height * std::tan(std::acos(cos_outer)) + cone_size_epsilon;
-		//rotation from +z to the light direction
-		const float cos_angle = clamp(dot(cone_z_axis, light_direction), -1.0f, 1.0f);
-		Mat4 rotation(1.0f);
-		if (cos_angle < -cone_rotation_epsilon)
-		{
-			rotation = to_mat4(angle_axis(Constants::pi<float>(), Vec3(1.0f, 0.0f, 0.0f)));
-		}
-		else if (cos_angle < cone_rotation_epsilon)
-		{
-			rotation = to_mat4(angle_axis(std::acos(cos_angle), normalize(cross(cone_z_axis, light_direction))));
-		}
 		UniformLightVolume ulight_volume;
-		ulight_volume.m_model = glm::translate(Mat4(1.0f), Vec3(uspot_light.m_position))
-								* rotation
-								* glm::scale(Mat4(1.0f), Vec3(base_radius, base_radius, cone_height));
+		ulight_volume.m_model = LightVolume::spot_light_model(uspot_light);
 		Render::update_constant_buffer(&render, cb_volume.get(), &ulight_volume);
 		//draw
 		cone->draw(render);
@@ -183,8 +103,8 @@ namespace Render
 		m_shader_present   = context.resource<Resource::Shader>("DeferredPresent");
 		//volume meshes
 		m_quad   = build_fullscreen_quad(context);
-		m_sphere = build_sphere(context);
-		m_cone   = build_cone(context);
+		m_sphere = LightVolume::build_sphere(context);
+		m_cone   = LightVolume::build_cone(context);
 	}
 
 	DrawerPassDeferred::~DrawerPassDeferred()
@@ -437,8 +357,9 @@ namespace Render
 					if (with_shadow)
 					{
 						Render::UniformPointShadowLight upoint_shadow_light;
-						//qualified call: PointLight::set(UniformPointLight*) hides the base shadow overloads
-						light->Render::Light::set(&upoint_shadow_light, false);
+						//call through the base: PointLight::set(UniformPointLight*) hides the shadow overloads,
+						//and a qualified call (light->Render::Light::set) would skip the virtual override
+						static_cast<const Render::Light&>(*light).set(&upoint_shadow_light, false);
 						Render::update_constant_buffer(&render(), m_cb_point_shadow_light.get(), &upoint_shadow_light);
 						if (auto uniform_shadow_map = shader->uniform("point_shadow_map"))
 						{
@@ -496,8 +417,9 @@ namespace Render
 					if (with_shadow)
 					{
 						Render::UniformSpotShadowLight uspot_shadow_light;
-						//qualified call: SpotLight::set(UniformSpotLight*) hides the base shadow overloads
-						light->Render::Light::set(&uspot_shadow_light, false);
+						//call through the base: SpotLight::set(UniformSpotLight*) hides the shadow overloads,
+						//and a qualified call (light->Render::Light::set) would skip the virtual override
+						static_cast<const Render::Light&>(*light).set(&uspot_shadow_light, false);
 						Render::update_constant_buffer(&render(), m_cb_spot_shadow_light.get(), &uspot_shadow_light);
 						if (auto uniform_shadow_map = shader->uniform("spot_shadow_map"))
 						{
