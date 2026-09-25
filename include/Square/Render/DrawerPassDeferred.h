@@ -78,6 +78,9 @@ namespace Render
 		void geometry_pass(const Vec4& clear_color, int num_of_pass, const Camera& camera, const PoolQueues& queues);
 		//light passes: accumulate all lights into the light buffer
 		void light_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues);
+		//translucent pass: the translucent renderables, forward shaded ("translucent" technique)
+		//into the light buffer, over the lit opaque scene and tested against its depth
+		void translucent_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues);
 		//present pass: draw the light buffer on the current (screen) target
 		void present_pass(const Camera& camera);
 		//bind the four G-Buffer textures on a light shader

@@ -15,6 +15,7 @@
 #include "Square/Render/Transform.h"
 #include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/DrawerPassForward.h"
+#include "Square/Render/ForwardShading.h"
 
 namespace Square
 {
@@ -63,171 +64,27 @@ namespace Render
             //clear
             render().clear();
         }
-        //buffers
-        Render::UniformBufferCamera ucamera;
-		Render::UniformBufferTransform utransform;
-
-		Render::UniformDirectionLight udirection_light;
-		Render::UniformPointLight upoint_light;
-		Render::UniformSpotLight uspot_light;
-
-		Render::UniformDirectionShadowLight udirection_shadow_light;
-		Render::UniformPointShadowLight upoint_shadow_light;
-		Render::UniformSpotShadowLight uspot_shadow_light;
-		//parameters
-		EffectPassInputs inputs
-		{
-			//render
-			  m_cb_camera.get()
-			, m_cb_transform.get()
-			//light
-			, ambient_light
-			, m_cb_direction_light.get()
-			, m_cb_point_light.get()
-			, m_cb_spot_light.get()
-			//shadow
-			, nullptr
-			, m_cb_direction_shadow_light.get()
-			, m_cb_point_shadow_light.get()
-			, m_cb_spot_shadow_light.get()
-		};
-        //update camera
-        camera.set(&ucamera);
-        render().update_steam_CB(m_cb_camera.get(), (const unsigned char*)&ucamera, sizeof(ucamera));
-        //for each elements of opaque  and translucent queues
-		for(auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
-        if (randerable)
-        {
-            //jump?
-            if(!randerable->can_draw()) continue;
-			//update transform
-			if (auto transform = randerable->transform().lock())
-			{
-				transform->set(&utransform);
-				render().update_steam_CB(m_cb_transform.get(), (const unsigned char*)&utransform, sizeof(utransform));
-			}
-			//set id
-			//for each materials
-			for (size_t material_id = 0; material_id != randerable->materials_count(); ++material_id)
-			{
-				//material
-				auto weak_material = randerable->material(material_id);
-				auto material = weak_material.lock();
-				if (!material) continue;
-				//effect
-				auto effect = material->effect();
-				auto technique = effect->technique("forward");
-				if (!technique) continue;
-				//draw for each pass
-				for (auto& pass : *technique)
-				{
-					//light only or light and shadow?
-                    int support[]
-                    {
-                          static_cast<int>(pass.m_support_light)
-                        , static_cast<int>(pass.m_support_shadow)
-                    };
-					//shadow?
-					bool shadow = pass.m_support_shadow != EffectPass::LT_NONE;
-					//bind
-					switch (support[shadow])
-					{
-						//not costant buffer
-					case EffectPass::LT_NONE:
-					case EffectPass::LT_AMBIENT:
-						//no shadow light
-						if (shadow) break;
-						//draw
-						for (size_t draw_id = 0; draw_id < pass.m_draw_count; ++draw_id)
-							randerable->draw(render(), material_id, inputs, pass, draw_id);
-						break;
-						//update constant buffer
-					case EffectPass::LT_DIRECTION:
-						for (auto weak_light : queues[RQ_DIRECTION_LIGHT])
-						if (auto light = weak_light->lock< Render::Light >())
-						{
-							if (!light->visible()) continue;
-							//is a shadow light
-							if (light->shadow() != shadow) break;
-							//get buffer
-							light->set(&udirection_light);
-							//update buffer
-							Render::update_constant_buffer(&render(), m_cb_direction_light.get(), &udirection_light);
-							//shadow
-							if (shadow)
-							{
-								//get buffer
-								light->set(&udirection_shadow_light, &camera, false);
-								//update buffer
-								Render::update_constant_buffer(&render(), m_cb_direction_shadow_light.get(), &udirection_shadow_light);
-								//shadow map
-								inputs.m_shadow_map = light->shadow_buffer().texture();
-							}
-							//draw
-							for (size_t draw_id = 0; draw_id < pass.m_draw_count; ++draw_id)
-								randerable->draw(render(), material_id, inputs, pass, draw_id);
-						}
-						break;
-						//update constant buffer
-					case EffectPass::LT_POINT:
-						for (auto weak_light : queues[RQ_POINT_LIGHT])
-						if (auto light = weak_light->lock< Render::Light >())
-						{
-							if (!light->visible()) continue;
-							//is a shadow light
-							if (light->shadow() != shadow) break;
-							//get buffer
-;							light->set(&upoint_light);
-							//update buffer
-							Render::update_constant_buffer(&render(), m_cb_point_light.get(), &upoint_light);
-							//shadow
-							if (shadow)
-							{
-								//get buffer
-								light->set(&upoint_shadow_light, false);
-								//update buffer
-								Render::update_constant_buffer(&render(), m_cb_point_shadow_light.get(), &upoint_shadow_light);
-								//shadow map
-								inputs.m_shadow_map = light->shadow_buffer().texture();
-							}
-							//draw
-							for (size_t draw_id = 0; draw_id < pass.m_draw_count; ++draw_id)
-								randerable->draw(render(), material_id, inputs, pass, draw_id);
-						}
-						break;
-						//update constant buffer
-					case EffectPass::LT_SPOT:
-						for (auto weak_light : queues[RQ_SPOT_LIGHT])
-						if (auto light = weak_light->lock< Render::Light >())
-						{
-							if (!light->visible()) continue;
-							//is a shadow light
-							if (light->shadow() != shadow) break;
-							//get buffer
-							light->set(&uspot_light);
-							//update buffer
-							Render::update_constant_buffer(&render(), m_cb_spot_light.get(), &uspot_light);
-							//shadow
-							if (shadow)
-							{
-								//get buffer
-								light->set(&uspot_shadow_light, false);
-								//update buffer
-								Render::update_constant_buffer(&render(), m_cb_spot_shadow_light.get(), &uspot_shadow_light);
-								//shadow map
-								inputs.m_shadow_map = light->shadow_buffer().texture();
-							}
-							//draw
-							for (size_t draw_id = 0; draw_id < pass.m_draw_count; ++draw_id)
-								randerable->draw(render(), material_id, inputs, pass, draw_id);
-						}
-						break;
-						/* not support */
-					default: continue;
-					}
-				}
-			}
-        }
+        //draw opaque and translucent renderables with their "forward" technique
+        draw_forward
+        (
+              render()
+            , "forward"
+            , camera
+            , ambient_light
+            , queues
+            , { RQ_OPAQUE, RQ_TRANSLUCENT }
+            , ForwardShadingBuffers
+              {
+                  m_cb_camera.get()
+                , m_cb_transform.get()
+                , m_cb_direction_light.get()
+                , m_cb_point_light.get()
+                , m_cb_spot_light.get()
+                , m_cb_direction_shadow_light.get()
+                , m_cb_point_shadow_light.get()
+                , m_cb_spot_shadow_light.get()
+              }
+        );
     }
 }
 }

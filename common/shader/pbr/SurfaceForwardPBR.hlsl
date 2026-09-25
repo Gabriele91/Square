@@ -22,9 +22,10 @@ SurfaceOutput compute_surface_output(in SurfaceData data)
 
 	//output
 	SurfaceOutput output;
-	// Noramly the input is in linear RGB, while the target buffer is in sRGB
+	// Noramly the input is in linear RGB, while the target buffer is in sRGB.
+	// OUTPUT_LINEAR_COLOR: the target is a linear buffer encoded later (deferred light buffer)
 	output.m_color = Vec4(light_results.m_radiance, data.m_alpha);
-#if !defined(ENABLE_TARGET_SRGB)
+#if !defined(ENABLE_TARGET_SRGB) && !defined(OUTPUT_LINEAR_COLOR)
 	output.m_color = to_srgb_space(output.m_color);
 #endif
 	return output;

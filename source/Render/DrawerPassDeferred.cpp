@@ -17,6 +17,7 @@
 #include "Square/Render/DrawerPassDeferred.h"
 #include "Square/Resource/Shader.h"
 #include "Square/Render/LightVolume.h"
+#include "Square/Render/ForwardShading.h"
 #include <cmath>
 
 namespace Square
@@ -454,11 +455,48 @@ namespace Render
 		geometry_pass(clear_color, num_of_pass, camera, queues);
 		//2) accumulate lights into the light buffer
 		light_pass(ambient_color, camera, queues);
+		//2b) blend the translucent renderables over it (forward shaded)
+		translucent_pass(ambient_color, camera, queues);
 		//3) present the light buffer to the screen
 		present_pass(camera);
 		//4) copy depth for later passes (no-op on backends without blit support)
 		const IVec4 area(0, 0, size.x, size.y);
 		render().copy_target_to_target(area, m_gbuffer->target(), area, nullptr, RT_DEPTH);
+	}
+
+	void DrawerPassDeferred::translucent_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues)
+	{
+		if (!queues[RQ_TRANSLUCENT].size()) return;
+		//the light buffer: linear HDR, with the G-Buffer depth attached (hidden by the opaque scene).
+		//Blend and depth states come from the passes of the "translucent" technique
+		//(depth test without write, alpha blending): see PBRTranslucent.sqfx
+		render().enable_render_target(m_light_target);
+		render().set_viewport_state({ camera.viewport().viewport() });
+		draw_forward
+		(
+			  render()
+			, "translucent"
+			, camera
+			, ambient_color
+			, queues
+			, { RQ_TRANSLUCENT }
+			, ForwardShadingBuffers
+			  {
+				  m_cb_camera.get()
+				, m_cb_transform.get()
+				, m_cb_direction_light.get()
+				, m_cb_point_light.get()
+				, m_cb_spot_light.get()
+				, m_cb_direction_shadow_light.get()
+				, m_cb_point_shadow_light.get()
+				, m_cb_spot_shadow_light.get()
+			  }
+		);
+		render().disable_render_target(m_light_target);
+		//restore state
+		render().set_blend_state({});
+		render().set_depth_buffer_state({ DM_ENABLE_AND_WRITE });
+		render().set_cullface_state({ CF_BACK });
 	}
 
 	void DrawerPassDeferred::present_pass(const Camera& camera)

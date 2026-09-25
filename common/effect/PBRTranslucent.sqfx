@@ -1,0 +1,86 @@
+parameters
+{
+    albedo_map    texture("white")
+    metallic_map  texture("black")
+    emmisive_map  texture("black")
+    roughness_map texture("white")
+    occlusion_map texture("white")
+    normal_map    texture("normal_up")
+
+    //alpha = albedo_map.a * color.a
+    color Vec4(1.0,1.0,1.0,0.5)
+    metallic float(0.0)
+    roughness float(1.0)
+    emmisive Vec3(1.0,1.0,1.0)
+
+    mask         float(-1.0)
+    mask_shadow  float(-1.0)
+    dither       float(0.0)
+}
+
+//Translucent PBR: alpha blended, drawn after the opaque scene, back to front.
+//It is not written into the G-Buffer and it does not cast shadows (it receives them).
+sub_effect
+{
+    queue { type translucent }
+    //forward rendering pipeline: drawn on the screen target
+    technique "forward"
+    {
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one_minus_src_alpha
+            cullface back
+            lights only_ambient
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #include "PBR.hlsl"
+            }
+        }
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one
+            cullface back
+            lights spot_point_direction
+            shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #include "PBR.hlsl"
+            }
+        }
+    }
+    //deferred rendering pipeline: drawn into the light buffer (linear, encoded by the present)
+    technique "translucent"
+    {
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one_minus_src_alpha
+            cullface back
+            lights only_ambient
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define OUTPUT_LINEAR_COLOR
+                #include "PBR.hlsl"
+            }
+        }
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one
+            cullface back
+            lights spot_point_direction
+            shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define OUTPUT_LINEAR_COLOR
+                #include "PBR.hlsl"
+            }
+        }
+    }
+}

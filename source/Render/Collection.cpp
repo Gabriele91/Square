@@ -41,6 +41,27 @@ namespace Render
 	{
 		return distance(position, transform->position(true));
 	}
+
+	//point a renderable is sorted by: the center of its bounding box. The origin of the actor
+	//can be far from the geometry (e.g. every object exported with an identity transform has
+	//it at the scene origin), which breaks the back to front order of translucent objects.
+	static inline Vec3 sort_point(const Shared<Renderable>& renderable, const Shared<Transform>& transform)
+	{
+		if (renderable->support_culling()) return renderable->bounding_box().get_position();
+		return transform ? transform->position(true) : Vec3(0.0f);
+	}
+	static inline float compute_renderable_depth(const Geometry::Frustum& f_camera, const Shared<Renderable>& renderable, const Shared<Transform>& transform)
+	{
+		return f_camera.distance_from_near_plane(sort_point(renderable, transform));
+	}
+	static inline float compute_renderable_depth(const Geometry::Sphere& in_sphere, const Shared<Renderable>& renderable, const Shared<Transform>& transform)
+	{
+		return distance(in_sphere.get_center(), sort_point(renderable, transform));
+	}
+	static inline float compute_renderable_depth(const Vec3& position, const Shared<Renderable>& renderable, const Shared<Transform>& transform)
+	{
+		return distance(position, sort_point(renderable, transform));
+	}
     
     //Query Lights
     void CollectionQuery::lights(const Collection& collection, PoolQueues& queues,const Geometry::Frustum& view_frustum)
@@ -164,8 +185,8 @@ namespace Render
                 //distance
                 switch (queue.m_type)
                 {
-                    case RQ_OPAQUE:      rqueue_opaque.push_front_to_back(weak_renderable, compute_camera_depth(position, transform)); break;
-                    case RQ_TRANSLUCENT: rqueue_translucent.push_back_to_front(weak_renderable, compute_camera_depth(position, transform)); break;
+                    case RQ_OPAQUE:      rqueue_opaque.push_front_to_back(weak_renderable, compute_renderable_depth(position, renderable, transform)); break;
+                    case RQ_TRANSLUCENT: rqueue_translucent.push_back_to_front(weak_renderable, compute_renderable_depth(position, renderable, transform)); break;
                     default: queues[queue.m_type].push_back_to_front(weak_renderable, queue.m_order); break;
                 }
             }
@@ -199,8 +220,8 @@ namespace Render
 				//distance
 				switch (queue.m_type)
 				{
-				case RQ_OPAQUE:      rqueue_opaque.push_front_to_back(weak_renderable, compute_camera_depth(view_frustum, transform)); break;
-				case RQ_TRANSLUCENT: rqueue_translucent.push_back_to_front(weak_renderable, compute_camera_depth(view_frustum, transform)); break;
+				case RQ_OPAQUE:      rqueue_opaque.push_front_to_back(weak_renderable, compute_renderable_depth(view_frustum, renderable, transform)); break;
+				case RQ_TRANSLUCENT: rqueue_translucent.push_back_to_front(weak_renderable, compute_renderable_depth(view_frustum, renderable, transform)); break;
 				default: queues[queue.m_type].push_back_to_front(weak_renderable, queue.m_order); break;
 				}
 			}
@@ -234,8 +255,8 @@ namespace Render
 				//distance
 				switch (queue.m_type)
 				{
-				case RQ_OPAQUE:      rqueue_opaque.push_front_to_back(weak_renderable, compute_camera_depth(in_sphere, transform)); break;
-				case RQ_TRANSLUCENT: rqueue_translucent.push_back_to_front(weak_renderable, compute_camera_depth(in_sphere, transform)); break;
+				case RQ_OPAQUE:      rqueue_opaque.push_front_to_back(weak_renderable, compute_renderable_depth(in_sphere, renderable, transform)); break;
+				case RQ_TRANSLUCENT: rqueue_translucent.push_back_to_front(weak_renderable, compute_renderable_depth(in_sphere, renderable, transform)); break;
 				default: queues[queue.m_type].push_back_to_front(weak_renderable, queue.m_order); break;
 				}
 			}
@@ -268,7 +289,7 @@ namespace Render
                 EffectQueueType queue = material->queue();
                 //distance
                 if(queue.m_type == RQ_OPAQUE)
-					rqueue_opaque.push_front_to_back(weak_renderable, compute_camera_depth(position, transform));
+					rqueue_opaque.push_front_to_back(weak_renderable, compute_renderable_depth(position, renderable, transform));
             }
         }
     }
@@ -295,7 +316,7 @@ namespace Render
 				//culling
 				if (queue.m_type == RQ_OPAQUE)
 				if (!renderable->support_culling() || Intersection::check(view_frustum, renderable->bounding_box()) != Intersection::OUTSIDE)
-						rqueue_opaque.push_front_to_back(weak_renderable, compute_camera_depth(view_frustum, transform));
+						rqueue_opaque.push_front_to_back(weak_renderable, compute_renderable_depth(view_frustum, renderable, transform));
 			}
         }
     }
@@ -323,7 +344,7 @@ namespace Render
 				//culling
 				if (queue.m_type == RQ_OPAQUE)
 					if (!renderable->support_culling() || Intersection::check(renderable->bounding_box(), in_sphere) != Intersection::OUTSIDE)
-						rqueue_opaque.push_front_to_back(weak_renderable, compute_camera_depth(in_sphere, transform));
+						rqueue_opaque.push_front_to_back(weak_renderable, compute_renderable_depth(in_sphere, renderable, transform));
 			}
 		}
 	}

@@ -881,7 +881,7 @@ namespace GLTF
         // Function to decode Alpha mode from string
         static Material::AlphaMode decode_alpha_mode(const std::string& alpha_mode)
         {
-            if (Square::case_insensitive_equal(alpha_mode, "OPQUE"))
+            if (Square::case_insensitive_equal(alpha_mode, "OPAQUE"))
                 return Material::AlphaMode::AM_OPAQUE;
             else if (Square::case_insensitive_equal(alpha_mode, "BLEND"))
                 return Material::AlphaMode::AM_BLEND;

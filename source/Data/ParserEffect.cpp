@@ -7,6 +7,7 @@
 //
 #include "Square/Data/ParserUtils.h"
 #include "Square/Data/ParserEffect.h"
+#include <cctype>
 
 namespace Square
 {
@@ -875,6 +876,18 @@ namespace Parser
         //parse
         pass.m_depth.m_mode = Render::DM_ENABLE_AND_WRITE;
         pass.m_depth.m_type = depth_from_string(param1,  Render::DT_LESS);
+        //optional: "read_only", test the depth without writing it (translucent surfaces)
+        skip_line_space(m_context->m_line, ptr);
+        if (std::isalpha((unsigned char)*ptr))
+        {
+            std::string param2;
+            if (!parse_name(ptr, param2) || (param2 != "read_only" && param2 != "only_read"))
+            {
+                push_error("Depth write parameter not valid (read_only)");
+                return false;
+            }
+            pass.m_depth.m_mode = Render::DM_ENABLE_ONLY_READ;
+        }
         return true;
     }
     bool Effect::parse_cullface(const char*& ptr, PassField& pass)

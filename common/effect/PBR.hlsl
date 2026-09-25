@@ -36,6 +36,23 @@ float metallic;
 float roughness;
 Vec3 emmisive;
 float mask;
+float dither;
+
+// Dithered opacity: 4x4 ordered (Bayer) threshold in (0,1) of a screen pixel.
+// A pixel is kept when its alpha is above the threshold, so the share of kept
+// pixels follows the alpha and the surface stays opaque (deferred, shadows...).
+float dither_threshold(Vec2 pixel)
+{
+	static const float bayer[16] =
+	{
+		 0.0,  8.0,  2.0, 10.0,
+		12.0,  4.0, 14.0,  6.0,
+		 3.0, 11.0,  1.0,  9.0,
+		15.0,  7.0, 13.0,  5.0
+	};
+	uint2 p = uint2(pixel) & 3;
+	return (bayer[p.y * 4 + p.x] + 0.5) / 16.0;
+}
 
 VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
 {
@@ -66,6 +83,12 @@ surface(VertexShaderOutput input)
 	data.m_albedo = albedo_color.rgb * color.rgb;
 	// Alpha
 	data.m_alpha = albedo_color.a * color.a;
+	// Dithered opacity: drop the pixels of the pattern above the alpha
+	if (dither > 0.5)
+	{
+		if (data.m_alpha <= dither_threshold(input.m_position.xy)) discard;
+		data.m_alpha = 1.0;
+	}
 	// Emmisive
 	data.m_emmisive = to_rgb_space(texture2D(emmisive_map, input.m_uv).rgb) * emmisive;
 	// Normal

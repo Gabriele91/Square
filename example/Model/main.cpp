@@ -338,7 +338,7 @@ class MaterialManager
         // SRGB (emmisive, albedo)
         const char pbr_material_template[] =
         {
-            "effect \"PBR\"\n"
+            "effect \"%s\"\n"
             "{\n"
                 "\talbedo_map    texture(\"%s\")\n"
                 "\tmetallic_map  texture(\"%s\")\n"
@@ -372,10 +372,15 @@ class MaterialManager
         const float metallic = material.pbr_metallic_roughness.value_or(Square::Data::GLTF::Material::PbrMetallicRoughness()).metallic_factor;
         const float roughness = material.pbr_metallic_roughness.value_or(Square::Data::GLTF::Material::PbrMetallicRoughness()).roughness_factor;
         const Square::Vec3 emissive = material.emissive_factor;
-        const float mask = material.alpha_cutoff;
+        // glTF alphaMode: BLEND is translucent (alpha blended, drawn after the opaque scene),
+        // MASK is opaque with an alpha test at alphaCutoff, OPAQUE ignores the alpha
+        using AlphaMode = Square::Data::GLTF::Material::AlphaMode;
+        const char* effect = material.alpha_mode == AlphaMode::AM_BLEND ? "PBRTranslucent" : "PBR";
+        const float mask = material.alpha_mode == AlphaMode::AM_MASK ? material.alpha_cutoff : -1.0f;
 
         char output_template[2048] = { '\0' };
-        std::snprintf(&output_template[0], 2048, pbr_material_template, 
+        std::snprintf(&output_template[0], 2048, pbr_material_template,
+            effect,
             albedo_map.c_str(),
             metallic_map.c_str(),
             roughness_map.c_str(),
