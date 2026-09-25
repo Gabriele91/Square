@@ -103,6 +103,58 @@ namespace Render
 		return mesh;
 	}
 
+	
+	//////////////////////////////////////////////////////////////////////
+	// Draw volume meshes 
+	/////////////////////////////////////////////////////////////////////
+	static void draw_point_light(Square::Render::Context& render,
+							    Shared<Square::Render::ConstBuffer> cb_volume,  
+								Shared<Mesh> sphere, 
+								const Render::UniformPointLight& upoint_light)
+	{
+		//sphere volume: translate to the light, scale to radius (+10% margin)
+		const float sphere_scale = upoint_light.m_radius * 1.1f;
+		UniformLightVolume ulight_volume;
+		ulight_volume.m_model = glm::translate(Mat4(1.0f), upoint_light.m_position)
+								* glm::scale(Mat4(1.0f), Vec3(sphere_scale, sphere_scale, sphere_scale));
+		Render::update_constant_buffer(&render, cb_volume.get(), &ulight_volume);
+		//draw
+		sphere->draw(render);
+	}
+
+	static void draw_spot_light(Square::Render::Context& render, 
+							    Shared<Square::Render::ConstBuffer> cb_volume, 
+								Shared<Mesh> cone, 
+								const Render::UniformSpotLight& uspot_light)
+	{
+		static constexpr float cone_rotation_epsilon{ 0.9999f };
+		static constexpr float cone_size_epsilon{  1e-3f };
+		static constexpr Square::Vec3 cone_z_axis{ 0.0f, 0.0f, 1.0f };
+		//cone volume: orient +z to the light direction, scale by cone size
+		const Vec3  light_direction = normalize(uspot_light.m_direction);
+		const float cone_height     = uspot_light.m_radius * 1.1f;
+		const float cos_outer       = clamp(uspot_light.m_outer_cut_off, -1.0f, 1.0f);
+		const float base_radius     = cone_height * std::tan(std::acos(cos_outer)) + cone_size_epsilon;
+		//rotation from +z to the light direction
+		const float cos_angle = clamp(dot(cone_z_axis, light_direction), -1.0f, 1.0f);
+		Mat4 rotation(1.0f);
+		if (cos_angle < -cone_rotation_epsilon)
+		{
+			rotation = to_mat4(angle_axis(Constants::pi<float>(), Vec3(1.0f, 0.0f, 0.0f)));
+		}
+		else if (cos_angle < cone_rotation_epsilon)
+		{
+			rotation = to_mat4(angle_axis(std::acos(cos_angle), normalize(cross(cone_z_axis, light_direction))));
+		}
+		UniformLightVolume ulight_volume;
+		ulight_volume.m_model = glm::translate(Mat4(1.0f), Vec3(uspot_light.m_position))
+								* rotation
+								* glm::scale(Mat4(1.0f), Vec3(base_radius, base_radius, cone_height));
+		Render::update_constant_buffer(&render, cb_volume.get(), &ulight_volume);
+		//draw
+		cone->draw(render);
+	}
+	
 	//////////////////////////////////////////////////////////////////////
 	// DrawerPassDeferred
 	//////////////////////////////////////////////////////////////////////
@@ -393,14 +445,8 @@ namespace Render
 							uniform_shadow_map->set(light->shadow_buffer().texture());
 						}
 					}
-					//sphere volume: translate to the light, scale to radius (+10% margin)
-					const float sphere_scale = light->radius() * 1.1f;
-					UniformLightVolume ulight_volume;
-					ulight_volume.m_model = glm::translate(Mat4(1.0f), upoint_light.m_position)
-					                      * glm::scale(Mat4(1.0f), Vec3(sphere_scale, sphere_scale, sphere_scale));
-					Render::update_constant_buffer(&render(), m_cb_light_volume.get(), &ulight_volume);
-					//draw
-					m_sphere->draw(render());
+					//sphere volume
+					draw_point_light(render(), m_cb_light_volume, m_sphere, upoint_light);
 				}
 				if (shader_bound)
 				{
@@ -458,30 +504,9 @@ namespace Render
 							uniform_shadow_map->set(light->shadow_buffer().texture());
 						}
 					}
-					//cone volume: orient +z to the light direction, scale by cone size
-					const Vec3  light_direction = normalize(uspot_light.m_direction);
-					const float cone_height     = uspot_light.m_radius * 1.1f;
-					const float cos_outer       = clamp(uspot_light.m_outer_cut_off, -1.0f, 1.0f);
-					const float base_radius     = cone_height * std::tan(std::acos(cos_outer)) * 1.1f + 1e-3f;
-					//rotation from +z to the light direction
-					const Vec3  z_axis(0.0f, 0.0f, 1.0f);
-					const float cos_angle = clamp(dot(z_axis, light_direction), -1.0f, 1.0f);
-					Mat4 rotation(1.0f);
-					if (cos_angle < -0.9999f)
-					{
-						rotation = to_mat4(angle_axis(Constants::pi<float>(), Vec3(1.0f, 0.0f, 0.0f)));
-					}
-					else if (cos_angle < 0.9999f)
-					{
-						rotation = to_mat4(angle_axis(std::acos(cos_angle), normalize(cross(z_axis, light_direction))));
-					}
-					UniformLightVolume ulight_volume;
-					ulight_volume.m_model = glm::translate(Mat4(1.0f), Vec3(uspot_light.m_position))
-					                      * rotation
-					                      * glm::scale(Mat4(1.0f), Vec3(base_radius, base_radius, cone_height));
-					Render::update_constant_buffer(&render(), m_cb_light_volume.get(), &ulight_volume);
-					//draw
-					m_cone->draw(render());
+
+					// Draw volume
+					draw_spot_light(render(), m_cb_light_volume, m_cone, uspot_light);
 				}
 				if (shader_bound)
 				{
