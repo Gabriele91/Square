@@ -5,6 +5,12 @@
 #define SLOPE_BIAS 2
 #include <ShadowCamera>
 Sampler2DArray(direction_shadow_map)
+// Material option: 1 = lit by this light without its shadow (e.g. glows, light beams).
+// A material that does not set it gets 0: shadows on.
+#ifndef IGNORE_SHADOWS_UNIFORM
+#define IGNORE_SHADOWS_UNIFORM
+float ignore_shadows;
+#endif
 
 uint find_csm_layer(in float depth)
 {
@@ -119,6 +125,7 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3
 
 float direction_light_apply_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3 normal)
 {
+	if (ignore_shadows > 0.5) return 1.0;
 	//factor
 	float shadow_factor = direction_light_compute_shadow(fposition, view_dir, normal);
 	//add shadow

@@ -2,6 +2,12 @@
 #define PCF_SHADOW
 #include <ShadowCamera>
 Sampler2D(spot_shadow_map)
+// Material option: 1 = lit by this light without its shadow (e.g. glows, light beams).
+// A material that does not set it gets 0: shadows on.
+#ifndef IGNORE_SHADOWS_UNIFORM
+#define IGNORE_SHADOWS_UNIFORM
+float ignore_shadows;
+#endif
 
 #ifdef PCF_SHADOW
 float spot_light_shadow(in Vec3 proj_coords, const float bias)
@@ -68,6 +74,7 @@ float spot_light_compute_shadow(in Vec4 fposition, const float bias)
 
 float spot_light_apply_shadow(in Vec4 fposition)
 {
+	if (ignore_shadows > 0.5) return 1.0;
 	//const bias
 	const float bias = 0.0000001;
 	//factor

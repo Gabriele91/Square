@@ -1,26 +1,20 @@
 parameters
 {
     albedo_map    texture("white")
-    metallic_map  texture("black")
-    emmisive_map  texture("black")
-    roughness_map texture("white")
-    occlusion_map texture("white")
     normal_map    texture("normal_up")
-
+    specular_map  texture("black")
+    occlusion_map texture("white")
     //alpha = albedo_map.a * color.a
-    color Vec4(1.0,1.0,1.0,0.5)
-    metallic float(0.0)
-    roughness float(1.0)
-    emmisive Vec3(1.0,1.0,1.0)
+    color         Vec4(1.0,1.0,1.0,0.5)
+    shininess     float(16.0)
 
-    mask         float(-1.0)
-    mask_shadow  float(-1.0)
+    mask          float(-1.0)
+    mask_shadow   float(-1.0)
     //1 = lit without the shadows of the lights (glows, light beams); only forward/translucent passes
     ignore_shadows float(0.0)
-    dither       float(0.0)
 }
 
-//Translucent PBR: alpha blended, drawn after the opaque scene, back to front.
+//Translucent Legacy (Blinn-Phong): alpha blended, drawn after the opaque scene, back to front.
 //It is not written into the G-Buffer and it does not cast shadows (it receives them).
 sub_effect
 {
@@ -37,7 +31,7 @@ sub_effect
             shader source
             {
                 #define FORWARD_RENDERING
-                #include "PBR.hlsl"
+                #include "Legacy.hlsl"
             }
         }
         pass
@@ -50,7 +44,7 @@ sub_effect
             shader source
             {
                 #define FORWARD_RENDERING
-                #include "PBR.hlsl"
+                #include "Legacy.hlsl"
             }
         }
     }
@@ -67,7 +61,7 @@ sub_effect
             {
                 #define FORWARD_RENDERING
                 #define OUTPUT_LINEAR_COLOR
-                #include "PBR.hlsl"
+                #include "Legacy.hlsl"
             }
         }
         pass
@@ -81,7 +75,7 @@ sub_effect
             {
                 #define FORWARD_RENDERING
                 #define OUTPUT_LINEAR_COLOR
-                #include "PBR.hlsl"
+                #include "Legacy.hlsl"
             }
         }
     }
