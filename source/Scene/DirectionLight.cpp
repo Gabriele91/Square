@@ -377,6 +377,7 @@ namespace Scene
 			Mat4 light_space_transform = look_at(Vec3(0.0f, 0.0f, 0.0f), Vec3(direction), Constants::UP_LIGHT_DIR);
 			// Scene AABB
 			Mat4 scene_matrix = scene_size.to_matrix();
+			scene_matrix *= Square::scale(Vec3{1.1f,1.1f,1.1f});
 			// Cam view
 			const Mat4& cam_view = camera.view();
 			// Const
@@ -395,11 +396,13 @@ namespace Scene
                                                                                    scene_matrix,
                                                                                    fs_size, 
                                                                                    fs_depth);
+				const unsigned int index = i+1;
+				const float distance_factor = float(index) * index;
 				data.m_projection[i] = l_proj;
 				data.m_view[i] = l_view;
-				data.m_data[i] = Vec3(cascade_vdepths[i + 1],
-									  base_bias * fs_size,
-					                  slope_bias * fs_size);
+				data.m_data[i] = Vec3(cascade_vdepths[index],
+									  base_bias * fs_size / distance_factor,
+					                  slope_bias * fs_size / distance_factor);
 			}
 		}
 	}
