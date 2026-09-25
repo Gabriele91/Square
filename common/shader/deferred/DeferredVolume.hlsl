@@ -30,5 +30,9 @@ DeferredVSOutput vertex(Position3D input)
 	Vec4 world_position = mul(Vec4(input.m_position, 1.0), volume.m_model);
 	world_position      = mul(world_position, camera.m_view);
 	output.m_position   = mul(world_position, camera.m_projection);
+	// Depth clamp: a volume bigger than the camera range would have its back faces clipped by
+	// the far plane, cutting the light off with a hard edge. Vertices beyond the far plane are
+	// flattened onto it (depth 1): they still pass the >= test behind every visible pixel.
+	output.m_position.z = min(output.m_position.z, output.m_position.w);
 	return output;
 }
