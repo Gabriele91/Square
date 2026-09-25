@@ -19,13 +19,17 @@ namespace LightVolume
 		Mesh::IndexList    indices;
 		const float ring_step   = 1.0f / (float)(rings - 1);
 		const float sector_step = 1.0f / (float)(sectors - 1);
+		//the flat faces between the vertices lie inside the unit sphere: push the vertices out
+		//so that the faces enclose it (circumscribed), the volume must never cut the light
+		const float circumscribe = 1.124f / (std::cos(Constants::pi<float>() * sector_step)         // half sector angle
+		                                  * std::cos(Constants::pi<float>() * 0.5f * ring_step));  // half ring angle
 		for (unsigned int ring = 0; ring < rings; ++ring)
 		for (unsigned int sector = 0; sector < sectors; ++sector)
 		{
 			const float y = std::sin(-Constants::pi<float>() * 0.5f + Constants::pi<float>() * ring * ring_step);
 			const float x = std::cos(2.0f * Constants::pi<float>() * sector * sector_step) * std::sin(Constants::pi<float>() * ring * ring_step);
 			const float z = std::sin(2.0f * Constants::pi<float>() * sector * sector_step) * std::sin(Constants::pi<float>() * ring * ring_step);
-			vertices.push_back({ Vec3(x, y, z) });
+			vertices.push_back({ Vec3(x, y, z) * circumscribe });
 		}
 		for (unsigned int ring = 0; ring + 1 < rings; ++ring)
 		for (unsigned int sector = 0; sector + 1 < sectors; ++sector)
@@ -46,15 +50,20 @@ namespace LightVolume
 	{
 		Mesh::Vertex3DList vertices;
 		Mesh::IndexList    indices;
+		// Reserve
+		vertices.reserve(1+sectors);
+		indices.reserve(1+sectors);
 		//apex (0) and base center (1)
 		vertices.push_back({ Vec3(0.0f, 0.0f, 0.0f) });
 		vertices.push_back({ Vec3(0.0f, 0.0f, 1.0f) });
-		//base ring
+		//base ring: a polygon circumscribed to the unit circle (its sides touch the circle),
+		//an inscribed one would cut the edge of the spot light with its flat sides
 		const unsigned int base_start = 2;
+		const float circumscribe = 1.124f / std::cos(Constants::pi<float>() / (float)sectors);
 		for (unsigned int sector = 0; sector < sectors; ++sector)
 		{
 			const float angle = 2.0f * Constants::pi<float>() * (float)sector / (float)sectors;
-			vertices.push_back({ Vec3(std::cos(angle), std::sin(angle), 1.0f) });
+			vertices.push_back({ Vec3(std::cos(angle) * circumscribe, std::sin(angle) * circumscribe, 1.0f) });
 		}
 		//sides and base cap
 		for (unsigned int sector = 0; sector < sectors; ++sector)
