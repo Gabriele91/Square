@@ -51,30 +51,50 @@ namespace Render
 	//////////////////////////////////////////////////////////////////////
 	// Draw volume meshes 
 	/////////////////////////////////////////////////////////////////////
-	static void draw_point_light(Square::Render::Context& render,
-							    Shared<Square::Render::ConstBuffer> cb_volume,  
-								Shared<Mesh> sphere, 
-								const Render::UniformPointLight& upoint_light)
+	//true when part of the volume lies beyond the camera far plane: its back faces would be
+	//clipped there and the light would be cut off with a hard edge
+	static bool volume_crosses_far_plane(const Mat4& view_projection, const Mat4& model, float z_min)
 	{
-		UniformLightVolume ulight_volume;
-		ulight_volume.m_model = LightVolume::point_light_model(upoint_light);
-		Render::update_constant_buffer(&render, cb_volume.get(), &ulight_volume);
-		//draw
-		sphere->draw(render);
+		//conservative: the corners of the unit box enclosing the mesh (z from z_min to 1)
+		for (float x : { -1.0f, 1.0f })
+		for (float y : { -1.0f, 1.0f })
+		for (float z : { z_min, 1.0f })
+		{
+			const Vec4 clip = view_projection * (model * Vec4(x, y, z, 1.0f));
+			if (clip.w > 0.0f && clip.z > clip.w) return true;
+		}
+		return false;
 	}
 
-	static void draw_spot_light(Square::Render::Context& render, 
-							    Shared<Square::Render::ConstBuffer> cb_volume, 
-								Shared<Mesh> cone, 
-								const Render::UniformSpotLight& uspot_light)
+	//draw the volume that bounds a light; if the volume crosses the far plane the light is
+	//drawn on the whole screen instead (the light shader already limits it per pixel)
+	static void draw_light_volume(Square::Render::Context& render,
+								  const Shared<Square::Render::ConstBuffer>& cb_volume,
+								  const Shared<Mesh>& volume,
+								  const Shared<Mesh>& quad,
+								  const Mat4& model,
+								  float volume_z_min,
+								  const Mat4& view_projection)
 	{
 		UniformLightVolume ulight_volume;
-		ulight_volume.m_model = LightVolume::spot_light_model(uspot_light);
+		if (volume_crosses_far_plane(view_projection, model, volume_z_min))
+		{
+			//the unit quad (z = 0) mapped back from clip space and moved to half depth: it covers
+			//the whole screen. On the near plane (z = 0) the round trip through inverse(vp) and vp
+			//lands a little outside the clip volume in some frames, so the quad flickers away.
+			ulight_volume.m_model = Square::inverse(view_projection)
+								  * glm::translate(Mat4(1.0f), Vec3(0.0f, 0.0f, 0.5f));
+			Render::update_constant_buffer(&render, cb_volume.get(), &ulight_volume);
+			render.set_depth_buffer_state({ DM_DISABLE });
+			quad->draw(render);
+			render.set_depth_buffer_state({ DT_GREATER_EQUAL, DM_ENABLE_ONLY_READ });
+			return;s
+		}
+		ulight_volume.m_model = model;
 		Render::update_constant_buffer(&render, cb_volume.get(), &ulight_volume);
-		//draw
-		cone->draw(render);
+		volume->draw(render);
 	}
-	
+
 	//////////////////////////////////////////////////////////////////////
 	// DrawerPassDeferred
 	//////////////////////////////////////////////////////////////////////
@@ -235,6 +255,8 @@ namespace Render
 			context().logger()->warning("DrawerPassDeferred: missing deferred light shaders, light pass skipped");
 			return;
 		}
+		//to test the light volumes against the far plane
+		const Mat4 view_projection = camera.projection() * camera.view();
 		//bind and clear the light accumulation target
 		render().enable_render_target(m_light_target);
 		render().set_viewport_state({ camera.viewport().viewport() });
@@ -367,7 +389,7 @@ namespace Render
 						}
 					}
 					//sphere volume
-					draw_point_light(render(), m_cb_light_volume, m_sphere, upoint_light);
+					draw_light_volume(render(), m_cb_light_volume, m_sphere, m_quad, LightVolume::point_light_model(upoint_light), -1.0f, view_projection);
 				}
 				if (shader_bound)
 				{
@@ -428,7 +450,7 @@ namespace Render
 					}
 
 					// Draw volume
-					draw_spot_light(render(), m_cb_light_volume, m_cone, uspot_light);
+					draw_light_volume(render(), m_cb_light_volume, m_cone, m_quad, LightVolume::spot_light_model(uspot_light), 0.0f, view_projection);
 				}
 				if (shader_bound)
 				{
