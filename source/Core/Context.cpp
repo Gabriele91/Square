@@ -53,25 +53,52 @@ namespace Square
     //Get resource
     Shared<ResourceObject> BaseContext::resource(const std::string& name)
     {
+        //referenced while a resource of a folder loads: look in that folder first
+        if (!m_resource_scopes.empty() && !m_resource_scopes.back().empty())
+        {
+            const size_t colon = name.find(':');
+            if (colon != std::string::npos)
+            {
+                const std::string scoped = name.substr(0, colon + 1) + m_resource_scopes.back() + "/" + name.substr(colon + 1);
+                if (m_resources.count(scoped) || m_resources_file.count(scoped))
+                {
+                    return load_resource(scoped);
+                }
+            }
+        }
+        return load_resource(name);
+    }
+
+    Shared<ResourceObject> BaseContext::load_resource(const std::string& name)
+    {
         //olready loaded
         auto resource_it = m_resources.find(name);
         if (resource_it != m_resources.end()) return resource_it->second;
         //else find resource from file
         auto resource_file_it = m_resources_file.find(name);
         if (resource_file_it  == m_resources_file.end()) return nullptr;
+        //copy: loading can register/load other resources (and invalidate the iterators)
+        const ResourceFile resource_file = resource_file_it->second;
         //create resource
-        auto resource = DynamicPointerCast<ResourceObject>(create(resource_file_it->second.m_resouce_id));
+        auto resource = DynamicPointerCast<ResourceObject>(create(resource_file.m_resouce_id));
         if(!resource) return nullptr;
 		//insert
 		m_resources.insert({ name, resource });
-		//iterator
-		resource_it = m_resources.find(name);
-		//set resource name
-		resource->resource_name(resource_it->first.c_str());
+		//set resource name (the key string lives as long as the map entry)
+		resource->resource_name(m_resources.find(name)->first.c_str());
+        //folder of "Class:folder/name": the resources it references are looked up there first
+        const size_t colon = name.find(':');
+        const size_t name_start = colon == std::string::npos ? 0 : colon + 1;
+        const size_t slash = name.rfind('/');
+        m_resource_scopes.push_back(slash != std::string::npos && slash > name_start
+                                    ? name.substr(name_start, slash - name_start)
+                                    : std::string());
         //load
-        if(resource->load(resource_file_it->second.m_filepath)) return resource;
+        const bool loaded = resource->load(resource_file.m_filepath);
+        m_resource_scopes.pop_back();
+        if (loaded) return resource;
 		//fail
-		m_resources.erase(resource_it);
+		m_resources.erase(name);
 		//wrong
 		logger()->warning("Resource: unable to load " + name);
 		//end
@@ -139,32 +166,29 @@ namespace Square
 		//end
 		return true;
 	}
-    void BaseContext::add_resource_path(const std::string& path, bool recursive)
+    void BaseContext::add_resource_path(const std::string& path, bool recursive, const std::string& name_prefix)
     {
-        //for all sub path
+        //for all sub path: their files are named "sub/name"
 		if (recursive)
 		{
-			for (const std::string& directorypath : Filesystem::get_sub_directories(path))
+			for (const std::string& directoryname : Filesystem::get_sub_directories(path))
 			{
-				std::string subdirfullpath = Filesystem::join(path, directorypath);
+				std::string subdirfullpath = Filesystem::join(path, directoryname);
 				if (auto canonical_path = Filesystem::get_canonical(subdirfullpath); canonical_path.m_success)
 				{
 					subdirfullpath = canonical_path.m_path;
 				}
-				add_resource_path(subdirfullpath, recursive);
+				add_resource_path(subdirfullpath, recursive, name_prefix + directoryname + "/");
 			}
 		}
         //for all files
         for(const std::string& filename : Filesystem::get_files(path))
         {
-            //get extension
-            auto f_ext = Filesystem::get_extension(filename);
-            //add file
-			add_resource_file(Filesystem::join(path, filename));
+			add_resource_file(name_prefix + Filesystem::get_basename(filename), Filesystem::join(path, filename));
         }
         //end
     }
-	void BaseContext::add_resource_path(const std::string& path, const std::string& filter, bool recursive)
+	void BaseContext::add_resource_path(const std::string& path, const std::string& filter, bool recursive, const std::string& name_prefix)
     {
 		//get all files
 		Filesystem::FilesList files = Filesystem::get_files(path);
@@ -174,7 +198,7 @@ namespace Square
 		try
 		{
 			std::regex reg_exp(filter, std::regex::ECMAScript);
-			add_resource_path(path, reg_exp, recursive);
+			add_resource_path(path, reg_exp, recursive, name_prefix);
 		}
 		catch (std::regex_error& e)
 		{
@@ -183,7 +207,7 @@ namespace Square
 		}
         //end
     }
-	void BaseContext::add_resource_path(const std::string& path, const std::regex& filter, bool recursive)
+	void BaseContext::add_resource_path(const std::string& path, const std::regex& filter, bool recursive, const std::string& name_prefix)
     {
 		//get all files
 		Filesystem::FilesList files = Filesystem::get_files(path);
@@ -195,7 +219,7 @@ namespace Square
 			if (std::regex_match(filename, filter))
 			{
 				//add
-				add_resource_file(Filesystem::join(path, filename));
+				add_resource_file(name_prefix + Filesystem::get_basename(filename), Filesystem::join(path, filename));
 			}
 		}
 		//sub directories
@@ -208,7 +232,7 @@ namespace Square
 			//push dir into table
 			for (const std::string& directoryname : directories.m_fields)
 			{
-				add_resource_path(Filesystem::join(path, directoryname), filter, true);
+				add_resource_path(Filesystem::join(path, directoryname), filter, true, name_prefix + directoryname + "/");
 			}
 		}
         //end
@@ -236,6 +260,11 @@ namespace Square
 			{
 				auto class_name = m_object_factories[r_info.first]->info().name();
 				auto name = class_name + ":" + resource_name;
+				//two files with the same name and type: only one can be loaded
+				if (auto it = m_resources_file.find(name); it != m_resources_file.end() && it->second.m_filepath != filepath)
+				{
+					logger()->warning("Resource " + name + " found twice: " + it->second.m_filepath + " and " + filepath + " (the last one is used)");
+				}
 				m_resources_file[name] = ResourceFile(r_info.first, filepath);
 				return true;
 			}

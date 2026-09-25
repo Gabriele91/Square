@@ -62,7 +62,8 @@ namespace Square
         const std::vector < Attribute >* attributes(const Object& object) const;
         const std::vector < Attribute >* attributes(const ObjectInfo& info) const;
 
-		//Get resource
+		//Get resource, name = "Class:path". While a resource "Class:folder/x" loads, the names it
+		//references are looked up first inside "folder/" and then as they are (global).
         Shared<ResourceObject> resource(const std::string& name);
         const std::string& resource_path(const std::string& name);
 
@@ -75,9 +76,11 @@ namespace Square
         
 		//Resource
 		bool add_resources(const std::string& file_of_resources);
-		void add_resource_path(const std::string& path, bool recursive = false);
-		void add_resource_path(const std::string& path, const std::string& filter, bool recursive = true);
-		void add_resource_path(const std::string& path, const std::regex& filter, bool recursive = true);
+		//name_prefix is put before the file names: a recursive path gives every sub folder
+		//its own prefix ("sub/"), so files are named by their path relative to the root
+		void add_resource_path(const std::string& path, bool recursive = false, const std::string& name_prefix = "");
+		void add_resource_path(const std::string& path, const std::string& filter, bool recursive = true, const std::string& name_prefix = "");
+		void add_resource_path(const std::string& path, const std::regex& filter, bool recursive = true, const std::string& name_prefix = "");
 		bool add_resource_file(const std::string& filepath);
 		bool add_resource_file(const std::string& name, const std::string& path);
 		template< typename T >
@@ -155,6 +158,10 @@ namespace Square
         ResourceFileMap   m_resources_file;
         ResourceInfoMap   m_resources_info;
 		ResourceObjectMap m_resources;
+		//folders ("arena", "a/b") of the resources being loaded, innermost last
+		std::vector<std::string> m_resource_scopes;
+		//find/load a resource by its full name, no scope lookup
+		Shared<ResourceObject> load_resource(const std::string& name);
 		//friend class
 		friend class Application;
 		//delete all

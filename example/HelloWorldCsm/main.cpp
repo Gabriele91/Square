@@ -14,7 +14,7 @@ class Game01 : public Square::AppInterface
 {
 public:
 
-	std::string m_scene{"csm_scene"};
+	std::string m_scene{"csm"};
 
 	Game01(const std::string& scene) : m_scene(scene) {}
 	
@@ -177,7 +177,8 @@ public:
 		// level
 		m_level = world().level("main");
 		// load
-		if (auto scene_node = m_level->load_actor(m_scene); scene_node)
+		//every scene lives in its own folder: assets/<scene>/scene
+		if (auto scene_node = m_level->load_actor(m_scene + "/scene"); scene_node)
 		{
 			m_camera = scene_node->child("camera");
 			m_camera->component<Camera>()->viewport({ 0,0, window_width, window_height });
@@ -185,21 +186,21 @@ public:
 		}
 		else
 		{
-			context().logger()->info("Error to load base_scene");
+			context().logger()->info("Error to load " + m_scene + "/scene");
 		}
 		//
         m_drawer = Square::MakeShared<Render::Drawer>(context());
 		//rendering pipeline: SQUARE_RENDERING=forward|deferred (default: forward)
 		const char* rendering_type = std::getenv("SQUARE_RENDERING");
-		if (rendering_type && Square::case_insensitive_equal(rendering_type, "deferred"))
-		{
-			context().logger()->info("Rendering: deferred");
-			m_drawer->create<Render::DrawerPassDeferred>();
-		}
-		else
+		if (rendering_type && Square::case_insensitive_equal(rendering_type, "forward"))
 		{
 			context().logger()->info("Rendering: forward");
 			m_drawer->create<Render::DrawerPassForward>();
+		}
+		else
+		{
+			context().logger()->info("Rendering: deferred");
+			m_drawer->create<Render::DrawerPassDeferred>();
 		}
 		m_drawer->create<Render::DrawerPassShadow>();
 		// Draw OBB
@@ -289,7 +290,7 @@ static Square::Shell::ParserCommands s_ShellCommands
     , Square::Shell::Command{ "gputype","g", "select gpu type [low, high]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("high")) }
 	, Square::Shell::Command{ "debug",  "d", "enable debug"               , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 	, Square::Shell::Command{ "verbose","v", "enable verbose"             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
-	, Square::Shell::Command{ "scene",  "s", "scene resource to load"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("csm_scene"))}
+	, Square::Shell::Command{ "scene",  "s", "scene resource to load"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("csm"))}
 	, Square::Shell::Command{ "srgb",   "c", "enable gamme correction"    , Square::Shell::ValueType::value_bool  , false, Square::Shell::Value_t(true) }
 	, Square::Shell::Command{ "help",   "h", "show help"                  , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 };

@@ -6,3 +6,5 @@ add_subdirectory(HelloWorld)
 add_subdirectory(HelloWorldCsm)
 # Add examples Model
 add_subdirectory(Model)
+# Add examples Rush
+add_subdirectory(Rush)

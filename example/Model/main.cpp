@@ -9,6 +9,8 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <unordered_set>
+#include <cctype>
 #include "GLTFImport.h"
 
 enum class OutputFormat
@@ -39,6 +41,37 @@ static Square::Shell::ParserCommands s_ShellCommands
     , Square::Shell::Command{ "help",    "h", "show help"                                , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
 };
 
+// Resource names taken from the model (Blender object/material/image names), made safe for a
+// file name and unique: a "_2", "_3"... suffix is added only when two names really clash.
+// The names are local to the model folder: the engine resolves them from there first.
+class UniqueNames
+{
+    std::unordered_set<std::string> m_used;
+
+    static std::string sanitize(const std::string& name)
+    {
+        std::string out;
+        for (const char c : name)
+        {
+            out += (std::isalnum((unsigned char)c) || c == '_' || c == '-') ? c : '_';
+        }
+        return out;
+    }
+
+public:
+    std::string make(const std::string& wanted, const std::string& fallback)
+    {
+        std::string base = sanitize(wanted);
+        if (base.empty()) base = sanitize(fallback);
+        std::string name = base;
+        for (int n = 2; !m_used.insert(name).second; ++n)
+        {
+            name = base + "_" + std::to_string(n);
+        }
+        return name;
+    }
+};
+
 class TextureManager
 {
     struct TextureBufferDescription
@@ -51,8 +84,10 @@ class TextureManager
     Square::Context& m_context;
     std::string m_output;
     std::vector< TextureType > m_images;
+    std::vector< std::string > m_image_names; //wanted name of the textures made from each image
     std::vector< std::string > m_samplers;
     std::vector< std::string > m_textures;
+    UniqueNames                m_names;       //texture resources: .sqtex and copied images
 
     inline static const char* texture_filter_to_string(const Square::Data::GLTF::TextureFilter filter)
     {
@@ -108,10 +143,10 @@ public:
         if (std::holds_alternative<Square::Data::GLTF::ImagePath>(in_image))
         {
             const Square::Data::GLTF::ImagePath& image_path = std::get<Square::Data::GLTF::ImagePath>(in_image);
-            size_t index = m_images.size();
-            // Build path
-            auto newname = Square::Filesystem::get_basename(image_path.uri)
-                         + "_" + std::to_string(index)
+            const std::string image_name = Square::Filesystem::get_basename(image_path.uri);
+            // The copy is a texture resource too (.png/.jpg...): "_img" keeps it apart
+            // from the .sqtex named after the image
+            auto newname = m_names.make(image_name + "_img", "image_img")
                          + Square::Filesystem::get_extension(image_path.uri);
             auto outputpath = Square::Filesystem::join(m_output, newname);
             // Real image path
@@ -123,12 +158,14 @@ public:
                 m_context.logger()->warning("unable to copy: " + image_path.uri);
             }
             m_images.push_back(outputpath);
+            m_image_names.push_back(image_name);
             return m_images.size();
         }
         else if (std::holds_alternative<Square::Data::GLTF::ImageBuffer>(in_image))
         {
             const Square::Data::GLTF::ImageBuffer& buffer_description = std::get<Square::Data::GLTF::ImageBuffer>(in_image);
             m_images.push_back(TextureBufferDescription{ buffer_description.name, buffer_description.buffer_view });
+            m_image_names.push_back(buffer_description.name);
             return m_images.size();
         }
         
@@ -162,20 +199,17 @@ public:
     {
         if (texture.sampler.has_value() && texture.sampler < m_samplers.size() && texture.source < m_images.size())
         {
-            const auto& in_image = m_images[texture.source];
             const auto& sampler = m_samplers[texture.sampler.value()];
-            return add_texture_internal(in_image, sampler, views, buffers);
+            return add_texture_internal(texture.source, sampler, views, buffers);
         }
         else if (!texture.sampler.has_value() && texture.source < m_images.size())
-        {           
-            const auto& in_image = m_images[texture.source];
-            std::string texture_id = "_" + std::to_string(m_textures.size());
+        {
             const std::string sampler = "mag_filter linear\n"
                                          "min_filter linear_mipmap_linear\n"
                                          "wrap_s repeat\n"
                                          "wrap_t repeat\n"
                                          "wrap_r repeat\n";
-            return add_texture_internal(in_image, sampler, views, buffers);
+            return add_texture_internal(texture.source, sampler, views, buffers);
         }
         // Output
         if (texture.sampler.has_value())
@@ -202,14 +236,16 @@ public:
 
 private:
 
-    size_t add_texture_internal(const TextureType& in_image, const std::string& sampler, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers)
+    size_t add_texture_internal(size_t image_id, const std::string& sampler, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers)
     {
-        std::string texture_id = "_" + std::to_string(m_textures.size());
+        const TextureType& in_image = m_images[image_id];
+        //named after its image (a second texture of the same image gets "_2")
+        const std::string texture_name = m_names.make(m_image_names[image_id], "texture" + std::to_string(m_textures.size()));
         if (std::holds_alternative<std::string>(in_image))
         {
             std::string image_uri = std::get<std::string>(in_image);
             std::string texture_sampler_body = sampler + "url " + Square::Filesystem::get_filename(image_uri) + "\n";
-            std::string texture_sampler_path = Square::Filesystem::join(m_output, Square::Filesystem::get_basename(image_uri) + texture_id + ".sqtex");
+            std::string texture_sampler_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
 
             Square::Filesystem::text_file_write_all(texture_sampler_path, texture_sampler_body);
             m_textures.push_back(texture_sampler_path);
@@ -218,7 +254,7 @@ private:
         else if (std::holds_alternative<TextureBufferDescription>(in_image))
         {
             const TextureBufferDescription& image_buffer_description = std::get<TextureBufferDescription>(in_image);
-            std::string texture_path = Square::Filesystem::join(m_output, image_buffer_description.m_name + texture_id + ".sqtex");
+            std::string texture_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
             std::string texture_body = sampler + "data";
             // Get buffer
             if (image_buffer_description.m_index < views.size())
@@ -250,6 +286,7 @@ class MaterialManager
     std::vector< std::string > m_materials;
     Square::Context& m_context;
     std::string m_output;
+    UniqueNames m_names;
 
     static inline std::string template_material_standard(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
     {
@@ -385,7 +422,7 @@ public:
     size_t add_material(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
     {
         const std::string material_data = template_material_pbr(material, texture_manager);
-        const std::string material_name = material.name + "_" + std::to_string(m_materials.size());
+        const std::string material_name = m_names.make(material.name, "material" + std::to_string(m_materials.size()));
         const std::string material_path = Square::Filesystem::join(m_output, material_name + ".mat");
         Square::Filesystem::text_file_write_all(material_path, material_data);
         m_materials.push_back(material_name);
@@ -397,7 +434,6 @@ public:
 class MeshManager
 {
     Square::Context& m_context;
-    std::string m_mesh_prefix;
     std::string m_output;
     unsigned char m_mode{ M_NONE };
 
@@ -405,18 +441,17 @@ class MeshManager
     std::vector< std::vector<size_t> > m_meshes_materials;
     std::vector<std::string> m_mesh_names;
     std::vector<Square::Geometry::OBoundingBox> m_mesh_obbs;
+    UniqueNames m_names;
 
 public:
-    MeshManager(Square::Context& context, const std::string& mesh_prefix, const std::string& output, unsigned char mode)
+    MeshManager(Square::Context& context, const std::string& output, unsigned char mode)
     : m_context(context)
-    , m_mesh_prefix(mesh_prefix)
     , m_output(output)
     , m_mode(mode)
     {}
 
-    MeshManager(Square::Context& context, const std::string& mesh_prefix, const std::string& output, unsigned char mode, const Square::Data::GLTF::GLTF& gltf)
+    MeshManager(Square::Context& context, const std::string& output, unsigned char mode, const Square::Data::GLTF::GLTF& gltf)
     : m_context(context)
-    , m_mesh_prefix(mesh_prefix)
     , m_output(output)
     , m_mode(mode)
     {
@@ -570,7 +605,7 @@ public:
         // Serialize
         std::vector<unsigned char> buffer;
         size_t mesh_id = m_mesh_names.size();
-        std::string sm3d_mesh_filename = m_mesh_prefix + "_mesh" + std::to_string(mesh_id);
+        std::string sm3d_mesh_filename = m_names.make(mesh.name, "mesh" + std::to_string(mesh_id));
         std::string sm3d_mesh_path = Filesystem::join(m_output, sm3d_mesh_filename + ".sm3dgz");
         static_mesh_context.m_index = std::move(context_index);
         static_mesh_context.m_vertex = std::move(context_mesh);
@@ -639,10 +674,16 @@ public:
         }
         // Get model
         const auto& gltf_model = std::get<GLTF::GLTF>(loaded_model);
+        // The model folder: its files are named relative to it (the engine resolves them from there)
+        if (!Filesystem::exists(m_output_model_path) && !Filesystem::makedir(m_output_model_path))
+        {
+            context().logger()->warning("Unable to create the output folder: " + m_output_model_path);
+            return;
+        }
         // Texture Manager
         TextureManager texture_manager(context(), m_output_model_path, gltf_model);
         MaterialManager material_manager(context(), m_output_model_path, texture_manager, gltf_model);
-        MeshManager mesh_manager(context(), m_output_model_name, m_output_model_path, m_mode, gltf_model);
+        MeshManager mesh_manager(context(), m_output_model_path, m_mode, gltf_model);
         // Create scene
         context().add_resource_map<Resource::Mesh>(mesh_manager.resource_map());
         context().add_resource_map<Resource::Material>(material_manager.resource_map());

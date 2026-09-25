@@ -149,7 +149,7 @@ public:
 		// level
 		m_level = world().level("main");
 		// load
-		if (m_level->load_actor("base_scene"))
+		if (m_level->load_actor("base/scene"))
 		{
 			for (auto node : { m_level->find_actor("base_scene.node"), m_level->find_actor("base_scene.box") })
 			{
@@ -171,7 +171,7 @@ public:
 		}
 		else
 		{
-			context().logger()->info("Error to load base_scene");
+			context().logger()->info("Error to load base/scene");
 		}
 		//
 		m_drawer = Square::MakeShared<Render::Drawer>(context());

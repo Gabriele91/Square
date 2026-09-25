@@ -26,6 +26,38 @@
             ]
         },
         {
+            "name": "Win32 Rush Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Rush.exe",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "true",
+                "-b", "ogl",
+                "-g", "high"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/"
+                },
+                {
+                    "name": "SQUARE_RENDERING",
+                   // "value": "forward"
+                    "value": "deferred"
+                }
+            ],
+            "console": "internalConsole",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        },
+        {
             "name": "Win32 HelloWorld Debug",
             "type": "cppvsdbg",
             "request": "launch",
@@ -36,16 +68,21 @@
                 "-b", "ogl",
                 "-g", "high"
             ],
-            "stopAtEntry": false,
+            "stopAtEntry": true,
             "cwd": "${workspaceRoot}",
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "%PATH%;${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/Debug/;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/"
+                    "value": "%PATH%;${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/"
+                },
+                {
+                    "name": "SQUARE_RENDERING",
+                    //"value": "forward"
+                    "value": "deferred"
                 }
             ],
             "console": "internalConsole",
-            "symbolSearchPath": "${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/Debug;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/",
             "logging": {
                 "moduleLoad": false,
                 "trace": true
@@ -61,18 +98,18 @@
                 "-d",
                 "-b", "d3d",
                 "-g", "high",
-                "-s", "csm_scene"
+                "-s", "csm"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "%PATH%;${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/Debug/;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/"
+                    "value": "%PATH%;${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/"
                 }
             ],
             "console": "internalConsole",
-            "symbolSearchPath": "${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/Debug;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/",
             "logging": {
                 "moduleLoad": false,
                 "trace": true
@@ -86,10 +123,10 @@
             "args": [
                 "-v",
                 "-d",
-                "-c", "false",
-                "-b", "ogl",
+                "-c", "true",
+                "-b", "d3d",
                 "-g", "high",
-                "-s", "sphere_scene"
+                "-s", "sphere"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
@@ -100,7 +137,7 @@
                 }
             ],
             "console": "internalConsole",
-            "symbolSearchPath": "${workspaceRoot}/build/bin;${workspaceRoot}/build/source;${workspaceRoot}/build/dependencies/HLSL2ALL",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/",
             "logging": {
                 "moduleLoad": false,
                 "trace": true
@@ -117,7 +154,7 @@
                 "-c", "true",
                 "-b", "ogl",
                 "-g", "high",
-                "-s", "bottle_scene"
+                "-s", "bottle"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
@@ -191,7 +228,7 @@
                 "-d",
                 "-b", "mtl",
                 "-g", "high",
-                "-s", "csm_scene"
+                "-s", "csm"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
@@ -210,7 +247,7 @@
                 "-c", "false",
                 "-b", "mtl",
                 "-g", "high",
-                "-s", "sphere_scene"
+                "-s", "sphere"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
@@ -229,7 +266,7 @@
                 "-c", "true",
                 "-b", "mtl",
                 "-g", "high",
-                "-s", "bottle_scene"
+                "-s", "bottle"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
@@ -265,7 +302,7 @@
                 "-d",
                 "-b", "ogl",
                 "-g", "high",
-                "-s", "csm_scene"
+                "-s", "csm"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

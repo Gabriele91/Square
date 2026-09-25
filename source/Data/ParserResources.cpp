@@ -84,14 +84,12 @@ namespace Parser
 					//test, is recursive
 					n_path_field.m_recursive =
 						Filesystem::get_filename(n_path_field.m_path) == "**";
-					//only dir
+					//only dir: kept relative, it is joined with the folder of the .rs file
+					//(making it canonical here would resolve it from the working directory)
 					if (n_path_field.m_recursive)
 					{
 						n_path_field.m_path = Filesystem::get_directory(n_path_field.m_path);
-						if(auto canonical_path = Filesystem::get_canonical(n_path_field.m_path); canonical_path.m_success)
-						{
-							n_path_field.m_path = canonical_path.m_path;
-						}
+						if (n_path_field.m_path.empty()) n_path_field.m_path = ".";
 					}
 					//skip spaces
 					skip_space_and_comments(m_context->m_line, ptr);
@@ -142,7 +140,7 @@ namespace Parser
 							return false;
 						}
 						//enable
-						n_file_field.m_asset_name = true;
+						n_file_field.m_use_asset_name = true;
 						//skip spaces
 						skip_space_and_comments(m_context->m_line, ptr);
 
