@@ -124,7 +124,9 @@ namespace Render
 			GBuffer::BufferFormat(),                                                   // GB_NORMAL
 			GBuffer::BufferFormat(),                                                   // GB_ALBEDO
 			GBuffer::BufferFormat(),                                                   // GB_EMISSIVE
-			GBuffer::BufferFormat(TF_DEPTH_COMPONENT32, TT_DEPTH, TTF_FLOAT, RT_DEPTH) // GB_DEPTH
+			//same depth format as the screen (24 bit + 8 stencil): copying the depth to the screen at the end
+			//of the pass needs matching formats (D3D11 CopySubresourceRegion, GL glBlitFramebuffer)
+			GBuffer::BufferFormat(TF_DEPTH24_STENCIL8, TT_DEPTH_STENCIL, TTF_UNSIGNED_INT_24_8, RT_DEPTH) // GB_DEPTH
 		};
 		m_gbuffer = MakeShared<GBuffer>(context(), size, formats);
 		if (!m_gbuffer->target()) return false;
@@ -148,13 +150,11 @@ namespace Render
 		static const char* s_uniform_names[]{ "g_position", "g_normal", "g_albedo", "g_emissive" };
 		for (size_t texture_id = 0; texture_id != 4; ++texture_id)
 		{
+			//a light shader may not read every G-Buffer texture (e.g. ambient ignores the normal):
+			//the compiler strips the unused ones, so a missing uniform is not an error
 			if (auto uniform_texture = shader->uniform(s_uniform_names[texture_id]))
 			{
 				uniform_texture->set(m_gbuffer->texture(texture_id));
-			}
-			else
-			{
-				context().logger()->warning(std::string("DrawerPassDeferred: uniform not found: ") + s_uniform_names[texture_id]);
 			}
 		}
 	}
