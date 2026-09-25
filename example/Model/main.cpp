@@ -270,8 +270,8 @@ class MaterialManager
         float tshininess = 16.0f;
         Square::Vec4 tcolor ( material.emissive_factor, 1.0f );
         std::string albedo_map = material.pbr_metallic_roughness.has_value() && material.pbr_metallic_roughness.value().base_color_texture.has_value()
-                                ? texture_manager.at(material.pbr_metallic_roughness.value().base_color_texture.value().index).value_or("default") 
-                                : "default";
+                                ? texture_manager.at(material.pbr_metallic_roughness.value().base_color_texture.value().index).value_or("white")
+                                : "white";
         std::string normal_map = material.normal_texture.has_value() ?
                                   texture_manager.at(material.normal_texture.value().index).value_or("normal_up") :
                                   "normal_up";
@@ -324,7 +324,7 @@ class MaterialManager
             return texture.has_value() ?  texture_manager.at(texture.value().index).value_or(default_name) : default_name;
         };
 
-        std::string albedo_map = material.pbr_metallic_roughness.has_value() ? get_texture(material.pbr_metallic_roughness.value().base_color_texture, "default") : "default";
+        std::string albedo_map = material.pbr_metallic_roughness.has_value() ? get_texture(material.pbr_metallic_roughness.value().base_color_texture, "white") : "white";
         std::string metallic_map = material.pbr_metallic_roughness.has_value() ? get_texture(material.pbr_metallic_roughness.value().metallic_roughness_texture, "black") : "black";
         std::string roughness_map = material.pbr_metallic_roughness.has_value() ? get_texture(material.pbr_metallic_roughness.value().metallic_roughness_texture, "white") : "white";
         std::string emmisive_map = get_texture(material.emissive_texture, "black");
