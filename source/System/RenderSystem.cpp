@@ -19,9 +19,52 @@
 #include "Square/Scene/World.h"
 #include "Square/Scene/Level.h"
 #include <algorithm>
+#include <cctype>
 
 namespace Square
 {
+	//pipeline mask <-> "forward|deferred|debug" (case insensitive)
+	static const std::pair<RenderPipeline, const char*> s_pipeline_names[]
+	{
+		{ RP_FORWARD,  "forward"  },
+		{ RP_DEFERRED, "deferred" },
+		{ RP_DEBUG,    "debug"    }
+	};
+
+	static std::string pipeline_to_string(unsigned int pipeline)
+	{
+		std::string names;
+		for (const auto& flag : s_pipeline_names)
+		{
+			if (!(pipeline & flag.first)) continue;
+			if (!names.empty()) names += "|";
+			names += flag.second;
+		}
+		return names;
+	}
+
+	static unsigned int pipeline_from_string(const std::string& names)
+	{
+		unsigned int pipeline = 0;
+		size_t start = 0;
+		while (start <= names.size())
+		{
+			size_t end = names.find('|', start);
+			if (end == std::string::npos) end = names.size();
+			//trim
+			size_t first = start, last = end;
+			while (first < last && std::isspace((unsigned char)names[first])) ++first;
+			while (last > first && std::isspace((unsigned char)names[last - 1])) --last;
+			const std::string name = names.substr(first, last - first);
+			for (const auto& flag : s_pipeline_names)
+			{
+				if (case_insensitive_equal(name, flag.second)) pipeline |= flag.first;
+			}
+			start = end + 1;
+		}
+		return pipeline;
+	}
+
 	//Add element to objects
 	SQUARE_CLASS_OBJECT_REGISTRATION(RenderSystem);
 	SQUARE_CLASS_OBJECT_REGISTRATION(RenderInstance);
@@ -39,18 +82,13 @@ namespace Square
 		ctx.add_attribute_function<RenderInstance, std::string>
 		("pipeline"
 		, std::string("deferred")
-		, [](const RenderInstance* instance) -> std::string { return instance->pipeline(); }
-		, [](RenderInstance* instance, const std::string& pipeline) { instance->pipeline(pipeline); });
+		, [](const RenderInstance* instance) -> std::string { return pipeline_to_string(instance->pipeline()); }
+		, [](RenderInstance* instance, const std::string& pipeline) { instance->pipeline(pipeline_from_string(pipeline)); });
 		ctx.add_attribute_function<RenderInstance, bool>
 		("shadows"
 		, true
 		, [](const RenderInstance* instance) -> bool { return instance->shadows(); }
 		, [](RenderInstance* instance, const bool& enable) { instance->shadows(enable); });
-		ctx.add_attribute_function<RenderInstance, bool>
-		("debug"
-		, true
-		, [](const RenderInstance* instance) -> bool { return instance->debug(); }
-		, [](RenderInstance* instance, const bool& enable) { instance->debug(enable); });
 		ctx.add_attribute_function<RenderInstance, Vec4>
 		("clear_color"
 		, Vec4(0.25f, 0.5f, 1.0f, 1.0f)
@@ -206,16 +244,15 @@ namespace Square
 	{
 	}
 
-	const std::string& RenderInstance::pipeline() const
+	unsigned int RenderInstance::pipeline() const
 	{
 		return m_pipeline;
 	}
 
-	void RenderInstance::pipeline(const std::string& pipeline)
+	void RenderInstance::pipeline(unsigned int pipeline)
 	{
-		const std::string name = case_insensitive_equal(pipeline, "forward") ? "forward" : "deferred";
-		if (name == m_pipeline) return;
-		m_pipeline = name;
+		if (pipeline == m_pipeline) return;
+		m_pipeline = pipeline;
 		rebuild_drawer();
 	}
 
@@ -228,18 +265,6 @@ namespace Square
 	{
 		if (enable == m_shadows) return;
 		m_shadows = enable;
-		rebuild_drawer();
-	}
-
-	bool RenderInstance::debug() const
-	{
-		return m_debug;
-	}
-
-	void RenderInstance::debug(bool enable)
-	{
-		if (enable == m_debug) return;
-		m_debug = enable;
 		rebuild_drawer();
 	}
 
@@ -288,7 +313,7 @@ namespace Square
 		//the debug flags survive a rebuild
 		const unsigned char debug_flags = m_debug_pass ? m_debug_pass->draw_flags() : 0;
 		m_drawer = MakeShared<Render::Drawer>(context());
-		if (m_pipeline == "forward")
+		if ((m_pipeline & RP_FORWARD) && !(m_pipeline & RP_DEFERRED))
 		{
 			context().logger()->info("Rendering: forward");
 			m_drawer->create<Render::DrawerPassForward>();
@@ -300,7 +325,7 @@ namespace Square
 		}
 		if (m_shadows) m_drawer->create<Render::DrawerPassShadow>();
 		m_debug_pass = nullptr;
-		if (m_debug)
+		if (m_pipeline & RP_DEBUG)
 		{
 			m_debug_pass = m_drawer->create<Render::DrawerPassDebug>();
 			m_debug_pass->draw_flags(debug_flags);
