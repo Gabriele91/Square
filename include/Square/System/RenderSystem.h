@@ -2,11 +2,12 @@
 //  RenderSystem.h
 //  Square
 //
-//  The render device (ring 0), and the drawing of every world at the end of the frame
+//  The render device, and the drawing of every world at the end of the frame
 //  (late_update, the last one), then the present (window swap):
-//  - RenderSystem, global: the render device (System::get<RenderSystem>(context)->render()), the drawer and its
-//    passes (pipeline, shadows, debug);
-//  - RenderInstance, per world: its clear and ambient colors, the renderables of its levels.
+//  - RenderSystem, global: the render device (System::get<RenderSystem>(context)->render()),
+//    it draws the instances and shows the frame;
+//  - RenderInstance, per world: its settings (pipeline, shadows, debug, colors), its drawer
+//    with the passes of its pipeline, the renderables of its levels.
 //
 #pragma once
 #include "Square/Config.h"
@@ -51,20 +52,9 @@ namespace Square
 		//the render device
 		Render::Context* render() const;
 
-		//pipeline: "deferred" (default) or "forward"; the environment variable
-		//SQUARE_RENDERING overrides the default at start
-		const std::string& pipeline() const;
-		void pipeline(const std::string& pipeline);
-
-		//shadow pass
-		bool shadows() const;
-		void shadows(bool enable);
-
-		//the drawer, and its debug pass (OBB, light volumes, textures; all off at start): from
-		//post_initialize (its passes load the effects added by AppInterface::start) to
-		//pre_shutdown, nullptr out of it
-		Shared<Render::Drawer> drawer() const;
-		Shared<Render::DrawerPassDebug> debug() const;
+		//the drawers of the worlds can be built: from post_initialize (their passes load the
+		//effects added by AppInterface::start) to pre_shutdown
+		bool ready() const;
 
 		//draw all the worlds, and show the frame (the loop calls them)
 		void draw();
@@ -74,16 +64,12 @@ namespace Square
 		//device
 		Render::Context*         m_render{ nullptr };
 		Render::RenderInspector* m_inspector{ nullptr };
-		//settings
-		std::string m_pipeline{ "deferred" };
-		bool        m_shadows{ true };
-		//drawer
-		Shared<Render::Drawer>          m_drawer;
-		Shared<Render::DrawerPassDebug> m_debug;
+		//between post_initialize and pre_shutdown
+		bool m_ready{ false };
 		//worlds
 		std::vector< Weak<RenderInstance> > m_instances;
-		//(re)build the drawer passes
-		void build_drawer();
+		//the instances alive
+		std::vector< Shared<RenderInstance> > instances();
 	};
 
 	class SQUARE_API RenderInstance : public SystemInstance
@@ -92,9 +78,24 @@ namespace Square
 		//A square object
 		SQUARE_OBJECT(RenderInstance)
 
+		//Registration in context (attributes)
+		static void object_registration(Context& ctx);
+
 		//Init
 		RenderInstance(Context& context, System& system, Scene::World& world);
 		virtual ~RenderInstance();
+
+		//pipeline: "deferred" (default) or "forward"
+		const std::string& pipeline() const;
+		void pipeline(const std::string& pipeline);
+
+		//shadow pass
+		bool shadows() const;
+		void shadows(bool enable);
+
+		//debug pass (OBB, light volumes, textures; its draw flags are all off at start)
+		bool debug() const;
+		void debug(bool enable);
 
 		//colors
 		const Vec4& clear_color() const;
@@ -106,14 +107,33 @@ namespace Square
 		bool visible() const;
 		void visible(bool visible);
 
+		//the drawer of the world and its debug pass: while the RenderSystem is ready,
+		//nullptr out of it (and the debug pass when debug is off)
+		Shared<Render::Drawer> drawer() const;
+		Shared<Render::DrawerPassDebug> debug_pass() const;
+
 		//draw the levels of the world
-		void draw(Render::Drawer& drawer);
+		void draw();
 
 	protected:
-		Vec4 m_clear_color{ 0.25f, 0.5f, 1.0f, 1.0f };
-		Vec4 m_ambient_color{ 0.1f, 0.1f, 0.1f, 1.0f };
-		bool m_visible{ true };
+		//settings
+		std::string m_pipeline{ "deferred" };
+		bool        m_shadows{ true };
+		bool        m_debug{ true };
+		Vec4        m_clear_color{ 0.25f, 0.5f, 1.0f, 1.0f };
+		Vec4        m_ambient_color{ 0.1f, 0.1f, 0.1f, 1.0f };
+		bool        m_visible{ true };
+		//drawer
+		Shared<Render::Drawer>          m_drawer;
+		Shared<Render::DrawerPassDebug> m_debug_pass;
 		//the collections of all the levels (rebuilt every frame)
 		Render::Collection m_collection;
+		//(re)build the passes of the settings / release them (by the RenderSystem, and by
+		//the settings when they change)
+		void build_drawer();
+		void release_drawer();
+		//a setting changed: new passes, if they are there
+		void rebuild_drawer();
+		friend class RenderSystem;
 	};
 }
