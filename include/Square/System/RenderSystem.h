@@ -6,7 +6,7 @@
 //  (late_update, the last one), then the present (window swap):
 //  - RenderSystem, global: the render device (System::get<RenderSystem>(context)->render()),
 //    it draws the instances and shows the frame;
-//  - RenderInstance, per world: its settings (pipeline, shadows, debug, colors), its drawer
+//  - RenderInstance, per world: its settings (pipeline, shadows, colors), its drawer
 //    with the passes of its pipeline, the renderables of its levels.
 //
 #pragma once
@@ -28,6 +28,14 @@ namespace Square
 	}
 	class RenderInstance;
 	//..................
+	//render pipeline of a world: a mask
+	enum RenderPipeline : unsigned int
+	{
+		RP_FORWARD  = 0b001,
+		RP_DEFERRED = 0b010,
+		RP_DEBUG    = 0b100
+	};
+
 	class SQUARE_API RenderSystem : public System
 	{
 	public:
@@ -85,17 +93,16 @@ namespace Square
 		RenderInstance(Context& context, System& system, Scene::World& world);
 		virtual ~RenderInstance();
 
-		//pipeline: "deferred" (default) or "forward"
-		const std::string& pipeline() const;
-		void pipeline(const std::string& pipeline);
+		//pipeline: a mask of RenderPipeline (default RP_DEFERRED | RP_DEBUG); RP_FORWARD or
+		//RP_DEFERRED (deferred if both), RP_DEBUG adds the debug pass (OBB, light volumes,
+		//textures; its draw flags are all off at start). Serialized as a string of the names,
+		//"|" between them ("deferred|debug"), case insensitive
+		unsigned int pipeline() const;
+		void pipeline(unsigned int pipeline);
 
 		//shadow pass
 		bool shadows() const;
 		void shadows(bool enable);
-
-		//debug pass (OBB, light volumes, textures; its draw flags are all off at start)
-		bool debug() const;
-		void debug(bool enable);
 
 		//colors
 		const Vec4& clear_color() const;
@@ -108,7 +115,7 @@ namespace Square
 		void visible(bool visible);
 
 		//the drawer of the world and its debug pass: while the RenderSystem is ready,
-		//nullptr out of it (and the debug pass when debug is off)
+		//nullptr out of it (and the debug pass without RP_DEBUG)
 		Shared<Render::Drawer> drawer() const;
 		Shared<Render::DrawerPassDebug> debug_pass() const;
 
@@ -117,9 +124,8 @@ namespace Square
 
 	protected:
 		//settings
-		std::string m_pipeline{ "deferred" };
+		unsigned int m_pipeline{ RP_DEFERRED | RP_DEBUG };
 		bool        m_shadows{ true };
-		bool        m_debug{ true };
 		Vec4        m_clear_color{ 0.25f, 0.5f, 1.0f, 1.0f };
 		Vec4        m_ambient_color{ 0.1f, 0.1f, 0.1f, 1.0f };
 		bool        m_visible{ true };

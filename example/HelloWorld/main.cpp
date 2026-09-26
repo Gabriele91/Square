@@ -152,7 +152,8 @@ public:
 		if (auto render_world = world().instance<RenderInstance>())
 		{
 			const char* rendering_type = std::getenv("SQUARE_RENDERING");
-			render_world->pipeline(rendering_type && Square::case_insensitive_equal(rendering_type, "forward") ? "forward" : "deferred");
+			const bool forward = rendering_type && Square::case_insensitive_equal(rendering_type, "forward");
+			render_world->pipeline((forward ? RP_FORWARD : RP_DEFERRED) | RP_DEBUG);
 		}
 		// load
 		if (m_level->load_actor("base/scene"))
