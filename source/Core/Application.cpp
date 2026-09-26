@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 10/11/17.
-//  Copyright © 2017 Gabriele Di Bari. All rights reserved.
+//  Copyright Â© 2017 Gabriele Di Bari. All rights reserved.
 //
 #include <algorithm>
 #include "Square/Core/Time.h"
@@ -12,6 +12,10 @@
 #include "Square/Driver/Render.h"
 #include "Square/Render/RegistryInspector.h"
 #include "Square/Scene/World.h"
+#include "Square/System/System.h"
+#include "Square/System/InputSystem.h"
+#include "Square/System/RenderSystem.h"
+#include "Square/System/SceneSystem.h"
 
 namespace Square
 {
@@ -194,22 +198,30 @@ namespace Square
 
 	Video::Input* Application::input()
 	{
-		return m_input;
+		auto* system = System::get<InputSystem>(m_context);
+		return system ? system->input() : nullptr;
 	}
 
 	Scene::World* Application::world()
 	{
-		return m_world;
+		auto* system = System::get<SceneSystem>(m_context);
+		return system ? system->world().get() : nullptr;
 	}
 
 	Context* Application::context()
 	{
 		return  &m_context;
 	}
+
+	const WindowRenderDriver& Application::render_driver() const
+	{
+		return m_render_driver;
+	}
 	
 	Render::Context* Application::render()
 	{
-		return  m_render;
+		auto* system = System::get<RenderSystem>(m_context);
+		return system ? system->render() : nullptr;
 	}
 
     const AppInterface* Application::app_instance() const
@@ -234,12 +246,14 @@ namespace Square
     
 	const Video::Input* Application::input() const
 	{
-		return m_input;
+		auto* system = System::get<InputSystem>(m_context);
+		return system ? system->input() : nullptr;
 	}
 
 	const Scene::World* Application::world() const
 	{
-		return m_world;
+		auto* system = System::get<SceneSystem>(m_context);
+		return system ? system->world().get() : nullptr;
 	}
 
 	const Context* Application::context() const
@@ -249,7 +263,8 @@ namespace Square
 
 	const Render::Context* Application::render() const
 	{
-		return  m_render;
+		auto* system = System::get<RenderSystem>(m_context);
+		return system ? system->render() : nullptr;
 	}
 	
 	static inline Video::ContextInfo::context_type get_context_type(Render::RenderDriver type)
@@ -327,72 +342,32 @@ namespace Square
         winfo.m_fullscreen = mode == WindowMode::FULLSCREEN;
         winfo.m_resize     = mode == WindowMode::RESIZABLE;
         m_window = SQ_NEW(allocator(), Video::Window, AllocType::ALCT_DEFAULT) Video::Window(winfo);
-        //input
-        m_input = SQ_NEW(allocator(), Video::Input, AllocType::ALCT_DEFAULT) Video::Input(m_window);
         //save instance
         m_instance = app;
-        ////////////////////////////////////////////////////////////////////////        
+        //render driver of the render system
+        m_render_driver = driver;
+        ////////////////////////////////////////////////////////////////////////
         //center
         m_window->set_position((screen_width - window_size.x) / 2,
                                (screen_height - window_size.y) / 2);
         //enable render context and  disable vSync (auto by Video::Window)
         m_window->acquire_context();
-		//Get render
-		m_render = Render::create_render_driver(context()->allocator(), context()->logger(), driver.m_type);
-		//init render
-		if (!m_render || !m_render->init(m_window->device()))
-		{
-            logger()->error("Unable to load render driver");
-			return false;
-		}
-        // If debug enable, set inspector
-        #if defined(TEXTURE_INTROSPECTION)
-        if(driver.m_debug)
+
+        //the systems registered as AUTOMATIC, from the lower ring up: render device, input, ..., scene
+        m_context.start_systems();
+        if (!render())
         {
-            m_inspector = SQ_NEW(allocator(), Render::RegistryInspector, AllocType::ALCT_DEFAULT) Render::RegistryInspector();
-            m_render->set_inspector(m_inspector);
+            logger()->error("Unable to start the render system");
+            m_context.stop_systems();
+            SQ_DELETE_NAMESPACE(allocator(), Video, Window, m_window);
+            m_window = nullptr;
+            return false;
         }
-        #endif
-        //flush errors
-		m_render->print_errors();
-        //show info
-		m_render->print_info();
-        //close event
-        bool close_event = false;
-        //set events
-        m_input->subscrive_keyboard_listener([this](Video::KeyboardEvent key,  short mode, Video::ActionEvent action)
-        {
-            app_instance()->key_event(key, mode, action);
-        });
-        
-        m_input->subscrive_mouse_move_listener([this](double x, double y)
-        {
-            app_instance()->mouse_move_event(DVec2(x,y));
-        });
-        
-        m_input->subscrive_mouse_button_listener([this](Video::MouseButtonEvent button, Video::ActionEvent action)
-        {
-            app_instance()->mouse_button_event(button, action);
-        });
-        
-        m_input->subscrive_mouse_scroll_listener([this](double scroll)
-        {
-            app_instance()->mouse_scroll_event(scroll);
-        });
-        
-        m_input->subscrive_window_listener([this,&close_event](Video::WindowEvent event)
-        {
-           app_instance()->window_event(event);
-            //close event?
-            if(event == Video::WindowEvent::CLOSE) close_event = true;
-        });
 
-        //set world
-        m_world = SQ_NEW(allocator(), Scene::World, AllocType::ALCT_DEFAULT) Scene::World(m_context);
-
-        //start
+        //start, then the second phase of the systems (the resources are there)
         m_instance->start();
-		m_render->print_errors();
+        m_context.post_initialize_systems();
+        render()->print_errors();
 
         //time
         double old_time = 0;
@@ -400,75 +375,57 @@ namespace Square
         m_last_delta_time = 0;
 
         //send event
+        if (auto* scene_world = world())
         {
             static std::string init_finished ("application::init::finished" );
             static const VariantRef init_finished_ref(init_finished);
-            m_world->send_message(init_finished_ref, true);
+            scene_world->send_message(init_finished_ref, true);
         }
 
-        //loop
-        while (!close_event)
+        //loop: every frame the systems up the rings (input), the application, the systems
+        //down the rings (render last)
+        auto* input_system = System::get<InputSystem>(m_context);
+        while (true)
         {
             //compute delta time
             old_time = last_time;
             last_time = Time::get_ms_time();
-            //print
-			m_render->print_errors();
             //update delta time
             m_last_delta_time = std::max(last_time - old_time,  1E-16) / 1000.0;
-            //update
+            //a frame
+            m_context.update_systems(m_last_delta_time);
             if (!m_instance->run(m_last_delta_time)) break;
-            //print
-			m_render->print_errors();
-            //update window
-            Video::Input::pull_events();
-            //swap
-            m_window->swap();
+            m_context.late_update_systems(m_last_delta_time);
+            //close
+            if (input_system && input_system->close_requested()) break;
         }
 
         //send event
+        if (auto* scene_world = world())
         {
             static std::string loop_finished("application::loop::finished");
             static const VariantRef loop_finished_ref(loop_finished);
-            m_world->send_message(loop_finished_ref, true);
+            scene_world->send_message(loop_finished_ref, true);
         }
 
-        //end state
+        //first phase of the shut down of the systems, then end
+        m_context.pre_shutdown_systems();
         bool end_state = m_instance->end();
 
-        //dealloc input
-        SQ_DELETE_NAMESPACE(allocator(), Video, Input, m_input);
-        m_input = nullptr;
+        //dealloc the application (its references to the scene go)
+        delete m_instance;
+        m_instance = nullptr;
+
+        //shut down the systems, from the upper ring down: scene (world), ..., input, render device
+        m_context.stop_systems();
 
         //clear context
         context()->clear();
 
-        //dealloc
-        delete m_instance;
-        m_instance = nullptr;
-
-        //delete world
-        SQ_DELETE_NAMESPACE(allocator(), Scene, World, m_world);
-        m_world = nullptr;
-        
-        //delete render context
-        m_render->close();
-        Render::delete_render_driver(m_render);
-
-        //delete inspector
-        #if defined(TEXTURE_INTROSPECTION)
-        if(m_inspector)
-        {
-            auto* texture_inspector = dynamic_cast<Render::RegistryInspector*>(m_inspector);
-            SQ_DELETE_NAMESPACE(allocator(), Render, RegistryInspector, texture_inspector);
-            m_inspector = nullptr;
-        }
-        #endif
-        
         //dealloc window
         SQ_DELETE_NAMESPACE(allocator(), Video, Window, m_window);
         m_window = nullptr;
-        
+
         //return status
         return end_state;
     }

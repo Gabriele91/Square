@@ -52,20 +52,20 @@ public:
 		
 		case Square::Video::KEY_O:
 			if (action == Square::Video::ActionEvent::PRESS)
-			if (m_render_debug)
+			if (render_debug())
 			{
-				if(!m_render_debug->draw_flags())
-					m_render_debug->draw_flags(Render::DF_DRAW_OBB);
+				if(!render_debug()->draw_flags())
+					render_debug()->draw_flags(Render::DF_DRAW_OBB);
 				else
-					m_render_debug->draw_flags(0);
+					render_debug()->draw_flags(0);
 			}
 		break;
 		case Square::Video::KEY_T:
 			//toggle the texture panel (images/TBO/RBO)
 			if (action == Square::Video::ActionEvent::PRESS)
-			if (m_render_debug)
+			if (render_debug())
 			{
-				m_render_debug->draw_flags(m_render_debug->draw_flags() ^ Render::DB_DRAW_TEXTURES);
+				render_debug()->draw_flags(render_debug()->draw_flags() ^ Render::DB_DRAW_TEXTURES);
 			}
 		break;
 		case Square::Video::KEY_C:
@@ -130,7 +130,7 @@ public:
 	void mouse_scroll_event(double scroll)
 	{
 		//scroll the debug texture panel
-		if (m_render_debug) m_render_debug->panel_scroll((float)scroll * 20.0f);
+		if (render_debug()) render_debug()->panel_scroll((float)scroll * 20.0f);
 	}
 
     void start()
@@ -173,24 +173,6 @@ public:
 		{
 			context().logger()->info("Error to load base/scene");
 		}
-		//
-		m_drawer = Square::MakeShared<Render::Drawer>(context());
-		//rendering pipeline: SQUARE_RENDERING=forward|deferred (default: deferred)
-		const char* rendering_type = std::getenv("SQUARE_RENDERING");
-		if (rendering_type && Square::case_insensitive_equal(rendering_type, "forward"))
-		{
-			context().logger()->info("Rendering: forward");
-			m_drawer->create<Render::DrawerPassForward>();
-		}
-		else
-		{
-			context().logger()->info("Rendering: deferred");
-			m_drawer->create<Render::DrawerPassDeferred>();
-		}
-		m_drawer->create<Render::DrawerPassShadow>();
-		// Draw OBB
-		m_render_debug = m_drawer->create<Render::DrawerPassDebug>();
-		m_render_debug->draw_flags(0);
     }
     
     bool run(double dt)
@@ -208,12 +190,6 @@ public:
 		{
 			child->turn(rotate_euler<float>(Square::radians(10.0f) * dt, 0.0f, 0.0f));
 		}
-		// draw
-		m_drawer->draw(
-			  Vec4(0.25, 0.5, 1.0, 1.0)
-			, Vec4(0.1, 0.1, 0.1, 1.0)
-			, m_level->randerable_collection()
-		);
 		//loop event
         return m_loop;
     }
@@ -266,14 +242,20 @@ public:
 		}
 	}
 
+	//the debug pass of the render system (OBB, lights, textures): the RenderSystem draws the
+	//world every frame, its drawer exists after start()
+	Square::Shared<Square::Render::DrawerPassDebug> render_debug()
+	{
+		auto* render_system = Square::System::get<Square::RenderSystem>(context());
+		return render_system ? render_system->debug() : nullptr;
+	}
+
 private:
     
     bool m_loop = true;
 	double m_acc = 0;
 	Square::Time::FPSCounter				   m_counter;
 	Square::Shared<Square::Scene::Level>	   m_level;
-    Square::Shared<Square::Render::Drawer>     m_drawer;
-	Square::Shared<Square::Render::DrawerPassDebug> m_render_debug;
 };
 
 static Square::Shell::ParserCommands s_ShellCommands

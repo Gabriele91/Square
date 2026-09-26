@@ -1,4 +1,5 @@
 #include "Square/Config.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/StaticMesh.h"
 #include "Square/Geometry/CreateBounding.h"
@@ -224,9 +225,9 @@ namespace Scene
 	bool StaticMesh::build_local_obounding_box(bool from_triangles)
 	{
 		if(m_mesh)
-		if(auto render = context().render())
+		if(auto render = System::get<RenderSystem>(context())->render())
 		if(auto vbuffer = m_mesh->vertex_buffer())
-		if(auto gpuvertex = context().render()->copy_buffer_VBO(vbuffer.get()); gpuvertex.size())
+		if(auto gpuvertex = render->copy_buffer_VBO(vbuffer.get()); gpuvertex.size())
 		{
 			const unsigned int mesh_type = m_mesh->layout_type();
 			// Vertex size

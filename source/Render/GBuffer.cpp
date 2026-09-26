@@ -6,6 +6,7 @@
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Core/Context.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Render/GBuffer.h"
 
 namespace Square
@@ -28,7 +29,7 @@ namespace Render
         //delete if target
         if(m_target) destoy();
         //
-        if(auto render = context().render())
+        if(auto render = System::get<RenderSystem>(context())->render())
         {
             //save size
             m_size = size;
@@ -69,7 +70,7 @@ namespace Render
     }
     void GBuffer::destoy()
     {
-        if(auto render = context().render())
+        if(auto render = System::get<RenderSystem>(context())->render())
         {
             if (m_target) render->delete_render_target(m_target);
             

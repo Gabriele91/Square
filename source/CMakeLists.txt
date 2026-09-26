@@ -29,7 +29,8 @@ file(GLOB SOURCES Core/*.cpp
                   Math/*.cpp
                   Render/*.cpp
                   Resource/*.cpp
-                  Scene/*.cpp)
+                  Scene/*.cpp
+                  System/*.cpp)
 
 set(OS_FLAGS "")
 set(OS_SOURCES "")

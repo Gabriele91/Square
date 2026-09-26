@@ -1,4 +1,5 @@
 #include "Square/Render/Mesh.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Driver/Render.h"
 #include "Square/Core/Context.h"
 
@@ -341,7 +342,7 @@ namespace Render
 	//build help
 	bool Mesh::build_vertex_layout(Layout::InputLayoutId type)
 	{
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 		{
 			m_layout = Layout::Collection::index_by_type(render, type);
 			if(m_layout) m_layout_type = type;
@@ -352,7 +353,7 @@ namespace Render
 	//build help
 	bool Mesh::build_vertex_buffer(unsigned char* data, size_t stride, size_t size, bool cpu_access)
 	{
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 		{
 			if (cpu_access)
 			{
@@ -370,7 +371,7 @@ namespace Render
 	//build help
 	bool Mesh::build_index_buffer(unsigned int* data, size_t size, bool cpu_access)
 	{
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 		{
 			if (cpu_access)
 			{

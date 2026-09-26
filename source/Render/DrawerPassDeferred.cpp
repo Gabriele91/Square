@@ -5,6 +5,7 @@
 //  See DrawerPassDeferred.h for the high level description.
 //
 #include "Square/Core/Context.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Driver/Render.h"
 #include "Square/Render/Material.h"
 #include "Square/Render/Effect.h"
@@ -98,7 +99,7 @@ namespace Render
 
 	DrawerPassDeferred::~DrawerPassDeferred()
 	{
-		if (auto render_driver = context().render())
+		if (auto render_driver = System::get<RenderSystem>(context())->render())
 		{
 			if (m_light_target)  render_driver->delete_render_target(m_light_target);
 			if (m_light_texture) render_driver->delete_texture(m_light_texture);
@@ -109,8 +110,8 @@ namespace Render
 	Square::Context& DrawerPassDeferred::context() { return m_context; }
 	const Square::Context& DrawerPassDeferred::context() const { return m_context; }
 	//render
-	Render::Context& DrawerPassDeferred::render() { return *context().render(); }
-	const Render::Context& DrawerPassDeferred::render() const { return *context().render(); }
+	Render::Context& DrawerPassDeferred::render() { return *System::get<RenderSystem>(context())->render(); }
+	const Render::Context& DrawerPassDeferred::render() const { return *System::get<RenderSystem>(context())->render(); }
 
 	bool DrawerPassDeferred::build_buffers(const IVec2& size)
 	{

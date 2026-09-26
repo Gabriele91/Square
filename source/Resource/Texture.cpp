@@ -4,6 +4,7 @@
 //  Copyright � 2016 Gabriele. All rights reserved.
 //
 #include "Square/Config.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Data/Image.h"
 #include "Square/Data/ParserTexture.h"
@@ -308,7 +309,7 @@ namespace Resource
 		m_type = type;
 		m_attributes = attr;
 		//create texture
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 		{
 			m_ctx_texture =
 			render->create_texture
@@ -372,7 +373,7 @@ namespace Resource
 	void Texture::destoy()
 	{
 		if (m_ctx_texture)
-			if (auto render = context().render())
+			if (auto render = System::get<RenderSystem>(context())->render())
 				render->delete_texture(m_ctx_texture);
 		m_ctx_texture = nullptr;
 	}

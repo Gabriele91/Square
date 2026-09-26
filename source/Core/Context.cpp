@@ -8,7 +8,10 @@
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/Application.h"
 #include "Square/Data/ParserResources.h"
+#include "Square/System/System.h"
+#include "Square/Scene/World.h"
 #include <iostream>
+#include <algorithm>
 
 namespace Square
 {
@@ -336,25 +339,10 @@ namespace Square
 	{
 		return m_logger;
 	}
-	//get render
-	Render::Context* BaseContext::render()
-	{
-		return application() ? application()->render() : nullptr;
-	}
 	//get window
 	Video::Window* BaseContext::window()
 	{
 		return application() ? application()->window() : nullptr;
-	}
-	//get window
-	Video::Input* BaseContext::input()
-	{
-		return application() ? application()->input() : nullptr;
-	}
-	//get world
-	Scene::World* BaseContext::world()
-	{
-		return application() ? application()->world() : nullptr;
 	}
     //get application
     const Application* BaseContext::application() const
@@ -371,29 +359,198 @@ namespace Square
 	{
 		return m_logger;
 	}
-    //get render
-    const Render::Context* BaseContext::render() const
-    {
-        return application() ? application()->render() : nullptr;
-    }
     //get window
     const Video::Window* BaseContext::window() const
     {
         return application() ? application()->window() : nullptr;
     }
-	//get window
-	const Video::Input* BaseContext::input() const
+
+	//System class
+	void BaseContext::add_system(Shared<ObjectFactory> object_fectory, SystemStartup startup, unsigned int ring)
 	{
-		return application() ? application()->input() : nullptr;
+		add_object(object_fectory);
+		m_systems_info[object_fectory->info().id()] = SystemInfo{ startup, ring };
 	}
-	//get world
-	const Scene::World* BaseContext::world() const
+	const SystemInfo* BaseContext::system_info(const std::string& name) const
 	{
-		return application() ? application()->world() : nullptr;
+		return system_info(ObjectInfo::compute_id(name));
+	}
+	const SystemInfo* BaseContext::system_info(uint64 id) const
+	{
+		auto info = m_systems_info.find(id);
+		return info != m_systems_info.end() ? &info->second : nullptr;
+	}
+
+	//Systems
+	System* BaseContext::start_system(const std::string& name)
+	{
+		return start_system(ObjectInfo::compute_id(name));
+	}
+	System* BaseContext::start_system(uint64 id)
+	{
+		//once
+		if (auto* existing = system(id)) return existing;
+		//a system class
+		const SystemInfo* info = system_info(id);
+		if (!info)
+		{
+			logger()->warning("Context: " + std::to_string(id) + " is not a registered system");
+			return nullptr;
+		}
+		auto new_system = DynamicPointerCast<System>(create(id));
+		if (!new_system)
+		{
+			logger()->warning("Context: unable to create the system " + std::to_string(id));
+			return nullptr;
+		}
+		//running, by ring; already in the list while it initializes (what it creates can
+		//look for it, e.g. the drawer for the render device)
+		auto position = std::upper_bound(m_systems.begin(), m_systems.end(), new_system->system_ring(), [](unsigned int ring, const Shared<System>& running)
+		{
+			return ring < running->system_ring();
+		});
+		m_systems.insert(position, new_system);
+		if (!new_system->initialize())
+		{
+			logger()->warning("Context: unable to start the system " + new_system->object_name());
+			m_systems.erase(std::find(m_systems.begin(), m_systems.end(), new_system));
+			return nullptr;
+		}
+		//the worlds already there
+		for (Scene::World* alive : m_worlds) alive->add_instance(*new_system);
+		//the application is already running: the second phase too
+		if (m_systems_post_initialized) new_system->post_initialize();
+		return new_system.get();
+	}
+	void BaseContext::start_systems()
+	{
+		//the AUTOMATIC ones, from the lower ring up (then by name, to always start them the same way)
+		std::vector< std::pair<unsigned int, std::string> > automatic;
+		for (const auto& info : m_systems_info)
+		{
+			if (info.second.m_startup != SystemStartup::AUTOMATIC) continue;
+			auto factory = m_object_factories.find(info.first);
+			if (factory == m_object_factories.end()) continue;
+			automatic.emplace_back(info.second.m_ring, factory->second->info().name());
+		}
+		std::sort(automatic.begin(), automatic.end());
+		for (const auto& system : automatic) start_system(system.second);
+	}
+	System* BaseContext::system(const std::string& name) const
+	{
+		return system(ObjectInfo::compute_id(name));
+	}
+	System* BaseContext::system(uint64 id) const
+	{
+		for (const Shared<System>& system : m_systems)
+		{
+			if (system->object_id() == id) return system.get();
+		}
+		return nullptr;
+	}
+	const SystemList& BaseContext::systems() const
+	{
+		return m_systems;
+	}
+	void BaseContext::shutdown_system(const Shared<System>& system)
+	{
+		//the application is still running: the first phase too
+		if (m_systems_post_initialized) system->pre_shutdown();
+		//the worlds first, then the system
+		for (Scene::World* alive : m_worlds) alive->remove_instances(*system);
+		system->shutdown();
+	}
+	bool BaseContext::stop_system(const std::string& name)
+	{
+		return stop_system(ObjectInfo::compute_id(name));
+	}
+	bool BaseContext::stop_system(uint64 id)
+	{
+		auto it = std::find_if(m_systems.begin(), m_systems.end(), [id](const Shared<System>& system) { return system->object_id() == id; });
+		if (it == m_systems.end()) return false;
+		//still in the list while it shuts down (what it releases can look for it,
+		//e.g. the resources for the render device), then out
+		auto running = *it;
+		shutdown_system(running);
+		m_systems.erase(std::find(m_systems.begin(), m_systems.end(), running));
+		return true;
+	}
+	void BaseContext::stop_systems()
+	{
+		//the last started first
+		while (!m_systems.empty())
+		{
+			auto running = m_systems.back();
+			shutdown_system(running);
+			m_systems.erase(std::find(m_systems.begin(), m_systems.end(), running));
+		}
+	}
+	void BaseContext::post_initialize_systems()
+	{
+		if (m_systems_post_initialized) return;
+		m_systems_post_initialized = true;
+		//lower ring up (by index: a system can start/stop others)
+		for (size_t i = 0; i < m_systems.size(); ++i)
+		{
+			Shared<System> running = m_systems[i];
+			running->post_initialize();
+		}
+	}
+	void BaseContext::pre_shutdown_systems()
+	{
+		if (!m_systems_post_initialized) return;
+		m_systems_post_initialized = false;
+		//upper ring down
+		for (size_t i = m_systems.size(); i > 0; --i)
+		{
+			if (i > m_systems.size()) continue;
+			Shared<System> running = m_systems[i - 1];
+			running->pre_shutdown();
+		}
+	}
+	//worlds
+	const std::vector<Scene::World*>& BaseContext::worlds() const
+	{
+		return m_worlds;
+	}
+	void BaseContext::add_world(Scene::World* world)
+	{
+		m_worlds.push_back(world);
+	}
+	void BaseContext::remove_world(Scene::World* world)
+	{
+		m_worlds.erase(std::remove(m_worlds.begin(), m_worlds.end(), world), m_worlds.end());
+	}
+	void BaseContext::clear_resources()
+	{
+		m_resources.clear();
+		m_resource_scopes.clear();
+	}
+	void BaseContext::update_systems(double delta_time)
+	{
+		//lower ring up (by index: a system can start/stop others)
+		for (size_t i = 0; i < m_systems.size(); ++i)
+		{
+			Shared<System> running = m_systems[i];
+			running->update(delta_time);
+		}
+	}
+	void BaseContext::late_update_systems(double delta_time)
+	{
+		//upper ring down: the render device is the last one
+		for (size_t i = m_systems.size(); i > 0; --i)
+		{
+			if (i > m_systems.size()) continue;
+			Shared<System> running = m_systems[i - 1];
+			running->late_update(delta_time);
+		}
 	}
 
 	void BaseContext::clear()
 	{
+		//systems
+		stop_systems();
+		m_systems_info.clear();
         //
 		m_variables.clear();
 		m_attributes.clear();

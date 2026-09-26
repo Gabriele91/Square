@@ -132,6 +132,8 @@ namespace Square
 		//ctx info
 		Context*	     context();
 		Render::Context* render();
+		//render driver asked to execute (used by the RenderSystem)
+		const WindowRenderDriver& render_driver() const;
         //get attr (const)
         const AppInterface*   app_instance() const;
         Allocator*            allocator() const;
@@ -157,18 +159,15 @@ namespace Square
 		static Application*     instance();
 
     private:
-        //info screen
+        //info screen (input, world and render device are systems of the context)
         Video::Window*      m_window{ nullptr };
-		Video::Input*       m_input{ nullptr };
-		Scene::World*       m_world{ nullptr };
+        WindowRenderDriver  m_render_driver;
 		//info instance
         AppInterface*       m_instance{ nullptr };
 		//context (delta of update)
         double              m_last_delta_time{ 0 };
 		//context (application context)
 		Context				m_context;
-		Render::Context*	m_render{ nullptr };
-        Render::RenderInspector* m_inspector{ nullptr };
         //global
         static Application* s_instance;
     };

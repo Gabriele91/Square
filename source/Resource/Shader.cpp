@@ -8,6 +8,7 @@
 #include <HLSL2ALL/HLSL2ALL.h>
 //Square includes
 #include "Square/Config.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Core/Application.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/StringUtilities.h"
@@ -59,7 +60,7 @@ namespace Resource
 		, m_add_GL_ARB_shading_language_420pack(false)
 		, m_add_GL_EXT_control_flow_attributes(false)
 	{
-		if (auto render = context.render(); 
+		if (auto render = System::get<RenderSystem>(context)->render(); 
 			render
 			&& render->get_render_driver_info().m_render_driver == Square::Render::DR_OPENGL 
 			&& render->get_render_driver_info().m_shader_language == "GLSL")
@@ -170,7 +171,7 @@ namespace Resource
 		source.m_version = m_glsl_compatible_settings.m_shader_version;
 		source.m_texture_target = false;
 		//OpenGL or DirectX or Metal
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 		{
 			const auto& lang = render->get_render_driver_info().m_shader_language;
 			source.m_hlsl_target = (lang == "HLSL");
@@ -191,7 +192,7 @@ namespace Resource
 			// Output encode (linear→sRGB): let the hardware do it only when the
 			// framebuffer is actually sRGB-capable (DX UNORM_SRGB or GL with sRGB FB).
 			// Otherwise the shader handles it via to_srgb_space() as a fallback.
-			if (auto render = context().render())
+			if (auto render = System::get<RenderSystem>(context())->render())
 			if (render->is_srgb_framebuffer())
 				shader_commond_header += "#define ENABLE_TARGET_SRGB 1\n";
 		}
@@ -363,7 +364,7 @@ namespace Resource
 		}
 		////////////////////////////////////////////////////////////////////////////////
 		// load shaders from files
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 		{
 			//compile
 			m_shader = render->create_shader(render_shader_info);
@@ -474,7 +475,7 @@ namespace Resource
 		
 		////////////////////////////////////////////////////////////////////////////////
 		// load shaders from files
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 		{
 			//compile
 			m_shader = render->create_shader(shader_info);
@@ -522,7 +523,7 @@ namespace Resource
 		HLSL2ALL::MSLConfig msl_config;
 		msl_config.m_ios   = false;
 		msl_config.m_macos = true;
-		if (const auto render = context().render(); render != nullptr)
+		if (const auto render = System::get<RenderSystem>(context())->render(); render != nullptr)
 		{
 			msl_config.m_msl_version = render->get_render_driver_info().m_shader_version; // MSL 2.0
 		}
@@ -558,7 +559,7 @@ namespace Resource
 			});
 		}
 
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 		{
 			m_shader = render->create_shader(shader_info);
 			if (!m_shader || render->shader_linked_with_error(m_shader))
@@ -581,14 +582,14 @@ namespace Resource
     //get buffer
     Render::Uniform* Shader::uniform(const std::string& name) const
     {
-        if (auto render = context().render())
+        if (auto render = System::get<RenderSystem>(context())->render())
             return render->get_uniform(m_shader, std::string(name));
         return nullptr;
     }
     
     Render::UniformConstBuffer* Shader::constant_buffer(const std::string& name) const
     {
-        if (auto render = context().render())
+        if (auto render = System::get<RenderSystem>(context())->render())
             return render->get_uniform_const_buffer(m_shader, name);
         return nullptr;
     }
@@ -601,14 +602,14 @@ namespace Resource
 	//bind shader
 	void Shader::bind()
 	{
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 			render->bind_shader(m_shader);
 	}
 
 	//unbind shader
 	void Shader::unbind()
 	{
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 			render->unbind_shader(m_shader);
 	}
 
@@ -621,7 +622,7 @@ namespace Resource
 		m_cbuffer_map.clear();
 		//delete last shader
 		if (m_shader)
-			if (auto render = context().render())
+			if (auto render = System::get<RenderSystem>(context())->render())
 				render->delete_shader(m_shader);
 		m_shader = nullptr;
 	}

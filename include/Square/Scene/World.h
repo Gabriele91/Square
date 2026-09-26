@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 10/03/18.
-//  Copyright © 2017 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2017 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -16,6 +16,9 @@
 
 namespace Square
 {
+	class System;
+	class SystemInstance;
+	using SystemInstanceList = std::vector< Shared<SystemInstance> >;
 namespace Scene
 {
 	//..................
@@ -67,6 +70,17 @@ namespace Scene
 		void send_message(const VariantRef& value, bool brodcast = false);
 		void send_message(const Message& msg, bool brodcast = false);
 
+		//systems: the state of every system in this world (created by the systems)
+		void add_instance(System& system);
+		void remove_instances(const System& system);
+		void clear_instances();
+		Shared<SystemInstance> instance(uint64 instance_id) const;
+		const SystemInstanceList& instances() const;
+		template< class T > Shared<T> instance() const
+		{
+			return DynamicPointerCast<T>(instance(T::static_object_id()));
+		}
+
 		//serialize
 		void serialize(Data::Archive& archive);
 		void serialize_json(Data::JsonValue& archive);
@@ -80,6 +94,8 @@ namespace Scene
 		std::string m_name;
 		//actor list
 		LevelList m_levels;
+		//system instances
+		SystemInstanceList m_instances;
 	};
 }
 }

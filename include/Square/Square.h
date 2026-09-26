@@ -23,6 +23,11 @@
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/Application.h"
+/* --- System --- */
+#include "Square/System/System.h"
+#include "Square/System/RenderSystem.h"
+#include "Square/System/InputSystem.h"
+#include "Square/System/SceneSystem.h"
 /* --- Math --- */
 #include "Square/Math/Linear.h"
 #include "Square/Math/Tangent.h"

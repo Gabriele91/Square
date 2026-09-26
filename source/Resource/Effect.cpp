@@ -6,6 +6,7 @@
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Config.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Data/ParserEffect.h"
@@ -109,7 +110,7 @@ namespace Resource
         //test sub effect
         for(Parser::Effect::SubEffectField& sub_effect : e_context.m_sub_effect )
         {
-            if(sub_effect.m_requirement.test(context().render()))
+            if(sub_effect.m_requirement.test(System::get<RenderSystem>(context())->render()))
             {
                 ptr_sub_effect = &sub_effect;
                 break;
@@ -274,7 +275,7 @@ namespace Resource
 						if (!this_pass.m_uniform_multipass) this_pass.m_uniform_multipass = this_pass.m_shader->constant_buffer("multi_pass");
 						//create its backing buffer only when the shader declares it
 						if (this_pass.m_uniform_multipass)
-							this_pass.m_cb_multipass = Render::stream_constant_buffer<Render::UniformMultiPass>(context().render());
+							this_pass.m_cb_multipass = Render::stream_constant_buffer<Render::UniformMultiPass>(System::get<RenderSystem>(context())->render());
 						//lights uniforms
 						switch (current_shader_def)
 						{

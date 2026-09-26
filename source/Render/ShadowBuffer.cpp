@@ -6,6 +6,7 @@
 //  Copyright � 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Core/Context.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Driver/Render.h"
 #include "Square/Render/Light.h"
 #include "Square/Render/ShadowBuffer.h"
@@ -40,7 +41,7 @@ namespace Render
         //delete if target
         if(m_target) destoy();
         //
-        if(auto render = context().render())
+        if(auto render = System::get<RenderSystem>(context())->render())
         {
             //save size
             m_size = size;
@@ -100,7 +101,7 @@ namespace Render
     }
     void ShadowBuffer::destoy()
     {
-        if(auto render = context().render())
+        if(auto render = System::get<RenderSystem>(context())->render())
         {
             if (m_target)  render->delete_render_target(m_target);
 			if (m_texture) render->delete_texture(m_texture);

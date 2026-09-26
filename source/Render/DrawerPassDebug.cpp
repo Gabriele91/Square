@@ -1,4 +1,5 @@
 #include "Square/Core/Context.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Driver/Render.h"
 #include "Square/Driver/RenderInspector.h"
 #include "Square/Render/Material.h"
@@ -417,8 +418,8 @@ namespace Render
     Square::Context& DrawerPassDebug::context(){ return m_context; }
     const Square::Context& DrawerPassDebug::context() const { return m_context; }
     //render
-    Render::Context& DrawerPassDebug::render(){ return *context().render(); }
-    const Render::Context& DrawerPassDebug::render() const { return *context().render(); }
+    Render::Context& DrawerPassDebug::render(){ return *System::get<RenderSystem>(context())->render(); }
+    const Render::Context& DrawerPassDebug::render() const { return *System::get<RenderSystem>(context())->render(); }
     //draw
     void DrawerPassDebug::draw
     (
