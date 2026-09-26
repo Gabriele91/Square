@@ -130,6 +130,8 @@ namespace Scene
 		//get level
 		Weak<Level> level() const;
         void   level(Weak<Level> level);
+		//get world (of its level)
+		Weak<World> world() const;
 		bool   is_root_of_level() const;
 		bool   remove_from_level();
         

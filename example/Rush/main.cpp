@@ -32,10 +32,10 @@ public:
 			const bool down = action == Square::Video::ActionEvent::PRESS;
 			switch (key)
 			{
-			case Square::Video::KEY_UP:    m_hovercraft_input.forward  = down; return;
-			case Square::Video::KEY_DOWN:  m_hovercraft_input.backward = down; return;
-			case Square::Video::KEY_LEFT:  m_hovercraft_input.left     = down; return;
-			case Square::Video::KEY_RIGHT: m_hovercraft_input.right    = down; return;
+			case Square::Video::KEY_UP:    if (m_driver) m_driver->input().forward  = down; return;
+			case Square::Video::KEY_DOWN:  if (m_driver) m_driver->input().backward = down; return;
+			case Square::Video::KEY_LEFT:  if (m_driver) m_driver->input().left     = down; return;
+			case Square::Video::KEY_RIGHT: if (m_driver) m_driver->input().right    = down; return;
 			default: break;
 			}
 		}
@@ -99,9 +99,9 @@ public:
 			break;
 		case Square::Video::KEY_SPACE:
 			//back on the ground at the start
-			if (action == Square::Video::ActionEvent::PRESS && m_hovercraft_drive)
+			if (action == Square::Video::ActionEvent::PRESS && m_driver)
 			{
-				m_hovercraft_drive->spawn(0.0f, 0.0f);
+				m_driver->spawn(0.0f, 0.0f);
 			}
 		break;
 		default: break;
@@ -135,6 +135,8 @@ public:
 			const char* rendering_type = std::getenv("SQUARE_RENDERING");
 			render_world->pipeline(rendering_type && Square::case_insensitive_equal(rendering_type, "forward") ? "forward" : "deferred");
 		}
+		// collisions of the world (a game system, started on demand)
+		context().start_system<CollisionSystem>();
 		// arena
 		if (auto arena = m_level->load_actor("arena/scene"))
 		{
@@ -145,8 +147,11 @@ public:
 			m_light = arena->child("light") ? arena->child("light") : arena->child("sun");
 			if (!m_light) context().logger()->info("arena has no 'sun'/'light' node");
 			// the solid triangles of the arena (after it is placed)
-			m_collision.add(context(), arena);
-			context().logger()->info("arena collision triangles: " + std::to_string(m_collision.size()));
+			if (auto collision = world().instance<CollisionWorld>())
+			{
+				collision->add(context(), arena);
+				context().logger()->info("arena collision triangles: " + std::to_string(collision->mesh().size()));
+			}
 		}
 		else
 		{
@@ -160,8 +165,11 @@ public:
 		{
 			// the model is about twice the size that fits the arena
 			m_hovercraft->scale({ 0.5f, 0.5f, 0.5f });
-			m_hovercraft_drive = std::make_unique<Hovercraft>(context(), m_hovercraft, m_camera, m_collision, hovercraft_settings());
-			m_hovercraft_drive->spawn(0.0f, 0.0f);
+			// the driver: a component of the hovercraft, updated every frame by the scene
+			m_driver = m_hovercraft->component<HovercraftDriver>();
+			m_driver->settings() = hovercraft_settings();
+			m_driver->camera(m_camera);
+			m_driver->spawn(0.0f, 0.0f);
 		}
 		else
 		{
@@ -175,11 +183,6 @@ public:
 		m_acc += dt;
 		//fps counter
 		m_counter.count_frame();
-		// hovercraft: arrows drive/steer, the camera follows
-		if (m_hovercraft_drive)
-		{
-			m_hovercraft_drive->update(dt, m_hovercraft_input);
-		}
 		//loop event
         return m_loop;
     }
@@ -257,9 +260,7 @@ private:
 	Square::Shared<Square::Scene::Actor>      m_camera;
 	Square::Shared<Square::Scene::Actor>      m_light;
 	Square::Shared<Square::Scene::Actor>      m_hovercraft;
-	CollisionMesh                             m_collision;
-	std::unique_ptr<Hovercraft>               m_hovercraft_drive;
-	Hovercraft::Input                         m_hovercraft_input;
+	Square::Shared<HovercraftDriver>          m_driver;
 };
 
 static Square::Shell::ParserCommands s_ShellCommands

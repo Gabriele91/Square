@@ -417,6 +417,11 @@ namespace Scene
 	{
 		if (m_level.lock()) return m_level;
 		else return Weak<Level>();
+	}
+	Weak<World> Actor::world() const
+	{
+		if (auto shared_level = m_level.lock()) return shared_level->world();
+		return Weak<World>();
 	}	
 
 	bool Actor::is_root_of_level() const

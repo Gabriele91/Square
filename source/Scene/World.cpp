@@ -90,12 +90,8 @@ namespace Scene
 	//add an level	
 	Shared<Level> World::level()
 	{
-		m_levels.push_back(MakeShared<Level>(context()));
+		m_levels.push_back(MakeShared<Level>(context(), weak_from_this()));
 		return m_levels.back();
-	}
-	void  World::add(Shared<Level> level)
-	{
-		m_levels.push_back(level);
 	}
 
 	//query
@@ -108,9 +104,9 @@ namespace Scene
 		//search
 		for (const Shared<Level>& level : m_levels) if (level->name() == name) return level;
 		//create
-		auto level = MakeShared<Level>(context(), name);
+		auto level = MakeShared<Level>(context(), weak_from_this(), name);
 		//add
-		add(level);
+		m_levels.push_back(level);
 		//return
 		return level;
 	}		
@@ -162,9 +158,27 @@ namespace Scene
 	{
 		//remove child from list
 		auto it = std::find(m_levels.begin(), m_levels.end(), level_);
-		if (it != m_levels.end()) { m_levels.erase(it); return true; }
+		if (it != m_levels.end()) { (*it)->m_world.reset(); m_levels.erase(it); return true; }
 		//return
 		return false;
+	}
+
+	//every frame
+	void World::update(double delta_time)
+	{
+		for (size_t i = 0; i < m_levels.size(); ++i)
+		{
+			Shared<Level> level = m_levels[i];
+			level->update(delta_time);
+		}
+	}
+	void World::late_update(double delta_time)
+	{
+		for (size_t i = 0; i < m_levels.size(); ++i)
+		{
+			Shared<Level> level = m_levels[i];
+			level->late_update(delta_time);
+		}
 	}
 
 	//message
@@ -214,6 +228,7 @@ namespace Scene
 	void  World::deserialize(Data::Archive& archive)
 	{
 		///clear
+		for (auto& old_level : m_levels) old_level->m_world.reset();
 		m_levels.clear(); //todo: call events
 						  //deserialize this
 		Data::deserialize(archive, this);
@@ -230,6 +245,7 @@ namespace Scene
 	void  World::deserialize_json(Data::JsonValue& archive)
 	{
 		///clear
+		for (auto& old_level : m_levels) old_level->m_world.reset();
 		m_levels.clear(); //todo: call events
 						  //deserialize this
 		if(archive.contains("data") && archive["data"].is_object())

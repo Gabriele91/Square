@@ -274,3 +274,65 @@ void Hovercraft::follow_camera()
 	const float pitch = -std::atan2(direction.y, horizontal);
 	m_camera->rotation(angle_axis(yaw, Vec3(0.0f, 1.0f, 0.0f)) * angle_axis(pitch, Vec3(1.0f, 0.0f, 0.0f)));
 }
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//HovercraftDriver
+SQUARE_CLASS_OBJECT_REGISTRATION(HovercraftDriver);
+
+void HovercraftDriver::object_registration(Context& ctx)
+{
+	//factory: actor->component<HovercraftDriver>()
+	ctx.add_object<HovercraftDriver>();
+}
+
+HovercraftDriver::HovercraftDriver(Context& context) : Component(context)
+{
+}
+
+bool HovercraftDriver::ready()
+{
+	if (m_hovercraft) return true;
+	auto actor = this->actor().lock();
+	auto current_world = world().lock();
+	if (!actor || !current_world) return false;
+	auto collision = current_world->instance<CollisionWorld>();
+	if (!collision) return false;
+	m_hovercraft = std::make_unique<Hovercraft>(context(), actor, m_camera, collision->mesh(), m_settings);
+	return true;
+}
+
+void HovercraftDriver::spawn(float x, float z)
+{
+	if (ready()) m_hovercraft->spawn(x, z);
+}
+
+void HovercraftDriver::on_deattch()
+{
+	m_hovercraft.reset();
+}
+
+void HovercraftDriver::on_update(double delta_time)
+{
+	if (ready()) m_hovercraft->update(delta_time, m_input);
+}
+
+void HovercraftDriver::serialize(Data::Archive& archive)
+{
+	Data::serialize(archive, this);
+}
+
+void HovercraftDriver::serialize_json(Data::JsonValue& archive)
+{
+	Data::serialize_json(archive, this);
+}
+
+void HovercraftDriver::deserialize(Data::Archive& archive)
+{
+	Data::deserialize(archive, this);
+}
+
+void HovercraftDriver::deserialize_json(Data::JsonValue& archive)
+{
+	Data::deserialize_json(archive, this);
+}

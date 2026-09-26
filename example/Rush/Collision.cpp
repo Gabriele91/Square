@@ -234,3 +234,34 @@ bool CollisionMesh::push_out(Vec3& center, float radius, float max_normal_y) con
 	}
 	return moved;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//CollisionWorld
+CollisionWorld::CollisionWorld(Context& context, System& system, Scene::World& world)
+: SystemInstance(context, system, world)
+{
+}
+
+void CollisionWorld::add(Context& context, const Shared<Scene::Actor>& actor)
+{
+	m_mesh.add(context, actor);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//CollisionSystem
+SQUARE_CLASS_OBJECT_REGISTRATION(CollisionSystem);
+
+void CollisionSystem::object_registration(Context& ctx)
+{
+	//system: when the game starts it
+	ctx.add_system<CollisionSystem>(SystemStartup::ON_DEMAND);
+}
+
+CollisionSystem::CollisionSystem(Context& context) : System(context)
+{
+}
+
+Shared<SystemInstance> CollisionSystem::create_instance(Scene::World& world)
+{
+	return MakeShared<CollisionWorld>(context(), *this, world);
+}

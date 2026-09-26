@@ -6,6 +6,7 @@
 //
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"
+#include "Square/Scene/Level.h"
 
 namespace Square
 {
@@ -37,6 +38,19 @@ namespace Scene
     const Weak<Actor> Component::actor() const
     {
         return m_parent;
+    }
+
+    //level and world
+    Weak<Level> Component::level() const
+    {
+        if (auto shared_actor = m_parent.lock()) return shared_actor->level();
+        return Weak<Level>();
+    }
+
+    Weak<World> Component::world() const
+    {
+        if (auto shared_actor = m_parent.lock()) return shared_actor->world();
+        return Weak<World>();
     }
     
     //internal

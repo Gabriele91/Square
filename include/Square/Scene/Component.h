@@ -22,6 +22,8 @@ namespace Scene
     //..................
     //declaretion
     class  Actor;
+    class  Level;
+    class  World;
     class  Component;
 	struct Message;
 	//Alias
@@ -69,12 +71,19 @@ namespace Scene
         //actor
 		Weak<Actor> actor();
         const Weak<Actor> actor() const;
+        //level and world of its actor (empty while the actor is out of them)
+        Weak<Level> level() const;
+        Weak<World> world() const;
                 
         //all events
         virtual void on_attach(Actor& entity)      {}
         virtual void on_deattch()                  {}
         virtual void on_transform()                {}
         virtual void on_message(const Message& msg){}
+        //every frame, while its actor is in a world (SceneSystem): before AppInterface::run,
+        //and after it (before the render)
+        virtual void on_update(double delta_time)      {}
+        virtual void on_late_update(double delta_time) {}
         
         //virtual
         virtual void serialize(Data::Archive& archive) = 0;

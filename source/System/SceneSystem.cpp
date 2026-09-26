@@ -40,6 +40,19 @@ namespace Square
 		m_world.reset();
 	}
 
+	void SceneSystem::update(double delta_time)
+	{
+		//by index: a component can create/destroy worlds
+		const auto& worlds = context().worlds();
+		for (size_t i = 0; i < worlds.size(); ++i) worlds[i]->update(delta_time);
+	}
+
+	void SceneSystem::late_update(double delta_time)
+	{
+		const auto& worlds = context().worlds();
+		for (size_t i = 0; i < worlds.size(); ++i) worlds[i]->late_update(delta_time);
+	}
+
 	Shared<Scene::World> SceneSystem::world() const
 	{
 		return m_world;

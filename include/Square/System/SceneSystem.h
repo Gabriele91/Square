@@ -35,6 +35,10 @@ namespace Square
 		//System
 		virtual bool initialize() override;
 		virtual void shutdown() override;
+		
+		//the components of the actors of every world (Component::on_update / on_late_update)
+		virtual void update(double delta_time) override;
+		virtual void late_update(double delta_time) override;
 
 		//the world
 		Shared<Scene::World> world() const;

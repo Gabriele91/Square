@@ -25,17 +25,17 @@ namespace Scene
 	//Registration in context
 	void Level::object_registration(Context& ctx)
 	{
-		//factory
-		ctx.add_object<Level>();
+		//no factory: a level is created by its world (World::level)
 		//Attributes
 		ctx.add_attribute_field<Level, std::string>("name", std::string(), offsetof(Level,m_name));
 	}
 
 	//constructor
-	Level::Level(Context& context) : Object(context), SharedObject_t(context.allocator())
-	{
-	}
-	Level::Level(Context& context, const std::string& name) : Object(context), SharedObject_t(context.allocator()), m_name(name)
+	Level::Level(Context& context, Weak<World> world, const std::string& name)
+	: Object(context)
+	, SharedObject_t(context.allocator())
+	, m_name(name)
+	, m_world(world)
 	{
 	}
 	Level::~Level()
@@ -289,6 +289,30 @@ namespace Scene
 	const Render::Collection& Level::randerable_collection() const
 	{
 		return m_rander_collection;
+	}
+
+	//world
+	Weak<World> Level::world() const
+	{
+		return m_world;
+	}
+
+	//every frame: the components of the actors
+	void Level::update(double delta_time)
+	{
+		visit([delta_time](Shared<Actor> actor) -> bool
+		{
+			for (auto& component : actor->components()) component.second->on_update(delta_time);
+			return true;
+		});
+	}
+	void Level::late_update(double delta_time)
+	{
+		visit([delta_time](Shared<Actor> actor) -> bool
+		{
+			for (auto& component : actor->components()) component.second->on_late_update(delta_time);
+			return true;
+		});
 	}
 
 	//added an actor

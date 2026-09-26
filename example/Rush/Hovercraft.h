@@ -13,11 +13,15 @@
 //  - the camera moves towards a point behind the hull and looks at it.
 //  The values are per step, and the simulation runs at a fixed 60 steps per second,
 //  like the per frame loop of the original.
+//  HovercraftDriver: the component that drives its actor as a hovercraft, every frame
+//  (Component::on_update, before AppInterface::run: the input of the frame is there),
+//  colliding with the CollisionWorld of its world.
 //
 #pragma once
 #include <Square/Square.h>
 #include <array>
 #include <vector>
+#include <memory>
 
 class CollisionMesh;
 
@@ -108,4 +112,47 @@ private:
 	Square::Vec3 m_velocity{ 0.0f };          //x/z shared by the wheels, per step
 	float        m_speed{ 0.0f };
 	double       m_time{ 0.0 };
+};
+
+
+//the component: drives its actor as a hovercraft
+class HovercraftDriver : public Square::Scene::Component
+{
+public:
+	SQUARE_OBJECT(HovercraftDriver)
+
+	//Registration in context
+	static void object_registration(Square::Context& ctx);
+
+	HovercraftDriver(Square::Context& context);
+
+	//settings and chase camera: before the first spawn/update (the hovercraft is made then,
+	//from the meshes of the actor, with its scale)
+	Hovercraft::Settings& settings() { return m_settings; }
+	void camera(Square::Shared<Square::Scene::Actor> camera) { m_camera = camera; }
+
+	//controls, held (set by the game)
+	Hovercraft::Input& input() { return m_input; }
+
+	//on the ground at x, z, still
+	void spawn(float x, float z);
+	float speed() const { return m_hovercraft ? m_hovercraft->speed() : 0.0f; }
+
+	//events
+	virtual void on_deattch() override;
+	virtual void on_update(double delta_time) override;
+
+	//serialize (no attributes)
+	virtual void serialize(Square::Data::Archive& archive) override;
+	virtual void serialize_json(Square::Data::JsonValue& archive) override;
+	virtual void deserialize(Square::Data::Archive& archive) override;
+	virtual void deserialize_json(Square::Data::JsonValue& archive) override;
+
+private:
+	Hovercraft::Settings                 m_settings;
+	Hovercraft::Input                    m_input;
+	Square::Shared<Square::Scene::Actor> m_camera;
+	std::unique_ptr<Hovercraft>          m_hovercraft;
+	//the hovercraft, made when the actor is in a world with a CollisionWorld
+	bool ready();
 };
