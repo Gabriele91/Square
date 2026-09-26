@@ -12,6 +12,7 @@
 #include "Square/Core/Resource.h"
 #include "Square/Core/Attribute.h"
 #include "Square/Core/Logger.h"
+#include "Square/System/System.h"
 #include <unordered_map>
 #include <ostream>
 #include <regex>
@@ -36,6 +37,9 @@ namespace Square
 	{
 		class World;
 	}
+	//Systems
+	class System;
+	using SystemList = std::vector< Shared<System> >;
 	//Context without template (dll)
 	class SQUARE_API BaseContext
 	{
@@ -97,35 +101,61 @@ namespace Square
 
 		//Add variable
         void add_variable(const std::string& name, const Variant& value);
-		
+
+		//System class: in the object factory (like add_resource), with when it starts (start-up
+		//or on demand) and its ring; called by the object_registration of a system
+		void add_system(Shared<ObjectFactory> object_fectory, SystemStartup startup, unsigned int ring);
+		const SystemInfo* system_info(const std::string& name) const;
+		const SystemInfo* system_info(uint64 id) const;
+
+		//Systems running: created by the object factory, initialized and given to the worlds;
+		//a system is started once
+		System* start_system(const std::string& name);
+		System* start_system(uint64 id);
+		//start the AUTOMATIC systems, from the lower ring up (the Application calls it at start-up)
+		void start_systems();
+		//a running system, nullptr if it is not running
+		System* system(const std::string& name) const;
+		System* system(uint64 id) const;
+		//running, from the lower ring up
+		const SystemList& systems() const;
+		//shut down a system (its world instances first)
+		bool stop_system(const std::string& name);
+		bool stop_system(uint64 id);
+		//shut down all the systems, from the upper ring down
+		void stop_systems();
+		//the phases around the application: post_initialize after AppInterface::start, from the
+		//lower ring up; pre_shutdown before AppInterface::end, from the upper ring down (the
+		//Application calls them). Between the two, a system started/stopped gets them at once
+		void post_initialize_systems();
+		void pre_shutdown_systems();
+		//a frame of the systems: before AppInterface::run from the lower ring up, after it
+		//from the upper ring down (the Application calls them)
+		void update_systems(double delta_time);
+		void late_update_systems(double delta_time);
+
+		//unload all the loaded resources (their files stay registered)
+		void clear_resources();
+
+		//the worlds alive (a world adds/removes itself), they get the instances of the systems
+		const std::vector<Scene::World*>& worlds() const;
+
 		//get application
 		Application* application();
 		//get allocator
 		Allocator* allocator();
-        //get render
-        Render::Context* render();
 		//get logger
 		Logger* logger();
         //get window
         Video::Window* window();
-        //get window
-        Video::Input* input();
-		//get world
-		Scene::World* world();
         //get application
         const Application* application() const;
 		//get allocator
 		Allocator* allocator() const;
 		//get logger
 		Logger* logger() const;
-        //get render
-        const Render::Context* render() const;
         //get window
         const Video::Window* window() const;
-        //get window
-        const Video::Input* input() const;
-		//get world
-		const Scene::World* world() const;
 
 	protected:
 		//Can't alloc a BaseContext
@@ -160,6 +190,18 @@ namespace Square
 		ResourceObjectMap m_resources;
 		//folders ("arena", "a/b") of the resources being loaded, innermost last
 		std::vector<std::string> m_resource_scopes;
+		//worlds alive
+		std::vector<Scene::World*> m_worlds;
+		void add_world(Scene::World* world);
+		void remove_world(Scene::World* world);
+		friend class Scene::World;
+		//systems
+		SystemInfoMap    m_systems_info;
+		SystemList       m_systems;
+		//shut down a running system
+		void shutdown_system(const Shared<System>& system);
+		//between post_initialize_systems and pre_shutdown_systems
+		bool m_systems_post_initialized{ false };
 		//find/load a resource by its full name, no scope lookup
 		Shared<ResourceObject> load_resource(const std::string& name);
 		//friend class
@@ -207,12 +249,22 @@ namespace Square
 		using BaseContext::add_resource_path;
 		using BaseContext::add_resource_file;
 		using BaseContext::add_variable;
+		using BaseContext::add_system;
+		using BaseContext::system_info;
+		using BaseContext::start_system;
+		using BaseContext::start_systems;
+		using BaseContext::system;
+		using BaseContext::systems;
+		using BaseContext::stop_system;
+		using BaseContext::stop_systems;
+		using BaseContext::post_initialize_systems;
+		using BaseContext::pre_shutdown_systems;
+		using BaseContext::worlds;
+		using BaseContext::update_systems;
+		using BaseContext::late_update_systems;
 
 		using BaseContext::application;
-		using BaseContext::render;
 		using BaseContext::window;
-		using BaseContext::input;
-		using BaseContext::world;
 		using BaseContext::allocator;
 
 		//template utils
@@ -229,6 +281,31 @@ namespace Square
 		template< class T > inline void add_object()
 		{
 			BaseContext::add_object(MakeShared< ObjectFactoryItem<T> >(*this));
+		}
+
+		template< class T > inline void add_system(SystemStartup startup = SystemStartup::ON_DEMAND)
+		{
+			BaseContext::add_system(MakeShared< ObjectFactoryItem<T> >(*this), startup, T::static_system_ring());
+		}
+
+		template< class T > inline const SystemInfo* system_info() const
+		{
+			return BaseContext::system_info(T::static_object_id());
+		}
+
+		template< class T > inline T* start_system()
+		{
+			return static_cast<T*>(BaseContext::start_system(T::static_object_id()));
+		}
+
+		template< class T > inline bool stop_system()
+		{
+			return BaseContext::stop_system(T::static_object_id());
+		}
+
+		template< class T > inline T* system() const
+		{
+			return static_cast<T*>(BaseContext::system(T::static_object_id()));
 		}
 
 		template< class T > inline void add_resource(const std::vector< std::string >& exts)
@@ -340,5 +417,12 @@ namespace Square
 	MakeUnique(const Context& context, Args&&... args) {
 		return std::move(Unique<T>(SQ_NEW(context.allocator(), T, AllocType::ALCT_DEFAULT) T(context, std::forward<Args>(args)...),
 			                       DefaultDelete(context.allocator())));
+	}
+
+	//System::get, here: it needs the Context
+	template< class T >
+	inline T* System::get(const Context& context)
+	{
+		return context.system<T>();
 	}
 }

@@ -6,6 +6,7 @@
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Core/Context.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Driver/Render.h"
 #include "Square/Render/Material.h"
 #include "Square/Render/Effect.h"
@@ -40,8 +41,8 @@ namespace Render
     Square::Context& DrawerPassForward::context(){ return m_context; }
     const Square::Context& DrawerPassForward::context() const { return m_context; }
     //render
-    Render::Context& DrawerPassForward::render(){ return *context().render(); }
-    const Render::Context& DrawerPassForward::render() const { return *context().render(); }
+    Render::Context& DrawerPassForward::render(){ return *System::get<RenderSystem>(context())->render(); }
+    const Render::Context& DrawerPassForward::render() const { return *System::get<RenderSystem>(context())->render(); }
     //draw
     void DrawerPassForward::draw
     (

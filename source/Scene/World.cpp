@@ -14,6 +14,7 @@
 #include "Square/Scene/Level.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/World.h"
+#include "Square/System/System.h"
 #include <algorithm>
 
 namespace Square
@@ -34,9 +35,47 @@ namespace Scene
 
 	World::World(Context& context) : Object(context), SharedObject_t(context.allocator())
 	{
+		//alive: the systems started from now on give it their instances
+		context.add_world(this);
+		//the systems already running
+		for (const Shared<System>& system : context.systems()) add_instance(*system);
 	}
 	World::~World()
 	{
+		context().remove_world(this);
+		clear_instances();
+	}
+
+	//systems
+	void World::add_instance(System& system)
+	{
+		if (auto new_instance = system.create_instance(*this))
+		{
+			m_instances.push_back(new_instance);
+		}
+	}
+	void World::remove_instances(const System& system)
+	{
+		m_instances.erase(std::remove_if(m_instances.begin(), m_instances.end(), [&system](const Shared<SystemInstance>& world_instance)
+		{
+			return &world_instance->system() == &system;
+		}), m_instances.end());
+	}
+	void World::clear_instances()
+	{
+		m_instances.clear();
+	}
+	Shared<SystemInstance> World::instance(uint64 instance_id) const
+	{
+		for (const Shared<SystemInstance>& world_instance : m_instances)
+		{
+			if (world_instance->object_id() == instance_id) return world_instance;
+		}
+		return nullptr;
+	}
+	const SystemInstanceList& World::instances() const
+	{
+		return m_instances;
 	}
 	//name
 	const std::string& World::name() const

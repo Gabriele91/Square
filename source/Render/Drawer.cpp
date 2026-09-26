@@ -7,6 +7,7 @@
 //
 #include <set>
 #include "Square/Core/Context.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Driver/Render.h"
 #include "Square/Render/Drawer.h"
 #include "Square/Render/Viewport.h"
@@ -143,8 +144,8 @@ namespace Render
     Square::Context& Drawer::context(){ return m_context; }
     const Square::Context& Drawer::context() const { return m_context; }
     
-    Render::Context& Drawer::render(){ return *context().render(); }
-    const Render::Context& Drawer::render() const { return *context().render(); }
+    Render::Context& Drawer::render(){ return *System::get<RenderSystem>(context())->render(); }
+    const Render::Context& Drawer::render() const { return *System::get<RenderSystem>(context())->render(); }
     
     //draw
     void Drawer::draw(const Collection& collection, unsigned char draw_types)
