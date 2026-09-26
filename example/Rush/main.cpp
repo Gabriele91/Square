@@ -101,7 +101,7 @@ public:
 			//back on the ground at the start
 			if (action == Square::Video::ActionEvent::PRESS && m_driver)
 			{
-				m_driver->spawn(0.0f, 0.0f);
+				m_driver->spawn(s_start);
 			}
 		break;
 		default: break;
@@ -170,7 +170,7 @@ public:
 			m_driver = m_hovercraft->component<HovercraftDriver>();
 			m_driver->settings() = hovercraft_settings();
 			m_driver->camera(m_camera);
-			m_driver->spawn(0.0f, 0.0f);
+			m_driver->spawn(s_start);
 		}
 		else
 		{
@@ -187,6 +187,10 @@ public:
 		//loop event
         return m_loop;
     }
+
+	//start of the hovercraft: it drops on the first surface under it (under the roof, over
+	//the field)
+	static constexpr Square::Vec3 s_start{ 0.0f, 50.0f, 0.0f };
 
 	static Hovercraft::Settings hovercraft_settings()
 	{
