@@ -19,29 +19,48 @@
 #include "Square/Scene/World.h"
 #include "Square/Scene/Level.h"
 #include <algorithm>
-#include <cstdlib>
 
 namespace Square
 {
 	//Add element to objects
 	SQUARE_CLASS_OBJECT_REGISTRATION(RenderSystem);
+	SQUARE_CLASS_OBJECT_REGISTRATION(RenderInstance);
 
 	//Registration in context
 	void RenderSystem::object_registration(Context& ctx)
 	{
-		//system: at start-up (ring CORE: the device the other systems use)
+		//system: at start-up
 		ctx.add_system<RenderSystem>(SystemStartup::AUTOMATIC);
-		//Attributes
-		ctx.add_attribute_function<RenderSystem, std::string>
+	}
+
+	void RenderInstance::object_registration(Context& ctx)
+	{
+		//Attributes: the render settings of a world
+		ctx.add_attribute_function<RenderInstance, std::string>
 		("pipeline"
 		, std::string("deferred")
-		, [](const RenderSystem* system) -> std::string { return system->pipeline(); }
-		, [](RenderSystem* system, const std::string& pipeline) { system->pipeline(pipeline); });
-		ctx.add_attribute_function<RenderSystem, bool>
+		, [](const RenderInstance* instance) -> std::string { return instance->pipeline(); }
+		, [](RenderInstance* instance, const std::string& pipeline) { instance->pipeline(pipeline); });
+		ctx.add_attribute_function<RenderInstance, bool>
 		("shadows"
 		, true
-		, [](const RenderSystem* system) -> bool { return system->shadows(); }
-		, [](RenderSystem* system, const bool& enable) { system->shadows(enable); });
+		, [](const RenderInstance* instance) -> bool { return instance->shadows(); }
+		, [](RenderInstance* instance, const bool& enable) { instance->shadows(enable); });
+		ctx.add_attribute_function<RenderInstance, bool>
+		("debug"
+		, true
+		, [](const RenderInstance* instance) -> bool { return instance->debug(); }
+		, [](RenderInstance* instance, const bool& enable) { instance->debug(enable); });
+		ctx.add_attribute_function<RenderInstance, Vec4>
+		("clear_color"
+		, Vec4(0.25f, 0.5f, 1.0f, 1.0f)
+		, [](const RenderInstance* instance) -> Vec4 { return instance->clear_color(); }
+		, [](RenderInstance* instance, const Vec4& color) { instance->clear_color(color); });
+		ctx.add_attribute_function<RenderInstance, Vec4>
+		("ambient_color"
+		, Vec4(0.1f, 0.1f, 0.1f, 1.0f)
+		, [](const RenderInstance* instance) -> Vec4 { return instance->ambient_color(); }
+		, [](RenderInstance* instance, const Vec4& color) { instance->ambient_color(color); });
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -63,7 +82,7 @@ namespace Square
 		{
 			context().logger()->error("RenderSystem: unable to get window or application instance");
 			return false;
-		} 
+		}
 		// Render driver
 		const WindowRenderDriver& driver = application->render_driver();
 		m_render = Render::create_render_driver(context().allocator(), context().logger(), driver.m_type);
@@ -85,32 +104,28 @@ namespace Square
 		//flush errors, show info
 		m_render->print_errors();
 		m_render->print_info();
-		//SQUARE_RENDERING=forward|deferred
-		if (const char* rendering_type = std::getenv("SQUARE_RENDERING"))
-		{
-			m_pipeline = case_insensitive_equal(rendering_type, "forward") ? "forward" : "deferred";
-		}
-		//the drawer: post_initialize
+		//the drawers of the worlds: post_initialize
 		return true;
 	}
 
 	void RenderSystem::post_initialize()
 	{
 		//the passes load their effects: AppInterface::start has added the resources
-		build_drawer();
+		m_ready = true;
+		for (auto& instance : instances()) instance->build_drawer();
 	}
 
 	void RenderSystem::pre_shutdown()
 	{
-		m_debug.reset();
-		m_drawer.reset();
+		for (auto& instance : instances()) instance->release_drawer();
+		m_ready = false;
 	}
 
 	void RenderSystem::shutdown()
 	{
+		for (auto& instance : instances()) instance->release_drawer();
 		m_instances.clear();
-		m_debug.reset();
-		m_drawer.reset();
+		m_ready = false;
 		//the loaded resources hold objects of the device: they go before it
 		context().clear_resources();
 		if (m_render)
@@ -139,6 +154,8 @@ namespace Square
 	{
 		auto instance = MakeShared<RenderInstance>(context(), *this, world);
 		m_instances.push_back(instance);
+		//a world created while the application runs
+		if (m_ready) instance->build_drawer();
 		return instance;
 	}
 
@@ -147,73 +164,28 @@ namespace Square
 		return m_render;
 	}
 
-	const std::string& RenderSystem::pipeline() const
+	bool RenderSystem::ready() const
 	{
-		return m_pipeline;
+		return m_ready;
 	}
 
-	void RenderSystem::pipeline(const std::string& pipeline)
+	std::vector< Shared<RenderInstance> > RenderSystem::instances()
 	{
-		const std::string name = case_insensitive_equal(pipeline, "forward") ? "forward" : "deferred";
-		if (name == m_pipeline) return;
-		m_pipeline = name;
-		//already running: new passes
-		if (m_drawer) build_drawer();
-	}
-
-	bool RenderSystem::shadows() const
-	{
-		return m_shadows;
-	}
-
-	void RenderSystem::shadows(bool enable)
-	{
-		if (enable == m_shadows) return;
-		m_shadows = enable;
-		if (m_drawer) build_drawer();
-	}
-
-	Shared<Render::Drawer> RenderSystem::drawer() const
-	{
-		return m_drawer;
-	}
-
-	Shared<Render::DrawerPassDebug> RenderSystem::debug() const
-	{
-		return m_debug;
-	}
-
-	void RenderSystem::build_drawer()
-	{
-		//the debug flags survive a rebuild
-		const unsigned char debug_flags = m_debug ? m_debug->draw_flags() : 0;
-		m_drawer = MakeShared<Render::Drawer>(context());
-		if (m_pipeline == "forward")
+		//worlds gone
+		m_instances.erase(std::remove_if(m_instances.begin(), m_instances.end(), [](const Weak<RenderInstance>& instance) { return instance.expired(); }), m_instances.end());
+		std::vector< Shared<RenderInstance> > alive;
+		for (const Weak<RenderInstance>& weak_instance : m_instances)
 		{
-			context().logger()->info("Rendering: forward");
-			m_drawer->create<Render::DrawerPassForward>();
+			if (auto instance = weak_instance.lock()) alive.push_back(instance);
 		}
-		else
-		{
-			context().logger()->info("Rendering: deferred");
-			m_drawer->create<Render::DrawerPassDeferred>();
-		}
-		if (m_shadows) m_drawer->create<Render::DrawerPassShadow>();
-		m_debug = m_drawer->create<Render::DrawerPassDebug>();
-		m_debug->draw_flags(debug_flags);
+		return alive;
 	}
 
 	void RenderSystem::draw()
 	{
-		if (!m_drawer) return;
-		//worlds gone
-		m_instances.erase(std::remove_if(m_instances.begin(), m_instances.end(), [](const Weak<RenderInstance>& instance) { return instance.expired(); }), m_instances.end());
-		for (const Weak<RenderInstance>& weak_instance : m_instances)
+		for (auto& instance : instances())
 		{
-			if (auto instance = weak_instance.lock())
-			{
-				if (instance->visible()) instance->draw(*m_drawer);
-			}
+			if (instance->visible()) instance->draw();
 		}
 	}
 
@@ -232,6 +204,43 @@ namespace Square
 
 	RenderInstance::~RenderInstance()
 	{
+	}
+
+	const std::string& RenderInstance::pipeline() const
+	{
+		return m_pipeline;
+	}
+
+	void RenderInstance::pipeline(const std::string& pipeline)
+	{
+		const std::string name = case_insensitive_equal(pipeline, "forward") ? "forward" : "deferred";
+		if (name == m_pipeline) return;
+		m_pipeline = name;
+		rebuild_drawer();
+	}
+
+	bool RenderInstance::shadows() const
+	{
+		return m_shadows;
+	}
+
+	void RenderInstance::shadows(bool enable)
+	{
+		if (enable == m_shadows) return;
+		m_shadows = enable;
+		rebuild_drawer();
+	}
+
+	bool RenderInstance::debug() const
+	{
+		return m_debug;
+	}
+
+	void RenderInstance::debug(bool enable)
+	{
+		if (enable == m_debug) return;
+		m_debug = enable;
+		rebuild_drawer();
 	}
 
 	const Vec4& RenderInstance::clear_color() const
@@ -264,8 +273,55 @@ namespace Square
 		m_visible = visible;
 	}
 
-	void RenderInstance::draw(Render::Drawer& drawer)
+	Shared<Render::Drawer> RenderInstance::drawer() const
 	{
+		return m_drawer;
+	}
+
+	Shared<Render::DrawerPassDebug> RenderInstance::debug_pass() const
+	{
+		return m_debug_pass;
+	}
+
+	void RenderInstance::build_drawer()
+	{
+		//the debug flags survive a rebuild
+		const unsigned char debug_flags = m_debug_pass ? m_debug_pass->draw_flags() : 0;
+		m_drawer = MakeShared<Render::Drawer>(context());
+		if (m_pipeline == "forward")
+		{
+			context().logger()->info("Rendering: forward");
+			m_drawer->create<Render::DrawerPassForward>();
+		}
+		else
+		{
+			context().logger()->info("Rendering: deferred");
+			m_drawer->create<Render::DrawerPassDeferred>();
+		}
+		if (m_shadows) m_drawer->create<Render::DrawerPassShadow>();
+		m_debug_pass = nullptr;
+		if (m_debug)
+		{
+			m_debug_pass = m_drawer->create<Render::DrawerPassDebug>();
+			m_debug_pass->draw_flags(debug_flags);
+		}
+	}
+
+	void RenderInstance::release_drawer()
+	{
+		m_debug_pass.reset();
+		m_drawer.reset();
+	}
+
+	void RenderInstance::rebuild_drawer()
+	{
+		//only while the render system is ready (else post_initialize builds them)
+		if (m_drawer) build_drawer();
+	}
+
+	void RenderInstance::draw()
+	{
+		if (!m_drawer) return;
 		//one collection with the cameras, lights and renderables of all the levels
 		m_collection.clear();
 		for (const Shared<Scene::Level>& level : m_world.levels())
@@ -275,6 +331,6 @@ namespace Square
 			m_collection.m_lights.insert(m_collection.m_lights.end(), collection.m_lights.begin(), collection.m_lights.end());
 			m_collection.m_renderables.insert(m_collection.m_renderables.end(), collection.m_renderables.begin(), collection.m_renderables.end());
 		}
-		drawer.draw(m_clear_color, m_ambient_color, m_collection);
+		m_drawer->draw(m_clear_color, m_ambient_color, m_collection);
 	}
 }

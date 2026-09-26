@@ -148,6 +148,12 @@ public:
 		context().window()->get_size(window_width, window_height);
 		// level
 		m_level = world().level("main");
+		// rendering pipeline of the world: SQUARE_RENDERING=forward|deferred (default: deferred)
+		if (auto render_world = world().instance<RenderInstance>())
+		{
+			const char* rendering_type = std::getenv("SQUARE_RENDERING");
+			render_world->pipeline(rendering_type && Square::case_insensitive_equal(rendering_type, "forward") ? "forward" : "deferred");
+		}
 		// load
 		if (m_level->load_actor("base/scene"))
 		{
@@ -242,12 +248,12 @@ public:
 		}
 	}
 
-	//the debug pass of the render system (OBB, lights, textures): the RenderSystem draws the
-	//world every frame, its drawer exists after start()
+	//the debug pass of the world (OBB, lights, textures): the RenderSystem draws the world
+	//every frame, the drawer of the world exists after start()
 	Square::Shared<Square::Render::DrawerPassDebug> render_debug()
 	{
-		auto* render_system = Square::System::get<Square::RenderSystem>(context());
-		return render_system ? render_system->debug() : nullptr;
+		auto render_world = world().instance<Square::RenderInstance>();
+		return render_world ? render_world->debug_pass() : nullptr;
 	}
 
 private:
