@@ -48,9 +48,8 @@ namespace Scene
 		const std::string& name() const;
 		void name(const std::string&);
 
-		//add an level	
+		//a new level of this world (the world is created with MakeShared: its levels keep it weak)
 		Shared<Level> level();
-		void add(Shared<Level> level);
 
 		//query
 		Shared<Level> level(size_t index);
@@ -66,6 +65,10 @@ namespace Scene
 		bool remove(Shared<Actor> child);
 		bool remove(Shared<Level> child);
 			
+		//every frame (SceneSystem): the levels, and the components of their actors
+		void update(double delta_time);
+		void late_update(double delta_time);
+
 		//message
 		void send_message(const VariantRef& value, bool brodcast = false);
 		void send_message(const Message& msg, bool brodcast = false);

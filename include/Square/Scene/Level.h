@@ -37,9 +37,8 @@ namespace Scene
 		//Registration in context
 		static void object_registration(Context& ctx);
 
-		//constructor
-		Level(Context& context);
-		Level(Context& context, const std::string& name);
+		//constructor: a level is always of a world (World::level creates it)
+		Level(Context& context, Weak<World> world, const std::string& name = std::string());
 		virtual ~Level();
 
 		//add an actor
@@ -80,6 +79,13 @@ namespace Scene
 		//get randerable collection
 		const Render::Collection& randerable_collection() const;
 
+		//its world (empty if it is gone, or the level was removed from it)
+		Weak<World> world() const;
+
+		//every frame (SceneSystem): the events of the components of its actors
+		void update(double delta_time);
+		void late_update(double delta_time);
+
 	protected:
 		
 		//name
@@ -98,6 +104,10 @@ namespace Scene
 
 		//Collection
 		Render::Collection m_rander_collection;
+
+		//world, given by the world that creates it (reset only when it removes the level)
+		Weak<World> m_world;
+		friend class World;
 
 		//firend class
 		friend class Actor;
