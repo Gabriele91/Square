@@ -101,7 +101,7 @@ public:
 			//back on the ground at the start
 			if (action == Square::Video::ActionEvent::PRESS && m_driver)
 			{
-				m_driver->spawn(s_start);
+				m_driver->spawn(m_start);
 			}
 		break;
 		default: break;
@@ -158,8 +158,12 @@ public:
 				context().logger()->info("arena has no 'camera' node");
 			}
 			// Sun
-			m_light = arena->child("light") ? arena->child("light") : arena->child("sun");
-			if (!m_light)
+			m_light = arena->child("sun");
+			if (m_light)
+			{
+				m_light->component<DirectionLight>()->shadow({2048,2048});
+			}
+			else
 			{
 				context().logger()->info("arena has no 'sun'/'light' node");
 			}
@@ -168,6 +172,13 @@ public:
 			auto arena_collider = arena->component<MeshCollider>();
 			arena_collider->type(TYPE_SCENE);
 			context().logger()->info("arena collision triangles: " + std::to_string(arena_collider->mesh().size()));
+			// start of the hovercraft: the spawn point of the scene (after the arena is placed)
+			arena->visit([&](Shared<Actor> node) -> bool
+			{
+				if (node->name() != "spawn_point_1") return true;
+				m_start = node->position(true);
+				return false;
+			});
 		}
 		else
 		{
@@ -185,7 +196,7 @@ public:
 			m_driver = m_hovercraft->component<HovercraftDriver>();
 			m_driver->settings() = hovercraft_settings();
 			m_driver->camera(m_camera);
-			m_driver->spawn(s_start);
+			m_driver->spawn(m_start);
 		}
 		else
 		{
@@ -203,8 +214,8 @@ public:
         return m_loop;
     }
 
-	//start of the hovercraft: it drops on the first surface under it (under the roof, over
-	//the field)
+	//start of the hovercraft, when the arena has no spawn point: it drops on the first surface
+	//under it (under the roof, over the field)
 	static constexpr Square::Vec3 s_start{ 0.0f, 50.0f, 0.0f };
 
 	//collision types (Const BODY=1,WHEEL=2,SCENE=3)
@@ -285,12 +296,13 @@ private:
 
     bool m_loop = true;
 	double m_acc = 0;
-	Square::Time::FPSCounter				   m_counter;
-	Square::Shared<Square::Scene::Level>	   m_level;
+	Square::Time::FPSCounter				  m_counter;
+	Square::Shared<Square::Scene::Level>	  m_level;
 	Square::Shared<Square::Scene::Actor>      m_camera;
 	Square::Shared<Square::Scene::Actor>      m_light;
 	Square::Shared<Square::Scene::Actor>      m_hovercraft;
 	Square::Shared<HovercraftDriver>          m_driver;
+	Square::Vec3                              m_start{ s_start }; //spawn_point_1 of the arena
 };
 
 static Square::Shell::ParserCommands s_ShellCommands
