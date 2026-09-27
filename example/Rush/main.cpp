@@ -12,6 +12,7 @@
 #include <memory>
 #include "Collision.h"
 #include "Hovercraft.h"
+#include "Checkpoints.h"
 
 class RushGame : public Square::AppInterface
 {
@@ -145,7 +146,8 @@ public:
 			collision->collisions(TYPE_WHEEL, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDEXZ);
 		}
 		// arena
-		if (auto arena = m_level->load_actor("arena/scene"))
+		auto arena = m_level->load_actor("arena/scene");
+		if (arena)
 		{
 			arena->position({ 0.0f, 4.0f, 0.0f });
 			m_camera = arena->child("camera");
@@ -184,6 +186,34 @@ public:
 		{
 			context().logger()->info("Error to load arena");
 		}
+		// light beam: on the checkpoints of the arena (checkpoint_1, checkpoint_2...), to the
+		// following one when the hovercraft touches it
+		if (auto light_beam = m_level->load_actor("light_beam/scene"))
+		{
+			// its light: a point light in the middle, a little over the ground, with shadow and a
+			// large radius (a child of the beam: it goes with it from checkpoint to checkpoint)
+			auto beam_light = light_beam->child();
+			beam_light->name("light_beam_light");
+			beam_light->position({ 0.0f, 1.25f, 0.0f });
+			auto point_light = beam_light->component<PointLight>();
+			point_light->diffuse({ 0.1f, 0.7f, 1.0f });
+			point_light->specular({ 0.1f, 0.7f, 1.0f });
+			point_light->constant(1.0f);
+			point_light->radius(80.0f);
+			point_light->inside_radius(15.0f);
+			point_light->shadow({ 2048, 2048 });
+			m_checkpoints = light_beam->component<Checkpoints>();
+			const size_t count = m_checkpoints->collect(arena);
+			context().logger()->info("checkpoints: " + std::to_string(count));
+			m_checkpoints->on_reached([this](size_t index)
+			{
+				context().logger()->info("checkpoint " + std::to_string(index + 1) + " reached");
+			});
+		}
+		else
+		{
+			context().logger()->info("Error to load light_beam");
+		}
 		// the camera chases the hovercraft in world space: out of the arena, at the level root
 		if (m_camera) m_level->add(m_camera);
 		// hovercraft
@@ -197,6 +227,7 @@ public:
 			m_driver->settings() = hovercraft_settings();
 			m_driver->camera(m_camera);
 			m_driver->spawn(m_start);
+			if (m_checkpoints) m_checkpoints->target(m_hovercraft);
 		}
 		else
 		{
@@ -302,6 +333,7 @@ private:
 	Square::Shared<Square::Scene::Actor>      m_light;
 	Square::Shared<Square::Scene::Actor>      m_hovercraft;
 	Square::Shared<HovercraftDriver>          m_driver;
+	Square::Shared<Checkpoints>               m_checkpoints;
 	Square::Vec3                              m_start{ s_start }; //spawn_point_1 of the arena
 };
 

@@ -23,6 +23,8 @@ set(SOURCE_FILES
     Collision.cpp
     Hovercraft.h
     Hovercraft.cpp
+    Checkpoints.h
+    Checkpoints.cpp
 )
 
 # Create executable
