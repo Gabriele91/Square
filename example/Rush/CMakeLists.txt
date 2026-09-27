@@ -25,6 +25,10 @@ set(SOURCE_FILES
     Hovercraft.cpp
     Checkpoints.h
     Checkpoints.cpp
+    HovercraftInput.h
+    HovercraftInput.cpp
+    CameraFollow.h
+    CameraFollow.cpp
 )
 
 # Create executable

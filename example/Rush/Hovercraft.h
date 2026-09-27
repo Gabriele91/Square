@@ -8,8 +8,9 @@
 //    right then front/rear (AlignToVector); its velocity;
 //  - update_input: steering, then on the scene (EntityCollided) throttle/brake/drag forward
 //    along the body and a little gravity (MoveEntity, TranslateEntity), in the air the
-//    velocity plus gravity; the wheels back under the body;
-//  - update_camera: towards a point behind the body, looking at it.
+//    velocity plus gravity; the wheels back under the body.
+//  Who drives it writes its Input: the player (HovercraftInput) or, later, an NPC. The chase
+//  camera is a component of the camera (CameraFollow).
 //  Body: a sphere on the actor (half the hull height); wheels: spheres on four children (a
 //  quarter of it), height probes that come down on the ground under the corners.
 //  The values are per frame of the original (a step of 1/60 s): a frame of dt seconds counts
@@ -47,8 +48,6 @@ public:
 		int   wheel_type{ 2 };         //collision type of the wheels (WHEEL)
 		int   scene_type{ 3 };         //collision type of the ground (SCENE)
 		float floor_normal_y{ 0.5f };  //a body contact with normal.y under it is a wall (in front, or pushing down): no drive, it falls
-		Square::Vec3 camera_offset{ 0.0f, 8.0f, -25.0f }; //target pivot of the camera, in body space
-		float camera_follow{ 0.1f };   //share of the way to the target per step
 		double step{ 1.0 / 60.0 };     //seconds of a step (a frame of the original)
 	};
 
@@ -57,13 +56,14 @@ public:
 
 	HovercraftDriver(Square::Context& context);
 
-	//settings and chase camera: before the first spawn/update (body and wheels are made then,
-	//from the meshes of the actor, with its scale)
+	//settings: before the first spawn/update (body and wheels are made then, from the meshes
+	//of the actor, with its scale)
 	Settings& settings() { return m_settings; }
-	void camera(Square::Shared<Square::Scene::Actor> camera) { m_camera = camera; }
 
-	//controls, held (set by the game)
+	//controls, held (set by who drives it: the player, an NPC)
 	Input& input() { return m_input; }
+	//speed along the body, per step (negative: backward)
+	float speed() const { return m_speed; }
 
 	//drop it on the first surface under start, still
 	void spawn(const Square::Vec3& start);
@@ -87,13 +87,11 @@ private:
 	//a frame
 	void update(float steps);
 	void update_input(float steps);
-	void update_camera(float steps);
 	//the wheels back under the body
 	void place_wheels();
 
 	Settings                             m_settings;
 	Input                                m_input;
-	Square::Shared<Square::Scene::Actor> m_camera;
 	//body and wheels (offsets in body space, world units)
 	Square::Shared<SphereCollider>                      m_body;
 	std::array<Square::Shared<Square::Scene::Actor>, 4> m_wheels;

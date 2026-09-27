@@ -13,6 +13,8 @@
 #include "Collision.h"
 #include "Hovercraft.h"
 #include "Checkpoints.h"
+#include "HovercraftInput.h"
+#include "CameraFollow.h"
 
 class RushGame : public Square::AppInterface
 {
@@ -27,19 +29,8 @@ public:
 		//move vel
 		const auto  level_path = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.sq");
 		const auto  level_path_json = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.jsq");
-		//hovercraft controls: held state, applied every frame in run()
-		if (action != Square::Video::ActionEvent::REPEAT)
-		{
-			const bool down = action == Square::Video::ActionEvent::PRESS;
-			switch (key)
-			{
-			case Square::Video::KEY_UP:    if (m_driver) m_driver->input().forward  = down; return;
-			case Square::Video::KEY_DOWN:  if (m_driver) m_driver->input().backward = down; return;
-			case Square::Video::KEY_LEFT:  if (m_driver) m_driver->input().left     = down; return;
-			case Square::Video::KEY_RIGHT: if (m_driver) m_driver->input().right    = down; return;
-			default: break;
-			}
-		}
+		//controls of the player's hovercraft
+		if (m_player && m_player->key(key, action)) return;
 		//
 		switch (key)
 		{
@@ -100,9 +91,9 @@ public:
 			break;
 		case Square::Video::KEY_SPACE:
 			//back on the ground at the start
-			if (action == Square::Video::ActionEvent::PRESS && m_driver)
+			if (action == Square::Video::ActionEvent::PRESS)
 			{
-				m_driver->spawn(m_start);
+				spawn();
 			}
 		break;
 		default: break;
@@ -224,6 +215,7 @@ public:
 			auto camera_collider = m_camera->component<SphereCollider>();
 			camera_collider->type(TYPE_CAMERA);
 			camera_collider->radius(1.0f);
+			m_camera_follow = m_camera->component<CameraFollow>();
 		}
 		// hovercraft
 		m_hovercraft = m_level->load_actor("hovercraft/scene");
@@ -231,18 +223,29 @@ public:
 		{
 			// the model is about twice the size that fits the arena
 			m_hovercraft->scale({ 0.5f, 0.5f, 0.5f });
-			// the driver: a component of the hovercraft, updated every frame by the scene
+			// the driver: a component of the hovercraft, updated every frame by the scene; the
+			// player drives it (its keys become the input of the driver)
 			m_driver = m_hovercraft->component<HovercraftDriver>();
 			m_driver->settings() = hovercraft_settings();
-			m_driver->camera(m_camera);
-			m_driver->spawn(m_start);
+			m_player = m_hovercraft->component<HovercraftInput>();
+			// the camera follows it
+			if (m_camera_follow) m_camera_follow->target(m_hovercraft);
 			if (m_checkpoints) m_checkpoints->target(m_hovercraft);
+			spawn();
 		}
 		else
 		{
 			context().logger()->info("Error to load hovercraft");
 		}
     }
+
+	//the hovercraft at the start, the camera straight behind it
+	void spawn()
+	{
+		if (!m_driver) return;
+		m_driver->spawn(m_start);
+		if (m_camera_follow) m_camera_follow->snap();
+	}
 
     bool run(double dt)
     {
@@ -343,6 +346,8 @@ private:
 	Square::Shared<Square::Scene::Actor>      m_light;
 	Square::Shared<Square::Scene::Actor>      m_hovercraft;
 	Square::Shared<HovercraftDriver>          m_driver;
+	Square::Shared<HovercraftInput>           m_player;
+	Square::Shared<CameraFollow>              m_camera_follow;
 	Square::Shared<Checkpoints>               m_checkpoints;
 	Square::Vec3                              m_start{ s_start }; //spawn_point_1 of the arena
 };

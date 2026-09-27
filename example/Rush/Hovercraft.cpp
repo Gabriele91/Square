@@ -129,14 +129,6 @@ void HovercraftDriver::spawn(const Vec3& start)
 	m_speed = 0.0f;
 	m_velocity = Vec3(0.0f);
 	m_previous_steps = 0.0f;
-	//camera straight at the target
-	if (m_camera)
-	{
-		m_camera->position(position + m_settings.camera_offset);
-		//a teleport also for the camera sphere, if it has one
-		if (m_camera->contains<SphereCollider>()) m_camera->component<SphereCollider>()->reset();
-	}
-	update_camera(1.0f);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -149,7 +141,6 @@ void HovercraftDriver::on_update(double delta_time)
 	if (steps <= 0.0f) return;
 	update(steps);
 	update_input(steps);
-	update_camera(steps);
 }
 
 void HovercraftDriver::update(float steps)
@@ -204,26 +195,6 @@ void HovercraftDriver::update_input(float steps)
 	hovercraft->position(hovercraft->position() + move * steps);
 	//reposition the four wheel collision probes (where the hovercraft is now)
 	place_wheels();
-}
-
-void HovercraftDriver::update_camera(float steps)
-{
-	if (!m_camera) return;
-	auto hovercraft = actor().lock();
-	const Vec3 body = hovercraft->position();
-	Vec3 camera = m_camera->position();
-	//towards the target pivot, not while reversing
-	if (m_speed >= 0.0f)
-	{
-		const Vec3 target = body + hovercraft->rotation() * m_settings.camera_offset;
-		camera += (target - camera) * (1.0f - std::pow(1.0f - m_settings.camera_follow, steps));
-		m_camera->position(camera);
-	}
-	//PointEntity camera,hovercraft (no roll)
-	const Vec3 direction = body - camera;
-	const float horizontal = std::sqrt(direction.x * direction.x + direction.z * direction.z);
-	if (horizontal < 1e-5f && std::abs(direction.y) < 1e-5f) return;
-	m_camera->rotation(angle_axis(std::atan2(direction.x, direction.z), AXIS_Y) * angle_axis(-std::atan2(direction.y, horizontal), AXIS_X));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
