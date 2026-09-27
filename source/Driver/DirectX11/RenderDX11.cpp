@@ -351,10 +351,10 @@ namespace Render
 			if (!shader->binary((ShaderType)s_type)) continue;
 			//reflector
 			ID3D11ShaderReflection *reflector = nullptr;
-			D3DReflect(shader->binary((ShaderType)s_type)->GetBufferPointer()
+			if (FAILED(D3DReflect(shader->binary((ShaderType)s_type)->GetBufferPointer()
 					 , shader->binary((ShaderType)s_type)->GetBufferSize()
 				     , IID_ID3D11ShaderReflection
-				     , (void **)&reflector);
+				     , (void **)&reflector))) continue;
 			D3D11_SHADER_DESC desc_shader;
 			reflector->GetDesc(&desc_shader);
 			//search
@@ -374,6 +374,8 @@ namespace Render
 					m_found_the_cbuffer = true;
 				}
 			}
+			//the reflection is only needed here
+			reflector->Release();
 		}
     }
 	UniformConstBufferDX11::UniformConstBufferDX11()
@@ -1729,6 +1731,7 @@ namespace Render
 			//save element desc
 			semantic_type_map[std::string(paramDesc.SemanticName)] = format;
 		}
+		shader_ref->Release();
 		return std::move(semantic_type_map);
 	}
 
@@ -2850,7 +2853,7 @@ namespace Render
 	)
 	{
 		ID3D11ShaderReflection *reflector = nullptr;
-		D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+		if (FAILED(D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector))) return false;
 		D3D11_SHADER_DESC desc_shader;
 		reflector->GetDesc(&desc_shader);
 		for (UINT i = 0; i < desc_shader.ConstantBuffers; ++i)
@@ -2890,6 +2893,7 @@ namespace Render
 				}
 			}
 		}
+		reflector->Release();
 		return true;
 	}
 	
@@ -2900,7 +2904,7 @@ namespace Render
 	)
 	{
 		ID3D11ShaderReflection *reflector = nullptr;
-		D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+		if (FAILED(D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector))) return false;
 		D3D11_SHADER_DESC desc_shader;
 		reflector->GetDesc(&desc_shader);
 		for (UINT i = 0; i < desc_shader.ConstantBuffers; ++i)
@@ -2920,6 +2924,7 @@ namespace Render
 				info.m_slot[type] = bind_desc.BindPoint;
 			}
 		}
+		reflector->Release();
 		return true;
 	}
 
@@ -2944,7 +2949,7 @@ namespace Render
 	)
 	{
 		ID3D11ShaderReflection *reflector = nullptr;
-		D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+		if (FAILED(D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector))) return;
 		D3D11_SHADER_DESC desc_shader;
 		reflector->GetDesc(&desc_shader);
 		//samplers: the compiler assigns s# independently from t# (unused samplers are stripped,
@@ -2969,7 +2974,7 @@ namespace Render
 				info.m_fields_uniforms[name] = UniformDX11(context, shader, (size_t)bind_desc.BindPoint, (size_t)sampler_slot);
 			}
 		}
-		
+		reflector->Release();
 	}
 	Shader* ContextDX11::create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
@@ -3230,18 +3235,13 @@ namespace Render
     UniformConstBuffer* ContextDX11::get_uniform_const_buffer(Square::Render::Shader* shader, const std::string& uname) const
     {
         auto uit = shader->m_uniform_const_buffer_map.find(uname);
-        //if find
-        if (uit != shader->m_uniform_const_buffer_map.end()) return uit->second.get();
-		//valid?
+        //if find (a cbuffer the shader does not have is saved too: not valid)
+        if (uit != shader->m_uniform_const_buffer_map.end()) return uit->second->is_valid() ? uit->second.get() : nullptr;
+		//reflection of the shader, once for each name
 		auto ucbuffer = MakeUnique<UniformConstBufferDX11>(allocator(),(ContextDX11*)this, shader, uname);
-		//is valid?
-		if (!ucbuffer->is_valid()) return nullptr;
-        //add and return
-		shader->m_uniform_const_buffer_map.insert({ 
-			uname,
-			std::move(ucbuffer)
-		});
-		return shader->m_uniform_const_buffer_map[uname].get();
+		auto* ucbuffer_ptr = ucbuffer.get();
+		shader->m_uniform_const_buffer_map.insert({ uname, std::move(ucbuffer) });
+		return ucbuffer_ptr->is_valid() ? ucbuffer_ptr : nullptr;
     }
 
 	/*
