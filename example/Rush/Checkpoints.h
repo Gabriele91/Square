@@ -21,13 +21,13 @@ public:
 
 	struct Settings
 	{
-		float        radius{ 4.0f };              //touched when the target is this near (x/z) to the beam
-		float        height{ 8.0f };              //and between the ground and this over it (the beam)
-		std::string  inner{ "Cylinder01-0" };     //child of the beam, spins at inner_speed
-		std::string  outer{ "Cylinder02-0" };     //child of the beam, spins at outer_speed
-		float        inner_speed{ 90.0f };        //degrees per second around the up axis
-		float        outer_speed{ -60.0f };       //opposite way of the inner one
-		std::string  prefix{ "checkpoint_" };     //name of the checkpoints in the arena
+		float        radius{ 4.0f };               //touched when the target is this near (x/z) to the beam
+		float        height{ 8.0f };               //and between the ground and this over it (the beam)
+		std::string  inner{ "Cylinder01-0" };      //child of the beam, spins at inner_speed
+		std::string  outer{ "Cylinder02-0" };      //child of the beam, spins at outer_speed
+		float        inner_speed{ 360.0f * 3.0f }; //degrees per second around the up axis
+		float        outer_speed{ -360.0f * 2.0f };//opposite way of the inner one
+		std::string  prefix{ "checkpoint_" };      //name of the checkpoints in the arena
 	};
 
 	//Registration in context
@@ -68,6 +68,7 @@ private:
 	bool set_parts();
 	void spin(float seconds);
 	bool touched() const;
+	size_t random_next() const;
 
 	Settings                             m_settings;
 	std::vector<Square::Vec3>            m_points;   //ground under every checkpoint

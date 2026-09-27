@@ -241,7 +241,8 @@ public:
 			// the camera follows it
 			if (m_camera_follow) m_camera_follow->target(m_hovercraft);
 			if (m_checkpoints) m_checkpoints->target(m_hovercraft);
-			spawn();
+			// at the start the camera is in its place of the scene: it glides behind the hovercraft
+			m_driver->spawn(m_start);
 		}
 		else
 		{
@@ -249,7 +250,7 @@ public:
 		}
     }
 
-	//the hovercraft at the start, the camera straight behind it
+	//the hovercraft back at the start, the camera straight behind it (a teleport)
 	void spawn()
 	{
 		if (!m_driver) return;

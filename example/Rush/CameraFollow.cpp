@@ -32,6 +32,8 @@ void CameraFollow::target(Shared<Scene::Actor> target)
 {
 	m_target = target;
 	if (target) m_target_previous = target->position(true);
+	//from where it is now, it glides behind the target
+	m_intro = target ? 0.0f : -1.0f;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +47,8 @@ void CameraFollow::snap()
 	camera->position(m_target_previous + target->rotation(true) * m_settings.offset);
 	//a teleport also for the camera sphere, if it has one
 	if (camera->contains<SphereCollider>()) camera->component<SphereCollider>()->reset();
-	look_at_target();
+	camera->rotation(look_at_target());
+	m_intro = -1.0f;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -55,32 +58,44 @@ void CameraFollow::on_update(double delta_time)
 	auto camera = actor().lock();
 	auto target = m_target.lock();
 	if (!camera || !target) return;
-	const float steps = std::clamp(float(delta_time / m_settings.step), 0.0f, 4.0f);
+	//steps of this frame (at the start a long frame, the end of the loading, counts at most 1)
+	const float steps = std::clamp(float(delta_time / m_settings.step), 0.0f, m_intro >= 0.0f ? 1.0f : 4.0f);
 	const Vec3  body = target->position(true);
 	const Quat  rotation = target->rotation(true);
 	//moving backward: the target went against its forward (+z)
 	const bool backward = dot(body - m_target_previous, rotation * AXIS_Z) < 0.0f;
 	m_target_previous = body;
+	if (steps <= 0.0f) return;
+	//share of the way per step: at the start from intro_follow up to follow (smoothstep)
+	float follow = m_settings.follow;
+	if (m_intro >= 0.0f)
+	{
+		m_intro += float(std::min(delta_time, m_settings.step));
+		const float t = m_settings.intro_time > 0.0f ? std::min(m_intro / m_settings.intro_time, 1.0f) : 1.0f;
+		follow = m_settings.intro_follow + (m_settings.follow - m_settings.intro_follow) * (t * t * (3.0f - 2.0f * t));
+		if (t >= 1.0f) m_intro = -1.0f;
+	}
 	//towards the pivot
-	if (steps > 0.0f && !(m_settings.hold_backward && backward))
+	if (!(m_settings.hold_backward && backward))
 	{
 		const Vec3 pivot = body + rotation * m_settings.offset;
 		Vec3 position = camera->position();
-		position += (pivot - position) * (1.0f - std::pow(1.0f - m_settings.follow, steps));
+		position += (pivot - position) * (1.0f - std::pow(1.0f - follow, steps));
 		camera->position(position);
 	}
-	look_at_target();
+	//looks at the target
+	camera->rotation(look_at_target());
 }
 
-void CameraFollow::look_at_target()
+Quat CameraFollow::look_at_target() const
 {
 	auto camera = actor().lock();
 	auto target = m_target.lock();
 	//PointEntity camera,target (no roll)
 	const Vec3 direction = target->position(true) - camera->position();
 	const float horizontal = std::sqrt(direction.x * direction.x + direction.z * direction.z);
-	if (horizontal < 1e-5f && std::abs(direction.y) < 1e-5f) return;
-	camera->rotation(angle_axis(std::atan2(direction.x, direction.z), AXIS_Y) * angle_axis(-std::atan2(direction.y, horizontal), AXIS_X));
+	if (horizontal < 1e-5f && std::abs(direction.y) < 1e-5f) return camera->rotation();
+	return angle_axis(std::atan2(direction.x, direction.z), AXIS_Y) * angle_axis(-std::atan2(direction.y, horizontal), AXIS_X);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
