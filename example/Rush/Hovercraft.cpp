@@ -130,7 +130,12 @@ void HovercraftDriver::spawn(const Vec3& start)
 	m_velocity = Vec3(0.0f);
 	m_previous_steps = 0.0f;
 	//camera straight at the target
-	if (m_camera) m_camera->position(position + m_settings.camera_offset);
+	if (m_camera)
+	{
+		m_camera->position(position + m_settings.camera_offset);
+		//a teleport also for the camera sphere, if it has one
+		if (m_camera->contains<SphereCollider>()) m_camera->component<SphereCollider>()->reset();
+	}
 	update_camera(1.0f);
 }
 

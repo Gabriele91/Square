@@ -144,6 +144,8 @@ public:
 		{
 			collision->collisions(TYPE_BODY, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDEXZ);
 			collision->collisions(TYPE_WHEEL, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDEXZ);
+			// the camera does not go into the map: it slides on it
+			collision->collisions(TYPE_CAMERA, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDE);
 		}
 		// arena
 		auto arena = m_level->load_actor("arena/scene");
@@ -214,8 +216,15 @@ public:
 		{
 			context().logger()->info("Error to load light_beam");
 		}
-		// the camera chases the hovercraft in world space: out of the arena, at the level root
-		if (m_camera) m_level->add(m_camera);
+		// the camera chases the hovercraft in world space: out of the arena, at the level root;
+		// a sphere of the camera type, so it does not go through the walls and the ground
+		if (m_camera)
+		{
+			m_level->add(m_camera);
+			auto camera_collider = m_camera->component<SphereCollider>();
+			camera_collider->type(TYPE_CAMERA);
+			camera_collider->radius(1.0f);
+		}
 		// hovercraft
 		m_hovercraft = m_level->load_actor("hovercraft/scene");
 		if (m_hovercraft)
@@ -249,12 +258,13 @@ public:
 	//under it (under the roof, over the field)
 	static constexpr Square::Vec3 s_start{ 0.0f, 50.0f, 0.0f };
 
-	//collision types (Const BODY=1,WHEEL=2,SCENE=3)
+	//collision types (Const BODY=1,WHEEL=2,SCENE=3), and the camera
 	enum CollisionType : int
 	{
 		TYPE_BODY  = 1,
 		TYPE_WHEEL = 2,
-		TYPE_SCENE = 3
+		TYPE_SCENE = 3,
+		TYPE_CAMERA = 4
 	};
 
 	static HovercraftDriver::Settings hovercraft_settings()
