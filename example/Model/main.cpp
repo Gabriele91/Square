@@ -11,6 +11,7 @@
 #include <fstream>
 #include <unordered_set>
 #include <cctype>
+#include <algorithm>
 #include "GLTFImport.h"
 
 enum class OutputFormat
@@ -71,6 +72,97 @@ public:
         return name;
     }
 };
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//Custom properties of Blender (glTF "extras") for Square: "square_<name>"
+namespace SquareExtras
+{
+    static const std::string PREFIX = "square_";
+
+    //the name without the prefix, empty if it is not a square property
+    static std::string name(const std::string& key)
+    {
+        if (key.size() <= PREFIX.size() || key.compare(0, PREFIX.size(), PREFIX) != 0) return {};
+        return key.substr(PREFIX.size());
+    }
+
+    //the string of an extra ("square_effect"), if there is
+    static std::optional<std::string> string(const Square::Data::JsonObject& extras, const std::string& key)
+    {
+        auto it = extras.find(PREFIX + key);
+        if (it == extras.end() || !it->second.is_string()) return std::nullopt;
+        return it->second.string();
+    }
+
+    //a number of an extra value (a boolean is 0/1)
+    static double number(const Square::Data::JsonValue& value)
+    {
+        if (value.is_boolean()) return value.boolean() ? 1.0 : 0.0;
+        return value.is_number() ? value.number() : 0.0;
+    }
+
+    //the i-th number of an array (or the number itself: all the components)
+    static double component(const Square::Data::JsonValue& value, size_t i)
+    {
+        if (!value.is_array()) return number(value);
+        const auto& values = value.array();
+        return i < values.size() ? number(values[i]) : 0.0;
+    }
+
+    //the value of a material parameter: a number (or a boolean) is a float, an array of 2/3/4
+    //numbers a Vec2/3/4, a string a texture; empty if it is none of them
+    static std::string material_value(const Square::Data::JsonValue& value)
+    {
+        std::ostringstream text;
+        if (value.is_number() || value.is_boolean())
+        {
+            text << "float(" << number(value) << ")";
+        }
+        else if (value.is_string())
+        {
+            text << "texture(\"" << value.string() << "\")";
+        }
+        else if (value.is_array() && value.array().size() >= 2 && value.array().size() <= 4)
+        {
+            const auto& values = value.array();
+            text << "Vec" << values.size() << "(";
+            for (size_t i = 0; i < values.size(); ++i) text << (i ? "," : "") << number(values[i]);
+            text << ")";
+        }
+        return text.str();
+    }
+
+    //the attributes of an object (a light...) from the extras "square_<attribute>": the value
+    //is turned into the type of the attribute (a number for an IVec2 fills both components)
+    static void apply(Square::Object& object, const Square::Data::JsonObject& extras)
+    {
+        using namespace Square;
+        const std::vector<Attribute>* attributes = object.context().attributes(object);
+        if (!attributes) return;
+        for (const Attribute& attribute : *attributes)
+        {
+            auto it = extras.find(PREFIX + attribute.name());
+            if (it == extras.end()) continue;
+            const Data::JsonValue& value = it->second;
+            Variant variant;
+            switch (attribute.value_type())
+            {
+            case VR_BOOL:   variant = Variant(number(value) != 0.0); break;
+            case VR_INT:    variant = Variant(int(number(value))); break;
+            case VR_FLOAT:  variant = Variant(float(number(value))); break;
+            case VR_DOUBLE: variant = Variant(number(value)); break;
+            case VR_VEC2:   variant = Variant(Vec2(component(value, 0), component(value, 1))); break;
+            case VR_VEC3:   variant = Variant(Vec3(component(value, 0), component(value, 1), component(value, 2))); break;
+            case VR_VEC4:   variant = Variant(Vec4(component(value, 0), component(value, 1), component(value, 2), component(value, 3))); break;
+            case VR_IVEC2:  variant = Variant(IVec2(int(component(value, 0)), int(component(value, 1)))); break;
+            case VR_STD_STRING: if (value.is_string()) variant = Variant(value.string()); break;
+            default: break;
+            }
+            if (variant.get_type() == VR_NONE) continue;
+            attribute.set(&object, variant.as_variant_ref());
+        }
+    }
+}
 
 class TextureManager
 {
@@ -280,6 +372,151 @@ private:
     }
 };
 
+//////////////////////////////////////////////////////////////////////////////////////////
+//The .mat of a glTF material for an effect: the glTF values mapped to the parameters of the
+//effect family (Legacy/LegacyTranslucent, PBR/PBRTranslucent); the "square_<parameter>"
+//custom properties set/override parameters
+class MaterialTemplate
+{
+public:
+    enum class Family
+    {
+        LEGACY, //Legacy, LegacyTranslucent: color, shininess, specular map
+        PBR     //PBR, PBRTranslucent: metallic, roughness, emissive
+    };
+
+    static Family family(const std::string& effect)
+    {
+        return effect.compare(0, 6, "Legacy") == 0 ? Family::LEGACY : Family::PBR;
+    }
+
+    //effect: "square_effect", else by the glTF alphaMode (BLEND: translucent, drawn after the
+    //opaque scene)
+    static std::string effect(const Square::Data::GLTF::Material& material)
+    {
+        using AlphaMode = Square::Data::GLTF::Material::AlphaMode;
+        return SquareExtras::string(material.extras, "effect")
+               .value_or(material.alpha_mode == AlphaMode::AM_BLEND ? "PBRTranslucent" : "PBR");
+    }
+
+    MaterialTemplate(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
+    : m_material(material)
+    , m_texture_manager(texture_manager)
+    {
+    }
+
+    //the text of the .mat
+    std::string build(const std::string& effect) const
+    {
+        Parameters parameters = family(effect) == Family::LEGACY ? legacy() : pbr();
+        //square_<parameter>: set or override
+        for (const auto& extra : m_material.extras)
+        {
+            const std::string name = SquareExtras::name(extra.first);
+            if (name.empty() || name == "effect") continue;
+            const std::string value = SquareExtras::material_value(extra.second);
+            if (value.empty()) continue;
+            auto it = std::find_if(parameters.begin(), parameters.end(), [&](const Parameter& parameter) { return parameter.first == name; });
+            if (it != parameters.end()) it->second = value;
+            else parameters.emplace_back(name, value);
+        }
+        std::ostringstream text;
+        text << "effect \"" << effect << "\"\n{\n";
+        for (const Parameter& parameter : parameters) text << "\t" << parameter.first << " " << parameter.second << "\n";
+        text << "}";
+        return text.str();
+    }
+
+private:
+    using Parameter = std::pair<std::string, std::string>;
+    using Parameters = std::vector<Parameter>;
+    using Material = Square::Data::GLTF::Material;
+
+    const Material&       m_material;
+    const TextureManager& m_texture_manager;
+
+    //texture("name") of a texture of the material, the default if it has none
+    std::string texture(const std::optional<Material::TextureInfo>& info, const std::string& default_name) const
+    {
+        const std::string name = info.has_value() ? m_texture_manager.at(info.value().index).value_or(default_name) : default_name;
+        return "texture(\"" + name + "\")";
+    }
+    static std::string real(float value)
+    {
+        std::ostringstream text;
+        text << "float(" << value << ")";
+        return text.str();
+    }
+    static std::string vec3(const Square::Vec3& value)
+    {
+        std::ostringstream text;
+        text << "Vec3(" << value.x << "," << value.y << "," << value.z << ")";
+        return text.str();
+    }
+    static std::string vec4(const Square::Vec4& value)
+    {
+        std::ostringstream text;
+        text << "Vec4(" << value.x << "," << value.y << "," << value.z << "," << value.w << ")";
+        return text.str();
+    }
+
+    //the glTF values
+    Material::PbrMetallicRoughness pbr_values() const
+    {
+        return m_material.pbr_metallic_roughness.value_or(Material::PbrMetallicRoughness());
+    }
+    //MASK: opaque with an alpha test at alphaCutoff; OPAQUE and BLEND: no test
+    float mask() const
+    {
+        return m_material.alpha_mode == Material::AlphaMode::AM_MASK ? m_material.alpha_cutoff : -1.0f;
+    }
+
+    //Legacy/LegacyTranslucent (albedo, normal, specular, occlusion maps; color, shininess)
+    Parameters legacy() const
+    {
+        const Material::PbrMetallicRoughness values = pbr_values();
+        const auto& specular_glossiness = m_material.extra_specular_glossiness;
+        //specular map: the one of KHR_materials_pbrSpecularGlossiness, else none
+        const std::optional<Material::TextureInfo> specular_map = specular_glossiness.has_value()
+                                                                ? specular_glossiness->specular_glossiness_texture
+                                                                : std::nullopt;
+        //shininess from the roughness (Blinn-Phong exponent of alpha = roughness^2)
+        const float alpha = std::max(values.roughness_factor * values.roughness_factor, 0.01f);
+        const float shininess = std::clamp(2.0f / (alpha * alpha) - 2.0f, 1.0f, 256.0f);
+        return
+        {
+            { "albedo_map",    texture(values.base_color_texture, "white") },
+            { "normal_map",    texture(m_material.normal_texture, "normal_up") },
+            { "specular_map",  texture(specular_map, "black") },
+            { "occlusion_map", texture(m_material.occlusion_texture, "white") },
+            { "color",         vec4(values.base_color_factor) },
+            { "shininess",     real(shininess) },
+            { "mask",          real(mask()) }
+        };
+    }
+
+    //PBR/PBRTranslucent (albedo, metallic, roughness, emissive, occlusion, normal maps;
+    //color, metallic, roughness, emissive); metallic and roughness share the glTF texture
+    Parameters pbr() const
+    {
+        const Material::PbrMetallicRoughness values = pbr_values();
+        return
+        {
+            { "albedo_map",    texture(values.base_color_texture, "white") },
+            { "metallic_map",  texture(values.metallic_roughness_texture, "black") },
+            { "roughness_map", texture(values.metallic_roughness_texture, "white") },
+            { "emmisive_map",  texture(m_material.emissive_texture, "black") },
+            { "occlusion_map", texture(m_material.occlusion_texture, "white") },
+            { "normal_map",    texture(m_material.normal_texture, "normal_up") },
+            { "color",         vec4(values.base_color_factor) },
+            { "metallic",      real(values.metallic_factor) },
+            { "roughness",     real(values.roughness_factor) },
+            { "emmisive",      vec3(m_material.emissive_factor) },
+            { "mask",          real(mask()) }
+        };
+    }
+};
+
 class MaterialManager
 {
     std::unordered_map<std::string, std::string> m_materials_resrouces;
@@ -287,114 +524,6 @@ class MaterialManager
     Square::Context& m_context;
     std::string m_output;
     UniqueNames m_names;
-
-    static inline std::string template_material_standard(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
-    {
-        const char solit_material_template[] =
-        {
-            "effect \"Legacy\"\n"
-            "{\n"
-                "\tmask float(%f)\n"
-                "\tshininess float(%f)\t"
-                "\tcolor Vec4(%f,%f,%f,%f)\n"
-                "\talbedo_map  texture(\"%s\")\n"
-                "\tnormal_map   texture(\"%s\")\n"
-                "\tspecular_map texture(\"%s\")\n"
-                "\tocclusion_map texture(\"%s\")\n"
-            "}"
-        };
-        float tmask = material.alpha_cutoff;
-        float tshininess = 16.0f;
-        Square::Vec4 tcolor ( material.emissive_factor, 1.0f );
-        std::string albedo_map = material.pbr_metallic_roughness.has_value() && material.pbr_metallic_roughness.value().base_color_texture.has_value()
-                                ? texture_manager.at(material.pbr_metallic_roughness.value().base_color_texture.value().index).value_or("white")
-                                : "white";
-        std::string normal_map = material.normal_texture.has_value() ?
-                                  texture_manager.at(material.normal_texture.value().index).value_or("normal_up") :
-                                  "normal_up";
-        std::string specular_map = material.emissive_texture.has_value() ?
-                                  texture_manager.at(material.emissive_texture.value().index).value_or("black") :
-                                  "black";
-        std::string occlusion_map = material.occlusion_texture.has_value() ?
-                                  texture_manager.at(material.occlusion_texture.value().index).value_or("white") :
-                                  "white";
-
-        char output_template[255] = { '\0' };
-        std::snprintf(&output_template[0], 255, solit_material_template, 
-            tmask,
-            tshininess,
-            tcolor.x, tcolor.y, tcolor.z, tcolor.w,
-            albedo_map.c_str(),
-            normal_map.c_str(),
-            specular_map.c_str(),
-            occlusion_map.c_str()
-        );
-        return output_template;
-    }
-    
-    static inline std::string template_material_pbr(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
-    {
-        // RGB (metallic, norma maps)
-        // SRGB (emmisive, albedo)
-        const char pbr_material_template[] =
-        {
-            "effect \"%s\"\n"
-            "{\n"
-                "\talbedo_map    texture(\"%s\")\n"
-                "\tmetallic_map  texture(\"%s\")\n"
-                "\troughness_map texture(\"%s\")\n"
-                "\temmisive_map  texture(\"%s\")\n"
-                "\tocclusion_map texture(\"%s\")\n"   
-                "\tnormal_map    texture(\"%s\")\n"
-
-                "\tcolor Vec4(%f,%f,%f,%f)\n"
-                "\tmetallic float(%f)\n"
-                "\troughness float(%f)\n"
-                "\temmisive Vec3(%f,%f,%f)\n"
-                
-                "\tmask float(%f)\n"
-            "}"
-        };
-
-        auto get_texture = [&](const std::optional<Square::Data::GLTF::Material::TextureInfo>& texture, const std::string& default_name)
-        {
-            return texture.has_value() ?  texture_manager.at(texture.value().index).value_or(default_name) : default_name;
-        };
-
-        std::string albedo_map = material.pbr_metallic_roughness.has_value() ? get_texture(material.pbr_metallic_roughness.value().base_color_texture, "white") : "white";
-        std::string metallic_map = material.pbr_metallic_roughness.has_value() ? get_texture(material.pbr_metallic_roughness.value().metallic_roughness_texture, "black") : "black";
-        std::string roughness_map = material.pbr_metallic_roughness.has_value() ? get_texture(material.pbr_metallic_roughness.value().metallic_roughness_texture, "white") : "white";
-        std::string emmisive_map = get_texture(material.emissive_texture, "black");
-        std::string occlusion_map = get_texture(material.occlusion_texture, "white");
-        std::string normal_map = get_texture(material.normal_texture, "normal_up");
-
-        const Square::Vec4 color = material.pbr_metallic_roughness.value_or(Square::Data::GLTF::Material::PbrMetallicRoughness()).base_color_factor;
-        const float metallic = material.pbr_metallic_roughness.value_or(Square::Data::GLTF::Material::PbrMetallicRoughness()).metallic_factor;
-        const float roughness = material.pbr_metallic_roughness.value_or(Square::Data::GLTF::Material::PbrMetallicRoughness()).roughness_factor;
-        const Square::Vec3 emissive = material.emissive_factor;
-        // glTF alphaMode: BLEND is translucent (alpha blended, drawn after the opaque scene),
-        // MASK is opaque with an alpha test at alphaCutoff, OPAQUE ignores the alpha
-        using AlphaMode = Square::Data::GLTF::Material::AlphaMode;
-        const char* effect = material.alpha_mode == AlphaMode::AM_BLEND ? "PBRTranslucent" : "PBR";
-        const float mask = material.alpha_mode == AlphaMode::AM_MASK ? material.alpha_cutoff : -1.0f;
-
-        char output_template[2048] = { '\0' };
-        std::snprintf(&output_template[0], 2048, pbr_material_template,
-            effect,
-            albedo_map.c_str(),
-            metallic_map.c_str(),
-            roughness_map.c_str(),
-            emmisive_map.c_str(),
-            occlusion_map.c_str(),
-            normal_map.c_str(),
-            color.x, color.y, color.z, color.w,
-            metallic,
-            roughness,
-            emissive.x, emissive.y, emissive.z,
-            mask
-        );
-        return output_template;
-    }
 
 public:
     MaterialManager(Square::Context& context, const std::string& output)
@@ -426,7 +555,8 @@ public:
 
     size_t add_material(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
     {
-        const std::string material_data = template_material_pbr(material, texture_manager);
+        // the parameters of its effect, from the glTF values and the square_* properties
+        const std::string material_data = MaterialTemplate(material, texture_manager).build(MaterialTemplate::effect(material));
         const std::string material_name = m_names.make(material.name, "material" + std::to_string(m_materials.size()));
         const std::string material_path = Square::Filesystem::join(m_output, material_name + ".mat");
         Square::Filesystem::text_file_write_all(material_path, material_data);
@@ -868,6 +998,14 @@ public:
                                 }
                                 break;
                                 default: break;
+                                }
+                                // "square_<attribute>" (Blender custom properties) of the light
+                                // data, then of the object: the attributes of the light
+                                // (square_radius, square_shadow, square_visible...)
+                                for (const auto& light : actor->components())
+                                {
+                                    SquareExtras::apply(*light.second, gltf_light.m_extras);
+                                    SquareExtras::apply(*light.second, node.extras);
                                 }
                             }
                         }
