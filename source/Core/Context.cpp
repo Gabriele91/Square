@@ -388,9 +388,13 @@ namespace Square
 	}
 	System* BaseContext::start_system(uint64 id)
 	{
-		//once
-		if (auto* existing = system(id)) return existing;
-		//a system class
+		// Once
+		if (auto* existing = system(id))
+		{
+			logger()->warning("Context: system(" + std::to_string(id) + ") is already started");
+			return existing;
+		}
+		// Create system
 		const SystemInfo* info = system_info(id);
 		if (!info)
 		{
@@ -403,8 +407,8 @@ namespace Square
 			logger()->warning("Context: unable to create the system " + std::to_string(id));
 			return nullptr;
 		}
-		//running, by ring; already in the list while it initializes (what it creates can
-		//look for it, e.g. the drawer for the render device)
+		// Running, by ring; already in the list while it initializes (what it creates can
+		// look for it, e.g. the drawer for the render device)
 		auto position = std::upper_bound(m_systems.begin(), m_systems.end(), new_system->system_ring(), [](unsigned int ring, const Shared<System>& running)
 		{
 			return ring < running->system_ring();
@@ -416,10 +420,16 @@ namespace Square
 			m_systems.erase(std::find(m_systems.begin(), m_systems.end(), new_system));
 			return nullptr;
 		}
-		//the worlds already there
-		for (Scene::World* alive : m_worlds) alive->add_instance(*new_system);
-		//the application is already running: the second phase too
-		if (m_systems_post_initialized) new_system->post_initialize();
+		// The worlds already there
+		for (Scene::World* alive : m_worlds)
+		{ 
+			alive->add_instance(*new_system);
+		}
+		// The application is already running: the second phase too
+		if (m_systems_post_initialized)
+		{
+			new_system->post_initialize();
+		}
 		return new_system.get();
 	}
 	void BaseContext::start_systems()

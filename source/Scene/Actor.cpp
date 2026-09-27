@@ -15,6 +15,8 @@
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Level.h"
 #include <algorithm>
+#include <cmath>
+#include <algorithm>
 #include <fstream>
 
 
@@ -483,6 +485,51 @@ namespace Scene
         set_dirty();
     }
     
+    void Actor::align_to_vector(const Vec3& vector, const Vec3& axis, float rate)
+    {
+        // Epsilon
+        const float epsilon = Constants::epsilon<float>();
+        const float cosine_threshold = 1.0f - epsilon;
+        constexpr float reference_threshold = 0.99f;
+        constexpr const Vec3 x_dir(1.0f, 0.0f, 0.0f);
+        constexpr const Vec3 y_dir(0.0f, 1.0f, 0.0f);
+        // Check length 
+        if (length(vector) < epsilon || length(axis) < epsilon)
+        { 
+            return;
+        }
+        // On world space: from where the axis points now to the vector
+        const Quat global = rotation(true);
+        const Vec3 from = normalize(global * axis);
+        const Vec3 to = normalize(vector);
+        // Rotation 
+        const float cosine = Square::clamp(dot(from, to), -1.0f, 1.0f);
+        if (cosine > cosine_threshold)
+        { 
+            return;
+        }
+        // Trn 
+        Vec3 turn_axis = cross(from, to);
+        // Opposite: any axis orthogonal to it
+        if (length(turn_axis) < epsilon)
+        {
+            const Vec3 reference = std::abs(from.x) < reference_threshold ? x_dir : y_dir;
+            turn_axis = cross(from, reference);
+        }
+        // compute angle
+        const float angle = std::acos(cosine) * std::clamp(rate, 0.0f, 1.0f);
+        const Quat aligned = normalize(angle_axis(angle, normalize(turn_axis)) * global);
+        //back in the space of the parent
+        if (auto parent_actor = parent().lock())
+        { 
+            rotation(normalize(inverse(parent_actor->rotation(true)) * aligned));
+        }
+        else
+        {
+            rotation(aligned);
+        }
+    }
+
     void Actor::position(const Vec3& pos)
     {
         m_tranform.m_position = pos;
