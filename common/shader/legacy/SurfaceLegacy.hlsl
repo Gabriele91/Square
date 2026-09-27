@@ -15,6 +15,7 @@ struct SurfaceData
 	float  m_alpha;       // alpha for transparencies
 	float  m_shininess;   // shininess
 	half   m_occlusion;   // occlusion (default 1)
+	Vec3   m_emmisive;    // light emission (forward: added in the ambient pass)
 };
 
 SurfaceData DefaultSurfaceData()
@@ -27,6 +28,7 @@ SurfaceData DefaultSurfaceData()
 	output.m_alpha = 1.0;
 	output.m_shininess = 16.0;
 	output.m_occlusion = 1.0;
+	output.m_emmisive = Vec3(0.0, 0.0, 0.0);
 	return output;
 }
 

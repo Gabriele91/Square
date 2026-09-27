@@ -471,7 +471,8 @@ private:
         return m_material.alpha_mode == Material::AlphaMode::AM_MASK ? m_material.alpha_cutoff : -1.0f;
     }
 
-    //Legacy/LegacyTranslucent (albedo, normal, specular, occlusion maps; color, shininess)
+    //Legacy/LegacyTranslucent (albedo, normal, specular, occlusion, emissive maps; color,
+    //shininess, emissive; the emission is drawn by the forward/translucent passes)
     Parameters legacy() const
     {
         const Material::PbrMetallicRoughness values = pbr_values();
@@ -489,8 +490,10 @@ private:
             { "normal_map",    texture(m_material.normal_texture, "normal_up") },
             { "specular_map",  texture(specular_map, "black") },
             { "occlusion_map", texture(m_material.occlusion_texture, "white") },
+            { "emmisive_map",  texture(m_material.emissive_texture, "black") },
             { "color",         vec4(values.base_color_factor) },
             { "shininess",     real(shininess) },
+            { "emmisive",      vec3(m_material.emissive_factor) },
             { "mask",          real(mask()) }
         };
     }

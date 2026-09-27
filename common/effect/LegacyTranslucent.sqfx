@@ -4,9 +4,11 @@ parameters
     normal_map    texture("normal_up")
     specular_map  texture("black")
     occlusion_map texture("white")
+    emmisive_map  texture("black")
     //alpha = albedo_map.a * color.a
     color         Vec4(1.0,1.0,1.0,0.5)
     shininess     float(16.0)
+    emmisive      Vec3(1.0,1.0,1.0)
 
     mask          float(-1.0)
     mask_shadow   float(-1.0)

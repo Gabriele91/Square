@@ -27,12 +27,14 @@ struct VertexShaderOutput
 float mask;
 Vec4 color;
 float shininess;
+Vec3 emmisive;
 
 //texture
 Sampler2D(albedo_map);
 Sampler2D(normal_map);
 Sampler2D(specular_map);
 Sampler2D(occlusion_map);
+Sampler2D(emmisive_map);
 
 VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
 {
@@ -75,6 +77,8 @@ surface(VertexShaderOutput input)
 	data.m_shininess = shininess;
 	data.m_specular = specular_color.rgb;
 	data.m_occlusion = occlusion_color.r;
+	//emission (forward/translucent passes: the deferred G-Buffer has the specular color there)
+	data.m_emmisive = to_rgb_space(texture2D(emmisive_map, input.m_uv).rgb) * emmisive; // sRGB
 	//return
 	surface_return(data);
 }
