@@ -230,6 +230,7 @@ namespace GLTF
         LightType   m_type;
         std::optional<double    > m_range;
         std::optional<SpotFields> m_spotfields;
+        JsonObject  m_extras;      // custom properties (Blender: of the light data)
 
         Light(const std::string& name,
               const Vec3&        color,
@@ -404,6 +405,7 @@ namespace GLTF
         float alpha_cutoff;
         bool double_sided;
         std::optional<SpecularGlossiness> extra_specular_glossiness;
+        JsonObject extras;       // custom properties (Blender: of the material)
 
         Material(
             const std::string& name = std::string(),
@@ -458,6 +460,7 @@ namespace GLTF
         Vec3 scale = { 1,1,1 };
         Mat4 matrix = Mat4(1);
         TransformType transform_type;    // Type of transformation (enum)
+        JsonObject extras;               // custom properties (Blender: of the object)
 
         // Constructor
         Node(std::string name
@@ -872,6 +875,10 @@ namespace GLTF
                 range,
                 spotfields
             });
+            if (light.find("extras") != light.end())
+            {
+                out_lights.back().m_extras = light.at("extras").object({});
+            }
         }
         return out_lights;
     }
@@ -1076,6 +1083,10 @@ namespace GLTF
                 double_sided,
                 extra_specular_glossiness
             );
+            if (mat.find("extras") != mat.end())
+            {
+                out_materials.back().extras = mat.at("extras").object({});
+            }
         }
 
         return out_materials;
@@ -1199,6 +1210,10 @@ namespace GLTF
                 , std::move(matrix)
                 , TransformType(transform_type)
             );
+            if (node.find("extras") != node.end())
+            {
+                out_nodes.back().extras = node.at("extras").object({});
+            }
         }
 
         return out_nodes;
