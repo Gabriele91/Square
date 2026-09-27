@@ -15,6 +15,7 @@
 #include "Square/Render/DrawerPassForward.h"
 #include "Square/Render/DrawerPassDeferred.h"
 #include "Square/Render/DrawerPassShadow.h"
+#include "Square/Render/PostEffect.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/World.h"
 #include "Square/Scene/Level.h"
@@ -298,6 +299,30 @@ namespace Square
 		m_visible = visible;
 	}
 
+	void RenderInstance::add_post_effect(Shared<Render::PostEffect> effect)
+	{
+		if (!effect || std::find(m_post_effects.begin(), m_post_effects.end(), effect) != m_post_effects.end()) return;
+		m_post_effects.push_back(effect);
+		if (m_drawer) m_drawer->post_effects(m_post_effects);
+	}
+
+	void RenderInstance::remove_post_effect(Shared<Render::PostEffect> effect)
+	{
+		m_post_effects.erase(std::remove(m_post_effects.begin(), m_post_effects.end(), effect), m_post_effects.end());
+		if (m_drawer) m_drawer->post_effects(m_post_effects);
+	}
+
+	void RenderInstance::post_effects(const std::vector< Shared<Render::PostEffect> >& effects)
+	{
+		m_post_effects = effects;
+		if (m_drawer) m_drawer->post_effects(m_post_effects);
+	}
+
+	const std::vector< Shared<Render::PostEffect> >& RenderInstance::post_effects() const
+	{
+		return m_post_effects;
+	}
+
 	Shared<Render::Drawer> RenderInstance::drawer() const
 	{
 		return m_drawer;
@@ -313,6 +338,7 @@ namespace Square
 		//the debug flags survive a rebuild
 		const unsigned char debug_flags = m_debug_pass ? m_debug_pass->draw_flags() : 0;
 		m_drawer = MakeShared<Render::Drawer>(context());
+		m_drawer->post_effects(m_post_effects);
 		if ((m_pipeline & RP_FORWARD) && !(m_pipeline & RP_DEFERRED))
 		{
 			context().logger()->info("Rendering: forward");
@@ -334,6 +360,8 @@ namespace Square
 
 	void RenderInstance::release_drawer()
 	{
+		//the GPU objects of the post effects go with the passes (made again when drawn)
+		for (auto& effect : m_post_effects) if (effect) effect->release();
 		m_debug_pass.reset();
 		m_drawer.reset();
 	}

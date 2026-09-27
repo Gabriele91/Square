@@ -57,6 +57,7 @@ namespace Render
     //Class/enum declare
     class Drawer;
     class DrawerPass;
+    class PostEffect;
     //define types
     enum DrawerPassType : unsigned char
     {
@@ -133,6 +134,9 @@ namespace Render
         
         //add a pass
         void add(Shared<DrawerPass> pass);
+        //post effects of the frame (drawn by the render passes, see PostEffect.h)
+        void post_effects(const std::vector< Shared<PostEffect> >& effects) { m_post_effects = effects; }
+        const std::vector< Shared<PostEffect> >& post_effects() const { return m_post_effects; }
 
         template<class T, typename ...ARGS>
         Shared<T> create(ARGS&&... args)
@@ -147,6 +151,7 @@ namespace Render
         //CPU DATA
         Square::Context& m_context;
         std::vector< Shared<DrawerPass> > m_rendering_pass[RPT_MAX];
+        std::vector< Shared<PostEffect> > m_post_effects;
 
         //Cache objects to draw
         PoolQueues m_camera_queue;

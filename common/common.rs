@@ -6,6 +6,7 @@ resources
 	path "shader/legacy" filter "(\\w)+.hlsl"
 	path "shader/deferred" filter "(\\w)+.hlsl"
 	path "shader/debug" filter "(\\w)+.hlsl"
+	path "shader/post" filter "(\\w)+.hlsl"
 	path "texture" filter "(\\w)+.(tga|png|jpg|dds)"
 	path "material" filter "(\\w)+.mat"
 }

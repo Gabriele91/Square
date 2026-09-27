@@ -24,6 +24,8 @@ R"HLSLCODE(
 #define texture2DArray(name,pos) name.Sample(sempler_ ## name,pos)
 #define texture3D(name,pos) name.Sample(sempler_ ## name,pos)
 #define textureCube(name,pos) name.Sample(sempler_ ## name,pos)
+//sample of a mip level: no derivatives, also in loops and branches (D3D does not allow the others there)
+#define texture2DLod(name,pos,lod) name.SampleLevel(sempler_ ## name,pos,lod)
 
 #ifdef GLSL_BACKEND
 	#define shadow2D(name,pos) name.Sample(sempler_ ## name,invY(pos))
