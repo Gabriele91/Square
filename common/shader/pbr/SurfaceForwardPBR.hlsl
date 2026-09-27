@@ -19,6 +19,10 @@ SurfaceOutput compute_surface_output(in SurfaceData data)
 
 	// Then calculate lighting as usual
 	LightResult light_results = compute_light(view_direction, data);
+#if defined(RENDERING_AMBIENT_LIGHT)
+	// Emission, once: in the ambient pass (as the deferred ambient light pass does)
+	light_results.m_radiance += data.m_emmisive;
+#endif
 
 	//output
 	SurfaceOutput output;
