@@ -26,26 +26,18 @@ Shared<HovercraftDriver> HovercraftInput::driver() const
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-//keys
-bool HovercraftInput::key(Video::KeyboardEvent key, Video::ActionEvent action)
+//a frame: the actions held become the controls of the driver
+void HovercraftInput::on_update(double delta_time)
 {
-	bool* control = nullptr;
-	auto  hovercraft = driver();
-	if (!hovercraft) return false;
-	auto& input = hovercraft->input();
-	     if (key == m_bindings.forward)  control = &input.forward;
-	else if (key == m_bindings.backward) control = &input.backward;
-	else if (key == m_bindings.left)     control = &input.left;
-	else if (key == m_bindings.right)    control = &input.right;
-	if (!control) return false;
-	//held: down on press, up on release (repeat changes nothing)
-	if (action != Video::ActionEvent::REPEAT) *control = action == Video::ActionEvent::PRESS;
-	return true;
-}
-
-void HovercraftInput::release()
-{
-	if (auto hovercraft = driver()) hovercraft->input() = HovercraftDriver::Input();
+	auto input = System::get<InputSystem>(context());
+	auto hovercraft = driver();
+	if (!input || !hovercraft) return;
+	HovercraftDriver::Input controls;
+	controls.forward  = input->action(m_actions.forward);
+	controls.backward = input->action(m_actions.backward);
+	controls.left     = input->action(m_actions.left);
+	controls.right    = input->action(m_actions.right);
+	hovercraft->input(controls);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////

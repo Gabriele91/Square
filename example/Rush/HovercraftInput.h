@@ -2,12 +2,14 @@
 //  HovercraftInput.h
 //  Rush
 //
-//  The player at the controls of a hovercraft, as a component of the hovercraft actor: the
-//  keys (from the key events of the game) held down become the Input of its HovercraftDriver.
-//  An NPC is another component that writes the same Input.
+//  The player at the controls of a hovercraft, as a component of the hovercraft actor: every
+//  frame it reads the actions of the InputSystem (the keys are bound to them by the game) and
+//  sets them as the Input of its HovercraftDriver.
+//  An NPC is another component that sets the Input of the driver from its logic.
 //
 #pragma once
 #include <Square/Square.h>
+#include <string>
 
 class HovercraftDriver;
 
@@ -16,12 +18,13 @@ class HovercraftInput : public Square::Scene::Component
 public:
 	SQUARE_OBJECT(HovercraftInput)
 
-	struct Bindings
+	//the actions of the InputSystem for the controls
+	struct Actions
 	{
-		Square::Video::KeyboardEvent forward{ Square::Video::KEY_UP };
-		Square::Video::KeyboardEvent backward{ Square::Video::KEY_DOWN };
-		Square::Video::KeyboardEvent left{ Square::Video::KEY_LEFT };
-		Square::Video::KeyboardEvent right{ Square::Video::KEY_RIGHT };
+		std::string forward{ "forward" };
+		std::string backward{ "backward" };
+		std::string left{ "left" };
+		std::string right{ "right" };
 	};
 
 	//Registration in context
@@ -29,12 +32,11 @@ public:
 
 	HovercraftInput(Square::Context& context);
 
-	Bindings& bindings() { return m_bindings; }
+	void actions(const Actions& actions) { m_actions = actions; }
+	const Actions& actions() const { return m_actions; }
 
-	//a key event of the game: true if it is a control of the hovercraft
-	bool key(Square::Video::KeyboardEvent key, Square::Video::ActionEvent action);
-	//all the controls up (focus lost, respawn...)
-	void release();
+	//events
+	virtual void on_update(double delta_time) override;
 
 	//serialize (no attributes)
 	virtual void serialize(Square::Data::Archive& archive) override;
@@ -45,5 +47,5 @@ public:
 private:
 	Square::Shared<HovercraftDriver> driver() const;
 
-	Bindings m_bindings;
+	Actions m_actions;
 };

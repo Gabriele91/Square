@@ -29,7 +29,8 @@ public:
 
 	CameraFollow(Square::Context& context);
 
-	Settings& settings() { return m_settings; }
+	void settings(const Settings& settings) { m_settings = settings; }
+	const Settings& settings() const { return m_settings; }
 
 	//who it follows
 	void target(Square::Shared<Square::Scene::Actor> target);

@@ -29,8 +29,6 @@ public:
 		//move vel
 		const auto  level_path = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.sq");
 		const auto  level_path_json = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.jsq");
-		//controls of the player's hovercraft
-		if (m_player && m_player->key(key, action)) return;
 		//
 		switch (key)
 		{
@@ -119,6 +117,18 @@ public:
 		// window size
 		uint32_t window_width, window_height;
 		context().window()->get_size(window_width, window_height);
+		// controls: the actions of the input system (read by the HovercraftInput of the player)
+		if (auto input = System::get<InputSystem>(context()))
+		{
+			input->bind("forward",  Video::KEY_UP);
+			input->bind("forward",  Video::KEY_W);
+			input->bind("backward", Video::KEY_DOWN);
+			input->bind("backward", Video::KEY_S);
+			input->bind("left",     Video::KEY_LEFT);
+			input->bind("left",     Video::KEY_A);
+			input->bind("right",    Video::KEY_RIGHT);
+			input->bind("right",    Video::KEY_D);
+		}
 		// level
 		m_level = world().level("main");
 		// rendering pipeline of the world: SQUARE_RENDERING=forward|deferred (default: deferred)
@@ -226,7 +236,7 @@ public:
 			// the driver: a component of the hovercraft, updated every frame by the scene; the
 			// player drives it (its keys become the input of the driver)
 			m_driver = m_hovercraft->component<HovercraftDriver>();
-			m_driver->settings() = hovercraft_settings();
+			m_driver->settings(hovercraft_settings());
 			m_player = m_hovercraft->component<HovercraftInput>();
 			// the camera follows it
 			if (m_camera_follow) m_camera_follow->target(m_hovercraft);

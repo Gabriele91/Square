@@ -58,10 +58,12 @@ public:
 
 	//settings: before the first spawn/update (body and wheels are made then, from the meshes
 	//of the actor, with its scale)
-	Settings& settings() { return m_settings; }
+	void settings(const Settings& settings) { m_settings = settings; }
+	const Settings& settings() const { return m_settings; }
 
 	//controls, held (set by who drives it: the player, an NPC)
-	Input& input() { return m_input; }
+	void input(const Input& input) { m_input = input; }
+	const Input& input() const { return m_input; }
 	//speed along the body, per step (negative: backward)
 	float speed() const { return m_speed; }
 

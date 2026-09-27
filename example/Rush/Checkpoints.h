@@ -35,7 +35,8 @@ public:
 
 	Checkpoints(Square::Context& context);
 
-	Settings& settings() { return m_settings; }
+	void settings(const Settings& settings) { m_settings = settings; }
+	const Settings& settings() const { return m_settings; }
 
 	//the checkpoints: the "<prefix><n>" nodes under root (world positions), in the order of n;
 	//the beam goes to the first one
