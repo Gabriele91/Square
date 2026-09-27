@@ -279,6 +279,8 @@ namespace Render
         virtual Shader* get_shader() override;
         
         UniformDX11(ContextDX11* context, Shader* shader, unsigned char* buffer, size_t offset);
+        //texture uniform: texture (t#) and sampler (s#) registers are assigned independently by the compiler
+        UniformDX11(ContextDX11* context, Shader* shader, size_t texture_slot, size_t sampler_slot);
         
         UniformDX11();
         
@@ -288,6 +290,7 @@ namespace Render
         ContextDX11*   m_context{ nullptr };
         Shader*        m_shader { nullptr };
 		size_t         m_offset { 0 };
+		size_t         m_sampler_offset { 0 };
 		unsigned char* m_buffer { nullptr };
 		//write
 		template < typename T > void primitive_write(const T& value)

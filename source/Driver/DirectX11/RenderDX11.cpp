@@ -52,7 +52,7 @@ namespace Render
 	void UniformDX11::set(Texture* in_texture)
 	{
 		//bind texture
-		m_context->bind_texture(in_texture, (int)m_offset, (int)m_offset);
+		m_context->bind_texture(in_texture, (int)m_offset, (int)m_sampler_offset);
 	}
 
 	void UniformDX11::set(int i)
@@ -146,7 +146,7 @@ namespace Render
 		for (size_t i = 0; i!= n; ++i)
         {
             //bind texture
-            m_context->bind_texture(tvector++, (int)m_offset+i, (int)m_offset+i);
+            m_context->bind_texture(tvector++, (int)(m_offset+i), (int)(m_sampler_offset+i));
         }
     }
 
@@ -317,6 +317,16 @@ namespace Render
 	, m_shader(shader)
 	, m_buffer(buffer)
 	, m_offset(offset)
+	, m_sampler_offset(offset)
+	{
+	}
+
+	UniformDX11::UniformDX11(ContextDX11* context, Shader* shader, size_t texture_slot, size_t sampler_slot)
+	: m_context(context)
+	, m_shader(shader)
+	, m_buffer(nullptr)
+	, m_offset(texture_slot)
+	, m_sampler_offset(sampler_slot)
 	{
 	}
 
@@ -904,15 +914,16 @@ namespace Render
 		case BLEND_ZERO: return D3D11_BLEND_ZERO;
 		case BLEND_ONE:  return D3D11_BLEND_ONE;
 
-		case BLEND_ONE_MINUS_DST_COLOR: return D3D11_BLEND_INV_DEST_COLOR;
+		//the alpha channel does not accept the *_COLOR factors: use the *_ALPHA ones
+		case BLEND_ONE_MINUS_DST_COLOR: return isAlpha ? D3D11_BLEND_INV_DEST_ALPHA : D3D11_BLEND_INV_DEST_COLOR;
 		case BLEND_ONE_MINUS_DST_ALPHA: return D3D11_BLEND_INV_DEST_ALPHA;
-		case BLEND_ONE_MINUS_SRC_COLOR: return D3D11_BLEND_INV_SRC_COLOR;
+		case BLEND_ONE_MINUS_SRC_COLOR: return isAlpha ? D3D11_BLEND_INV_SRC_ALPHA : D3D11_BLEND_INV_SRC_COLOR;
 		case BLEND_ONE_MINUS_SRC_ALPHA: return D3D11_BLEND_INV_SRC_ALPHA;
 
-		case BLEND_DST_COLOR: return D3D11_BLEND_DEST_COLOR;
+		case BLEND_DST_COLOR: return isAlpha ? D3D11_BLEND_DEST_ALPHA : D3D11_BLEND_DEST_COLOR;
 		case BLEND_DST_ALPHA: return D3D11_BLEND_DEST_ALPHA;
 
-		case BLEND_SRC_COLOR: return D3D11_BLEND_SRC_COLOR;
+		case BLEND_SRC_COLOR: return isAlpha ? D3D11_BLEND_SRC_ALPHA : D3D11_BLEND_SRC_COLOR;
 		case BLEND_SRC_ALPHA: return D3D11_BLEND_SRC_ALPHA;
 		case BLEND_SRC_ALPHA_SATURATE: return D3D11_BLEND_SRC_ALPHA_SAT;
 		}
@@ -926,8 +937,8 @@ namespace Render
 		//ENABLE/DISABLE
 		D3D11_BLEND_DESC bsd;
 		ZeroMemory(&bsd, sizeof(D3D11_BLEND_DESC));
-		//ALPHA
-		bsd.AlphaToCoverageEnable = TRUE;
+		//no alpha to coverage: without MSAA it is an alpha test (~0.5), it cuts the alpha blended surfaces
+		bsd.AlphaToCoverageEnable = FALSE;
 		//FOR ALL
 		bsd.IndependentBlendEnable = FALSE; //USE only RenderTarget[0] 
 		//for (D3D11_RENDER_TARGET_BLEND_DESC& btarget : bsd.RenderTarget)
@@ -938,7 +949,7 @@ namespace Render
 			btarget.DestBlend = get_blend_type(dbs.m_dst, 0);
 			btarget.BlendOp = D3D11_BLEND_OP_ADD;
 			btarget.SrcBlendAlpha = get_blend_type(dbs.m_src, 1);
-			btarget.DestBlendAlpha = get_blend_type(dbs.m_src, 1);
+			btarget.DestBlendAlpha = get_blend_type(dbs.m_dst, 1);
 			btarget.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 			btarget.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 		}
@@ -2936,18 +2947,27 @@ namespace Render
 		D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
 		D3D11_SHADER_DESC desc_shader;
 		reflector->GetDesc(&desc_shader);
+		//samplers: the compiler assigns s# independently from t# (unused samplers are stripped,
+		//textures read without a sampler take no s#), so match them by name: "sempler_<texture>"
+		std::unordered_map<std::string, UINT> samplers;
 		for (UINT i = 0; i < desc_shader.BoundResources; ++i)
 		{
 			D3D11_SHADER_INPUT_BIND_DESC bind_desc;
-			if (SUCCEEDED(reflector->GetResourceBindingDesc(i, &bind_desc)))
+			if (SUCCEEDED(reflector->GetResourceBindingDesc(i, &bind_desc)) && bind_desc.Type == D3D_SIT_SAMPLER)
 			{
-				//if is a texture // WIP, (D3D_SIT_TEXTURE) same location of texture                           
-				if (bind_desc.Type == D3D_SIT_TEXTURE /* D3D_SIT_SAMPLER */)
-				{
-					info.m_fields_uniforms[std::string(bind_desc.Name)] = UniformDX11(context, shader, nullptr, bind_desc.BindPoint);
-				}
+				samplers[std::string(bind_desc.Name)] = bind_desc.BindPoint;
 			}
-
+		}
+		for (UINT i = 0; i < desc_shader.BoundResources; ++i)
+		{
+			D3D11_SHADER_INPUT_BIND_DESC bind_desc;
+			if (SUCCEEDED(reflector->GetResourceBindingDesc(i, &bind_desc)) && bind_desc.Type == D3D_SIT_TEXTURE)
+			{
+				std::string name(bind_desc.Name);
+				auto it_sampler = samplers.find("sempler_" + name);
+				UINT sampler_slot = it_sampler != samplers.end() ? it_sampler->second : bind_desc.BindPoint;
+				info.m_fields_uniforms[name] = UniformDX11(context, shader, (size_t)bind_desc.BindPoint, (size_t)sampler_slot);
+			}
 		}
 		
 	}
