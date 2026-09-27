@@ -67,13 +67,27 @@ size_t Checkpoints::collect(Shared<Scene::Actor> root)
 		if (collision && collision->raycast(position, -AXIS_Y, 1000.0f, hit)) position = hit.m_point;
 		m_points.push_back(position);
 	}
-	go_to(0);
+	m_current = NONE;
+	go_to(random_next());
 	return m_points.size();
+}
+
+size_t Checkpoints::random_next() const
+{
+	const size_t count = m_points.size();
+	if (count == 0) return NONE;
+	//no current one: any of them
+	if (m_current == NONE || m_current >= count) return std::uniform_int_distribution<size_t>(0, count - 1)(m_random);
+	//only one: it is the current one
+	if (count == 1) return 0;
+	//one of the others: skip the current one
+	const size_t index = std::uniform_int_distribution<size_t>(0, count - 2)(m_random);
+	return index >= m_current ? index + 1 : index;
 }
 
 void Checkpoints::go_to(size_t index)
 {
-	if (m_points.empty()) return;
+	if (m_points.empty() || index == NONE) return;
 	m_current = index % m_points.size();
 	if (auto beam = actor().lock()) beam->position(m_points[m_current]);
 }
@@ -119,7 +133,7 @@ void Checkpoints::on_update(double delta_time)
 	if (touched())
 	{
 		if (m_on_reached) m_on_reached(m_current);
-		go_to(m_current + 1);
+		go_to(random_next());
 	}
 }
 
