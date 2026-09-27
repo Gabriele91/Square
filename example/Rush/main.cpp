@@ -136,23 +136,38 @@ public:
 			const bool forward = rendering_type && Square::case_insensitive_equal(rendering_type, "forward");
 			render_world->pipeline((forward ? RP_FORWARD : RP_DEFERRED) | RP_DEBUG);
 		}
-		// collisions of the world (a game system, started on demand)
+		// collisions of the world (a game system, started on demand): body and wheels slide
+		// on the scene (Collisions BODY,SCENE,2,3 / WHEEL,SCENE,2,3: polygon, slide xz)
 		context().start_system<CollisionSystem>();
+		if (auto collision = world().instance<CollisionWorld>())
+		{
+			collision->collisions(TYPE_BODY, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDEXZ);
+			collision->collisions(TYPE_WHEEL, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDEXZ);
+		}
 		// arena
 		if (auto arena = m_level->load_actor("arena/scene"))
 		{
 			arena->position({ 0.0f, 4.0f, 0.0f });
 			m_camera = arena->child("camera");
-			if (m_camera) m_camera->component<Camera>()->viewport({ 0,0, window_width, window_height });
-			else context().logger()->info("arena has no 'camera' node");
-			m_light = arena->child("light") ? arena->child("light") : arena->child("sun");
-			if (!m_light) context().logger()->info("arena has no 'sun'/'light' node");
-			// the solid triangles of the arena (after it is placed)
-			if (auto collision = world().instance<CollisionWorld>())
+			if (m_camera)
 			{
-				collision->add(context(), arena);
-				context().logger()->info("arena collision triangles: " + std::to_string(collision->mesh().size()));
+				m_camera->component<Camera>()->viewport({ 0,0, window_width, window_height });
 			}
+			else
+			{
+				context().logger()->info("arena has no 'camera' node");
+			}
+			// Sun
+			m_light = arena->child("light") ? arena->child("light") : arena->child("sun");
+			if (!m_light)
+			{
+				context().logger()->info("arena has no 'sun'/'light' node");
+			}
+			// the arena is solid: a mesh collider of the scene type (its triangles, from where
+			// it is placed)
+			auto arena_collider = arena->component<MeshCollider>();
+			arena_collider->type(TYPE_SCENE);
+			context().logger()->info("arena collision triangles: " + std::to_string(arena_collider->mesh().size()));
 		}
 		else
 		{
@@ -192,11 +207,21 @@ public:
 	//the field)
 	static constexpr Square::Vec3 s_start{ 0.0f, 50.0f, 0.0f };
 
-	static Hovercraft::Settings hovercraft_settings()
+	//collision types (Const BODY=1,WHEEL=2,SCENE=3)
+	enum CollisionType : int
 	{
-		Hovercraft::Settings settings;
-		// the model floats a little: a quarter of its height lower
-		settings.model_offset_y = -0.25f;
+		TYPE_BODY  = 1,
+		TYPE_WHEEL = 2,
+		TYPE_SCENE = 3
+	};
+
+	static HovercraftDriver::Settings hovercraft_settings()
+	{
+		HovercraftDriver::Settings settings;
+		// collision types of body, wheels and ground
+		settings.body_type  = TYPE_BODY;
+		settings.wheel_type = TYPE_WHEEL;
+		settings.scene_type = TYPE_SCENE;
 		return settings;
 	}
 

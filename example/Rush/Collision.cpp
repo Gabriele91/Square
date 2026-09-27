@@ -170,6 +170,137 @@ namespace
 		    && a_min.y <= b_max.y && a_max.y >= b_min.y
 		    && a_min.z <= b_max.z && a_max.z >= b_min.z;
 	}
+
+	//Blitz3D World::collide (sphere, no y scale): the sphere moves from sv to dv; collide(line,
+	//collision, response) finds the first contact along line (with the response of what it
+	//hit), report(line, collision) gets every hit; where it ends
+	template < class Collide, class Report >
+	Vec3 slide_move(Vec3 sv, Vec3 dv, Collide collide, Report report)
+	{
+		if (sv == dv) return dv;
+		const Vec3 panic = sv;
+
+		int n_hit = 0;
+		Plane planes[2];
+		Line coll_line;
+		coll_line.m_origin = sv;
+		coll_line.m_direction = dv - sv;
+		const Vec3 dir = coll_line.m_direction;
+		float td = length(coll_line.m_direction);
+		float td_xz = length(Vec3(coll_line.m_direction.x, 0.0f, coll_line.m_direction.z));
+
+		int hits = 0;
+		for (;;)
+		{
+			CollisionMesh::Collision coll;
+			CollisionResponse response = CollisionResponse::SLIDE;
+			if (!collide(coll_line, coll, response)) break;
+
+			//register collision
+			if (++hits == MAX_HITS) break;
+			report(coll_line, coll);
+
+			Plane coll_plane(coll_line.at(coll.m_time), coll.m_normal);
+			coll_plane.m_d -= COLLISION_EPSILON;
+			coll.m_time = coll_plane.t_intersect(coll_line);
+
+			if (coll.m_time > 0.0f)
+			{
+				//update source position - only if ahead
+				sv = coll_line.at(coll.m_time);
+				td *= 1.0f - coll.m_time;
+				td_xz *= 1.0f - coll.m_time;
+			}
+
+			//nearest point on the plane to the destination
+			const Vec3 nv = coll_plane.nearest(dv);
+
+			if (n_hit == 0)
+			{
+				dv = nv;
+			}
+			else if (n_hit == 1)
+			{
+				if (planes[0].distance(nv) >= 0.0f)
+				{
+					dv = nv;
+					n_hit = 0;
+				}
+				else if (std::abs(dot(planes[0].m_normal, coll_plane.m_normal)) < 1.0f - EPSILON)
+				{
+					//along the crease of the two planes
+					dv = nearest(coll_plane.intersect(planes[0]), dv);
+				}
+				else
+				{
+					//squished
+					hits = MAX_HITS;
+					break;
+				}
+			}
+			else if (planes[0].distance(nv) >= 0.0f && planes[1].distance(nv) >= 0.0f)
+			{
+				dv = nv;
+				n_hit = 0;
+			}
+			else
+			{
+				dv = sv;
+				break;
+			}
+
+			Vec3 dd = dv - sv;
+
+			//going behind the initial direction
+			if (dot(dd, dir) <= 0.0f)
+			{
+				dv = sv;
+				break;
+			}
+
+			if (response == CollisionResponse::SLIDE)
+			{
+				const float d = length(dd);
+				if (d <= EPSILON)
+				{
+					dv = sv;
+					break;
+				}
+				if (d > td) dd *= td / d;
+			}
+			else if (response == CollisionResponse::SLIDEXZ)
+			{
+				const float d = length(Vec3(dd.x, 0.0f, dd.z));
+				if (d <= EPSILON)
+				{
+					dv = sv;
+					break;
+				}
+				if (d > td_xz) dd *= td_xz / d;
+			}
+
+			coll_line.m_origin = sv;
+			coll_line.m_direction = dd;
+			dv = sv + dd;
+			planes[n_hit++] = coll_plane;
+		}
+
+		if (hits >= MAX_HITS) return panic;
+		return dv;
+	}
+
+	//the world position of an actor (in its parent space if it has one)
+	void world_position(Scene::Actor& actor, const Vec3& position)
+	{
+		if (auto parent = actor.parent().lock())
+		{
+			actor.position(Vec3(inverse(parent->global_model_matrix()) * Vec4(position, 1.0f)));
+		}
+		else
+		{
+			actor.position(position);
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -238,6 +369,12 @@ void CollisionMesh::add(Context& context, const Shared<Scene::Actor>& actor)
 	});
 	//the tree of the triangles
 	build();
+}
+
+void CollisionMesh::clear()
+{
+	m_triangles.clear();
+	m_nodes.clear();
 }
 
 void CollisionMesh::add_triangle(const Vec3& a, const Vec3& b, const Vec3& c)
@@ -314,32 +451,34 @@ int CollisionMesh::build_node(std::vector<int>& triangles)
 	return node_id;
 }
 
-bool CollisionMesh::collide(const Line& line, float radius, Collision& collision) const
+bool CollisionMesh::collide(const Line& line, float radius, Collision& collision, float y_scale) const
 {
 	if (m_nodes.empty()) return false;
-	//box of the move
+	//box of the move, back in world space (the tree is in world space)
 	const Vec3 end = line.at(1.0f);
-	const Vec3 box_min = glm::min(line.m_origin, end) - Vec3(radius);
-	const Vec3 box_max = glm::max(line.m_origin, end) + Vec3(radius);
-	return collide(line, radius, box_min, box_max, 0, collision);
+	const Vec3 unscale(1.0f, 1.0f / y_scale, 1.0f);
+	const Vec3 box_min = (glm::min(line.m_origin, end) - Vec3(radius)) * unscale;
+	const Vec3 box_max = (glm::max(line.m_origin, end) + Vec3(radius)) * unscale;
+	return collide(line, radius, y_scale, box_min, box_max, 0, collision);
 }
 
-bool CollisionMesh::collide(const Line& line, float radius, const Vec3& box_min, const Vec3& box_max, int node_id, Collision& collision) const
+bool CollisionMesh::collide(const Line& line, float radius, float y_scale, const Vec3& box_min, const Vec3& box_max, int node_id, Collision& collision) const
 {
 	const Node& node = m_nodes[node_id];
 	if (!boxes_overlap(box_min, box_max, node.m_min, node.m_max)) return false;
 	bool hit = false;
 	if (node.m_triangles.empty())
 	{
-		if (node.m_left >= 0)  hit |= collide(line, radius, box_min, box_max, node.m_left, collision);
-		if (node.m_right >= 0) hit |= collide(line, radius, box_min, box_max, node.m_right, collision);
+		if (node.m_left >= 0)  hit |= collide(line, radius, y_scale, box_min, box_max, node.m_left, collision);
+		if (node.m_right >= 0) hit |= collide(line, radius, y_scale, box_min, box_max, node.m_right, collision);
 		return hit;
 	}
+	const Vec3 scale(1.0f, y_scale, 1.0f);
 	for (int id : node.m_triangles)
 	{
 		const Triangle& triangle = m_triangles[id];
 		if (!boxes_overlap(box_min, box_max, triangle.m_min, triangle.m_max)) continue;
-		if (!triangle_collide(line, radius, triangle.m_a, triangle.m_b, triangle.m_c, collision)) continue;
+		if (!triangle_collide(line, radius, triangle.m_a * scale, triangle.m_b * scale, triangle.m_c * scale, collision)) continue;
 		collision.m_triangle = id;
 		hit = true;
 	}
@@ -348,15 +487,6 @@ bool CollisionMesh::collide(const Line& line, float radius, const Vec3& box_min,
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //CollisionMesh: queries
-bool CollisionMesh::sweep(const Vec3& from, const Vec3& to, float radius, Collision& collision) const
-{
-	Line line;
-	line.m_origin = from;
-	line.m_direction = to - from;
-	collision = Collision();
-	return collide(line, radius, collision);
-}
-
 bool CollisionMesh::raycast(const Vec3& origin, const Vec3& direction, float max_distance, Hit& hit) const
 {
 	Line line;
@@ -370,117 +500,87 @@ bool CollisionMesh::raycast(const Vec3& origin, const Vec3& direction, float max
 	return true;
 }
 
-//Blitz3D World::collide (sphere, no y scale)
-Vec3 CollisionMesh::move(const Vec3& from, const Vec3& to, float radius, std::vector<Contact>* contacts, Response response) const
+//////////////////////////////////////////////////////////////////////////////////////////
+//SphereCollider
+SQUARE_CLASS_OBJECT_REGISTRATION(SphereCollider);
+
+void SphereCollider::object_registration(Context& ctx)
 {
-	Vec3 sv = from, dv = to;
-	if (sv == dv) return dv;
-	const Vec3 panic = sv;
-
-	int n_hit = 0;
-	Plane planes[2];
-	Line coll_line;
-	coll_line.m_origin = sv;
-	coll_line.m_direction = dv - sv;
-	const Vec3 dir = coll_line.m_direction;
-	float td = length(coll_line.m_direction);
-
-	int hits = 0;
-	for (;;)
-	{
-		Collision coll;
-		if (!collide(coll_line, radius, coll)) break;
-
-		//register collision
-		if (++hits == MAX_HITS) break;
-		if (contacts)
-		{
-			Contact contact;
-			contact.m_point = coll_line.at(coll.m_time) - coll.m_normal * radius;
-			contact.m_normal = coll.m_normal;
-			contacts->push_back(contact);
-		}
-
-		Plane coll_plane(coll_line.at(coll.m_time), coll.m_normal);
-		coll_plane.m_d -= COLLISION_EPSILON;
-		coll.m_time = coll_plane.t_intersect(coll_line);
-
-		if (coll.m_time > 0.0f)
-		{
-			//update source position - only if ahead
-			sv = coll_line.at(coll.m_time);
-			td *= 1.0f - coll.m_time;
-		}
-
-		if (response == Response::STOP)
-		{
-			dv = sv;
-			break;
-		}
-
-		//nearest point on the plane to the destination
-		const Vec3 nv = coll_plane.nearest(dv);
-
-		if (n_hit == 0)
-		{
-			dv = nv;
-		}
-		else if (n_hit == 1)
-		{
-			if (planes[0].distance(nv) >= 0.0f)
-			{
-				dv = nv;
-				n_hit = 0;
-			}
-			else if (std::abs(dot(planes[0].m_normal, coll_plane.m_normal)) < 1.0f - EPSILON)
-			{
-				//along the crease of the two planes
-				dv = nearest(coll_plane.intersect(planes[0]), dv);
-			}
-			else
-			{
-				//squished
-				hits = MAX_HITS;
-				break;
-			}
-		}
-		else if (planes[0].distance(nv) >= 0.0f && planes[1].distance(nv) >= 0.0f)
-		{
-			dv = nv;
-			n_hit = 0;
-		}
-		else
-		{
-			dv = sv;
-			break;
-		}
-
-		Vec3 dd = dv - sv;
-
-		//going behind the initial direction
-		if (dot(dd, dir) <= 0.0f)
-		{
-			dv = sv;
-			break;
-		}
-
-		const float d = length(dd);
-		if (d <= EPSILON)
-		{
-			dv = sv;
-			break;
-		}
-		if (d > td) dd *= td / d;
-
-		coll_line.m_origin = sv;
-		coll_line.m_direction = dd;
-		dv = sv + dd;
-		planes[n_hit++] = coll_plane;
-	}
-
-	if (hits && hits >= MAX_HITS) return panic;
-	return dv;
+	//factory: actor->component<SphereCollider>()
+	ctx.add_object<SphereCollider>();
+	//attributes
+	ctx.add_attribute_function<SphereCollider, int>
+	("type"
+	, 0
+	, [](const SphereCollider* collider) -> int { return collider->type(); }
+	, [](SphereCollider* collider, const int& type) { collider->type(type); });
+	ctx.add_attribute_function<SphereCollider, float>
+	("radius"
+	, 1.0f
+	, [](const SphereCollider* collider) -> float { return collider->radius(); }
+	, [](SphereCollider* collider, const float& radius) { collider->radius(radius); });
 }
+
+SphereCollider::SphereCollider(Context& context) : Component(context)
+{
+}
+
+Vec3 SphereCollider::center() const
+{
+	auto owner = actor().lock();
+	if (!owner) return m_offset;
+	return owner->position(true) + owner->rotation(true) * m_offset;
+}
+
+bool SphereCollider::collided(int type, float min_normal_y) const
+{
+	for (const CollisionReport& report : m_collisions)
+	{
+		if (report.m_type == type && report.m_normal.y >= min_normal_y) return true;
+	}
+	return false;
+}
+
+void SphereCollider::serialize(Data::Archive& archive)           { Data::serialize(archive, this); }
+void SphereCollider::serialize_json(Data::JsonValue& archive)    { Data::serialize_json(archive, this); }
+void SphereCollider::deserialize(Data::Archive& archive)         { Data::deserialize(archive, this); }
+void SphereCollider::deserialize_json(Data::JsonValue& archive)  { Data::deserialize_json(archive, this); }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//MeshCollider
+SQUARE_CLASS_OBJECT_REGISTRATION(MeshCollider);
+
+void MeshCollider::object_registration(Context& ctx)
+{
+	//factory: actor->component<MeshCollider>()
+	ctx.add_object<MeshCollider>();
+	//attributes
+	ctx.add_attribute_function<MeshCollider, int>
+	("type"
+	, 0
+	, [](const MeshCollider* collider) -> int { return collider->type(); }
+	, [](MeshCollider* collider, const int& type) { collider->type(type); });
+}
+
+MeshCollider::MeshCollider(Context& context) : Component(context)
+{
+}
+
+const CollisionMesh& MeshCollider::mesh()
+{
+	if (!m_built)
+	{
+		m_mesh.clear();
+		if (auto owner = actor().lock()) m_mesh.add(context(), owner);
+		m_built = true;
+	}
+	return m_mesh;
+}
+
+void MeshCollider::serialize(Data::Archive& archive)           { Data::serialize(archive, this); }
+void MeshCollider::serialize_json(Data::JsonValue& archive)    { Data::serialize_json(archive, this); }
+void MeshCollider::deserialize(Data::Archive& archive)         { Data::deserialize(archive, this); }
+void MeshCollider::deserialize_json(Data::JsonValue& archive)  { Data::deserialize_json(archive, this); }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //CollisionWorld
@@ -489,9 +589,114 @@ CollisionWorld::CollisionWorld(Context& context, System& system, Scene::World& w
 {
 }
 
-void CollisionWorld::add(Context& context, const Shared<Scene::Actor>& actor)
+void CollisionWorld::collisions(int src_type, int dst_type, CollisionMethod method, CollisionResponse response)
 {
-	m_mesh.add(context, actor);
+	std::vector<Rule>& rules = m_rules[src_type];
+	for (const Rule& rule : rules)
+	{
+		if (rule.m_dst_type == dst_type) return;
+	}
+	rules.push_back(Rule{ dst_type, method, response });
+}
+
+CollisionWorld::Colliders CollisionWorld::colliders() const
+{
+	Colliders colliders;
+	for (const Shared<Scene::Level>& level : m_world.levels())
+	{
+		level->visit([&](Shared<Scene::Actor> actor) -> bool
+		{
+			if (actor->contains<SphereCollider>()) colliders.m_spheres.push_back(actor->component<SphereCollider>());
+			if (actor->contains<MeshCollider>())   colliders.m_meshes.push_back(actor->component<MeshCollider>());
+			return true;
+		});
+	}
+	return colliders;
+}
+
+void CollisionWorld::update()
+{
+	const Colliders all = colliders();
+	for (const Shared<SphereCollider>& sphere : all.m_spheres)
+	{
+		sphere->m_collisions.clear();
+		collide(*sphere, all);
+	}
+}
+
+void CollisionWorld::collide(SphereCollider& source, const Colliders& colliders)
+{
+	auto actor = source.actor().lock();
+	if (!actor) return;
+	const Vec3 position = source.center();
+	//first update, or a reset: from here
+	if (!source.m_has_previous)
+	{
+		source.m_previous = position;
+		source.m_has_previous = true;
+		return;
+	}
+	const Vec3 from = source.m_previous;
+	auto rules = m_rules.find(source.type());
+	if (rules == m_rules.end())
+	{
+		source.m_previous = position;
+		return;
+	}
+	//an ellipsoid: a sphere of radius in a space where y is scaled by radius / radius_y
+	//(Blitz3D y_scale)
+	const float radius = source.radius();
+	const float y_scale = radius / std::max(source.radius_y(), 1e-5f);
+	const Vec3  scale(1.0f, y_scale, 1.0f), unscale(1.0f, 1.0f / y_scale, 1.0f);
+	Weak<Scene::Actor> hit_actor;
+	int hit_type = 0;
+	const Vec3 resolved = unscale * slide_move(from * scale, position * scale,
+	[&](const Line& line, CollisionMesh::Collision& collision, CollisionResponse& response) -> bool
+	{
+		bool hit = false;
+		for (const Rule& rule : rules->second)
+		{
+			for (const Shared<MeshCollider>& mesh : colliders.m_meshes)
+			{
+				if (mesh->type() != rule.m_dst_type) continue;
+				if (!mesh->mesh().collide(line, radius, collision, y_scale)) continue;
+				hit = true;
+				response = rule.m_response;
+				hit_actor = mesh->actor();
+				hit_type = mesh->type();
+			}
+		}
+		return hit;
+	},
+	[&](const Line& line, const CollisionMesh::Collision& collision)
+	{
+		CollisionReport report;
+		report.m_point = (line.at(collision.m_time) - collision.m_normal * radius) * unscale;
+		report.m_normal = normalize(collision.m_normal * scale);
+		report.m_with = hit_actor;
+		report.m_type = hit_type;
+		source.m_collisions.push_back(report);
+	});
+	//the actor follows the center
+	if (resolved != position) world_position(*actor, actor->position(true) + (resolved - position));
+	source.m_previous = resolved;
+}
+
+bool CollisionWorld::raycast(const Vec3& origin, const Vec3& direction, float max_distance, CollisionMesh::Hit& hit)
+{
+	bool found = false;
+	float best = max_distance;
+	for (const Shared<MeshCollider>& mesh : colliders().m_meshes)
+	{
+		CollisionMesh::Hit mesh_hit;
+		if (mesh->mesh().raycast(origin, direction, best, mesh_hit) && mesh_hit.m_distance <= best)
+		{
+			best = mesh_hit.m_distance;
+			hit = mesh_hit;
+			found = true;
+		}
+	}
+	return found;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -508,7 +713,24 @@ CollisionSystem::CollisionSystem(Context& context) : System(context)
 {
 }
 
+void CollisionSystem::shutdown()
+{
+	m_instances.clear();
+}
+
+void CollisionSystem::update(double delta_time)
+{
+	//worlds gone
+	m_instances.erase(std::remove_if(m_instances.begin(), m_instances.end(), [](const Weak<CollisionWorld>& instance) { return instance.expired(); }), m_instances.end());
+	for (const Weak<CollisionWorld>& weak_instance : m_instances)
+	{
+		if (auto instance = weak_instance.lock()) instance->update();
+	}
+}
+
 Shared<SystemInstance> CollisionSystem::create_instance(Scene::World& world)
 {
-	return MakeShared<CollisionWorld>(context(), *this, world);
+	auto instance = MakeShared<CollisionWorld>(context(), *this, world);
+	m_instances.push_back(instance);
+	return instance;
 }
