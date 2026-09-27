@@ -79,6 +79,22 @@ public:
 				context().logger()->info("FPS avg: " + std::to_string(m_counter.get()));
 			}
 			break;
+		case Square::Video::KEY_K:
+			if (action == Square::Video::ActionEvent::RELEASE && m_ssao)
+			{
+				m_ssao->enabled(!m_ssao->enabled());
+				context().logger()->info(std::string("SSAO: ") + (m_ssao->enabled() ? "on" : "off"));
+			}
+			break;
+		case Square::Video::KEY_U:
+			//SSAO debug view: the occlusion on the screen
+			if (action == Square::Video::ActionEvent::RELEASE && m_ssao)
+			{
+				auto settings = m_ssao->settings();
+				settings.debug = !settings.debug;
+				m_ssao->settings(settings);
+			}
+			break;
 		case Square::Video::KEY_P:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			if (m_light && m_light->contains<DirectionLight>())
@@ -137,6 +153,9 @@ public:
 			const char* rendering_type = std::getenv("SQUARE_RENDERING");
 			const bool forward = rendering_type && Square::case_insensitive_equal(rendering_type, "forward");
 			render_world->pipeline((forward ? RP_FORWARD : RP_DEFERRED) | RP_DEBUG);
+			// post effects: SSAO (deferred: it darkens the ambient light), K to turn it on/off
+			m_ssao = MakeShared<Render::SSAO>(context());
+			render_world->add_post_effect(m_ssao);
 		}
 		// collisions of the world (a game system, started on demand): body and wheels slide
 		// on the scene (Collisions BODY,SCENE,2,3 / WHEEL,SCENE,2,3: polygon, slide xz)
@@ -360,6 +379,7 @@ private:
 	Square::Shared<HovercraftInput>           m_player;
 	Square::Shared<CameraFollow>              m_camera_follow;
 	Square::Shared<Checkpoints>               m_checkpoints;
+	Square::Shared<Square::Render::SSAO>      m_ssao;
 	Square::Vec3                              m_start{ s_start }; //spawn_point_1 of the arena
 };
 

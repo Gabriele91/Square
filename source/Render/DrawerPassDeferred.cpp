@@ -31,24 +31,6 @@ namespace Render
 		Mat4 m_model;
 	};
 
-	//////////////////////////////////////////////////////////////////////
-	// Volume meshes (unit space, scaled/positioned by the light pass)
-	//////////////////////////////////////////////////////////////////////
-	static Shared<Mesh> build_fullscreen_quad(Square::Context& context)
-	{
-		Mesh::Vertex3DList vertices
-		{
-			{ Vec3(-1.0f, -1.0f, 0.0f) },
-			{ Vec3( 1.0f, -1.0f, 0.0f) },
-			{ Vec3( 1.0f,  1.0f, 0.0f) },
-			{ Vec3(-1.0f,  1.0f, 0.0f) },
-		};
-		Mesh::IndexList indices{ 0, 2, 1, 0, 3, 2 };
-		auto mesh = MakeShared<Mesh>(context);
-		mesh->build(vertices, indices);
-		return mesh;
-	}
-
 	
 	//////////////////////////////////////////////////////////////////////
 	// Draw volume meshes 
@@ -71,6 +53,7 @@ namespace Render
 	DrawerPassDeferred::DrawerPassDeferred(Square::Context& context)
 	: DrawerPass(context.allocator(), RPT_RENDER)
 	, m_context(context)
+	, m_post_effects(context)
 	{
 		//constant buffers
 		m_cb_camera          = Render::stream_constant_buffer<Render::UniformBufferCamera>(&render());
@@ -101,6 +84,7 @@ namespace Render
 	{
 		if (auto render_driver = System::get<RenderSystem>(context())->render())
 		{
+			if (m_occlusion_target) render_driver->delete_render_target(m_occlusion_target);
 			if (m_light_target)  render_driver->delete_render_target(m_light_target);
 			if (m_light_texture) render_driver->delete_texture(m_light_texture);
 		}
@@ -119,6 +103,8 @@ namespace Render
 		if (m_gbuffer && m_size == size) return true;
 		//save size
 		m_size = size;
+		//the occlusion target is on the G-Buffer that is replaced
+		if (m_occlusion_target) render().delete_render_target(m_occlusion_target);
 		//G-Buffer: position/normal/albedo/emissive + depth
 		std::vector<GBuffer::BufferFormat> formats
 		{
@@ -144,7 +130,9 @@ namespace Render
 			  Render::TargetField{ m_light_texture, RT_COLOR }
 			, Render::TargetField{ m_gbuffer->texture(GB_DEPTH), RT_DEPTH }
 		});
-		return m_light_target != nullptr;
+		//the G-Buffer occlusion alone (GT3: emissive | occlusion), for the G-Buffer post effects
+		m_occlusion_target = render().create_render_target({ Render::TargetField{ m_gbuffer->texture(GB_EMISSIVE), RT_COLOR } });
+		return m_light_target != nullptr && m_occlusion_target != nullptr;
 	}
 
 	void DrawerPassDeferred::bind_gbuffer(Resource::Shader* shader)
@@ -452,14 +440,28 @@ namespace Render
 		if (size.x <= 0 || size.y <= 0) return;
 		//(re)build buffers if needed
 		if (!build_buffers(size)) return;
+		//post effects of the world
+		const auto& post_effects = drawer.post_effects();
 		//1) geometry into the G-Buffer
 		geometry_pass(clear_color, num_of_pass, camera, queues);
+		//1b) G-Buffer post effects (SSAO...)
+		if (PostEffectChain::any(post_effects, PES_GBUFFER))
+		{
+			m_post_effects.draw_gbuffer(post_effects, post_effect_frame(camera));
+		}
 		//2) accumulate lights into the light buffer
 		light_pass(ambient_color, camera, queues);
 		//2b) blend the translucent renderables over it (forward shaded)
 		translucent_pass(ambient_color, camera, queues);
-		//3) present the light buffer to the screen
-		present_pass(camera);
+		//2c) color post effects, on the light buffer
+		Texture* frame = m_light_texture;
+		if (PostEffectChain::any(post_effects, PES_COLOR))
+		{
+			frame = m_post_effects.draw_color(post_effects, post_effect_frame(camera), m_light_texture);
+		}
+		//3) present the frame to the screen (or the debug view of a post effect)
+		if (Texture* debug = PostEffectChain::debug_texture(post_effects)) frame = debug;
+		present_pass(camera, frame);
 		//4) copy depth for later passes (no-op on backends without blit support)
 		const IVec4 area(0, 0, size.x, size.y);
 		render().copy_target_to_target(area, m_gbuffer->target(), area, nullptr, RT_DEPTH);
@@ -500,7 +502,22 @@ namespace Render
 		render().set_cullface_state({ CF_BACK });
 	}
 
-	void DrawerPassDeferred::present_pass(const Camera& camera)
+	PostEffectFrame DrawerPassDeferred::post_effect_frame(const Camera& camera)
+	{
+		PostEffectFrame frame;
+		frame.m_render        = &render();
+		frame.m_camera        = &camera;
+		frame.m_camera_buffer = m_cb_camera.get(); //updated by the geometry pass
+		frame.m_size          = m_size;
+		frame.m_viewport      = camera.viewport().viewport();
+		frame.m_quad          = m_quad.get();
+		frame.m_gbuffer       = m_gbuffer.get();
+		frame.m_occlusion     = m_occlusion_target;
+		frame.m_linear        = true; //the light buffer is linear HDR
+		return frame;
+	}
+
+	void DrawerPassDeferred::present_pass(const Camera& camera, Texture* frame)
 	{
 		//present shader is required
 		if (!m_shader_present || !m_shader_present->base_shader())
@@ -517,7 +534,7 @@ namespace Render
 		m_shader_present->bind();
 		if (auto uniform_light = m_shader_present->uniform("g_light"))
 		{
-			uniform_light->set(m_light_texture);
+			uniform_light->set(frame);
 		}
 		else
 		{

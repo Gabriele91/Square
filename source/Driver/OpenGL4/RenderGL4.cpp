@@ -1772,31 +1772,43 @@ namespace Render
 		}
 	}
 
+	//the global uniforms set after the bind of the shader, before the draw (as D3D11)
+	static inline void upload_bound_shader_globals(Shader* shader)
+	{
+		if (shader) shader->upload_global_buffer();
+	}
+
 	void ContextGL4::draw_arrays(DrawType type, unsigned int n)
 	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
 		glDrawArrays(get_draw_type(type), 0, n);
 	}
 
 	void ContextGL4::draw_arrays(DrawType type, unsigned int start, unsigned int size)
 	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
 		glDrawArrays(get_draw_type(type), start, size);
 	}
 
 	void ContextGL4::draw_elements(DrawType type, unsigned int n)
 	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
 		glDrawElements(get_draw_type(type), n, GL_UNSIGNED_INT, (void*)NULL);
 	}
 	void ContextGL4::draw_elements(DrawType type, unsigned int start, unsigned int n)
 	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
 		glDrawElements(get_draw_type(type), n, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * start));
 	}
 
 	void ContextGL4::draw_arrays_instanced(DrawType type, unsigned int start, unsigned int size, unsigned int instances)
 	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
 		glDrawArraysInstanced(get_draw_type(type), start, size, instances);
 	}
 	void ContextGL4::draw_elements_instanced(DrawType type, unsigned int start, unsigned int n, unsigned int instances)
 	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
 		glDrawElementsInstanced(get_draw_type(type), n, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * start), instances);
 	}
 
@@ -2594,9 +2606,8 @@ namespace Render
 		if (m_global_buffer_gpu) m_context.delete_CB(m_global_buffer_gpu);
 	}
 
-	void Shader::bind()
+	void Shader::upload_global_buffer()
 	{
-		//update global buffer
 		if (m_global_buffer_ref && m_global_buffer_update)
 		{
 			m_context.update_steam_CB(
@@ -2606,6 +2617,12 @@ namespace Render
 			);
 			m_global_buffer_update = false;
 		}
+	}
+
+	void Shader::bind()
+	{
+		//update global buffer
+		upload_global_buffer();
 		//start texture uniform
 		m_uniform_ntexture = -1;
 		//uniform parogram shaders

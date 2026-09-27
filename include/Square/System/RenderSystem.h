@@ -24,6 +24,7 @@ namespace Square
 		class Context;
 		class Drawer;
 		class DrawerPassDebug;
+		class PostEffect;
 		class RenderInspector;
 	}
 	class RenderInstance;
@@ -114,6 +115,13 @@ namespace Square
 		bool visible() const;
 		void visible(bool visible);
 
+		//post effects of the world, in the order they are drawn (see Render/PostEffect.h):
+		//the effects of the pipeline stage (G-Buffer effects only in deferred)
+		void add_post_effect(Shared<Render::PostEffect> effect);
+		void remove_post_effect(Shared<Render::PostEffect> effect);
+		void post_effects(const std::vector< Shared<Render::PostEffect> >& effects);
+		const std::vector< Shared<Render::PostEffect> >& post_effects() const;
+
 		//the drawer of the world and its debug pass: while the RenderSystem is ready,
 		//nullptr out of it (and the debug pass without RP_DEBUG)
 		Shared<Render::Drawer> drawer() const;
@@ -129,6 +137,7 @@ namespace Square
 		Vec4        m_clear_color{ 0.25f, 0.5f, 1.0f, 1.0f };
 		Vec4        m_ambient_color{ 0.1f, 0.1f, 0.1f, 1.0f };
 		bool        m_visible{ true };
+		std::vector< Shared<Render::PostEffect> > m_post_effects;
 		//drawer
 		Shared<Render::Drawer>          m_drawer;
 		Shared<Render::DrawerPassDebug> m_debug_pass;

@@ -17,6 +17,7 @@
 #include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/DrawerPassForward.h"
 #include "Square/Render/ForwardShading.h"
+#include "Square/Resource/Shader.h"
 
 namespace Square
 {
@@ -25,6 +26,7 @@ namespace Render
     DrawerPassForward::DrawerPassForward(Square::Context& context)
     : DrawerPass(context.allocator(), RPT_RENDER)
     , m_context(context)
+    , m_post_effects(context)
     {
         m_cb_camera    = Render::stream_constant_buffer<Render::UniformBufferCamera>(&render());
 		m_cb_transform = Render::stream_constant_buffer<Render::UniformBufferTransform>(&render());
@@ -36,6 +38,9 @@ namespace Render
 		m_cb_direction_shadow_light = Render::stream_constant_buffer<Render::UniformDirectionShadowLight>(&render());
 		m_cb_point_shadow_light = Render::stream_constant_buffer<Render::UniformPointShadowLight>(&render());
 		m_cb_spot_shadow_light = Render::stream_constant_buffer<Render::UniformSpotShadowLight>(&render());
+		//post effects: full-screen quad and the final copy
+		m_quad = build_fullscreen_quad(context);
+		m_shader_copy = context.resource<Resource::Shader>("PostCopy");
     }
     //context
     Square::Context& DrawerPassForward::context(){ return m_context; }
@@ -55,6 +60,15 @@ namespace Render
      , const PoolQueues& queues
     )
     {
+        //color post effects: the scene goes on the intermediate target
+        const auto& post_effects = drawer.post_effects();
+        const Vec4& viewport = camera.viewport().viewport();
+        const IVec2 size((int)viewport.z, (int)viewport.w);
+        const bool post = PostEffectChain::any(post_effects, PES_COLOR)
+                       && m_shader_copy && m_shader_copy->base_shader()
+                       && size.x > 0 && size.y > 0
+                       && build_frame(size);
+        if (post) render().enable_render_target(m_frame->target());
         //start to draw
         if(num_of_pass == 0)
         {
@@ -86,6 +100,53 @@ namespace Render
                 , m_cb_spot_shadow_light.get()
               }
         );
+        //post effects, then the result on the screen
+        if (post)
+        {
+            render().disable_render_target(m_frame->target());
+            PostEffectFrame frame;
+            frame.m_render        = &render();
+            frame.m_camera        = &camera;
+            frame.m_camera_buffer = m_cb_camera.get(); //updated by draw_forward
+            frame.m_size          = size;
+            frame.m_viewport      = viewport;
+            frame.m_quad          = m_quad.get();
+            //the forward shaders write linear colors on an sRGB framebuffer, encoded ones otherwise
+            frame.m_linear        = render().is_srgb_framebuffer();
+            Texture* result = m_post_effects.draw_color(post_effects, frame, m_frame->texture(0));
+            //or the debug view of a post effect
+            if (Texture* debug = PostEffectChain::debug_texture(post_effects)) result = debug;
+            present(camera, result);
+        }
+    }
+
+    bool DrawerPassForward::build_frame(const IVec2& size)
+    {
+        if (m_frame && m_frame->size() == size) return m_frame->target() != nullptr;
+        m_frame = MakeShared<GBuffer>(context(), size, std::vector<GBuffer::BufferFormat>
+        {
+            GBuffer::BufferFormat(TF_RGBA16F, TT_RGBA, TTF_FLOAT, RT_COLOR),
+            //same depth format as the screen: it is copied there after the post effects
+            GBuffer::BufferFormat(TF_DEPTH24_STENCIL8, TT_DEPTH_STENCIL, TTF_UNSIGNED_INT_24_8, RT_DEPTH)
+        });
+        return m_frame->target() != nullptr;
+    }
+
+    void DrawerPassForward::present(const Camera& camera, Texture* frame)
+    {
+        //the frame on the screen (as it is: already in the space of the screen)
+        render().set_viewport_state({ camera.viewport().viewport() });
+        render().set_depth_buffer_state({ DM_DISABLE });
+        render().set_blend_state({});
+        render().set_cullface_state({ CF_BACK });
+        m_shader_copy->bind();
+        if (auto uniform_source = m_shader_copy->uniform("g_source")) uniform_source->set(frame);
+        m_quad->draw(render());
+        m_shader_copy->unbind();
+        render().set_depth_buffer_state({ DM_ENABLE_AND_WRITE });
+        //the depth of the scene, for the passes that follow (debug...)
+        const IVec4 area(0, 0, (int)m_frame->size().x, (int)m_frame->size().y);
+        render().copy_target_to_target(area, m_frame->target(), area, nullptr, RT_DEPTH);
     }
 }
 }

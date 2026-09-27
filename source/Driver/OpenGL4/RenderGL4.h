@@ -406,6 +406,9 @@ namespace Render
 
 		//update global buffer
 		void global_buffer_bind();
+		//upload the global uniforms changed since the last upload (before a draw: the uniforms
+		//set after the bind of the shader count for that draw)
+		void upload_global_buffer();
 
 		//get uniform
 		Uniform* uniform(const std::string& name);
