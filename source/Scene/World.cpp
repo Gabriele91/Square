@@ -77,6 +77,7 @@ namespace Scene
 	{
 		return m_instances;
 	}
+	
 	//name
 	const std::string& World::name() const
 	{

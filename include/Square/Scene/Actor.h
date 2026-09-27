@@ -105,7 +105,11 @@ namespace Scene
         void translation(const Vec3& vector) override;
         void move(const Vec3& vector) override;
         void turn(const Quat& rot) override;
-        
+
+        //turn so that its axis (in its own space, e.g. Vec3(1,0,0) the x axis) points along
+        //vector (world space), the smallest turn; rate 1 all the way, less a share of it
+        void align_to_vector(const Vec3& vector, const Vec3& axis, float rate = 1.0f);
+
         void position(const Vec3& pos) override;
         void rotation(const Quat& rot) override;
         void scale(const Vec3& pos) override;
