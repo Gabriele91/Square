@@ -170,7 +170,6 @@ namespace Parser
 			{ keyword::anisotropic,  handle_anisotropic },
 			{ keyword::mipmap,       handle_mipmap      },
 			{ keyword::build_mipmap, handle_mipmap      },
-			{ keyword::data,         handle_data        },
 			{ keyword::image,        handle_image       },
 			{ keyword::url,          handle_image       },
 			{ keyword::texture,      handle_image       },
@@ -203,6 +202,13 @@ namespace Parser
 		}
 		CommandResult parse_basic_commands(Context& context, const char*& cursor, const char* buffer_end)
 		{
+			//data: the bytes of the image follow at once and they can be letters too ("dataBM..." of a
+			//BMP): a prefix, not a whole word
+			if (cstr_cmp(cursor, keyword::data))
+			{
+				cursor += keyword::data.size();
+				return handle_data(context, cursor, buffer_end) ? CommandResult::Handled : CommandResult::Error;
+			}
 			for (const auto& command : s_basic_commands)
 			{
 				if (!cstr_cmp_skip(cursor, command.keyword)) continue;
