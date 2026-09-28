@@ -53,8 +53,17 @@ namespace Square
         return attributes(info.id());
     }
     
-    //Get resource
-    Shared<ResourceObject> BaseContext::resource(const std::string& name)
+    // Folder of "Class:folder/name" ("" if none): while it loads,
+	// the resources it references are looked up there first
+    static std::string resource_folder(const std::string& name)
+    {
+        const size_t colon = name.find(':');
+        const size_t name_start = colon == std::string::npos ? 0 : colon + 1;
+        const size_t slash = name.rfind('/');
+        return slash != std::string::npos && slash > name_start ? name.substr(name_start, slash - name_start) : std::string();
+    }
+
+    std::string BaseContext::scoped_resource_name(const std::string& name) const
     {
         //referenced while a resource of a folder loads: look in that folder first
         if (!m_resource_scopes.empty() && !m_resource_scopes.back().empty())
@@ -63,13 +72,22 @@ namespace Square
             if (colon != std::string::npos)
             {
                 const std::string scoped = name.substr(0, colon + 1) + m_resource_scopes.back() + "/" + name.substr(colon + 1);
-                if (m_resources.count(scoped) || m_resources_file.count(scoped))
-                {
-                    return load_resource(scoped);
-                }
+                if (m_resources.count(scoped) || m_resources_file.count(scoped)) return scoped;
             }
         }
-        return load_resource(name);
+        return name;
+    }
+
+    //Get resource
+    Shared<ResourceObject> BaseContext::resource(const std::string& name)
+    {
+        return load_resource(scoped_resource_name(name));
+    }
+
+    //A new object of a resource (not kept)
+    Shared<ResourceObject> BaseContext::resource_instance(const std::string& name)
+    {
+        return load_resource_file(scoped_resource_name(name));
     }
 
     Shared<ResourceObject> BaseContext::load_resource(const std::string& name)
@@ -89,14 +107,8 @@ namespace Square
 		m_resources.insert({ name, resource });
 		//set resource name (the key string lives as long as the map entry)
 		resource->resource_name(m_resources.find(name)->first.c_str());
-        //folder of "Class:folder/name": the resources it references are looked up there first
-        const size_t colon = name.find(':');
-        const size_t name_start = colon == std::string::npos ? 0 : colon + 1;
-        const size_t slash = name.rfind('/');
-        m_resource_scopes.push_back(slash != std::string::npos && slash > name_start
-                                    ? name.substr(name_start, slash - name_start)
-                                    : std::string());
-        //load
+        //load, in the scope of its folder
+        m_resource_scopes.push_back(resource_folder(name));
         const bool loaded = resource->load(resource_file.m_filepath);
         m_resource_scopes.pop_back();
         if (loaded) return resource;
@@ -107,7 +119,28 @@ namespace Square
 		//end
         return nullptr;
     }
-    
+
+    Shared<ResourceObject> BaseContext::load_resource_file(const std::string& name)
+    {
+        //the file of the resource
+        auto resource_file_it = m_resources_file.find(name);
+        if (resource_file_it == m_resources_file.end()) return nullptr;
+        //copy: loading can register/load other resources (and invalidate the iterators)
+        const ResourceFile resource_file = resource_file_it->second;
+        //a new object, not kept by the context
+        auto resource = DynamicPointerCast<ResourceObject>(create(resource_file.m_resouce_id));
+        if (!resource) return nullptr;
+        //resource name: the key of the file (it lives as long as the map entry)
+        resource->resource_name(m_resources_file.find(name)->first.c_str());
+        //load, in the scope of its folder
+        m_resource_scopes.push_back(resource_folder(name));
+        const bool loaded = resource->load(resource_file.m_filepath);
+        m_resource_scopes.pop_back();
+        if (loaded) return resource;
+        logger()->warning("Resource: unable to load " + name);
+        return nullptr;
+    }
+
     const std::string& BaseContext::resource_path(const std::string& name)
     {
         //find resource from file

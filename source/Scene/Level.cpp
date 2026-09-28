@@ -119,11 +119,14 @@ namespace Scene
 	}
 	Shared<Actor> Level::load_actor(const std::string& resource_name)
 	{
-		Shared<Actor> new_actor = context().resource<Actor>(resource_name);
-		if (new_actor)
+		//an actor in the level is an instance: a new one from the file of the resource every time
+		//(the cache of the resources would give back the same actor, moved here again)
+		Shared<Actor> new_actor = context().resource_instance<Actor>(resource_name);
+		if (!new_actor)
 		{
-			add(new_actor);
+			return nullptr;
 		}
+		add(new_actor);
 		return new_actor;
 	}
 	

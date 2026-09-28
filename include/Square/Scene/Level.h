@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 10/03/18.
-//  Copyright © 2017 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2017 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -43,6 +43,8 @@ namespace Scene
 
 		//add an actor
 		void add(Shared<Actor> child);
+
+		// Load a new actor from a file; an instance is cread at every call,
 		Shared<Actor> load_actor(const std::string& resource_name);
 
 		//query

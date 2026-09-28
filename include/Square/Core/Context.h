@@ -69,6 +69,10 @@ namespace Square
 		//Get resource, name = "Class:path". While a resource "Class:folder/x" loads, the names it
 		//references are looked up first inside "folder/" and then as they are (global).
         Shared<ResourceObject> resource(const std::string& name);
+		//a new object of a resource every call (not kept: e.g. an actor placed in a scene), loaded
+		//as resource() loads it (same lookup of the names it references)
+		Shared<ResourceObject> resource_instance(const std::string& name);
+		// Get resource path 
         const std::string& resource_path(const std::string& name);
 
 		//Get variable
@@ -204,6 +208,10 @@ namespace Square
 		bool m_systems_post_initialized{ false };
 		//find/load a resource by its full name, no scope lookup
 		Shared<ResourceObject> load_resource(const std::string& name);
+		//the full name of a resource, looked up first in the folder of the resource loading
+		std::string scoped_resource_name(const std::string& name) const;
+		//create and load the object of a resource file (its folder is the scope while it loads)
+		Shared<ResourceObject> load_resource_file(const std::string& name);
 		//friend class
 		friend class Application;
 		//delete all
@@ -239,6 +247,7 @@ namespace Square
 		using BaseContext::create;
 		using BaseContext::attributes;
 		using BaseContext::resource;
+		using BaseContext::resource_instance;
 		using BaseContext::resource_path;
 		using BaseContext::variable;
 		
@@ -377,6 +386,11 @@ namespace Square
 		template< class T >  inline Shared<T> resource(const std::string& name)
 		{
 			return DynamicPointerCast<T>(BaseContext::resource(T::static_object_name() + ":" + name));
+		}
+
+		template< class T >  inline Shared<T> resource_instance(const std::string& name)
+		{
+			return DynamicPointerCast<T>(BaseContext::resource_instance(T::static_object_name() + ":" + name));
 		}
 
 		template< class T >  inline Shared<T> reinterpret_resource(const std::string& name)
