@@ -10,10 +10,13 @@
 #include <sstream>
 #include <fstream>
 #include <memory>
+#include <array>
+#include <algorithm>
 #include "Collision.h"
 #include "Hovercraft.h"
 #include "Checkpoints.h"
 #include "HovercraftInput.h"
+#include "HovercraftAI.h"
 #include "CameraFollow.h"
 
 class RushGame : public Square::AppInterface
@@ -107,7 +110,7 @@ public:
 			//back on the ground at the start
 			if (action == Square::Video::ActionEvent::PRESS)
 			{
-				spawn();
+				spawn(0);
 			}
 		break;
 		default: break;
@@ -123,17 +126,26 @@ public:
     void start()
     {
 		using namespace Square;
-		using namespace Square::Data;
-		using namespace Square::Scene;
-		using namespace Square::Resource;
+		using namespace Square::Filesystem;
 		//rs file
-		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "/resources.rs"));
-		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "common/resources.rs"));
-		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "example/Rush/resources.rs"));
-		// window size
-		uint32_t window_width, window_height;
-		context().window()->get_size(window_width, window_height);
-		// controls: the actions of the input system (read by the HovercraftInput of the player)
+		context().add_resources(join(resource_dir(), "/resources.rs"));
+		context().add_resources(join(resource_dir(), "common/resources.rs"));
+		context().add_resources(join(resource_dir(), "example/Rush/resources.rs"));
+		// level
+		m_level = world().level("main");
+		// the game
+		setup_controls();
+		setup_rendering();
+		setup_collisions();
+		auto arena = load_arena();
+		load_light_beam(arena);
+		load_hovercraft();
+    }
+
+	//controls: the actions of the input system (read by the HovercraftInput of the player)
+	void setup_controls()
+	{
+		using namespace Square;
 		if (auto input = System::get<InputSystem>(context()))
 		{
 			input->bind("forward",  Video::KEY_UP);
@@ -145,9 +157,13 @@ public:
 			input->bind("right",    Video::KEY_RIGHT);
 			input->bind("right",    Video::KEY_D);
 		}
-		// level
-		m_level = world().level("main");
-		// rendering pipeline of the world: SQUARE_RENDERING=forward|deferred (default: deferred)
+	}
+
+	//rendering pipeline of the world: SQUARE_RENDERING=forward|deferred (default: deferred), and
+	//its post effects
+	void setup_rendering()
+	{
+		using namespace Square;
 		if (auto render_world = world().instance<RenderInstance>())
 		{
 			const char* rendering_type = std::getenv("SQUARE_RENDERING");
@@ -157,124 +173,186 @@ public:
 			m_ssao = MakeShared<Render::SSAO>(context());
 			render_world->add_post_effect(m_ssao);
 		}
-		// collisions of the world (a game system, started on demand): body and wheels slide
-		// on the scene (Collisions BODY,SCENE,2,3 / WHEEL,SCENE,2,3: polygon, slide xz)
+	}
+
+	//collisions of the world (a game system, started on demand): body and wheels slide on the
+	//scene (Collisions BODY,SCENE,2,3 / WHEEL,SCENE,2,3: polygon, slide xz)
+	void setup_collisions()
+	{
 		context().start_system<CollisionSystem>();
 		if (auto collision = world().instance<CollisionWorld>())
 		{
 			collision->collisions(TYPE_BODY, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDEXZ);
 			collision->collisions(TYPE_WHEEL, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDEXZ);
-			// the camera does not go into the map: it slides on it
 			collision->collisions(TYPE_CAMERA, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDE);
 		}
-		// arena
+	}
+
+	//the map: the arena (solid), its sun, the starts of the hovercraft (spawn_point_1..4) and
+	//its camera (the chase camera of the player)
+	Square::Shared<Square::Scene::Actor> load_arena()
+	{
+		using namespace Square;
+		using namespace Square::Scene;
 		auto arena = m_level->load_actor("arena/scene");
-		if (arena)
-		{
-			arena->position({ 0.0f, 4.0f, 0.0f });
-			m_camera = arena->child("camera");
-			if (m_camera)
-			{
-				m_camera->component<Camera>()->viewport({ 0,0, window_width, window_height });
-			}
-			else
-			{
-				context().logger()->info("arena has no 'camera' node");
-			}
-			// Sun
-			m_light = arena->child("sun");
-			if (m_light)
-			{
-				m_light->component<DirectionLight>()->shadow({2048,2048});
-			}
-			else
-			{
-				context().logger()->info("arena has no 'sun'/'light' node");
-			}
-			// the arena is solid: a mesh collider of the scene type (its triangles, from where
-			// it is placed)
-			auto arena_collider = arena->component<MeshCollider>();
-			arena_collider->type(TYPE_SCENE);
-			context().logger()->info("arena collision triangles: " + std::to_string(arena_collider->mesh().size()));
-			// start of the hovercraft: the spawn point of the scene (after the arena is placed)
-			arena->visit([&](Shared<Actor> node) -> bool
-			{
-				if (node->name() != "spawn_point_1") return true;
-				m_start = node->position(true);
-				return false;
-			});
-		}
-		else
+		if (!arena)
 		{
 			context().logger()->info("Error to load arena");
+			return nullptr;
 		}
-		// light beam: on the checkpoints of the arena (checkpoint_1, checkpoint_2...), to the
-		// following one when the hovercraft touches it
-		if (auto light_beam = m_level->load_actor("light_beam/scene"))
+		arena->position({ 0.0f, 4.0f, 0.0f });
+		// Sun
+		m_light = arena->child("sun");
+		if (!m_light)
 		{
-			// its light: a point light in the middle, a little over the ground, with shadow and a
-			// large radius (a child of the beam: it goes with it from checkpoint to checkpoint)
-			auto beam_light = light_beam->child();
-			beam_light->name("light_beam_light");
-			beam_light->position({ 0.0f, 1.25f, 0.0f });
-			auto point_light = beam_light->component<PointLight>();
-			point_light->diffuse({ 0.1f, 0.7f, 1.0f });
-			point_light->specular({ 0.1f, 0.7f, 1.0f });
-			point_light->constant(1.0f);
-			point_light->radius(80.0f);
-			point_light->inside_radius(15.0f);
-			point_light->shadow({ 2048, 2048 });
-			m_checkpoints = light_beam->component<Checkpoints>();
-			const size_t count = m_checkpoints->collect(arena);
-			context().logger()->info("checkpoints: " + std::to_string(count));
-			m_checkpoints->on_reached([this](size_t index)
-			{
-				context().logger()->info("checkpoint " + std::to_string(index + 1) + " reached");
-			});
+			context().logger()->info("arena has no 'sun'/'light' node");
 		}
-		else
+		// the arena is solid: a mesh collider of the scene type (its triangles, from where it is
+		// placed)
+		auto arena_collider = arena->component<MeshCollider>();
+		arena_collider->type(TYPE_SCENE);
+		context().logger()->info("arena collision triangles: " + std::to_string(arena_collider->mesh().size()));
+		// start of the hovercraft: the spawn points of the scene (after the arena is placed),
+		// spawn_point_1 the player, the others the NPCs; they start facing the middle
+		m_arena_center = arena->position(true);
+		arena->visit([&](Shared<Actor> node) -> bool
+		{
+			for (size_t id = 0; id != s_racers; ++id)
+			{
+				if (node->name() == "spawn_point_" + std::to_string(id + 1)) m_starts[id] = node->position(true);
+			}
+			return true;
+		});
+		// the camera of the scene: it chases the hovercraft in world space (out of the arena, at
+		// the level root), with a sphere of the camera type, so it does not go through the walls
+		// and the ground
+		m_camera = arena->child("camera");
+		if (!m_camera)
+		{
+			context().logger()->info("arena has no 'camera' node");
+			return arena;
+		}
+		uint32_t window_width, window_height;
+		context().window()->get_size(window_width, window_height);
+		m_camera->component<Camera>()->viewport({ 0,0, window_width, window_height });
+		m_level->add(m_camera);
+		auto camera_collider = m_camera->component<SphereCollider>();
+		camera_collider->type(TYPE_CAMERA);
+		camera_collider->radius(1.0f);
+		m_camera_follow = m_camera->component<CameraFollow>();
+		return arena;
+	}
+
+	//the light: the beam on the checkpoints of the arena (checkpoint_1, checkpoint_2...), with
+	//its point light; who touches it scores and the beam goes to another checkpoint
+	void load_light_beam(Square::Shared<Square::Scene::Actor> arena)
+	{
+		using namespace Square;
+		using namespace Square::Scene;
+		auto light_beam = m_level->load_actor("light_beam/scene");
+		if (!light_beam)
 		{
 			context().logger()->info("Error to load light_beam");
+			return;
 		}
-		// the camera chases the hovercraft in world space: out of the arena, at the level root;
-		// a sphere of the camera type, so it does not go through the walls and the ground
-		if (m_camera)
+		// its light: a point light in the middle, a little over the ground, with shadow and a
+		// large radius (a child of the beam: it goes with it from checkpoint to checkpoint)
+		auto beam_light = light_beam->child();
+		beam_light->name("light_beam_light");
+		beam_light->position({ 0.0f, 1.25f, 0.0f });
+		auto point_light = beam_light->component<PointLight>();
+		point_light->diffuse({ 0.1f, 0.7f, 1.0f });
+		point_light->specular({ 0.1f, 0.7f, 1.0f });
+		point_light->constant(1.0f);
+		point_light->radius(80.0f);
+		point_light->inside_radius(15.0f);
+		point_light->shadow({ 2048, 2048 });
+		// the checkpoints
+		m_checkpoints = light_beam->component<Checkpoints>();
+		const size_t count = m_checkpoints->collect(arena);
+		context().logger()->info("checkpoints: " + std::to_string(count));
+		m_checkpoints->on_reached([this](size_t index, Shared<Actor> who)
 		{
-			m_level->add(m_camera);
-			auto camera_collider = m_camera->component<SphereCollider>();
-			camera_collider->type(TYPE_CAMERA);
-			camera_collider->radius(1.0f);
-			m_camera_follow = m_camera->component<CameraFollow>();
-		}
-		// hovercraft
-		m_hovercraft = m_level->load_actor("hovercraft/scene");
-		if (m_hovercraft)
-		{
-			// the model is about twice the size that fits the arena
-			m_hovercraft->scale({ 0.5f, 0.5f, 0.5f });
-			// the driver: a component of the hovercraft, updated every frame by the scene; the
-			// player drives it (its keys become the input of the driver)
-			m_driver = m_hovercraft->component<HovercraftDriver>();
-			m_driver->settings(hovercraft_settings());
-			m_player = m_hovercraft->component<HovercraftInput>();
-			// the camera follows it
-			if (m_camera_follow) m_camera_follow->target(m_hovercraft);
-			if (m_checkpoints) m_checkpoints->target(m_hovercraft);
-			// at the start the camera is in its place of the scene: it glides behind the hovercraft
-			m_driver->spawn(m_start);
-		}
-		else
-		{
-			context().logger()->info("Error to load hovercraft");
-		}
-    }
+			reached(index, who);
+		});
+	}
 
-	//the hovercraft back at the start, the camera straight behind it (a teleport)
-	void spawn()
+	//the hovercraft: the player (the first) and the NPCs, each with its driver, at their
+	//starts; the checkpoints know all of them (who reaches the light scores), the camera
+	//follows the player
+	void load_hovercraft()
 	{
-		if (!m_driver) return;
-		m_driver->spawn(m_start);
-		if (m_camera_follow) m_camera_follow->snap();
+		using namespace Square;
+		for (size_t id = 0; id != s_racers; ++id)
+		{
+			Racer racer;
+			racer.m_name  = id == 0 ? "player" : "npc " + std::to_string(id);
+			racer.m_actor = m_level->load_actor("hovercraft/scene");
+			if (!racer.m_actor)
+			{
+				context().logger()->info("Error to load hovercraft");
+				break;
+			}
+			racer.m_actor->name("hovercraft_" + std::to_string(id + 1));
+			// the model is about twice the size that fits the arena
+			racer.m_actor->scale({ 0.5f, 0.5f, 0.5f });
+			// the driver: a component of the hovercraft, updated every frame by the scene; who
+			// drives it sets its input: the player (keys), an NPC (towards the light)
+			racer.m_driver = racer.m_actor->component<HovercraftDriver>();
+			racer.m_driver->settings(hovercraft_settings(id));
+			if (id == 0)
+			{
+				m_player = racer.m_actor->component<HovercraftInput>();
+			}
+			else
+			{
+				racer.m_actor->component<HovercraftAI>()->checkpoints(m_checkpoints);
+			}
+			//
+			if (m_checkpoints)
+			{
+				m_checkpoints->add_target(racer.m_actor);
+			}
+			m_racers.push_back(racer);
+			spawn(id, false);
+		}
+		// the camera follows the player; at the start it is in its place of the scene: it glides
+		// behind the hovercraft
+		if (m_camera_follow && !m_racers.empty()) m_camera_follow->target(m_racers[0].m_actor);
+	}
+
+	//a hovercraft at its start, facing the middle of the arena; the player's camera straight
+	//behind it (a teleport)
+	void spawn(size_t id, bool snap_camera = true)
+	{
+		if (id >= m_racers.size()) return;
+		const Square::Vec3& start = m_starts[id];
+		const Square::Vec3  to_center = m_arena_center - start;
+		const float yaw = (to_center.x * to_center.x + to_center.z * to_center.z) > 1e-4f
+		                ? Square::degrees(std::atan2(to_center.x, to_center.z))
+		                : 0.0f;
+		m_racers[id].m_driver->spawn(start, yaw);
+		if (id == 0 && snap_camera && m_camera_follow) m_camera_follow->snap();
+	}
+
+	//a hovercraft reached the light: it scores; at s_winning_score the match ends and a new one
+	//starts
+	void reached(size_t checkpoint, Square::Shared<Square::Scene::Actor> who)
+	{
+		for (auto& racer : m_racers)
+		{
+			if (racer.m_actor != who) continue;
+			++racer.m_score;
+			std::string board;
+			for (const auto& other : m_racers) board += " " + other.m_name + ":" + std::to_string(other.m_score);
+			context().logger()->info(racer.m_name + " reached checkpoint " + std::to_string(checkpoint + 1) + " |" + board);
+			if (racer.m_score >= s_winning_score)
+			{
+				context().logger()->info(&racer == &m_racers[0] ? std::string("You win!") : "You lose! (" + racer.m_name + " wins)");
+				for (auto& other : m_racers) other.m_score = 0;
+			}
+			break;
+		}
 	}
 
     bool run(double dt)
@@ -300,13 +378,32 @@ public:
 		TYPE_CAMERA = 4
 	};
 
-	static HovercraftDriver::Settings hovercraft_settings()
+	//hovercraft of the race: the player and the NPCs; the first to s_winning_score lights wins
+	static constexpr size_t s_racers = 4;
+	static constexpr int    s_winning_score = 10;
+
+	static HovercraftDriver::Settings hovercraft_settings(size_t id)
 	{
 		HovercraftDriver::Settings settings;
 		// collision types of body, wheels and ground
 		settings.body_type  = TYPE_BODY;
 		settings.wheel_type = TYPE_WHEEL;
 		settings.scene_type = TYPE_SCENE;
+		// each hovercraft its own engine (data_player_positions of Limit Rush: move distance
+		// and friction), relative to the player: acceleration, top speed, grip
+		struct Engine { float acceleration; float max_speed; float drag; };
+		static const Engine s_engines[s_racers]
+		{
+			{ 1.00f, 1.00f, 1.000f }, // player: 0.075, 0.974
+			{ 0.73f, 0.96f, 1.006f }, // npc 1:  0.055, 0.980
+			{ 0.80f, 0.83f, 1.001f }, // npc 2:  0.060, 0.975
+			{ 0.93f, 0.69f, 0.991f }, // npc 3:  0.070, 0.965
+		};
+		const Engine& engine = s_engines[id % s_racers];
+		settings.acceleration *= engine.acceleration;
+		settings.max_speed    *= engine.max_speed;
+		settings.max_reverse  *= engine.max_speed;
+		settings.drag          = std::min(settings.drag * engine.drag, 0.999f);
 		return settings;
 	}
 
@@ -374,13 +471,23 @@ private:
 	Square::Shared<Square::Scene::Level>	  m_level;
 	Square::Shared<Square::Scene::Actor>      m_camera;
 	Square::Shared<Square::Scene::Actor>      m_light;
-	Square::Shared<Square::Scene::Actor>      m_hovercraft;
-	Square::Shared<HovercraftDriver>          m_driver;
+	//a hovercraft of the race
+	struct Racer
+	{
+		std::string                          m_name;
+		Square::Shared<Square::Scene::Actor> m_actor;
+		Square::Shared<HovercraftDriver>     m_driver;
+		int                                  m_score{ 0 };
+	};
+	std::vector<Racer>                        m_racers;   //the first: the player
 	Square::Shared<HovercraftInput>           m_player;
 	Square::Shared<CameraFollow>              m_camera_follow;
 	Square::Shared<Checkpoints>               m_checkpoints;
 	Square::Shared<Square::Render::SSAO>      m_ssao;
-	Square::Vec3                              m_start{ s_start }; //spawn_point_1 of the arena
+	//starts of the hovercraft (spawn_point_1..4 of the arena, a fallback without them), the middle
+	//they face
+	std::array<Square::Vec3, s_racers>        m_starts{ s_start, s_start + Square::Vec3(10, 0, 0), s_start + Square::Vec3(0, 0, 10), s_start + Square::Vec3(10, 0, 10) };
+	Square::Vec3                              m_arena_center{ 0.0f };
 };
 
 static Square::Shell::ParserCommands s_ShellCommands

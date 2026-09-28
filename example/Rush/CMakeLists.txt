@@ -27,6 +27,8 @@ set(SOURCE_FILES
     Checkpoints.cpp
     HovercraftInput.h
     HovercraftInput.cpp
+    HovercraftAI.h
+    HovercraftAI.cpp
     CameraFollow.h
     CameraFollow.cpp
 )

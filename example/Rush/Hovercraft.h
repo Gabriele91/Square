@@ -67,8 +67,9 @@ public:
 	//speed along the body, per step (negative: backward)
 	float speed() const { return m_speed; }
 
-	//drop it on the first surface under start, still
-	void spawn(const Square::Vec3& start);
+	//drop it on the first surface under start, still, turned by yaw degrees around the up axis
+	//(0: forward along +z, 90: along +x)
+	void spawn(const Square::Vec3& start, float yaw = 0.0f);
 
 	//events
 	virtual void on_deattch() override;

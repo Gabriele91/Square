@@ -109,11 +109,11 @@ void HovercraftDriver::on_deattch()
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //spawn
-void HovercraftDriver::spawn(const Vec3& start)
+void HovercraftDriver::spawn(const Vec3& start, float yaw)
 {
 	if (!set_wheels()) return;
 	auto hovercraft = actor().lock();
-	hovercraft->rotation(angle_axis(0.0f, AXIS_Y));
+	hovercraft->rotation(angle_axis(radians(yaw), AXIS_Y));
 	//over the first surface under start: the body drops from its radius over it
 	Vec3 position = start;
 	CollisionMesh::Hit hit;

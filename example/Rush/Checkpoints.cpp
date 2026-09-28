@@ -92,15 +92,39 @@ void Checkpoints::go_to(size_t index)
 	if (auto beam = actor().lock()) beam->position(m_points[m_current]);
 }
 
-bool Checkpoints::touched() const
+void Checkpoints::add_target(Shared<Scene::Actor> target)
 {
-	auto target = m_target.lock();
+	if (!target) return;
+	for (auto& weak_target : m_targets) if (weak_target.lock() == target) return;
+	m_targets.push_back(target);
+}
+
+void Checkpoints::remove_target(Shared<Scene::Actor> target)
+{
+	m_targets.erase(std::remove_if(m_targets.begin(), m_targets.end(), [&](const Weak<Scene::Actor>& weak_target)
+	{
+		auto locked = weak_target.lock();
+		return !locked || locked == target;
+	}), m_targets.end());
+}
+
+Shared<Scene::Actor> Checkpoints::touched() const
+{
 	auto beam = actor().lock();
-	if (!target || !beam || m_points.empty()) return false;
+	if (!beam || m_points.empty()) return nullptr;
 	const Vec3 base = beam->position(true);
-	const Vec3 delta = target->position(true) - base;
-	return delta.x * delta.x + delta.z * delta.z <= m_settings.radius * m_settings.radius
-		&& delta.y >= -m_settings.radius && delta.y <= m_settings.height;
+	for (auto& weak_target : m_targets)
+	{
+		auto target = weak_target.lock();
+		if (!target) continue;
+		const Vec3 delta = target->position(true) - base;
+		if (delta.x * delta.x + delta.z * delta.z <= m_settings.radius * m_settings.radius
+		&&  delta.y >= -m_settings.radius && delta.y <= m_settings.height)
+		{
+			return target;
+		}
+	}
+	return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -130,9 +154,9 @@ void Checkpoints::spin(float seconds)
 void Checkpoints::on_update(double delta_time)
 {
 	spin(float(delta_time));
-	if (touched())
+	if (auto who = touched())
 	{
-		if (m_on_reached) m_on_reached(m_current);
+		if (m_on_reached) m_on_reached(m_current, who);
 		go_to(random_next());
 	}
 }
