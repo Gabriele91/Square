@@ -294,8 +294,8 @@ public:
 				break;
 			}
 			racer.m_actor->name("hovercraft_" + std::to_string(id + 1));
-			// the model is about twice the size that fits the arena
-			racer.m_actor->scale({ 0.5f, 0.5f, 0.5f });
+			// its color (the player: the one of the model)
+			if (s_skins[id][0]) paint(racer.m_actor, s_skins[id]);
 			// the driver: a component of the hovercraft, updated every frame by the scene; who
 			// drives it sets its input: the player (keys), an NPC (towards the light)
 			racer.m_driver = racer.m_actor->component<HovercraftDriver>();
@@ -319,6 +319,32 @@ public:
 		// the camera follows the player; at the start it is in its place of the scene: it glides
 		// behind the hovercraft
 		if (m_camera_follow && !m_racers.empty()) m_camera_follow->target(m_racers[0].m_actor);
+	}
+
+	//a hovercraft of its own color: its materials become its own (new objects of the same .mat,
+	//not shared with the other hovercraft), with the albedo of the skin texture
+	void paint(Square::Shared<Square::Scene::Actor> hovercraft, const std::string& skin)
+	{
+		using namespace Square;
+		auto texture = context().resource<Resource::Texture>(skin);
+		if (!texture)
+		{
+			context().logger()->info("Error to load the skin " + skin);
+			return;
+		}
+		hovercraft->visit([&](Shared<Scene::Actor> node) -> bool
+		{
+			if (!node->contains<Scene::StaticMesh>()) return true;
+			for (auto& material : node->component<Scene::StaticMesh>()->m_materials)
+			{
+				if (!material) continue;
+				auto own = DynamicPointerCast<Resource::Material>(context().resource_instance(material->resource_name()));
+				if (!own) continue;
+				if (auto albedo = own->parameter_by_name("albedo_map")) albedo->set(texture);
+				material = own;
+			}
+			return true;
+		});
 	}
 
 	//a hovercraft at its start, facing the middle of the arena; the player's camera straight
@@ -381,6 +407,14 @@ public:
 	//hovercraft of the race: the player and the NPCs; the first to s_winning_score lights wins
 	static constexpr size_t s_racers = 4;
 	static constexpr int    s_winning_score = 10;
+	//colors of the hovercraft: textures of assets/hovercraft_skins ("": the one of the model, red)
+	static constexpr const char* s_skins[s_racers]
+	{
+		"hovercraft/hovercraft_red",
+		"hovercraft_skins/hovercraft_blue",
+		"hovercraft_skins/hovercraft_green",
+		"hovercraft_skins/hovercraft_yellow",
+	};
 
 	static HovercraftDriver::Settings hovercraft_settings(size_t id)
 	{
