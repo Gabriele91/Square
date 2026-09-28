@@ -45,6 +45,13 @@ namespace Data
 	#define VERTICAL_FLIP(tga_h)   ( tga_h->m_descriptor & 0b00100000)
 	#define HORIZONTAL_FLIP(tga_h) ( tga_h->m_descriptor & 0b00010000)
 
+	PACKED(struct TGAFooter
+	{
+		unsigned int m_extensionoffset;    // offset of the extension area (0 none)
+		unsigned int m_developeroffset;    // offset of the developer area (0 none)
+		char         m_signature[18];      // "TRUEVISION-XFILE." '\0' included
+	});
+
 	static void decoder_rle
 	(
 		unsigned long width,
@@ -94,6 +101,59 @@ namespace Data
 				i += image_bytes_pixel*length_chunk;
 				//length to 0
 				length_chunk = 0;
+			}
+		}
+	}
+
+	static void encoder_rle
+	(
+		unsigned long width,
+		unsigned long height,
+		unsigned long image_bytes_pixel,
+		const unsigned char* buffer_in,
+		std::vector<unsigned char>& out_tga
+	)
+	{
+		//same pixel
+		auto same = [&](const unsigned char* a, const unsigned char* b)
+		{
+			return std::memcmp(a, b, image_bytes_pixel) == 0;
+		};
+		//chunks do not cross the lines
+		for (unsigned long y = 0; y != height; ++y)
+		{
+			//ptr to line
+			const unsigned char* line = buffer_in + width * image_bytes_pixel * y;
+			//pixel of the line
+			unsigned long x = 0;
+			// Encode
+			while (x < width)
+			{
+				//length of the run
+				unsigned long length_chunk = 1;
+				while (x + length_chunk < width
+				   &&  length_chunk < 128
+				   &&  same(&line[(x + length_chunk) * image_bytes_pixel], &line[x * image_bytes_pixel]))
+					++length_chunk;
+				// 1XXX XXXX RLE chunk [ LEN | PIXEL ]
+				if (length_chunk > 1)
+				{
+					out_tga.push_back((unsigned char)(0x80 | (length_chunk - 1)));
+					out_tga.insert(out_tga.end(), &line[x * image_bytes_pixel], &line[(x + 1) * image_bytes_pixel]);
+				}
+				// RAW chunk  [ LEN | PIXEL | PIXEL |... ], until a run of 2 pixels
+				else
+				{
+					while (x + length_chunk < width
+					   &&  length_chunk < 128
+					   && !(x + length_chunk + 1 < width
+					     && same(&line[(x + length_chunk) * image_bytes_pixel], &line[(x + length_chunk + 1) * image_bytes_pixel])))
+						++length_chunk;
+					out_tga.push_back((unsigned char)(length_chunk - 1));
+					out_tga.insert(out_tga.end(), &line[x * image_bytes_pixel], &line[(x + length_chunk) * image_bytes_pixel]);
+				}
+				//next chunk
+				x += length_chunk;
 			}
 		}
 	}
@@ -281,8 +341,9 @@ namespace Data
 		default:
 			break;
 		}
-		//flip
-		if VERTICAL_FLIP(header)
+		//flip: the rows from the top, as the other loaders (stb_image); a TGA is from the bottom
+		//unless its descriptor says top-left
+		if (!VERTICAL_FLIP(header))
 		{
 			image_y_flip(out_image, header->m_bits / 8, image_width, image_height);
 		}
@@ -290,6 +351,45 @@ namespace Data
 		{
 			image_x_flip(out_image, header->m_bits / 8, image_width, image_height);
 		}
+		//success
+		return true;
+	}
+
+	bool encode_tga
+	(
+		std::vector<unsigned char>& out_tga,
+		unsigned long image_width,
+		unsigned long image_height,
+		unsigned long image_bytes_pixel,
+		bool top_down,
+		const unsigned char* in_image
+	)
+	{
+		//only rgb (16, 24, 32 bits) supported
+		if (!in_image || !image_width || !image_height) return false;
+		if (image_width > 0x7FFF || image_height > 0x7FFF) return false;
+		if (image_bytes_pixel != 2 && image_bytes_pixel != 3 && image_bytes_pixel != 4) return false;
+		//header
+		TGAHeader header;
+		std::memset(&header, 0, sizeof(TGAHeader));
+		header.m_imagetype = TGA_RGB_RLE;
+		header.m_width  = (short)image_width;
+		header.m_height = (short)image_height;
+		header.m_bits   = (unsigned char)(image_bytes_pixel * 8);
+		//alpha bits (32: 8, 16: 1), origin at the top
+		header.m_descriptor = image_bytes_pixel == 4 ? 8 : (image_bytes_pixel == 2 ? 1 : 0);
+		if (top_down) header.m_descriptor |= 0b00100000;
+		//write header
+		out_tga.resize(sizeof(TGAHeader));
+		std::memcpy(&out_tga[0], &header, sizeof(TGAHeader));
+		//write data
+		encoder_rle(image_width, image_height, image_bytes_pixel, in_image, out_tga);
+		//footer, TGA 2.0 (the loader finds a TGA by it)
+		TGAFooter footer;
+		std::memset(&footer, 0, sizeof(TGAFooter));
+		std::memcpy(footer.m_signature, "TRUEVISION-XFILE.", sizeof(footer.m_signature));
+		const unsigned char* footer_ptr = (const unsigned char*)&footer;
+		out_tga.insert(out_tga.end(), footer_ptr, footer_ptr + sizeof(TGAFooter));
 		//success
 		return true;
 	}
