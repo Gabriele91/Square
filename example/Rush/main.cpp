@@ -342,6 +342,8 @@ public:
 				auto own = DynamicPointerCast<Resource::Material>(context().resource_instance(material->resource_name()));
 				if (!own) continue;
 				if (auto albedo = own->parameter_by_name("albedo_map")) albedo->set(texture);
+				//the skin is the whole albedo (the model color, e.g. the 0.8 grey of Blender, would darken it)
+				if (auto color = own->parameter_by_name("color")) color->set(Vec4(1.0f));
 				material = own;
 			}
 			return true;
@@ -408,10 +410,11 @@ public:
 	//hovercraft of the race: the player and the NPCs; the first to s_winning_score lights wins
 	static constexpr size_t s_racers = 4;
 	static constexpr int    s_winning_score = 10;
-	//colors of the hovercraft: textures of assets/hovercraft_skins ("": the one of the model, red)
+	//colors of the hovercraft: textures of assets/hovercraft_skins (made by origial_assets/
+	//hovercraft/skins.py; "": the one of the model)
 	static constexpr const char* s_skins[s_racers]
 	{
-		"hovercraft/hovercraft_red",
+		"hovercraft_skins/hovercraft_red",
 		"hovercraft_skins/hovercraft_blue",
 		"hovercraft_skins/hovercraft_green",
 		"hovercraft_skins/hovercraft_yellow",
