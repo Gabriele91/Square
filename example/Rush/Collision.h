@@ -27,6 +27,7 @@
 //how a sphere tests the destination (Blitz3D collision methods)
 enum class CollisionMethod
 {
+	SPHERE,  //against the other SphereColliders (a sphere where they are now)
 	POLYGON  //against the triangles of a MeshCollider
 };
 
@@ -162,7 +163,7 @@ public:
 
 private:
 	int                          m_type{ 0 };
-	float                        m_radius{ 1.0f };
+	float                        m_radius{ 1.0f }; 
 	float                        m_radius_y{ 1.0f };
 	Square::Vec3                 m_offset{ 0.0f };
 	Square::Vec3                 m_previous{ 0.0f };
@@ -210,8 +211,9 @@ public:
 
 	CollisionWorld(Square::Context& context, Square::System& system, Square::Scene::World& world);
 
-	//a rule (Blitz3D Collisions): the sphere colliders of src_type against the mesh colliders
-	//of dst_type, with method and response
+	//a rule (Blitz3D Collisions): the sphere colliders of src_type against the colliders of
+	//dst_type, with method (SPHERE: the other sphere colliders, POLYGON: the mesh colliders) and
+	//response
 	void collisions(int src_type, int dst_type, CollisionMethod method, CollisionResponse response);
 
 	//every sphere collider with a rule goes from where it was at the last update to where it

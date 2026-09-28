@@ -48,6 +48,7 @@ public:
 		int   wheel_type{ 2 };         //collision type of the wheels (WHEEL)
 		int   scene_type{ 3 };         //collision type of the ground (SCENE)
 		float floor_normal_y{ 0.5f };  //a body contact with normal.y under it is a wall (in front, or pushing down): no drive, it falls
+		Square::Vec2 body_radius_scale{ 1.0f, 1.0f }; //radii of the body from the hull: x the x/z radius (half the longer side), y the y radius (half the height)
 		double step{ 1.0 / 60.0 };     //seconds of a step (a frame of the original)
 	};
 

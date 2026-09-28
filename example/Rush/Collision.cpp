@@ -90,6 +90,30 @@ namespace
 		return true;
 	}
 
+	//Blitz3D Collision::sphereCollide: the sphere against another one (at center, radius: the
+	//two radii), a point for a sphere of the sum of the radii. Already inside (Blitz3D lets
+	//them go through): a contact at the start, it can only go out
+	bool sphere_collide(const Line& line, float radius, const Vec3& center, CollisionMesh::Collision& collision)
+	{
+		Line l;
+		l.m_origin = line.m_origin - center;
+		l.m_direction = line.m_direction;
+		const float a = dot(l.m_direction, l.m_direction);
+		if (a <= 0.0f) return false;
+		const float b = dot(l.m_origin, l.m_direction) * 2.0f;
+		const float c = dot(l.m_origin, l.m_origin) - radius * radius;
+		float t = 0.0f;
+		if (c > 0.0f)
+		{
+			if (!smaller_root(a, b, c, t)) return false; //misses it
+			if (t < 0.0f) return false;                  //behind
+		}
+		if (t > collision.m_time) return false;          //too far
+		const Vec3 at = l.at(t);
+		if (dot(at, at) <= EPSILON) return false;        //same center: no direction
+		return update(collision, line, t, normalize(at));
+	}
+
 	//Blitz3D edgeTest: the sphere against the edge v0 v1 (a cylinder of radius), and the
 	//vertex v0 (a sphere); pn is the triangle normal, en the edge plane normal
 	bool edge_test(const Vec3& v0, const Vec3& v1, const Vec3& pn, const Vec3& en, const Line& line, float radius, CollisionMesh::Collision& collision)
@@ -656,14 +680,31 @@ void CollisionWorld::collide(SphereCollider& source, const Colliders& colliders)
 		bool hit = false;
 		for (const Rule& rule : rules->second)
 		{
-			for (const Shared<MeshCollider>& mesh : colliders.m_meshes)
+			switch (rule.m_method)
 			{
-				if (mesh->type() != rule.m_dst_type) continue;
-				if (!mesh->mesh().collide(line, radius, collision, y_scale)) continue;
-				hit = true;
-				response = rule.m_response;
-				hit_actor = mesh->actor();
-				hit_type = mesh->type();
+			case CollisionMethod::SPHERE:
+				//the other spheres, where they are now (in the space of this ellipsoid)
+				for (const Shared<SphereCollider>& sphere : colliders.m_spheres)
+				{
+					if (sphere.get() == &source || sphere->type() != rule.m_dst_type) continue;
+					if (!sphere_collide(line, radius + sphere->radius(), sphere->center() * scale, collision)) continue;
+					hit = true;
+					response = rule.m_response;
+					hit_actor = sphere->actor();
+					hit_type = sphere->type();
+				}
+				break;
+			case CollisionMethod::POLYGON:
+				for (const Shared<MeshCollider>& mesh : colliders.m_meshes)
+				{
+					if (mesh->type() != rule.m_dst_type) continue;
+					if (!mesh->mesh().collide(line, radius, collision, y_scale)) continue;
+					hit = true;
+					response = rule.m_response;
+					hit_actor = mesh->actor();
+					hit_type = mesh->type();
+				}
+				break;
 			}
 		}
 		return hit;

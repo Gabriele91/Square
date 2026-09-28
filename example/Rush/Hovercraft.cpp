@@ -47,9 +47,10 @@ bool HovercraftDriver::set_wheels()
 	const float bottom = bounds_min.y;
 
 	//EntityType hovercraft,BODY, EntityRadius hovercraft,x,y: an ellipsoid on the ground, around the whole
-	//base (x/z: half the larger of width and length) and half the height of the hull
-	const float body_radius   = std::max(0.05f, std::max(size.x, size.z) * 0.5f);
-	const float body_radius_y = std::max(0.05f, size.y * 0.5f);
+	//base (x/z: half the larger of width and length) and half the height of the hull, each one
+	//scaled by body_radius_scale
+	const float body_radius   = std::max(0.05f, std::max(size.x, size.z) * 0.5f * m_settings.body_radius_scale.x);
+	const float body_radius_y = std::max(0.05f, size.y * 0.5f * m_settings.body_radius_scale.y);
 	m_body = hovercraft->component<SphereCollider>();
 	m_body->type(m_settings.body_type);
 	m_body->radius(body_radius, body_radius_y);

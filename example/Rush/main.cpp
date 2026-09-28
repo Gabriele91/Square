@@ -184,6 +184,7 @@ public:
 		{
 			collision->collisions(TYPE_BODY, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDEXZ);
 			collision->collisions(TYPE_WHEEL, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDEXZ);
+			collision->collisions(TYPE_BODY, TYPE_BODY, CollisionMethod::SPHERE, CollisionResponse::SLIDEXZ);
 			collision->collisions(TYPE_CAMERA, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDE);
 		}
 	}
@@ -423,6 +424,9 @@ public:
 		settings.body_type  = TYPE_BODY;
 		settings.wheel_type = TYPE_WHEEL;
 		settings.scene_type = TYPE_SCENE;
+		// body: x/z radius at 80% of the hull (closer to its shape, between the hovercraft),
+		// y radius as the hull
+		settings.body_radius_scale = Square::Vec2(0.8f, 1.0f);
 		// each hovercraft its own engine (data_player_positions of Limit Rush: move distance
 		// and friction), relative to the player: acceleration, top speed, grip
 		struct Engine { float acceleration; float max_speed; float drag; };
