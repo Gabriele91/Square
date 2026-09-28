@@ -64,11 +64,14 @@ namespace Scene
     // Load child node from resource
     Shared<Actor> Actor::load_child(const std::string& resource_name)
     {
-        Shared<Actor> new_actor = context().resource<Actor>(resource_name);
-        if (new_actor)
+        //a child is an instance: a new one from the file of the resource every time (the cache of
+        //the resources would give back the same actor, moved here again)
+        Shared<Actor> new_actor = context().resource_instance<Actor>(resource_name);
+        if (!new_actor)
         {
-            add(new_actor);
+            return nullptr;
         }
+        add(new_actor);
         return new_actor;
     }
 
