@@ -70,8 +70,8 @@ namespace  Data
 			Render::TextureType&   image_type
 		);
 
-		//load image from file raw
-		static bool load
+		//load image from file raw (the data of a file: PNG, JPEG, BMP, TGA; the format from the data)
+		static SQUARE_API bool load
 		(
 			const std::vector<unsigned char>& data_file,
 			std::vector<unsigned char>& out_image,
@@ -79,6 +79,28 @@ namespace  Data
 			unsigned long&  image_height,
 			Render::TextureFormat& image_format,
 			Render::TextureType&   image_type
+		);
+
+		//encode a PNG file (8 bit per channel): pixels row after row from the top, channels 1
+		//(grey), 2 (grey alpha), 3 (RGB) or 4 (RGBA); empty on a wrong input
+		static SQUARE_API std::vector<unsigned char> encode_png
+		(
+			const unsigned char* pixels,
+			unsigned long width,
+			unsigned long height,
+			unsigned int  channels
+		);
+
+		//encode a TGA file with RLE compression (type 10, TGA 2.0 footer): pixels in the order of
+		//TGA, bytes_per_pixel 2 (A1R5G5B5 little endian), 3 (BGR) or 4 (BGRA); rows from the top
+		//(top_down) or from the bottom; empty on a wrong input
+		static SQUARE_API std::vector<unsigned char> encode_tga_rle
+		(
+			const unsigned char* pixels,
+			unsigned long width,
+			unsigned long height,
+			unsigned int  bytes_per_pixel,
+			bool          top_down
 		);
 
 	protected:
