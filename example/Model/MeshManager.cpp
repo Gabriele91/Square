@@ -105,8 +105,8 @@ size_t MeshManager::add_mesh(const Square::Data::GLTF::Mesh& mesh, const Square:
                     vertex.m_position.z *= -1.0;
                     vertex.m_normal.z *= -1.0;
                     vertex.m_tangent.z *= -1.0;
-                    // Flip bitangent to maintain correct handedness
-                    vertex.m_binomial = -vertex.m_binomial;
+                    // The bitangent is a direction as the tangent: mirrored the same way
+                    vertex.m_binomial.z *= -1.0;
                 }
                 // Remap indices based on draw type
                 switch (drawtype)

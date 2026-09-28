@@ -27,4 +27,8 @@ namespace ImageConverter
     //the image (the bytes of its file) for the engine; extension: of its file (".tga"), a TGA
     //has no magic number
     Result convert(const std::vector<unsigned char>& file, const std::string& extension);
+
+    //a normal map of glTF (OpenGL: green up) for the engine (DirectX: green down, the shaders
+    //invert it): a PNG RGB/RGBA with the green inverted; kept as it is if it cannot be decoded
+    Result convert_normal_map(const std::vector<unsigned char>& file);
 }

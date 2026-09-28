@@ -69,6 +69,11 @@ embedded in its `.sqtex`, whatever the original format and depth:
 | TGA 16 bit | TGA 16 bit RLE (already RLE: kept) |
 | anything else | kept as it is (the log says it) |
 
+**Normal maps**: glTF normal maps are OpenGL (green up), the engine reads them DirectX (green
+down, the shaders invert it). The images used as *normalTexture* by a material are always (also
+with `--images keep`) written in the `.sqtex` as a PNG with the green inverted: in Blender and in
+the source files keep them OpenGL.
+
 The PNGs are written with the highest compression. Note: a `.glb` exported by Blender already
 has its images in PNG (unless *Keep original* is chosen in the export).
 

@@ -439,6 +439,49 @@ namespace Import
         // Ok
         return vertexes;
     }
+    // Tangent space of glTF: T along u, B toward the top of the image (the v of glTF grows toward
+    // the bottom, the normal maps are OpenGL: green up), N. Per vertex, the sum of its triangles.
+    inline void compute_tangents(const Render::Mesh::IndexList& indices, Render::Mesh::Vertex3DNTBUVList& vertexes)
+    {
+        for (auto& vertex : vertexes)
+        {
+            vertex.m_tangent = Vec3(0.0f);
+            vertex.m_binomial = Vec3(0.0f);
+        }
+        auto triangle = [&](size_t i0, size_t i1, size_t i2)
+        {
+            auto& v0 = vertexes[i0]; auto& v1 = vertexes[i1]; auto& v2 = vertexes[i2];
+            const Vec3 edge1 = v1.m_position - v0.m_position;
+            const Vec3 edge2 = v2.m_position - v0.m_position;
+            const Vec2 delta_uv1 = v1.m_uvmap - v0.m_uvmap;
+            const Vec2 delta_uv2 = v2.m_uvmap - v0.m_uvmap;
+            const float div = delta_uv1.x * delta_uv2.y - delta_uv1.y * delta_uv2.x;
+            if (div == 0.0f) return;
+            const Vec3 tangent = (edge1 * delta_uv2.y - edge2 * delta_uv1.y) / div;   // dP/du
+            const Vec3 bitangent = (edge1 * delta_uv2.x - edge2 * delta_uv1.x) / div; // -dP/dv: up
+            for (auto* vertex : { &v0, &v1, &v2 })
+            {
+                vertex->m_tangent += tangent;
+                vertex->m_binomial += bitangent;
+            }
+        };
+        if (indices.size())
+            for (size_t i = 0; i + 2 < indices.size(); i += 3) triangle(indices[i], indices[i + 1], indices[i + 2]);
+        else
+            for (size_t i = 0; i + 2 < vertexes.size(); i += 3) triangle(i, i + 1, i + 2);
+        // Orthogonal to the normal (Gram-Schmidt); B keeps its side (mirrored uv: B = -N x T)
+        for (auto& vertex : vertexes)
+        {
+            const Vec3& n = vertex.m_normal;
+            Vec3 t = vertex.m_tangent - n * dot(n, vertex.m_tangent);
+            if (length(t) < 1e-8f) t = std::abs(n.x) < 0.9f ? cross(n, Vec3(1, 0, 0)) : cross(n, Vec3(0, 1, 0));
+            t = normalize(t);
+            const float handedness = dot(cross(n, t), vertex.m_binomial) < 0.0f ? -1.0f : 1.0f;
+            vertex.m_tangent = t;
+            vertex.m_binomial = cross(n, t) * handedness;
+        }
+    }
+
     inline Render::Mesh::Vertex3DNTBUVList get_Position3DNormalTangetBinomialUV(const GLTF& gltf, const Primitive& primitive, const Render::Mesh::IndexList& indices = {})
     {
         using Vertex = Render::Layout::Position3DNormalTangetBinomialUV;
@@ -505,26 +548,18 @@ namespace Import
         }
         else if (!(layout & Render::Layout::LayoutFields::LF_TANGENT))
         {
-            if (indices.size())
-                Square::tangent_model_fast(indices, vertexes);
-            else
-                Square::tangent_model_fast(vertexes);
+            compute_tangents(indices, vertexes);
         }
         else if (!(layout & Render::Layout::LayoutFields::LF_BINOMIAL))
         {
-            if (indices.size())
+            // B = (N x T) * w: the w of the glTF TANGENT (VEC4) is the side of B (mirrored uv: -1)
+            struct TangentW { Vec4 m_tangent; };
+            std::vector<TangentW> tangents;
+            process_attribute(tangents, gltf, primitive.attributes.at("TANGENT"), &TangentW::m_tangent, get_vertexes<TangentW, Square::Vec4>);
+            for (size_t i = 0; i < vertexes.size(); ++i)
             {
-                for (auto index : indices)
-                {
-                    vertexes[index].m_binomial = normalize(cross(vertexes[index].m_normal, vertexes[index].m_tangent));
-                }
-            }
-            else
-            {
-                for (auto& vertex : vertexes)
-                {
-                    vertex.m_binomial = normalize(cross(vertex.m_normal, vertex.m_tangent));
-                }
+                const float w = i < tangents.size() && tangents[i].m_tangent.w < 0.0f ? -1.0f : 1.0f;
+                vertexes[i].m_binomial = normalize(cross(vertexes[i].m_normal, vertexes[i].m_tangent)) * w;
             }
         }
         // Ok
