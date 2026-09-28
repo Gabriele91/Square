@@ -171,6 +171,13 @@ public:
 			render_world->pipeline((forward ? RP_FORWARD : RP_DEFERRED) | RP_DEBUG);
 			// post effects: SSAO (deferred: it darkens the ambient light), K to turn it on/off
 			m_ssao = MakeShared<Render::SSAO>(context());
+			// softer than the defaults: a light shade in the creases, not a dark halo
+			Render::SSAO::Settings ssao_settings;
+			ssao_settings.radius     = 0.85f; //smaller creases
+			ssao_settings.intensity  = 0.45f; //light occlusion
+			ssao_settings.contrast   = 1.1f;  //linear: no extra darkening
+			ssao_settings.max_pixels = 32.0f; //near the camera: short reach, less cache misses
+			m_ssao->settings(ssao_settings);
 			render_world->add_post_effect(m_ssao);
 		}
 	}
