@@ -53,6 +53,10 @@ TextureManager::TextureManager(Square::Context& context, const std::string& outp
     {
         add_sampler(sempler);
     }
+    for (auto& material : gltf.materials)
+    {
+        if (material.normal_texture.has_value()) m_normal_maps.insert(material.normal_texture->index);
+    }
     for (auto& texture : gltf.textures)
     {
         add_texture(texture, gltf.views, gltf.buffers);
@@ -125,10 +129,11 @@ size_t TextureManager::add_sampler(const Square::Data::GLTF::Sampler& sampler)
 
 size_t TextureManager::add_texture(const Square::Data::GLTF::Texture& texture, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers)
 {
+    const bool normal_map = m_normal_maps.count(m_next_texture++) != 0;
     if (texture.sampler.has_value() && texture.sampler < m_samplers.size() && texture.source < m_images.size())
     {
         const auto& sampler = m_samplers[texture.sampler.value()];
-        return add_texture_internal(texture.source, sampler, views, buffers);
+        return add_texture_internal(texture.source, normal_map, sampler, views, buffers);
     }
     else if (!texture.sampler.has_value() && texture.source < m_images.size())
     {
@@ -137,7 +142,7 @@ size_t TextureManager::add_texture(const Square::Data::GLTF::Texture& texture, c
                                      "wrap_s repeat\n"
                                      "wrap_t repeat\n"
                                      "wrap_r repeat\n";
-        return add_texture_internal(texture.source, sampler, views, buffers);
+        return add_texture_internal(texture.source, normal_map, sampler, views, buffers);
     }
     // Output
     if (texture.sampler.has_value())
@@ -164,6 +169,10 @@ std::optional<std::string> TextureManager::at(size_t index) const
 
 std::vector<unsigned char> TextureManager::image_bytes(const TextureType& in_image, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers) const
 {
+    if (std::holds_alternative<std::string>(in_image))
+    {
+        return Square::Filesystem::binary_file_read_all(std::get<std::string>(in_image));
+    }
     if (std::holds_alternative<ImageFile>(in_image))
     {
         return Square::Filesystem::binary_file_read_all(std::get<ImageFile>(in_image).m_path);
@@ -180,13 +189,13 @@ std::vector<unsigned char> TextureManager::image_bytes(const TextureType& in_ima
     return {};
 }
 
-size_t TextureManager::add_texture_internal(size_t image_id, const std::string& sampler, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers)
+size_t TextureManager::add_texture_internal(size_t image_id, bool normal_map, const std::string& sampler, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers)
 {
     const TextureType& in_image = m_images[image_id];
     //named after its image (a second texture of the same image gets "_2")
     const std::string texture_name = m_names.make(m_image_names[image_id], "texture" + std::to_string(m_textures.size()));
-    //a copied image: the texture refers to it
-    if (std::holds_alternative<std::string>(in_image))
+    //a copied image: the texture refers to it (not a normal map: its green is inverted)
+    if (std::holds_alternative<std::string>(in_image) && !normal_map)
     {
         std::string image_uri = std::get<std::string>(in_image);
         std::string texture_sampler_body = sampler + "url " + Square::Filesystem::get_filename(image_uri) + "\n";
@@ -196,22 +205,24 @@ size_t TextureManager::add_texture_internal(size_t image_id, const std::string& 
         m_textures.push_back(texture_sampler_path);
         return m_textures.size();
     }
-    //the image in the texture: "data" and its bytes (converted once per image)
+    //the image in the texture: "data" and its bytes (converted once per image and use)
     std::vector<unsigned char> bytes = image_bytes(in_image, views, buffers);
     if (bytes.empty())
     {
         m_context.logger()->warning("unable to read the image of: " + texture_name);
         return 0;
     }
-    if (m_convert)
+    if (m_convert || normal_map)
     {
-        auto converted = m_converted.find(image_id);
+        auto converted = m_converted.find({ image_id, normal_map });
         if (converted == m_converted.end())
         {
             const std::string extension = std::holds_alternative<ImageFile>(in_image)
                                         ? Square::Filesystem::get_extension(std::get<ImageFile>(in_image).m_path)
                                         : std::string();
-            converted = m_converted.insert({ image_id, ImageConverter::convert(bytes, extension) }).first;
+            converted = m_converted.insert({ { image_id, normal_map },
+                                             normal_map ? ImageConverter::convert_normal_map(bytes)
+                                                        : ImageConverter::convert(bytes, extension) }).first;
             m_context.logger()->info("image " + m_image_names[image_id] + ": " + converted->second.m_description);
         }
         bytes = converted->second.m_data;

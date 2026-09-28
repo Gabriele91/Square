@@ -8,6 +8,8 @@
 #include <Square/Square.h>
 #include <variant>
 #include <optional>
+#include <map>
+#include <unordered_set>
 #include "GLTFReader.h"
 #include "ImageConverter.h"
 #include "UniqueNames.h"
@@ -16,6 +18,8 @@
 //The textures of a glTF: a .sqtex per texture (its sampler and its image). The images:
 // - convert (--images png, the default): in the .sqtex ("data"), converted by ImageConverter;
 // - else: the image files copied next to the .sqtex ("url"), the embedded ones in it ("data").
+//The normal maps (the normalTexture of the materials) are OpenGL in glTF (green up), the engine
+//reads them DirectX (green down): always in the .sqtex, a PNG with the green inverted.
 class TextureManager
 {
     struct TextureBufferDescription
@@ -38,7 +42,9 @@ class TextureManager
     std::vector< std::string > m_samplers;
     std::vector< std::string > m_textures;
     UniqueNames                m_names;       //texture resources: .sqtex and copied images
-    std::unordered_map< size_t, ImageConverter::Result > m_converted; //image id -> its conversion
+    std::unordered_set< size_t > m_normal_maps; //glTF textures used as normal map
+    size_t                     m_next_texture{ 0 }; //glTF index of the next add_texture
+    std::map< std::pair<size_t, bool>, ImageConverter::Result > m_converted; //(image id, normal map) -> its conversion
 
 public:
     TextureManager(Square::Context& context, const std::string& output);
@@ -59,5 +65,5 @@ private:
     //the bytes of an image (a file, or a buffer view of the glTF); empty if missing
     std::vector<unsigned char> image_bytes(const TextureType& in_image, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers) const;
 
-    size_t add_texture_internal(size_t image_id, const std::string& sampler, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers);
+    size_t add_texture_internal(size_t image_id, bool normal_map, const std::string& sampler, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers);
 };

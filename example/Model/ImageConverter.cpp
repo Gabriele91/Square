@@ -219,4 +219,31 @@ namespace ImageConverter
         result.m_description = "kept as it is (not converted)";
         return result;
     }
+
+    Result convert_normal_map(const std::vector<unsigned char>& file)
+    {
+        Result result;
+        std::vector<unsigned char> pixels;
+        unsigned long width = 0, height = 0;
+        Square::Render::TextureFormat format;
+        Square::Render::TextureType type;
+        const bool decoded = Square::Data::Image::load(file, pixels, width, height, format, type);
+        const unsigned int channels = !decoded ? 0
+                                    : format == Square::Render::TF_RGB8 ? 3
+                                    : format == Square::Render::TF_RGBA8 ? 4 : 0;
+        if (!channels)
+        {
+            result.m_data = file;
+            result.m_description = "normal map kept as it is (not RGB/RGBA: green not inverted)";
+            return result;
+        }
+        //OpenGL (green up) to DirectX (green down)
+        for (size_t i = 1; i < pixels.size(); i += channels)
+        {
+            pixels[i] = 255 - pixels[i];
+        }
+        result.m_data = Square::Data::Image::encode_png(pixels.data(), width, height, channels);
+        result.m_description = std::string("normal map OpenGL -> DirectX (green inverted), PNG ") + (channels == 4 ? "RGBA" : "RGB");
+        return result;
+    }
 }
