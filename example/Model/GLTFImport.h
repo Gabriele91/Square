@@ -23,7 +23,7 @@ namespace Import
     };
 
     // Function to determine the best fitting structure
-    StructureType determine_structure(const PrimitiveAttributes& attributes,  const Accessors& accessors)
+    inline StructureType determine_structure(const PrimitiveAttributes& attributes,  const Accessors& accessors)
     {
         // Find POSITION attribute and get its accessor index
         auto position_iter = attributes.find("POSITION");
@@ -75,7 +75,7 @@ namespace Import
     }
     
     // Debugging
-    std::string structure_type_to_string(StructureType type)
+    inline std::string structure_type_to_string(StructureType type)
     {
         switch (type)
         {
@@ -235,7 +235,7 @@ namespace Import
     }
 
     // Get geometry vectors
-    Render::Mesh::Vertex2DList get_Position2D(const GLTF& gltf, const Primitive& primitive)
+    inline Render::Mesh::Vertex2DList get_Position2D(const GLTF& gltf, const Primitive& primitive)
     {
         using Vertex = Render::Layout::Position2D;
         using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
@@ -267,7 +267,7 @@ namespace Import
         // Ok
         return vertexes;
     }
-    Render::Mesh::Vertex2DUVList get_Position2DUV(const GLTF& gltf, const Primitive& primitive)
+    inline Render::Mesh::Vertex2DUVList get_Position2DUV(const GLTF& gltf, const Primitive& primitive)
     {
         using Vertex = Render::Layout::Position2DUV;
         using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
@@ -300,7 +300,7 @@ namespace Import
         // Ok
         return vertexes;
     }
-    Render::Mesh::Vertex3DList get_Position3D(const GLTF& gltf, const Primitive& primitive)
+    inline Render::Mesh::Vertex3DList get_Position3D(const GLTF& gltf, const Primitive& primitive)
     {
         using Vertex = Render::Layout::Position3D;
         using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
@@ -332,7 +332,7 @@ namespace Import
         // Ok
         return vertexes;
     }
-    Render::Mesh::Vertex3DUVList get_Position3DUV(const GLTF& gltf, const Primitive& primitive)
+    inline Render::Mesh::Vertex3DUVList get_Position3DUV(const GLTF& gltf, const Primitive& primitive)
     {
         using Vertex = Render::Layout::Position3DUV;
         using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
@@ -385,7 +385,7 @@ namespace Import
         // Ok
         return vertexes;
     }
-    Render::Mesh::Vertex3DNUVList get_Position3DNormalUV(const GLTF& gltf, const Primitive& primitive)
+    inline Render::Mesh::Vertex3DNUVList get_Position3DNormalUV(const GLTF& gltf, const Primitive& primitive)
     {
         using Vertex = Render::Layout::Position3DNormalUV;
         using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
@@ -439,7 +439,7 @@ namespace Import
         // Ok
         return vertexes;
     }
-    Render::Mesh::Vertex3DNTBUVList get_Position3DNormalTangetBinomialUV(const GLTF& gltf, const Primitive& primitive, const Render::Mesh::IndexList& indices = {})
+    inline Render::Mesh::Vertex3DNTBUVList get_Position3DNormalTangetBinomialUV(const GLTF& gltf, const Primitive& primitive, const Render::Mesh::IndexList& indices = {})
     {
         using Vertex = Render::Layout::Position3DNormalTangetBinomialUV;
         using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
@@ -530,7 +530,7 @@ namespace Import
         // Ok
         return vertexes;
     }
-    Render::Mesh::IndexList get_Index(const GLTF& gltf, const Primitive& primitive)
+    inline Render::Mesh::IndexList get_Index(const GLTF& gltf, const Primitive& primitive)
     {
         const auto& accessor = gltf.accessors[primitive.indices];
         const auto& buffer_view = gltf.views[accessor.buffer_view];
@@ -538,7 +538,7 @@ namespace Import
         const unsigned char* data_ptr = buffer_data.data() + buffer_view.offset + accessor.byte_offset;
         return get_indices(data_ptr, accessor.count, accessor.component_type);
     }
-    Render::DrawType get_DrawType(const Primitive& primitive)
+    inline Render::DrawType get_DrawType(const Primitive& primitive)
     {
         switch (primitive.mode)
         {
