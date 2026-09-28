@@ -13,6 +13,10 @@
 #include <cctype>
 #include <algorithm>
 #include "GLTFImport.h"
+#include "SquareExtras.h"
+#include "TextureManager.h"
+#include "MaterialManager.h"
+#include "MeshManager.h"
 
 enum class OutputFormat
 {
@@ -20,13 +24,6 @@ enum class OutputFormat
     SQ_BIN_GZ,
     SQ_JSON,
     SQ_JSON_GZ
-};
-
-enum Modes : unsigned char
-{
-    M_NONE = 0,
-    M_SWAP_ZY = 0b00000001,
-    M_TO_LHS = 0b00000010,
 };
 
 static Square::Shell::ParserCommands s_ShellCommands
@@ -39,720 +36,8 @@ static Square::Shell::ParserCommands s_ShellCommands
     , Square::Shell::Command{ "swapzy",  "s", "swap z with y coord"                      , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
     , Square::Shell::Command{ "lhs",     "l", "convert in left hand"                     , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(true)               }
     , Square::Shell::Command{ "shadow",  "r", "force shadow resolution [size]"           , Square::Shell::ValueType::value_int   , false, Square::Shell::Value_t(0)                  }
+    , Square::Shell::Command{ "images",  "m", "texture images [png, keep]"               , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("png")) }
     , Square::Shell::Command{ "help",    "h", "show help"                                , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
-};
-
-// Resource names taken from the model (Blender object/material/image names), made safe for a
-// file name and unique: a "_2", "_3"... suffix is added only when two names really clash.
-// The names are local to the model folder: the engine resolves them from there first.
-class UniqueNames
-{
-    std::unordered_set<std::string> m_used;
-
-    static std::string sanitize(const std::string& name)
-    {
-        std::string out;
-        for (const char c : name)
-        {
-            out += (std::isalnum((unsigned char)c) || c == '_' || c == '-') ? c : '_';
-        }
-        return out;
-    }
-
-public:
-    std::string make(const std::string& wanted, const std::string& fallback)
-    {
-        std::string base = sanitize(wanted);
-        if (base.empty()) base = sanitize(fallback);
-        std::string name = base;
-        for (int n = 2; !m_used.insert(name).second; ++n)
-        {
-            name = base + "_" + std::to_string(n);
-        }
-        return name;
-    }
-};
-
-//////////////////////////////////////////////////////////////////////////////////////////
-//Custom properties of Blender (glTF "extras") for Square: "square_<name>"
-namespace SquareExtras
-{
-    static const std::string PREFIX = "square_";
-
-    //the name without the prefix, empty if it is not a square property
-    static std::string name(const std::string& key)
-    {
-        if (key.size() <= PREFIX.size() || key.compare(0, PREFIX.size(), PREFIX) != 0) return {};
-        return key.substr(PREFIX.size());
-    }
-
-    //the string of an extra ("square_effect"), if there is
-    static std::optional<std::string> string(const Square::Data::JsonObject& extras, const std::string& key)
-    {
-        auto it = extras.find(PREFIX + key);
-        if (it == extras.end() || !it->second.is_string()) return std::nullopt;
-        return it->second.string();
-    }
-
-    //a number of an extra value (a boolean is 0/1)
-    static double number(const Square::Data::JsonValue& value)
-    {
-        if (value.is_boolean()) return value.boolean() ? 1.0 : 0.0;
-        return value.is_number() ? value.number() : 0.0;
-    }
-
-    //the i-th number of an array (or the number itself: all the components)
-    static double component(const Square::Data::JsonValue& value, size_t i)
-    {
-        if (!value.is_array()) return number(value);
-        const auto& values = value.array();
-        return i < values.size() ? number(values[i]) : 0.0;
-    }
-
-    //the value of a material parameter: a number (or a boolean) is a float, an array of 2/3/4
-    //numbers a Vec2/3/4, a string a texture; empty if it is none of them
-    static std::string material_value(const Square::Data::JsonValue& value)
-    {
-        std::ostringstream text;
-        if (value.is_number() || value.is_boolean())
-        {
-            text << "float(" << number(value) << ")";
-        }
-        else if (value.is_string())
-        {
-            text << "texture(\"" << value.string() << "\")";
-        }
-        else if (value.is_array() && value.array().size() >= 2 && value.array().size() <= 4)
-        {
-            const auto& values = value.array();
-            text << "Vec" << values.size() << "(";
-            for (size_t i = 0; i < values.size(); ++i) text << (i ? "," : "") << number(values[i]);
-            text << ")";
-        }
-        return text.str();
-    }
-
-    //the attributes of an object (a light...) from the extras "square_<attribute>": the value
-    //is turned into the type of the attribute (a number for an IVec2 fills both components)
-    static void apply(Square::Object& object, const Square::Data::JsonObject& extras)
-    {
-        using namespace Square;
-        const std::vector<Attribute>* attributes = object.context().attributes(object);
-        if (!attributes) return;
-        for (const Attribute& attribute : *attributes)
-        {
-            auto it = extras.find(PREFIX + attribute.name());
-            if (it == extras.end()) continue;
-            const Data::JsonValue& value = it->second;
-            Variant variant;
-            switch (attribute.value_type())
-            {
-            case VR_BOOL:   variant = Variant(number(value) != 0.0); break;
-            case VR_INT:    variant = Variant(int(number(value))); break;
-            case VR_FLOAT:  variant = Variant(float(number(value))); break;
-            case VR_DOUBLE: variant = Variant(number(value)); break;
-            case VR_VEC2:   variant = Variant(Vec2(component(value, 0), component(value, 1))); break;
-            case VR_VEC3:   variant = Variant(Vec3(component(value, 0), component(value, 1), component(value, 2))); break;
-            case VR_VEC4:   variant = Variant(Vec4(component(value, 0), component(value, 1), component(value, 2), component(value, 3))); break;
-            case VR_IVEC2:  variant = Variant(IVec2(int(component(value, 0)), int(component(value, 1)))); break;
-            case VR_STD_STRING: if (value.is_string()) variant = Variant(value.string()); break;
-            default: break;
-            }
-            if (variant.get_type() == VR_NONE) continue;
-            attribute.set(&object, variant.as_variant_ref());
-        }
-    }
-}
-
-class TextureManager
-{
-    struct TextureBufferDescription
-    {
-        std::string m_name;
-        size_t m_index;
-    };
-    using TextureType = std::variant< std::string, TextureBufferDescription >;
-
-    Square::Context& m_context;
-    std::string m_output;
-    std::vector< TextureType > m_images;
-    std::vector< std::string > m_image_names; //wanted name of the textures made from each image
-    std::vector< std::string > m_samplers;
-    std::vector< std::string > m_textures;
-    UniqueNames                m_names;       //texture resources: .sqtex and copied images
-
-    inline static const char* texture_filter_to_string(const Square::Data::GLTF::TextureFilter filter)
-    {
-        switch (filter) 
-        {
-            case Square::Data::GLTF::TextureFilter::NEAREST: return "nearest";
-            case Square::Data::GLTF::TextureFilter::LINEAR: return "linear";
-            case Square::Data::GLTF::TextureFilter::NEAREST_MIPMAP_NEAREST: return "nearest_mipmap_nearest";
-            case Square::Data::GLTF::TextureFilter::LINEAR_MIPMAP_NEAREST: return "linear_mipmap_nearest";
-            case Square::Data::GLTF::TextureFilter::NEAREST_MIPMAP_LINEAR: return "nearest_mipmap_linear";
-            case Square::Data::GLTF::TextureFilter::LINEAR_MIPMAP_LINEAR: return "linear_mipmap_linear";
-            default: return "unknown";
-        }
-    }
-
-    inline static const char* texture_wrap_mode_to_string(const Square::Data::GLTF::TextureWrapMode mode)
-    {
-        switch (mode) 
-        {
-        case Square::Data::GLTF::TextureWrapMode::CLAMP_TO_EDGE: return "clamp";
-        case Square::Data::GLTF::TextureWrapMode::MIRRORED_REPEAT: return "mirrored_repeat";
-        case Square::Data::GLTF::TextureWrapMode::REPEAT: return "repeat";
-        default: return "unknown";
-        }
-    }
-
-public:
-    TextureManager(Square::Context& context, const std::string& output) 
-    : m_context(context)
-    , m_output(output) 
-    {}
-
-    TextureManager(Square::Context& context, const std::string& output, const Square::Data::GLTF::GLTF& gltf)
-    : m_context(context)
-    , m_output(output) 
-    {
-        for (auto& image : gltf.images)
-        {
-            add_image(image, gltf.path);
-        }
-        for (auto& sempler : gltf.samplers)
-        {
-            add_sampler(sempler);
-        }
-        for (auto& texture : gltf.textures)
-        {
-            add_texture(texture, gltf.views, gltf.buffers);
-        }
-    }
-
-    size_t add_image(const Square::Data::GLTF::Image& in_image, const std::string& gltfpath)
-    {
-        if (std::holds_alternative<Square::Data::GLTF::ImagePath>(in_image))
-        {
-            const Square::Data::GLTF::ImagePath& image_path = std::get<Square::Data::GLTF::ImagePath>(in_image);
-            const std::string image_name = Square::Filesystem::get_basename(image_path.uri);
-            // The copy is a texture resource too (.png/.jpg...): "_img" keeps it apart
-            // from the .sqtex named after the image
-            auto newname = m_names.make(image_name + "_img", "image_img")
-                         + Square::Filesystem::get_extension(image_path.uri);
-            auto outputpath = Square::Filesystem::join(m_output, newname);
-            // Real image path
-            auto gltfwd = Square::Filesystem::get_directory(gltfpath);
-            auto imagepath = Square::Filesystem::join(gltfwd, image_path.uri);
-            // Copy
-            if (!Square::Filesystem::copyfile(imagepath, outputpath))
-            {
-                m_context.logger()->warning("unable to copy: " + image_path.uri);
-            }
-            m_images.push_back(outputpath);
-            m_image_names.push_back(image_name);
-            return m_images.size();
-        }
-        else if (std::holds_alternative<Square::Data::GLTF::ImageBuffer>(in_image))
-        {
-            const Square::Data::GLTF::ImageBuffer& buffer_description = std::get<Square::Data::GLTF::ImageBuffer>(in_image);
-            m_images.push_back(TextureBufferDescription{ buffer_description.name, buffer_description.buffer_view });
-            m_image_names.push_back(buffer_description.name);
-            return m_images.size();
-        }
-        
-        m_context.logger()->warning("Invalid image");
-        return ~size_t(0);
-    }
-
-    size_t add_sampler(const Square::Data::GLTF::Sampler& sampler)
-    {
-        const char _template[] =
-        {
-            "mag_filter %s\n"
-            "min_filter %s\n"
-            "wrap_s %s\n"
-            "wrap_t %s\n"
-            "wrap_r %s\n"
-        };
-        char output_template[255] = { '\0' };
-        std::snprintf(&output_template[0], 255, _template,
-            texture_filter_to_string(sampler.mag_filter),
-            texture_filter_to_string(sampler.min_filter),
-            texture_wrap_mode_to_string(sampler.wrap_s),
-            texture_wrap_mode_to_string(sampler.wrap_t),
-            texture_wrap_mode_to_string(sampler.wrap_r)
-        );
-        m_samplers.push_back(output_template);
-        return m_samplers.size();
-    }
-
-    size_t add_texture(const Square::Data::GLTF::Texture& texture, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers)
-    {
-        if (texture.sampler.has_value() && texture.sampler < m_samplers.size() && texture.source < m_images.size())
-        {
-            const auto& sampler = m_samplers[texture.sampler.value()];
-            return add_texture_internal(texture.source, sampler, views, buffers);
-        }
-        else if (!texture.sampler.has_value() && texture.source < m_images.size())
-        {
-            const std::string sampler = "mag_filter linear\n"
-                                         "min_filter linear_mipmap_linear\n"
-                                         "wrap_s repeat\n"
-                                         "wrap_t repeat\n"
-                                         "wrap_r repeat\n";
-            return add_texture_internal(texture.source, sampler, views, buffers);
-        }
-        // Output
-        if (texture.sampler.has_value())
-        {
-            m_context.logger()->warning("Invalid texture(" +  std::to_string(texture.sampler.value()) + ", " +  std::to_string(texture.source) + ")");
-        }
-        else
-        {
-            m_context.logger()->warning("Invalid texture(NONE, " +  std::to_string(texture.source) + ")");
-        }
-        // Return invalid id
-        return ~size_t(0);
-    }
-
-    std::optional<std::string> at(size_t index) const
-    {
-        std::optional<std::string> texture { };
-        if (index < m_textures.size())
-        {
-            return Square::Filesystem::get_basename(m_textures[index]);
-        }
-        return texture;
-    }
-
-private:
-
-    size_t add_texture_internal(size_t image_id, const std::string& sampler, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers)
-    {
-        const TextureType& in_image = m_images[image_id];
-        //named after its image (a second texture of the same image gets "_2")
-        const std::string texture_name = m_names.make(m_image_names[image_id], "texture" + std::to_string(m_textures.size()));
-        if (std::holds_alternative<std::string>(in_image))
-        {
-            std::string image_uri = std::get<std::string>(in_image);
-            std::string texture_sampler_body = sampler + "url " + Square::Filesystem::get_filename(image_uri) + "\n";
-            std::string texture_sampler_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
-
-            Square::Filesystem::text_file_write_all(texture_sampler_path, texture_sampler_body);
-            m_textures.push_back(texture_sampler_path);
-            return m_textures.size();
-        }
-        else if (std::holds_alternative<TextureBufferDescription>(in_image))
-        {
-            const TextureBufferDescription& image_buffer_description = std::get<TextureBufferDescription>(in_image);
-            std::string texture_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
-            std::string texture_body = sampler + "data";
-            // Get buffer
-            if (image_buffer_description.m_index < views.size())
-            {
-                const auto& image_data_view = views[image_buffer_description.m_index];
-                const auto& image_buffer = buffers[image_data_view.buffer];
-                /////////////////////////////////////////////////////////////////////
-                FILE* texture_pfile = std::fopen(texture_path.c_str(), "wb");
-                //bad case
-                if (texture_pfile)
-                {
-                    std::fwrite(texture_body.data(), texture_body.size(), 1, texture_pfile);
-                    std::fwrite(&image_buffer[image_data_view.offset], image_data_view.length, 1, texture_pfile);
-                    /////////////////////////////////////////////////////////////////////
-                    std::fclose(texture_pfile);
-                    /////////////////////////////////////////////////////////////////////
-                    m_textures.push_back(texture_path);
-                    return m_textures.size();
-                }
-            }
-        }
-        return 0;
-    }
-};
-
-//////////////////////////////////////////////////////////////////////////////////////////
-//The .mat of a glTF material for an effect: the glTF values mapped to the parameters of the
-//effect family (Legacy/LegacyTranslucent, PBR/PBRTranslucent); the "square_<parameter>"
-//custom properties set/override parameters
-class MaterialTemplate
-{
-public:
-    enum class Family
-    {
-        LEGACY, //Legacy, LegacyTranslucent: color, shininess, specular map
-        PBR     //PBR, PBRTranslucent: metallic, roughness, emissive
-    };
-
-    static Family family(const std::string& effect)
-    {
-        return effect.compare(0, 6, "Legacy") == 0 ? Family::LEGACY : Family::PBR;
-    }
-
-    //effect: "square_effect", else by the glTF alphaMode (BLEND: translucent, drawn after the
-    //opaque scene)
-    static std::string effect(const Square::Data::GLTF::Material& material)
-    {
-        using AlphaMode = Square::Data::GLTF::Material::AlphaMode;
-        return SquareExtras::string(material.extras, "effect")
-               .value_or(material.alpha_mode == AlphaMode::AM_BLEND ? "PBRTranslucent" : "PBR");
-    }
-
-    MaterialTemplate(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
-    : m_material(material)
-    , m_texture_manager(texture_manager)
-    {
-    }
-
-    //the text of the .mat
-    std::string build(const std::string& effect) const
-    {
-        Parameters parameters = family(effect) == Family::LEGACY ? legacy() : pbr();
-        //square_<parameter>: set or override
-        for (const auto& extra : m_material.extras)
-        {
-            const std::string name = SquareExtras::name(extra.first);
-            if (name.empty() || name == "effect") continue;
-            const std::string value = SquareExtras::material_value(extra.second);
-            if (value.empty()) continue;
-            auto it = std::find_if(parameters.begin(), parameters.end(), [&](const Parameter& parameter) { return parameter.first == name; });
-            if (it != parameters.end()) it->second = value;
-            else parameters.emplace_back(name, value);
-        }
-        std::ostringstream text;
-        text << "effect \"" << effect << "\"\n{\n";
-        for (const Parameter& parameter : parameters) text << "\t" << parameter.first << " " << parameter.second << "\n";
-        text << "}";
-        return text.str();
-    }
-
-private:
-    using Parameter = std::pair<std::string, std::string>;
-    using Parameters = std::vector<Parameter>;
-    using Material = Square::Data::GLTF::Material;
-
-    const Material&       m_material;
-    const TextureManager& m_texture_manager;
-
-    //texture("name") of a texture of the material, the default if it has none
-    std::string texture(const std::optional<Material::TextureInfo>& info, const std::string& default_name) const
-    {
-        const std::string name = info.has_value() ? m_texture_manager.at(info.value().index).value_or(default_name) : default_name;
-        return "texture(\"" + name + "\")";
-    }
-    static std::string real(float value)
-    {
-        std::ostringstream text;
-        text << "float(" << value << ")";
-        return text.str();
-    }
-    static std::string vec3(const Square::Vec3& value)
-    {
-        std::ostringstream text;
-        text << "Vec3(" << value.x << "," << value.y << "," << value.z << ")";
-        return text.str();
-    }
-    static std::string vec4(const Square::Vec4& value)
-    {
-        std::ostringstream text;
-        text << "Vec4(" << value.x << "," << value.y << "," << value.z << "," << value.w << ")";
-        return text.str();
-    }
-
-    //the glTF values
-    Material::PbrMetallicRoughness pbr_values() const
-    {
-        return m_material.pbr_metallic_roughness.value_or(Material::PbrMetallicRoughness());
-    }
-    //MASK: opaque with an alpha test at alphaCutoff; OPAQUE and BLEND: no test
-    float mask() const
-    {
-        return m_material.alpha_mode == Material::AlphaMode::AM_MASK ? m_material.alpha_cutoff : -1.0f;
-    }
-
-    //Legacy/LegacyTranslucent (albedo, normal, specular, occlusion, emissive maps; color,
-    //shininess, emissive; the emission is drawn by the forward/translucent passes)
-    Parameters legacy() const
-    {
-        const Material::PbrMetallicRoughness values = pbr_values();
-        const auto& specular_glossiness = m_material.extra_specular_glossiness;
-        //specular map: the one of KHR_materials_pbrSpecularGlossiness, else none
-        const std::optional<Material::TextureInfo> specular_map = specular_glossiness.has_value()
-                                                                ? specular_glossiness->specular_glossiness_texture
-                                                                : std::nullopt;
-        //shininess from the roughness (Blinn-Phong exponent of alpha = roughness^2)
-        const float alpha = std::max(values.roughness_factor * values.roughness_factor, 0.01f);
-        const float shininess = std::clamp(2.0f / (alpha * alpha) - 2.0f, 1.0f, 256.0f);
-        return
-        {
-            { "albedo_map",    texture(values.base_color_texture, "white") },
-            { "normal_map",    texture(m_material.normal_texture, "normal_up") },
-            { "specular_map",  texture(specular_map, "black") },
-            { "occlusion_map", texture(m_material.occlusion_texture, "white") },
-            { "emmisive_map",  texture(m_material.emissive_texture, "black") },
-            { "color",         vec4(values.base_color_factor) },
-            { "shininess",     real(shininess) },
-            { "emmisive",      vec3(m_material.emissive_factor) },
-            { "mask",          real(mask()) }
-        };
-    }
-
-    //PBR/PBRTranslucent (albedo, metallic, roughness, emissive, occlusion, normal maps;
-    //color, metallic, roughness, emissive); metallic and roughness share the glTF texture
-    Parameters pbr() const
-    {
-        const Material::PbrMetallicRoughness values = pbr_values();
-        return
-        {
-            { "albedo_map",    texture(values.base_color_texture, "white") },
-            { "metallic_map",  texture(values.metallic_roughness_texture, "black") },
-            { "roughness_map", texture(values.metallic_roughness_texture, "white") },
-            { "emmisive_map",  texture(m_material.emissive_texture, "black") },
-            { "occlusion_map", texture(m_material.occlusion_texture, "white") },
-            { "normal_map",    texture(m_material.normal_texture, "normal_up") },
-            { "color",         vec4(values.base_color_factor) },
-            { "metallic",      real(values.metallic_factor) },
-            { "roughness",     real(values.roughness_factor) },
-            { "emmisive",      vec3(m_material.emissive_factor) },
-            { "mask",          real(mask()) }
-        };
-    }
-};
-
-class MaterialManager
-{
-    std::unordered_map<std::string, std::string> m_materials_resrouces;
-    std::vector< std::string > m_materials;
-    Square::Context& m_context;
-    std::string m_output;
-    UniqueNames m_names;
-
-public:
-    MaterialManager(Square::Context& context, const std::string& output)
-    : m_context(context)
-    , m_output(output) 
-    {}
-    
-    MaterialManager(Square::Context& context, const std::string& output, const TextureManager& texture_manager, const Square::Data::GLTF::GLTF& gltf)
-    : m_context(context)
-    , m_output(output) 
-    {
-        for (auto& material : gltf.materials)
-        {
-            add_material(material, texture_manager);
-        }
-    }
-
-    const std::unordered_map<std::string, std::string>& resource_map() const
-    {
-        return m_materials_resrouces;
-    }
-
-    std::optional<std::string> at(size_t id)
-    {
-        return id < m_materials.size()
-               ? std::optional<std::string> { m_materials[id] } 
-               : std::optional<std::string>{};
-    }
-
-    size_t add_material(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
-    {
-        // the parameters of its effect, from the glTF values and the square_* properties
-        const std::string material_data = MaterialTemplate(material, texture_manager).build(MaterialTemplate::effect(material));
-        const std::string material_name = m_names.make(material.name, "material" + std::to_string(m_materials.size()));
-        const std::string material_path = Square::Filesystem::join(m_output, material_name + ".mat");
-        Square::Filesystem::text_file_write_all(material_path, material_data);
-        m_materials.push_back(material_name);
-        m_materials_resrouces[material_name] = material_path;
-        return m_materials.size();
-    }
-};
-
-class MeshManager
-{
-    Square::Context& m_context;
-    std::string m_output;
-    unsigned char m_mode{ M_NONE };
-
-    std::unordered_map<std::string, std::string> m_mesh_name_files;
-    std::vector< std::vector<size_t> > m_meshes_materials;
-    std::vector<std::string> m_mesh_names;
-    std::vector<Square::Geometry::OBoundingBox> m_mesh_obbs;
-    UniqueNames m_names;
-
-public:
-    MeshManager(Square::Context& context, const std::string& output, unsigned char mode)
-    : m_context(context)
-    , m_output(output)
-    , m_mode(mode)
-    {}
-
-    MeshManager(Square::Context& context, const std::string& output, unsigned char mode, const Square::Data::GLTF::GLTF& gltf)
-    : m_context(context)
-    , m_output(output)
-    , m_mode(mode)
-    {
-        for (auto& mesh : gltf.meshes)
-        {
-            add_mesh(mesh, gltf);
-        }
-    }
-
-    const std::unordered_map<std::string, std::string>& resource_map() const
-    {
-        return m_mesh_name_files;
-    }
-
-    std::optional< std::tuple<const std::string*, const Square::Geometry::OBoundingBox*, const std::vector<size_t>* > > at(size_t id) const
-    {
-        if (id < m_mesh_names.size() && id < m_mesh_obbs.size())
-        {
-            return { std::make_tuple(&m_mesh_names[id], &m_mesh_obbs[id], &m_meshes_materials[id]) };
-        }
-        return {};
-    }
-
-    size_t add_mesh(const Square::Data::GLTF::Mesh& mesh, const Square::Data::GLTF::GLTF& gltf)
-    {
-        using namespace Square;
-        using namespace Square::Data;
-        using namespace Square::Scene;
-        //push material list
-        m_meshes_materials.push_back({});
-        auto& mesh_materials_ids = m_meshes_materials.back();
-        //build context
-        Parser::StaticMesh::Context static_mesh_context;
-        // Mesh geometry 
-        Render::Mesh::Vertex3DNTBUVList context_mesh;
-        Render::Mesh::IndexList context_index;
-        // Save
-        size_t primitive_id = 0;
-        for (const auto& primitive : mesh.primitives)
-        {
-            switch (GLTF::Import::determine_structure(primitive.attributes, gltf.accessors))
-            {
-            case GLTF::Import::StructureType::Position2D:
-            case GLTF::Import::StructureType::Position2DUV:
-            case GLTF::Import::StructureType::Position3D:
-            case GLTF::Import::StructureType::Position3DUV:
-            case GLTF::Import::StructureType::Position3DNormalUV:
-            case GLTF::Import::StructureType::Position3DNormalTangentBinormalUV:
-            {
-                // Get draw type
-                auto drawtype = GLTF::Import::get_DrawType(primitive);
-                // Invalid draw type?
-                if (drawtype == Render::DrawType::DRAW_INVALID)
-                {
-                    m_context.logger()->warning("Error to import primitive[" + std::to_string(primitive_id) + "] mesh: " + mesh.name);
-                    continue;
-                }
-                // Get data
-                auto indices = std::move(GLTF::Import::get_Index(gltf, primitive));
-                auto vertexes = std::move(GLTF::Import::get_Position3DNormalTangetBinomialUV(gltf, primitive, indices));
-                // Swap Z Y
-                if (m_mode & M_SWAP_ZY)
-                {
-                    for (auto& vertex : vertexes)
-                    {
-                        // Swap all
-                        std::swap(vertex.m_position.z, vertex.m_position.y);
-                        std::swap(vertex.m_normal.z, vertex.m_normal.y);
-                        std::swap(vertex.m_tangent.z, vertex.m_tangent.y);
-                        std::swap(vertex.m_binomial.z, vertex.m_binomial.y);
-                    }
-                }
-                // Force indexed
-                if (indices.empty())
-                {
-                    indices.reserve(vertexes.size());
-                    for (size_t i = 0; i < vertexes.size(); ++i)
-                        indices.emplace_back(i);
-                }
-                // to LHs
-                if (m_mode & M_TO_LHS)
-                {
-                    // Flip
-                    for (auto& vertex : vertexes)
-                    {
-                        // Flip Z for position and normal
-                        vertex.m_position.z *= -1.0;
-                        vertex.m_normal.z *= -1.0;
-                        vertex.m_tangent.z *= -1.0;
-                        // Flip bitangent to maintain correct handedness
-                        vertex.m_binomial = -vertex.m_binomial;
-                    }
-                    // Remap indices based on draw type
-                    switch (drawtype)
-                    {
-                    case Render::DrawType::DRAW_TRIANGLES:
-                    {
-                        // Flip winding order for triangles (swap second and third indices)
-                        for (size_t i = 0; i < indices.size(); i += 3)
-                        {
-                            if (i + 2 < indices.size())
-                            {
-                                std::swap(indices[i + 1], indices[i + 2]);
-                            }
-                        }
-                        break;
-                    }
-                    case Render::DrawType::DRAW_TRIANGLE_STRIP:
-                    {
-                        // For triangle strips, we need to flip every other triangle
-                        // In triangle strips, each new vertex forms a triangle with the previous two
-                        for (size_t i = 0; i < indices.size() - 2; i += 2)
-                        {
-                            std::swap(indices[i], indices[i + 1]);
-                        }
-                        break;
-                    }
-                    case Render::DrawType::DRAW_LINES:
-                    case Render::DrawType::DRAW_LINE_LOOP:
-                    case Render::DrawType::DRAW_POINTS:
-                    default:
-                        // No need to swap indices for line loops, they don't have winding order
-                        break;
-                    }
-                }
-                // Add sub mesh
-                static_mesh_context.m_submesh.emplace_back(drawtype, indices.size(), context_index.size());
-                // Update indices
-                if (context_mesh.size())
-                {
-                    for (auto& index : indices)
-                        index += context_mesh.size();
-                }
-                // Push in context_mesh
-                context_index.insert(context_index.end(), indices.begin(), indices.end());
-                context_mesh.insert(context_mesh.end(), vertexes.begin(), vertexes.end());
-            }
-            break;
-            default:
-                break;
-            }
-            // Next primitive
-            mesh_materials_ids.push_back(primitive.material);
-            ++primitive_id;
-        }
-        // Compute obb just 1 time
-        const unsigned char* points = reinterpret_cast<const unsigned char*>(context_mesh.data());
-        const size_t vertex_size = sizeof(Render::Layout::Position3DNormalTangetBinomialUV);
-        const size_t position_offset = offsetof(Render::Layout::Position3DNormalTangetBinomialUV, m_position);
-        m_mesh_obbs.push_back(Geometry::obounding_box_from_points(points, position_offset, vertex_size, context_mesh.size()));
-        // Serialize
-        std::vector<unsigned char> buffer;
-        size_t mesh_id = m_mesh_names.size();
-        std::string sm3d_mesh_filename = m_names.make(mesh.name, "mesh" + std::to_string(mesh_id));
-        std::string sm3d_mesh_path = Filesystem::join(m_output, sm3d_mesh_filename + ".sm3dgz");
-        static_mesh_context.m_index = std::move(context_index);
-        static_mesh_context.m_vertex = std::move(context_mesh);
-        Parser::StaticMesh().serialize(static_mesh_context, buffer);
-        Square::Filesystem::binary_compress_file_write_all(sm3d_mesh_path, buffer);
-        m_mesh_name_files[sm3d_mesh_filename] = sm3d_mesh_path;
-        m_mesh_names.emplace_back(std::move(sm3d_mesh_filename));
-        return m_mesh_names.size();
-    }
 };
 
 class ModelImporter : public Square::AppInterface
@@ -764,6 +49,7 @@ public:
     std::string m_output_model_name;
     OutputFormat m_output_model_format;
     size_t m_shadow_resoluction;
+    bool m_convert_images;
 
     struct Consts
     {
@@ -785,13 +71,15 @@ public:
                   const std::string& output_model_name, 
                   OutputFormat output_model_format,
                   unsigned char mode = M_NONE,
-                  size_t shodow_resoluction = 0)
+                  size_t shodow_resoluction = 0,
+                  bool convert_images = true)
     : m_input_model_path(input_model_path)
     , m_output_model_path(output_model_path)
     , m_output_model_name(output_model_name)
     , m_output_model_format(output_model_format)
     , m_mode(mode)
     , m_shadow_resoluction(shodow_resoluction)
+    , m_convert_images(convert_images)
     {}
 
     virtual void start() 
@@ -819,7 +107,7 @@ public:
             return;
         }
         // Texture Manager
-        TextureManager texture_manager(context(), m_output_model_path, gltf_model);
+        TextureManager texture_manager(context(), m_output_model_path, gltf_model, m_convert_images);
         MaterialManager material_manager(context(), m_output_model_path, texture_manager, gltf_model);
         MeshManager mesh_manager(context(), m_output_model_path, m_mode, gltf_model);
         // Create scene
@@ -1144,6 +432,21 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
     {
         shadow_resoluction = std::get<int>(shadow_it->second);
     }
+    // images: png (converted, the default) or keep (copied as they are)
+    bool convert_images = true;
+    if (auto images_it = args.find("images"); images_it != args.end())
+    if (auto images_str = std::get<std::string>(images_it->second); images_str.size())
+    {
+        if (Square::case_insensitive_equal(images_str, "keep"))
+        {
+            convert_images = false;
+        }
+        else if (!Square::case_insensitive_equal(images_str, "png"))
+        {
+            std::cout << "unknown images mode: " << images_str << " (png, keep)" << std::endl;
+            return -1;
+        }
+    }
     //srgb on
     const bool srgb = true;
     //test
@@ -1160,7 +463,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
         , false                                // Debug
       }
     , "ModelImporter"
-    , new ModelImporter(input_model_path, output_model_path, output_model_name, output_model_format, modes, shadow_resoluction)
+    , new ModelImporter(input_model_path, output_model_path, output_model_name, output_model_format, modes, shadow_resoluction, convert_images)
     );
     // End
     return 0;

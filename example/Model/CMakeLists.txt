@@ -19,6 +19,11 @@ add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 # Source files
 set(SOURCE_FILES
     main.cpp
+    ImageConverter.cpp
+    SquareExtras.cpp
+    TextureManager.cpp
+    MaterialManager.cpp
+    MeshManager.cpp
 )
 
 # Create executable
