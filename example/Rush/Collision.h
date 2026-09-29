@@ -51,7 +51,7 @@ public:
 	struct Collision
 	{
 		float        m_time{ 1.0f };
-		Square::Vec3 m_normal{ 0.0f, 1.0f, 0.0f };
+		Square::Vec3 m_normal{ Square::Constants::axis_y };
 		int          m_triangle{ -1 };
 	};
 
@@ -60,7 +60,7 @@ public:
 	{
 		float        m_distance{ 0.0f };
 		Square::Vec3 m_point{ 0.0f };
-		Square::Vec3 m_normal{ 0.0f, 1.0f, 0.0f };
+		Square::Vec3 m_normal{ Square::Constants::axis_y };
 	};
 
 	//a segment: origin + direction * t
@@ -118,7 +118,7 @@ private:
 struct CollisionReport
 {
 	Square::Vec3                           m_point{ 0.0f };  //on the surface hit
-	Square::Vec3                           m_normal{ 0.0f, 1.0f, 0.0f };
+	Square::Vec3                           m_normal{ Square::Constants::axis_y };
 	Square::Weak<Square::Scene::Actor>     m_with;           //the actor hit
 	int                                    m_type{ 0 };      //its collision type
 };

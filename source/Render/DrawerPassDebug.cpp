@@ -17,6 +17,7 @@
 #include "Square/Math/Transformation.h"
 #include "Square/Math/Tangent.h"
 #include "Square/Render/LightVolume.h"
+#include "Square/Render/BasicMesh.h"
 #include <algorithm>
 
 namespace Square
@@ -78,117 +79,6 @@ namespace Render
             {1.0, 1.0, 1.0, 1.0}      // WHITE
         };
         return colors[ccode % DB_SIZE_COLORS];
-    }
-
-    static Shared<Render::Mesh> create_cube(Square::Context& context, const float size = 1.0f)
-    {
-        // Output
-        Shared<Render::Mesh> mesh = MakeShared<Render::Mesh>(context);
-        // Geometry
-        Render::Mesh::Vertex3DList vertexs
-        {
-            { Vec3(-size, size, -size) }, // +Y (top face)
-            { Vec3(size, size, -size) },
-            { Vec3(size, size,  size) },
-            { Vec3(-size, size,  size) },
-
-            { Vec3(-size, -size,  size) }, // -Y (bottom face)
-            { Vec3(size, -size,  size) },
-            { Vec3(size, -size, -size) },
-            { Vec3(-size, -size, -size) },
-
-            { Vec3(size,  size,  size) }, // +X (right face)
-            { Vec3(size,  size, -size) },
-            { Vec3(size, -size, -size) },
-            { Vec3(size, -size,  size) },
-
-            { Vec3(-size,  size, -size) }, // -X (left face)
-            { Vec3(-size,  size,  size) },
-            { Vec3(-size, -size,  size) },
-            { Vec3(-size, -size, -size) },
-
-            { Vec3(-size,  size, size) }, // +Z (front face)
-            { Vec3(size,  size, size) },
-            { Vec3(size, -size, size) },
-            { Vec3(-size, -size, size) },
-
-            { Vec3(size,  size, -size) }, // -Z (back face)
-            { Vec3(-size,  size, -size) },
-            { Vec3(-size, -size, -size) },
-            { Vec3(size, -size, -size) }
-        };
-        Render::Mesh::IndexList indexes
-        {
-            0, 2, 1,
-            0, 3, 2,
-
-            4, 6, 5,
-            4, 7, 6,
-
-            8, 10, 9,
-            8, 11, 10,
-
-            12, 14, 13,
-            12, 15, 14,
-
-            16, 18, 17,
-            16, 19, 18,
-
-            20, 22, 21,
-            20, 23, 22
-        };
-        // Submesh
-        Render::SubMesh sub_mesh{ Render::DrawType::DRAW_TRIANGLES, uint32(indexes.size()) };
-        //Build mesh
-        if (mesh->build(vertexs, indexes, { sub_mesh }, false))
-            return mesh;
-        return nullptr;
-    }
-
-    //box of the clip space volume: x,y in [-1,1], z in [0,1] (GLM_FORCE_DEPTH_ZERO_TO_ONE);
-    //mapped through inverse(projection * view) it is exactly the frustum
-    static Shared<Render::Mesh> create_frustum_box(Square::Context& context)
-    {
-        Render::Mesh::Vertex3DList vertexs
-        {
-            { Vec3(-1,  1, 0) }, { Vec3( 1,  1, 0) }, { Vec3( 1,  1, 1) }, { Vec3(-1,  1, 1) }, // +Y
-            { Vec3(-1, -1, 1) }, { Vec3( 1, -1, 1) }, { Vec3( 1, -1, 0) }, { Vec3(-1, -1, 0) }, // -Y
-            { Vec3( 1,  1, 1) }, { Vec3( 1,  1, 0) }, { Vec3( 1, -1, 0) }, { Vec3( 1, -1, 1) }, // +X
-            { Vec3(-1,  1, 0) }, { Vec3(-1,  1, 1) }, { Vec3(-1, -1, 1) }, { Vec3(-1, -1, 0) }, // -X
-            { Vec3(-1,  1, 1) }, { Vec3( 1,  1, 1) }, { Vec3( 1, -1, 1) }, { Vec3(-1, -1, 1) }, // far
-            { Vec3( 1,  1, 0) }, { Vec3(-1,  1, 0) }, { Vec3(-1, -1, 0) }, { Vec3( 1, -1, 0) }  // near
-        };
-        Render::Mesh::IndexList indexes
-        {
-            0, 2, 1,    0, 3, 2,
-            4, 6, 5,    4, 7, 6,
-            8, 10, 9,   8, 11, 10,
-            12, 14, 13, 12, 15, 14,
-            16, 18, 17, 16, 19, 18,
-            20, 22, 21, 20, 23, 22
-        };
-        Render::SubMesh sub_mesh{ Render::DrawType::DRAW_TRIANGLES, uint32(indexes.size()) };
-        auto mesh = MakeShared<Render::Mesh>(context);
-        if (mesh->build(vertexs, indexes, { sub_mesh }, false))
-            return mesh;
-        return nullptr;
-    }
-
-    //screen quad in NDC, wound clockwise (engine front-face convention)
-    static Shared<Render::Mesh> create_screen_quad(Square::Context& context)
-    {
-        Render::Mesh::Vertex3DList vertexs
-        {
-            { Vec3(-1.0f, -1.0f, 0.0f) },
-            { Vec3( 1.0f, -1.0f, 0.0f) },
-            { Vec3( 1.0f,  1.0f, 0.0f) },
-            { Vec3(-1.0f,  1.0f, 0.0f) },
-        };
-        Render::Mesh::IndexList indexes{ 0, 2, 1, 0, 3, 2 };
-        auto mesh = MakeShared<Render::Mesh>(context);
-        if (mesh->build(vertexs, indexes))
-            return mesh;
-        return nullptr;
     }
 
     void DrawerPassDebug::draw_obb
@@ -396,8 +286,8 @@ namespace Render
 		m_debug_effect = context.resource<Resource::Effect>("Debug");
         m_cb_camera    = Render::stream_constant_buffer<Render::UniformBufferCamera>(&render());
 		m_cb_transform = Render::stream_constant_buffer<Render::UniformBufferTransform>(&render());
-        m_mesh_box     = create_cube(context);
-        m_mesh_frustum = create_frustum_box(context);
+        m_mesh_box     = BasicMesh::build_box(context);
+        m_mesh_frustum = BasicMesh::build_frustum_box(context);
         m_mesh_sphere  = LightVolume::build_sphere(context);
         m_mesh_cone    = LightVolume::build_cone(context);
         if (!m_mesh_box || !m_mesh_frustum)
@@ -408,7 +298,7 @@ namespace Render
         m_shader_texture_2D    = context.resource<Resource::Shader>("DebugTexture2D");
         m_shader_texture_cube  = context.resource<Resource::Shader>("DebugTextureCube");
         m_shader_texture_array = context.resource<Resource::Shader>("DebugTextureArray");
-        m_mesh_quad            = create_screen_quad(context);
+        m_mesh_quad            = BasicMesh::build_quad(context);
         if (!m_mesh_quad)
         {
             context.logger()->warning("Unable to build debug quad mesh");

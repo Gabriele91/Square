@@ -23,9 +23,6 @@ class RushGame : public Square::AppInterface
 {
 public:
 
-	//collision_debug: the debug view of the collisions on from the start (X toggles it)
-	RushGame(bool collision_debug = false) : m_collision_debug(collision_debug) {}
-
 	void key_event(Square::Video::KeyboardEvent key, short mode, Square::Video::ActionEvent action)
 	{
 		using namespace Square;

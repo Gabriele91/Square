@@ -39,7 +39,7 @@ namespace
 	//plane dot(normal, x) + offset = 0 (normal normalized)
 	struct Plane
 	{
-		Vec3  m_normal{ 0.0f, 1.0f, 0.0f };
+		Vec3  m_normal{ Constants::axis_y };
 		float m_offset{ 0.0f };
 
 		Plane() = default;

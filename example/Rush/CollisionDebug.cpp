@@ -5,38 +5,8 @@
 #include "CollisionDebug.h"
 #include "Collision.h"
 #include <algorithm>
-#include <cmath>
 
 using namespace Square;
-
-namespace
-{
-	//a sphere of radius 1 (rings from pole to pole, sectors around y)
-	Shared<Render::Mesh> build_sphere(Context& context, unsigned int rings = 10, unsigned int sectors = 16)
-	{
-		Render::Mesh::Vertex3DList vertices;
-		Render::Mesh::IndexList    indices;
-		for (unsigned int ring = 0; ring <= rings; ++ring)
-		{
-			const float polar = Constants::pi<float>() * float(ring) / float(rings);
-			for (unsigned int sector = 0; sector <= sectors; ++sector)
-			{
-				const float azimuth = 2.0f * Constants::pi<float>() * float(sector) / float(sectors);
-				Render::Layout::Position3D vertex;
-				vertex.m_position = Vec3(std::sin(polar) * std::cos(azimuth), std::cos(polar), std::sin(polar) * std::sin(azimuth));
-				vertices.push_back(vertex);
-			}
-		}
-		for (unsigned int ring = 0; ring < rings; ++ring)
-		for (unsigned int sector = 0; sector < sectors; ++sector)
-		{
-			const unsigned int a = ring * (sectors + 1) + sector, b = a + sectors + 1;
-			indices.insert(indices.end(), { a, b, a + 1, a + 1, b, b + 1 });
-		}
-		auto mesh = MakeShared<Render::Mesh>(context);
-		return mesh->build(vertices, indices) ? mesh : nullptr;
-	}
-}
 
 CollisionDebug::CollisionDebug(Context& context, CollisionWorld& world)
 : PostEffect(context, Render::PES_COLOR)
@@ -49,7 +19,7 @@ bool CollisionDebug::build()
 	if (!m_copy)      m_copy = load_shader("PostCopy");
 	if (!m_effect)    m_effect = context().resource<Resource::Effect>("Debug");
 	if (!m_transform) m_transform = Render::stream_constant_buffer<Render::UniformBufferTransform>(&render());
-	if (!m_sphere)    m_sphere = build_sphere(context());
+	if (!m_sphere)    m_sphere = Render::BasicMesh::build_sphere(context(), 10, 16);
 	return m_copy && m_effect && m_transform && m_sphere;
 }
 

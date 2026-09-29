@@ -9,11 +9,6 @@
 
 using namespace Square;
 
-namespace
-{
-	const Vec3 AXIS_Z(0.0f, 0.0f, 1.0f);
-}
-
 SQUARE_CLASS_OBJECT_REGISTRATION(HovercraftAI);
 
 void HovercraftAI::object_registration(Context& ctx)
@@ -47,7 +42,7 @@ void HovercraftAI::on_update(double delta_time)
 		//angle between the forward of the hovercraft and the target, on x/z (degrees, positive:
 		//the target is on the right, +x)
 		const Vec3  position = hovercraft->position(true);
-		const Vec3  forward  = hovercraft->rotation(true) * AXIS_Z;
+		const Vec3  forward  = hovercraft->rotation(true) * Constants::axis_z;
 		const Vec3  to_target = race->point(race->current()) - position;
 		float angle = degrees(std::atan2(to_target.x, to_target.z) - std::atan2(forward.x, forward.z));
 		while (angle >  180.0f) angle -= 360.0f;

@@ -15,24 +15,6 @@ namespace Square
 {
 namespace Render
 {
-	//////////////////////////////////////////////////////////////////////
-	// Full-screen quad
-	//////////////////////////////////////////////////////////////////////
-	Shared<Mesh> build_fullscreen_quad(Square::Context& context)
-	{
-		Mesh::Vertex3DList vertices
-		{
-			{ Vec3(-1.0f, -1.0f, 0.0f) },
-			{ Vec3( 1.0f, -1.0f, 0.0f) },
-			{ Vec3( 1.0f,  1.0f, 0.0f) },
-			{ Vec3(-1.0f,  1.0f, 0.0f) },
-		};
-		Mesh::IndexList indices{ 0, 2, 1, 0, 3, 2 };
-		auto mesh = MakeShared<Mesh>(context);
-		mesh->build(vertices, indices);
-		return mesh;
-	}
-
 	//a color texture (linear, clamp, no mipmaps) and a target on it
 	static bool build_color_target(Render::Context& render, const IVec2& size, TextureFormat format, Texture*& texture, Target*& target)
 	{

@@ -9,13 +9,6 @@
 
 using namespace Square;
 
-namespace
-{
-	const Vec3 AXIS_X(1.0f, 0.0f, 0.0f);
-	const Vec3 AXIS_Y(0.0f, 1.0f, 0.0f);
-	const Vec3 AXIS_Z(0.0f, 0.0f, 1.0f);
-}
-
 SQUARE_CLASS_OBJECT_REGISTRATION(CameraFollow);
 
 void CameraFollow::object_registration(Context& ctx)
@@ -63,7 +56,7 @@ void CameraFollow::on_update(double delta_time)
 	const Vec3  body = target->position(true);
 	const Quat  rotation = target->rotation(true);
 	//moving backward: the target went against its forward (+z)
-	const bool backward = dot(body - m_target_previous, rotation * AXIS_Z) < 0.0f;
+	const bool backward = dot(body - m_target_previous, rotation * Constants::axis_z) < 0.0f;
 	m_target_previous = body;
 	if (steps <= 0.0f) return;
 	//share of the way per step: at the start from intro_follow up to follow (smoothstep)
@@ -95,7 +88,7 @@ Quat CameraFollow::look_at_target() const
 	const Vec3 direction = target->position(true) - camera->position();
 	const float horizontal = std::sqrt(direction.x * direction.x + direction.z * direction.z);
 	if (horizontal < 1e-5f && std::abs(direction.y) < 1e-5f) return camera->rotation();
-	return angle_axis(std::atan2(direction.x, direction.z), AXIS_Y) * angle_axis(-std::atan2(direction.y, horizontal), AXIS_X);
+	return angle_axis(std::atan2(direction.x, direction.z), Constants::axis_y) * angle_axis(-std::atan2(direction.y, horizontal), Constants::axis_x);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////

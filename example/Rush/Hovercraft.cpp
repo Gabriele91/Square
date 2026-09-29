@@ -8,13 +8,6 @@
 
 using namespace Square;
 
-namespace
-{
-	const Vec3 AXIS_X(1.0f, 0.0f, 0.0f);
-	const Vec3 AXIS_Y(0.0f, 1.0f, 0.0f);
-	const Vec3 AXIS_Z(0.0f, 0.0f, 1.0f);
-}
-
 SQUARE_CLASS_OBJECT_REGISTRATION(HovercraftDriver);
 
 void HovercraftDriver::object_registration(Context& ctx)
@@ -85,7 +78,7 @@ void HovercraftDriver::place_wheels()
 	for (int wheel_id = 0; wheel_id < 4; ++wheel_id)
 	{
 		const Vec3 corner = position + rotation * m_wheel_offsets[wheel_id];
-		m_wheels[wheel_id]->component<SphereCollider>()->reset(corner + AXIS_Y * m_body->radius_y());
+		m_wheels[wheel_id]->component<SphereCollider>()->reset(corner + Constants::axis_y * m_body->radius_y());
 		m_wheels[wheel_id]->position(Vec3(to_hovercraft * Vec4(corner, 1.0f)));
 	}
 }
@@ -132,12 +125,12 @@ void HovercraftDriver::spawn(const Vec3& start, float yaw)
 {
 	if (!set_wheels()) return;
 	auto hovercraft = actor().lock();
-	hovercraft->rotation(angle_axis(radians(yaw), AXIS_Y));
+	hovercraft->rotation(angle_axis(radians(yaw), Constants::axis_y));
 	//over the first surface under start: the body drops from its radius over it
 	Vec3 position = start;
 	CollisionMesh::Hit hit;
 	auto collision = world().lock()->instance<CollisionWorld>();
-	if (collision && collision->raycast(start, -AXIS_Y, 10000.0f, hit))
+	if (collision && collision->raycast(start, -Constants::axis_y, 10000.0f, hit))
 	{
 		position.y = hit.m_point.y + m_body->radius_y() * 2.0f - m_body->offset().y;
 	}
@@ -204,8 +197,8 @@ void HovercraftDriver::update(float steps)
 	{
 		wheels_position[wheel_id] = m_wheels[wheel_id]->position(true);
 	}
-	hovercraft->align_to_vector((wheels_position[FRONT_RIGHT] + wheels_position[BACK_RIGHT]) - (wheels_position[FRONT_LEFT] + wheels_position[BACK_LEFT]), AXIS_X);
-	hovercraft->align_to_vector((wheels_position[FRONT_LEFT] + wheels_position[FRONT_RIGHT]) - (wheels_position[BACK_LEFT] + wheels_position[BACK_RIGHT]), AXIS_Z);
+	hovercraft->align_to_vector((wheels_position[FRONT_RIGHT] + wheels_position[BACK_RIGHT]) - (wheels_position[FRONT_LEFT] + wheels_position[BACK_LEFT]), Constants::axis_x);
+	hovercraft->align_to_vector((wheels_position[FRONT_LEFT] + wheels_position[FRONT_RIGHT]) - (wheels_position[BACK_LEFT] + wheels_position[BACK_RIGHT]), Constants::axis_z);
 	//velocity of the last step (where the collisions left it), per step
 	const Vec3 position = hovercraft->position();
 	if (m_has_previous)
@@ -225,7 +218,7 @@ void HovercraftDriver::update_input(float steps)
 	const float yaw = (m_input.right ? rate : 0.0f) - (m_input.left ? rate : 0.0f);
 	if (yaw != 0.0f)
 	{
-		hovercraft->rotation(hovercraft->rotation() * angle_axis(radians(yaw), AXIS_Y));
+		hovercraft->rotation(hovercraft->rotation() * angle_axis(radians(yaw), Constants::axis_y));
 	}
 	//on the ground (a contact under the body, not a wall in front or over it): throttle/brake/
 	//drag, forward along the body plus a little gravity (it stays pressed on the ground); in
@@ -236,11 +229,11 @@ void HovercraftDriver::update_input(float steps)
 		if (m_input.forward)       m_speed = std::min(m_speed + m_settings.acceleration * steps, m_settings.max_speed);
 		else if (m_input.backward) m_speed = std::max(m_speed - m_settings.acceleration * steps, m_settings.max_reverse);
 		else                       m_speed *= std::pow(m_settings.drag, steps);
-		velocity = hovercraft->rotation() * (AXIS_Z * m_speed) + AXIS_Y * m_settings.gravity;
+		velocity = hovercraft->rotation() * (Constants::axis_z * m_speed) + Constants::axis_y * m_settings.gravity;
 	}
 	else
 	{
-		velocity = m_velocity + AXIS_Y * (m_settings.gravity * steps);
+		velocity = m_velocity + Constants::axis_y * (m_settings.gravity * steps);
 	}
 	hovercraft->position(hovercraft->position() + velocity * steps);
 	//the wheels back under the body (where the hovercraft is now)

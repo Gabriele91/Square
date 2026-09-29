@@ -12,7 +12,6 @@ using namespace Square;
 
 namespace
 {
-	const Vec3 AXIS_Y(0.0f, 1.0f, 0.0f);
 
 	//first node named name under root (root included)
 	Shared<Scene::Actor> find(Shared<Scene::Actor> root, const std::string& name)
@@ -64,7 +63,7 @@ size_t Checkpoints::collect(Shared<Scene::Actor> root)
 	{
 		Vec3 position = point.second;
 		CollisionMesh::Hit hit;
-		if (collision && collision->raycast(position, -AXIS_Y, 1000.0f, hit)) position = hit.m_point;
+		if (collision && collision->raycast(position, -Constants::axis_y, 1000.0f, hit)) position = hit.m_point;
 		m_points.push_back(position);
 	}
 	m_current = NONE;
@@ -145,8 +144,8 @@ void Checkpoints::spin(float seconds)
 {
 	if (!set_parts()) return;
 	m_time = std::fmod(m_time + seconds, 3600.0f); //seconds of spinning, kept small
-	if (m_inner) m_inner->rotation(m_inner_rest * angle_axis(radians(std::fmod(m_time * m_settings.inner_speed, 360.0f)), AXIS_Y));
-	if (m_outer) m_outer->rotation(m_outer_rest * angle_axis(radians(std::fmod(m_time * m_settings.outer_speed, 360.0f)), AXIS_Y));
+	if (m_inner) m_inner->rotation(m_inner_rest * angle_axis(radians(std::fmod(m_time * m_settings.inner_speed, 360.0f)), Constants::axis_y));
+	if (m_outer) m_outer->rotation(m_outer_rest * angle_axis(radians(std::fmod(m_time * m_settings.outer_speed, 360.0f)), Constants::axis_y));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////

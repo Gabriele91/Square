@@ -144,7 +144,7 @@ public:
                 if (m_mode & M_SWAP_ZY)
                 {
                     // Swap Y Z
-                    const Quat swap_zy = angle_axis(radians(90.0f), Vec3(1, 0, 0));
+                    const Quat swap_zy = angle_axis(radians(90.0f), Constants::axis_x);
                     // Swap all
                     std::swap(translation.z, translation.y);
                     rotation = swap_zy * rotation * conjugate(swap_zy);

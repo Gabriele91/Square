@@ -474,7 +474,7 @@ namespace Import
         {
             const Vec3& n = vertex.m_normal;
             Vec3 t = vertex.m_tangent - n * dot(n, vertex.m_tangent);
-            if (length(t) < 1e-8f) t = std::abs(n.x) < 0.9f ? cross(n, Vec3(1, 0, 0)) : cross(n, Vec3(0, 1, 0));
+            if (length(t) < 1e-8f) t = std::abs(n.x) < 0.9f ? cross(n, Constants::axis_x) : cross(n, Constants::axis_y);
             t = normalize(t);
             const float handedness = dot(cross(n, t), vertex.m_binomial) < 0.0f ? -1.0f : 1.0f;
             vertex.m_tangent = t;

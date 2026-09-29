@@ -26,12 +26,6 @@ namespace Square
 
 namespace Square
 {
-namespace Constants
-{
-	const Vec3 DIRECTION_LIGHT_DIR(0.0, 0.0, 1.0);
-	const Vec3 UP_LIGHT_DIR(0.0, 1.0, 0.0);
-}
-
 namespace Scene
 {
     //Add element to objects
@@ -75,7 +69,7 @@ namespace Scene
 	, m_buffer(context)
 	{
 		m_rotation = Mat3(1);
-		m_direction = Constants::DIRECTION_LIGHT_DIR;
+		m_direction = Constants::axis_z;
 	}
 
 	//all events
@@ -84,20 +78,20 @@ namespace Scene
 		if (auto ptr_actor = actor().lock())
 		{
 			m_rotation = to_mat3(ptr_actor->rotation(true));
-			m_direction = m_rotation * Constants::DIRECTION_LIGHT_DIR;
+			m_direction = m_rotation * Constants::axis_z;
 		}
 	}
 	void DirectionLight::on_deattch()
 	{
 		m_rotation = Mat3(1);
-		m_direction = Constants::DIRECTION_LIGHT_DIR;
+		m_direction = Constants::axis_z;
 	}
 	void DirectionLight::on_transform()
 	{
 		if (auto ptr_actor = actor().lock())
 		{
 			m_rotation = to_mat3(ptr_actor->rotation(true));
-			m_direction = m_rotation * Constants::DIRECTION_LIGHT_DIR;
+			m_direction = m_rotation * Constants::axis_z;
 		}
 	}
 	void DirectionLight::on_message(const Message& msg){}
@@ -374,7 +368,7 @@ namespace Scene
 			// multiply by inverse projection*view matrix to find frustum vertices in world space
 			// transform to light space
 			// same pass, find minimum along each axis
-			Mat4 light_space_transform = look_at(Vec3(0.0f, 0.0f, 0.0f), Vec3(direction), Constants::UP_LIGHT_DIR);
+			Mat4 light_space_transform = look_at(Vec3(0.0f, 0.0f, 0.0f), Vec3(direction), Constants::axis_y);
 			// Scene AABB
 			Mat4 scene_matrix = scene_size.to_matrix();
 			scene_matrix *= Square::scale(Vec3{1.1f,1.1f,1.1f});

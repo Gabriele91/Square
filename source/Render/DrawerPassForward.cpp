@@ -16,6 +16,7 @@
 #include "Square/Render/Transform.h"
 #include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/DrawerPassForward.h"
+#include "Square/Render/BasicMesh.h"
 #include "Square/Render/ForwardShading.h"
 #include "Square/Resource/Shader.h"
 
@@ -39,7 +40,7 @@ namespace Render
 		m_cb_point_shadow_light = Render::stream_constant_buffer<Render::UniformPointShadowLight>(&render());
 		m_cb_spot_shadow_light = Render::stream_constant_buffer<Render::UniformSpotShadowLight>(&render());
 		//post effects: full-screen quad and the final copy
-		m_quad = build_fullscreen_quad(context);
+		m_quad = BasicMesh::build_quad(context);
 		m_shader_copy = context.resource<Resource::Shader>("PostCopy");
     }
     //context

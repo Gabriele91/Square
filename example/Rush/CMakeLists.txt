@@ -21,6 +21,8 @@ set(SOURCE_FILES
     main.cpp
     Collision.h
     Collision.cpp
+    CollisionDebug.h
+    CollisionDebug.cpp
     Hovercraft.h
     Hovercraft.cpp
     Checkpoints.h
