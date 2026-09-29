@@ -28,6 +28,8 @@
 #include <unordered_map>
 #include <vector>
 
+class CollisionDebug;
+
 //how a sphere tests the destination
 enum class CollisionMethod
 {
@@ -86,6 +88,9 @@ public:
 	bool bounds(const Square::Mat4& transform, Square::Vec3& out_min, Square::Vec3& out_max) const;
 
 	size_t size() const { return m_triangles.size(); }
+
+	//the triangles in world space, three vertices each (e.g. to draw them)
+	void triangles(std::vector<Square::Vec3>& out) const;
 
 private:
 	struct Triangle
@@ -231,6 +236,7 @@ public:
 	};
 
 	CollisionWorld(Square::Context& context, Square::System& system, Square::Scene::World& world);
+	virtual ~CollisionWorld();
 
 	void settings(const Settings& settings) { m_settings = settings; }
 	const Settings& settings() const { return m_settings; }
@@ -246,6 +252,15 @@ public:
 
 	//closest hit of a ray with the mesh colliders
 	bool raycast(const Square::Vec3& origin, const Square::Vec3& direction, float max_distance, CollisionMesh::Hit& hit);
+
+	//the colliders in the levels of the world
+	const std::vector< Square::Weak<SphereCollider> >& spheres() const { return m_spheres; }
+	const std::vector< Square::Weak<MeshCollider> >&   meshes() const { return m_meshes; }
+
+	//debug view of the collisions (CollisionDebug), drawn over the frame of the world
+	void debug(bool enable);
+	bool debug() const { return m_debug != nullptr; }
+	const Square::Shared<CollisionDebug>& debug_view() const { return m_debug; }
 
 	//the colliders and the listeners that join / leave the levels of the world
 	virtual void on_add_component(const Square::Shared<Square::Scene::Actor>& actor, const Square::Shared<Square::Scene::Component>& component) override;
@@ -272,6 +287,7 @@ private:
 	std::vector< Square::Weak<SphereCollider> > m_spheres;
 	std::vector< Square::Weak<MeshCollider> >   m_meshes;
 	std::vector< Listener >                     m_listeners;
+	Square::Shared<CollisionDebug>              m_debug;
 
 	void step();
 	void collide(SphereCollider& source);

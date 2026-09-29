@@ -23,6 +23,9 @@ class RushGame : public Square::AppInterface
 {
 public:
 
+	//collision_debug: the debug view of the collisions on from the start (X toggles it)
+	RushGame(bool collision_debug = false) : m_collision_debug(collision_debug) {}
+
 	void key_event(Square::Video::KeyboardEvent key, short mode, Square::Video::ActionEvent action)
 	{
 		using namespace Square;
@@ -58,6 +61,14 @@ public:
 			if (render_debug())
 			{
 				render_debug()->draw_flags(render_debug()->draw_flags() ^ Render::DF_DRAW_OBB);
+			}
+		break;
+		case Square::Video::KEY_X:
+			//toggle the debug view of the collisions (mesh colliders, spheres, contacts)
+			if (action == Square::Video::ActionEvent::PRESS)
+			if (auto collision = world().instance<CollisionWorld>())
+			{
+				collision->debug(!collision->debug());
 			}
 		break;
 		case Square::Video::KEY_L:
@@ -193,6 +204,7 @@ public:
 			collision->collisions(TYPE_WHEEL, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDEXZ);
 			collision->collisions(TYPE_BODY, TYPE_BODY, CollisionMethod::SPHERE, CollisionResponse::SLIDEXZ);
 			collision->collisions(TYPE_CAMERA, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDE);
+			collision->debug(false);
 		}
 	}
 

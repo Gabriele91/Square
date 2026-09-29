@@ -37,11 +37,11 @@ public:
 
 	struct Settings
 	{
-		float gravity{ -0.005f };      //vertical speed added every step
-		float acceleration{ 0.07f };   //speed gained per step with the throttle
-		float drag{ 0.97f };           //share of the speed kept per step without throttle
-		float max_speed{ 0.75f };      //forward
-		float max_reverse{ -0.6f };    //backward
+		float gravity{ -0.007f };      //vertical speed added every step
+		float acceleration{ 0.065f };  //speed gained per step with the throttle
+		float drag{ 0.9725f };           //share of the speed kept per step without throttle
+		float max_speed{ 0.7f };       //forward
+		float max_reverse{ -0.55f };   //backward
 		float turn{ 2.2f };            //degrees of yaw per step, per unit of speed
 		float idle_turn{ 1.8f };       //degrees of yaw per step at least, also still (0: it turns only moving forward)
 		int   body_type{ 1 };          //collision type of the body

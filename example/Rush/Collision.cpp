@@ -6,6 +6,7 @@
 //  slide on the contact planes, with the vectors of Square.
 //
 #include "Collision.h"
+#include "CollisionDebug.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -413,6 +414,17 @@ void CollisionMesh::add_triangle(const Vec3& a, const Vec3& b, const Vec3& c)
 	m_triangles.push_back(triangle);
 }
 
+void CollisionMesh::triangles(std::vector<Vec3>& out) const
+{
+	out.reserve(out.size() + m_triangles.size() * 3);
+	for (const Triangle& triangle : m_triangles)
+	{
+		out.push_back(triangle.m_a);
+		out.push_back(triangle.m_b);
+		out.push_back(triangle.m_c);
+	}
+}
+
 bool CollisionMesh::bounds(const Mat4& transform, Vec3& out_min, Vec3& out_max) const
 {
 	if (m_triangles.empty()) return false;
@@ -610,6 +622,29 @@ void MeshCollider::deserialize_json(Data::JsonValue& archive)  { Data::deseriali
 CollisionWorld::CollisionWorld(Context& context, System& system, Scene::World& world)
 : SystemInstance(context, system, world)
 {
+}
+
+CollisionWorld::~CollisionWorld()
+{
+	//the view can outlive it (the render instance keeps it): nothing more to draw
+	if (m_debug) m_debug->detach();
+}
+
+void CollisionWorld::debug(bool enable)
+{
+	if (enable == debug()) return;
+	auto render_instance = m_world.instance<RenderInstance>();
+	if (enable)
+	{
+		m_debug = MakeShared<CollisionDebug>(context(), *this);
+		if (render_instance) render_instance->add_post_effect(m_debug);
+	}
+	else
+	{
+		if (render_instance) render_instance->remove_post_effect(m_debug);
+		m_debug->detach();
+		m_debug.reset();
+	}
 }
 
 void CollisionWorld::collisions(int src_type, int dst_type, CollisionMethod method, CollisionResponse response)
