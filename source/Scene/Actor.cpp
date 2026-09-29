@@ -289,7 +289,7 @@ namespace Scene
 			component->submit_remove();
 			//send event to level
 			if (auto shared_level = level().lock())
-				shared_level->on_add_a_component(shared_from_this(), component);
+				shared_level->on_remove_a_component(shared_from_this(), component);
 			//remove
 			m_components.erase(component_it);
 		}

@@ -12,7 +12,6 @@
 #include "Square/Core/Object.h"
 #include "Square/Data/AttributeSerialize.h"
 #include "Square/Data/Json.h"
-#include "Square/Render/Collection.h"
 
 namespace Square
 {
@@ -21,6 +20,7 @@ namespace Scene
 	//..................
 	//declaretion
 	class Actor;
+	class Component;
 	class Level;
 	class World;
 	using ActorList = std::vector< Shared<Actor> >;
@@ -78,9 +78,6 @@ namespace Scene
 		void deserialize(Data::Archive& archive);
 		void deserialize_json(Data::JsonValue& archive);
 
-		//get randerable collection
-		const Render::Collection& randerable_collection() const;
-
 		//its world (empty if it is gone, or the level was removed from it)
 		Weak<World> world() const;
 
@@ -100,12 +97,14 @@ namespace Scene
 		void on_add_a_actor(Shared<Actor> actor);
 		void on_remove_a_actor(Shared<Actor> actor);
 
-		//Call by component add into level / actor
+		//Call by component add into level / actor: sent to the systems of the world (their
+		//collections: render, collisions...)
 		void on_add_a_component(Shared<Actor> actor, Shared<Component> component);
 		void on_remove_a_component(Shared<Actor> actor, Shared<Component> component);
 
-		//Collection
-		Render::Collection m_rander_collection;
+		//every component of its actors leaves the systems of the world (the actors are cleared,
+		//or the level leaves the world)
+		void remove_components();
 
 		//world, given by the world that creates it (reset only when it removes the level)
 		Weak<World> m_world;

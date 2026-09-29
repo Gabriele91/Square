@@ -11,8 +11,8 @@
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/Level.h"
-#include "Square/Render/Light.h"
-#include "Square/Render/Renderable.h"
+#include "Square/Scene/World.h"
+#include "Square/System/System.h"
 #include <algorithm>
 
 namespace Square
@@ -76,8 +76,8 @@ namespace Scene
 	void Level::deserialize(Data::Archive& archive)
 	{
 		///clear
-		m_rander_collection.clear();
-		m_actors.clear(); //todo: call events
+		remove_components();
+		m_actors.clear();
 		//deserialize this
 		Data::deserialize(archive, this);
 		//deserialize childs
@@ -93,8 +93,8 @@ namespace Scene
 	void Level::deserialize_json(Data::JsonValue& archive)
 	{
 		///clear
-		m_rander_collection.clear();
-		m_actors.clear(); //todo: call events
+		remove_components();
+		m_actors.clear();
 		//
 		if (archive.contains("data") && archive["data"].is_object())
 		{
@@ -288,12 +288,6 @@ namespace Scene
 			actor->send_message(msg, brodcast);
 		}
 	}
-	//get randerable collection
-	const Render::Collection& Level::randerable_collection() const
-	{
-		return m_rander_collection;
-	}
-
 	//world
 	Weak<World> Level::world() const
 	{
@@ -335,70 +329,32 @@ namespace Scene
 		}
 	}
 
-	//added a component
+	//every component of its actors leaves the systems of the world
+	void Level::remove_components()
+	{
+		visit([this](Shared<Actor> actor) -> bool
+		{
+			for (auto& component : actor->components()) on_remove_a_component(actor, component.second);
+			return true;
+		});
+	}
+
+	//added a component: to the systems of the world (the render collection is in the
+	//RenderInstance of the world)
 	void Level::on_add_a_component(Shared<Actor> actor, Shared<Component> component)
 	{
-		if (auto renderable = DynamicPointerCast<Render::Renderable, Component>(component);  renderable) 
-		{ 
-			m_rander_collection.m_renderables.push_back(renderable);
-		}
-		else if (auto light = DynamicPointerCast<Render::Light, Component>(component);  light)
+		if (auto world = m_world.lock())
 		{
-			m_rander_collection.m_lights.push_back(light);
-		}
-		else if (auto camera = DynamicPointerCast<Render::Camera, Component>(component); camera) 
-		{ 
-			m_rander_collection.m_cameras.push_back(camera);
+			for (const Shared<SystemInstance>& instance : world->instances()) instance->on_add_component(actor, component);
 		}
 	}
 	//remove a component
 	void Level::on_remove_a_component(Shared<Actor> actor, Shared<Component> component)
 	{
-		auto& renderables = m_rander_collection.m_renderables;
-		auto renderable = DynamicPointerCast<Render::Renderable, Component>(component);
-		if (renderable)
+		if (auto world = m_world.lock())
 		{
-			renderables.erase(
-				std::remove_if( renderables.begin(), renderables.end(), 
-								[&](Weak<Render::Renderable> n_renderable)
-								{ 
-									return renderable == n_renderable.lock();
-								}),
-				renderables.end()
-			);
-			return;
+			for (const Shared<SystemInstance>& instance : world->instances()) instance->on_remove_component(actor, component);
 		}
-
-		auto& lights = m_rander_collection.m_lights;
-		auto light = DynamicPointerCast<Render::Light, Component>(component);
-		if (light)
-		{
-			lights.erase(
-				std::remove_if( lights.begin(), lights.end(),
-								[&](Weak<Render::Light> n_light)
-								{ 
-									return light == n_light.lock();
-								}),
-				lights.end()
-			); 
-			return;
-		}
-        
-        auto& cameras = m_rander_collection.m_cameras;
-        auto camera = DynamicPointerCast<Render::Camera, Component>(component);
-        if (camera)
-        {
-            cameras.erase(
-                 std::remove_if( cameras.begin(), cameras.end(),
-                                [&](Weak<Render::Camera> n_camera)
-                                {
-                                    return camera == n_camera.lock();
-                                }),
-                 cameras.end()
-            );
-            return;
-        }
-
 	}
 }
 }

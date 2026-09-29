@@ -130,6 +130,10 @@ namespace Square
 		//draw the levels of the world
 		void draw();
 
+		//the cameras, lights and renderables that join / leave the levels of the world
+		virtual void on_add_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component) override;
+		virtual void on_remove_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component) override;
+
 	protected:
 		//settings
 		unsigned int m_pipeline{ RP_DEFERRED | RP_DEBUG };
@@ -141,7 +145,7 @@ namespace Square
 		//drawer
 		Shared<Render::Drawer>          m_drawer;
 		Shared<Render::DrawerPassDebug> m_debug_pass;
-		//the collections of all the levels (rebuilt every frame)
+		//the cameras, lights and renderables of all the levels (kept by the add/remove events)
 		Render::Collection m_collection;
 		//(re)build the passes of the settings / release them (by the RenderSystem, and by
 		//the settings when they change)
