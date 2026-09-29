@@ -52,6 +52,15 @@ namespace Scene
 		if (auto new_instance = system.create_instance(*this))
 		{
 			m_instances.push_back(new_instance);
+			//the components already in the levels
+			for (const Shared<Level>& level : m_levels)
+			{
+				level->visit([&](Shared<Actor> actor) -> bool
+				{
+					for (auto& component : actor->components()) new_instance->on_add_component(actor, component.second);
+					return true;
+				});
+			}
 		}
 	}
 	void World::remove_instances(const System& system)
@@ -159,7 +168,14 @@ namespace Scene
 	{
 		//remove child from list
 		auto it = std::find(m_levels.begin(), m_levels.end(), level_);
-		if (it != m_levels.end()) { (*it)->m_world.reset(); m_levels.erase(it); return true; }
+		if (it != m_levels.end())
+		{
+			//its components leave the systems of this world
+			(*it)->remove_components();
+			(*it)->m_world.reset();
+			m_levels.erase(it);
+			return true;
+		}
 		//return
 		return false;
 	}
@@ -229,9 +245,9 @@ namespace Scene
 	void  World::deserialize(Data::Archive& archive)
 	{
 		///clear
-		for (auto& old_level : m_levels) old_level->m_world.reset();
-		m_levels.clear(); //todo: call events
-						  //deserialize this
+		for (auto& old_level : m_levels) { old_level->remove_components(); old_level->m_world.reset(); }
+		m_levels.clear();
+		//deserialize this
 		Data::deserialize(archive, this);
 		//deserialize childs
 		{
@@ -246,9 +262,9 @@ namespace Scene
 	void  World::deserialize_json(Data::JsonValue& archive)
 	{
 		///clear
-		for (auto& old_level : m_levels) old_level->m_world.reset();
-		m_levels.clear(); //todo: call events
-						  //deserialize this
+		for (auto& old_level : m_levels) { old_level->remove_components(); old_level->m_world.reset(); }
+		m_levels.clear();
+		//deserialize this
 		if(archive.contains("data") && archive["data"].is_object())
 		{
 			Data::deserialize_json(archive["data"], this);

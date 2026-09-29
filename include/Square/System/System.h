@@ -35,6 +35,8 @@ namespace Square
 	namespace Scene
 	{
 		class World;
+		class Actor;
+		class Component;
 	}
 	class System;
 	class SystemInstance;
@@ -128,6 +130,13 @@ namespace Square
 		const System& system() const;
 		Scene::World& world();
 		const Scene::World& world() const;
+
+		//a component joined / left a level of the world (added to an actor in a level, or its
+		//actor added to / removed from a level); at the creation of the instance, the ones
+		//already there are added (like the render collection of a level, without visiting the
+		//levels every frame)
+		virtual void on_add_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component) {}
+		virtual void on_remove_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component) {}
 
 	protected:
 		System&       m_system;

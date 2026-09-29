@@ -2,21 +2,25 @@
 //  Collision.h
 //  Rush
 //
-//  The collisions of Blitz3D (collision.cpp, meshcollider.cpp, world.cpp):
+//  Collisions of moving spheres (and ellipsoids) against triangle meshes and other spheres:
 //  - CollisionMesh: triangles in world space, in a tree of boxes (16 per leaf); a sphere
 //    moving along a segment against them: the face, the edges (cylinders) and the vertices
 //    (spheres), the first contact along the segment;
-//  - MeshCollider (component, EntityType + the mesh): the triangles of the meshes of its
-//    actor and children, and its collision type;
-//  - SphereCollider (component, EntityType + EntityRadius): a moving sphere, its collision
-//    type, and the collisions of the last update (CountCollisions, CollisionNX...);
-//  - CollisionWorld (per world): the rules (Collisions src, dst, method, response) and the
-//    update (UpdateWorld): every sphere collider goes from where it was at the last update to
-//    where it is now, and on a hit it slides on the plane of the contact (up to 10 hits; on
-//    two planes along their crease);
-//  - CollisionSystem (game system, on demand): the update of every world, every frame (after
-//    the components moved their actors, Component::on_update; the results are there in
-//    Component::on_late_update).
+//  - MeshCollider (component): the triangles of the meshes of its actor and children, and its
+//    collision type;
+//  - SphereCollider (component): a moving sphere, its collision type, and the collisions of
+//    the last step (contact points and normals);
+//  - CollisionWorld (per world): the rules (source type, destination type, method, response)
+//    and the steps: every sphere collider goes from where it was at the last step to where it
+//    is now, and on a hit it slides on the plane of the contact (up to 10 hits; on two planes
+//    along their crease);
+//  - CollisionSystem (game system, on demand): the steps of every world, every frame.
+//  The time goes in fixed steps (CollisionWorld::Settings::step), whatever the frame rate: a
+//  frame runs as many steps as its time holds; a FixedStepListener component moves its actor
+//  at every step (before the collisions of the step), and after the steps of the frame it can
+//  show a pose between the last two steps (no stutter when the frames are not multiples of
+//  the steps). So the same input gives the same motion at 30 or at 120 frames per second.
+//  Order in a frame: Component::on_update (input), the steps, Component::on_late_update.
 //
 #pragma once
 #include <Square/Square.h>
@@ -24,14 +28,14 @@
 #include <unordered_map>
 #include <vector>
 
-//how a sphere tests the destination (Blitz3D collision methods)
+//how a sphere tests the destination
 enum class CollisionMethod
 {
 	SPHERE,  //against the other SphereColliders (a sphere where they are now)
 	POLYGON  //against the triangles of a MeshCollider
 };
 
-//what a sphere does on a hit (Blitz3D collision responses)
+//what a sphere does on a hit
 enum class CollisionResponse
 {
 	SLIDE,   //slides on the contact plane(s)
@@ -71,8 +75,8 @@ public:
 	void clear();
 
 	//first contact of a sphere of radius moving along line, if before collision.m_time; with
-	//y_scale the line is in a space where y is scaled (an ellipsoid, Blitz3D y_scale): the
-	//triangles are scaled too
+	//y_scale the line is in a space where y is scaled (an ellipsoid: a sphere of radius in a
+	//space squeezed on y): the triangles are scaled too
 	bool collide(const Line& line, float radius, Collision& collision, float y_scale = 1.0f) const;
 
 	//closest hit along origin + t * direction (direction normalized), t in [0, max_distance]
@@ -105,7 +109,7 @@ private:
 	bool collide(const Line& line, float radius, float y_scale, const Square::Vec3& box_min, const Square::Vec3& box_max, int node, Collision& collision) const;
 };
 
-//a collision of the last update of a sphere collider
+//a collision of the last step of a sphere collider
 struct CollisionReport
 {
 	Square::Vec3                           m_point{ 0.0f };  //on the surface hit
@@ -114,7 +118,7 @@ struct CollisionReport
 	int                                    m_type{ 0 };      //its collision type
 };
 
-//a moving sphere (Blitz3D EntityType + EntityRadius)
+//a moving sphere
 class SphereCollider : public Square::Scene::Component
 {
 public:
@@ -129,8 +133,7 @@ public:
 	int type() const { return m_type; }
 	void type(int type) { m_type = type; }
 
-	//radius, in world units: a sphere, or an ellipsoid (x/z radius, y radius; Blitz3D
-	//EntityRadius x,y)
+	//radius, in world units: a sphere, or an ellipsoid (x/z radius, y radius)
 	float radius() const { return m_radius; }
 	float radius_y() const { return m_radius_y; }
 	void radius(float radius) { m_radius = m_radius_y = radius; }
@@ -144,15 +147,15 @@ public:
 	//center of the sphere now
 	Square::Vec3 center() const;
 
-	//the next update starts from where the actor is now (a teleport, not a move)
+	//the next step starts from where the actor is now (a teleport, not a move)
 	void reset() { m_has_previous = false; }
-	//the next update moves the sphere from `from` (its center, world) to where it is then
+	//the next step moves the sphere from `from` (its center, world) to where it is then
 	void reset(const Square::Vec3& from) { m_previous = from; m_has_previous = true; }
 
-	//the collisions of the last update
+	//the collisions of the last step
 	const std::vector<CollisionReport>& collisions() const { return m_collisions; }
-	//it hit a collider of type in the last update (Blitz3D EntityCollided), with a contact
-	//normal.y of at least min_normal_y (e.g. 0.5: a floor, not a wall in front or a ceiling)
+	//it hit a collider of type in the last step, with a contact normal.y of at least
+	//min_normal_y (e.g. 0.5: a floor, not a wall in front or a ceiling)
 	bool collided(int type, float min_normal_y = -1.0f) const;
 
 	//serialize (attributes)
@@ -163,7 +166,7 @@ public:
 
 private:
 	int                          m_type{ 0 };
-	float                        m_radius{ 1.0f }; 
+	float                        m_radius{ 1.0f };
 	float                        m_radius_y{ 1.0f };
 	Square::Vec3                 m_offset{ 0.0f };
 	Square::Vec3                 m_previous{ 0.0f };
@@ -172,8 +175,8 @@ private:
 	friend class CollisionWorld;
 };
 
-//the triangles of the meshes of its actor and children (Blitz3D EntityType + mesh), static:
-//built from where they are the first time they are needed
+//the triangles of the meshes of its actor and children, static: built from where they are
+//the first time they are needed
 class MeshCollider : public Square::Scene::Component
 {
 public:
@@ -203,25 +206,50 @@ private:
 	bool          m_built{ false };
 };
 
+//a component (also a Square::Scene::Component) moved at the fixed steps of the collisions
+class FixedStepListener
+{
+public:
+	virtual ~FixedStepListener() = default;
+	//a step of step seconds: move the actor (the collisions of the step come after it)
+	virtual void on_fixed_update(double step) = 0;
+	//after the steps of a frame (also none): alpha in [0, 1), the time of the frame between
+	//the last step and the next one (e.g. to show a pose between the last two steps)
+	virtual void on_fixed_interpolate(double alpha) {}
+};
+
 //the collisions of a world
 class CollisionWorld : public Square::SystemInstance
 {
 public:
 	SQUARE_OBJECT(CollisionWorld)
 
+	struct Settings
+	{
+		double step{ 1.0 / 60.0 }; //seconds of a step
+		int    max_steps{ 8 };     //steps of a frame at most: a longer frame (loading, debugger) loses the rest of its time
+	};
+
 	CollisionWorld(Square::Context& context, Square::System& system, Square::Scene::World& world);
 
-	//a rule (Blitz3D Collisions): the sphere colliders of src_type against the colliders of
-	//dst_type, with method (SPHERE: the other sphere colliders, POLYGON: the mesh colliders) and
-	//response
+	void settings(const Settings& settings) { m_settings = settings; }
+	const Settings& settings() const { return m_settings; }
+
+	//a rule: the sphere colliders of src_type against the colliders of dst_type, with method
+	//(SPHERE: the other sphere colliders, POLYGON: the mesh colliders) and response
 	void collisions(int src_type, int dst_type, CollisionMethod method, CollisionResponse response);
 
-	//every sphere collider with a rule goes from where it was at the last update to where it
-	//is now (Blitz3D UpdateWorld); the CollisionSystem calls it every frame
-	void update();
+	//a frame of delta_time seconds: the steps it holds (every step: the listeners, then every
+	//sphere collider with a rule from where it was to where it is now), then the listeners
+	//interpolate; the CollisionSystem calls it every frame
+	void update(double delta_time);
 
-	//closest hit of a ray with the mesh colliders (Blitz3D LinePick)
+	//closest hit of a ray with the mesh colliders
 	bool raycast(const Square::Vec3& origin, const Square::Vec3& direction, float max_distance, CollisionMesh::Hit& hit);
+
+	//the colliders and the listeners that join / leave the levels of the world
+	virtual void on_add_component(const Square::Shared<Square::Scene::Actor>& actor, const Square::Shared<Square::Scene::Component>& component) override;
+	virtual void on_remove_component(const Square::Shared<Square::Scene::Actor>& actor, const Square::Shared<Square::Scene::Component>& component) override;
 
 private:
 	struct Rule
@@ -231,15 +259,22 @@ private:
 		CollisionResponse m_response;
 	};
 	std::unordered_map< int, std::vector<Rule> > m_rules;
+	Settings m_settings;
+	double   m_time{ 0.0 }; //time not stepped yet
 
-	//the colliders of the world now (Blitz3D enumerates the entities every update)
-	struct Colliders
+	//the colliders and the listeners in the levels of the world (kept by the add/remove events,
+	//like the render collection of a level)
+	struct Listener
 	{
-		std::vector< Square::Shared<SphereCollider> > m_spheres;
-		std::vector< Square::Shared<MeshCollider> >   m_meshes;
+		Square::Weak<Square::Scene::Component> m_component;
+		FixedStepListener*                     m_listener{ nullptr };
 	};
-	Colliders colliders() const;
-	void collide(SphereCollider& source, const Colliders& colliders);
+	std::vector< Square::Weak<SphereCollider> > m_spheres;
+	std::vector< Square::Weak<MeshCollider> >   m_meshes;
+	std::vector< Listener >                     m_listeners;
+
+	void step();
+	void collide(SphereCollider& source);
 };
 
 //the collisions of the worlds, updated every frame

@@ -16,6 +16,9 @@
 #include "Square/Render/DrawerPassDeferred.h"
 #include "Square/Render/DrawerPassShadow.h"
 #include "Square/Render/PostEffect.h"
+#include "Square/Render/Camera.h"
+#include "Square/Render/Light.h"
+#include "Square/Render/Renderable.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/World.h"
 #include "Square/Scene/Level.h"
@@ -375,15 +378,55 @@ namespace Square
 	void RenderInstance::draw()
 	{
 		if (!m_drawer) return;
-		//one collection with the cameras, lights and renderables of all the levels
-		m_collection.clear();
-		for (const Shared<Scene::Level>& level : m_world.levels())
-		{
-			const Render::Collection& collection = level->randerable_collection();
-			m_collection.m_cameras.insert(m_collection.m_cameras.end(), collection.m_cameras.begin(), collection.m_cameras.end());
-			m_collection.m_lights.insert(m_collection.m_lights.end(), collection.m_lights.begin(), collection.m_lights.end());
-			m_collection.m_renderables.insert(m_collection.m_renderables.end(), collection.m_renderables.begin(), collection.m_renderables.end());
-		}
 		m_drawer->draw(m_clear_color, m_ambient_color, m_collection);
+	}
+
+	//the cameras, lights and renderables of all the levels of the world
+	void RenderInstance::on_add_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component)
+	{
+		if (auto renderable = DynamicPointerCast<Render::Renderable, Scene::Component>(component))
+		{
+			m_collection.m_renderables.push_back(renderable);
+		}
+		else if (auto light = DynamicPointerCast<Render::Light, Scene::Component>(component))
+		{
+			m_collection.m_lights.push_back(light);
+		}
+		else if (auto camera = DynamicPointerCast<Render::Camera, Scene::Component>(component))
+		{
+			m_collection.m_cameras.push_back(camera);
+		}
+	}
+
+	void RenderInstance::on_remove_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component)
+	{
+		//it, and the ones gone
+		if (auto renderable = DynamicPointerCast<Render::Renderable, Scene::Component>(component))
+		{
+			auto& renderables = m_collection.m_renderables;
+			renderables.erase(std::remove_if(renderables.begin(), renderables.end(), [&](const Weak<Render::Renderable>& weak_renderable)
+			{
+				auto other = weak_renderable.lock();
+				return !other || other == renderable;
+			}), renderables.end());
+		}
+		else if (auto light = DynamicPointerCast<Render::Light, Scene::Component>(component))
+		{
+			auto& lights = m_collection.m_lights;
+			lights.erase(std::remove_if(lights.begin(), lights.end(), [&](const Weak<Render::Light>& weak_light)
+			{
+				auto other = weak_light.lock();
+				return !other || other == light;
+			}), lights.end());
+		}
+		else if (auto camera = DynamicPointerCast<Render::Camera, Scene::Component>(component))
+		{
+			auto& cameras = m_collection.m_cameras;
+			cameras.erase(std::remove_if(cameras.begin(), cameras.end(), [&](const Weak<Render::Camera>& weak_camera)
+			{
+				auto other = weak_camera.lock();
+				return !other || other == camera;
+			}), cameras.end());
+		}
 	}
 }

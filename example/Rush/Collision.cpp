@@ -2,8 +2,8 @@
 //  Collision.cpp
 //  Rush
 //
-//  The collisions of Blitz3D (github.com/blitz-research/blitz3d: collision.cpp,
-//  meshcollider.cpp, world.cpp), with the vectors of Square.
+//  Moving spheres against triangles and spheres: the first contact along the move, then a
+//  slide on the contact planes, with the vectors of Square.
 //
 #include "Collision.h"
 #include <algorithm>
@@ -16,8 +16,8 @@ using Line = CollisionMesh::Line;
 
 namespace
 {
-	//a contact plane is moved out of this much (Blitz3D COLLISION_EPSILON)
-	const float COLLISION_EPSILON = 0.001f;
+	//a contact plane is moved out of this much: the sphere stops just before it
+	const float CONTACT_EPSILON = 0.001f;
 	const float EPSILON = 0.000001f;
 	//triangles in a leaf of the tree
 	const size_t MAX_LEAF_TRIANGLES = 16;
@@ -27,40 +27,41 @@ namespace
 	Vec3 to_vec3(const Vec2& v) { return Vec3(v, 0.0f); }
 	Vec3 to_vec3(const Vec3& v) { return v; }
 
-	//nearest point of a line to q
-	Vec3 nearest(const Line& line, const Vec3& q)
+	//nearest point of a line to point
+	Vec3 nearest(const Line& line, const Vec3& point)
 	{
-		const float dd = dot(line.m_direction, line.m_direction);
-		if (dd <= 0.0f) return line.m_origin;
-		return line.m_origin + line.m_direction * (dot(line.m_direction, q - line.m_origin) / dd);
+		const float length2 = dot(line.m_direction, line.m_direction);
+		if (length2 <= 0.0f) return line.m_origin;
+		return line.m_origin + line.m_direction * (dot(line.m_direction, point - line.m_origin) / length2);
 	}
 
-	//plane n.x + d = 0 (n normalized)
+	//plane dot(normal, x) + offset = 0 (normal normalized)
 	struct Plane
 	{
 		Vec3  m_normal{ 0.0f, 1.0f, 0.0f };
-		float m_d{ 0.0f };
+		float m_offset{ 0.0f };
 
 		Plane() = default;
-		Plane(const Vec3& point, const Vec3& normal) : m_normal(normal), m_d(-dot(normal, point)) {}
-		//through three points, normal (v1 - v0) x (v2 - v0)
-		static Plane from(const Vec3& v0, const Vec3& v1, const Vec3& v2)
+		Plane(const Vec3& point, const Vec3& normal) : m_normal(normal), m_offset(-dot(normal, point)) {}
+		//through three points, normal (b - a) x (c - a)
+		static Plane from(const Vec3& a, const Vec3& b, const Vec3& c)
 		{
-			return Plane(v0, normalize(cross(v1 - v0, v2 - v0)));
+			return Plane(a, normalize(cross(b - a, c - a)));
 		}
 
-		float distance(const Vec3& v) const { return dot(m_normal, v) + m_d; }
-		float t_intersect(const Line& line) const { return -distance(line.m_origin) / dot(m_normal, line.m_direction); }
-		Vec3  nearest(const Vec3& v) const { return v - m_normal * distance(v); }
+		float distance(const Vec3& point) const { return dot(m_normal, point) + m_offset; }
+		//t of the line where it crosses the plane
+		float intersect_time(const Line& line) const { return -distance(line.m_origin) / dot(m_normal, line.m_direction); }
+		Vec3  nearest(const Vec3& point) const { return point - m_normal * distance(point); }
 		//the line of two planes (not parallel)
-		Line intersect(const Plane& q) const
+		Line intersect(const Plane& other) const
 		{
-			const float c = dot(m_normal, q.m_normal);
-			const float det = 1.0f - c * c;
-			const float h1 = -m_d, h2 = -q.m_d;
+			const float cos_angle = dot(m_normal, other.m_normal);
+			const float det = 1.0f - cos_angle * cos_angle;
+			const float offset = -m_offset, other_offset = -other.m_offset;
 			Line line;
-			line.m_origin = (m_normal * (h1 - h2 * c) + q.m_normal * (h2 - h1 * c)) / det;
-			line.m_direction = normalize(cross(m_normal, q.m_normal));
+			line.m_origin = (m_normal * (offset - other_offset * cos_angle) + other.m_normal * (other_offset - offset * cos_angle)) / det;
+			line.m_direction = normalize(cross(m_normal, other.m_normal));
 			return line;
 		}
 	};
@@ -68,124 +69,122 @@ namespace
 	//smaller root of a t^2 + b t + c, false if none
 	bool smaller_root(float a, float b, float c, float& t)
 	{
-		const float d = b * b - 4.0f * a * c;
-		if (d < 0.0f) return false;
-		const float s = std::sqrt(d);
-		const float t1 = (-b + s) / (2.0f * a);
-		const float t2 = (-b - s) / (2.0f * a);
-		t = std::min(t1, t2);
+		const float discriminant = b * b - 4.0f * a * c;
+		if (discriminant < 0.0f) return false;
+		const float root = std::sqrt(discriminant);
+		t = std::min((-b + root) / (2.0f * a), (-b - root) / (2.0f * a));
 		return true;
 	}
 
-	//Blitz3D Collision::update: a contact at t with normal n, if it is the first one and the
-	//sphere is going into it (and it was not already behind it)
-	bool update(CollisionMesh::Collision& collision, const Line& line, float t, const Vec3& n)
+	//a contact at time with normal: taken if it is the first one and the sphere is going into
+	//it (and it was not already behind it)
+	bool take_contact(CollisionMesh::Collision& collision, const Line& line, float time, const Vec3& normal)
 	{
-		if (t > collision.m_time) return false;
-		const Plane plane(line.at(t), n);
+		if (time > collision.m_time) return false;
+		const Plane plane(line.at(time), normal);
 		if (dot(plane.m_normal, line.m_direction) >= 0.0f) return false;
-		if (plane.distance(line.m_origin) < -COLLISION_EPSILON) return false;
-		collision.m_time = t;
-		collision.m_normal = n;
+		if (plane.distance(line.m_origin) < -CONTACT_EPSILON) return false;
+		collision.m_time = time;
+		collision.m_normal = normal;
 		return true;
 	}
 
-	//Blitz3D Collision::sphereCollide: the sphere against another one (at center, radius: the
-	//two radii), a point for a sphere of the sum of the radii. Already inside (Blitz3D lets
-	//them go through): a contact at the start, it can only go out
+	//the sphere against another one (at center, radius: the two radii), a point against a
+	//sphere of the sum of the radii. Already inside: a contact at the start, it can only go out
 	bool sphere_collide(const Line& line, float radius, const Vec3& center, CollisionMesh::Collision& collision)
 	{
-		Line l;
-		l.m_origin = line.m_origin - center;
-		l.m_direction = line.m_direction;
-		const float a = dot(l.m_direction, l.m_direction);
+		Line local;
+		local.m_origin = line.m_origin - center;
+		local.m_direction = line.m_direction;
+		const float a = dot(local.m_direction, local.m_direction);
 		if (a <= 0.0f) return false;
-		const float b = dot(l.m_origin, l.m_direction) * 2.0f;
-		const float c = dot(l.m_origin, l.m_origin) - radius * radius;
-		float t = 0.0f;
+		const float b = dot(local.m_origin, local.m_direction) * 2.0f;
+		const float c = dot(local.m_origin, local.m_origin) - radius * radius;
+		float time = 0.0f;
 		if (c > 0.0f)
 		{
-			if (!smaller_root(a, b, c, t)) return false; //misses it
-			if (t < 0.0f) return false;                  //behind
+			if (!smaller_root(a, b, c, time)) return false; //misses it
+			if (time < 0.0f) return false;                  //behind
 		}
-		if (t > collision.m_time) return false;          //too far
-		const Vec3 at = l.at(t);
-		if (dot(at, at) <= EPSILON) return false;        //same center: no direction
-		return update(collision, line, t, normalize(at));
+		if (time > collision.m_time) return false;          //too far
+		const Vec3 contact = local.at(time);
+		if (dot(contact, contact) <= EPSILON) return false;  //same center: no direction
+		return take_contact(collision, line, time, normalize(contact));
 	}
 
-	//Blitz3D edgeTest: the sphere against the edge v0 v1 (a cylinder of radius), and the
-	//vertex v0 (a sphere); pn is the triangle normal, en the edge plane normal
-	bool edge_test(const Vec3& v0, const Vec3& v1, const Vec3& pn, const Vec3& en, const Line& line, float radius, CollisionMesh::Collision& collision)
+	//the sphere against the edge from edge_start to edge_end (a cylinder of radius) and the
+	//vertex edge_start (a sphere); triangle_normal and edge_normal (of the plane of the edge,
+	//pointing inside) are the axes of the edge space
+	bool edge_collide(const Vec3& edge_start, const Vec3& edge_end, const Vec3& triangle_normal, const Vec3& edge_normal, const Line& line, float radius, CollisionMesh::Collision& collision)
 	{
-		//edge space: x the edge plane normal, y along the edge, z the triangle normal
-		const Mat3 basis(en, normalize(v1 - v0), pn);
-		const Mat3 to_edge = transpose(basis);
-		const Vec3 sv = to_edge * (line.m_origin - v0);
-		const Vec3 dv = to_edge * (line.m_origin + line.m_direction - v0);
-		Line l;
-		l.m_origin = sv;
-		l.m_direction = dv - sv;
+		//edge space: x the edge normal, y along the edge, z the triangle normal
+		const Mat3 edge_basis(edge_normal, normalize(edge_end - edge_start), triangle_normal);
+		const Mat3 to_edge = transpose(edge_basis);
+		const Vec3 local_start = to_edge * (line.m_origin - edge_start);
+		const Vec3 local_end = to_edge * (line.m_origin + line.m_direction - edge_start);
+		Line local;
+		local.m_origin = local_start;
+		local.m_direction = local_end - local_start;
 		//cylinder around y
-		float a = l.m_direction.x * l.m_direction.x + l.m_direction.z * l.m_direction.z;
+		float a = local.m_direction.x * local.m_direction.x + local.m_direction.z * local.m_direction.z;
 		if (a <= 0.0f) return false; //parallel to the cylinder
-		float b = (l.m_origin.x * l.m_direction.x + l.m_origin.z * l.m_direction.z) * 2.0f;
-		float c = (l.m_origin.x * l.m_origin.x + l.m_origin.z * l.m_origin.z) - radius * radius;
-		float t = 0.0f;
-		if (!smaller_root(a, b, c, t)) return false;   //misses the cylinder
-		if (t > collision.m_time) return false;        //too far
-		Vec3 i = l.at(t), p(0.0f);
-		if (i.y > length(v1 - v0)) return false;       //over the end of the edge
-		if (i.y >= 0.0f)
+		float b = (local.m_origin.x * local.m_direction.x + local.m_origin.z * local.m_direction.z) * 2.0f;
+		float c = (local.m_origin.x * local.m_origin.x + local.m_origin.z * local.m_origin.z) - radius * radius;
+		float time = 0.0f;
+		if (!smaller_root(a, b, c, time)) return false;      //misses the cylinder
+		if (time > collision.m_time) return false;           //too far
+		Vec3 contact = local.at(time), axis_point(0.0f);
+		if (contact.y > length(edge_end - edge_start)) return false; //over the end of the edge
+		if (contact.y >= 0.0f)
 		{
-			p.y = i.y;
+			axis_point.y = contact.y;
 		}
 		else
 		{
 			//under the start: the sphere of the vertex
-			a = dot(l.m_direction, l.m_direction);
+			a = dot(local.m_direction, local.m_direction);
 			if (a <= 0.0f) return false;
-			b = dot(l.m_origin, l.m_direction) * 2.0f;
-			c = dot(l.m_origin, l.m_origin) - radius * radius;
-			if (!smaller_root(a, b, c, t)) return false;
-			if (t > collision.m_time) return false;
-			i = l.at(t);
+			b = dot(local.m_origin, local.m_direction) * 2.0f;
+			c = dot(local.m_origin, local.m_origin) - radius * radius;
+			if (!smaller_root(a, b, c, time)) return false;
+			if (time > collision.m_time) return false;
+			contact = local.at(time);
 		}
-		return update(collision, line, t, normalize(basis * (i - p)));
+		return take_contact(collision, line, time, normalize(edge_basis * (contact - axis_point)));
 	}
 
-	//Blitz3D Collision::triangleCollide, both faces: the face facing the move is used
-	bool triangle_collide(const Line& line, float radius, Vec3 v0, Vec3 v1, Vec3 v2, CollisionMesh::Collision& collision)
+	//the sphere against a triangle, both faces: the face facing the move is used
+	bool triangle_collide(const Line& line, float radius, Vec3 a, Vec3 b, Vec3 c, CollisionMesh::Collision& collision)
 	{
-		Plane p = Plane::from(v0, v1, v2);
-		if (dot(p.m_normal, line.m_direction) >= 0.0f)
+		Plane plane = Plane::from(a, b, c);
+		if (dot(plane.m_normal, line.m_direction) >= 0.0f)
 		{
 			//the other face
-			std::swap(v1, v2);
-			p = Plane::from(v0, v1, v2);
-			if (dot(p.m_normal, line.m_direction) >= 0.0f) return false; //parallel
+			std::swap(b, c);
+			plane = Plane::from(a, b, c);
+			if (dot(plane.m_normal, line.m_direction) >= 0.0f) return false; //parallel
 		}
-		//move the plane out of radius
-		Plane moved = p;
-		moved.m_d -= radius;
-		const float t = moved.t_intersect(line);
-		if (t > collision.m_time) return false;
-		//edge planes (pointing inside)
-		const Plane p0 = Plane::from(v0 + p.m_normal, v1, v0);
-		const Plane p1 = Plane::from(v1 + p.m_normal, v2, v1);
-		const Plane p2 = Plane::from(v2 + p.m_normal, v0, v2);
+		//the plane moved out of radius
+		Plane moved_plane = plane;
+		moved_plane.m_offset -= radius;
+		const float time = moved_plane.intersect_time(line);
+		if (time > collision.m_time) return false;
+		//planes of the edges (pointing inside)
+		const Plane edge_ab = Plane::from(a + plane.m_normal, b, a);
+		const Plane edge_bc = Plane::from(b + plane.m_normal, c, b);
+		const Plane edge_ca = Plane::from(c + plane.m_normal, a, c);
 		//on the face?
-		const Vec3 i = line.at(t);
-		if (p0.distance(i) >= 0.0f && p1.distance(i) >= 0.0f && p2.distance(i) >= 0.0f)
+		const Vec3 contact = line.at(time);
+		if (edge_ab.distance(contact) >= 0.0f && edge_bc.distance(contact) >= 0.0f && edge_ca.distance(contact) >= 0.0f)
 		{
-			return update(collision, line, t, p.m_normal);
+			return take_contact(collision, line, time, plane.m_normal);
 		}
 		if (radius <= 0.0f) return false;
 		//the edges and the vertices (all of them: the first contact wins)
-		const bool e0 = edge_test(v0, v1, p.m_normal, p0.m_normal, line, radius, collision);
-		const bool e1 = edge_test(v1, v2, p.m_normal, p1.m_normal, line, radius, collision);
-		const bool e2 = edge_test(v2, v0, p.m_normal, p2.m_normal, line, radius, collision);
-		return e0 || e1 || e2;
+		const bool hit_ab = edge_collide(a, b, plane.m_normal, edge_ab.m_normal, line, radius, collision);
+		const bool hit_bc = edge_collide(b, c, plane.m_normal, edge_bc.m_normal, line, radius, collision);
+		const bool hit_ca = edge_collide(c, a, plane.m_normal, edge_ca.m_normal, line, radius, collision);
+		return hit_ab || hit_bc || hit_ca;
 	}
 
 	bool boxes_overlap(const Vec3& a_min, const Vec3& a_max, const Vec3& b_min, const Vec3& b_max)
@@ -195,122 +194,122 @@ namespace
 		    && a_min.z <= b_max.z && a_max.z >= b_min.z;
 	}
 
-	//Blitz3D World::collide (sphere, no y scale): the sphere moves from sv to dv; collide(line,
-	//collision, response) finds the first contact along line (with the response of what it
-	//hit), report(line, collision) gets every hit; where it ends
+	//the sphere moves from `from` to `to`: collide(line, collision, response) finds the first
+	//contact along line (with the response of what it hit), report(line, collision) gets every
+	//hit; where it ends
 	template < class Collide, class Report >
-	Vec3 slide_move(Vec3 sv, Vec3 dv, Collide collide, Report report)
+	Vec3 slide_move(Vec3 from, Vec3 to, Collide collide, Report report)
 	{
-		if (sv == dv) return dv;
-		const Vec3 panic = sv;
+		if (from == to) return to;
+		const Vec3 start = from;
 
-		int n_hit = 0;
+		int   plane_count = 0;
 		Plane planes[2];
-		Line coll_line;
-		coll_line.m_origin = sv;
-		coll_line.m_direction = dv - sv;
-		const Vec3 dir = coll_line.m_direction;
-		float td = length(coll_line.m_direction);
-		float td_xz = length(Vec3(coll_line.m_direction.x, 0.0f, coll_line.m_direction.z));
+		Line  line;
+		line.m_origin = from;
+		line.m_direction = to - from;
+		const Vec3 direction = line.m_direction;
+		float distance = length(line.m_direction);
+		float distance_xz = length(Vec3(line.m_direction.x, 0.0f, line.m_direction.z));
 
-		int hits = 0;
+		int hit_count = 0;
 		for (;;)
 		{
-			CollisionMesh::Collision coll;
+			CollisionMesh::Collision collision;
 			CollisionResponse response = CollisionResponse::SLIDE;
-			if (!collide(coll_line, coll, response)) break;
+			if (!collide(line, collision, response)) break;
 
-			//register collision
-			if (++hits == MAX_HITS) break;
-			report(coll_line, coll);
+			//a hit
+			if (++hit_count == MAX_HITS) break;
+			report(line, collision);
 
-			Plane coll_plane(coll_line.at(coll.m_time), coll.m_normal);
-			coll_plane.m_d -= COLLISION_EPSILON;
-			coll.m_time = coll_plane.t_intersect(coll_line);
+			Plane plane(line.at(collision.m_time), collision.m_normal);
+			plane.m_offset -= CONTACT_EPSILON;
+			collision.m_time = plane.intersect_time(line);
 
-			if (coll.m_time > 0.0f)
+			if (collision.m_time > 0.0f)
 			{
-				//update source position - only if ahead
-				sv = coll_line.at(coll.m_time);
-				td *= 1.0f - coll.m_time;
-				td_xz *= 1.0f - coll.m_time;
+				//the start goes to the contact (only forward)
+				from = line.at(collision.m_time);
+				distance *= 1.0f - collision.m_time;
+				distance_xz *= 1.0f - collision.m_time;
 			}
 
-			//nearest point on the plane to the destination
-			const Vec3 nv = coll_plane.nearest(dv);
+			//the destination on the plane
+			const Vec3 on_plane = plane.nearest(to);
 
-			if (n_hit == 0)
+			if (plane_count == 0)
 			{
-				dv = nv;
+				to = on_plane;
 			}
-			else if (n_hit == 1)
+			else if (plane_count == 1)
 			{
-				if (planes[0].distance(nv) >= 0.0f)
+				if (planes[0].distance(on_plane) >= 0.0f)
 				{
-					dv = nv;
-					n_hit = 0;
+					to = on_plane;
+					plane_count = 0;
 				}
-				else if (std::abs(dot(planes[0].m_normal, coll_plane.m_normal)) < 1.0f - EPSILON)
+				else if (std::abs(dot(planes[0].m_normal, plane.m_normal)) < 1.0f - EPSILON)
 				{
 					//along the crease of the two planes
-					dv = nearest(coll_plane.intersect(planes[0]), dv);
+					to = nearest(plane.intersect(planes[0]), to);
 				}
 				else
 				{
-					//squished
-					hits = MAX_HITS;
+					//squeezed between two parallel planes
+					hit_count = MAX_HITS;
 					break;
 				}
 			}
-			else if (planes[0].distance(nv) >= 0.0f && planes[1].distance(nv) >= 0.0f)
+			else if (planes[0].distance(on_plane) >= 0.0f && planes[1].distance(on_plane) >= 0.0f)
 			{
-				dv = nv;
-				n_hit = 0;
+				to = on_plane;
+				plane_count = 0;
 			}
 			else
 			{
-				dv = sv;
+				to = from;
 				break;
 			}
 
-			Vec3 dd = dv - sv;
+			Vec3 move = to - from;
 
-			//going behind the initial direction
-			if (dot(dd, dir) <= 0.0f)
+			//going back against the first direction
+			if (dot(move, direction) <= 0.0f)
 			{
-				dv = sv;
+				to = from;
 				break;
 			}
 
 			if (response == CollisionResponse::SLIDE)
 			{
-				const float d = length(dd);
-				if (d <= EPSILON)
+				const float move_length = length(move);
+				if (move_length <= EPSILON)
 				{
-					dv = sv;
+					to = from;
 					break;
 				}
-				if (d > td) dd *= td / d;
+				if (move_length > distance) move *= distance / move_length;
 			}
 			else if (response == CollisionResponse::SLIDEXZ)
 			{
-				const float d = length(Vec3(dd.x, 0.0f, dd.z));
-				if (d <= EPSILON)
+				const float move_length = length(Vec3(move.x, 0.0f, move.z));
+				if (move_length <= EPSILON)
 				{
-					dv = sv;
+					to = from;
 					break;
 				}
-				if (d > td_xz) dd *= td_xz / d;
+				if (move_length > distance_xz) move *= distance_xz / move_length;
 			}
 
-			coll_line.m_origin = sv;
-			coll_line.m_direction = dd;
-			dv = sv + dd;
-			planes[n_hit++] = coll_plane;
+			line.m_origin = from;
+			line.m_direction = move;
+			to = from + move;
+			planes[plane_count++] = plane;
 		}
 
-		if (hits >= MAX_HITS) return panic;
-		return dv;
+		if (hit_count >= MAX_HITS) return start;
+		return to;
 	}
 
 	//the world position of an actor (in its parent space if it has one)
@@ -432,7 +431,7 @@ bool CollisionMesh::bounds(const Mat4& transform, Vec3& out_min, Vec3& out_max) 
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-//CollisionMesh: tree (Blitz3D MeshCollider)
+//CollisionMesh: tree
 void CollisionMesh::build()
 {
 	m_nodes.clear();
@@ -623,37 +622,79 @@ void CollisionWorld::collisions(int src_type, int dst_type, CollisionMethod meth
 	rules.push_back(Rule{ dst_type, method, response });
 }
 
-CollisionWorld::Colliders CollisionWorld::colliders() const
+void CollisionWorld::on_add_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component)
 {
-	Colliders colliders;
-	for (const Shared<Scene::Level>& level : m_world.levels())
+	if (auto sphere = DynamicPointerCast<SphereCollider, Scene::Component>(component))  m_spheres.push_back(sphere);
+	else if (auto mesh = DynamicPointerCast<MeshCollider, Scene::Component>(component)) m_meshes.push_back(mesh);
+	if (auto listener = dynamic_cast<FixedStepListener*>(component.get())) m_listeners.push_back(Listener{ component, listener });
+}
+
+void CollisionWorld::on_remove_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component)
+{
+	//it, and the ones gone
+	const Scene::Component* removed = component.get();
+	m_spheres.erase(std::remove_if(m_spheres.begin(), m_spheres.end(), [&](const Weak<SphereCollider>& weak_sphere)
 	{
-		level->visit([&](Shared<Scene::Actor> actor) -> bool
+		auto sphere = weak_sphere.lock();
+		return !sphere || static_cast<const Scene::Component*>(sphere.get()) == removed;
+	}), m_spheres.end());
+	m_meshes.erase(std::remove_if(m_meshes.begin(), m_meshes.end(), [&](const Weak<MeshCollider>& weak_mesh)
+	{
+		auto mesh = weak_mesh.lock();
+		return !mesh || static_cast<const Scene::Component*>(mesh.get()) == removed;
+	}), m_meshes.end());
+	m_listeners.erase(std::remove_if(m_listeners.begin(), m_listeners.end(), [&](const Listener& listener)
+	{
+		auto listener_component = listener.m_component.lock();
+		return !listener_component || listener_component.get() == removed;
+	}), m_listeners.end());
+}
+
+void CollisionWorld::update(double delta_time)
+{
+	//the steps the time of the frame holds
+	m_time += delta_time;
+	int steps = 0;
+	while (m_time >= m_settings.step && steps < m_settings.max_steps)
+	{
+		step();
+		m_time -= m_settings.step;
+		++steps;
+	}
+	//a frame too long: the rest of its time is lost (no catching up after a loading)
+	if (steps == m_settings.max_steps) m_time = std::min(m_time, m_settings.step * 0.999);
+	//the pose between the last two steps
+	const double alpha = m_time / m_settings.step;
+	for (const Listener& listener : m_listeners)
+	{
+		if (!listener.m_component.expired()) listener.m_listener->on_fixed_interpolate(alpha);
+	}
+}
+
+void CollisionWorld::step()
+{
+	//the listeners move their actors
+	for (const Listener& listener : m_listeners)
+	{
+		if (!listener.m_component.expired()) listener.m_listener->on_fixed_update(m_settings.step);
+	}
+	//then the spheres collide, from where they were at the last step
+	for (const Weak<SphereCollider>& weak_sphere : m_spheres)
+	{
+		if (auto sphere = weak_sphere.lock())
 		{
-			if (actor->contains<SphereCollider>()) colliders.m_spheres.push_back(actor->component<SphereCollider>());
-			if (actor->contains<MeshCollider>())   colliders.m_meshes.push_back(actor->component<MeshCollider>());
-			return true;
-		});
-	}
-	return colliders;
-}
-
-void CollisionWorld::update()
-{
-	const Colliders all = colliders();
-	for (const Shared<SphereCollider>& sphere : all.m_spheres)
-	{
-		sphere->m_collisions.clear();
-		collide(*sphere, all);
+			sphere->m_collisions.clear();
+			collide(*sphere);
+		}
 	}
 }
 
-void CollisionWorld::collide(SphereCollider& source, const Colliders& colliders)
+void CollisionWorld::collide(SphereCollider& source)
 {
 	auto actor = source.actor().lock();
 	if (!actor) return;
 	const Vec3 position = source.center();
-	//first update, or a reset: from here
+	//first step, or a reset: from here
 	if (!source.m_has_previous)
 	{
 		source.m_previous = position;
@@ -668,7 +709,6 @@ void CollisionWorld::collide(SphereCollider& source, const Colliders& colliders)
 		return;
 	}
 	//an ellipsoid: a sphere of radius in a space where y is scaled by radius / radius_y
-	//(Blitz3D y_scale)
 	const float radius = source.radius();
 	const float y_scale = radius / std::max(source.radius_y(), 1e-5f);
 	const Vec3  scale(1.0f, y_scale, 1.0f), unscale(1.0f, 1.0f / y_scale, 1.0f);
@@ -684,9 +724,10 @@ void CollisionWorld::collide(SphereCollider& source, const Colliders& colliders)
 			{
 			case CollisionMethod::SPHERE:
 				//the other spheres, where they are now (in the space of this ellipsoid)
-				for (const Shared<SphereCollider>& sphere : colliders.m_spheres)
+				for (const Weak<SphereCollider>& weak_sphere : m_spheres)
 				{
-					if (sphere.get() == &source || sphere->type() != rule.m_dst_type) continue;
+					auto sphere = weak_sphere.lock();
+					if (!sphere || sphere.get() == &source || sphere->type() != rule.m_dst_type) continue;
 					if (!sphere_collide(line, radius + sphere->radius(), sphere->center() * scale, collision)) continue;
 					hit = true;
 					response = rule.m_response;
@@ -695,9 +736,10 @@ void CollisionWorld::collide(SphereCollider& source, const Colliders& colliders)
 				}
 				break;
 			case CollisionMethod::POLYGON:
-				for (const Shared<MeshCollider>& mesh : colliders.m_meshes)
+				for (const Weak<MeshCollider>& weak_mesh : m_meshes)
 				{
-					if (mesh->type() != rule.m_dst_type) continue;
+					auto mesh = weak_mesh.lock();
+					if (!mesh || mesh->type() != rule.m_dst_type) continue;
 					if (!mesh->mesh().collide(line, radius, collision, y_scale)) continue;
 					hit = true;
 					response = rule.m_response;
@@ -727,8 +769,10 @@ bool CollisionWorld::raycast(const Vec3& origin, const Vec3& direction, float ma
 {
 	bool found = false;
 	float best = max_distance;
-	for (const Shared<MeshCollider>& mesh : colliders().m_meshes)
+	for (const Weak<MeshCollider>& weak_mesh : m_meshes)
 	{
+		auto mesh = weak_mesh.lock();
+		if (!mesh) continue;
 		CollisionMesh::Hit mesh_hit;
 		if (mesh->mesh().raycast(origin, direction, best, mesh_hit) && mesh_hit.m_distance <= best)
 		{
@@ -765,7 +809,7 @@ void CollisionSystem::update(double delta_time)
 	m_instances.erase(std::remove_if(m_instances.begin(), m_instances.end(), [](const Weak<CollisionWorld>& instance) { return instance.expired(); }), m_instances.end());
 	for (const Weak<CollisionWorld>& weak_instance : m_instances)
 	{
-		if (auto instance = weak_instance.lock()) instance->update();
+		if (auto instance = weak_instance.lock()) instance->update(delta_time);
 	}
 }
 
