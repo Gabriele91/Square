@@ -16,6 +16,7 @@
 #include "Square/Render/Light.h"
 #include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/DrawerPassDeferred.h"
+#include "Square/Render/BasicMesh.h"
 #include "Square/Resource/Shader.h"
 #include "Square/Render/LightVolume.h"
 #include "Square/Render/ForwardShading.h"
@@ -75,7 +76,7 @@ namespace Render
 		m_shader_spot_shadow      = context.resource<Resource::Shader>("DeferredSpotShadowLight");
 		m_shader_present   = context.resource<Resource::Shader>("DeferredPresent");
 		//volume meshes
-		m_quad   = build_fullscreen_quad(context);
+		m_quad   = BasicMesh::build_quad(context);
 		m_sphere = LightVolume::build_sphere(context);
 		m_cone   = LightVolume::build_cone(context);
 	}

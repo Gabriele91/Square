@@ -79,28 +79,28 @@ namespace Scene
 		//(+x -x +y -y +z -z)^-1
 		switch (i)
 		{
-		case 0: return look_at(pos, pos + Vec3(1, 0, 0), Vec3(0, -1, 0));
-		case 1: return look_at(pos, pos + Vec3(-1, 0, 0), Vec3(0, -1, 0));
+		case 0: return look_at(pos, pos + Constants::axis_x, -Constants::axis_y);
+		case 1: return look_at(pos, pos - Constants::axis_x, -Constants::axis_y);
 
-		case 2: return look_at(pos, pos + Vec3(0, 1, 0), Vec3(0, 0, 1));
-		case 3: return look_at(pos, pos + Vec3(0, -1, 0), Vec3(0, 0, -1));
+		case 2: return look_at(pos, pos + Constants::axis_y, Constants::axis_z);
+		case 3: return look_at(pos, pos - Constants::axis_y, -Constants::axis_z);
 
-		case 4: return look_at(pos, pos + Vec3(0, 0, 1), Vec3(0, -1, 0));
-		case 5: return look_at(pos, pos + Vec3(0, 0, -1), Vec3(0, -1, 0));
+		case 4: return look_at(pos, pos + Constants::axis_z, -Constants::axis_y);
+		case 5: return look_at(pos, pos - Constants::axis_z, -Constants::axis_y);
 		default: return  Constants::identity<Mat4>();
 		}
 #else // LHs
 		//(+x -x +y -y +z -z)
 		switch (i)
 		{
-		case 0: return look_at(pos, pos + Vec3(1, 0, 0), Vec3(0, 1, 0)); // Right
-		case 1: return look_at(pos, pos + Vec3(-1, 0, 0), Vec3(0, 1, 0)); // Left
+		case 0: return look_at(pos, pos + Constants::axis_x, Constants::axis_y); // Right
+		case 1: return look_at(pos, pos - Constants::axis_x, Constants::axis_y); // Left
 
-		case 2: return look_at(pos, pos + Vec3(0, 1, 0),  Vec3(0, 0, -1)); // Up
-		case 3: return look_at(pos, pos + Vec3(0, -1, 0), Vec3(0, 0, 1)); // Down
+		case 2: return look_at(pos, pos + Constants::axis_y, -Constants::axis_z); // Up
+		case 3: return look_at(pos, pos - Constants::axis_y, Constants::axis_z); // Down
 
-		case 4: return look_at(pos, pos + Vec3(0, 0, 1), Vec3(0, 1, 0)); // Forward
-		case 5: return look_at(pos, pos + Vec3(0, 0, -1), Vec3(0, 1, 0)); // Backward
+		case 4: return look_at(pos, pos + Constants::axis_z, Constants::axis_y); // Forward
+		case 5: return look_at(pos, pos - Constants::axis_z, Constants::axis_y); // Backward
 		default: return Constants::identity<Mat4>();
 		}
 #endif 

@@ -67,11 +67,11 @@ namespace Geometry
 			Vec3 v2;
 			if (std::abs(eigenbasis[0].x) > std::abs(eigenbasis[0].y)) 
 			{
-				v2 = Vec3(0.0f, 1.0f, 0.0f);
+				v2 = Constants::axis_y;
 			}
 			else 
 			{
-				v2 = Vec3(1.0f, 0.0f, 0.0f);
+				v2 = Constants::axis_x;
 			}
 			v2 = normalize(v2 - glm::dot(v2, eigenbasis[0]) * eigenbasis[0]);
 

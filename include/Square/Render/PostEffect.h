@@ -147,7 +147,5 @@ namespace Render
 		Target*          m_targets[2]{ nullptr, nullptr };
 	};
 
-	//full-screen quad in NDC (two triangles), for the full-screen passes
-	SQUARE_API Shared<Mesh> build_fullscreen_quad(Square::Context& context);
 }
 }

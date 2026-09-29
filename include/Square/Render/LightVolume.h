@@ -24,6 +24,7 @@ class Mesh;
 
 namespace LightVolume
 {
+	//the volumes: BasicMesh sphere and cone, circumscribed (their faces enclose the light)
 	//unit sphere centered at the origin
 	SQUARE_API Shared<Mesh> build_sphere(Square::Context& context, unsigned int rings = 12, unsigned int sectors = 24);
 	//cone: apex at origin, base circle of radius 1 at z=+1

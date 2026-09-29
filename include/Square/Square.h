@@ -72,6 +72,7 @@
 #include "Square/Render/DrawerPassDeferred.h"
 #include "Square/Render/DrawerPassShadow.h"
 #include "Square/Render/PostEffect.h"
+#include "Square/Render/BasicMesh.h"
 #include "Square/Render/PostEffectSSAO.h"
 /* --- Resource --- */
 #include "Square/Resource/Texture.h"

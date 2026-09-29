@@ -100,6 +100,10 @@ namespace Square
         {
            return glm::epsilon<T>();
         }
+        //the axes: unit vectors along x (right), y (up), z (forward)
+        inline const Vec3 axis_x{ 1.0f, 0.0f, 0.0f };
+        inline const Vec3 axis_y{ 0.0f, 1.0f, 0.0f };
+        inline const Vec3 axis_z{ 0.0f, 0.0f, 1.0f };
     }
     
 
