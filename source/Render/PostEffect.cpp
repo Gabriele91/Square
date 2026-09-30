@@ -15,12 +15,12 @@ namespace Square
 {
 namespace Render
 {
-	//a color texture (linear, clamp, no mipmaps) and a target on it
+	//a color texture (linear, clamp, one level: it is drawn and read at level 0) and a target on it
 	static bool build_color_target(Render::Context& render, const IVec2& size, TextureFormat format, Texture*& texture, Target*& target)
 	{
 		texture = render.create_texture(
 			{ format, (unsigned int)size.x, (unsigned int)size.y, nullptr, TT_RGBA, TTF_FLOAT, false },
-			{ TMIN_LINEAR, TMAG_LINEAR, TEDGE_CLAMP, TEDGE_CLAMP, TEDGE_CLAMP }
+			{ TMIN_LINEAR, TMAG_LINEAR, TEDGE_CLAMP, TEDGE_CLAMP, TEDGE_CLAMP, false, 0, 1 }
 		);
 		if (!texture) return false;
 		target = render.create_render_target({ Render::TargetField{ texture, RT_COLOR } });

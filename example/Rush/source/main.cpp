@@ -106,6 +106,38 @@ public:
 				m_ssao->settings(settings);
 			}
 			break;
+		case Square::Video::KEY_H:
+			if (action == Square::Video::ActionEvent::RELEASE && m_bloom)
+			{
+				m_bloom->enabled(!m_bloom->enabled());
+				context().logger()->info(std::string("Bloom: ") + (m_bloom->enabled() ? "on" : "off"));
+			}
+			break;
+		case Square::Video::KEY_I:
+			//bloom debug view: only the bloom on the screen
+			if (action == Square::Video::ActionEvent::RELEASE && m_bloom)
+			{
+				auto settings = m_bloom->settings();
+				settings.debug = !settings.debug;
+				m_bloom->settings(settings);
+			}
+			break;
+		case Square::Video::KEY_R:
+			if (action == Square::Video::ActionEvent::RELEASE && m_ssr)
+			{
+				m_ssr->enabled(!m_ssr->enabled());
+				context().logger()->info(std::string("SSR: ") + (m_ssr->enabled() ? "on" : "off"));
+			}
+			break;
+		case Square::Video::KEY_Y:
+			//SSR debug views: off, only the reflection, projection check
+			if (action == Square::Video::ActionEvent::RELEASE && m_ssr)
+			{
+				auto settings = m_ssr->settings();
+				settings.debug = (settings.debug + 1) % 3;
+				m_ssr->settings(settings);
+			}
+			break;
 		case Square::Video::KEY_P:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			if (m_light && m_light->contains<DirectionLight>())
@@ -187,6 +219,13 @@ public:
 			ssao_settings.max_pixels = 32.0f; //near the camera: short reach, less cache misses
 			m_ssao->settings(ssao_settings);
 			render_world->add_post_effect(m_ssao);
+			// screen space reflections (deferred): before the bloom, the reflected lights glow too;
+			// R to turn it on/off, Y for its debug views
+			m_ssr = MakeShared<Render::SSR>(context());
+			render_world->add_post_effect(m_ssr);
+			// bloom (forward and deferred): the lights and the emissive glow, H to turn it on/off
+			m_bloom = MakeShared<Render::Bloom>(context());
+			render_world->add_post_effect(m_bloom);
 		}
 	}
 
@@ -541,6 +580,8 @@ private:
 	Square::Shared<CameraFollow>              m_camera_follow;
 	Square::Shared<Checkpoints>               m_checkpoints;
 	Square::Shared<Square::Render::SSAO>      m_ssao;
+	Square::Shared<Square::Render::Bloom>     m_bloom;
+	Square::Shared<Square::Render::SSR>       m_ssr;
 	//starts of the hovercraft (spawn_point_1..4 of the arena, a fallback without them), the middle
 	//they face
 	std::array<Square::Vec3, s_racers>        m_starts{ s_start, s_start + Square::Vec3(10, 0, 0), s_start + Square::Vec3(0, 0, 10), s_start + Square::Vec3(10, 0, 10) };
