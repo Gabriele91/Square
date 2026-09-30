@@ -232,7 +232,7 @@ public:
 	struct Settings
 	{
 		double step{ 1.0 / 60.0 }; //seconds of a step
-		int    max_steps{ 8 };     //steps of a frame at most: a longer frame (loading, debugger) loses the rest of its time
+		int    max_steps{ 10 };     //steps of a frame at most: a longer frame (loading, debugger) loses the rest of its time
 	};
 
 	CollisionWorld(Square::Context& context, Square::System& system, Square::Scene::World& world);

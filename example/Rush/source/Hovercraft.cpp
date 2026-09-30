@@ -5,6 +5,7 @@
 #include <Hovercraft.h>
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 using namespace Square;
 
@@ -73,6 +74,7 @@ void HovercraftDriver::place_wheels()
 	const Vec3 position = hovercraft->position(true);
 	const Quat rotation = hovercraft->rotation(true);
 	const Mat4 to_hovercraft = inverse(hovercraft->global_model_matrix());
+#if 0
 	//height probes: each one comes down from half a body height over its corner to it (it
 	//stops on what is under it: a ramp, a step, not the top of a wall)
 	for (int wheel_id = 0; wheel_id < 4; ++wheel_id)
@@ -81,6 +83,50 @@ void HovercraftDriver::place_wheels()
 		m_wheels[wheel_id]->component<SphereCollider>()->reset(corner + Constants::axis_y * m_body->radius_y());
 		m_wheels[wheel_id]->position(Vec3(to_hovercraft * Vec4(corner, 1.0f)));
 	}
+#else
+	//height probes: a ray for each wheel, down over its corner from the highest corner (plus
+	//half a body height: a level body over a small step) to the lowest one. The lower corner of
+	//a body tilted a lot is under the ground (a probe from there would not see it). A wheel
+	//touches when the ground is at its corner or over it; with at least two wheels off the
+	//ground (the body on a side, on one wheel) a lifted wheel comes down on the ground found
+	//down to the lowest corner, and the body goes back down; otherwise it stays at its corner
+	//(in the air the tilt stays)
+	auto collision = world().lock()->instance<CollisionWorld>();
+	std::array<Vec3, 4> corners;
+	std::array<float, 4> grounds;
+	std::array<bool, 4> hits;
+	float top = -std::numeric_limits<float>::max();
+	float bottom = std::numeric_limits<float>::max();
+	for (int wheel_id = 0; wheel_id < 4; ++wheel_id)
+	{
+		corners[wheel_id] = position + rotation * m_wheel_offsets[wheel_id];
+		top = std::max(top, corners[wheel_id].y);
+		bottom = std::min(bottom, corners[wheel_id].y);
+	}
+	top += m_body->radius_y();
+	int off_ground = 0;
+	for (int wheel_id = 0; wheel_id < 4; ++wheel_id)
+	{
+		const float radius = m_wheels[wheel_id]->component<SphereCollider>()->radius();
+		const Vec3 origin(corners[wheel_id].x, top, corners[wheel_id].z);
+		CollisionMesh::Hit hit;
+		hits[wheel_id] = collision && collision->raycast(origin, -Constants::axis_y, top - bottom + radius, hit);
+		grounds[wheel_id] = hits[wheel_id] ? hit.m_point.y + radius : corners[wheel_id].y;
+		if (!hits[wheel_id] || grounds[wheel_id] < corners[wheel_id].y) ++off_ground;
+	}
+	const bool lifted = off_ground == 3;
+	for (int wheel_id = 0; wheel_id < 4; ++wheel_id)
+	{
+		Vec3 target = corners[wheel_id];
+		if (hits[wheel_id] && (lifted || grounds[wheel_id] >= corners[wheel_id].y))
+		{
+			target.y = grounds[wheel_id];
+		}
+		//the collider of the wheel does not move (it shows where the probe is)
+		m_wheels[wheel_id]->component<SphereCollider>()->reset(target);
+		m_wheels[wheel_id]->position(Vec3(to_hovercraft * Vec4(target, 1.0f)));
+	}
+#endif
 }
 
 void HovercraftDriver::on_deattch()
