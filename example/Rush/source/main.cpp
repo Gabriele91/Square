@@ -122,6 +122,15 @@ public:
 				m_bloom->settings(settings);
 			}
 			break;
+		case Square::Video::KEY_F:
+			//the player's hovercraft all mirror: the SSR on it
+			if (action == Square::Video::ActionEvent::RELEASE)
+			{
+				m_mirror = !m_mirror;
+				mirror(m_mirror);
+				context().logger()->info(std::string("Mirror hovercraft: ") + (m_mirror ? "on" : "off"));
+			}
+			break;
 		case Square::Video::KEY_R:
 			if (action == Square::Video::ActionEvent::RELEASE && m_ssr)
 			{
@@ -222,6 +231,11 @@ public:
 			// screen space reflections (deferred): before the bloom, the reflected lights glow too;
 			// R to turn it on/off, Y for its debug views
 			m_ssr = MakeShared<Render::SSR>(context());
+			Render::SSR::Settings ssr_setting;
+			ssr_setting.half_resolution = false;
+			ssr_setting.max_distance = 100.0;
+			ssr_setting.steps = 128;
+			m_ssr->settings(ssr_setting);
 			render_world->add_post_effect(m_ssr);
 			// bloom (forward and deferred): the lights and the emissive glow, H to turn it on/off
 			m_bloom = MakeShared<Render::Bloom>(context());
@@ -405,6 +419,38 @@ public:
 		});
 	}
 
+	//the player's hovercraft all mirror (to show the screen space reflections: it reflects the
+	//arena and the other hovercraft), or back to its skin
+	void mirror(bool enable)
+	{
+		using namespace Square;
+		if (m_racers.empty() || !m_racers[0].m_actor) return;
+		auto hovercraft = m_racers[0].m_actor;
+		//back: its materials again from the .mat, with the skin
+		if (!enable)
+		{
+			if (s_skins[0][0]) paint(hovercraft, s_skins[0]);
+			return;
+		}
+		//chrome: a white metal (the albedo of a metal is its reflected color), perfectly smooth
+		auto white = context().resource<Resource::Texture>("white");
+		hovercraft->visit([&](Shared<Scene::Actor> node) -> bool
+		{
+			if (!node->contains<Scene::StaticMesh>()) return true;
+			for (auto& material : node->component<Scene::StaticMesh>()->m_materials)
+			{
+				if (!material) continue;
+				if (auto p = material->parameter_by_name("albedo_map"))    p->set(white);
+				if (auto p = material->parameter_by_name("metallic_map"))  p->set(white);
+				if (auto p = material->parameter_by_name("roughness_map")) p->set(white);
+				if (auto p = material->parameter_by_name("color"))         p->set(Vec4(0.95f, 0.95f, 0.95f, 1.0f));
+				if (auto p = material->parameter_by_name("metallic"))      p->set(1.0f);
+				if (auto p = material->parameter_by_name("roughness"))     p->set(0.0f);
+			}
+			return true;
+		});
+	}
+
 	//a hovercraft at its start, facing the middle of the arena; the player's camera straight
 	//behind it (a teleport)
 	void spawn(size_t id, bool snap_camera = true)
@@ -582,6 +628,7 @@ private:
 	Square::Shared<Square::Render::SSAO>      m_ssao;
 	Square::Shared<Square::Render::Bloom>     m_bloom;
 	Square::Shared<Square::Render::SSR>       m_ssr;
+	bool                                      m_mirror{ false }; //F: the player's hovercraft all mirror
 	//starts of the hovercraft (spawn_point_1..4 of the arena, a fallback without them), the middle
 	//they face
 	std::array<Square::Vec3, s_racers>        m_starts{ s_start, s_start + Square::Vec3(10, 0, 0), s_start + Square::Vec3(0, 0, 10), s_start + Square::Vec3(10, 0, 10) };
