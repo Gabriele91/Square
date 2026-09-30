@@ -74,6 +74,8 @@
 #include "Square/Render/PostEffect.h"
 #include "Square/Render/BasicMesh.h"
 #include "Square/Render/PostEffectSSAO.h"
+#include "Square/Render/PostEffectBloom.h"
+#include "Square/Render/PostEffectSSR.h"
 /* --- Resource --- */
 #include "Square/Resource/Texture.h"
 #include "Square/Resource/Shader.h"

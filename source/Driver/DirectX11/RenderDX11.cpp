@@ -2294,6 +2294,17 @@ namespace Render
 		return new_format;
 	}
 
+	//mip levels of a texture: 0 (the whole chain, generated) when it builds the mipmaps, else
+	//mipmap_max clamped to the levels its size has (a 320x180 has 9: more is E_INVALIDARG)
+	static UINT texture_mip_levels(const TextureGpuDataInformation& info, UINT width, UINT height)
+	{
+		if (info.m_build_mipmap) return 0;
+		UINT levels = 1;
+		for (UINT size = (width > height ? width : height); size > 1; size >>= 1) ++levels;
+		if (info.m_mipmap_max < 1) return 1;
+		return (UINT)info.m_mipmap_max < levels ? (UINT)info.m_mipmap_max : levels;
+	}
+
 	Texture* ContextDX11::create_texture
 	(
 		const TextureRawDataInformation& data,
@@ -2304,7 +2315,7 @@ namespace Render
 		UINT pixel_size = get_textut_pixel_size(data.m_format);
 		D3D11_USAGE usage = info.m_read_from_cpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
 		UINT cpu_access_flags = info.m_read_from_cpu ? D3D11_CPU_ACCESS_READ : 0;
-		UINT mip_levels = info.m_build_mipmap ? 0 : info.m_mipmap_max;
+		UINT mip_levels = texture_mip_levels(info, data.m_width, data.m_height);
 		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
 		//format
@@ -2368,7 +2379,7 @@ namespace Render
 			s_resource_view.Format = texture_format_resource;
 			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			s_resource_view.Texture2D.MostDetailedMip = 0;
-			s_resource_view.Texture2D.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
+			s_resource_view.Texture2D.MipLevels = info.m_build_mipmap ? -1 : mip_levels;
 			//try
 			if (!dx_op_success(device()->CreateShaderResourceView(d11_texture, &s_resource_view, &texture2D->m_resource_view)))
 			{
@@ -2420,7 +2431,7 @@ namespace Render
 		UINT pixel_size = get_textut_pixel_size(data.m_format);
 		D3D11_USAGE usage = info.m_read_from_cpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
 		UINT cpu_access_flags = info.m_read_from_cpu ? D3D11_CPU_ACCESS_READ : 0;
-		UINT mip_levels = info.m_build_mipmap ? 0 : info.m_mipmap_max;
+		UINT mip_levels = texture_mip_levels(info, data.m_width, data.m_height);
 		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
 		//format
@@ -2485,7 +2496,7 @@ namespace Render
 			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
 			s_resource_view.Texture2DArray.ArraySize = size;
 			s_resource_view.Texture2DArray.MostDetailedMip = 0;
-			s_resource_view.Texture2DArray.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
+			s_resource_view.Texture2DArray.MipLevels = info.m_build_mipmap ? -1 : mip_levels;
 			//try
 			if (!dx_op_success(device()->CreateShaderResourceView(d11_texture, &s_resource_view, &texture2D->m_resource_view)))
 			{
@@ -2540,7 +2551,7 @@ namespace Render
 		UINT pixel_size = get_textut_pixel_size(data[0].m_format);
 		D3D11_USAGE usage = info.m_read_from_cpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
 		UINT cpu_access_flags = info.m_read_from_cpu ? D3D11_CPU_ACCESS_READ : 0;
-		UINT mip_levels = info.m_build_mipmap ? 0 : info.m_mipmap_max;
+		UINT mip_levels = texture_mip_levels(info, data[0].m_width, data[0].m_height);
 		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
 		//is a cubemap
@@ -2618,7 +2629,7 @@ namespace Render
 			s_resource_view.Format = texture_format_resource;
 			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
 			s_resource_view.TextureCube.MostDetailedMip = 0;
-			s_resource_view.TextureCube.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
+			s_resource_view.TextureCube.MipLevels = info.m_build_mipmap ? -1 : mip_levels;
 			//try
 			if (!SUCCEEDED(device()->CreateShaderResourceView(d11_texture, &s_resource_view, &texture2D->m_resource_view)))
 			{
