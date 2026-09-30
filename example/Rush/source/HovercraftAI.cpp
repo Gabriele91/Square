@@ -2,9 +2,9 @@
 //  HovercraftAI.cpp
 //  Rush
 //
-#include "HovercraftAI.h"
-#include "Hovercraft.h"
-#include "Checkpoints.h"
+#include <HovercraftAI.h>
+#include <Hovercraft.h>
+#include <Checkpoints.h>
 #include <cmath>
 
 using namespace Square;

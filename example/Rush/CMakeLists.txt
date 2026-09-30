@@ -17,29 +17,16 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 
 # Source files
-set(SOURCE_FILES
-    main.cpp
-    Collision.h
-    Collision.cpp
-    CollisionDebug.h
-    CollisionDebug.cpp
-    Hovercraft.h
-    Hovercraft.cpp
-    Checkpoints.h
-    Checkpoints.cpp
-    HovercraftInput.h
-    HovercraftInput.cpp
-    HovercraftAI.h
-    HovercraftAI.cpp
-    CameraFollow.h
-    CameraFollow.cpp
-)
+
+file(GLOB SOURCE_FILES source/*.cpp)
+file(GLOB INCLUDE_FILES include/*.h)
 
 # Create executable
-add_executable(Rush ${SOURCE_FILES})
+add_executable(Rush ${SOURCE_FILES} ${INCLUDE_FILES})
 
 # Include directories
 target_include_directories(Rush PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/dependencies/glm/
     ${CMAKE_SOURCE_DIR}/dependencies/glad/include

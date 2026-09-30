@@ -2,8 +2,8 @@
 //  HovercraftInput.cpp
 //  Rush
 //
-#include "HovercraftInput.h"
-#include "Hovercraft.h"
+#include <HovercraftInput.h>
+#include <Hovercraft.h>
 
 using namespace Square;
 

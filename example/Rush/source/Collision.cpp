@@ -5,8 +5,8 @@
 //  Moving spheres against triangles and spheres: the first contact along the move, then a
 //  slide on the contact planes, with the vectors of Square.
 //
-#include "Collision.h"
-#include "CollisionDebug.h"
+#include <Collision.h>
+#include <CollisionDebug.h>
 #include <algorithm>
 #include <cmath>
 #include <limits>

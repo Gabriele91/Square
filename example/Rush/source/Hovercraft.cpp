@@ -2,7 +2,7 @@
 //  Hovercraft.cpp
 //  Rush
 //
-#include "Hovercraft.h"
+#include <Hovercraft.h>
 #include <algorithm>
 #include <cmath>
 

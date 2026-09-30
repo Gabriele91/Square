@@ -2,7 +2,7 @@
 //  CameraFollow.cpp
 //  Rush
 //
-#include "CameraFollow.h"
+#include <CameraFollow.h>
 #include "Collision.h"
 #include <algorithm>
 #include <cmath>

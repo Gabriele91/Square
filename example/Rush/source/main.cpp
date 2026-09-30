@@ -12,12 +12,12 @@
 #include <memory>
 #include <array>
 #include <algorithm>
-#include "Collision.h"
-#include "Hovercraft.h"
-#include "Checkpoints.h"
-#include "HovercraftInput.h"
-#include "HovercraftAI.h"
-#include "CameraFollow.h"
+#include <Collision.h>
+#include <Hovercraft.h>
+#include <Checkpoints.h>
+#include <HovercraftInput.h>
+#include <HovercraftAI.h>
+#include <CameraFollow.h>
 
 class RushGame : public Square::AppInterface
 {

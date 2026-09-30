@@ -2,8 +2,8 @@
 //  Checkpoints.cpp
 //  Rush
 //
-#include "Checkpoints.h"
-#include "Collision.h"
+#include <Checkpoints.h>
+#include <Collision.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>

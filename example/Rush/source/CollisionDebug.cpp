@@ -2,8 +2,8 @@
 //  CollisionDebug.cpp
 //  Rush
 //
-#include "CollisionDebug.h"
-#include "Collision.h"
+#include <CollisionDebug.h>
+#include <Collision.h>
 #include <algorithm>
 
 using namespace Square;
