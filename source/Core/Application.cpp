@@ -11,6 +11,7 @@
 #include "Square/Core/Application.h"
 #include "Square/Driver/Render.h"
 #include "Square/Render/RegistryInspector.h"
+#include "Square/Render/SplashScreen.h"
 #include "Square/Scene/World.h"
 #include "Square/System/System.h"
 #include "Square/System/InputSystem.h"
@@ -217,6 +218,16 @@ namespace Square
 	{
 		return m_render_driver;
 	}
+
+	void Application::splash_screen(bool enable)
+	{
+		m_splash_screen = enable;
+	}
+
+	bool Application::splash_screen() const
+	{
+		return m_splash_screen;
+	}
 	
 	Render::Context* Application::render()
 	{
@@ -363,6 +374,9 @@ namespace Square
             m_window = nullptr;
             return false;
         }
+
+        //the splash screen while the application loads (start: its resources, its scene)
+        if (m_splash_screen) Render::SplashScreen::show(m_context);
 
         //start, then the second phase of the systems (the resources are there)
         m_instance->start();
