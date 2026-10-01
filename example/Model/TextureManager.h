@@ -20,6 +20,9 @@
 // - else: the image files copied next to the .sqtex ("url"), the embedded ones in it ("data").
 //The normal maps (the normalTexture of the materials) are OpenGL in glTF (green up), the engine
 //reads them DirectX (green down): always in the .sqtex, a PNG with the green inverted.
+//Compressed (--images bc, the default; astc): the converted image compressed with its levels
+//(ImageConverter::compress) in a file next to the .sqtex ("url"), the converted one too for a
+//GPU without the format ("fallback"); an image that cannot be compressed is as with png.
 class TextureManager
 {
     struct TextureBufferDescription
@@ -45,12 +48,15 @@ class TextureManager
     std::unordered_set< size_t > m_normal_maps; //glTF textures used as normal map
     size_t                     m_next_texture{ 0 }; //glTF index of the next add_texture
     std::map< std::pair<size_t, bool>, ImageConverter::Result > m_converted; //(image id, normal map) -> its conversion
+    ImageConverter::Compression m_compression{ ImageConverter::Compression::NONE }; //of the converted images
+    std::map< std::pair<size_t, bool>, std::string > m_compressed; //(image id, normal map) -> the "url"/"fallback" lines of its files ("": not compressed)
 
 public:
     TextureManager(Square::Context& context, const std::string& output);
 
-    //convert: the images for the engine (PNG, TGA RLE), else as they are
-    TextureManager(Square::Context& context, const std::string& output, const Square::Data::GLTF::GLTF& gltf, bool convert = true);
+    //convert: the images for the engine (PNG, TGA RLE), else as they are; compression: of the
+    //converted images (DDS BC, KTX ASTC)
+    TextureManager(Square::Context& context, const std::string& output, const Square::Data::GLTF::GLTF& gltf, bool convert = true, ImageConverter::Compression compression = ImageConverter::Compression::NONE);
 
     size_t add_image(const Square::Data::GLTF::Image& in_image, const std::string& gltfpath);
 
@@ -66,4 +72,8 @@ private:
     std::vector<unsigned char> image_bytes(const TextureType& in_image, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers) const;
 
     size_t add_texture_internal(size_t image_id, bool normal_map, const std::string& sampler, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers);
+
+    //the converted image compressed, and itself as fallback, in files next to the textures: the
+    //"url"/"fallback" lines of a .sqtex ("" when it cannot be compressed)
+    std::string compress_image(size_t image_id, bool normal_map, const std::string& texture_name, const std::vector<unsigned char>& converted);
 };

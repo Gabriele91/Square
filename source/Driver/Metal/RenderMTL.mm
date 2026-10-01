@@ -119,6 +119,12 @@ static MTLPixelFormat to_mtl_pixel_format(TextureFormat tf, bool srgb)
     case TF_DEPTH_COMPONENT16: return MTLPixelFormatDepth16Unorm;
     case TF_DEPTH_COMPONENT24:
     case TF_DEPTH_COMPONENT32: return MTLPixelFormatDepth32Float;
+    // compressed (m_texture_bc / m_texture_astc of the driver info: what the device samples)
+    case TF_BC1:      return srgb ? MTLPixelFormatBC1_RGBA_sRGB : MTLPixelFormatBC1_RGBA;
+    case TF_BC3:      return srgb ? MTLPixelFormatBC3_RGBA_sRGB : MTLPixelFormatBC3_RGBA;
+    case TF_BC4:      return MTLPixelFormatBC4_RUnorm;
+    case TF_BC5:      return MTLPixelFormatBC5_RGUnorm;
+    case TF_ASTC_4x4: return srgb ? MTLPixelFormatASTC_4x4_sRGB : MTLPixelFormatASTC_4x4_LDR;
     default:          return MTLPixelFormatRGBA8Unorm;
     }
 }
@@ -779,6 +785,11 @@ bool ContextMTL::init(Video::DeviceResources* resource)
     m_driver_info.m_geometry_shader = false; // Metal has no geometry shaders → multipass shadows
     m_driver_info.m_vertex_viewport_index = true; // Metal can write [[render_target_array_index]] from the vertex shader
     m_driver_info.m_draw_instanced = true; // Metal supports instanced draw calls
+    // Compressed textures: BC on the Macs (and the Apple GPUs that have it), ASTC on the Apple GPUs
+    m_driver_info.m_texture_bc = false;
+    m_driver_info.m_texture_astc = false;
+    if (@available(macOS 11.0, iOS 16.4, *)) m_driver_info.m_texture_bc = [m_device supportsBCTextureCompression];
+    if (@available(macOS 10.15, iOS 13.0, *)) m_driver_info.m_texture_astc = [m_device supportsFamily:MTLGPUFamilyApple2];
 
     return true;
 }
@@ -1014,6 +1025,33 @@ static id<MTLTexture> upload_texture(id<MTLDevice> dev,
     MTLPixelFormat fmt = to_mtl_pixel_format(raw.m_format, raw.m_is_srgb);
     MTLTextureDescriptor* td;
 
+    // Compressed: a 2D texture with the levels given (no mipmaps built), rows of 4x4 blocks
+    if (is_compressed_format(raw.m_format) && !cube && slices == 1)
+    {
+        const NSUInteger levels = raw.m_levels ? raw.m_levels : 1;
+        td = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:fmt
+                                                                width:raw.m_width
+                                                               height:raw.m_height
+                                                            mipmapped:NO];
+        td.mipmapLevelCount = levels;
+        td.storageMode = MTLStorageModeShared;
+        td.usage = MTLTextureUsageShaderRead;
+        id<MTLTexture> tex = [dev newTextureWithDescriptor:td];
+        if (!tex || !raw.m_bytes) return tex;
+        const unsigned char* level_bytes = raw.m_bytes;
+        for (NSUInteger level = 0; level < levels; ++level)
+        {
+            const unsigned int level_width  = texture_level_size(raw.m_width, (unsigned int)level);
+            const unsigned int level_height = texture_level_size(raw.m_height, (unsigned int)level);
+            [tex replaceRegion:MTLRegionMake2D(0, 0, level_width, level_height)
+                   mipmapLevel:level
+                     withBytes:level_bytes
+                   bytesPerRow:texture_block_row_bytes(raw.m_format, level_width)];
+            level_bytes += texture_level_bytes(raw.m_format, level_width, level_height);
+        }
+        return tex;
+    }
+
     if (cube)
     {
         td = [MTLTextureDescriptor textureCubeDescriptorWithPixelFormat:fmt
@@ -1166,7 +1204,7 @@ Texture* ContextMTL::create_texture(const TextureRawDataInformation& raw, const 
 {
     auto* t = new Texture();
     t->m_texture = upload_texture(m_device, raw, gpu);
-    if (gpu.m_build_mipmap) generate_mipmaps(t->m_texture);
+    if (gpu.m_build_mipmap && !is_compressed_format(raw.m_format)) generate_mipmaps(t->m_texture);
     t->m_sampler = create_sampler(m_device, gpu);
 #if defined(TEXTURE_INTROSPECTION)
 	if (auto render_inspector = inspector())

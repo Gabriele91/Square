@@ -266,9 +266,62 @@ namespace Render
 		TF_DEPTH_COMPONENT16,
 		TF_DEPTH_COMPONENT24,
 		TF_DEPTH_COMPONENT32,
+		////////////////////
+		//compressed (blocks of 4x4 pixels, the levels are given: no mipmaps built by the GPU)
+		TF_BC1,       //RGB (DXT1), 8 bytes a block
+		TF_BC3,       //RGBA (DXT5), 16 bytes a block
+		TF_BC4,       //R (RGTC1), 8 bytes a block
+		TF_BC5,       //RG (RGTC2), 16 bytes a block
+		TF_ASTC_4x4,  //RGBA (LDR), 16 bytes a block
 
 		TF_INVALID = 0xFFFF
 	};
+
+	//a compressed format (texture_level_bytes for the size of a level)
+	inline bool is_compressed_format(TextureFormat format)
+	{
+		switch (format)
+		{
+		case TF_BC1:
+		case TF_BC3:
+		case TF_BC4:
+		case TF_BC5:
+		case TF_ASTC_4x4: return true;
+		default:          return false;
+		}
+	}
+
+	//bytes of a 4x4 block of a compressed format (0: not compressed)
+	inline unsigned int texture_block_bytes(TextureFormat format)
+	{
+		switch (format)
+		{
+		case TF_BC1:
+		case TF_BC4:      return 8;
+		case TF_BC3:
+		case TF_BC5:
+		case TF_ASTC_4x4: return 16;
+		default:          return 0;
+		}
+	}
+
+	//bytes of a row of blocks and of a whole level of a compressed format, width x height pixels
+	inline unsigned int texture_block_row_bytes(TextureFormat format, unsigned int width)
+	{
+		return ((width + 3) / 4) * texture_block_bytes(format);
+	}
+
+	inline unsigned int texture_level_bytes(TextureFormat format, unsigned int width, unsigned int height)
+	{
+		return texture_block_row_bytes(format, width) * ((height + 3) / 4);
+	}
+
+	//size of the level of a texture (at least 1)
+	inline unsigned int texture_level_size(unsigned int size, unsigned int level)
+	{
+		const unsigned int level_size = size >> level;
+		return level_size ? level_size : 1;
+	}
 
 	enum TextureType : unsigned char
 	{
@@ -334,6 +387,9 @@ namespace Render
 		TextureType 		m_type;
 		TextureTypeFormat   m_type_format;
 		bool                m_is_srgb;
+		//levels in m_bytes, one after the other from the largest (compressed formats: all the
+		//levels the texture has, the GPU cannot build them)
+		unsigned int        m_levels{ 1 };
 	};
 
 	struct TextureGpuDataInformation
@@ -764,6 +820,11 @@ namespace Render
 		// Capability: the backend can issue instanced draw calls (draw_*_instanced).
 		// Core since OpenGL 3.1 / available on Metal and DirectX 11.
 		bool                     m_draw_instanced{ false };
+		// Capabilities: the compressed texture formats the backend can sample, BC1/BC3/BC4/BC5
+		// (desktop: DirectX, OpenGL with S3TC/RGTC, Metal on macOS) and ASTC 4x4 (Metal on
+		// Apple GPUs, OpenGL with KHR_texture_compression_astc_ldr)
+		bool                     m_texture_bc{ false };
+		bool                     m_texture_astc{ false };
     };
 	/////////////////////////////////
 	//Uniform global //legacy

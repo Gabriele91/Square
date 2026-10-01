@@ -10,3 +10,6 @@
 [submodule "dependencies/glad"]
 	path = dependencies/glad
 	url = https://github.com/Dav1dde/glad.git
+[submodule "dependencies/astc-encoder"]
+	path = dependencies/astc-encoder
+	url = https://github.com/ARM-software/astc-encoder.git

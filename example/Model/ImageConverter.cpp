@@ -6,6 +6,8 @@
 //
 #include "ImageConverter.h"
 #include <cstdlib>
+#include <cmath>
+#include <algorithm>
 
 namespace ImageConverter
 {
@@ -244,6 +246,163 @@ namespace ImageConverter
         }
         result.m_data = Square::Data::Image::encode_png(pixels.data(), width, height, channels);
         result.m_description = std::string("normal map OpenGL -> DirectX (green inverted), PNG ") + (channels == 4 ? "RGBA" : "RGB");
+        return result;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Compression
+    namespace
+    {
+        //a level: RGBA pixels, rows from the top
+        struct Level
+        {
+            std::vector<unsigned char> m_rgba;
+            unsigned long m_width{ 0 };
+            unsigned long m_height{ 0 };
+        };
+
+        //the pixels of a file of 8 bit channels as RGBA (grey: RGB); false for the others
+        bool decode_rgba(const std::vector<unsigned char>& file, Level& level, bool& has_alpha)
+        {
+            std::vector<unsigned char> pixels;
+            Square::Render::TextureFormat format;
+            Square::Render::TextureType type;
+            if (!Square::Data::Image::load(file, pixels, level.m_width, level.m_height, format, type)) return false;
+            unsigned int channels = 0;
+            switch (format)
+            {
+            case Square::Render::TF_R8:    channels = 1; break;
+            case Square::Render::TF_RG8:   channels = 2; break;
+            case Square::Render::TF_RGB8:  channels = 3; break;
+            case Square::Render::TF_RGBA8: channels = 4; break;
+            default: return false;
+            }
+            const size_t count = size_t(level.m_width) * level.m_height;
+            level.m_rgba.resize(count * 4);
+            has_alpha = false;
+            for (size_t i = 0; i != count; ++i)
+            {
+                const unsigned char* in = &pixels[i * channels];
+                unsigned char* out = &level.m_rgba[i * 4];
+                out[0] = in[0];
+                out[1] = channels >= 3 ? in[1] : in[0];
+                out[2] = channels >= 3 ? in[2] : in[0];
+                out[3] = channels == 4 ? in[3] : channels == 2 ? in[1] : 255;
+                has_alpha |= out[3] != 255;
+            }
+            return true;
+        }
+
+        //the next level: half the size (at least 1), the average of 2x2 pixels (the last row/
+        //column of an odd size repeated); a normal map normalized
+        Level half_level(const Level& level, bool normal_map)
+        {
+            Level half;
+            half.m_width = level.m_width > 1 ? level.m_width / 2 : 1;
+            half.m_height = level.m_height > 1 ? level.m_height / 2 : 1;
+            half.m_rgba.resize(size_t(half.m_width) * half.m_height * 4);
+            for (unsigned long y = 0; y != half.m_height; ++y)
+            for (unsigned long x = 0; x != half.m_width; ++x)
+            {
+                float sum[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                for (unsigned long dy = 0; dy != 2; ++dy)
+                for (unsigned long dx = 0; dx != 2; ++dx)
+                {
+                    const unsigned long in_x = std::min(x * 2 + dx, level.m_width - 1);
+                    const unsigned long in_y = std::min(y * 2 + dy, level.m_height - 1);
+                    const unsigned char* in = &level.m_rgba[(size_t(in_y) * level.m_width + in_x) * 4];
+                    for (int c = 0; c != 4; ++c) sum[c] += float(in[c]);
+                }
+                unsigned char* out = &half.m_rgba[(size_t(y) * half.m_width + x) * 4];
+                if (normal_map)
+                {
+                    //the average of the normals, of unit length again
+                    float n[3];
+                    for (int c = 0; c != 3; ++c) n[c] = sum[c] / (4.0f * 255.0f) * 2.0f - 1.0f;
+                    const float length = std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+                    for (int c = 0; c != 3; ++c)
+                    {
+                        const float unit = length > 1e-6f ? n[c] / length : (c == 2 ? 1.0f : 0.0f);
+                        out[c] = (unsigned char)std::lround((unit * 0.5f + 0.5f) * 255.0f);
+                    }
+                    out[3] = (unsigned char)std::lround(sum[3] / 4.0f);
+                }
+                else
+                {
+                    for (int c = 0; c != 4; ++c) out[c] = (unsigned char)std::lround(sum[c] / 4.0f);
+                }
+            }
+            return half;
+        }
+    }
+
+    std::string extension(Compression compression)
+    {
+        switch (compression)
+        {
+        case Compression::BC:   return ".dds";
+        case Compression::ASTC: return ".ktx";
+        default:                return std::string();
+        }
+    }
+
+    Result compress(const std::vector<unsigned char>& file, bool normal_map, Compression compression)
+    {
+        Result result;
+        Level level;
+        bool has_alpha = false;
+        if (compression == Compression::NONE)
+        {
+            result.m_description = "not compressed";
+            return result;
+        }
+        if (!decode_rgba(file, level, has_alpha))
+        {
+            result.m_description = "not compressed (not an image of 8 bit channels)";
+            return result;
+        }
+        if (compression == Compression::BC && (level.m_width % 4 || level.m_height % 4))
+        {
+            result.m_description = "not compressed (" + std::to_string(level.m_width) + "x" + std::to_string(level.m_height) + ": BC wants a multiple of 4)";
+            return result;
+        }
+        //the format
+        using namespace Square::Render;
+        const TextureFormat format = compression == Compression::ASTC ? TF_ASTC_4x4
+                                   : normal_map ? TF_BC5
+                                   : has_alpha  ? TF_BC3
+                                   :              TF_BC1;
+        //the levels, down to 1x1
+        const unsigned long width = level.m_width;
+        const unsigned long height = level.m_height;
+        std::vector<unsigned char> levels_data;
+        unsigned int levels = 0;
+        bool compressed = true;
+        while (true)
+        {
+            std::vector<unsigned char> blocks = format == TF_ASTC_4x4
+                                              ? Square::Data::Image::compress_astc(level.m_rgba.data(), level.m_width, level.m_height)
+                                              : Square::Data::Image::compress_bc(level.m_rgba.data(), level.m_width, level.m_height, format);
+            compressed = !blocks.empty();
+            if (!compressed) break;
+            levels_data.insert(levels_data.end(), blocks.begin(), blocks.end());
+            ++levels;
+            if (level.m_width == 1 && level.m_height == 1) break;
+            level = half_level(level, normal_map);
+        }
+        if (!compressed)
+        {
+            result.m_description = "not compressed (encoder error)";
+            return result;
+        }
+        //the file
+        static const char* format_names[] = { "BC1", "BC3", "BC4", "BC5", "ASTC 4x4" };
+        const char* format_name = format_names[format - TF_BC1];
+        result.m_data = format == TF_ASTC_4x4
+                      ? Square::Data::Image::encode_ktx(levels_data.data(), width, height, levels, format)
+                      : Square::Data::Image::encode_dds(levels_data.data(), width, height, levels, format);
+        result.m_description = std::string(format == TF_ASTC_4x4 ? "KTX " : "DDS ") + format_name
+                             + ", " + std::to_string(levels) + " levels, " + std::to_string(result.m_data.size() / 1024) + " KB";
         return result;
     }
 }

@@ -24,7 +24,7 @@ namespace Resource
     void Texture::object_registration(Context& ctx)
     {
         //factory
-        ctx.add_resource<Texture>({ ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".sqtex", ".sampler" });
+        ctx.add_resource<Texture>({ ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds", ".ktx", ".sqtex", ".sampler" });
         //attributes
 		#if 0
         ctx.add_attribute_function<Texture, unsigned long>
@@ -146,7 +146,20 @@ namespace Resource
 				if (std::holds_alternative<std::string>(tex_context.m_image))
 				{
 					auto image_path = Filesystem::join(Filesystem::get_directory(path), std::get<std::string>(tex_context.m_image));
-					return load(tex_context.m_attributes, image_path);
+					// Load default texture
+					if (load(tex_context.m_attributes, image_path))
+					{ 
+						return true;
+					}
+					// Fallback: an image for a GPU without the format of the first (DDS/KTX)
+					if (tex_context.m_fallback.empty())
+					{ 
+						return false;
+					}
+					auto fallback_path = Filesystem::join(Filesystem::get_directory(path), tex_context.m_fallback);
+					context().logger()->info("Texture: " + path + ", the GPU uses " + tex_context.m_fallback);
+					// Load fallback
+					return load(tex_context.m_attributes, fallback_path);
 				}
 				else if (std::holds_alternative< std::vector<unsigned char> >(tex_context.m_image))
 				{
@@ -185,6 +198,15 @@ namespace Resource
 		const std::string& path
 	)
 	{
+		//compressed: DDS (BC), KTX (ASTC, BC); false when the GPU has not its format (a .sqtex
+		//can give a fallback image)
+		const std::string ext = Filesystem::get_extension(path);
+		if (ext == ".dds" || ext == ".ktx")
+		{
+			if (load_compressed(attr, Filesystem::binary_file_read_all(path))) return true;
+			context().logger()->warning("Texture: " + path + "\nFormat not supported by the GPU");
+			return false;
+		}
 		//decode
 		std::vector<unsigned char> image;
 		unsigned long image_width = 0;
@@ -204,6 +226,8 @@ namespace Resource
 		const std::vector< unsigned char >& data_file
 	)
 	{
+		//compressed: DDS (BC), KTX (ASTC, BC)
+		if (Data::Image::is_compressed(data_file)) return load_compressed(attr, data_file);
 		//decode
 		std::vector<unsigned char> image;
 		unsigned long image_width = 0;
@@ -337,6 +361,75 @@ namespace Resource
 		}
 
 		//ok
+		return m_ctx_texture != nullptr;
+	}
+
+	bool Texture::load_compressed
+	(
+		const Attributes& attr,
+		const std::vector< unsigned char >& data_file
+	)
+	{
+		std::vector<unsigned char> levels_data;
+		unsigned long image_width = 0;
+		unsigned long image_height = 0;
+		unsigned int  image_levels = 0;
+		Render::TextureFormat image_format = Render::TF_INVALID;
+		if (!Data::Image::load_compressed(data_file, levels_data, image_width, image_height, image_levels, image_format))
+			return false;
+		return build_compressed(attr, levels_data.data(), image_width, image_height, image_levels, image_format);
+	}
+
+	bool Texture::build_compressed
+	(
+		const Attributes& attr,
+		const unsigned char* levels_data,
+		unsigned long width,
+		unsigned long height,
+		unsigned int  levels,
+		Render::TextureFormat format
+	)
+	{
+		auto render = System::get<RenderSystem>(context())->render();
+		if (!render || !Render::is_compressed_format(format) || !levels) return false;
+		//the GPU samples it?
+		const Render::RenderDriverInfo& info = render->get_render_driver_info();
+		if (format == Render::TF_ASTC_4x4 ? !info.m_texture_astc : !info.m_texture_bc) return false;
+		//a new texture
+		destoy();
+		m_width = width;
+		m_height = height;
+		m_format = format;
+		m_type = format == Render::TF_BC4 ? Render::TT_R : format == Render::TF_BC5 ? Render::TT_RG : Render::TT_RGBA;
+		m_attributes = attr;
+		//the levels of the file (no mipmaps built: without levels, a mipmap filter samples the first)
+		Render::TextureRawDataInformation data
+		{
+			format,
+			(unsigned int)m_width,
+			(unsigned int)m_height,
+			levels_data,
+			m_type,
+			Render::TTF_UNSIGNED_BYTE,
+			false
+		};
+		data.m_levels = levels;
+		m_ctx_texture = render->create_texture
+		(
+			data,
+			{
+				attr.m_min_filter,           // min_type
+				attr.m_mag_filter,           // mag_type
+				attr.m_wrap_s,               // edge_s
+				attr.m_wrap_t,               // edge_t
+				attr.m_wrap_r,               // edge_r
+				false,                       // build_mipmap
+				0,                           // mipmap_min
+				int(levels) - 1,             // mipmap_max
+				attr.m_anisotropic,          // anisotropy
+				false                        // read_from_cpu
+			}
+		);
 		return m_ctx_texture != nullptr;
 	}
 

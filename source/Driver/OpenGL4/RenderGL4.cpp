@@ -8,6 +8,7 @@
 #include "Square/Driver/Window.h"
 //--------------------------------------------------
 #include <cstddef>
+#include <cstring>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -32,6 +33,25 @@
 // undef GL_R
 #ifndef GL_R
 #define GL_R GL_RED
+#endif
+// compressed textures: S3TC (BC1/BC3) and ASTC are extensions (RGTC, BC4/BC5, is core 3.0)
+#ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT         0x83F0
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT        0x83F3
+#endif
+#ifndef GL_COMPRESSED_SRGB_S3TC_DXT1_EXT
+#define GL_COMPRESSED_SRGB_S3TC_DXT1_EXT        0x8C4C
+#endif
+#ifndef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT  0x8C4F
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_4x4_KHR
+#define GL_COMPRESSED_RGBA_ASTC_4x4_KHR         0x93B0
+#endif
+#ifndef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR 0x93D0
 #endif
 // offeset "VertexAttribPointer"
 #define GL_OFFSET_OF(x) ((char *)NULL + (x))
@@ -758,6 +778,19 @@ namespace Render
 		// Test
 		return is_compatible;
 	}
+	//an extension of the context (glGetStringi, core 3.0)
+	static bool has_gl_extension(const char* name)
+	{
+		GLint count = 0;
+		glGetIntegerv(GL_NUM_EXTENSIONS, &count);
+		for (GLint i = 0; i < count; ++i)
+		{
+			const char* extension = (const char*)glGetStringi(GL_EXTENSIONS, (GLuint)i);
+			if (extension && std::strcmp(extension, name) == 0) return true;
+		}
+		return false;
+	}
+
 	static std::vector<std::string> make_test_all_exts(Logger* logger)
 	{
 		static std::string extensions[] = 
@@ -920,6 +953,10 @@ namespace Render
 		context->s_render_driver_info.m_draw_instanced =
 			(context->s_render_driver_info.m_major_version > 3) ||
 			(context->s_render_driver_info.m_major_version == 3 && context->s_render_driver_info.m_minor_version >= 1);
+		//compressed textures: BC4/BC5 (RGTC) are core, BC1/BC3 need S3TC (every desktop GPU, also
+		//macOS), ASTC its extension (Apple GPUs, some Intel)
+		context->s_render_driver_info.m_texture_bc = has_gl_extension("GL_EXT_texture_compression_s3tc");
+		context->s_render_driver_info.m_texture_astc = has_gl_extension("GL_KHR_texture_compression_astc_ldr");
     }
     
 #if defined( WIN32 )
@@ -2168,6 +2205,13 @@ namespace Render
 		case TF_DEPTH_COMPONENT16: return GL_DEPTH_COMPONENT16; break;
 		case TF_DEPTH_COMPONENT24: return GL_DEPTH_COMPONENT24; break;
 		case TF_DEPTH_COMPONENT32: return GL_DEPTH_COMPONENT32; break;
+			///////////////////
+			//COMPRESSED
+		case TF_BC1: return sRGB ? GL_COMPRESSED_SRGB_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_S3TC_DXT1_EXT; break;
+		case TF_BC3: return sRGB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+		case TF_BC4: return GL_COMPRESSED_RED_RGTC1; break;
+		case TF_BC5: return GL_COMPRESSED_RG_RGTC2; break;
+		case TF_ASTC_4x4: return sRGB ? GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR : GL_COMPRESSED_RGBA_ASTC_4x4_KHR; break;
 
 		default: return GL_ZERO; break;
 		}
@@ -2254,21 +2298,51 @@ namespace Render
 		GLenum gl_format = get_texture_format(data.m_format, data.m_is_srgb);
 		GLenum gl_type = get_texture_type(data.m_type, data.m_is_srgb);
 		GLenum gl_type_format = get_texture_type_format(data.m_type_format);
+		//compressed: the levels are given (no mipmaps built)
+		const bool compressed = is_compressed_format(data.m_format);
+		const GLint levels = compressed ? GLint(data.m_levels ? data.m_levels : 1) : 1;
 		//enable texture
 		glBindTexture(ctx_texture->m_type_texture, ctx_texture->m_tbo);
 		//create texture buffer
-		glTexImage2D
-		(
-			ctx_texture->m_type_texture,
-			0,
-			gl_format,
-			data.m_width,
-			data.m_height,
-			0,
-			gl_type,
-			gl_type_format,
-			data.m_bytes
-		);
+		if (compressed)
+		{
+			const unsigned char* level_bytes = data.m_bytes;
+			for (GLint level = 0; level < levels; ++level)
+			{
+				const unsigned int level_width  = texture_level_size(data.m_width, level);
+				const unsigned int level_height = texture_level_size(data.m_height, level);
+				const unsigned int level_size   = texture_level_bytes(data.m_format, level_width, level_height);
+				glCompressedTexImage2D
+				(
+					ctx_texture->m_type_texture,
+					level,
+					gl_format,
+					level_width,
+					level_height,
+					0,
+					level_size,
+					level_bytes
+				);
+				if (level_bytes) level_bytes += level_size;
+			}
+			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_BASE_LEVEL, 0);
+			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_LEVEL, levels - 1);
+		}
+		else
+		{
+			glTexImage2D
+			(
+				ctx_texture->m_type_texture,
+				0,
+				gl_format,
+				data.m_width,
+				data.m_height,
+				0,
+				gl_type,
+				gl_type_format,
+				data.m_bytes
+			);
+		}
 		//set filters
 		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MIN_FILTER, get_texture_min_filter(info.m_min_type));
 		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAG_FILTER, get_texture_mag_filter(info.m_mag_type));
@@ -2278,7 +2352,7 @@ namespace Render
 		if (info.m_anisotropy)
 			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_ANISOTROPY_EXT, info.m_anisotropy);
 		// Generate mipmaps, by the way
-		if (info.m_build_mipmap)
+		if (info.m_build_mipmap && !compressed)
 		{
 			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_BASE_LEVEL, info.m_mipmap_min);
 			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_LEVEL, info.m_mipmap_max);

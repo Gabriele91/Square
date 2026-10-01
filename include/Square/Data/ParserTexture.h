@@ -17,6 +17,7 @@ namespace Parser
 		{
 			Resource::Texture::Attributes                         m_attributes;
 			std::variant<std::string, std::vector<unsigned char>> m_image;
+			std::string                                           m_fallback; //an image for a GPU without the format of m_image (DDS/KTX)
 			std::list< ErrorField >	                              m_errors;
 			size_t						                          m_line{ 0 };
 

@@ -33,12 +33,16 @@ Mat3 compute_tbn(in Mat3 normal_matrix,
     return Mat3(t_pixel, b_pixel, n_pixel);
 }
 
+//the tangent space normal of a normal map (DirectX: green down): X from red, Y from green, Z
+//rebuilt from them (as Unity): BC5 maps have only red and green, the RGB ones lose nothing
+//(a unit normal facing out of the surface)
 Vec3 normal_from_texture(in Vec4 normal_color)
 {
 	// Inv G (Dx like)
-	normal_color.g = 1.0f - normal_color.g;
+	Vec2 xy = Vec2(normal_color.r, 1.0f - normal_color.g) * 2.0f - 1.0f;
+	float z = sqrt(saturate(1.0f - dot(xy, xy)));
 	//return
-	return normalize(normal_color.rgb * 2.0f - 1.0f);
+	return normalize(Vec3(xy, z));
 }
 
 //Compute position

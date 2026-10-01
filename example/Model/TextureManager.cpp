@@ -40,10 +40,11 @@ TextureManager::TextureManager(Square::Context& context, const std::string& outp
 , m_output(output)
 {}
 
-TextureManager::TextureManager(Square::Context& context, const std::string& output, const Square::Data::GLTF::GLTF& gltf, bool convert)
+TextureManager::TextureManager(Square::Context& context, const std::string& output, const Square::Data::GLTF::GLTF& gltf, bool convert, ImageConverter::Compression compression)
 : m_context(context)
 , m_output(output)
 , m_convert(convert)
+, m_compression(convert ? compression : ImageConverter::Compression::NONE)
 {
     for (auto& image : gltf.images)
     {
@@ -198,7 +199,7 @@ size_t TextureManager::add_texture_internal(size_t image_id, bool normal_map, co
     if (std::holds_alternative<std::string>(in_image) && !normal_map)
     {
         std::string image_uri = std::get<std::string>(in_image);
-        std::string texture_sampler_body = sampler + "url " + Square::Filesystem::get_filename(image_uri) + "\n";
+        std::string texture_sampler_body = sampler + "url \"" + Square::Filesystem::get_filename(image_uri) + "\"\n";
         std::string texture_sampler_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
 
         Square::Filesystem::text_file_write_all(texture_sampler_path, texture_sampler_body);
@@ -227,6 +228,22 @@ size_t TextureManager::add_texture_internal(size_t image_id, bool normal_map, co
         }
         bytes = converted->second.m_data;
     }
+    //compressed: the files of the image (once per image and use), the texture refers to them
+    if (m_compression != ImageConverter::Compression::NONE)
+    {
+        auto compressed = m_compressed.find({ image_id, normal_map });
+        if (compressed == m_compressed.end())
+        {
+            compressed = m_compressed.insert({ { image_id, normal_map }, compress_image(image_id, normal_map, texture_name, bytes) }).first;
+        }
+        if (!compressed->second.empty())
+        {
+            std::string texture_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
+            Square::Filesystem::text_file_write_all(texture_path, sampler + compressed->second);
+            m_textures.push_back(texture_path);
+            return m_textures.size();
+        }
+    }
     std::string texture_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
     std::string texture_body = sampler + "data";
     FILE* texture_pfile = std::fopen(texture_path.c_str(), "wb");
@@ -240,4 +257,26 @@ size_t TextureManager::add_texture_internal(size_t image_id, bool normal_map, co
     std::fclose(texture_pfile);
     m_textures.push_back(texture_path);
     return m_textures.size();
+}
+
+std::string TextureManager::compress_image(size_t image_id, bool normal_map, const std::string& texture_name, const std::vector<unsigned char>& converted)
+{
+    ImageConverter::Result result = ImageConverter::compress(converted, normal_map, m_compression);
+    m_context.logger()->info("image " + m_image_names[image_id] + ": " + result.m_description);
+    if (result.m_data.empty()) return std::string();
+    //the extension of the converted image (PNG, BMP, TGA, else as it was: JPEG)
+    const bool png = converted.size() >= 4 && converted[0] == 0x89 && converted[1] == 'P';
+    const bool bmp = converted.size() >= 2 && converted[0] == 'B' && converted[1] == 'M';
+    const bool jpeg = converted.size() >= 3 && converted[0] == 0xFF && converted[1] == 0xD8;
+    const std::string fallback_extension = png ? ".png" : bmp ? ".bmp" : jpeg ? ".jpg" : ".tga";
+    //"_img"/"_fallback": apart from the .sqtex named after the image (they are texture resources too)
+    const std::string image_file = m_names.make(texture_name + "_img", "image_img") + ImageConverter::extension(m_compression);
+    const std::string fallback_file = m_names.make(texture_name + "_fallback", "image_fallback") + fallback_extension;
+    if (!Square::Filesystem::binary_file_write_all(Square::Filesystem::join(m_output, image_file), result.m_data)
+    ||  !Square::Filesystem::binary_file_write_all(Square::Filesystem::join(m_output, fallback_file), converted))
+    {
+        m_context.logger()->warning("unable to write the images of: " + texture_name);
+        return std::string();
+    }
+    return "url \"" + image_file + "\"\nfallback \"" + fallback_file + "\"\n";
 }

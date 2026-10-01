@@ -35,6 +35,7 @@ namespace Parser
 		constexpr std::string_view image        = "image";
 		constexpr std::string_view url          = "url";
 		constexpr std::string_view texture      = "texture";
+		constexpr std::string_view fallback     = "fallback";
 	}
 	// // // // // // // // // // // // // // // // // // // // // // // // // //
 	// Keyword <-> enum tables and the parsing helpers. Everything is file-static
@@ -158,6 +159,16 @@ namespace Parser
 			context.m_image = url;
 			return true;
 		}
+		bool handle_fallback(Context& context, const char*& cursor, const char* /*buffer_end*/)
+		{
+			skip_space_and_comments(context.m_line, cursor);
+			if (!parse_string(context.m_line, cursor, context.m_fallback))
+			{
+				context.m_errors.emplace_back(context.m_line, "Invalid fallback value");
+				return false;
+			}
+			return true;
+		}
 
 		// A command: keyword + a handler (false on parse error, error already pushed).
 		struct Command
@@ -173,6 +184,7 @@ namespace Parser
 			{ keyword::image,        handle_image       },
 			{ keyword::url,          handle_image       },
 			{ keyword::texture,      handle_image       },
+			{ keyword::fallback,     handle_fallback    },
 		};
 
 		// -- sub-parsers: each returns NotFound / Handled / Error ------------------
