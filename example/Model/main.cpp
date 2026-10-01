@@ -36,7 +36,7 @@ static Square::Shell::ParserCommands s_ShellCommands
     , Square::Shell::Command{ "swapzy",  "s", "swap z with y coord"                      , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
     , Square::Shell::Command{ "lhs",     "l", "convert in left hand"                     , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(true)               }
     , Square::Shell::Command{ "shadow",  "r", "force shadow resolution [size]"           , Square::Shell::ValueType::value_int   , false, Square::Shell::Value_t(0)                  }
-    , Square::Shell::Command{ "images",  "m", "texture images [png, keep]"               , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("png")) }
+    , Square::Shell::Command{ "images",  "m", "texture images [bc, astc, png, keep]"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("bc"))  }
     , Square::Shell::Command{ "help",    "h", "show help"                                , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
 };
 
@@ -50,6 +50,7 @@ public:
     OutputFormat m_output_model_format;
     size_t m_shadow_resoluction;
     bool m_convert_images;
+    ImageConverter::Compression m_compression;
 
     struct Consts
     {
@@ -72,7 +73,8 @@ public:
                   OutputFormat output_model_format,
                   unsigned char mode = M_NONE,
                   size_t shodow_resoluction = 0,
-                  bool convert_images = true)
+                  bool convert_images = true,
+                  ImageConverter::Compression compression = ImageConverter::Compression::BC)
     : m_input_model_path(input_model_path)
     , m_output_model_path(output_model_path)
     , m_output_model_name(output_model_name)
@@ -80,6 +82,7 @@ public:
     , m_mode(mode)
     , m_shadow_resoluction(shodow_resoluction)
     , m_convert_images(convert_images)
+    , m_compression(compression)
     {}
 
     virtual void start() 
@@ -107,7 +110,7 @@ public:
             return;
         }
         // Texture Manager
-        TextureManager texture_manager(context(), m_output_model_path, gltf_model, m_convert_images);
+        TextureManager texture_manager(context(), m_output_model_path, gltf_model, m_convert_images, m_compression);
         MaterialManager material_manager(context(), m_output_model_path, texture_manager, gltf_model);
         MeshManager mesh_manager(context(), m_output_model_path, m_mode, gltf_model);
         // Create scene
@@ -432,18 +435,29 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
     {
         shadow_resoluction = std::get<int>(shadow_it->second);
     }
-    // images: png (converted, the default) or keep (copied as they are)
+    // images: bc (converted and compressed in DDS, the default), astc (compressed in KTX), png
+    // (converted) or keep (copied as they are)
     bool convert_images = true;
+    ImageConverter::Compression compression = ImageConverter::Compression::BC;
     if (auto images_it = args.find("images"); images_it != args.end())
     if (auto images_str = std::get<std::string>(images_it->second); images_str.size())
     {
         if (Square::case_insensitive_equal(images_str, "keep"))
         {
             convert_images = false;
+            compression = ImageConverter::Compression::NONE;
         }
-        else if (!Square::case_insensitive_equal(images_str, "png"))
+        else if (Square::case_insensitive_equal(images_str, "png"))
         {
-            std::cout << "unknown images mode: " << images_str << " (png, keep)" << std::endl;
+            compression = ImageConverter::Compression::NONE;
+        }
+        else if (Square::case_insensitive_equal(images_str, "astc"))
+        {
+            compression = ImageConverter::Compression::ASTC;
+        }
+        else if (!Square::case_insensitive_equal(images_str, "bc"))
+        {
+            std::cout << "unknown images mode: " << images_str << " (bc, astc, png, keep)" << std::endl;
             return -1;
         }
     }
@@ -463,7 +477,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
         , false                                // Debug
       }
     , "ModelImporter"
-    , new ModelImporter(input_model_path, output_model_path, output_model_name, output_model_format, modes, shadow_resoluction, convert_images)
+    , new ModelImporter(input_model_path, output_model_path, output_model_name, output_model_format, modes, shadow_resoluction, convert_images, compression)
     );
     // End
     return 0;

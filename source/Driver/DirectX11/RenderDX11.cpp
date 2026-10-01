@@ -481,6 +481,9 @@ namespace Render
 		context->s_render_driver_info.m_geometry_shader = true;
 		//DirectX 11 supports instanced draw calls (DrawInstanced / DrawIndexedInstanced)
 		context->s_render_driver_info.m_draw_instanced = true;
+		//BC1-BC5 are core since DirectX 10, ASTC is not in DirectX
+		context->s_render_driver_info.m_texture_bc = true;
+		context->s_render_driver_info.m_texture_astc = false;
 		//Writing SV_RenderTargetArrayIndex from the vertex shader (without a GS) requires
 		//VPAndRTArrayIndexFromAnyShaderFeedingRasterizer (D3D11.3 / feature level 11.1+);
 		//otherwise the geometry-shader techniques are used to route the layered shadows.
@@ -2024,6 +2027,12 @@ namespace Render
 		case TF_DEPTH_COMPONENT16: return DXGI_FORMAT_D16_UNORM; break;
 		//case TF_DEPTH_COMPONENT24: return GL_DEPTH_COMPONENT24; break;
 		case TF_DEPTH_COMPONENT32: return DXGI_FORMAT_D32_FLOAT; break;
+		///////////////////
+		//COMPRESSED (no ASTC in DirectX)
+		case TF_BC1: return sRGB ? DXGI_FORMAT_BC1_UNORM_SRGB : DXGI_FORMAT_BC1_UNORM; break;
+		case TF_BC3: return sRGB ? DXGI_FORMAT_BC3_UNORM_SRGB : DXGI_FORMAT_BC3_UNORM; break;
+		case TF_BC4: return DXGI_FORMAT_BC4_UNORM; break;
+		case TF_BC5: return DXGI_FORMAT_BC5_UNORM; break;
 
 		default: return DXGI_FORMAT_FORCE_UINT; break;
 		}
@@ -2315,19 +2324,28 @@ namespace Render
 		UINT pixel_size = get_textut_pixel_size(data.m_format);
 		D3D11_USAGE usage = info.m_read_from_cpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
 		UINT cpu_access_flags = info.m_read_from_cpu ? D3D11_CPU_ACCESS_READ : 0;
-		UINT mip_levels = texture_mip_levels(info, data.m_width, data.m_height);
-		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
+		//compressed: the levels are given (no mipmaps built, not a render target)
+		const bool compressed = is_compressed_format(data.m_format);
+		UINT mip_levels = compressed ? (data.m_levels ? data.m_levels : 1) : texture_mip_levels(info, data.m_width, data.m_height);
+		const bool build_mipmap = info.m_build_mipmap && !compressed;
+		UINT misc_flags = build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
 		//format
 		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format, data.m_is_srgb);
+		if (texture_format_raw == DXGI_FORMAT_FORCE_UINT)
+		{
+			m_errors.push_back({ "create_texture: format not supported" });
+			print_errors();
+			return nullptr;
+		}
 		bool	    depth_target        = is_depth_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_data = texture_depth_to_typeless_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_resource = texture_depth_to_resource_format(texture_format_raw);
 		//render target
-		if (depth_target) bind_flags |= D3D11_BIND_DEPTH_STENCIL;
-		else              bind_flags |= D3D11_BIND_RENDER_TARGET;
+		if (depth_target)     bind_flags |= D3D11_BIND_DEPTH_STENCIL;
+		else if (!compressed) bind_flags |= D3D11_BIND_RENDER_TARGET;
 		//new image if need
-		auto new_image = Unique<const unsigned char[]> (add_alpha_if_need(allocator(), data.m_bytes, data.m_width, data.m_height, data.m_format), DefaultDelete(allocator()));
+		auto new_image = Unique<const unsigned char[]> (compressed ? nullptr : add_alpha_if_need(allocator(), data.m_bytes, data.m_width, data.m_height, data.m_format), DefaultDelete(allocator()));
 		//if new image alloc, point to new image
 		if (new_image.get())
 		{
@@ -2353,7 +2371,18 @@ namespace Render
 		if (dx_op_success(device()->CreateTexture2D(&texture_desc, nullptr, &d11_texture)))
 		{
 			//upload
-			if (texture_bytes)
+			if (texture_bytes && compressed)
+			{
+				//every level, rows of blocks
+				for (UINT level = 0; level < mip_levels; ++level)
+				{
+					const UINT level_width  = texture_level_size(data.m_width, level);
+					const UINT level_height = texture_level_size(data.m_height, level);
+					device_context()->UpdateSubresource(d11_texture, level, nullptr, texture_bytes, texture_block_row_bytes(data.m_format, level_width), 0);
+					texture_bytes += texture_level_bytes(data.m_format, level_width, level_height);
+				}
+			}
+			else if (texture_bytes)
 			{
 				device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes, (data.m_width * pixel_size), 0);
 			}
@@ -2379,7 +2408,7 @@ namespace Render
 			s_resource_view.Format = texture_format_resource;
 			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			s_resource_view.Texture2D.MostDetailedMip = 0;
-			s_resource_view.Texture2D.MipLevels = info.m_build_mipmap ? -1 : mip_levels;
+			s_resource_view.Texture2D.MipLevels = build_mipmap ? -1 : mip_levels;
 			//try
 			if (!dx_op_success(device()->CreateShaderResourceView(d11_texture, &s_resource_view, &texture2D->m_resource_view)))
 			{
@@ -2388,7 +2417,7 @@ namespace Render
 				return texture2D;
 			}
 			//build
-			if (info.m_build_mipmap)
+			if (build_mipmap)
 			{
 				device_context()->GenerateMips(texture2D->m_resource_view);
 			}

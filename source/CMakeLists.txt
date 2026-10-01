@@ -113,12 +113,14 @@ target_include_directories(Square PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/zlib
     ${CMAKE_SOURCE_DIR}/dependencies/glm
     ${CMAKE_SOURCE_DIR}/dependencies/HLSL2ALL/include
+    ${CMAKE_SOURCE_DIR}/dependencies/astc-encoder/Source
 )
 
 # Link libraries
 target_link_libraries(Square PRIVATE 
     HLSL2ALL 
     zlibstatic
+    ${SQUARE_ASTCENC_LIBRARY}
     ${OS_LIBS}
 )
 

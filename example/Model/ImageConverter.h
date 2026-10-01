@@ -31,4 +31,20 @@ namespace ImageConverter
     //a normal map of glTF (OpenGL: green up) for the engine (DirectX: green down, the shaders
     //invert it): a PNG RGB/RGBA with the green inverted; kept as it is if it cannot be decoded
     Result convert_normal_map(const std::vector<unsigned char>& file);
+
+    //the compression of the textures in the GPU (--images bc, the default; astc)
+    enum class Compression
+    {
+        NONE,
+        BC,   //DDS: BC5 the normal maps (the shaders rebuild z), BC3 with alpha, else BC1
+        ASTC  //KTX: ASTC 4x4 (Apple GPUs, mobiles; not the desktop ones)
+    };
+
+    //the extension of the files of a compression (".dds", ".ktx")
+    std::string extension(Compression compression);
+
+    //the image (a file the engine reads: the m_data of convert/convert_normal_map) compressed,
+    //with its levels down to 1x1 (box filter; the normal maps normalized); m_data empty when it
+    //cannot be (not decoded; BC: a size not a multiple of 4, DirectX wants it)
+    Result compress(const std::vector<unsigned char>& file, bool normal_map, Compression compression);
 }

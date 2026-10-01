@@ -23,6 +23,15 @@ if(UNIX AND NOT APPLE)
 endif()
 add_subdirectory(${PROJECT_SOURCE_DIR}/dependencies/zlib EXCLUDE_FROM_ALL)
 
+# ASTC encoder (the textures of the tools, as Model): only the static library, with the SIMD of
+# the compiler defaults (one target on every platform: astcenc-native-static)
+set(ASTCENC_CLI OFF CACHE BOOL "Do not build the astcenc command line tools" FORCE)
+set(ASTCENC_WERROR OFF CACHE BOOL "Do not treat the astcenc warnings as errors" FORCE)
+set(ASTCENC_UNIVERSAL_BUILD OFF CACHE BOOL "One astcenc library also on macOS" FORCE)
+set(ASTCENC_ISA_NATIVE ON CACHE BOOL "astcenc with the SIMD of the compiler defaults" FORCE)
+add_subdirectory(${PROJECT_SOURCE_DIR}/dependencies/astc-encoder EXCLUDE_FROM_ALL)
+set(SQUARE_ASTCENC_LIBRARY astcenc-native-static)
+
 # Driver texture/render target introspection (debug texture panel):
 # defined here so EVERY target in the tree inherits it (Square, the render
 # backends — C++ and Objective-C++ — and the examples/game), only in Debug.
