@@ -106,13 +106,15 @@ namespace Render
 		m_size = size;
 		//the occlusion target is on the G-Buffer that is replaced
 		if (m_occlusion_target) render().delete_render_target(m_occlusion_target);
-		//G-Buffer: position/normal/albedo/emissive + depth
+		//G-Buffer: position/normal/albedo/emissive + depth (36 bytes per pixel): the world position
+		//needs 32 bit floats (lights, shadows, SSAO and SSR far from the origin); normal and
+		//roughness/shininess and the HDR emissive fit 16 bit floats; albedo and metallic are in [0, 1]
 		std::vector<GBuffer::BufferFormat> formats
 		{
-			GBuffer::BufferFormat(),                                                   // GB_POSITION
-			GBuffer::BufferFormat(),                                                   // GB_NORMAL
-			GBuffer::BufferFormat(),                                                   // GB_ALBEDO
-			GBuffer::BufferFormat(),                                                   // GB_EMISSIVE
+			GBuffer::BufferFormat(TF_RGBA32F, TT_RGBA, TTF_FLOAT, RT_COLOR),          // GB_POSITION
+			GBuffer::BufferFormat(TF_RGBA16F, TT_RGBA, TTF_FLOAT, RT_COLOR),          // GB_NORMAL
+			GBuffer::BufferFormat(TF_RGBA8,   TT_RGBA, TTF_UNSIGNED_BYTE, RT_COLOR),  // GB_ALBEDO
+			GBuffer::BufferFormat(TF_RGBA16F, TT_RGBA, TTF_FLOAT, RT_COLOR),          // GB_EMISSIVE
 			//same depth format as the screen (24 bit + 8 stencil): copying the depth to the screen at the end
 			//of the pass needs matching formats (D3D11 CopySubresourceRegion, GL glBlitFramebuffer)
 			GBuffer::BufferFormat(TF_DEPTH24_STENCIL8, TT_DEPTH_STENCIL, TTF_UNSIGNED_INT_24_8, RT_DEPTH) // GB_DEPTH
