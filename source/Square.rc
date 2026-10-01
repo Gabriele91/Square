@@ -1,0 +1,8 @@
+//
+//  Square.rc
+//  Square
+//
+//  The resources of Square.dll: the icon of the splash screen (Render/SplashScreen.cpp), found
+//  in the include paths of the resources (common/texture, from CMake)
+//
+SQUARE_SPLASH_IMAGE RCDATA "square_icon.png"

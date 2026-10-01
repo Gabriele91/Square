@@ -38,7 +38,7 @@ set(OS_LIBS "")
 set(INSTALL_DY_LIBS "")
 if(WIN32)
     file(GLOB WIN_SRC Driver/Win32/*.cpp)
-    list(APPEND OS_SOURCES ${WIN_SRC})
+    list(APPEND OS_SOURCES ${WIN_SRC} Square.rc)
     list(APPEND OS_FLAGS SQUARE_LIBRARY_EXPORT
                          HLSL2ALL_LIBRARY_IMPORT
                          _CRT_SECURE_NO_WARNINGS
@@ -115,6 +115,19 @@ target_include_directories(Square PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/HLSL2ALL/include
     ${CMAKE_SOURCE_DIR}/dependencies/astc-encoder/Source
 )
+
+# Splash screen (Render/SplashScreen.cpp): the icon inside the library, a resource of Square.dll
+# on Windows (Square.rc), the .incbin of its path elsewhere
+set(SQUARE_SPLASH_IMAGE ${CMAKE_SOURCE_DIR}/common/texture/square_icon.png)
+if(WIN32)
+    target_include_directories(Square PRIVATE $<$<COMPILE_LANGUAGE:RC>:${CMAKE_SOURCE_DIR}/common/texture>)
+    set_source_files_properties(Square.rc PROPERTIES OBJECT_DEPENDS ${SQUARE_SPLASH_IMAGE})
+else()
+    set_source_files_properties(Render/SplashScreen.cpp PROPERTIES
+        COMPILE_DEFINITIONS "SQUARE_SPLASH_IMAGE_PATH=\"${SQUARE_SPLASH_IMAGE}\""
+        OBJECT_DEPENDS ${SQUARE_SPLASH_IMAGE}
+    )
+endif()
 
 # Link libraries
 target_link_libraries(Square PRIVATE 

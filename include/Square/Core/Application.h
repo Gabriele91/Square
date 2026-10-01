@@ -134,6 +134,10 @@ namespace Square
 		Render::Context* render();
 		//render driver asked to execute (used by the RenderSystem)
 		const WindowRenderDriver& render_driver() const;
+		//the splash screen of the engine (Render::SplashScreen): shown by execute while the
+		//application loads (before AppInterface::start); on by default
+		void splash_screen(bool enable);
+		bool splash_screen() const;
         //get attr (const)
         const AppInterface*   app_instance() const;
         Allocator*            allocator() const;
@@ -164,6 +168,7 @@ namespace Square
         WindowRenderDriver  m_render_driver;
 		//info instance
         AppInterface*       m_instance{ nullptr };
+		bool                m_splash_screen{ true };
 		//context (delta of update)
         double              m_last_delta_time{ 0 };
 		//context (application context)

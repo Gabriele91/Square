@@ -23,8 +23,8 @@ if(UNIX AND NOT APPLE)
 endif()
 add_subdirectory(${PROJECT_SOURCE_DIR}/dependencies/zlib EXCLUDE_FROM_ALL)
 
-# ASTC encoder (the textures of the tools, as Model): only the static library, with the SIMD of
-# the compiler defaults (one target on every platform: astcenc-native-static)
+# ASTC encoder (Data::Image::compress_astc, in Square): only the static library, with the SIMD
+# of the compiler defaults (one target on every platform: astcenc-native-static)
 set(ASTCENC_CLI OFF CACHE BOOL "Do not build the astcenc command line tools" FORCE)
 set(ASTCENC_WERROR OFF CACHE BOOL "Do not treat the astcenc warnings as errors" FORCE)
 set(ASTCENC_UNIVERSAL_BUILD OFF CACHE BOOL "One astcenc library also on macOS" FORCE)

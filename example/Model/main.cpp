@@ -463,6 +463,8 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
     }
     //srgb on
     const bool srgb = true;
+    //a tool: no splash screen
+    app.splash_screen(false);
     //test
     app.execute
 	(
