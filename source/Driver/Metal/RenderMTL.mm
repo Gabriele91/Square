@@ -732,6 +732,26 @@ void ContextMTL::apply_state_to_encoder()
     mtlvp.zfar    = 1.0;
     [m_encoder setViewport:mtlvp];
 
+    // Scissor: the rectangle in the viewport (Metal: inside the target), else the whole viewport
+    {
+        const NSInteger vp_x = NSInteger(std::max(0.0f, vp.x)), vp_y = NSInteger(std::max(0.0f, vp.y));
+        const NSInteger vp_w = NSInteger(std::max(0.0f, vp.z)), vp_h = NSInteger(std::max(0.0f, vp.w));
+        NSInteger x0 = vp_x, y0 = vp_y, x1 = vp_x + vp_w, y1 = vp_y + vp_h;
+        if (m_scissor_state.m_enable)
+        {
+            x0 = std::max<NSInteger>(x0, vp_x + m_scissor_state.m_rect.x);
+            y0 = std::max<NSInteger>(y0, vp_y + m_scissor_state.m_rect.y);
+            x1 = std::min<NSInteger>(x1, vp_x + m_scissor_state.m_rect.x + m_scissor_state.m_rect.z);
+            y1 = std::min<NSInteger>(y1, vp_y + m_scissor_state.m_rect.y + m_scissor_state.m_rect.w);
+        }
+        MTLScissorRect scissor;
+        scissor.x      = NSUInteger(x0);
+        scissor.y      = NSUInteger(y0);
+        scissor.width  = NSUInteger(std::max<NSInteger>(0, x1 - x0));
+        scissor.height = NSUInteger(std::max<NSInteger>(0, y1 - y0));
+        [m_encoder setScissorRect:scissor];
+    }
+
     [m_encoder setFrontFacingWinding:MTLWindingClockwise]; // match DX11/HLSL CW convention
     [m_encoder setCullMode:to_mtl_cull(m_render_state.m_cullface.m_cullface)];
     [m_encoder setDepthStencilState:get_or_create_ds()];
@@ -842,6 +862,9 @@ void ContextMTL::set_cullface_state(const CullfaceState& s) { m_render_state.m_c
 
 const ViewportState& ContextMTL::get_viewport_state() { return m_render_state.m_viewport; }
 void ContextMTL::set_viewport_state(const ViewportState& s) { m_render_state.m_viewport = s; }
+
+const ScissorState& ContextMTL::get_scissor_state() { return m_scissor_state; }
+void ContextMTL::set_scissor_state(const ScissorState& s) { m_scissor_state = s; }
 
 const BlendState& ContextMTL::get_blend_state() { return m_render_state.m_blend; }
 void ContextMTL::set_blend_state(const BlendState& s) { m_render_state.m_blend = s; }
