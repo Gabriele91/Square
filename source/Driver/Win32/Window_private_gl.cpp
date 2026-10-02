@@ -255,6 +255,8 @@ namespace Win32
 			{
 				SetWindowLongPtr(m_hWnd, GWL_EXSTYLE, m_last_window_exstyle);
 				SetWindowLongPtr(m_hWnd, GWL_STYLE, m_last_window_style);
+				//no more maximized (SW_MAXIMIZE of the fullscreen), else it keeps the work area
+				ShowWindow(m_hWnd, SW_SHOWNORMAL);
 				//calc size window
 				unsigned int last_window_real_size[2] = { 0,0 };
 				compute_window_size(m_last_window_size, last_window_real_size);

@@ -33,6 +33,10 @@ namespace Win32
 		HRESULT release_backbuffer();
 		HRESULT go_fullscreen(UINT width = 0, UINT height = 0);
 		HRESULT go_windowed(UINT width = 0, UINT height = 0);
+		//go_windowed in two steps: out of the fullscreen of DXGI (before the window is restored,
+		//else DXGI puts back its own window), then the back buffer (0: the client area)
+		HRESULT leave_fullscreen();
+		HRESULT resize_backbuffer(UINT width = 0, UINT height = 0);
 
 		//on change
 		virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
@@ -341,6 +345,21 @@ namespace Win32
 		return hr;
 	}
 
+	HRESULT DeviceResourcesDX::leave_fullscreen()
+	{
+		return m_DXGI_swap_chain->SetFullscreenState(FALSE, NULL);
+	}
+
+	HRESULT DeviceResourcesDX::resize_backbuffer(UINT width, UINT height)
+	{
+		HRESULT hr = S_OK;
+		release_backbuffer();
+		hr = m_DXGI_swap_chain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+		hr = configure_backbuffer();
+		callback_target_changed();
+		return hr;
+	}
+
 	HRESULT DeviceResourcesDX::go_windowed(UINT width, UINT height)
 	{
 		HRESULT hr = S_OK;
@@ -534,18 +553,23 @@ namespace Win32
 				ShowWindow(m_hWnd, SW_MAXIMIZE);
 				//update
 				m_info.m_fullscreen = enable;
-				//device fullscreen mode
-				if (m_device) m_device->go_fullscreen(m_info.m_size[0], m_info.m_size[1]);
+				//device fullscreen mode, the back buffer of the client area (the mode the screen
+				//took, not always the size asked)
+				if (m_device) m_device->go_fullscreen(0, 0);
 			}
 		}
 		else
 		{
+			//DXGI out of the fullscreen first: it restores a window of its own
+			if (m_device) m_device->leave_fullscreen();
 			is_change_successful = ChangeDisplaySettings(NULL, CDS_RESET) == DISP_CHANGE_SUCCESSFUL;
 			//change only if a success
 			if (is_change_successful)
 			{
 				SetWindowLongPtr(m_hWnd, GWL_EXSTYLE, m_last_window_exstyle);
 				SetWindowLongPtr(m_hWnd, GWL_STYLE, m_last_window_style);
+				//no more maximized (SW_MAXIMIZE of the fullscreen), else it keeps the work area
+				ShowWindow(m_hWnd, SW_SHOWNORMAL);
 				//calc size window
 				unsigned int last_window_real_size[2] = { 0,0 };
 				compute_window_size(m_last_window_size, last_window_real_size);
@@ -562,8 +586,8 @@ namespace Win32
 				//update
 				m_info.m_fullscreen = enable;
 				//device fullscreen mode
-				//(the back buffer: the client area, not the window with its borders)
-				if (m_device) m_device->go_windowed(m_last_window_size[0], m_last_window_size[1]);
+				//the back buffer: the client area of the window restored
+				if (m_device) m_device->resize_backbuffer(0, 0);
 			}
 		}
 		//show window
