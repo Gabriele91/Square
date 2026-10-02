@@ -30,7 +30,8 @@ file(GLOB SOURCES Core/*.cpp
                   Render/*.cpp
                   Resource/*.cpp
                   Scene/*.cpp
-                  System/*.cpp)
+                  System/*.cpp
+                  UI/*.cpp)
 
 set(OS_FLAGS "")
 set(OS_SOURCES "")
@@ -134,6 +135,7 @@ target_link_libraries(Square PRIVATE
     HLSL2ALL 
     zlibstatic
     ${SQUARE_ASTCENC_LIBRARY}
+    ${SQUARE_RMLUI_LIBRARIES}
     ${OS_LIBS}
 )
 

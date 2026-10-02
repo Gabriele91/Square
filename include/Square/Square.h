@@ -28,6 +28,8 @@
 #include "Square/System/RenderSystem.h"
 #include "Square/System/InputSystem.h"
 #include "Square/System/SceneSystem.h"
+#include "Square/System/UISystem.h"
+#include "Square/UI/Context.h"
 /* --- Math --- */
 #include "Square/Math/Linear.h"
 #include "Square/Math/Tangent.h"

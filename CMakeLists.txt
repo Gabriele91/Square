@@ -32,6 +32,25 @@ set(ASTCENC_ISA_NATIVE ON CACHE BOOL "astcenc with the SIMD of the compiler defa
 add_subdirectory(${PROJECT_SOURCE_DIR}/dependencies/astc-encoder EXCLUDE_FROM_ALL)
 set(SQUARE_ASTCENC_LIBRARY astcenc-native-static)
 
+# FreeType (the fonts of RmlUi): static, without its optional dependencies
+set(FT_DISABLE_ZLIB ON CACHE BOOL "FreeType without zlib" FORCE)
+set(FT_DISABLE_BZIP2 ON CACHE BOOL "FreeType without bzip2" FORCE)
+set(FT_DISABLE_PNG ON CACHE BOOL "FreeType without libpng" FORCE)
+set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "FreeType without HarfBuzz" FORCE)
+set(FT_DISABLE_BROTLI ON CACHE BOOL "FreeType without Brotli" FORCE)
+set(SKIP_INSTALL_ALL ON CACHE BOOL "Skip install step" FORCE)
+add_subdirectory(${PROJECT_SOURCE_DIR}/dependencies/freetype EXCLUDE_FROM_ALL)
+if(NOT TARGET Freetype::Freetype)
+    add_library(Freetype::Freetype ALIAS freetype)
+endif()
+
+# RmlUi (Square::UI, in Square): the static core and the debugger, FreeType fonts, no samples
+set(RMLUI_FONT_ENGINE "freetype" CACHE STRING "RmlUi with the FreeType font engine" FORCE)
+set(RMLUI_SAMPLES OFF CACHE BOOL "No RmlUi samples" FORCE)
+set(RMLUI_BACKEND "native" CACHE STRING "No RmlUi backend (the one of Square)" FORCE)
+add_subdirectory(${PROJECT_SOURCE_DIR}/dependencies/RmlUi EXCLUDE_FROM_ALL)
+set(SQUARE_RMLUI_LIBRARIES RmlUi::Core RmlUi::Debugger)
+
 # Driver texture/render target introspection (debug texture panel):
 # defined here so EVERY target in the tree inherits it (Square, the render
 # backends — C++ and Objective-C++ — and the examples/game), only in Debug.

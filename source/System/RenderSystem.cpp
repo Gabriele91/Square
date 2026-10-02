@@ -189,7 +189,24 @@ namespace Square
 	void RenderSystem::late_update(double delta_time)
 	{
 		draw();
+		if (m_render)
+		{
+			for (auto* overlay : m_overlays) overlay->draw_overlay(*m_render);
+		}
 		present();
+	}
+
+	void RenderSystem::add_overlay(RenderOverlay* overlay)
+	{
+		if (overlay && std::find(m_overlays.begin(), m_overlays.end(), overlay) == m_overlays.end())
+		{
+			m_overlays.push_back(overlay);
+		}
+	}
+
+	void RenderSystem::remove_overlay(RenderOverlay* overlay)
+	{
+		m_overlays.erase(std::remove(m_overlays.begin(), m_overlays.end(), overlay), m_overlays.end());
 	}
 
 	Shared<SystemInstance> RenderSystem::create_instance(Scene::World& world)

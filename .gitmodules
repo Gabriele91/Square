@@ -13,3 +13,9 @@
 [submodule "dependencies/astc-encoder"]
 	path = dependencies/astc-encoder
 	url = https://github.com/ARM-software/astc-encoder.git
+[submodule "dependencies/RmlUi"]
+	path = dependencies/RmlUi
+	url = https://github.com/mikke89/RmlUi.git
+[submodule "dependencies/freetype"]
+	path = dependencies/freetype
+	url = https://github.com/freetype/freetype.git
