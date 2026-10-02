@@ -37,6 +37,14 @@ namespace Square
 		RP_DEBUG    = 0b100
 	};
 
+	//what is drawn on the frame after the worlds, before it is shown (the UI): RenderSystem::add_overlay
+	class SQUARE_API RenderOverlay
+	{
+	public:
+		virtual ~RenderOverlay() {}
+		virtual void draw_overlay(Render::Context& render) = 0;
+	};
+
 	class SQUARE_API RenderSystem : public System
 	{
 	public:
@@ -69,6 +77,10 @@ namespace Square
 		void draw();
 		void present();
 
+		//the overlays, in their order (not owned: removed before they go)
+		void add_overlay(RenderOverlay* overlay);
+		void remove_overlay(RenderOverlay* overlay);
+
 	protected:
 		//device
 		Render::Context*         m_render{ nullptr };
@@ -77,6 +89,7 @@ namespace Square
 		bool m_ready{ false };
 		//worlds
 		std::vector< Weak<RenderInstance> > m_instances;
+		std::vector< RenderOverlay* >       m_overlays;
 		//the instances alive
 		std::vector< Shared<RenderInstance> > instances();
 	};

@@ -22,6 +22,21 @@
 namespace Square
 {
 	//..................
+	//who wants the events of the input as they come, before the state of the frame (the UI):
+	//InputSystem::add_listener
+	class SQUARE_API InputListener
+	{
+	public:
+		virtual ~InputListener() {}
+		virtual void on_key(Video::KeyboardEvent key, short mode, Video::ActionEvent action) {}
+		virtual void on_character(int character, short mode) {}
+		virtual void on_mouse_button(Video::MouseButtonEvent button, Video::ActionEvent action) {}
+		virtual void on_mouse_move(const Vec2& position) {}
+		virtual void on_mouse_scroll(float scroll) {}
+		virtual void on_window(Video::WindowEvent event) {}
+	};
+
+	//..................
 	class SQUARE_API InputSystem : public System
 	{
 	public:
@@ -45,6 +60,10 @@ namespace Square
 
 		//the window was asked to close
 		bool close_requested() const;
+
+		//the listeners of the events (not owned: removed before they go)
+		void add_listener(InputListener* listener);
+		void remove_listener(InputListener* listener);
 
 		//keys: held, went down in this frame, went up in this frame
 		bool down(Video::KeyboardEvent key) const;
@@ -87,6 +106,7 @@ namespace Square
 
 		Video::Input* m_input{ nullptr };
 		bool          m_close_requested{ false };
+		std::vector<InputListener*> m_listeners;
 		//state of the frame, and the next one
 		std::array<Button, KEY_COUNT>    m_keys;
 		std::array<Button, KEY_COUNT>    m_keys_next;

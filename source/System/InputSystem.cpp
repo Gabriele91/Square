@@ -45,25 +45,34 @@ namespace Square
 		m_input->subscrive_keyboard_listener([this, app](Video::KeyboardEvent key, short mode, Video::ActionEvent action)
 		{
 			if (key >= 0 && size_t(key) < KEY_COUNT) change(m_keys_next[size_t(key)], action);
+			for (auto* listener : m_listeners) listener->on_key(key, mode, action);
 			if (auto* instance = app()) instance->key_event(key, mode, action);
+		});
+		m_input->subscrive_character_listener([this](int character, short mode, int /*plain*/)
+		{
+			for (auto* listener : m_listeners) listener->on_character(character, mode);
 		});
 		m_input->subscrive_mouse_move_listener([this, app](double x, double y)
 		{
 			m_mouse_next = Vec2(float(x), float(y));
+			for (auto* listener : m_listeners) listener->on_mouse_move(m_mouse_next);
 			if (auto* instance = app()) instance->mouse_move_event(DVec2(x, y));
 		});
 		m_input->subscrive_mouse_button_listener([this, app](Video::MouseButtonEvent button, Video::ActionEvent action)
 		{
 			if (button >= 0 && size_t(button) < BUTTON_COUNT) change(m_buttons_next[size_t(button)], action);
+			for (auto* listener : m_listeners) listener->on_mouse_button(button, action);
 			if (auto* instance = app()) instance->mouse_button_event(button, action);
 		});
 		m_input->subscrive_mouse_scroll_listener([this, app](double scroll)
 		{
 			m_scroll_next += float(scroll);
+			for (auto* listener : m_listeners) listener->on_mouse_scroll(float(scroll));
 			if (auto* instance = app()) instance->mouse_scroll_event(scroll);
 		});
 		m_input->subscrive_window_listener([this, app](Video::WindowEvent event)
 		{
+			for (auto* listener : m_listeners) listener->on_window(event);
 			if (auto* instance = app()) instance->window_event(event);
 			if (event == Video::WindowEvent::CLOSE) m_close_requested = true;
 			//no focus: no key is held any more (their release goes to another window)
@@ -123,6 +132,19 @@ namespace Square
 		//pressed and released in the same frame: both seen
 		state = next;
 		for (auto& button : next) button.pressed = button.released = false;
+	}
+
+	void InputSystem::add_listener(InputListener* listener)
+	{
+		if (listener && std::find(m_listeners.begin(), m_listeners.end(), listener) == m_listeners.end())
+		{
+			m_listeners.push_back(listener);
+		}
+	}
+
+	void InputSystem::remove_listener(InputListener* listener)
+	{
+		m_listeners.erase(std::remove(m_listeners.begin(), m_listeners.end(), listener), m_listeners.end());
 	}
 
 	Video::Input* InputSystem::input() const

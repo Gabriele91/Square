@@ -1021,7 +1021,7 @@ namespace Video
 		else                                                           button = MouseButtonEvent::MOUSE_BUTTON_5;
 		//action
 		action = ( message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN 
-				|| message == WM_MBUTTONDOWN || message == WM_XBUTTONDOWN) ? ActionEvent::RELEASE : ActionEvent::PRESS;
+				|| message == WM_MBUTTONDOWN || message == WM_XBUTTONDOWN) ? ActionEvent::PRESS : ActionEvent::RELEASE;
 
 		return { button,action };
 	}
@@ -1123,7 +1123,8 @@ namespace Video
 		{
 			if (wParam == SIZE_MINIMIZED) wnd_input->send_window_event(WindowEvent::MINIMIZED);
 			if (wParam == SIZE_MAXIMIZED) wnd_input->send_window_event(WindowEvent::MAXIMIZED);
-			if (wParam == SIZE_RESTORED)
+			//restored or maximized (also the fullscreen): a new size
+			if (wParam == SIZE_RESTORED || wParam == SIZE_MAXIMIZED)
 			{
 				//wnd_window->m_info.m_size[0] = LOWORD(lParam);
 				//wnd_window->m_info.m_size[1] = HIWORD(lParam);

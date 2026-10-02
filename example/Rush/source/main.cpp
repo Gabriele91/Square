@@ -26,141 +26,15 @@ public:
 	void key_event(Square::Video::KeyboardEvent key, short mode, Square::Video::ActionEvent action)
 	{
 		using namespace Square;
-		using namespace Square::Data;
-		using namespace Square::Scene;
-		using namespace Square::Resource;
-		//move vel
-		const auto  level_path = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.sq");
-		const auto  level_path_json = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.jsq");
-		//
+		//the options, the debug views and the level: in the menu
 		switch (key)
 		{
-		case Square::Video::KEY_ESCAPE:
-		case Square::Video::KEY_DELETE: m_loop = false; break;
-		case Square::Video::KEY_V: Square::Application::instance()->fullscreen(false); break;
-		case Square::Video::KEY_G: Square::Application::instance()->fullscreen(true); break;
-		case Square::Video::KEY_J:
-			serialize_json(level_path_json);
+		case Video::KEY_ESCAPE:
+			if (action == Video::ActionEvent::RELEASE) menu(!m_menu.visible());
 		break;
-		case Square::Video::KEY_M:
-			if (Square::Filesystem::exists(level_path_json))
-				deserialize_json(level_path_json);
-		break;
-		case Square::Video::KEY_B:
-			serialize(level_path);
-		break;
-		case Square::Video::KEY_N:
-			if (Square::Filesystem::exists(level_path))
-				deserialize(level_path);
-		break;
-		case Square::Video::KEY_O:
-			if (action == Square::Video::ActionEvent::PRESS)
-			if (render_debug())
-			{
-				render_debug()->draw_flags(render_debug()->draw_flags() ^ Render::DF_DRAW_OBB);
-			}
-		break;
-		case Square::Video::KEY_X:
-			//toggle the debug view of the collisions (mesh colliders, spheres, contacts)
-			if (action == Square::Video::ActionEvent::PRESS)
-			if (auto collision = world().instance<CollisionWorld>())
-			{
-				collision->debug(!collision->debug());
-			}
-		break;
-		case Square::Video::KEY_L:
-			//toggle the light volumes (spot cone, point cube faces, directional CSM cascades)
-			if (action == Square::Video::ActionEvent::PRESS)
-			if (render_debug())
-			{
-				render_debug()->draw_flags(render_debug()->draw_flags() ^ (Render::DF_DRAW_SPOT_LIGHT | Render::DF_DRAW_POINT_LIGHT | Render::DF_DRAW_DIRECTIONAL_LIGHT));
-			}
-		break;
-		case Square::Video::KEY_T:
-			//toggle the texture panel (images/TBO/RBO)
-			if (action == Square::Video::ActionEvent::PRESS)
-			if (render_debug())
-			{
-				render_debug()->draw_flags(render_debug()->draw_flags() ^ Render::DB_DRAW_TEXTURES);
-			}
-		break;
-		case Square::Video::KEY_C:
-			if (action == Square::Video::ActionEvent::RELEASE)
-			{
-				context().logger()->info("FPS avg: " + std::to_string(m_counter.get()));
-			}
-			break;
-		case Square::Video::KEY_K:
-			if (action == Square::Video::ActionEvent::RELEASE && m_ssao)
-			{
-				m_ssao->enabled(!m_ssao->enabled());
-				context().logger()->info(std::string("SSAO: ") + (m_ssao->enabled() ? "on" : "off"));
-			}
-			break;
-		case Square::Video::KEY_U:
-			//SSAO debug view: the occlusion on the screen
-			if (action == Square::Video::ActionEvent::RELEASE && m_ssao)
-			{
-				auto settings = m_ssao->settings();
-				settings.debug = !settings.debug;
-				m_ssao->settings(settings);
-			}
-			break;
-		case Square::Video::KEY_H:
-			if (action == Square::Video::ActionEvent::RELEASE && m_bloom)
-			{
-				m_bloom->enabled(!m_bloom->enabled());
-				context().logger()->info(std::string("Bloom: ") + (m_bloom->enabled() ? "on" : "off"));
-			}
-			break;
-		case Square::Video::KEY_I:
-			//bloom debug view: only the bloom on the screen
-			if (action == Square::Video::ActionEvent::RELEASE && m_bloom)
-			{
-				auto settings = m_bloom->settings();
-				settings.debug = !settings.debug;
-				m_bloom->settings(settings);
-			}
-			break;
-		case Square::Video::KEY_F:
-			//the player's hovercraft all mirror: the SSR on it
-			if (action == Square::Video::ActionEvent::RELEASE)
-			{
-				m_mirror = !m_mirror;
-				mirror(m_mirror);
-				context().logger()->info(std::string("Mirror hovercraft: ") + (m_mirror ? "on" : "off"));
-			}
-			break;
-		case Square::Video::KEY_R:
-			if (action == Square::Video::ActionEvent::RELEASE && m_ssr)
-			{
-				m_ssr->enabled(!m_ssr->enabled());
-				context().logger()->info(std::string("SSR: ") + (m_ssr->enabled() ? "on" : "off"));
-			}
-			break;
-		case Square::Video::KEY_Y:
-			//SSR debug views: off, only the reflection, projection check
-			if (action == Square::Video::ActionEvent::RELEASE && m_ssr)
-			{
-				auto settings = m_ssr->settings();
-				settings.debug = (settings.debug + 1) % 3;
-				m_ssr->settings(settings);
-			}
-			break;
-		case Square::Video::KEY_P:
-			if (action == Square::Video::ActionEvent::RELEASE)
-			if (m_light && m_light->contains<DirectionLight>())
-			{
-				auto light = m_light->component<DirectionLight>();
-				light->visible(!light->visible());
-			}
-			break;
-		case Square::Video::KEY_SPACE:
+		case Video::KEY_SPACE:
 			//back on the ground at the start
-			if (action == Square::Video::ActionEvent::PRESS)
-			{
-				spawn(0);
-			}
+			if (action == Video::ActionEvent::PRESS) spawn(0);
 		break;
 		default: break;
 		}
@@ -189,6 +63,7 @@ public:
 		auto arena = load_arena();
 		load_light_beam(arena);
 		load_hovercraft();
+		setup_ui();
     }
 
 	//controls: the actions of the input system (read by the HovercraftInput of the player)
@@ -479,6 +354,8 @@ public:
 			if (racer.m_score >= s_winning_score)
 			{
 				context().logger()->info(&racer == &m_racers[0] ? std::string("You win!") : "You lose! (" + racer.m_name + " wins)");
+				const size_t winner = size_t(&racer - &m_racers[0]);
+				show_message(winner == 0 ? std::string("You win!") : std::string(s_ui_names[winner]) + " wins!");
 				for (auto& other : m_racers) other.m_score = 0;
 			}
 			break;
@@ -491,6 +368,8 @@ public:
 		m_acc += dt;
 		//fps counter
 		m_counter.count_frame();
+		//the HUD, the options of the menu
+		update_ui(dt);
 		//loop event
         return m_loop;
     }
@@ -597,6 +476,168 @@ public:
 		}
 	}
 
+	//UI: the HUD (scores, speed, the message of a match) and the menu (Esc: options, quit),
+	//documents of assets/ui with the data model "rush" (the variables of m_ui)
+	void setup_ui()
+	{
+		using namespace Square;
+		auto* ui_system = System::get<UISystem>(context());
+		if (!ui_system || !ui_system->ui().valid()) return;
+		UI::Context& ui = ui_system->ui();
+		UI::Context::load_font("common/ui/LatoLatin-Regular.ttf");
+		UI::Context::load_font("common/ui/LatoLatin-Bold.ttf");
+		//the model (before the documents)
+		m_ui_model = ui.create_data_model("rush");
+		m_ui_model.bind("winning_score", &m_ui.m_winning_score);
+		m_ui_model.bind("score_red", &m_ui.m_scores[0]);
+		m_ui_model.bind("score_blue", &m_ui.m_scores[1]);
+		m_ui_model.bind("score_green", &m_ui.m_scores[2]);
+		m_ui_model.bind("score_yellow", &m_ui.m_scores[3]);
+		m_ui_model.bind("speed", &m_ui.m_speed);
+		m_ui_model.bind("message", &m_ui.m_message);
+		m_ui_model.bind("message_visible", &m_ui.m_message_visible);
+		m_ui_model.bind("ssr", &m_ui.m_ssr.m_value);
+		m_ui_model.bind("bloom", &m_ui.m_bloom.m_value);
+		m_ui_model.bind("ssao", &m_ui.m_ssao.m_value);
+		m_ui_model.bind("mirror", &m_ui.m_mirror.m_value);
+		m_ui_model.bind("collisions", &m_ui.m_collisions.m_value);
+		m_ui_model.bind("fps", &m_ui.m_fps);
+		m_ui_model.bind("fullscreen", &m_ui.m_fullscreen.m_value);
+		m_ui_model.bind("sun", &m_ui.m_sun.m_value);
+		m_ui_model.bind("obb", &m_ui.m_obb.m_value);
+		m_ui_model.bind("lights", &m_ui.m_lights.m_value);
+		m_ui_model.bind("textures", &m_ui.m_textures.m_value);
+		m_ui_model.bind("ssr_debug", &m_ui.m_ssr_debug.m_value);
+		m_ui_model.bind("bloom_debug", &m_ui.m_bloom_debug.m_value);
+		m_ui_model.bind("ssao_debug", &m_ui.m_ssao_debug.m_value);
+		m_ui_model.bind("ui_debugger", &m_ui.m_ui_debugger.m_value);
+		//the documents
+		m_hud = ui.load("example/Rush/assets/ui/hud.rml");
+		m_hud.show();
+		m_menu = ui.load("example/Rush/assets/ui/menu.rml");
+		m_menu.find("resume").on(UI::EventType::CLICK, [this](UI::Event&) { menu(false); });
+		m_menu.find("quit").on(UI::EventType::CLICK, [this](UI::Event&) { m_loop = false; });
+		//the level: binary (.sq) and json (.jsq)
+		m_menu.find("save").on(UI::EventType::CLICK, [this](UI::Event&) { serialize(level_path(false)); });
+		m_menu.find("load").on(UI::EventType::CLICK, [this](UI::Event&) { if (Filesystem::exists(level_path(false))) deserialize(level_path(false)); });
+		m_menu.find("save_json").on(UI::EventType::CLICK, [this](UI::Event&) { serialize_json(level_path(true)); });
+		m_menu.find("load_json").on(UI::EventType::CLICK, [this](UI::Event&) { if (Filesystem::exists(level_path(true))) deserialize_json(level_path(true)); });
+	}
+
+	//the file of the level saved by the menu
+	static std::string level_path(bool json)
+	{
+		return Square::Filesystem::join(Square::Filesystem::resource_dir(), json ? "level.jsq" : "level.sq");
+	}
+
+	//the menu shown or hidden
+	void menu(bool show)
+	{
+		if (show) m_menu.show(true);
+		else      m_menu.hide();
+	}
+
+	//a message in the middle of the HUD for a while
+	void show_message(const std::string& message)
+	{
+		m_ui.m_message = message;
+		m_ui.m_message_visible = true;
+		m_ui.m_message_time = s_ui_message_time;
+	}
+
+	//the values of the HUD, the options of the menu, every frame
+	void update_ui(double delta_time)
+	{
+		using namespace Square;
+		if (!m_ui_model.valid()) return;
+		//scores, speed of the player (per step of 1/60 s: m/s, then km/h)
+		for (size_t id = 0; id < m_racers.size() && id < s_racers; ++id)
+		{ 
+			m_ui.m_scores[id] = m_racers[id].m_score;
+		}
+		m_ui.m_speed = m_racers.empty() || !m_racers[0].m_driver ? 0.0f : std::abs(m_racers[0].m_driver->speed()) * 60.0f * 3.6f;
+		//the message fades after its time
+		if (m_ui.m_message_time > 0.0)
+		{
+			m_ui.m_message_time -= delta_time;
+			if (m_ui.m_message_time <= 0.0)
+			{ 
+				m_ui.m_message_visible = false;
+			}
+		}
+		//the options: a check box of the menu changes the game, a key of the game the check box
+		auto collision = world().instance<CollisionWorld>();
+		sync_option(m_ui.m_ssr, m_ssr && m_ssr->enabled(), [this](bool value) { if (m_ssr) m_ssr->enabled(value); });
+		sync_option(m_ui.m_bloom, m_bloom && m_bloom->enabled(), [this](bool value) { if (m_bloom) m_bloom->enabled(value); });
+		sync_option(m_ui.m_ssao, m_ssao && m_ssao->enabled(), [this](bool value) { if (m_ssao) m_ssao->enabled(value); });
+		sync_option(m_ui.m_mirror, m_mirror, [this](bool value) { m_mirror = value; mirror(value); });
+		sync_option(m_ui.m_collisions, collision && collision->debug(), [collision](bool value) { if (collision) collision->debug(value); });
+		auto* app = Application::instance();
+		sync_option(m_ui.m_fullscreen, app && app->fullscreen(), [app](bool value) { if (app) app->fullscreen(value); });
+		auto sun = m_light && m_light->contains<Scene::DirectionLight>() ? m_light->component<Scene::DirectionLight>() : nullptr;
+		sync_option(m_ui.m_sun, sun && sun->visible(), [sun](bool value) { if (sun) sun->visible(value); });
+		//the debug views: of the world (flags of the debug pass), of the effects, of the UI
+		auto debug = render_debug();
+		auto has_flags = [&](unsigned char flags) { return debug && (debug->draw_flags() & flags) == flags; };
+		auto set_flags = [&](unsigned char flags, bool value)
+		{
+			if (debug) debug->draw_flags((unsigned char)(value ? debug->draw_flags() | flags : debug->draw_flags() & ~flags));
+		};
+		const unsigned char lights = Render::DF_DRAW_SPOT_LIGHT | Render::DF_DRAW_POINT_LIGHT | Render::DF_DRAW_DIRECTIONAL_LIGHT;
+		sync_option(m_ui.m_obb, has_flags(Render::DF_DRAW_OBB), [&](bool value) { set_flags(Render::DF_DRAW_OBB, value); });
+		sync_option(m_ui.m_lights, has_flags(lights), [&](bool value) { set_flags(lights, value); });
+		sync_option(m_ui.m_textures, has_flags(Render::DB_DRAW_TEXTURES), [&](bool value) { set_flags(Render::DB_DRAW_TEXTURES, value); });
+		sync_option(m_ui.m_ssr_debug, m_ssr ? m_ssr->settings().debug : 0, [this](int value)
+		{
+			if (!m_ssr) return;
+			auto settings = m_ssr->settings();
+			settings.debug = value;
+			m_ssr->settings(settings);
+		});
+		sync_option(m_ui.m_bloom_debug, m_bloom && m_bloom->settings().debug, [this](bool value)
+		{
+			if (!m_bloom) return;
+			auto settings = m_bloom->settings();
+			settings.debug = value;
+			m_bloom->settings(settings);
+		});
+		sync_option(m_ui.m_ssao_debug, m_ssao && m_ssao->settings().debug, [this](bool value)
+		{
+			if (!m_ssao) return;
+			auto settings = m_ssao->settings();
+			settings.debug = value;
+			m_ssao->settings(settings);
+		});
+		auto* ui_system = System::get<UISystem>(context());
+		sync_option(m_ui.m_ui_debugger, ui_system && ui_system->ui().debugger(), [ui_system](bool value) { if (ui_system) ui_system->ui().debugger(value); });
+		//the frames per second
+		m_ui.m_fps = float(m_counter.get());
+		m_ui_model.dirty_all();
+	}
+
+	//an option of the menu: m_value is the one of the check box (select), m_shown the last one it had
+	template < typename T >
+	struct UIOption
+	{
+		T m_value{};
+		T m_shown{};
+	};
+	template < typename T, typename Apply >
+	static void sync_option(UIOption<T>& option, T game, Apply apply)
+	{
+		//the check box changed: to the game
+		if (option.m_value != option.m_shown)
+		{
+			apply(option.m_value);
+			option.m_shown = option.m_value;
+		}
+		//the game changed (a key): to the check box
+		else if (option.m_value != game)
+		{
+			option.m_value = option.m_shown = game;
+		}
+	}
+
 	//the debug pass of the world (OBB, lights, textures): the RenderSystem draws the world
 	//every frame, the drawer of the world exists after start()
 	Square::Shared<Square::Render::DrawerPassDebug> render_debug()
@@ -628,7 +669,40 @@ private:
 	Square::Shared<Square::Render::SSAO>      m_ssao;
 	Square::Shared<Square::Render::Bloom>     m_bloom;
 	Square::Shared<Square::Render::SSR>       m_ssr;
-	bool                                      m_mirror{ false }; //F: the player's hovercraft all mirror
+	bool                                      m_mirror{ false }; //the player's hovercraft all mirror
+	//UI: the documents, the model, its variables
+	static constexpr const char* s_ui_names[s_racers]{ "You", "Blue", "Green", "Yellow" };
+	static constexpr double s_ui_message_time = 3.0; //seconds of a message of the HUD
+	struct UIState
+	{
+		int         m_winning_score{ s_winning_score };
+		int         m_scores[s_racers]{ 0, 0, 0, 0 };
+		float       m_speed{ 0.0f };
+		std::string m_message;
+		bool        m_message_visible{ false };
+		double      m_message_time{ 0.0 };
+		float       m_fps{ 0.0f };
+		//graphics
+		UIOption<bool> m_ssr;
+		UIOption<bool> m_bloom;
+		UIOption<bool> m_ssao;
+		UIOption<bool> m_fullscreen;
+		UIOption<bool> m_sun;
+		//debug
+		UIOption<bool> m_mirror;
+		UIOption<bool> m_collisions;
+		UIOption<bool> m_obb;
+		UIOption<bool> m_lights;
+		UIOption<bool> m_textures;
+		UIOption<int>  m_ssr_debug;
+		UIOption<bool> m_bloom_debug;
+		UIOption<bool> m_ssao_debug;
+		UIOption<bool> m_ui_debugger;
+	};
+	UIState                                   m_ui;
+	Square::UI::DataModel                     m_ui_model;
+	Square::UI::Document                      m_hud;
+	Square::UI::Document                      m_menu;
 	//starts of the hovercraft (spawn_point_1..4 of the arena, a fallback without them), the middle
 	//they face
 	std::array<Square::Vec3, s_racers>        m_starts{ s_start, s_start + Square::Vec3(10, 0, 0), s_start + Square::Vec3(0, 0, 10), s_start + Square::Vec3(10, 0, 10) };

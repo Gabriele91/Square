@@ -1,0 +1,112 @@
+/*
+ *  default.rcss
+ *  Square
+ *
+ *  The base styles of the UI documents (RML has no default style sheet): the block elements,
+ *  the text, the tables and the controls of a form. A document links it before its own:
+ *  <link type="text/rcss" href=".../common/ui/default.rcss"/>
+ *  The font (Lato, common/ui) is loaded by the game: UI::Context::load_font.
+ */
+
+body
+{
+	font-family: LatoLatin;
+	font-weight: normal;
+	font-style: normal;
+	font-size: 16dp;
+	color: #e8ecf2;
+}
+
+div, p, h1, h2, h3, h4, form, section, header, footer
+{
+	display: block;
+}
+
+h1 { font-size: 28dp; font-weight: bold; margin: 0 0 8dp 0; }
+h2 { font-size: 22dp; font-weight: bold; margin: 0 0 6dp 0; }
+h3 { font-size: 18dp; font-weight: bold; margin: 0 0 4dp 0; }
+p  { margin: 0 0 6dp 0; }
+
+em     { font-style: italic; }
+strong { font-weight: bold; }
+
+/* tables */
+table    { box-sizing: border-box; display: table; }
+tr       { box-sizing: border-box; display: table-row; }
+td       { box-sizing: border-box; display: table-cell; }
+col      { box-sizing: border-box; display: table-column; }
+colgroup { display: table-column-group; }
+thead, tbody, tfoot { display: table-row-group; }
+
+/* buttons */
+button, input.submit, input.button
+{
+	display: inline-block;
+	padding: 6dp 14dp;
+	border-radius: 4dp;
+	background-color: #2a3442;
+	color: #e8ecf2;
+	text-align: center;
+	cursor: pointer;
+}
+button:hover, input.submit:hover, input.button:hover { background-color: #3a4a5e; }
+button:active, input.submit:active, input.button:active { background-color: #1e2733; }
+button:disabled, input.submit:disabled, input.button:disabled { color: #7a8494; background-color: #20262f; }
+
+/* text fields */
+input.text, input.password, textarea
+{
+	display: inline-block;
+	padding: 4dp 6dp;
+	border: 1dp #4a5668;
+	border-radius: 3dp;
+	background-color: #11161d;
+	color: #e8ecf2;
+	cursor: text;
+}
+input.text:focus, input.password:focus, textarea:focus { border-color: #5aa0ff; }
+
+/* check boxes and radios */
+input.checkbox, input.radio
+{
+	display: inline-block;
+	width: 16dp;
+	height: 16dp;
+	vertical-align: middle;
+	border: 1dp #5a6678;
+	background-color: #11161d;
+	cursor: pointer;
+}
+input.checkbox { border-radius: 3dp; }
+input.radio    { border-radius: 8dp; }
+input.checkbox:checked, input.radio:checked { background-color: #5aa0ff; border-color: #5aa0ff; }
+
+/* sliders */
+input.range
+{
+	display: inline-block;
+	width: 160dp;
+	height: 16dp;
+	vertical-align: middle;
+}
+input.range slidertrack { margin-top: 6dp; height: 4dp; background-color: #3a4454; }
+input.range sliderbar   { width: 12dp; height: 16dp; border-radius: 3dp; background-color: #5aa0ff; }
+input.range sliderarrowdec, input.range sliderarrowinc { width: 0; height: 0; }
+
+/* selects */
+select
+{
+	display: inline-block;
+	padding: 4dp 6dp;
+	background-color: #2a3442;
+	text-align: left;
+	cursor: pointer;
+}
+select selectbox { background-color: #1a212b; }
+select selectbox option { padding: 4dp 6dp; }
+select selectbox option:hover { background-color: #3a4a5e; }
+
+/* scroll bars */
+scrollbarvertical   { width: 8dp; }
+scrollbarhorizontal { height: 8dp; }
+scrollbarvertical sliderbar, scrollbarhorizontal sliderbar { background-color: #4a5668; border-radius: 4dp; }

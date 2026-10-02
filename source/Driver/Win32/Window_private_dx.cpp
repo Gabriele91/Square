@@ -562,7 +562,8 @@ namespace Win32
 				//update
 				m_info.m_fullscreen = enable;
 				//device fullscreen mode
-				if (m_device) m_device->go_windowed(last_window_real_size[0], last_window_real_size[1]);
+				//(the back buffer: the client area, not the window with its borders)
+				if (m_device) m_device->go_windowed(m_last_window_size[0], m_last_window_size[1]);
 			}
 		}
 		//show window
