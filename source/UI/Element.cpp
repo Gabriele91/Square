@@ -55,10 +55,15 @@ namespace UI
 	std::vector<Element> Element::query_all(const std::string& selector) const
 	{
 		std::vector<Element> elements;
-		if (!m_element) return elements;
-		Rml::ElementList list;
-		m_element->QuerySelectorAll(list, selector);
-		for (Rml::Element* element : list) elements.emplace_back(element);
+		if (m_element)
+		{
+			Rml::ElementList list;
+			m_element->QuerySelectorAll(list, selector);
+			for (Rml::Element* element : list)
+			{ 
+				elements.emplace_back(element);
+			}
+		}
 		return elements;
 	}
 
@@ -302,17 +307,20 @@ namespace UI
 
 	void Document::show(bool modal)
 	{
-		if (auto* document = native_document()) document->Show(modal ? Rml::ModalFlag::Modal : Rml::ModalFlag::None);
+		if (auto* document = native_document()) 
+			document->Show(modal ? Rml::ModalFlag::Modal : Rml::ModalFlag::None);
 	}
 
 	void Document::hide()
 	{
-		if (auto* document = native_document()) document->Hide();
+		if (auto* document = native_document()) 
+			document->Hide();
 	}
 
 	void Document::close()
 	{
-		if (auto* document = native_document()) document->Close();
+		if (auto* document = native_document()) 
+			document->Close();
 		m_element = nullptr;
 	}
 

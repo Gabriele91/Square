@@ -169,23 +169,30 @@ namespace Square
 
 	void UISystem::update(double delta_time)
 	{
-		Rml::Context* ui_context = m_ui.native();
-		if (!ui_context) return;
-		//the size of the window
-		const IVec2 size = window_size(context());
-		if (size.x > 0 && size.y > 0 && size != m_ui.size()) ui_context->SetDimensions(Rml::Vector2i(size.x, size.y));
-		ui_context->Update();
+		if (Rml::Context* ui_context = m_ui.native())
+		{
+			//the size of the window
+			const IVec2 size = window_size(context());
+			if (size.x > 0 && size.y > 0 && size != m_ui.size())
+				ui_context->SetDimensions(Rml::Vector2i(size.x, size.y));
+			// Update
+			ui_context->Update();
+		}
 	}
 
 	void UISystem::draw_overlay(Render::Context& render)
 	{
-		Rml::Context* ui_context = m_ui.native();
-		if (!ui_context || !m_backend) return;
-		const IVec2 size = m_ui.size();
-		if (size.x <= 0 || size.y <= 0) return;
-		m_backend->begin_frame(size);
-		ui_context->Render();
-		m_backend->end_frame();
+		if (Rml::Context* ui_context = m_ui.native(); ui_context && m_backend)
+		{
+			//the size of the context (of the window)
+			const IVec2 size = m_ui.size();
+			if (size.x > 0 && size.y > 0)
+			{
+				m_backend->begin_frame(size);
+				ui_context->Render();
+				m_backend->end_frame();
+			}
+		}
 	}
 
 	UI::Context& UISystem::ui()
@@ -200,54 +207,68 @@ namespace Square
 
 	bool UISystem::wants_keyboard() const
 	{
-		Rml::Context* ui_context = m_ui.native();
-		Rml::Element* focus = ui_context ? ui_context->GetFocusElement() : nullptr;
-		//the body of a document has the focus when nothing else has it
-		return focus && focus != focus->GetOwnerDocument();
+		if (Rml::Context* ui_context = m_ui.native())
+		{
+			//the body of a document has the focus when nothing else has it
+			if (Rml::Element* focus = ui_context->GetFocusElement())
+				return focus != focus->GetOwnerDocument();
+		}
+		return false;
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	//input
 	void UISystem::on_key(Video::KeyboardEvent key, short mode, Video::ActionEvent action)
 	{
-		Rml::Context* ui_context = m_ui.native();
-		if (!ui_context) return;
-		m_modifiers = to_rml_modifiers(mode);
-		const Rml::Input::KeyIdentifier rml_key = to_rml_key(key);
-		if (rml_key == Rml::Input::KI_UNKNOWN) return;
-		if (action == Video::RELEASE) ui_context->ProcessKeyUp(rml_key, m_modifiers);
-		else                          ui_context->ProcessKeyDown(rml_key, m_modifiers);
+		if (Rml::Context* ui_context = m_ui.native())
+		{
+			m_modifiers = to_rml_modifiers(mode);
+			const Rml::Input::KeyIdentifier rml_key = to_rml_key(key);
+			if (rml_key != Rml::Input::KI_UNKNOWN)
+			{
+				if (action == Video::RELEASE) ui_context->ProcessKeyUp(rml_key, m_modifiers);
+				else                          ui_context->ProcessKeyDown(rml_key, m_modifiers);
+			}
+		}
 	}
 
 	void UISystem::on_character(int character, short mode)
 	{
-		Rml::Context* ui_context = m_ui.native();
-		//text only (the control characters are keys)
-		if (!ui_context || character < 32 || character == 127) return;
-		ui_context->ProcessTextInput(Rml::Character(character));
+		if (Rml::Context* ui_context = m_ui.native())
+		{
+			//text only (the control characters are keys)
+			if (character >= 32 && character != 127)
+				ui_context->ProcessTextInput(Rml::Character(character));
+		}
 	}
 
 	void UISystem::on_mouse_button(Video::MouseButtonEvent button, Video::ActionEvent action)
 	{
-		Rml::Context* ui_context = m_ui.native();
-		if (!ui_context || button < 0) return;
-		//buttons: 0 left, 1 right, 2 middle in both
-		if (action == Video::RELEASE) ui_context->ProcessMouseButtonUp(int(button), m_modifiers);
-		else if (action == Video::PRESS) ui_context->ProcessMouseButtonDown(int(button), m_modifiers);
+		if (Rml::Context* ui_context = m_ui.native(); ui_context && button >= 0)
+		{
+			//buttons: 0 left, 1 right, 2 middle in both
+			if (action == Video::RELEASE)
+				ui_context->ProcessMouseButtonUp(int(button), m_modifiers);
+			else if (action == Video::PRESS)
+				ui_context->ProcessMouseButtonDown(int(button), m_modifiers);
+		}
 	}
 
 	void UISystem::on_mouse_move(const Vec2& position)
 	{
-		Rml::Context* ui_context = m_ui.native();
-		if (!ui_context) return;
-		//false: over an element of a document
-		m_wants_mouse = !ui_context->ProcessMouseMove(int(position.x), int(position.y), m_modifiers);
+		if (Rml::Context* ui_context = m_ui.native())
+		{
+			//false: over an element of a document
+			m_wants_mouse = !ui_context->ProcessMouseMove(int(position.x), int(position.y), m_modifiers);
+		}
 	}
 
 	void UISystem::on_mouse_scroll(float scroll)
 	{
-		Rml::Context* ui_context = m_ui.native();
-		//RmlUi: positive down, the engine: positive up
-		if (ui_context) ui_context->ProcessMouseWheel(-scroll, m_modifiers);
+		if (Rml::Context* ui_context = m_ui.native())
+		{
+			//RmlUi: positive down, the engine: positive up
+			ui_context->ProcessMouseWheel(-scroll, m_modifiers);
+		}
 	}
 }
