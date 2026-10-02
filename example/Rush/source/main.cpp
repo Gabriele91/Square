@@ -40,6 +40,31 @@ public:
 		}
 	}
 
+	void window_event(Square::Video::WindowEvent event)
+	{
+		using namespace Square;
+		//a new size (the fullscreen and back): the viewport of the camera
+		switch (event)
+		{
+		case Video::WindowEvent::RESIZE:
+		case Video::WindowEvent::MAXIMIZED:
+			if(m_camera && m_camera->contains<Scene::Camera>())
+			{
+				// Resize
+				uint32_t window_width = 0, window_height = 0;
+				context().window()->get_size(window_width, window_height);
+				if (window_width && window_height)
+				{ 
+					m_camera->component<Scene::Camera>()->viewport({ 0, 0, window_width, window_height });
+				}
+			}
+		break;
+		
+		default:
+			break;
+		}
+	}
+
 	void mouse_scroll_event(double scroll)
 	{
 		//scroll the debug texture panel
