@@ -1122,9 +1122,14 @@ namespace Video
 		case WM_SIZE:
 		{
 			if (wParam == SIZE_MINIMIZED) wnd_input->send_window_event(WindowEvent::MINIMIZED);
-			if (wParam == SIZE_MAXIMIZED) wnd_input->send_window_event(WindowEvent::MAXIMIZED);
-			//restored or maximized (also the fullscreen): a new size
-			if (wParam == SIZE_RESTORED || wParam == SIZE_MAXIMIZED)
+			if (wParam == SIZE_MAXIMIZED)
+			{
+				//a new size, but m_size stays the one of the window restored: the resolution of the
+				//fullscreen (a maximized size is not a mode of the screen)
+				wnd_input->send_window_event(WindowEvent::MAXIMIZED);
+				wnd_input->send_window_event(WindowEvent::RESIZE);
+			}
+			if (wParam == SIZE_RESTORED)
 			{
 				//wnd_window->m_info.m_size[0] = LOWORD(lParam);
 				//wnd_window->m_info.m_size[1] = HIWORD(lParam);
