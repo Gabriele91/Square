@@ -368,6 +368,9 @@ namespace Render
         virtual const ViewportState& get_viewport_state() override;
         virtual void set_viewport_state(const ViewportState& vs) override;
 
+        virtual const ScissorState& get_scissor_state() override;
+        virtual void set_scissor_state(const ScissorState& ss) override;
+
         virtual const BlendState& get_blend_state() override;
         virtual void set_blend_state(const BlendState& bs) override;
 
@@ -499,6 +502,7 @@ namespace Render
         bool                        m_pending_clear_depth { true  };
 
         State           m_render_state;
+        ScissorState    m_scissor_state;
         BindContextMTL  m_bind;
         RenderDriverInfo m_driver_info;
 

@@ -1254,6 +1254,32 @@ namespace Render
 		}
 	}
 
+	const ScissorState& ContextGL4::get_scissor_state()
+	{
+		return m_scissor_state;
+	}
+
+	void ContextGL4::set_scissor_state(const ScissorState& ss)
+	{
+		if (m_scissor_state == ss) return;
+		m_scissor_state = ss;
+		if (!ss.m_enable)
+		{
+			glDisable(GL_SCISSOR_TEST);
+			return;
+		}
+		glEnable(GL_SCISSOR_TEST);
+		//from the top left of the viewport to the bottom left of GL
+		const Vec4& viewport = s_render_state.m_viewport.m_viewport;
+		glScissor
+		(
+			(GLint)viewport.x + ss.m_rect.x,
+			(GLint)(viewport.y + viewport.w) - (ss.m_rect.y + ss.m_rect.w),
+			(GLsizei)ss.m_rect.z,
+			(GLsizei)ss.m_rect.w
+		);
+	}
+
 	const BlendState& ContextGL4::get_blend_state()
 	{
 		return s_render_state.m_blend;

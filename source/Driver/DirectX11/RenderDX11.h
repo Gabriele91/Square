@@ -473,6 +473,9 @@ namespace Render
 		virtual const ViewportState& get_viewport_state() override;
 		virtual void set_viewport_state(const ViewportState& vs) override;
 
+		virtual const ScissorState& get_scissor_state() override;
+		virtual void set_scissor_state(const ScissorState& ss) override;
+
 		virtual const BlendState& get_blend_state() override;
 		virtual void set_blend_state(const BlendState& bs) override;
 
@@ -653,6 +656,9 @@ namespace Render
 		ID3D11RasterizerState*	m_render_state_cullface_front{ nullptr };
 		ID3D11RasterizerState*	m_render_state_cullface_back_and_front{ nullptr };
 		ID3D11RasterizerState*	m_render_state_cullface_disable{ nullptr };
+		//the same with the scissor test, by CullfaceType (disable, front, back, front and back)
+		ID3D11RasterizerState*	m_render_state_scissor[4]{ nullptr, nullptr, nullptr, nullptr };
+		ScissorState            m_scissor_state;
 		bool build_cullface_states();
 		ID3D11RasterizerState* cullface_state(CullfaceState);
 		///////////////////////////////////////////////////////////////////////////////////

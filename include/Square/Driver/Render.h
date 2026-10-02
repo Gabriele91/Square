@@ -639,6 +639,26 @@ namespace Render
 
 	};
 
+	//the pixels drawn: a rectangle of the target (x, y, width, height in pixels, from its top
+	//left corner, as the viewport), when enabled; the clears are not clipped by it
+	struct ScissorState
+	{
+		bool  m_enable{ false };
+		IVec4 m_rect{ 0, 0, 0, 0 };
+		//costructors
+		ScissorState() {}
+		ScissorState(const IVec4& rect) : m_enable(true), m_rect(rect) {}
+		//operators
+		bool operator==(const ScissorState& ss) const
+		{
+			return m_enable == ss.m_enable && (!m_enable || m_rect == ss.m_rect);
+		}
+		bool operator!=(const ScissorState& ss) const
+		{
+			return !(*this == ss);
+		}
+	};
+
 	struct BlendState
 	{
 		bool      m_enable;
@@ -1017,6 +1037,9 @@ namespace Render
 
 		virtual const ViewportState& get_viewport_state() = 0;
 		virtual void set_viewport_state(const ViewportState& vs) = 0;
+
+		virtual const ScissorState& get_scissor_state() = 0;
+		virtual void set_scissor_state(const ScissorState& ss) = 0;
 
 		virtual const BlendState& get_blend_state() = 0;
 		virtual void set_blend_state(const BlendState& bs) = 0;

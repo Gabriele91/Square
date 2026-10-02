@@ -680,6 +680,11 @@ namespace Render
 		if (m_render_state_cullface_front) m_render_state_cullface_front->Release();
 		if (m_render_state_cullface_back_and_front) m_render_state_cullface_back_and_front->Release();
 		if (m_render_state_cullface_disable) m_render_state_cullface_disable->Release();
+		for (auto*& state : m_render_state_scissor)
+		{
+			if (state) state->Release();
+			state = nullptr;
+		}
 		
 		if (m_view_target) SQ_DELETE(allocator(), Target, m_view_target);
 		if (m_query_buffer[0]) SQ_DELETE(allocator(), Texture2D, m_query_buffer[0]);
@@ -860,11 +865,28 @@ namespace Render
 		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_cullface_disable))) return false;
 		rds.FillMode = D3D11_FILL_WIREFRAME;
 		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_cullface_back_and_front))) return false;
+		//with the scissor test
+		rds.ScissorEnable = true;
+		rds.FillMode = D3D11_FILL_SOLID;
+		rds.CullMode = D3D11_CULL_NONE;
+		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_scissor[CF_DISABLE]))) return false;
+		rds.CullMode = D3D11_CULL_FRONT;
+		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_scissor[CF_FRONT]))) return false;
+		rds.CullMode = D3D11_CULL_BACK;
+		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_scissor[CF_BACK]))) return false;
+		rds.CullMode = D3D11_CULL_NONE;
+		rds.FillMode = D3D11_FILL_WIREFRAME;
+		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_scissor[CF_FRONT_AND_BACK]))) return false;
 		return true;
 	}
 
 	ID3D11RasterizerState* ContextDX11::cullface_state(CullfaceState cullface)
 	{
+		//the scissor test on: the states with it
+		if (m_scissor_state.m_enable && cullface.m_cullface <= CF_FRONT_AND_BACK)
+		{
+			return m_render_state_scissor[cullface.m_cullface];
+		}
 		switch (cullface.m_cullface)
 		{
 		case CF_BACK:           return m_render_state_cullface_back;            break;
@@ -909,6 +931,29 @@ namespace Render
 			vp.TopLeftY = vs.m_viewport.y;
 			device_context()->RSSetViewports(1, &vp);
 		}
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	const ScissorState& ContextDX11::get_scissor_state()
+	{
+		return m_scissor_state;
+	}
+
+	void ContextDX11::set_scissor_state(const ScissorState& ss)
+	{
+		if (m_scissor_state == ss) return;
+		const bool toggled = m_scissor_state.m_enable != ss.m_enable;
+		m_scissor_state = ss;
+		if (ss.m_enable)
+		{
+			D3D11_RECT rect;
+			rect.left = ss.m_rect.x;
+			rect.top = ss.m_rect.y;
+			rect.right = ss.m_rect.x + ss.m_rect.z;
+			rect.bottom = ss.m_rect.y + ss.m_rect.w;
+			device_context()->RSSetScissorRects(1, &rect);
+		}
+		//the rasterizer state with/without the scissor test
+		if (toggled) device_context()->RSSetState(cullface_state(s_render_state.m_cullface));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	static D3D11_BLEND get_blend_type(BlendType type, bool isAlpha) 
