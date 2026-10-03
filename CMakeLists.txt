@@ -32,8 +32,15 @@ set(ASTCENC_ISA_NATIVE ON CACHE BOOL "astcenc with the SIMD of the compiler defa
 add_subdirectory(${PROJECT_SOURCE_DIR}/dependencies/astc-encoder EXCLUDE_FROM_ALL)
 set(SQUARE_ASTCENC_LIBRARY astcenc-native-static)
 
-# FreeType (the fonts of RmlUi): static, without its optional dependencies
-set(FT_DISABLE_ZLIB ON CACHE BOOL "FreeType without zlib" FORCE)
+# FreeType (the fonts of RmlUi): static, with our zlib (above, found by its find_package as
+# ZLIB::ZLIB), without the other optional dependencies (libpng: only the color emoji fonts)
+if(NOT TARGET ZLIB::ZLIB)
+    add_library(ZLIB::ZLIB ALIAS zlibstatic)
+endif()
+set(ZLIB_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/dependencies/zlib CACHE PATH "Our zlib" FORCE)
+set(ZLIB_LIBRARY zlibstatic CACHE STRING "Our zlib" FORCE)
+set(FT_DISABLE_ZLIB OFF CACHE BOOL "FreeType with zlib" FORCE)
+set(FT_REQUIRE_ZLIB ON CACHE BOOL "FreeType with our zlib" FORCE)
 set(FT_DISABLE_BZIP2 ON CACHE BOOL "FreeType without bzip2" FORCE)
 set(FT_DISABLE_PNG ON CACHE BOOL "FreeType without libpng" FORCE)
 set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "FreeType without HarfBuzz" FORCE)
