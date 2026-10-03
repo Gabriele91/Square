@@ -73,7 +73,7 @@ elseif(UNIX AND NOT APPLE)
   file(GLOB LINUX_SRC Driver/Xorg/*.cpp)
   list(APPEND OS_SOURCES ${LINUX_SRC})
   list(APPEND OS_LIBS X11
-                      Xxf86vm
+                      Xrandr
                       GLU
                       GL
                       xcb
