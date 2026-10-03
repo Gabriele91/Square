@@ -32,7 +32,10 @@ namespace Xorg
 		WindowInfo          m_info;
 		XVisualInfo*        m_xinfo      { nullptr };
 		XWindow       	    m_xwindow    { 0 };
-		XF86VidModeModeInfo m_desktop_info;
+		unsigned int        m_windowed_size[2]{ 0, 0 }; // size before the fullscreen
+		RRCrtc              m_rr_crtc        { 0 };     // display switched by the fullscreen
+		RRMode              m_rr_desktop_mode{ 0 };     // its mode before the fullscreen
+		bool                m_rr_switched    { false };
 		GLXContext          m_gl_xcontext{ nullptr };
 		InputXorg*	        m_input_ref  { nullptr };
 		Window*    	        m_window_ref { nullptr };
