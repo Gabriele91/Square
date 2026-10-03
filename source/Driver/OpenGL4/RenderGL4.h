@@ -446,6 +446,9 @@ namespace Render
 		mutable UniformMap m_uniform_map;
         mutable UniformConstBufferMap m_uniform_const_buffer_map;
 		mutable long m_uniform_ntexture{ -1 }; //n texture bind
+		mutable std::unordered_map< const void*, long > m_uniform_texture_unit; //first texture unit of each uniform, since the bind
+		//texture unit of a uniform: the same one until the next bind (set again on each draw it would run out of units)
+		long texture_unit(const void* uniform, size_t count = 1) const;
         
         //help
 		Uniform& add_uniform(const std::string& name, Unique<Uniform>&& u) const;

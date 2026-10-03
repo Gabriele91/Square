@@ -140,7 +140,7 @@ namespace Render
 	//uniform
 	void UniformGL4::set(Texture* in_texture)
 	{
-		long n_texture = ++m_shader->m_uniform_ntexture;
+		long n_texture = m_shader->texture_unit(this);
 		//bind texture
 		m_context->bind_texture(in_texture, (int)n_texture, (int)n_texture);
 		//bind id
@@ -221,11 +221,13 @@ namespace Render
         /* 3D texture? */
         //id array
         auto id = m_id;
+        //first unit
+        long n_texture = m_shader->texture_unit(this, n) - 1;
         //for all
         while(n--)
         {
             //bind
-            long n_texture = ++m_shader->m_uniform_ntexture;
+            ++n_texture;
             //bind texture
             m_context->bind_texture(tvector++, (int)n_texture, (int)n_texture);
             //bind ids
@@ -400,7 +402,7 @@ namespace Render
 	//uniform
 	void UniformGLGUBO::set(Texture* in_texture)
 	{
-		long n_texture = ++m_shader->m_uniform_ntexture;
+		long n_texture = m_shader->texture_unit(this);
 		//bind texture
 		m_context->bind_texture(in_texture, (int)n_texture, 0);
 		//bind id
@@ -494,11 +496,13 @@ namespace Render
 	void UniformGLGUBO::set(Texture* tvector, size_t n)
 	{
 		/* 3D texture? */
+		//first unit
+		long n_texture = m_shader->texture_unit(this, n) - 1;
 		//for all
 		while (n--)
 		{
 			//bind
-			long n_texture = ++m_shader->m_uniform_ntexture;
+			++n_texture;
 			//bind texture
 			m_context->bind_texture(tvector++, (int)n_texture, (int)n_texture);
 		}
@@ -2603,6 +2607,13 @@ namespace Render
 
 	void ContextGL4::bind_texture(Texture* ctx_texture, int n, int sempler_id)
 	{
+		//out of the bind context (and of the texture units)
+		constexpr int n_slots = int(sizeof(s_bind_context.m_textures) / sizeof(s_bind_context.m_textures[0]));
+		if (n < 0 || n >= n_slots)
+		{
+			square_assert(0);
+			return;
+		}
         if (ctx_texture && ctx_texture != s_bind_context.m_textures[n])
         {
             //enable
@@ -2629,6 +2640,8 @@ namespace Render
         
     void ContextGL4::unbind_texture(int n)
     {
+        constexpr int n_slots = int(sizeof(s_bind_context.m_textures) / sizeof(s_bind_context.m_textures[0]));
+        if (n < 0 || n >= n_slots) return;
         unbind_texture(s_bind_context.m_textures[n]);
     }
         
@@ -2725,11 +2738,22 @@ namespace Render
 		upload_global_buffer();
 		//start texture uniform
 		m_uniform_ntexture = -1;
+		m_uniform_texture_unit.clear();
 		//uniform parogram shaders
 		glUseProgram(m_shader_id);
 		//bind constant global buffer
 		if (m_global_buffer_ref) m_global_buffer_ref->bind(m_global_buffer_gpu);
 	}
+	long Shader::texture_unit(const void* uniform, size_t count) const
+	{
+		auto it = m_uniform_texture_unit.find(uniform);
+		if (it != m_uniform_texture_unit.end()) return it->second;
+		long first = m_uniform_ntexture + 1;
+		m_uniform_ntexture += (long)count;
+		m_uniform_texture_unit[uniform] = first;
+		return first;
+	}
+
 	void Shader::unbind()
 	{
 		//disable textures

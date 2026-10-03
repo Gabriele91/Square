@@ -231,7 +231,7 @@ namespace Xorg
     {
         if
         (  (scancode < FILTER_X11_KEY_SIZE && scancode > 0)
-         || (scancode & (~FILTER_X11_KEY_SIZE)) == (~FILTER_X11_KEY_SIZE))
+         || (scancode & (~FILTER_X11_KEY_SIZE)) == (0xFFFF & ~FILTER_X11_KEY_SIZE))
         {
             return s_os_context.m_key_map.m_keyboard[FILTER_X11_KEY(scancode)];
         }
@@ -1333,8 +1333,9 @@ namespace Xorg
 		XCloseDisplay(Xorg::s_os_context.m_xdisplay);
 		//to null
 		Xorg::s_os_context.m_xdisplay = nullptr;
-        //dealloc fields
+        //dealloc fields (and rebuild an empty one: s_os_context is a global, destroyed again at exit)
         Xorg::s_os_context.~WrapperContext();
+        new (&Xorg::s_os_context) Xorg::WrapperContext();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////
