@@ -22,6 +22,7 @@
 #include "Square/Scene/Component.h"
 #include "Square/Scene/World.h"
 #include "Square/Scene/Level.h"
+#include "HLSL2ALL/SourceToSpirv.h"
 #include <algorithm>
 #include <cctype>
 
@@ -143,6 +144,8 @@ namespace Square
 			m_render->set_inspector(m_inspector);
 		}
 		#endif
+		//the shader converter, for all the shaders (its tables made once)
+		HLSL2ALL::initialize();
 		//flush errors, show info
 		m_render->print_errors();
 		m_render->print_info();
@@ -172,6 +175,7 @@ namespace Square
 		context().clear_resources();
 		if (m_render)
 		{
+			HLSL2ALL::shutdown();
 			m_render->close();
 			Render::delete_render_driver(m_render);
 			m_render = nullptr;
