@@ -23,6 +23,15 @@ if(UNIX AND NOT APPLE)
 endif()
 add_subdirectory(${PROJECT_SOURCE_DIR}/dependencies/zlib EXCLUDE_FROM_ALL)
 
+# minizip of zlib (the archives of Square::Filesystem, .sqz/.zip): its reader and its writer
+set(MINIZIP_DIR ${PROJECT_SOURCE_DIR}/dependencies/zlib/contrib/minizip)
+add_library(square_minizip STATIC ${MINIZIP_DIR}/ioapi.c ${MINIZIP_DIR}/unzip.c ${MINIZIP_DIR}/zip.c)
+target_include_directories(square_minizip PUBLIC ${MINIZIP_DIR})
+target_link_libraries(square_minizip PUBLIC zlibstatic)
+if(MSVC)
+    target_compile_definitions(square_minizip PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
+
 # ASTC encoder (Data::Image::compress_astc, in Square): only the static library, with the SIMD
 # of the compiler defaults (one target on every platform: astcenc-native-static)
 set(ASTCENC_CLI OFF CACHE BOOL "Do not build the astcenc command line tools" FORCE)
