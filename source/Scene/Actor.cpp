@@ -18,6 +18,7 @@
 #include <cmath>
 #include <algorithm>
 #include <fstream>
+#include <sstream>
 
 
 namespace Square
@@ -709,8 +710,10 @@ namespace Scene
         default:
         case ActorFormat::SQ_BIN:
         {
-            std::ifstream in_file_stream(path);
-            if (in_file_stream.good())
+            //by Filesystem: on the disk or in an archive
+            const std::vector<unsigned char> bytes = Filesystem::binary_file_read_all(path);
+            std::istringstream in_file_stream(std::string(bytes.begin(), bytes.end()), std::ios::in | std::ios::binary);
+            if (!bytes.empty())
             {
                 ArchiveBinRead in_archive(Object::context(), in_file_stream);
                 deserialize(in_archive);
@@ -724,8 +727,10 @@ namespace Scene
         break;
         case ActorFormat::SQ_BIN_GZ:
         {
-            GZIStream in_file_stream(path);
-            if (in_file_stream.good())
+            //by Filesystem: on the disk or in an archive
+            const std::vector<unsigned char> bytes = Filesystem::binary_compress_file_read_all(path);
+            std::istringstream in_file_stream(std::string(bytes.begin(), bytes.end()), std::ios::in | std::ios::binary);
+            if (!bytes.empty())
             {
                 ArchiveBinRead in_archive(Object::context(), in_file_stream);
                 deserialize(in_archive);

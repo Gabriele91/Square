@@ -134,6 +134,7 @@ endif()
 target_link_libraries(Square PRIVATE 
     HLSL2ALL 
     zlibstatic
+    square_minizip
     ${SQUARE_ASTCENC_LIBRARY}
     ${SQUARE_RMLUI_LIBRARIES}
     ${OS_LIBS}

@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <cctype>
 #include <algorithm>
+#include <filesystem>
 #include "GLTFImport.h"
 #include "SquareExtras.h"
 #include "TextureManager.h"
@@ -37,6 +38,7 @@ static Square::Shell::ParserCommands s_ShellCommands
     , Square::Shell::Command{ "lhs",     "l", "convert in left hand"                     , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(true)               }
     , Square::Shell::Command{ "shadow",  "r", "force shadow resolution [size]"           , Square::Shell::ValueType::value_int   , false, Square::Shell::Value_t(0)                  }
     , Square::Shell::Command{ "images",  "m", "texture images [bc, astc, png, keep]"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("bc"))  }
+    , Square::Shell::Command{ "pack",    "p", "pack the output folder in an archive (.sqz)", Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
     , Square::Shell::Command{ "help",    "h", "show help"                                , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
 };
 
@@ -51,6 +53,7 @@ public:
     size_t m_shadow_resoluction;
     bool m_convert_images;
     ImageConverter::Compression m_compression;
+    bool m_pack{ false }; //--pack: the folder in <folder>.sqz (the engine reads it as the folder)
 
     struct Consts
     {
@@ -104,7 +107,8 @@ public:
         // Get model
         const auto& gltf_model = std::get<GLTF::GLTF>(loaded_model);
         // The model folder: its files are named relative to it (the engine resolves them from there)
-        if (!Filesystem::exists(m_output_model_path) && !Filesystem::makedir(m_output_model_path))
+        const bool folder_created = !Filesystem::exists(m_output_model_path);
+        if (folder_created && !Filesystem::makedir(m_output_model_path))
         {
             context().logger()->warning("Unable to create the output folder: " + m_output_model_path);
             return;
@@ -321,7 +325,7 @@ public:
             using namespace Square::Data;
             using namespace Square::Filesystem::Stream;
             std::string actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".ac");
-            std::ofstream ofile(actor_model_name);
+            std::ofstream ofile(actor_model_name, std::ios::out | std::ios::binary);
             ArchiveBinWrite out(context(), ofile);
             main_node->serialize(out);
         }
@@ -358,6 +362,25 @@ public:
         }
         break;
         }
+        // Pack: the folder in an archive, the folder removed (only when made here)
+        if (m_pack) pack(folder_created);
+    }
+
+    void pack(bool remove_folder)
+    {
+        using namespace Square;
+        std::string folder = m_output_model_path;
+        while (folder.size() > 1 && (folder.back() == '/' || folder.back() == '\\')) folder.pop_back();
+        const std::string archive = folder + ".sqz";
+        if (!Filesystem::archive_write(folder, archive))
+        {
+            context().logger()->warning("Unable to pack the output folder in " + archive);
+            return;
+        }
+        context().logger()->info("Packed in " + archive);
+        std::error_code error;
+        if (remove_folder) std::filesystem::remove_all(folder, error);
+        else context().logger()->warning("The output folder was there before: kept, remove it (the archive has the same resources)");
     }
     virtual bool run(double delta_time) { return false; };
     virtual bool end() { return true; };
@@ -461,6 +484,9 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
             return -1;
         }
     }
+    //the importer, packed in an archive (--pack) or not
+    auto* importer = new ModelImporter(input_model_path, output_model_path, output_model_name, output_model_format, modes, shadow_resoluction, convert_images, compression);
+    if (auto pack_it = args.find("pack"); pack_it != args.end()) importer->m_pack = std::get<bool>(pack_it->second);
     //srgb on
     const bool srgb = true;
     //a tool: no splash screen
@@ -479,7 +505,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
         , false                                // Debug
       }
     , "ModelImporter"
-    , new ModelImporter(input_model_path, output_model_path, output_model_name, output_model_format, modes, shadow_resoluction, convert_images, compression)
+    , importer
     );
     // End
     return 0;

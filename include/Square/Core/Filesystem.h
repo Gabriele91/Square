@@ -22,6 +22,9 @@ namespace Filesystem
     SQUARE_API bool is_readable(const std::string& filepath);
     SQUARE_API bool is_writable(const std::string& filepath);
     SQUARE_API bool exists(const std::string& filepath);
+    //archives (.sqz, .zip): a directory for all the functions here ("pack.sqz/dir/file"), read only
+    SQUARE_API bool is_archive(const std::string& filepath);
+    SQUARE_API bool archive_write(const std::string& directorypath, const std::string& archivepath);
     //utilities files
     SQUARE_API std::string get_directory(const std::string& filepath);
     SQUARE_API std::string get_filename(const std::string& filepath);
