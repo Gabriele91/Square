@@ -30,6 +30,7 @@
     #include <dirent.h>
 	#include <unistd.h>
     #include <stdint.h>
+    #include <limits.h>
     #if defined(__linux)
     #include <sys/sendfile.h> // sendfile()
     #include <fcntl.h>
@@ -44,7 +45,6 @@
     #define bswap32 __builtin_bswap32
 	#define SEPARETOR '/'
 	#define SEPARETOR_STR "/"
-    #include <limits.h>
     #define OS_MAX_PATH PATH_MAX
 #endif
 
