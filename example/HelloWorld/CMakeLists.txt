@@ -37,7 +37,7 @@ target_link_libraries(HelloWorld PRIVATE Square)
 # Platform specific configurations
 if(WIN32)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "MSVC Runtime Library")
-    set(CMAKE_CXX_FLAGS_RELEASE "/Ox /MD")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Ob2 /DNDEBUG /MD")
     set(CMAKE_CXX_FLAGS_DEBUG " /Zi /Od /MDd")
     # Set Windows-specific properties
     set_target_properties(HelloWorld PROPERTIES

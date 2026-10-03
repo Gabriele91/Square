@@ -84,7 +84,7 @@ namespace Debug
 	}
 }
 }
-#if defined(_DEBUG) || defined(NDEBUG)
+#if defined(_DEBUG)
 	#define debug_gl_errors_to_string_args(source,line) ::Square::Debug::gl_errors_to_string(source,line)
 	#define debug_gl_errors_to_string() ::Square::Debug::gl_errors_to_string(__FILE__,__LINE__)
 #else

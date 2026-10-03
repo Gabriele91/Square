@@ -82,7 +82,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 # Platform-specific dependencies for Windows
 if(WIN32)
-    set(CMAKE_CXX_FLAGS_RELEASE " /Ox /MD")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Ob2 /DNDEBUG /MD")
     set(CMAKE_CXX_FLAGS_DEBUG " /Zi /Od /MDd")
     
     target_link_libraries(${PROJECT_NAME} PRIVATE
