@@ -44,7 +44,8 @@
     #define bswap32 __builtin_bswap32
 	#define SEPARETOR '/'
 	#define SEPARETOR_STR "/"
-    #define OS_MAX_PATH _POSIX_PATH_MAX
+    #include <limits.h>
+    #define OS_MAX_PATH PATH_MAX
 #endif
 
 namespace Square
@@ -439,9 +440,12 @@ namespace Filesystem
         if (GetFullPathNameA(relative.c_str(), MAX_PATH, fullpath, 0) == 0) return PathOperation{ false, "" };
         return PathOperation{ true, std::string(fullpath) };
 #else
-        char realname[_POSIX_PATH_MAX];
-        if (realpath(relative.c_str(), realname) == 0) return PathOperation{ false, "" };
-        return PathOperation{ true, std::string(realname) };
+        //allocated by realpath (a fixed buffer must be at least PATH_MAX)
+        char* realname = realpath(relative.c_str(), nullptr);
+        if (!realname) return PathOperation{ false, "" };
+        std::string output(realname);
+        free(realname);
+        return PathOperation{ true, output };
 #endif
     }
 
