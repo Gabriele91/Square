@@ -12,6 +12,7 @@
 #include <memory>
 #include <array>
 #include <algorithm>
+#include <limits>
 #include <Collision.h>
 #include <Hovercraft.h>
 #include <Checkpoints.h>
@@ -184,6 +185,18 @@ public:
 		auto arena_collider = arena->component<MeshCollider>();
 		arena_collider->type(TYPE_SCENE);
 		context().logger()->info("arena collision triangles: " + std::to_string(arena_collider->mesh().size()));
+		// its bounds (x/z: the map of the lights in the menu covers them)
+		{
+			std::vector<Vec3> triangles;
+			arena_collider->mesh().triangles(triangles);
+			m_arena_min = Vec3(std::numeric_limits<float>::max());
+			m_arena_max = Vec3(std::numeric_limits<float>::lowest());
+			for (const Vec3& vertex : triangles)
+			{
+				m_arena_min = glm::min(m_arena_min, vertex);
+				m_arena_max = glm::max(m_arena_max, vertex);
+			}
+		}
 		// start of the hovercraft: the spawn points of the scene (after the arena is placed),
 		// spawn_point_1 the player, the others the NPCs; they start facing the middle
 		m_arena_center = arena->position(true);
@@ -552,6 +565,69 @@ public:
 		m_menu.find("load").on(UI::EventType::CLICK, [this](UI::Event&) { if (Filesystem::exists(level_path(false))) deserialize(level_path(false)); });
 		m_menu.find("save_json").on(UI::EventType::CLICK, [this](UI::Event&) { serialize_json(level_path(true)); });
 		m_menu.find("load_json").on(UI::EventType::CLICK, [this](UI::Event&) { if (Filesystem::exists(level_path(true))) deserialize_json(level_path(true)); });
+		//the lights: the arena from the top
+		setup_light_map();
+	}
+
+	//the tab of the lights: a dot over the map (assets/ui.sqz/arena_map.png, it covers the x/z
+	//bounds of the arena, +x right, +z up) for each spot light of the arena, a click switches
+	//it; the sun switches the daylight (the option "sun")
+	void setup_light_map()
+	{
+		using namespace Square;
+		m_light_markers.clear();
+		UI::Element map = m_menu.find("map");
+		if (!map || !m_level) return;
+		const Vec3 size = glm::max(m_arena_max - m_arena_min, Vec3(0.001f));
+		m_level->visit([&](Shared<Scene::Actor> node) -> bool
+		{
+			if (!node->contains<Scene::SpotLight>()) return true;
+			const Vec3 position = node->position(true);
+			const float left = (position.x - m_arena_min.x) / size.x * 100.0f;
+			const float top  = (m_arena_max.z - position.z) / size.z * 100.0f;
+			LightMarker marker;
+			marker.m_name = node->name();
+			marker.m_light = node->component<Scene::SpotLight>();
+			marker.m_element = map.create_child("div");
+			marker.m_element.set_class("light");
+			marker.m_element.set_property("left", std::to_string(left) + "%");
+			marker.m_element.set_property("top", std::to_string(top) + "%");
+			const std::string name = marker.m_name;
+			marker.m_element.on(UI::EventType::CLICK, [this, name](UI::Event&)
+			{
+				if (auto light = spot_light(name)) light->visible(!light->visible());
+			});
+			m_light_markers.push_back(std::move(marker));
+			return true;
+		});
+		if (UI::Element sun = m_menu.find("sun_toggle"))
+		{
+			sun.on(UI::EventType::CLICK, [this](UI::Event&)
+			{
+				m_ui.m_sun.m_value = !m_ui.m_sun.m_value;
+				m_ui_model.dirty("sun");
+			});
+		}
+	}
+
+	//a spot light of a marker (found again by name after a load of the level)
+	Square::Shared<Square::Scene::SpotLight> spot_light(const std::string& name)
+	{
+		using namespace Square;
+		for (auto& marker : m_light_markers)
+		{
+			if (marker.m_name != name) continue;
+			if (auto light = marker.m_light.lock()) return light;
+			if (!m_level) return nullptr;
+			m_level->visit([&](Shared<Scene::Actor> node) -> bool
+			{
+				if (node->name() != name || !node->contains<Scene::SpotLight>()) return true;
+				marker.m_light = node->component<Scene::SpotLight>();
+				return false;
+			});
+			return marker.m_light.lock();
+		}
+		return nullptr;
 	}
 
 	//the file of the level saved by the menu
@@ -606,6 +682,11 @@ public:
 		sync_option(m_ui.m_fullscreen, app && app->fullscreen(), [app](bool value) { if (app) app->fullscreen(value); });
 		auto sun = m_light && m_light->contains<Scene::DirectionLight>() ? m_light->component<Scene::DirectionLight>() : nullptr;
 		sync_option(m_ui.m_sun, sun && sun->visible(), [sun](bool value) { if (sun) sun->visible(value); });
+		for (auto& marker : m_light_markers)
+		{
+			auto light = spot_light(marker.m_name);
+			marker.m_element.set_class("off", !light || !light->visible());
+		}
 		//the debug views: of the world (flags of the debug pass), of the effects, of the UI
 		auto debug = render_debug();
 		auto has_flags = [&](unsigned char flags) { return debug && (debug->draw_flags() & flags) == flags; };
@@ -705,6 +786,16 @@ private:
 	Square::Shared<Square::Scene::Level>	  m_level;
 	Square::Shared<Square::Scene::Actor>      m_camera;
 	Square::Shared<Square::Scene::Actor>      m_light;
+	//bounds of the arena (world), the spot lights on the map of the menu
+	Square::Vec3                              m_arena_min{ 0.0f };
+	Square::Vec3                              m_arena_max{ 0.0f };
+	struct LightMarker
+	{
+		std::string                              m_name;
+		Square::Weak<Square::Scene::SpotLight>   m_light;
+		Square::UI::Element                      m_element;
+	};
+	std::vector<LightMarker>                  m_light_markers;
 	//a hovercraft of the race
 	struct Racer
 	{
