@@ -732,10 +732,11 @@ namespace Render
 	static std::string compiler_shader_error_log(unsigned int shader);
 	static bool make_test_to_get_shader_ext_feacture(const std::string& ext)
 	{
-		// Test shader
+		// Test shader: require, not enable (an unknown extension with enable is accepted silently
+		// by some drivers, e.g. Mesa: no error, an empty log)
 		std::string test_shader
 		{
-			"#extension " + ext + " : enable\n"
+			"#extension " + ext + " : require\n"
 			"void main(){}"
 		};
 		const char* const test_shader_cstr = test_shader.c_str();
@@ -1064,16 +1065,10 @@ namespace Render
 		glDepthRange(0.0f, 1.0f);
 		//Front face
 		glFrontFace(GL_CW);
-		//Coords like direcX
-		#if defined( _WIN32 ) || defined( __linux )
-		if(GLAD_VERSION_MAJOR(gl_loaded_version) >= 4 
-		&& GLAD_VERSION_MINOR(gl_loaded_version) >= 5
-		&& glClipControl)
-		{
-			glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE); // DirectX/Vulkan like
-			// glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // OGL standard
-		}
-		#endif
+		//No glClipControl: the GLSL of the shaders is already in the OpenGL clip space (SPIRV-Cross
+		//fixup_clipspace: z from [0, w] to [-w, w]) and its origin is the lower left one (the uv
+		//of the post effects); a ZERO_TO_ONE / UPPER_LEFT clip control (a 4.5+ context, e.g. Mesa)
+		//remaps them again: the near half of the depth is clipped, nothing is drawn
 #endif
 		//clean
 		print_errors();
