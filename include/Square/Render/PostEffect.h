@@ -109,9 +109,9 @@ namespace Render
 			, const BlendState& blend
 			, const std::function<void(Resource::Shader&)>& uniforms
 		);
-		//a color texture and its target of the frame size (RGBA16F, linear, clamp); rebuilt when
+		//a color texture and its target of the frame size (linear or nearest, clamp); rebuilt when
 		//the size changes (texture/target are released first)
-		bool create_color_target(const IVec2& size, TextureFormat format, Texture*& texture, Target*& target);
+		bool create_color_target(const IVec2& size, TextureFormat format, Texture*& texture, Target*& target, bool linear = true);
 		void delete_color_target(Texture*& texture, Target*& target);
 
 	private:

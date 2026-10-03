@@ -126,13 +126,15 @@ public:
 			ssao_settings.intensity  = 0.45f; //light occlusion
 			ssao_settings.contrast   = 1.1f;  //linear: no extra darkening
 			ssao_settings.max_pixels = 32.0f; //near the camera: short reach, less cache misses
+			ssao_settings.half_resolution = true;
+			ssao_settings.blur       = Render::SSAO::Settings::BLUR_LOW;
 			m_ssao->settings(ssao_settings);
 			render_world->add_post_effect(m_ssao);
 			// screen space reflections (deferred): before the bloom, the reflected lights glow too;
 			// R to turn it on/off, Y for its debug views
 			m_ssr = MakeShared<Render::SSR>(context());
 			Render::SSR::Settings ssr_setting;
-			ssr_setting.half_resolution = false;
+			ssr_setting.half_resolution = true;
 			ssr_setting.max_distance = 100.0;
 			ssr_setting.steps = 128;
 			m_ssr->settings(ssr_setting);
@@ -524,6 +526,8 @@ public:
 		m_ui_model.bind("ssr", &m_ui.m_ssr.m_value);
 		m_ui_model.bind("bloom", &m_ui.m_bloom.m_value);
 		m_ui_model.bind("ssao", &m_ui.m_ssao.m_value);
+		m_ui_model.bind("ssao_half", &m_ui.m_ssao_half.m_value);
+		m_ui_model.bind("ssao_blur", &m_ui.m_ssao_blur.m_value);
 		m_ui_model.bind("mirror", &m_ui.m_mirror.m_value);
 		m_ui_model.bind("collisions", &m_ui.m_collisions.m_value);
 		m_ui_model.bind("fps", &m_ui.m_fps);
@@ -634,6 +638,20 @@ public:
 			settings.debug = value;
 			m_bloom->settings(settings);
 		});
+		sync_option(m_ui.m_ssao_half, m_ssao && m_ssao->settings().half_resolution, [this](bool value)
+		{
+			if (!m_ssao) return;
+			auto settings = m_ssao->settings();
+			settings.half_resolution = value;
+			m_ssao->settings(settings);
+		});
+		sync_option(m_ui.m_ssao_blur, m_ssao ? int(m_ssao->settings().blur) : 0, [this](int value)
+		{
+			if (!m_ssao) return;
+			auto settings = m_ssao->settings();
+			settings.blur = Render::SSAO::Settings::BlurQuality(std::clamp(value, 0, int(Render::SSAO::Settings::BLUR_HIGH)));
+			m_ssao->settings(settings);
+		});
 		sync_option(m_ui.m_ssao_debug, m_ssao && m_ssao->settings().debug, [this](bool value)
 		{
 			if (!m_ssao) return;
@@ -722,6 +740,8 @@ private:
 		UIOption<bool> m_fullscreen;
 		UIOption<bool> m_sun;
 		UIOption<int>  m_ssr_march; //1: on the screen (DDA), 0: in world space
+		UIOption<bool> m_ssao_half;
+		UIOption<int>  m_ssao_blur; //Render::SSAO::Settings::BlurQuality
 		//debug
 		UIOption<bool> m_mirror;
 		UIOption<bool> m_collisions;
@@ -789,7 +809,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
 	//test
     app.execute
 	(
-      WindowSizePixel({ 1280, 720 })
+      WindowSizePixel({ 1920, 1080 })
     , WindowMode::NOT_RESIZABLE
 	, render_driver
     , "Rush"

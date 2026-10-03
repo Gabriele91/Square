@@ -16,11 +16,11 @@ namespace Square
 namespace Render
 {
 	//a color texture (linear, clamp, one level: it is drawn and read at level 0) and a target on it
-	static bool build_color_target(Render::Context& render, const IVec2& size, TextureFormat format, Texture*& texture, Target*& target)
+	static bool build_color_target(Render::Context& render, const IVec2& size, TextureFormat format, Texture*& texture, Target*& target, bool linear = true)
 	{
 		texture = render.create_texture(
 			{ format, (unsigned int)size.x, (unsigned int)size.y, nullptr, TT_RGBA, TTF_FLOAT, false },
-			{ TMIN_LINEAR, TMAG_LINEAR, TEDGE_CLAMP, TEDGE_CLAMP, TEDGE_CLAMP, false, 0, 1 }
+			{ linear ? TMIN_LINEAR : TMIN_NEAREST, linear ? TMAG_LINEAR : TMAG_NEAREST, TEDGE_CLAMP, TEDGE_CLAMP, TEDGE_CLAMP, false, 0, 1 }
 		);
 		if (!texture) return false;
 		target = render.create_render_target({ Render::TargetField{ texture, RT_COLOR } });
@@ -91,10 +91,10 @@ namespace Render
 		render.set_depth_buffer_state({ DM_ENABLE_AND_WRITE });
 	}
 
-	bool PostEffect::create_color_target(const IVec2& size, TextureFormat format, Texture*& texture, Target*& target)
+	bool PostEffect::create_color_target(const IVec2& size, TextureFormat format, Texture*& texture, Target*& target, bool linear)
 	{
 		delete_color_target(texture, target);
-		return build_color_target(render(), size, format, texture, target);
+		return build_color_target(render(), size, format, texture, target, linear);
 	}
 
 	void PostEffect::delete_color_target(Texture*& texture, Target*& target)

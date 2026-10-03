@@ -27,7 +27,7 @@ The examples are `HelloWorld`, `HelloWorldCSM` and `Rush`, a small hovercraft ra
 **Linux**:
 ```bash
 sudo apt install build-essential gdb cmake python3 python3-dev python3-pip \
-                 libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxxf86vm-dev \
+                 libgl1-mesa-dev libglu1-mesa-dev libx11-dev \
                  libxinerama-dev libxcursor-dev libxi-dev libxrandr-dev
 ```
 

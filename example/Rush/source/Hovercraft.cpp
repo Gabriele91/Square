@@ -268,7 +268,8 @@ void HovercraftDriver::update_input(float steps)
 	}
 	//on the ground (a contact under the body, not a wall in front or over it): throttle/brake/
 	//drag, forward along the body plus a little gravity (it stays pressed on the ground); in
-	//the air or against a wall: the velocity plus gravity (it falls back)
+	//the air or against a wall: no throttle, the velocity slowed by the air drag (also the
+	//speed, it lands slower) plus gravity (it falls back)
 	Vec3 velocity(0.0f);
 	if (m_body->collided(m_settings.scene_type, m_settings.floor_normal_y))
 	{
@@ -279,7 +280,9 @@ void HovercraftDriver::update_input(float steps)
 	}
 	else
 	{
-		velocity = m_velocity + Constants::axis_y * (m_settings.gravity * steps);
+		const float keep = std::pow(m_settings.air_drag, steps);
+		m_speed *= keep;
+		velocity = Vec3(m_velocity.x * keep, m_velocity.y + m_settings.gravity * steps, m_velocity.z * keep);
 	}
 	hovercraft->position(hovercraft->position() + velocity * steps);
 	//the wheels back under the body (where the hovercraft is now)

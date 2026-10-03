@@ -7,8 +7,8 @@
 //  - update: the body is aligned to the four wheels (where the collisions of the last step
 //    left them), left/right then front/rear; its velocity;
 //  - update_input: steering, then on the ground (a contact of the body under it) throttle/
-//    brake/drag forward along the body and a little gravity, in the air the velocity plus
-//    gravity; the wheels back under the body.
+//    brake/drag forward along the body and a little gravity, in the air (no throttle) the
+//    velocity slowed by the air drag plus gravity; the wheels back under the body.
 //  After the steps of a frame the actor shows a pose between the last two steps (the pose of
 //  the simulation is put back before the next step).
 //  Who drives it writes its Input: the player (HovercraftInput) or an NPC (HovercraftAI). The
@@ -40,6 +40,7 @@ public:
 		float gravity{ -0.007f };      //vertical speed added every step
 		float acceleration{ 0.065f };  //speed gained per step with the throttle
 		float drag{ 0.9725f };           //share of the speed kept per step without throttle
+		float air_drag{ 0.99f };       //share of the speed kept per step in the air (no throttle there: it slows down)
 		float max_speed{ 0.7f };       //forward
 		float max_reverse{ -0.55f };   //backward
 		float turn{ 2.2f };            //degrees of yaw per step, per unit of speed
