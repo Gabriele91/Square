@@ -129,6 +129,8 @@ namespace Resource
 		{
 			Parser::Texture::Context tex_context;
 			std::vector<unsigned char> data = Filesystem::binary_file_read_all(path);
+			// The parser reads it as a C string
+			data.push_back('\0');
 			// Set default attrs
 			tex_context.m_attributes =
 			{
@@ -141,7 +143,7 @@ namespace Resource
 				1
 			};
 			// Parse texture data
-			if (Parser::Texture::parse(tex_context, reinterpret_cast<const char*>(data.data()), data.size()))
+			if (Parser::Texture::parse(tex_context, reinterpret_cast<const char*>(data.data()), data.size() - 1))
 			{
 				if (std::holds_alternative<std::string>(tex_context.m_image))
 				{

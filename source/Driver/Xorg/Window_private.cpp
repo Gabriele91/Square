@@ -45,8 +45,32 @@ namespace Xorg
 			//none
 		}
 
-		virtual bool get_vsync() { return false; }
-		virtual void set_vsync(bool vsync) { }
+		virtual bool get_vsync() { return m_vsync; }
+		virtual void set_vsync(bool vsync)
+		{
+			typedef void(*PFNGLXSWAPINTERVALEXTPROC)(Display*, GLXDrawable, int);
+			typedef int(*PFNGLXSWAPINTERVALMESAPROC)(unsigned int);
+			typedef int(*PFNGLXSWAPINTERVALSGIPROC)(int);
+			//get ptrs
+			auto glXSwapIntervalEXT  = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalEXT");
+			auto glXSwapIntervalMESA = (PFNGLXSWAPINTERVALMESAPROC)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalMESA");
+			auto glXSwapIntervalSGI  = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalSGI");
+			//on the current context
+			GLXDrawable drawable = glXGetCurrentDrawable();
+			if (glXSwapIntervalEXT && drawable)
+			{
+				glXSwapIntervalEXT(glXGetCurrentDisplay(), drawable, vsync ? 1 : 0);
+				m_vsync = vsync;
+			}
+			else if (glXSwapIntervalMESA)
+			{
+				if (glXSwapIntervalMESA(vsync ? 1 : 0) == 0) m_vsync = vsync;
+			}
+			else if (glXSwapIntervalSGI && vsync) // SGI can't set 0
+			{
+				if (glXSwapIntervalSGI(1) == 0) m_vsync = vsync;
+			}
+		}
 
 		virtual void* get_device()					   override { return (void*)nullptr; }
 		virtual void* get_device_context(size_t i = 0) override { return (void*)nullptr; }
@@ -62,12 +86,14 @@ namespace Xorg
 
 	protected:
 		const ContextInfo& m_info_context;
+		bool m_vsync{ true };
 	};
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-	static bool x11_create_visual(const WindowInfo& wnd_info, XVisualInfo*& visual)
+	static bool x11_create_visual(const WindowInfo& wnd_info, XVisualInfo*& visual, GLXFBConfig& fb_config)
 	{
 		//init
 		visual = nullptr;
+		fb_config = nullptr;
 		//select color map
 		int n_return = 0;
 		GLXFBConfig *fb_configs = nullptr;
@@ -140,7 +166,8 @@ namespace Xorg
 		//no msaa
 		if (ctx_info.m_anti_aliasing < ContextInfo::MSAAx2 || ctx_info.m_anti_aliasing > ContextInfo::MSAAx64)
 		{
-			buffer_OpenGL[17] = X11None;
+			buffer_OpenGL[19] = False; // GLX_SAMPLE_BUFFERS
+			buffer_OpenGL[21] = 0;     // GLX_SAMPLES
 		}
 		//try all
 		while(true)
@@ -155,8 +182,13 @@ namespace Xorg
 			else		   
 				break;
 		}
-		//get visual color map
-		if(n_return) visual = glXGetVisualFromFBConfig(s_os_context.m_xdisplay, fb_configs[0]);
+		//get visual color map (and keep the config: the GL context must be created from the same one)
+		if(n_return)
+		{
+			fb_config = fb_configs[0];
+			visual = glXGetVisualFromFBConfig(s_os_context.m_xdisplay, fb_config);
+		}
+		if(fb_configs) XFree(fb_configs);
 		//success?
 		return visual != nullptr;
 	}
@@ -313,18 +345,11 @@ namespace Xorg
 		return wnd;
 	}
 	
-	static bool x11_create_OpenGL_context(const WindowInfo& wnd_info, const XVisualInfo* visual, GLXContext& context)
+	static bool x11_create_OpenGL_context(const WindowInfo& wnd_info, GLXFBConfig frame_buffer_config, GLXContext& context)
 	{
 		// create a GLX context
 		glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
 		glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc) glXGetProcAddressARB((const GLubyte *) "glXCreateContextAttribsARB");
-		///////////////////////////////////////////////////////////////////////
-		int n_config = 0;				
-		auto* screen = (ScreenXorg*)wnd_info.m_screen->conteiner();		
-		//Get a framebuffer config using the default attributes
-		GLXFBConfig* frame_buffer_config = glXChooseFBConfig(s_os_context.m_xdisplay, screen->m_screen_id, 0, &n_config);
-		//test
-		if (!n_config) return false;
 		///////////////////////////////////////////////////////////////////////
 		if (glXCreateContextAttribsARB)
 		{
@@ -338,7 +363,7 @@ namespace Xorg
 			context = glXCreateContextAttribsARB
 			(
 				  s_os_context.m_xdisplay
-				, frame_buffer_config[0]
+				, frame_buffer_config
 				, NULL
 				, GL_TRUE
 				, context_attribs
@@ -349,7 +374,7 @@ namespace Xorg
 			context = glXCreateNewContext
 			(
 				  s_os_context.m_xdisplay
-				, frame_buffer_config[0]
+				, frame_buffer_config
 				, GLX_RGBA_TYPE
 				, NULL
 				, True
@@ -364,12 +389,13 @@ namespace Xorg
 	{
 		//create a window in window mode
 		XVisualInfo* visual_info;
-		x11_create_visual(info,visual_info);
+		GLXFBConfig fb_config;
+		x11_create_visual(info, visual_info, fb_config);
 		//failed 
 		if (!visual_info) throw std::runtime_error("Error: can't create XVisualInfo context");
 		//OpenGL
 		GLXContext xgl_ctx = NULL;
-		x11_create_OpenGL_context(info, visual_info, xgl_ctx);
+		if (!x11_create_OpenGL_context(info, fb_config, xgl_ctx)) throw std::runtime_error("Error: can't create the OpenGL context");
 		//Root xwindow				
 		auto* screen = (ScreenXorg*)info.m_screen->conteiner();
 		XWindow root_xwindow = RootWindow(s_os_context.m_xdisplay, screen->m_screen_id);

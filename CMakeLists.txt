@@ -50,6 +50,10 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/dependencies/freetype EXCLUDE_FROM_ALL)
 if(NOT TARGET Freetype::Freetype)
     add_library(Freetype::Freetype ALIAS freetype)
 endif()
+# Our FreeType also for the find_package of RmlUi (otherwise it looks for the system one)
+set(FREETYPE_INCLUDE_DIR_ft2build ${PROJECT_SOURCE_DIR}/dependencies/freetype/include CACHE PATH "Our FreeType" FORCE)
+set(FREETYPE_INCLUDE_DIR_freetype2 ${PROJECT_SOURCE_DIR}/dependencies/freetype/include CACHE PATH "Our FreeType" FORCE)
+set(FREETYPE_LIBRARY freetype CACHE STRING "Our FreeType" FORCE)
 
 # RmlUi (Square::UI, in Square): the static core and the debugger, FreeType fonts, no samples
 set(RMLUI_FONT_ENGINE "freetype" CACHE STRING "RmlUi with the FreeType font engine" FORCE)

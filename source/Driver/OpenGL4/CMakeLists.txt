@@ -38,6 +38,15 @@ if(NOT jinja2_installed EQUAL 0)
         OUTPUT_VARIABLE install_jinja2_output
         ERROR_VARIABLE install_jinja2_error
     )
+    # Older pip (< 23) does not know --break-system-packages
+    if(NOT install_jinja2_result EQUAL 0 AND install_jinja2_error MATCHES "no such option")
+        execute_process(
+            COMMAND ${Python_EXECUTABLE} -m pip install jinja2==3.1
+            RESULT_VARIABLE install_jinja2_result
+            OUTPUT_VARIABLE install_jinja2_output
+            ERROR_VARIABLE install_jinja2_error
+        )
+    endif()
     if(NOT install_jinja2_result EQUAL 0)
         message(FATAL_ERROR "Failed to install Jinja2: ${install_jinja2_error}")
     endif()
