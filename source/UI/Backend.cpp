@@ -5,6 +5,7 @@
 //  See Backend.h.
 //
 #include <algorithm>
+#include <cstdio>
 #include <cstring>
 #include "Square/Core/Context.h"
 #include "Square/Core/Filesystem.h"
@@ -291,6 +292,67 @@ namespace UI
 		default:                   m_context.logger()->debug("UI: " + message); break;
 		}
 		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////
+	//files
+	struct BackendFile
+	{
+		std::vector<unsigned char> m_bytes;
+		size_t                     m_position{ 0 };
+	};
+
+	Rml::FileHandle Backend::Open(const Rml::String& path)
+	{
+		if (!Filesystem::is_file(path)) return 0;
+		auto* file = new BackendFile();
+		file->m_bytes = Filesystem::binary_file_read_all(path);
+		return (Rml::FileHandle)file;
+	}
+
+	void Backend::Close(Rml::FileHandle handle)
+	{
+		delete (BackendFile*)handle;
+	}
+
+	size_t Backend::Read(void* buffer, size_t size, Rml::FileHandle handle)
+	{
+		auto* file = (BackendFile*)handle;
+		if (!file) return 0;
+		const size_t count = std::min(size, file->m_bytes.size() - file->m_position);
+		if (count) std::memcpy(buffer, file->m_bytes.data() + file->m_position, count);
+		file->m_position += count;
+		return count;
+	}
+
+	bool Backend::Seek(Rml::FileHandle handle, long offset, int origin)
+	{
+		auto* file = (BackendFile*)handle;
+		if (!file) return false;
+		long long base = 0;
+		switch (origin)
+		{
+		case SEEK_SET: base = 0; break;
+		case SEEK_CUR: base = (long long)file->m_position; break;
+		case SEEK_END: base = (long long)file->m_bytes.size(); break;
+		default: return false;
+		}
+		const long long position = base + offset;
+		if (position < 0 || position > (long long)file->m_bytes.size()) return false;
+		file->m_position = size_t(position);
+		return true;
+	}
+
+	size_t Backend::Tell(Rml::FileHandle handle)
+	{
+		auto* file = (BackendFile*)handle;
+		return file ? file->m_position : 0;
+	}
+
+	size_t Backend::Length(Rml::FileHandle handle)
+	{
+		auto* file = (BackendFile*)handle;
+		return file ? file->m_bytes.size() : 0;
 	}
 }
 }

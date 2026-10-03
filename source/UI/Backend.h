@@ -4,11 +4,12 @@
 //
 //  The backend of RmlUi in the engine (inside Square, not exposed): its render on
 //  Render::Context (geometry in buffers, textures, scissor, transforms; one shader, UI.hlsl),
-//  its time and its log. Clip masks, layers and filters of RmlUi are not there (RCSS without
+//  its time, its log and its files (by Filesystem: also in the archives, .sqz/.zip). Clip masks, layers and filters of RmlUi are not there (RCSS without
 //  them).
 //
 #pragma once
 #include <vector>
+#include <RmlUi/Core/FileInterface.h>
 #include <RmlUi/Core/RenderInterface.h>
 #include <RmlUi/Core/SystemInterface.h>
 #include "Square/Config.h"
@@ -29,7 +30,7 @@ namespace Square
 {
 namespace UI
 {
-	class Backend : public Rml::RenderInterface, public Rml::SystemInterface
+	class Backend : public Rml::RenderInterface, public Rml::SystemInterface, public Rml::FileInterface
 	{
 	public:
 		Backend(Square::Context& context);
@@ -58,6 +59,14 @@ namespace UI
 		//Rml::SystemInterface
 		double GetElapsedTime() override;
 		bool LogMessage(Rml::Log::Type type, const Rml::String& message) override;
+
+		//Rml::FileInterface: a file read whole (on the disk or in an archive)
+		Rml::FileHandle Open(const Rml::String& path) override;
+		void Close(Rml::FileHandle file) override;
+		size_t Read(void* buffer, size_t size, Rml::FileHandle file) override;
+		bool Seek(Rml::FileHandle file, long offset, int origin) override;
+		size_t Tell(Rml::FileHandle file) override;
+		size_t Length(Rml::FileHandle file) override;
 
 	protected:
 		//a geometry: its buffers

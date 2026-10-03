@@ -130,6 +130,7 @@ namespace Square
 		}
 		Rml::SetRenderInterface(m_backend.get());
 		Rml::SetSystemInterface(m_backend.get());
+		Rml::SetFileInterface(m_backend.get());
 		if (!Rml::Initialise())
 		{
 			context().logger()->warning("UI: unable to start RmlUi");

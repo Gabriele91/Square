@@ -35,6 +35,7 @@ renames the root actor to `scene`.
 | `--format` | `-f` | `bin` \| `bgz` \| `json` \| `jgz` | no | `bgz` | Format of the actor file: binary, binary gzip, JSON, JSON gzip. Meshes are always `.sm3dgz`. |
 | `--shadow` | `-r` | integer | no | `0` | Shadow map size (pixels, square) given to every light. `0`: the lights have no shadow. A light can override it with `square_shadow`. |
 | `--images` | `-m` | `bc` \| `astc` \| `png` \| `keep` | no | `bc` | The images of the textures: `bc` converted (see [Images](#images)) and compressed for the GPU with all their mipmaps in a `<texture>_img.dds` (BC5 the normal maps, BC3 with alpha, else BC1), `astc` the same in a `<texture>_img.ktx` (ASTC 4x4: Apple GPUs, mobiles), both with the converted image as `<texture>_fallback.png` for a GPU without the format (an image that cannot be compressed, e.g. a size not a multiple of 4 with `bc`, is as with `png`); `png` converted and embedded in the `.sqtex`; `keep` as they are (embedded for `.glb`, copied for `.gltf`). |
+| `--pack` | `-p` | | no | off | Pack the output folder in `<folder>.sqz` (a zip: deflate level 6, the PNG/JPEG and gzip files stored as they are): the engine reads it as the folder, with the same resource names. The folder is removed when the export made it. |
 | `--swapzy` | `-s` | | no | off | Swap the Z and Y coordinates. |
 | `--lhs` | `-l` | | no | **on** | Convert to the left handed system of the engine. Always on. |
 | `--debug` | `-d` | | no | off | Debug mode. |

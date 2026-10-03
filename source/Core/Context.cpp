@@ -202,6 +202,14 @@ namespace Square
 		//end
 		return true;
 	}
+    //the name of a directory in the names of its resources: an archive is named without its
+    //extension ("hovercraft.sqz" as "hovercraft", the same of a folder "hovercraft")
+    static std::string resource_directory_name(const std::string& path, const std::string& directoryname)
+    {
+        if (!Filesystem::is_archive(Filesystem::join(path, directoryname))) return directoryname;
+        return directoryname.substr(0, directoryname.size() - Filesystem::get_extension(directoryname).size());
+    }
+
     void BaseContext::add_resource_path(const std::string& path, bool recursive, const std::string& name_prefix)
     {
         //for all sub path: their files are named "sub/name"
@@ -214,7 +222,7 @@ namespace Square
 				{
 					subdirfullpath = canonical_path.m_path;
 				}
-				add_resource_path(subdirfullpath, recursive, name_prefix + directoryname + "/");
+				add_resource_path(subdirfullpath, recursive, name_prefix + resource_directory_name(path, directoryname) + "/");
 			}
 		}
         //for all files
@@ -268,7 +276,7 @@ namespace Square
 			//push dir into table
 			for (const std::string& directoryname : directories.m_fields)
 			{
-				add_resource_path(Filesystem::join(path, directoryname), filter, true, name_prefix + directoryname + "/");
+				add_resource_path(Filesystem::join(path, directoryname), filter, true, name_prefix + resource_directory_name(path, directoryname) + "/");
 			}
 		}
         //end
