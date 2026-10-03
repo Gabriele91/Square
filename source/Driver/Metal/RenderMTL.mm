@@ -14,7 +14,7 @@
 using namespace Square;
 using namespace Square::Render;
 
-#if defined(_DEBUG) || defined(NDEBUG)
+#if defined(_DEBUG)
     #define SQ_MTL_DEBUG_LOG 1
     #define SQ_MTL_DEBUG_FRAMES 3
 #endif
