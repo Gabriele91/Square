@@ -85,6 +85,7 @@ namespace Render
 				if (auto u = shader.uniform("ssr_params")) u->set(params);
 				if (auto u = shader.uniform("ssr_fade"))   u->set(std::clamp(m_settings.edge_fade, 0.001f, 0.5f));
 				if (auto u = shader.uniform("ssr_debug"))  u->set(float(m_settings.debug));
+				if (auto u = shader.uniform("ssr_march"))  u->set(m_settings.screen_march ? 1.0f : 0.0f);
 			});
 		}
 		//2) composite

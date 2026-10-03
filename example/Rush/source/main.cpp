@@ -533,6 +533,7 @@ public:
 		m_ui_model.bind("lights", &m_ui.m_lights.m_value);
 		m_ui_model.bind("textures", &m_ui.m_textures.m_value);
 		m_ui_model.bind("ssr_debug", &m_ui.m_ssr_debug.m_value);
+		m_ui_model.bind("ssr_march", &m_ui.m_ssr_march.m_value);
 		m_ui_model.bind("bloom_debug", &m_ui.m_bloom_debug.m_value);
 		m_ui_model.bind("ssao_debug", &m_ui.m_ssao_debug.m_value);
 		m_ui_model.bind("ui_debugger", &m_ui.m_ui_debugger.m_value);
@@ -617,6 +618,13 @@ public:
 			if (!m_ssr) return;
 			auto settings = m_ssr->settings();
 			settings.debug = value;
+			m_ssr->settings(settings);
+		});
+		sync_option(m_ui.m_ssr_march, m_ssr && m_ssr->settings().screen_march ? 1 : 0, [this](int value)
+		{
+			if (!m_ssr) return;
+			auto settings = m_ssr->settings();
+			settings.screen_march = value != 0;
 			m_ssr->settings(settings);
 		});
 		sync_option(m_ui.m_bloom_debug, m_bloom && m_bloom->settings().debug, [this](bool value)
@@ -713,6 +721,7 @@ private:
 		UIOption<bool> m_ssao;
 		UIOption<bool> m_fullscreen;
 		UIOption<bool> m_sun;
+		UIOption<int>  m_ssr_march; //1: on the screen (DDA), 0: in world space
 		//debug
 		UIOption<bool> m_mirror;
 		UIOption<bool> m_collisions;
