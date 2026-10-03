@@ -504,7 +504,7 @@ public:
 	}
 
 	//UI: the HUD (scores, speed, the message of a match) and the menu (Esc: options, quit),
-	//documents of assets/ui with the data model "rush" (the variables of m_ui)
+	//documents of assets/ui.sqz with the data model "rush" (the variables of m_ui)
 	void setup_ui()
 	{
 		using namespace Square;
@@ -542,9 +542,9 @@ public:
 		m_ui_model.bind("ssao_debug", &m_ui.m_ssao_debug.m_value);
 		m_ui_model.bind("ui_debugger", &m_ui.m_ui_debugger.m_value);
 		//the documents
-		m_hud = ui.load("example/Rush/assets/ui/hud.rml");
+		m_hud = ui.load("example/Rush/assets/ui.sqz/hud.rml");
 		m_hud.show();
-		m_menu = ui.load("example/Rush/assets/ui/menu.rml");
+		m_menu = ui.load("example/Rush/assets/ui.sqz/menu.rml");
 		m_menu.find("resume").on(UI::EventType::CLICK, [this](UI::Event&) { menu(false); });
 		m_menu.find("quit").on(UI::EventType::CLICK, [this](UI::Event&) { m_loop = false; });
 		//the level: binary (.sq) and json (.jsq)
