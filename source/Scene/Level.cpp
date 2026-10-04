@@ -294,9 +294,24 @@ namespace Scene
 		return m_world;
 	}
 
-	//every frame: the components of the actors
+	//active
+	void Level::active(bool active)
+	{
+		if (active == m_active) return;
+		//out of the systems while still active (on_remove_a_component skips a level not active)
+		if (!active) remove_components();
+		m_active = active;
+		if (active) add_components();
+	}
+	bool Level::active() const
+	{
+		return m_active;
+	}
+
+	//every frame: the components of the actors (an active level)
 	void Level::update(double delta_time)
 	{
+		if (!m_active) return;
 		visit([delta_time](Shared<Actor> actor) -> bool
 		{
 			for (auto& component : actor->components()) component.second->on_update(delta_time);
@@ -305,6 +320,7 @@ namespace Scene
 	}
 	void Level::late_update(double delta_time)
 	{
+		if (!m_active) return;
 		visit([delta_time](Shared<Actor> actor) -> bool
 		{
 			for (auto& component : actor->components()) component.second->on_late_update(delta_time);
@@ -329,7 +345,7 @@ namespace Scene
 		}
 	}
 
-	//every component of its actors leaves the systems of the world
+	//every component of its actors leaves the systems of the world, or comes back
 	void Level::remove_components()
 	{
 		visit([this](Shared<Actor> actor) -> bool
@@ -338,11 +354,21 @@ namespace Scene
 			return true;
 		});
 	}
+	void Level::add_components()
+	{
+		visit([this](Shared<Actor> actor) -> bool
+		{
+			for (auto& component : actor->components()) on_add_a_component(actor, component.second);
+			return true;
+		});
+	}
 
 	//added a component: to the systems of the world (the render collection is in the
 	//RenderInstance of the world)
 	void Level::on_add_a_component(Shared<Actor> actor, Shared<Component> component)
 	{
+		//not active: out of the systems (add_components when active again)
+		if (!m_active) return;
 		if (auto world = m_world.lock())
 		{
 			for (const Shared<SystemInstance>& instance : world->instances()) instance->on_add_component(actor, component);
@@ -351,6 +377,8 @@ namespace Scene
 	//remove a component
 	void Level::on_remove_a_component(Shared<Actor> actor, Shared<Component> component)
 	{
+		//not active: already out of the systems
+		if (!m_active) return;
 		if (auto world = m_world.lock())
 		{
 			for (const Shared<SystemInstance>& instance : world->instances()) instance->on_remove_component(actor, component);

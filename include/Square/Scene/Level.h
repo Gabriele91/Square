@@ -67,6 +67,12 @@ namespace Scene
 		const std::string& name() const;
 		void name(const std::string&);
 
+		//active (the default): its components updated and in the systems of the world (render,
+		//collisions...); not active: out of them, its actors as they are (a menu, a level not
+		//played now), back as they were when active again
+		void active(bool active);
+		bool active() const;
+
 		//message
 		void send_message(const VariantRef& value, bool brodcast = false);
 		void send_message(const Message& msg, bool brodcast = false);
@@ -89,6 +95,7 @@ namespace Scene
 		
 		//name
 		std::string m_name;
+		bool        m_active{ true };
 
 		//actor list
 		ActorList m_actors;
@@ -103,8 +110,9 @@ namespace Scene
 		void on_remove_a_component(Shared<Actor> actor, Shared<Component> component);
 
 		//every component of its actors leaves the systems of the world (the actors are cleared,
-		//or the level leaves the world)
+		//the level leaves the world, or it is not active), or comes back to them (active again)
 		void remove_components();
+		void add_components();
 
 		//world, given by the world that creates it (reset only when it removes the level)
 		Weak<World> m_world;

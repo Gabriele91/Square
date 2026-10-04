@@ -203,8 +203,9 @@ namespace Render
         if ( collection.m_cameras.size() <= camera_index ) return;
         //Init queue
         auto camera = collection.m_cameras[camera_index].lock();
-        // Test camera pointer
+        // Test camera pointer, a disabled camera is not drawn
         if (!camera) return;
+        if (!camera->enable()) return;
         //build queues
         CollectionQuery::lights(collection, m_camera_queue, *camera);
         CollectionQuery::renderables(collection, m_camera_queue, *camera);
@@ -251,9 +252,7 @@ namespace Render
                 for(auto e_light : m_camera_queue[RQ_DIRECTION_LIGHT]) draw_shadow(e_light->lock<Light>(), RQ_DIRECTION_LIGHT);
             }
         }
-        //for each cameras
-        for(auto [camera_index, weak_camera] : enumerate(collection.m_cameras))
-        if (auto camera = weak_camera.lock())
+        //this camera (its queues), the render, UI and debug passes
         {
             // RENDER Scene
             if (bool(draw_types & DrawerPassType::RPT_RENDER))

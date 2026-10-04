@@ -5,7 +5,7 @@
 //  Screen space reflections, a PES_COLOR post effect of the deferred pipeline (as in Unity and
 //  Unreal: the G-Buffer gives position, normal and material of every pixel; in forward the
 //  frame is copied as it is):
-//   1) trace (half size by default): from the world position of each pixel smooth enough
+//   1) trace (half size by default, a quarter the cheapest): from the world position of each pixel smooth enough
 //      (roughness under max_roughness) a ray reflected on its normal marches: on the screen
 //      (screen_march, by default: steps of the same length in pixels, DDA) or in world space
 //      (steps of the same length along the ray, each one projected on the screen); every step
@@ -45,7 +45,7 @@ namespace Render
 			float thickness{ 0.6f };      //world units behind a surface that are still a hit
 			float max_roughness{ 0.6f };  //rougher surfaces reflect nothing (it fades before)
 			float edge_fade{ 0.1f };      //share of the screen border where the reflection fades
-			bool  half_resolution{ true };//trace at half size (the composite is full size)
+			PostEffectResolution resolution{ PER_HALF }; //size of the trace (the composite is full size)
 			bool  screen_march{ false };   //march on the screen (DDA), false: in world space
 			//blur of the reflection by the roughness (the noise of the rays, the rough surfaces)
 			enum BlurQuality : int
