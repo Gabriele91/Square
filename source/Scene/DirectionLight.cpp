@@ -408,6 +408,8 @@ namespace Scene
 			CSMAux::set_uniform(m_cache_udirectionshadowlight, *camera, m_scene_size, m_buffer, m_rotation, m_direction, m_buffer.size());
 		}
 		std::memcpy(data, &m_cache_udirectionshadowlight, sizeof(Render::UniformDirectionShadowLight));
+		//the filter: every frame (it changes without a new shadow map)
+		data->m_filter = IVec4(int(shadow_filter()), 0, 0, 0);
 	}
 
 	void DirectionLight::set_scene_size(const Geometry::AABoundingBox& scene)

@@ -547,7 +547,7 @@ public:
 		m_ui_model.bind("fps", &m_ui.m_fps);
 		m_ui_model.bind("fullscreen", &m_ui.m_fullscreen.m_value);
 		m_ui_model.bind("sun", &m_ui.m_sun.m_value);
-		m_ui_model.bind("soft_shadows", &m_ui.m_soft_shadows.m_value);
+		m_ui_model.bind("shadow_filter", &m_ui.m_shadow_filter.m_value);
 		m_ui_model.bind("obb", &m_ui.m_obb.m_value);
 		m_ui_model.bind("lights", &m_ui.m_lights.m_value);
 		m_ui_model.bind("textures", &m_ui.m_textures.m_value);
@@ -686,9 +686,9 @@ public:
 		sync_option(m_ui.m_fullscreen, app && app->fullscreen(), [app](bool value) { if (app) app->fullscreen(value); });
 		auto sun = m_light && m_light->contains<Scene::DirectionLight>() ? m_light->component<Scene::DirectionLight>() : nullptr;
 		sync_option(m_ui.m_sun, sun && sun->visible(), [sun](bool value) { if (sun) sun->visible(value); });
-		sync_option(m_ui.m_soft_shadows, sun && sun->shadow_filter() == Render::ShadowFilter::PCSS, [sun](bool value)
+		sync_option(m_ui.m_shadow_filter, sun ? int(sun->shadow_filter()) : 0, [sun](int value)
 		{
-			if (sun) sun->shadow_filter(value ? Render::ShadowFilter::PCSS : Render::ShadowFilter::PCF);
+			if (sun) sun->shadow_filter(Render::ShadowFilter(std::clamp(value, 0, int(Render::ShadowFilter::PCSS))));
 		});
 		for (auto& marker : m_light_markers)
 		{
@@ -852,7 +852,7 @@ private:
 		UIOption<bool> m_ssao;
 		UIOption<bool> m_fullscreen;
 		UIOption<bool> m_sun;
-		UIOption<bool> m_soft_shadows; //the shadow of the sun: PCSS, else PCF
+		UIOption<int>  m_shadow_filter; //Render::ShadowFilter of the sun
 		UIOption<int>  m_ssr_march; //1: on the screen (DDA), 0: in world space
 		UIOption<int>  m_ssr_blur;  //Render::SSR::Settings::BlurQuality
 		UIOption<bool> m_ssr_denoise;

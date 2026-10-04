@@ -49,10 +49,11 @@ namespace Render
 		DIRECTION
 	};
 
-	//the filter of the shadow of a light: PCF (a fixed kernel), PCSS (soft: wider far from the
-	//caster; the deferred directional lights, the default)
-	enum class ShadowFilter
+	//the filter of the shadow of a light (directional: forward and deferred): NONE one sample
+	//(hard, aliased), PCF a fixed kernel, PCSS soft (wider far from the caster, the default)
+	enum class ShadowFilter : int
 	{
+		NONE,
 		PCF,
 		PCSS
 	};
@@ -94,6 +95,7 @@ namespace Render
 		CBArrMat4        m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 		CBArrMat4        m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 		CBArrVec3        m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // > hlsl packet rule: float4 for a float in array
+		IVec4            m_filter{ 0 }; //x: the ShadowFilter (a vector: its own register after the array)
 	};
 
 	CBStruct UniformPointShadowLight

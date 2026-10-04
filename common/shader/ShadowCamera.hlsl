@@ -63,6 +63,7 @@ struct DirectionShadowCameraStruct
 	Mat4 m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 	Mat4 m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 	Vec3 m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+	IVec4 m_filter; // x: 0 none, 1 PCF, 2 PCSS
 };
 
 cbuffer DirectionShadowCamera
