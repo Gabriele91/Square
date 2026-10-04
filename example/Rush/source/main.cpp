@@ -540,6 +540,7 @@ public:
 		m_ui_model.bind("ssr", &m_ui.m_ssr.m_value);
 		m_ui_model.bind("bloom", &m_ui.m_bloom.m_value);
 		m_ui_model.bind("ssao", &m_ui.m_ssao.m_value);
+		m_ui_model.bind("ssr_half", &m_ui.m_ssr_half.m_value);
 		m_ui_model.bind("ssao_half", &m_ui.m_ssao_half.m_value);
 		m_ui_model.bind("ssao_blur", &m_ui.m_ssao_blur.m_value);
 		m_ui_model.bind("mirror", &m_ui.m_mirror.m_value);
@@ -746,6 +747,13 @@ public:
 			settings.debug = value;
 			m_bloom->settings(settings);
 		});
+		sync_option(m_ui.m_ssr_half, m_ssr && m_ssr->settings().half_resolution, [this](bool value)
+		{
+			if (!m_ssr) return;
+			auto settings = m_ssr->settings();
+			settings.half_resolution = value;
+			m_ssr->settings(settings);
+		});
 		sync_option(m_ui.m_ssao_half, m_ssao && m_ssao->settings().half_resolution, [this](bool value)
 		{
 			if (!m_ssao) return;
@@ -862,6 +870,7 @@ private:
 		UIOption<int>  m_ssr_march; //1: on the screen (DDA), 0: in world space
 		UIOption<int>  m_ssr_blur;  //Render::SSR::Settings::BlurQuality
 		UIOption<bool> m_ssr_denoise;
+		UIOption<bool> m_ssr_half;
 		UIOption<bool> m_ssao_half;
 		UIOption<int>  m_ssao_blur; //Render::SSAO::Settings::BlurQuality
 		//debug
