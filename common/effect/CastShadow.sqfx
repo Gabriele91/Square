@@ -97,7 +97,7 @@ sub_effect
             blend off
             cullface param(shadow_cull)
             lights off
-            instances 4
+            instances 8
             shader "CastDirectionShadowInstanced.hlsl"
         }
     }
@@ -144,7 +144,7 @@ sub_effect
             blend off
             cullface param(shadow_cull)
             lights off
-            draw_count 4
+            draw_count 8
             shader "CastDirectionShadowMultiPass.hlsl"
         }
     }

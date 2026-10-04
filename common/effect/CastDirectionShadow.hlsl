@@ -4,6 +4,7 @@
 #include <Transform>
 #include <Matrix>
 #include <ShadowCamera>
+#include <MultiPassInfo>
 ////////////////
 //global uniform
 float shadow_mask;
@@ -44,10 +45,13 @@ void geometry(triangle VertexShaderOutput input[3]
 	        , inout TriangleStream<GeometryShaderOutput> output)
 {
 	GeometryShaderOutput outvertex = (GeometryShaderOutput)0;
-	//for each cube faces
+	//for each cascade of the light and of the caster
 	[unroll]
 	for (uint id = 0; id < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++id)
 	{
+		const bool of_light  = id < uint(direction_shadow_camera.m_options.y);
+		const bool of_caster = MULTI_PASS_HAS_LAYER(multi_pass.m_mask, id);
+		if (!of_light || !of_caster) continue;
 		// Set index
 		outvertex.m_RTIndex = id;
 		// for each triangle's vertices
@@ -69,6 +73,10 @@ void geometry(triangle VertexShaderOutput input[3]
 			, inout TriangleStream<GeometryShaderOutput> output
 	        , uint id : SV_GSInstanceID)
 {
+	// a cascade of the light and of the caster
+	const bool of_light  = id < uint(direction_shadow_camera.m_options.y);
+	const bool of_caster = MULTI_PASS_HAS_LAYER(multi_pass.m_mask, id);
+	if (!of_light || !of_caster) return;
 	GeometryShaderOutput outvertex = (GeometryShaderOutput)0;
 	// Set index
 	outvertex.m_RTIndex = id;

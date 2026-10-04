@@ -374,7 +374,8 @@ namespace Render
                 {
                     Render::UniformDirectionShadowLight direction_light_info;
                     light->set(&direction_light_info, &camera, false);
-                    for (int i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++i)
+                    const int cascades = std::min(direction_light_info.m_options.y, int(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
+                    for (int i = 0; i < cascades; ++i)
                     {
                         draw_fustrum(drawer,
                             camera,

@@ -45,6 +45,10 @@ namespace Scene
 		void  shadow(const IVec2& size);
 		const IVec2& shadow_size() const;
 
+		//the cascades of its shadow (1 to DIRECTION_SHADOW_CSM_NUMBER_OF_FACES)
+		void cascades(int cascades);
+		int  cascades() const;
+
 		//all events
 		virtual void on_attach(Actor& entity)      override;
 		virtual void on_deattch()                  override;
@@ -76,6 +80,7 @@ namespace Scene
 		Mat3 m_rotation;
 		//shadow
 		Render::ShadowBuffer m_buffer;
+		int m_cascades{ DIRECTION_SHADOW_CSM_DEFAULT_FACES };
 		Geometry::AABoundingBox m_scene_size;
 		mutable Render::UniformDirectionShadowLight m_cache_udirectionshadowlight;
 	};

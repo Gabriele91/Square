@@ -11,6 +11,7 @@
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Resource.h"
 #include "Square/Driver/Render.h"
+#include "Square/Render/MultiPass.h"
 #include "Square/Render/Queue.h"
 #include "Square/Render/VertexLayout.h"
 
@@ -292,6 +293,8 @@ namespace Render
 		Render::ConstBuffer*   m_direction_shadow_light{ nullptr };
 		Render::ConstBuffer*   m_point_shadow_light{ nullptr };
 		Render::ConstBuffer*   m_spot_shadow_light{ nullptr };
+		//the layers of a multi-pass draw (CSM: the cascades a caster is in), bit i: layer i
+		uint32                 m_layer_mask{ MULTI_PASS_ALL_LAYERS };
 
 		EffectPassInputs() = default;
 

@@ -5,6 +5,7 @@
 //  Created by Gabriele Di Bari on 27/04/18.
 //  Copyright � 2018 Gabriele Di Bari. All rights reserved.
 //
+#include <algorithm>
 #include <array>
 #include "Square/Core/Object.h"
 #include "Square/Core/Context.h"
@@ -60,6 +61,12 @@ namespace Scene
 		, IVec2(0)
 		, [](const DirectionLight* plight) -> IVec2 { return plight->shadow_size(); }
 		, [](DirectionLight* plight, const IVec2& shadow_size)  { plight->shadow(shadow_size);  });
+
+		ctx.add_attribute_function<DirectionLight, int>
+		("cascades"
+		, int(DIRECTION_SHADOW_CSM_DEFAULT_FACES)
+		, [](const DirectionLight* plight) -> int      { return plight->cascades(); }
+		, [](DirectionLight* plight, const int& cascades){ plight->cascades(cascades); });
     }
 
 	//light
@@ -117,10 +124,26 @@ namespace Scene
 		if (m_buffer.size() != size)
 		{
 			if (size.x != 0 && size.y != 0)
-				m_buffer.build(size, Render::ShadowBuffer::SB_TEXTURE_CSM);
+				m_buffer.build(size, Render::ShadowBuffer::SB_TEXTURE_CSM, (unsigned int)m_cascades);
 			else
 				m_buffer.destoy();
 		}
+	}
+
+	void DirectionLight::cascades(int cascades)
+	{
+		const int count = std::clamp(cascades, 1, int(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
+		if (count == m_cascades) return;
+		m_cascades = count;
+		//a layer of the shadow map for each one (its size copied: build resets it)
+		if (!shadow()) return;
+		const IVec2 size = m_buffer.size();
+		m_buffer.build(size, Render::ShadowBuffer::SB_TEXTURE_CSM, (unsigned int)m_cascades);
+	}
+
+	int DirectionLight::cascades() const
+	{
+		return m_cascades;
 	}
 
 	const IVec2& DirectionLight::shadow_size() const
@@ -173,7 +196,7 @@ namespace Scene
 
 	namespace CSMAux
 	{
-		CSMCascadeDepth compute_cascade_depth(const Render::Camera& camera)
+		CSMCascadeDepth compute_cascade_depth(const Render::Camera& camera, unsigned int cascades)
 		{
 			CSMCascadeDepth cascade_depth;
 			const float cam_near = camera.viewport().near();
@@ -185,9 +208,9 @@ namespace Scene
 			const float ratio = max_z / min_z;
 
 			cascade_depth[0] = cam_near;
-			for (uint32_t i = 1; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; i++)
+			for (uint32_t i = 1; i < cascades; i++)
 			{
-				float p = static_cast<float>(i) / static_cast<float>(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
+				float p = static_cast<float>(i) / static_cast<float>(cascades);
 				// Log depth
 				float log_depth = min_z * std::pow(ratio, p);
 				// Linear depth
@@ -196,7 +219,7 @@ namespace Scene
 				const float lambda = 0.5f;
 				cascade_depth[i] = lerp(log_depth, uniform, lambda);
 			}
-			cascade_depth[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES] = cam_far;
+			cascade_depth[cascades] = cam_far;
 			return cascade_depth;
 		}
 
@@ -361,10 +384,11 @@ namespace Scene
 						const Render::ShadowBuffer& buffer,
 						const Mat3& rotation,
 						const Vec3& direction,
-						const IVec2& shadow_map_size)
+						const IVec2& shadow_map_size,
+						unsigned int cascades)
 		{
 			// Depths
-			auto cascade_vdepths = compute_cascade_depth(camera);
+			auto cascade_vdepths = compute_cascade_depth(camera, cascades);
 			// multiply by inverse projection*view matrix to find frustum vertices in world space
 			// transform to light space
 			// same pass, find minimum along each axis
@@ -378,7 +402,7 @@ namespace Scene
 			const float base_bias = 0.0000020000f;
 			const float slope_bias = 0.0000060000f;
 			// Copy values
-			for (unsigned int i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++i)
+			for (unsigned int i = 0; i < cascades; ++i)
 			{
 				Mat4 cam_projection = Square::perspective(camera.viewport().fov(), camera.viewport().aspect(), cascade_vdepths[i], cascade_vdepths[i + 1]);
 				Mat4 cascade_cam = inverse(cam_projection * cam_view);
@@ -405,11 +429,11 @@ namespace Scene
 	{
 		if (auto ptr_actor = actor().lock() && draw_shadow_map)
 		{
-			CSMAux::set_uniform(m_cache_udirectionshadowlight, *camera, m_scene_size, m_buffer, m_rotation, m_direction, m_buffer.size());
+			CSMAux::set_uniform(m_cache_udirectionshadowlight, *camera, m_scene_size, m_buffer, m_rotation, m_direction, m_buffer.size(), (unsigned int)m_cascades);
 		}
 		std::memcpy(data, &m_cache_udirectionshadowlight, sizeof(Render::UniformDirectionShadowLight));
-		//the filter: every frame (it changes without a new shadow map)
-		data->m_filter = IVec4(int(shadow_filter()), 0, 0, 0);
+		//the filter and the cascades: every frame (the filter changes without a new shadow map)
+		data->m_options = IVec4(int(shadow_filter()), m_cascades, 0, 0);
 	}
 
 	void DirectionLight::set_scene_size(const Geometry::AABoundingBox& scene)

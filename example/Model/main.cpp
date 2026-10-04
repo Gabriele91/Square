@@ -39,6 +39,7 @@ static Square::Shell::ParserCommands s_ShellCommands
     , Square::Shell::Command{ "shadow",  "r", "force shadow resolution [size]"           , Square::Shell::ValueType::value_int   , false, Square::Shell::Value_t(0)                  }
     , Square::Shell::Command{ "images",  "m", "texture images [bc, astc, png, keep]"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("bc"))  }
     , Square::Shell::Command{ "pack",    "p", "pack the output folder in an archive (.sqz)", Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
+    , Square::Shell::Command{ "cascades","c", "cascades of the directional lights [1-8]"  , Square::Shell::ValueType::value_int   , false, Square::Shell::Value_t(0)                  }
     , Square::Shell::Command{ "help",    "h", "show help"                                , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
 };
 
@@ -54,6 +55,7 @@ public:
     bool m_convert_images;
     ImageConverter::Compression m_compression;
     bool m_pack{ false }; //--pack: the folder in <folder>.sqz (the engine reads it as the folder)
+    int  m_cascades{ 0 }; //--cascades: of the directional lights (0: the default of the engine)
 
     struct Consts
     {
@@ -293,6 +295,8 @@ public:
                                     actor->component<DirectionLight>()->specular(gltf_light.m_color);
                                     if (m_shadow_resoluction)
                                         actor->component<DirectionLight>()->shadow({ m_shadow_resoluction,m_shadow_resoluction });
+                                    if (m_cascades)
+                                        actor->component<DirectionLight>()->cascades(m_cascades);
                                 }
                                 break;
                                 default: break;
@@ -487,6 +491,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
     //the importer, packed in an archive (--pack) or not
     auto* importer = new ModelImporter(input_model_path, output_model_path, output_model_name, output_model_format, modes, shadow_resoluction, convert_images, compression);
     if (auto pack_it = args.find("pack"); pack_it != args.end()) importer->m_pack = std::get<bool>(pack_it->second);
+    if (auto cascades_it = args.find("cascades"); cascades_it != args.end()) importer->m_cascades = std::get<int>(cascades_it->second);
     //srgb on
     const bool srgb = true;
     //a tool: no splash screen

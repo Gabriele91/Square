@@ -386,6 +386,7 @@ namespace Render
 		{
 			Render::UniformMultiPass umultipass;
 			umultipass.m_id = (uint32)draw_id;
+			umultipass.m_mask = inputs.m_layer_mask;
 			render.update_steam_CB(m_cb_multipass.get(), (const unsigned char*)&umultipass, sizeof(umultipass));
 			m_uniform_multipass->bind(m_cb_multipass.get());
 		}
