@@ -76,6 +76,13 @@ set(SQUARE_RMLUI_LIBRARIES RmlUi::Core RmlUi::Debugger)
 # backends — C++ and Objective-C++ — and the examples/game), only in Debug.
 add_compile_definitions($<$<CONFIG:Debug>:TEXTURE_INTROSPECTION>)
 
+# Render profiler (Render/Profiler.h: CPU/GPU times of the render passes and of the shaders):
+# on in every configuration, off (-DSQUARE_RENDER_PROFILER=OFF) it is not compiled at all
+option(SQUARE_RENDER_PROFILER "Compile the render profiler (CPU/GPU times of the passes)" ON)
+if(SQUARE_RENDER_PROFILER)
+    add_compile_definitions(RENDER_PROFILER)
+endif()
+
 # Add square
 add_subdirectory(source)
 # Add examples
