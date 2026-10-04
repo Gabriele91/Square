@@ -1,7 +1,7 @@
 parameters
 {
     albedo_map  texture("white")
-    shadow_mask  float(-1.0)
+    mask_shadow  float(-1.0)
     //the faces in the directional shadow map (an importer gives its own: the material)
     shadow_cull cullface(back)
 }

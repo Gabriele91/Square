@@ -6,7 +6,7 @@
 #include <ShadowCamera>
 ////////////////
 //global uniform
-float shadow_mask;
+float mask_shadow;
 //texture
 Sampler2D(albedo_map);
 ////////////////
@@ -102,7 +102,7 @@ float fragment(in FragmentShaderinput input) : SV_Depth
 {
 	//albedo
 	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
-    if (albedo_color.a <= shadow_mask) discard;
+    if (albedo_color.a <= mask_shadow) discard;
 	//compute distance between wolrd and light source
 	float light_distance = length(point_shadow_camera.m_position - input.m_world_position.xyz);
 	//[0,1] range

@@ -12,7 +12,7 @@
 // array layer (SV_RenderTargetArrayIndex), so the render target is bound once.
 ////////////////
 //global uniform
-float shadow_mask;
+float mask_shadow;
 //texture
 Sampler2D(albedo_map);
 ////////////////
@@ -47,5 +47,5 @@ void fragment(in FragmentShaderInput input)
 {
 	//albedo
 	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
-	if (albedo_color.a <= shadow_mask) discard;
+	if (albedo_color.a <= mask_shadow) discard;
 }
