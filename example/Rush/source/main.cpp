@@ -551,6 +551,8 @@ public:
 		m_ui_model.bind("textures", &m_ui.m_textures.m_value);
 		m_ui_model.bind("ssr_debug", &m_ui.m_ssr_debug.m_value);
 		m_ui_model.bind("ssr_march", &m_ui.m_ssr_march.m_value);
+		m_ui_model.bind("ssr_blur", &m_ui.m_ssr_blur.m_value);
+		m_ui_model.bind("ssr_denoise", &m_ui.m_ssr_denoise.m_value);
 		m_ui_model.bind("bloom_debug", &m_ui.m_bloom_debug.m_value);
 		m_ui_model.bind("ssao_debug", &m_ui.m_ssao_debug.m_value);
 		m_ui_model.bind("ui_debugger", &m_ui.m_ui_debugger.m_value);
@@ -705,6 +707,20 @@ public:
 			settings.debug = value;
 			m_ssr->settings(settings);
 		});
+		sync_option(m_ui.m_ssr_denoise, m_ssr && m_ssr->settings().denoise, [this](bool value)
+		{
+			if (!m_ssr) return;
+			auto settings = m_ssr->settings();
+			settings.denoise = value;
+			m_ssr->settings(settings);
+		});
+		sync_option(m_ui.m_ssr_blur, m_ssr ? int(m_ssr->settings().blur) : 0, [this](int value)
+		{
+			if (!m_ssr) return;
+			auto settings = m_ssr->settings();
+			settings.blur = Render::SSR::Settings::BlurQuality(std::clamp(value, 0, int(Render::SSR::Settings::BLUR_HIGH)));
+			m_ssr->settings(settings);
+		});
 		sync_option(m_ui.m_ssr_march, m_ssr && m_ssr->settings().screen_march ? 1 : 0, [this](int value)
 		{
 			if (!m_ssr) return;
@@ -831,6 +847,8 @@ private:
 		UIOption<bool> m_fullscreen;
 		UIOption<bool> m_sun;
 		UIOption<int>  m_ssr_march; //1: on the screen (DDA), 0: in world space
+		UIOption<int>  m_ssr_blur;  //Render::SSR::Settings::BlurQuality
+		UIOption<bool> m_ssr_denoise;
 		UIOption<bool> m_ssao_half;
 		UIOption<int>  m_ssao_blur; //Render::SSAO::Settings::BlurQuality
 		//debug
