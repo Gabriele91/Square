@@ -902,9 +902,10 @@ namespace GLTF
         {
             if (texture.empty()) return std::nullopt;
 
-            int index = texture.at("index").number(0);
-            float scale = texture.find("scale") != texture.end() ?
-                texture.at("scale").number(1.0f) : 1.0f;
+            const int index = int(texture.at("index").number(0));
+            const float scale = texture.find("scale") != texture.end() 
+                                ? float(texture.at("scale").number(1.0f))
+                                : 1.0f;
             return Material::TextureInfo{ index, scale };
         }
 

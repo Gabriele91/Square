@@ -1,0 +1,17 @@
+//the default material of PBR, both faces (drawn and in the shadow map): the one sided meshes
+effect "PBR"
+{
+    cull          cullface(off)
+    shadow_cull   cullface(off)
+    albedo_map    texture("white")
+    metallic_map  texture("black")
+    roughness_map texture("white")
+    emmisive_map  texture("black")
+    occlusion_map texture("white")
+    normal_map    texture("normal_up")
+    color         Vec4(1.0,1.0,1.0,1.0)
+    metallic      float(0.0)
+    roughness     float(0.5)
+    emmisive      Vec3(1.0,1.0,1.0)
+    mask          float(-1.0)
+}

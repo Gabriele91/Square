@@ -49,6 +49,14 @@ namespace Render
 		DIRECTION
 	};
 
+	//the filter of the shadow of a light: PCF (a fixed kernel), PCSS (soft: wider far from the
+	//caster; the deferred directional lights, the default)
+	enum class ShadowFilter
+	{
+		PCF,
+		PCSS
+	};
+
 	//uniform buffers
 	CBStruct UniformDirectionLight
     {
@@ -147,6 +155,10 @@ namespace Render
 
 		LightType type() const;
 
+		ShadowFilter shadow_filter() const;
+
+		void shadow_filter(ShadowFilter filter);
+
     protected:
         
 		void type(LightType type);
@@ -155,6 +167,7 @@ namespace Render
         
         LightType m_type{ LightType::NONE };
 		bool m_visible{ true };
+		ShadowFilter m_shadow_filter{ ShadowFilter::PCSS };
 	};
 	
     class SQUARE_API DirectionLight : public Light

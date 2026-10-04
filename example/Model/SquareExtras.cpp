@@ -5,6 +5,7 @@
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
 #include "SquareExtras.h"
+#include <cctype>
 #include <sstream>
 
 namespace SquareExtras
@@ -37,12 +38,28 @@ namespace SquareExtras
         return i < values.size() ? number(values[i]) : 0.0;
     }
 
+    //a value of a parameter as it is in a .mat: name(...) (cullface(off), zbuffer(less), Vec3(...))
+    static bool literal(const std::string& value)
+    {
+        const size_t open = value.find('(');
+        if (open == 0 || open == std::string::npos || value.back() != ')') return false;
+        for (size_t i = 0; i != open; ++i)
+        {
+            if (!std::isalnum((unsigned char)value[i]) && value[i] != '_') return false;
+        }
+        return true;
+    }
+
     std::string material_value(const Square::Data::JsonValue& value)
     {
         std::ostringstream text;
         if (value.is_number() || value.is_boolean())
         {
             text << "float(" << number(value) << ")";
+        }
+        else if (value.is_string() && literal(value.string()))
+        {
+            text << value.string();
         }
         else if (value.is_string())
         {

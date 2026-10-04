@@ -327,13 +327,28 @@ namespace Render
 		}
 	};
 
+	//a render state of a pass: fixed (its value) or parametric (param(name) in the .sqfx: the value
+	//of a parameter of the effect, so of its material; m_value without it)
+	template < typename T >
+	struct PassState
+	{
+		T           m_value;          //fixed, or the one without the parameter
+		std::string m_param;          //parametric: the name of its parameter (empty: fixed)
+		int         m_param_id{ -1 }; //its id in the effect (an imported technique: in the importer)
+
+		PassState() = default;
+		PassState(const T& value) : m_value(value) {}
+
+		bool parametric() const { return !m_param.empty(); }
+	};
+
 	//pass type //todo: rename in pipeline
 	class SQUARE_API EffectPass
 	{
 	public:
-		Render::CullfaceState              m_cullface;
-		Render::DepthBufferState           m_depth;
-		Render::BlendState                 m_blend;
+		PassState< Render::CullfaceState >    m_cullface;
+		PassState< Render::DepthBufferState > m_depth;
+		PassState< Render::BlendState >       m_blend;
 		Shared<Resource::Shader>           m_shader;
 		std::vector< int >                 m_param_id;
 		std::vector< Render::Uniform* >    m_uniform;

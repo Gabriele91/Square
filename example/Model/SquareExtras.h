@@ -27,7 +27,8 @@ namespace SquareExtras
     double component(const Square::Data::JsonValue& value, size_t i);
 
     //the value of a material parameter: a number (or a boolean) is a float, an array of 2/3/4
-    //numbers a Vec2/3/4, a string a texture; empty if it is none of them
+    //numbers a Vec2/3/4, a string name(...) the value as it is (square_shadow_cull "cullface(off)"),
+    //another string a texture; empty if it is none of them
     std::string material_value(const Square::Data::JsonValue& value);
 
     //the attributes of an object (a light...) from the extras "square_<attribute>": the value

@@ -827,6 +827,8 @@ namespace Parser
     {
         //skip "line" space
         skip_line_space(m_context->m_line, ptr);
+        //parametric (without the parameter: off)
+        if (cstr_cmp_skip(ptr, "param")) return parse_state_param(ptr, pass.m_blend.m_param);
         //string
         std::string param1, param2;
         //parse name
@@ -838,7 +840,7 @@ namespace Parser
         //param test
         if (is_false_keyword(param1))
         {
-            pass.m_blend = Render::BlendState();
+            pass.m_blend.m_value = Render::BlendState();
             return true;
         }
         //skip "line" space
@@ -850,15 +852,17 @@ namespace Parser
             return false;
         }
         //parse
-        pass.m_blend.m_enable = true;
-        pass.m_blend.m_src = blend_from_string(param1, Render::BLEND_ONE);
-        pass.m_blend.m_dst = blend_from_string(param2, Render::BLEND_ZERO);
+        pass.m_blend.m_value.m_enable = true;
+        pass.m_blend.m_value.m_src = blend_from_string(param1, Render::BLEND_ONE);
+        pass.m_blend.m_value.m_dst = blend_from_string(param2, Render::BLEND_ZERO);
         return true;
     }
     bool Effect::parse_depth(const char*& ptr, PassField& pass)
     {
         //skip "line" space
         skip_line_space(m_context->m_line, ptr);
+        //parametric (without the parameter: less, written)
+        if (cstr_cmp_skip(ptr, "param")) return parse_state_param(ptr, pass.m_depth.m_param);
         //string
         std::string param1;
         //parse name
@@ -870,12 +874,12 @@ namespace Parser
         //param test
         if (is_false_keyword(param1))
         {
-            pass.m_depth = Render::DepthBufferState({ Render::DM_DISABLE });
+            pass.m_depth.m_value = Render::DepthBufferState({ Render::DM_DISABLE });
             return true;
         }
         //parse
-        pass.m_depth.m_mode = Render::DM_ENABLE_AND_WRITE;
-        pass.m_depth.m_type = depth_from_string(param1,  Render::DT_LESS);
+        pass.m_depth.m_value.m_mode = Render::DM_ENABLE_AND_WRITE;
+        pass.m_depth.m_value.m_type = depth_from_string(param1,  Render::DT_LESS);
         //optional: "read_only", test the depth without writing it (translucent surfaces)
         skip_line_space(m_context->m_line, ptr);
         if (std::isalpha((unsigned char)*ptr))
@@ -886,7 +890,7 @@ namespace Parser
                 push_error("Depth write parameter not valid (read_only)");
                 return false;
             }
-            pass.m_depth.m_mode = Render::DM_ENABLE_ONLY_READ;
+            pass.m_depth.m_value.m_mode = Render::DM_ENABLE_ONLY_READ;
         }
         return true;
     }
@@ -894,6 +898,12 @@ namespace Parser
     {
         //skip "line" space
         skip_line_space(m_context->m_line, ptr);
+        //parametric (without the parameter: the back faces)
+        if (cstr_cmp_skip(ptr, "param"))
+        {
+            pass.m_cullface.m_value = Render::CullfaceState(Render::CF_BACK);
+            return parse_state_param(ptr, pass.m_cullface.m_param);
+        }
         //string
         std::string param1;
         //parse name
@@ -905,11 +915,36 @@ namespace Parser
         //param test
         if (is_false_keyword(param1))
         {
-            pass.m_cullface = Render::CullfaceState(Render::CF_DISABLE);
+            pass.m_cullface.m_value = Render::CullfaceState(Render::CF_DISABLE);
             return true;
         }
         //parse
-        pass.m_cullface.m_cullface = cullface_from_string(param1, Render::CF_BACK);
+        pass.m_cullface.m_value.m_cullface = cullface_from_string(param1, Render::CF_BACK);
+        return true;
+    }
+    bool Effect::parse_state_param(const char*& ptr, std::string& name)
+    {
+        //(name)
+        skip_line_space(m_context->m_line, ptr);
+        if (!is_start_arg(*ptr))
+        {
+            push_error("param: ( expected");
+            return false;
+        }
+        ++ptr;
+        skip_line_space(m_context->m_line, ptr);
+        if (!parse_name(ptr, name))
+        {
+            push_error("param: the name of a parameter expected");
+            return false;
+        }
+        skip_line_space(m_context->m_line, ptr);
+        if (!is_end_arg(*ptr))
+        {
+            push_error("param: ) expected");
+            return false;
+        }
+        ++ptr;
         return true;
     }
     bool Effect::parse_lights(const char*& ptr, PassField& pass)

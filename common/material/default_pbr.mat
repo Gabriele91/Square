@@ -1,0 +1,15 @@
+//the default material of PBR: white, not metallic, half rough
+effect "PBR"
+{
+    albedo_map    texture("white")
+    metallic_map  texture("black")
+    roughness_map texture("white")
+    emmisive_map  texture("black")
+    occlusion_map texture("white")
+    normal_map    texture("normal_up")
+    color         Vec4(1.0,1.0,1.0,1.0)
+    metallic      float(0.0)
+    roughness     float(0.5)
+    emmisive      Vec3(1.0,1.0,1.0)
+    mask          float(-1.0)
+}
