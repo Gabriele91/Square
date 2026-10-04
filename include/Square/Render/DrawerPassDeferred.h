@@ -124,7 +124,6 @@ namespace Render
 		Shared<Resource::Shader> m_shader_spot;
 		//light shaders with shadow mapping
 		Shared<Resource::Shader> m_shader_direction_shadow;
-		Shared<Resource::Shader> m_shader_direction_shadow_pcss;
 		Shared<Resource::Shader> m_shader_point_shadow;
 		Shared<Resource::Shader> m_shader_spot_shadow;
 		Shared<Resource::Shader> m_shader_present;

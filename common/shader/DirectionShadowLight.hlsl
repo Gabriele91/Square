@@ -47,8 +47,13 @@ float csm_texel_world_size(uint id)
 	return width / textureSize2DArray(direction_shadow_map, 0).x;
 }
 
-#if defined(PCF_SHADOW) && PCF_SHADOW >= 1
-float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
+// the filters (direction_shadow_camera.m_filter.x)
+#define SHADOW_FILTER_NONE 0
+#define SHADOW_FILTER_PCF 1
+#define SHADOW_FILTER_PCSS 2
+
+// PCF: a fixed kernel of PCF_SHADOW x PCF_SHADOW samples
+float direction_light_shadow_pcf(in Vec3 proj_coords, uint id, const float bias)
 {
 	//depth of current pos
 #ifdef GLSL_BACKEND
@@ -79,8 +84,9 @@ float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
 	//return
 	return shadow;
 }
-#else
-float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
+
+// no filter: one sample (hard, aliased)
+float direction_light_shadow_none(in Vec3 proj_coords, uint id, const float bias)
 {
 	// depth of shadow map
 	float closest_depth = shadow2DArray(direction_shadow_map, Vec3(proj_coords.xy, id)).r;
@@ -95,9 +101,7 @@ float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
 	// shadow
 	return shadow;
 }
-#endif
 
-#if defined(PCSS_SHADOW)
 // Poisson disk, radius 1
 static const Vec2 pcss_poisson[PCSS_SAMPLES] =
 {
@@ -169,7 +173,6 @@ float direction_light_shadow_pcss(in Vec3 proj_coords, uint id, const float bias
 	}
 	return shadow / float(PCSS_SAMPLES);
 }
-#endif
 
 Vec4 rh_mul_direction_light_view_projection(in Vec4 position, uint id)
 {
@@ -210,12 +213,14 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec
 	proj_coords = invY(proj_coords);
 	// Compute bias
 	float bias = bias_depth_driven(light_dir, normal, cascade_id);
-	// Shadow
-#if defined(PCSS_SHADOW)
-	float shadow = direction_light_shadow_pcss(proj_coords, cascade_id, bias);
-#else
-	float shadow = direction_light_shadow(proj_coords, cascade_id, bias);
-#endif
+	// Shadow: by the filter of the light
+	float shadow = 1.0;
+	switch (direction_shadow_camera.m_filter.x)
+	{
+	case SHADOW_FILTER_NONE: shadow = direction_light_shadow_none(proj_coords, cascade_id, bias); break;
+	case SHADOW_FILTER_PCSS: shadow = direction_light_shadow_pcss(proj_coords, cascade_id, bias); break;
+	default:                 shadow = direction_light_shadow_pcf(proj_coords, cascade_id, bias); break;
+	}
 	// return
 	return shadow;
 }
