@@ -41,6 +41,7 @@ namespace Render
     class UniformConstBuffer;
     class MapConstBuffer;
     class RenderInspector;
+    class Profiler;
 	// POINTERS
 	using TextureSPtr	   = Shared< Texture >;
 	using TargetSPtr	   = Shared< Target >;
@@ -1189,6 +1190,23 @@ namespace Render
 		//Output file name and line
         virtual bool print_errors(const char* source_file_name, int line) const = 0;
 
+		//GPU timer (see Render/Profiler.h): timestamps written by the GPU during a frame, read
+		//back some frames later (no stall). Implemented by the backends only with RENDER_PROFILER,
+		//otherwise (or without device support) they do nothing
+		virtual bool gpu_timer_supported() const { return false; }
+		//a new frame of timestamps, its end
+		virtual void gpu_timer_begin_frame() {}
+		virtual void gpu_timer_end_frame() {}
+		//a timestamp after the commands given so far: its index in the frame (-1: none)
+		virtual int  gpu_timer_timestamp() { return -1; }
+		//the oldest frame done by the GPU: its id (the count of gpu_timer_begin_frame before it)
+		//and its timestamps, in ms from the first one (negative: not sampled); false when none is ready
+		virtual bool gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms) { return false; }
+
+		//profiler (see Render/Profiler.h): the passes open their scopes on it, nullptr when off
+		void set_profiler(Profiler* profiler) { m_profiler = profiler; }
+		Profiler* profiler() const { return m_profiler; }
+
 		//inspector (see Driver/RenderInspector.h): the backends notify it about
 		//texture/render target lifetime events, but only when TEXTURE_INTROSPECTION
 		//is enabled (debug builds by default) — a release driver never calls it
@@ -1202,6 +1220,7 @@ namespace Render
 		Allocator* m_allocator;
 		Logger* m_logger;
 		RenderInspector* m_inspector{ nullptr };
+		Profiler*        m_profiler{ nullptr };
 	};
 	/////////////////////////////////
 	// Buffer smart pointer	

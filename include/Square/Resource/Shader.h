@@ -70,7 +70,15 @@ namespace Resource
 		//destoy shader
 		void destoy();
 
+		//the name of the shader in the render profiler: the resource name (without its type), or the
+		//one given (the shaders of the effects are not resources)
+		const std::string& profile_name() const;
+		void profile_name(const std::string& name);
+
 	protected:
+
+		//the name in the profiler (made by profile_name() when empty)
+		mutable std::string m_profile_name;
 
 		//Values
 		Render::Shader* m_shader{ nullptr };

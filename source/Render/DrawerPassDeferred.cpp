@@ -20,6 +20,7 @@
 #include "Square/Resource/Shader.h"
 #include "Square/Render/LightVolume.h"
 #include "Square/Render/ForwardShading.h"
+#include "Square/Render/Profiler.h"
 #include <cmath>
 
 namespace Square
@@ -230,25 +231,29 @@ namespace Render
 		//////////////////////////////////////////////////////////////////
 		// AMBIENT (+ emissive), full-screen
 		//////////////////////////////////////////////////////////////////
-		m_shader_ambient->bind();
-		render().bind_uniform_CB(m_cb_camera.get(), m_shader_ambient->base_shader(), "Camera");
-		bind_gbuffer(m_shader_ambient.get());
-		if (auto uniform_light = m_shader_ambient->uniform("light"))
 		{
-			uniform_light->set(ambient_color);
+			SQUARE_RENDER_SCOPE(render(), "Ambient");
+			m_shader_ambient->bind();
+			render().bind_uniform_CB(m_cb_camera.get(), m_shader_ambient->base_shader(), "Camera");
+			bind_gbuffer(m_shader_ambient.get());
+			if (auto uniform_light = m_shader_ambient->uniform("light"))
+			{
+				uniform_light->set(ambient_color);
+			}
+			else
+			{
+				context().logger()->warning("DrawerPassDeferred: 'light' uniform not found in ambient shader");
+			}
+			m_quad->draw(render());
+			m_shader_ambient->unbind();
 		}
-		else
-		{
-			context().logger()->warning("DrawerPassDeferred: 'light' uniform not found in ambient shader");
-		}
-		m_quad->draw(render());
-		m_shader_ambient->unbind();
 
 		//////////////////////////////////////////////////////////////////
 		// DIRECTIONAL lights, full-screen
 		//////////////////////////////////////////////////////////////////
 		if (queues[RQ_DIRECTION_LIGHT].size())
 		{
+			SQUARE_RENDER_SCOPE(render(), "Direction lights");
 			//the shaders: no shadow, shadow (its filter, by the light, in the shader)
 			for (bool with_shadow : { false, true })
 			{
@@ -304,6 +309,7 @@ namespace Render
 		//////////////////////////////////////////////////////////////////
 		if (queues[RQ_POINT_LIGHT].size())
 		{
+			SQUARE_RENDER_SCOPE(render(), "Point lights");
 			//only the volume back faces behind the shaded geometry pass the test
 			render().set_depth_buffer_state({ DT_GREATER_EQUAL, DM_ENABLE_ONLY_READ });
 			for (bool with_shadow : { false, true })
@@ -364,6 +370,7 @@ namespace Render
 		//////////////////////////////////////////////////////////////////
 		if (queues[RQ_SPOT_LIGHT].size())
 		{
+			SQUARE_RENDER_SCOPE(render(), "Spot lights");
 			//only the volume back faces behind the shaded geometry pass the test
 			render().set_depth_buffer_state({ DT_GREATER_EQUAL, DM_ENABLE_ONLY_READ });
 			for (bool with_shadow : { false, true })
@@ -447,28 +454,42 @@ namespace Render
 		//post effects of the world
 		const auto& post_effects = drawer.post_effects();
 		//1) geometry into the G-Buffer
-		geometry_pass(clear_color, num_of_pass, camera, queues);
+		{
+			SQUARE_RENDER_SCOPE(render(), "G-Buffer");
+			geometry_pass(clear_color, num_of_pass, camera, queues);
+		}
 		//1b) G-Buffer post effects (SSAO...)
 		if (PostEffectChain::any(post_effects, PES_GBUFFER))
 		{
+			SQUARE_RENDER_SCOPE(render(), "G-Buffer effects");
 			m_post_effects.draw_gbuffer(post_effects, post_effect_frame(camera));
 		}
 		//2) accumulate lights into the light buffer
-		light_pass(ambient_color, camera, queues);
+		{
+			SQUARE_RENDER_SCOPE(render(), "Lights");
+			light_pass(ambient_color, camera, queues);
+		}
 		//2b) blend the translucent renderables over it (forward shaded)
-		translucent_pass(ambient_color, camera, queues);
+		{
+			SQUARE_RENDER_SCOPE(render(), "Translucent");
+			translucent_pass(ambient_color, camera, queues);
+		}
 		//2c) color post effects, on the light buffer
 		Texture* frame = m_light_texture;
 		if (PostEffectChain::any(post_effects, PES_COLOR))
 		{
+			SQUARE_RENDER_SCOPE(render(), "Color effects");
 			frame = m_post_effects.draw_color(post_effects, post_effect_frame(camera), m_light_texture);
 		}
 		//3) present the frame to the screen (or the debug view of a post effect)
 		if (Texture* debug = PostEffectChain::debug_texture(post_effects)) frame = debug;
-		present_pass(camera, frame);
-		//4) copy depth for later passes (no-op on backends without blit support)
-		const IVec4 area(0, 0, size.x, size.y);
-		render().copy_target_to_target(area, m_gbuffer->target(), area, nullptr, RT_DEPTH);
+		{
+			SQUARE_RENDER_SCOPE(render(), "Present");
+			present_pass(camera, frame);
+			//4) copy depth for later passes (no-op on backends without blit support)
+			const IVec4 area(0, 0, size.x, size.y);
+			render().copy_target_to_target(area, m_gbuffer->target(), area, nullptr, RT_DEPTH);
+		}
 	}
 
 	void DrawerPassDeferred::translucent_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues)

@@ -656,6 +656,15 @@ namespace Render
 		//Output file name and line
 		virtual bool print_errors(const char* source_file_name, int line) const override;
 
+#if defined(RENDER_PROFILER)
+		//GPU timer: GL_TIMESTAMP queries, a ring of frames
+		virtual bool gpu_timer_supported() const override;
+		virtual void gpu_timer_begin_frame() override;
+		virtual void gpu_timer_end_frame() override;
+		virtual int  gpu_timer_timestamp() override;
+		virtual bool gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms) override;
+#endif
+
 		//context
 		BindContext        s_bind_context;
 		State			   s_render_state;
@@ -663,6 +672,23 @@ namespace Render
 		GLuint             s_vao_attributes;
 		RenderDriverInfo   s_render_driver_info;
 		bool               m_srgb_fb{ false };
+
+#if defined(RENDER_PROFILER)
+		//GPU timer
+		struct GpuTimerFrame
+		{
+			uint64              m_id{ 0 };
+			std::vector<GLuint> m_queries; //grown on demand
+			size_t              m_count{ 0 };
+			bool                m_pending{ false };
+		};
+		static constexpr size_t GPU_TIMER_FRAMES = 4;
+		static constexpr size_t GPU_TIMER_MAX_TIMESTAMPS = 8192;
+		GpuTimerFrame m_gpu_timer_frames[GPU_TIMER_FRAMES];
+		uint64        m_gpu_timer_frame_id{ 0 };
+		bool          m_gpu_timer_in_frame{ false };
+		bool          m_gpu_timer_supported{ false };
+#endif
 	};
 }
 }

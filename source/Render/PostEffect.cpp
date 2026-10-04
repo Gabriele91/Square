@@ -9,6 +9,7 @@
 #include "Square/Driver/Render.h"
 #include "Square/Render/Mesh.h"
 #include "Square/Render/PostEffect.h"
+#include "Square/Render/Profiler.h"
 #include "Square/Resource/Shader.h"
 
 namespace Square
@@ -76,6 +77,7 @@ namespace Render
 	{
 		if (!shader || !target || !frame.m_quad) return;
 		auto& render = *frame.m_render;
+		SQUARE_RENDER_SCOPE(render, shader->profile_name().c_str());
 		render.enable_render_target(target);
 		render.set_viewport_state({ Vec4(0.0f, 0.0f, float(frame.m_size.x), float(frame.m_size.y)) });
 		render.set_depth_buffer_state({ DM_DISABLE });
@@ -167,7 +169,9 @@ namespace Render
 		if (!frame.m_gbuffer) return;
 		for (auto& effect : effects)
 		{
-			if (effect && effect->enabled() && effect->stage() == PES_GBUFFER) effect->draw(frame);
+			if (!effect || !effect->enabled() || effect->stage() != PES_GBUFFER) continue;
+			SQUARE_RENDER_SCOPE(render(), effect->object_name().c_str());
+			effect->draw(frame);
 		}
 	}
 
@@ -182,6 +186,7 @@ namespace Render
 			if (!effect || !effect->enabled() || effect->stage() != PES_COLOR) continue;
 			frame.m_source = current;
 			frame.m_destination = m_targets[next];
+			SQUARE_RENDER_SCOPE(render(), effect->object_name().c_str());
 			effect->draw(frame);
 			current = m_textures[next];
 			next = 1 - next;

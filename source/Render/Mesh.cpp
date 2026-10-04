@@ -2,6 +2,7 @@
 #include "Square/System/RenderSystem.h"
 #include "Square/Driver/Render.h"
 #include "Square/Core/Context.h"
+#include "Square/Render/Profiler.h"
 
 namespace Square
 {
@@ -272,6 +273,8 @@ namespace Render
 			context().logger()->debug("Unable to draw mesh: " + std::to_string(size_t(this)));
 			return;
 		}
+		//one draw for the profiler (its submeshes)
+		SQUARE_RENDER_DRAW(render);
 		//bind vertex buffer
 		render.bind_VBO(vertex_buffer().get());
 		//draw elements or array
@@ -312,6 +315,8 @@ namespace Render
 		}
 		//ref sub mesh
 		const SubMesh& sub_mesh = m_sub_meshs[sub_mesh_id];
+		//one draw for the profiler (its submeshes)
+		SQUARE_RENDER_DRAW(render);
 		//bind vertex buffer
 		render.bind_VBO(vertex_buffer().get());
 		//draw elements or array

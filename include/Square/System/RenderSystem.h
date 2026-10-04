@@ -26,6 +26,7 @@ namespace Square
 		class DrawerPassDebug;
 		class PostEffect;
 		class RenderInspector;
+		class Profiler;
 	}
 	class RenderInstance;
 	//..................
@@ -69,6 +70,9 @@ namespace Square
 		//the render device
 		Render::Context* render() const;
 
+		//the render profiler (see Render/Profiler.h): nullptr without RENDER_PROFILER
+		Render::Profiler* profiler() const;
+
 		//the drawers of the worlds can be built: from post_initialize (their passes load the
 		//effects added by AppInterface::start) to pre_shutdown
 		bool ready() const;
@@ -85,6 +89,7 @@ namespace Square
 		//device
 		Render::Context*         m_render{ nullptr };
 		Render::RenderInspector* m_inspector{ nullptr };
+		Render::Profiler*        m_profiler{ nullptr };
 		//between post_initialize and pre_shutdown
 		bool m_ready{ false };
 		//worlds

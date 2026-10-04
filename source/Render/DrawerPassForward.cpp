@@ -16,6 +16,7 @@
 #include "Square/Render/Transform.h"
 #include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/DrawerPassForward.h"
+#include "Square/Render/Profiler.h"
 #include "Square/Render/BasicMesh.h"
 #include "Square/Render/ForwardShading.h"
 #include "Square/Resource/Shader.h"
@@ -81,6 +82,8 @@ namespace Render
             render().clear();
         }
         //draw opaque and translucent renderables with their "forward" technique
+        {
+        SQUARE_RENDER_SCOPE(render(), "Forward");
         draw_forward
         (
               render()
@@ -101,9 +104,11 @@ namespace Render
                 , m_cb_spot_shadow_light.get()
               }
         );
+        }
         //post effects, then the result on the screen
         if (post)
         {
+            SQUARE_RENDER_SCOPE(render(), "Color effects");
             render().disable_render_target(m_frame->target());
             PostEffectFrame frame;
             frame.m_render        = &render();

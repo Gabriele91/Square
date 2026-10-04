@@ -14,6 +14,7 @@
 #include "Square/Data/Image.h"
 #include "Square/Resource/Shader.h"
 #include "Square/System/RenderSystem.h"
+#include "Square/Render/Profiler.h"
 #include "Backend.h"
 
 namespace Square
@@ -55,6 +56,7 @@ namespace UI
 		m_start_time = Time::get_time();
 		//shader and layout of the vertices
 		m_shader = MakeShared<Resource::Shader>(m_context);
+		m_shader->profile_name("UI");
 		if (!m_shader->compile(s_shader_source, {}))
 		{
 			m_shader.reset();
@@ -159,7 +161,10 @@ namespace UI
 		render->bind_VBO(geometry->m_vertices);
 		render->bind_IBO(geometry->m_indices);
 		render->bind_IL(m_layout);
-		render->draw_elements(Render::DRAW_TRIANGLES, 0, geometry->m_count);
+		{
+			SQUARE_RENDER_DRAW(*render);
+			render->draw_elements(Render::DRAW_TRIANGLES, 0, geometry->m_count);
+		}
 		render->unbind_IL(m_layout);
 		render->unbind_IBO(geometry->m_indices);
 		render->unbind_VBO(geometry->m_vertices);
