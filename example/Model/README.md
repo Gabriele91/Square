@@ -36,6 +36,7 @@ renames the root actor to `scene`.
 | `--shadow` | `-r` | integer | no | `0` | Shadow map size (pixels, square) given to every light. `0`: the lights have no shadow. A light can override it with `square_shadow`. |
 | `--images` | `-m` | `bc` \| `astc` \| `png` \| `keep` | no | `bc` | The images of the textures: `bc` converted (see [Images](#images)) and compressed for the GPU with all their mipmaps in a `<texture>_img.dds` (BC5 the normal maps, BC3 with alpha, else BC1), `astc` the same in a `<texture>_img.ktx` (ASTC 4x4: Apple GPUs, mobiles), both with the converted image as `<texture>_fallback.png` for a GPU without the format (an image that cannot be compressed, e.g. a size not a multiple of 4 with `bc`, is as with `png`); `png` converted and embedded in the `.sqtex`; `keep` as they are (embedded for `.glb`, copied for `.gltf`). |
 | `--pack` | `-p` | | no | off | Pack the output folder in `<folder>.sqz` (a zip: deflate level 6, the PNG/JPEG and gzip files stored as they are): the engine reads it as the folder, with the same resource names. The folder is removed when the export made it. |
+| `--cascades` | `-c` | integer | no | `0` | Cascades of the shadow of the directional lights, `1` to `8`. `0`: the default of the engine (`4`). A light can override it with `square_cascades`. |
 | `--swapzy` | `-s` | | no | off | Swap the Z and Y coordinates. |
 | `--lhs` | `-l` | | no | **on** | Convert to the left handed system of the engine. Always on. |
 | `--debug` | `-d` | | no | off | Debug mode. |
@@ -182,6 +183,7 @@ both have the same property, the object wins. They set the attributes of the lig
 | `square_diffuse` | Vec3 | ✓ | ✓ | ✓ | Diffuse color (default: the light color). |
 | `square_specular` | Vec3 | ✓ | ✓ | ✓ | Specular color (default: the light color). |
 | `square_shadow` | Int or Vec2 | ✓ | ✓ | ✓ | Shadow map size (pixels); a number is used for both sides; `0`: no shadow. Overrides `--shadow`. |
+| `square_cascades` | Int | | | ✓ | Cascades of the shadow (CSM), `1` to `8` (default `4`): more, sharper shadows far away, more draws. Overrides `--cascades`. |
 | `square_constant` | float | ✓ | ✓ | | Constant attenuation. |
 | `square_radius` | float | ✓ | ✓ | | Range (default: the glTF range, else from the power). |
 | `square_inside_radius` | float | ✓ | ✓ | | Radius where the attenuation starts. |

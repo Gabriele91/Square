@@ -9,9 +9,13 @@
 //
 #pragma once
 
+// the mask of the layers of the draw (CSM: the cascades of a caster), bit i: layer i
+#define MULTI_PASS_HAS_LAYER(mask, id) ((((mask) >> (id)) & 1u) != 0u) // a layer in a mask
+
 struct MultiPassStruct
 {
-	uint m_id; // current multi-pass index (PassID)
+	uint m_id;   // current multi-pass index (PassID)
+	uint m_mask; // the layers (CSM cascades) of the draw, bit i: layer i
 };
 
 cbuffer MultiPass

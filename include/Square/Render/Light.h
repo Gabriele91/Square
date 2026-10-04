@@ -11,7 +11,8 @@
 #include "Square/Math/Linear.h"
 #include "Square/Render/ConstantBuffer.h"
 
-#define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 4
+#define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 8 // cascades of a directional light at most
+#define DIRECTION_SHADOW_CSM_DEFAULT_FACES 4   // its cascades by default
 
 namespace Square
 {
@@ -95,7 +96,7 @@ namespace Render
 		CBArrMat4        m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 		CBArrMat4        m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 		CBArrVec3        m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // > hlsl packet rule: float4 for a float in array
-		IVec4            m_filter{ 0 }; //x: the ShadowFilter (a vector: its own register after the array)
+		IVec4            m_options{ 0, DIRECTION_SHADOW_CSM_DEFAULT_FACES, 0, 0 }; //x: the ShadowFilter, y: the cascades (a vector: its own register after the array)
 	};
 
 	CBStruct UniformPointShadowLight

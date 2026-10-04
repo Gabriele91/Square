@@ -21,12 +21,14 @@ float ignore_shadows;
 
 uint find_csm_layer(in float depth)
 {
-	for (uint i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++i)
+	// the cascades of the light
+	uint cascades = uint(clamp(direction_shadow_camera.m_options.y, 1, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
+	for (uint i = 0; i < cascades; ++i)
 	{
 		if (depth < abs(direction_shadow_camera.m_data[i][DEPTH]))
 			return i;
 	}
-	return DIRECTION_SHADOW_CSM_NUMBER_OF_FACES - 1;
+	return cascades - 1;
 }
 
 //light_dir: to the light
@@ -47,7 +49,7 @@ float csm_texel_world_size(uint id)
 	return width / textureSize2DArray(direction_shadow_map, 0).x;
 }
 
-// the filters (direction_shadow_camera.m_filter.x)
+// the filters (direction_shadow_camera.m_options.x)
 #define SHADOW_FILTER_NONE 0
 #define SHADOW_FILTER_PCF 1
 #define SHADOW_FILTER_PCSS 2
@@ -215,7 +217,7 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec
 	float bias = bias_depth_driven(light_dir, normal, cascade_id);
 	// Shadow: by the filter of the light
 	float shadow = 1.0;
-	switch (direction_shadow_camera.m_filter.x)
+	switch (direction_shadow_camera.m_options.x)
 	{
 	case SHADOW_FILTER_NONE: shadow = direction_light_shadow_none(proj_coords, cascade_id, bias); break;
 	case SHADOW_FILTER_PCSS: shadow = direction_light_shadow_pcss(proj_coords, cascade_id, bias); break;

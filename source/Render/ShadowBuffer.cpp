@@ -5,6 +5,7 @@
 //  Created by Gabriele Di Bari on 15/06/18.
 //  Copyright � 2018 Gabriele Di Bari. All rights reserved.
 //
+#include <algorithm>
 #include "Square/Core/Context.h"
 #include "Square/System/RenderSystem.h"
 #include "Square/Driver/Render.h"
@@ -36,7 +37,7 @@ namespace Render
     
 	ShadowBuffer::~ShadowBuffer(){ destoy(); }
     
-    bool ShadowBuffer::build( const IVec2& size, const Type& type)
+    bool ShadowBuffer::build( const IVec2& size, const Type& type, unsigned int layers)
     {
         //delete if target
         if(m_target) destoy();
@@ -45,6 +46,7 @@ namespace Render
         {
             //save size
             m_size = size;
+            m_layers = std::max(layers, 1u);
 			//texture data
 			Render::TextureRawDataInformation raw_data
 			{
@@ -88,7 +90,7 @@ namespace Render
 			}
 			break;
 			case SB_TEXTURE_CSM:
-				m_texture = render->create_texture_array(raw_data, gpu_data, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
+				m_texture = render->create_texture_array(raw_data, gpu_data, m_layers);
 			break;
 			default: return false;
 			}
@@ -134,6 +136,11 @@ namespace Render
     const IVec2& ShadowBuffer::size() const
     {
         return m_size;
+    }
+
+    unsigned int ShadowBuffer::layers() const
+    {
+    	return m_layers;
     }
 }
 }

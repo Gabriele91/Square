@@ -57,13 +57,13 @@ Vec4 mul_point_light_view_projection(in Vec4 position, uint cube_id)
 }
 
 // Shadow of a Direction light
-#define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 4
+#define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 8 // cascades at most (Render/Light.h)
 struct DirectionShadowCameraStruct
 {
 	Mat4 m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 	Mat4 m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 	Vec3 m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
-	IVec4 m_filter; // x: 0 none, 1 PCF, 2 PCSS
+	IVec4 m_options; // x: the filter (0 none, 1 PCF, 2 PCSS), y: the cascades
 };
 
 cbuffer DirectionShadowCamera

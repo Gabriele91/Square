@@ -4,6 +4,7 @@
 #include <Transform>
 #include <Matrix>
 #include <ShadowCamera>
+#include <MultiPassInfo>
 ////////////////
 // Instanced directional CSM shadow (texture array) for backends WITH instanced draw
 // AND the ability to write SV_RenderTargetArrayIndex from the vertex shader (Metal,
@@ -32,6 +33,10 @@ VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input, uint instan
 	output.m_position = mul_direction_light_view_projection(world_position, instance_id);
 	output.m_uv       = input.m_uv;
 	output.m_layer    = instance_id;
+	// a cascade not of the light or of the caster: a point (the triangle has no area)
+	const bool of_light  = instance_id < uint(direction_shadow_camera.m_options.y);
+	const bool of_caster = MULTI_PASS_HAS_LAYER(multi_pass.m_mask, instance_id);
+	if (!of_light || !of_caster) output.m_position = Vec4(0.0, 0.0, 0.0, 1.0);
 	return output;
 }
 

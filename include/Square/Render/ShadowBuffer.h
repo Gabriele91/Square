@@ -38,9 +38,11 @@ namespace Render
 		);
         virtual ~ShadowBuffer();
 		
+		//layers: of a CSM (its cascades)
 		bool build(
 			  const IVec2& size
 			, const Type& type
+			, unsigned int layers = 1
 		);
         void destoy();
         
@@ -54,9 +56,12 @@ namespace Render
 
 		const IVec2& size() const;
 
+		unsigned int layers() const;
+
 	protected:
 
 		IVec2 m_size;
+		unsigned int m_layers{ 1 };
 		Render::Target*  m_target{ nullptr };
 		Render::Texture* m_texture{ nullptr };
 
