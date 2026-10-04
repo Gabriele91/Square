@@ -52,9 +52,10 @@ namespace Scene
 		if (auto new_instance = system.create_instance(*this))
 		{
 			m_instances.push_back(new_instance);
-			//the components already in the levels
+			//the components already in the levels (the active ones: the others add them when active)
 			for (const Shared<Level>& level : m_levels)
 			{
+				if (!level->active()) continue;
 				level->visit([&](Shared<Actor> actor) -> bool
 				{
 					for (auto& component : actor->components()) new_instance->on_add_component(actor, component.second);

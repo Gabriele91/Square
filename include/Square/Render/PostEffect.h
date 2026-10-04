@@ -46,6 +46,24 @@ namespace Render
 		PES_COLOR   = 1  //forward and deferred: after the lighting, source -> destination
 	};
 
+	//size of the passes of a post effect, from the frame (its result is full size)
+	enum PostEffectResolution : int
+	{
+		PER_FULL    = 0, //the frame size
+		PER_HALF    = 1, //half the frame size (a quarter of the pixels)
+		PER_QUARTER = 2  //a quarter of the frame size (1/16 of the pixels)
+	};
+	//pixels of the frame a texel of a pass covers (on each side): 1, 2, 4
+	inline int post_effect_scale(PostEffectResolution resolution)
+	{
+		return 1 << int(resolution);
+	}
+	//size of a pass at a resolution (at least 1x1)
+	inline IVec2 post_effect_size(const IVec2& size, PostEffectResolution resolution)
+	{
+		return glm::max(size / post_effect_scale(resolution), IVec2(1, 1));
+	}
+
 	//what a post effect gets to draw a frame (a camera)
 	struct PostEffectFrame
 	{

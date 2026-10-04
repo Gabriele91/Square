@@ -151,8 +151,8 @@ namespace Render
 			copy(frame);
 			return;
 		}
-		//reflections texture, half or full size
-		const IVec2 trace_size = m_settings.half_resolution ? glm::max(frame.m_size / 2, IVec2(1, 1)) : frame.m_size;
+		//reflections texture: full, half or a quarter of the frame size
+		const IVec2 trace_size = post_effect_size(frame.m_size, m_settings.resolution);
 		if (!m_trace_target || m_trace_size != trace_size)
 		{
 			delete_color_target(m_trace_texture, m_trace_target);

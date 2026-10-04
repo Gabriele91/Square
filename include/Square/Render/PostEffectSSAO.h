@@ -7,7 +7,8 @@
 //  pixel is hidden by the geometry around it (Alchemy AO: samples in screen space within a
 //  radius in world units, nearer occluders count more), blurs it keeping the edges, and
 //  multiplies the occlusion of the G-Buffer: only the ambient light is darkened.
-//  Passes, at half size by default (the last one is full size):
+//  Passes, at half size by default (Settings::resolution: full, half, a quarter; the last one is
+//  full size):
 //   1) depth: the view depth of the G-Buffer in a R32F texture (4 bytes a sample instead of
 //      the 16 of the positions; the positions are rebuilt from it and the view rays);
 //   2) occlusion (R8);
@@ -34,7 +35,7 @@ namespace Render
 			float bias{ 0.01f };      //world units: nearly flat occluders do not count (self occlusion)
 			float contrast{ 1.15f };  //exponent of the result: darker creases
 			float max_pixels{ 64.0f }; //radius on the screen at most (pixels of the frame), near the camera
-			bool  half_resolution{ true }; //occlusion at half size (the apply is full size)
+			PostEffectResolution resolution{ PER_HALF }; //size of the occlusion (the apply is full size)
 			//blur of the occlusion (the noise of the samples), all keeping the edges
 			enum BlurQuality : int
 			{

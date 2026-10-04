@@ -78,6 +78,7 @@
 #include "Square/Render/PostEffectSSAO.h"
 #include "Square/Render/PostEffectBloom.h"
 #include "Square/Render/PostEffectSSR.h"
+#include "Square/Render/PostEffectFog.h"
 #include "Square/Render/Profiler.h"
 /* --- Resource --- */
 #include "Square/Resource/Texture.h"

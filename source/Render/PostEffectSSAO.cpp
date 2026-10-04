@@ -74,8 +74,8 @@ namespace Render
 		if (!m_shader_apply) m_shader_apply = load_shader("SSAOApply");
 		if (!m_shader_depth || !m_shader_ssao || !m_shader_blur || !m_shader_apply) return;
 		//targets of the occlusion size (half or full)
-		const int   scale   = m_settings.half_resolution ? 2 : 1;
-		const IVec2 ao_size = glm::max(frame.m_size / scale, IVec2(1, 1));
+		const int   scale   = post_effect_scale(m_settings.resolution);
+		const IVec2 ao_size = post_effect_size(frame.m_size, m_settings.resolution);
 		if (!m_depth_target || m_size != frame.m_size || m_ao_size != ao_size)
 		{
 			if (!create_targets(frame.m_size, ao_size)) return;

@@ -370,10 +370,14 @@ void CollisionMesh::add(Context& context, const Shared<Scene::Actor>& actor)
 		{
 			const Render::SubMesh& submesh = submeshes[submesh_id];
 			if (submesh.m_draw_type != Render::DRAW_TRIANGLES) continue;
-			//only opaque surfaces are solid
+			//only opaque surfaces are solid: not the translucent ones, nor the alpha tested ones
+			//(mask >= 0: grass, foliage, drawn as opaque)
 			if (auto material = static_mesh->material(submesh_id).lock())
 			{
-				if (material->queue().m_type != Render::RQ_OPAQUE) continue;
+				const auto* mask       = material->parameter_by_name("mask");
+				const bool  opaque     = material->queue().m_type == Render::RQ_OPAQUE;
+				const bool  alpha_test = mask && mask->get_float() >= 0.0f;
+				if (!opaque || alpha_test) continue;
 			}
 			auto vertex_id = [&](unsigned int i) -> size_t
 			{
