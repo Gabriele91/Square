@@ -92,9 +92,10 @@ namespace Parser
 
 		struct PassField
 		{
-            Render::CullfaceState    m_cullface;
-			Render::DepthBufferState m_depth;
-			Render::BlendState       m_blend;
+            //fixed, or param(name): from a parameter of the effect
+            Render::PassState< Render::CullfaceState >    m_cullface;
+			Render::PassState< Render::DepthBufferState > m_depth;
+			Render::PassState< Render::BlendState >       m_blend;
 			ShaderField              m_shader;
 			LightsField	             m_lights{ LT_COLOR }; //enable lights
 			LightsField				 m_shadows{ LT_NONE  }; //enable shadows
@@ -173,6 +174,8 @@ namespace Parser
         bool parse_blend(const char*& ptr, PassField& pass);
         bool parse_depth(const char*& ptr, PassField& pass);
         bool parse_cullface(const char*& ptr, PassField& pass);
+        //param(name): a parametric state, its parameter
+        bool parse_state_param(const char*& ptr, std::string& name);
         bool parse_lights(const char*& ptr, PassField& pass);
 		bool parse_shadows(const char*& ptr, PassField& pass);
         bool parse_draw_count(const char*& ptr, PassField& pass);

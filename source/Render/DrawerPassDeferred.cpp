@@ -72,6 +72,7 @@ namespace Render
 		m_shader_point     = context.resource<Resource::Shader>("DeferredPointLight");
 		m_shader_spot      = context.resource<Resource::Shader>("DeferredSpotLight");
 		m_shader_direction_shadow = context.resource<Resource::Shader>("DeferredDirectionShadowLight");
+		m_shader_direction_shadow_pcss = context.resource<Resource::Shader>("DeferredDirectionShadowLightPCSS");
 		m_shader_point_shadow     = context.resource<Resource::Shader>("DeferredPointShadowLight");
 		m_shader_spot_shadow      = context.resource<Resource::Shader>("DeferredSpotShadowLight");
 		m_shader_present   = context.resource<Resource::Shader>("DeferredPresent");
@@ -249,9 +250,18 @@ namespace Render
 		//////////////////////////////////////////////////////////////////
 		if (queues[RQ_DIRECTION_LIGHT].size())
 		{
-			for (bool with_shadow : { false, true })
+			//the shaders: no shadow, PCF, PCSS (the filter of the light)
+			struct Variant { Shared<Resource::Shader>& m_shader; bool m_shadow; ShadowFilter m_filter; };
+			static const Variant variants[]
 			{
-				auto& shader = with_shadow ? m_shader_direction_shadow : m_shader_direction;
+				{ m_shader_direction,             false, ShadowFilter::PCF  },
+				{ m_shader_direction_shadow,      true,  ShadowFilter::PCF  },
+				{ m_shader_direction_shadow_pcss, true,  ShadowFilter::PCSS }
+			};
+			for (const auto& variant : variants)
+			{
+				auto& shader = variant.m_shader;
+				const bool with_shadow = variant.m_shadow;
 				if (!shader || !shader->base_shader()) continue;
 				bool shader_bound = false;
 				for (auto weak_light : queues[RQ_DIRECTION_LIGHT])
@@ -260,6 +270,12 @@ namespace Render
 					//jump?
 					if (!light->visible()) continue;
 					if (light->shadow() != with_shadow) continue;
+					//PCSS without its shader: PCF
+					const bool pcss = light->shadow_filter() == ShadowFilter::PCSS && m_shader_direction_shadow_pcss && m_shader_direction_shadow_pcss->base_shader();
+					if (with_shadow && (pcss ? ShadowFilter::PCSS : ShadowFilter::PCF) != variant.m_filter) 
+					{
+						continue;
+					}
 					//bind only when a light of this kind exists
 					if (!shader_bound)
 					{

@@ -2,7 +2,14 @@ parameters
 {
     albedo_map  texture("white")
     shadow_mask  float(-1.0)
+    //the faces in the directional shadow map (an importer gives its own: the material)
+    shadow_cull cullface(back)
 }
+
+// Culling of the shadow maps: DirectionShadow the faces of the material (cullface
+// param(shadow_cull): back by default, the shadow starts where a caster touches the ground, its
+// acne is out by the normal offset of DirectionShadowLight; off for the one sided meshes); Spot
+// and Point the back faces (cullface front: no normal offset there).
 
 // ── Backends WITH geometry shaders (OpenGL, DirectX) ────────────────────────────
 // Point and CSM shadows render every cube face / cascade in a single pass via a
@@ -41,7 +48,7 @@ sub_effect
         {
             zbuffer less
             blend off
-            cullface front
+            cullface param(shadow_cull)
             lights off
             shader "CastDirectionShadow.hlsl"
         }
@@ -88,7 +95,7 @@ sub_effect
         {
             zbuffer less
             blend off
-            cullface front
+            cullface param(shadow_cull)
             lights off
             instances 4
             shader "CastDirectionShadowInstanced.hlsl"
@@ -135,7 +142,7 @@ sub_effect
         {
             zbuffer less
             blend off
-            cullface front
+            cullface param(shadow_cull)
             lights off
             draw_count 4
             shader "CastDirectionShadowMultiPass.hlsl"

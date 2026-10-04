@@ -48,6 +48,13 @@ namespace
         std::string build(const std::string& effect) const
         {
             Parameters parameters = family(effect) == Family::LEGACY ? legacy() : pbr();
+            //the faces: double sided (Blender: Backface Culling, Camera off) both, in the view and
+            //in the shadow map; square_cull and square_shadow_cull override them
+            if (m_material.double_sided)
+            {
+                parameters.emplace_back("cull", "cullface(off)");
+                parameters.emplace_back("shadow_cull", "cullface(off)");
+            }
             //square_<parameter>: set or override
             for (const auto& extra : m_material.extras)
             {

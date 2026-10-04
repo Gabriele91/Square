@@ -85,6 +85,12 @@ namespace Parser
         //////////////////////////////////////////////////////
         bool parse_parameters_block(const char*& ptr);
         bool parse_value(const char*& ptr, ParameterField& field);
+        //the values of the render states of the passes (cullface, zbuffer, blend param(name))
+        bool parse_state_value(const char*& ptr, ParameterField& field);
+        bool parse_cullface_value(const char*& ptr, ParameterField& field);
+        bool parse_zbuffer_value(const char*& ptr, ParameterField& field);
+        bool parse_blend_value(const char*& ptr, ParameterField& field);
+        bool parse_state_names(const char*& ptr, std::vector<std::string>& names);
         bool parse_int_values(const char*& ptr, int* values, size_t n);
         bool parse_float_values(const char*& ptr, float* values, size_t n);
         bool parse_double_values(const char*& ptr, double* values, size_t n);

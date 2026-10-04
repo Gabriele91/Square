@@ -93,6 +93,7 @@ Only the properties that start with `square_` are read; the others are ignored.
 | Float, Int | a number (`float(x)` in a material) |
 | Boolean | `0` / `1` |
 | Float/Int array of 2, 3, 4 | `Vec2`, `Vec3`, `Vec4` |
+| String `name(...)` | in a material, the value as it is: `cullface(off)`, `zbuffer(less)`, `blend(one, one)`, `Vec3(1,0,0)` |
 | String | a texture name in a material (`texture("name")`), a string elsewhere |
 
 For an attribute that is a pair (`shadow`), a single number fills both components.
@@ -127,6 +128,8 @@ alpha mode); `square_<parameter>` then overrides them.
 | `mask_shadow` | float | | Alpha test of the shadow casting. `-1`: off. |
 | `ignore_shadows` | float | | `1`: lit without the shadows of the lights (glows, light beams). |
 | `dither` | float | | `1`: dithered opacity instead of blending (PBR). |
+| `cull` | cullface | | The faces drawn: `cullface(back)` (default), `cullface(front)`, `cullface(off)` (both). |
+| `shadow_cull` | cullface | | The faces in the directional shadow map: `cullface(back)` (default: the front faces, the shadow starts where the mesh touches the ground), `cullface(off)` (both: the one sided meshes, walls and terrain without their back, cast from both sides). |
 
 **Legacy, LegacyTranslucent** (Blinn-Phong)
 
@@ -143,6 +146,15 @@ alpha mode); `square_<parameter>` then overrides them.
 | `mask` | float | alpha cutoff | Alpha test. `-1`: off. |
 | `mask_shadow` | float | | Alpha test of the shadow casting. `-1`: off. |
 | `ignore_shadows` | float | | `1`: lit without the shadows of the lights. |
+| `cull` | cullface | | As in PBR. |
+| `shadow_cull` | cullface | | As in PBR. |
+
+The faces come from the glTF *Double Sided* flag, Blender: **Material → Settings → Backface
+Culling → Camera** (off by default: a material is double sided). Double sided gives
+`cull cullface(off)` and `shadow_cull cullface(off)`, else both stay `back`. The *Shadow* checkbox
+of Blender is not exported in glTF: `square_shadow_cull` (and `square_cull`) override them, e.g.
+walls and terrain without their back, *Camera* on and `square_shadow_cull` `cullface(off)`: drawn
+from the front only, the shadow from both faces.
 
 Examples:
 
@@ -152,6 +164,8 @@ Examples:
 | `square_emmisive` | `[2, 2, 2]` | `emmisive Vec3(2,2,2)` |
 | `square_emmisive_map` | `LIGHT_2` | `emmisive_map texture("LIGHT_2")` |
 | `square_ignore_shadows` | `True` | `ignore_shadows float(1)` |
+| `square_shadow_cull` | `cullface(off)` | `shadow_cull cullface(off)` |
+| `square_cull` | `cullface(off)` | `cull cullface(off)` |
 
 A texture named in a property must be a texture of the same model (the name of its image, as in
 the output folder: `LIGHT_2`, `LIGHT_2_2`...) or of the resources (`white`, `black`,

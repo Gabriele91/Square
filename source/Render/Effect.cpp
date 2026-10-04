@@ -391,12 +391,61 @@ namespace Render
 		}
 	}
 
+	namespace AuxPassState
+	{
+		//a state from the value of a parameter (false: not of its type)
+		//cullface: int, the Render::CullfaceType
+		bool decode(EffectParameter& param, Render::CullfaceState& state)
+		{
+			if (param.get_type() != EffectParameterType::PT_INT) return false;
+			state = Render::CullfaceState(Render::CullfaceType(param.get_int()));
+			return true;
+		}
+
+		//zbuffer: IVec2, the Render::DepthMode and the Render::DepthFuncType
+		bool decode(EffectParameter& param, Render::DepthBufferState& state)
+		{
+			if (param.get_type() != EffectParameterType::PT_IVEC2) return false;
+			const IVec2& value = param.get_ivec2();
+			state = Render::DepthBufferState(Render::DepthFuncType(value.y), Render::DepthMode(value.x));
+			return true;
+		}
+
+		//blend: IVec3, enabled and the two Render::BlendType
+		bool decode(EffectParameter& param, Render::BlendState& state)
+		{
+			if (param.get_type() != EffectParameterType::PT_IVEC3) return false;
+			const IVec3& value = param.get_ivec3();
+			state = value.x ? Render::BlendState(Render::BlendType(value.y), Render::BlendType(value.z)) : Render::BlendState();
+			return true;
+		}
+
+		//the value of a state: fixed, or of its parameter
+		template < typename T >
+		T value(const PassState<T>& state, EffectParameters* params)
+		{
+			if (!params || state.m_param_id < 0 || size_t(state.m_param_id) >= params->size()) return state.m_value;
+			const auto& param = (*params)[state.m_param_id];
+			T output = state.m_value;
+			if (!param || !decode(*param, output)) return state.m_value;
+			return output;
+		}
+
+		//the id of the parameter of a state in an effect
+		template < typename T >
+		void resolve(PassState<T>& state, const EffectParametersMap& parameters)
+		{
+			auto it = parameters.find(state.m_param);
+			state.m_param_id = state.parametric() && it != parameters.end() ? it->second : -1;
+		}
+	}
+
 	void EffectPass::bind(Render::Context& render, EffectParameters* params) const
 	{
 		//bind
-		render.set_blend_state(m_blend);
-		render.set_cullface_state(m_cullface);
-		render.set_depth_buffer_state(m_depth);
+		render.set_blend_state(AuxPassState::value(m_blend, params));
+		render.set_cullface_state(AuxPassState::value(m_cullface, params));
+		render.set_depth_buffer_state(AuxPassState::value(m_depth, params));
 		//bind shader
 		m_shader->bind();
 		//test
@@ -708,6 +757,10 @@ namespace Render
 			//clear
 			pass.m_param_id.clear();
 			pass.m_uniform.clear();
+			//the parameters of the parametric states, in this effect (an imported technique: the importer)
+			AuxPassState::resolve(pass.m_cullface, m_parameters_map);
+			AuxPassState::resolve(pass.m_depth, m_parameters_map);
+			AuxPassState::resolve(pass.m_blend, m_parameters_map);
 			//build
 			for (auto parameter : m_parameters_map)
 			{

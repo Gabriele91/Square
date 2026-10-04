@@ -3,12 +3,13 @@
 #define DEPTH 0
 #define BIAS 1
 #define SLOPE_BIAS 2
-//normal offset: the point moved along its normal by texels of its cascade before the lookup
-//(less depth bias: no acne, no shadow detached from its caster), more at grazing light
-#define NORMAL_OFFSET_MIN 0.5
-#define NORMAL_OFFSET_MAX 2.0
-//the slope term of the depth bias at most (tan of the angle: infinite at grazing light)
-#define SLOPE_BIAS_MAX_TAN 10.0
+#define NORMAL_OFFSET_MIN 0.5   // texels of the cascade the point moves along its normal, light from above
+#define NORMAL_OFFSET_MAX 2.0   // ... at grazing light
+#define SLOPE_BIAS_MAX_TAN 10.0 // slope term of the depth bias at most (tan of the light angle)
+#define PCSS_LIGHT_SIZE 0.02    // PCSS: size of the light (tan of its angle), more is softer
+#define PCSS_BLOCKER_TEXELS 8.0 // PCSS: texels of the search of the casters
+#define PCSS_MAX_TEXELS 16.0    // PCSS: penumbra at most (texels)
+#define PCSS_SAMPLES 16         // PCSS: samples of the search and of the filter
 #include <ShadowCamera>
 Sampler2DArray(direction_shadow_map)
 // Material option: 1 = lit by this light without its shadow (e.g. glows, light beams).
@@ -96,15 +97,89 @@ float direction_light_shadow(in Vec3 proj_coords, uint id, const float bias)
 }
 #endif
 
+#if defined(PCSS_SHADOW)
+// Poisson disk, radius 1
+static const Vec2 pcss_poisson[PCSS_SAMPLES] =
+{
+	Vec2(-0.94201624, -0.39906216), Vec2( 0.94558609, -0.76890725),
+	Vec2(-0.09418410, -0.92938870), Vec2( 0.34495938,  0.29387760),
+	Vec2(-0.91588581,  0.45771432), Vec2(-0.81544232, -0.87912464),
+	Vec2(-0.38277543,  0.27676845), Vec2( 0.97484398,  0.75648379),
+	Vec2( 0.44323325, -0.97511554), Vec2( 0.53742981, -0.47373420),
+	Vec2(-0.26496911, -0.41893023), Vec2( 0.79197514,  0.19090188),
+	Vec2(-0.24188840,  0.99706507), Vec2(-0.81409955,  0.91437590),
+	Vec2( 0.19984126,  0.78641367), Vec2( 0.14383161, -0.14100790)
+};
+
+// normalized depth of the shadow map per world unit (orthographic: |m22|, z in -1..1 on GL)
+float csm_depth_per_world(uint id)
+{
+	float scale = abs(direction_shadow_camera.m_projection[id][2][2]);
+#ifdef GLSL_BACKEND
+	scale *= 0.5;
+#endif
+	return max(scale, 0.000001);
+}
+
+Vec2 pcss_rotate(in Vec2 v, in float angle)
+{
+	float s = sin(angle);
+	float c = cos(angle);
+	return Vec2(v.x * c - v.y * s, v.x * s + v.y * c);
+}
+
+// PCSS: the casters around the point give the penumbra (wider far from them), then a PCF of it
+float direction_light_shadow_pcss(in Vec3 proj_coords, uint id, const float bias)
+{
+#ifdef GLSL_BACKEND
+	float current_depth = proj_coords.z * 0.5 + 0.5;
+#else
+	float current_depth = proj_coords.z;
+#endif
+	Vec2 texel = Vec2(1.0, 1.0) / textureSize2DArray(direction_shadow_map, 0);
+	// the disk rotated per texel (noise, not bands)
+	float angle = 6.2831853 * frac(52.9829189 * frac(dot(proj_coords.xy / texel, Vec2(0.06711056, 0.00583715))));
+	// 1) the casters: their average depth
+	float blocker_depth = 0.0;
+	float blockers = 0.0;
+	[unroll]
+	for (int i = 0; i < PCSS_SAMPLES; ++i)
+	{
+		Vec2  coord = proj_coords.xy + pcss_rotate(pcss_poisson[i], angle) * texel * PCSS_BLOCKER_TEXELS;
+		float depth = shadow2DArray(direction_shadow_map, Vec3(coord, id)).r;
+		if (depth < current_depth - bias)
+		{
+			blocker_depth += depth;
+			blockers += 1.0;
+		}
+	}
+	if (blockers < 0.5) return 1.0;
+	blocker_depth /= blockers;
+	// 2) the penumbra: the distance caster - receiver (world) by the size of the light, in texels
+	float world_distance = (current_depth - blocker_depth) / csm_depth_per_world(id);
+	float radius = clamp(world_distance * PCSS_LIGHT_SIZE / csm_texel_world_size(id), 1.0, PCSS_MAX_TEXELS);
+	// 3) PCF of the penumbra
+	float shadow = 0.0;
+	[unroll]
+	for (int j = 0; j < PCSS_SAMPLES; ++j)
+	{
+		Vec2  coord = proj_coords.xy + pcss_rotate(pcss_poisson[j], angle) * texel * radius;
+		float depth = shadow2DArray(direction_shadow_map, Vec3(coord, id)).r;
+		shadow += (current_depth - bias) <= depth ? 1.0 : 0.0;
+	}
+	return shadow / float(PCSS_SAMPLES);
+}
+#endif
+
 Vec4 rh_mul_direction_light_view_projection(in Vec4 position, uint id)
 {
-	// Applicazione della vista
+	// The view of the light
 	Vec4 position_new = mul(position, direction_shadow_camera.m_view[id]);
 
-	// Modifica la matrice ortografica per RH (se questo non � gi� fatto altrove)
+	// The orthographic projection, right handed (if it is not done elsewhere)
 	Mat4 rh_projection = direction_shadow_camera.m_projection[id];
 
-	// Applicazione della proiezione
+	// The projection
 	return mul(position_new, rh_projection);
 }
 
@@ -136,7 +211,11 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec
 	// Compute bias
 	float bias = bias_depth_driven(light_dir, normal, cascade_id);
 	// Shadow
+#if defined(PCSS_SHADOW)
+	float shadow = direction_light_shadow_pcss(proj_coords, cascade_id, bias);
+#else
 	float shadow = direction_light_shadow(proj_coords, cascade_id, bias);
+#endif
 	// return
 	return shadow;
 }

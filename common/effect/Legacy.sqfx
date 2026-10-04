@@ -1,5 +1,9 @@
 parameters
 {
+    //the faces drawn: back, front or off (both)
+    cull cullface(back)
+    //the faces in the directional shadow map: back, front or off (both: the one sided meshes)
+    shadow_cull cullface(back)
     albedo_map  texture("white")
     normal_map   texture("normal_up")
     specular_map texture("black")
@@ -24,7 +28,7 @@ sub_effect
         {
             zbuffer less
             blend off
-            cullface back
+            cullface param(cull)
             lights only_ambient
             shader source 
             {
@@ -36,7 +40,7 @@ sub_effect
         {
             zbuffer equal
             blend one one  
-            cullface back
+            cullface param(cull)
             lights spot_point_direction
 			shadows spot_point_direction
             shader source 
@@ -53,7 +57,7 @@ sub_effect
 		{
 			zbuffer less
 			blend off
-			cullface back
+			cullface param(cull)
 			lights off
 			shader source
 			{
