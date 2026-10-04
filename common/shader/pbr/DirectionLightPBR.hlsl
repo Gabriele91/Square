@@ -38,7 +38,7 @@ LightResult compute_light
     LightResult result;
 
     // Shadow
-    float shadow_factor = direction_light_apply_shadow(data.m_position, view_direction, data.m_normal);
+    float shadow_factor = direction_light_apply_shadow(data.m_position, normalize(-light.m_direction), data.m_normal);
 
     // Lgiht final color
     Vec3 light_color = light.m_diffuse * shadow_factor;

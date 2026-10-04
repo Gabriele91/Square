@@ -3,6 +3,12 @@
 #define DEPTH 0
 #define BIAS 1
 #define SLOPE_BIAS 2
+//normal offset: the point moved along its normal by texels of its cascade before the lookup
+//(less depth bias: no acne, no shadow detached from its caster), more at grazing light
+#define NORMAL_OFFSET_MIN 0.5
+#define NORMAL_OFFSET_MAX 2.0
+//the slope term of the depth bias at most (tan of the angle: infinite at grazing light)
+#define SLOPE_BIAS_MAX_TAN 10.0
 #include <ShadowCamera>
 Sampler2DArray(direction_shadow_map)
 // Material option: 1 = lit by this light without its shadow (e.g. glows, light beams).
@@ -22,16 +28,22 @@ uint find_csm_layer(in float depth)
 	return DIRECTION_SHADOW_CSM_NUMBER_OF_FACES - 1;
 }
 
-float bias_depth_driven(in Vec3  view_dir, in Vec3  normal, in uint id)
+//light_dir: to the light
+float bias_depth_driven(in Vec3 light_dir, in Vec3 normal, in uint id)
 {
-	Vec3 normalized_view_dir = normalize(view_dir);
-	Vec3 normalized_normal = normalize(normal);
 	float bias = direction_shadow_camera.m_data[id][BIAS];
 	float slope_bias = direction_shadow_camera.m_data[id][SLOPE_BIAS];
-	// slope scale biasing
-	float NoL = max(0.0, dot(normalized_normal, normalized_view_dir));
-	float total_bias = bias + slope_bias * tan(acos(NoL));
-	return total_bias;
+	// slope scale biasing: tan(acos(NoL)), clamped
+	float NoL = saturate(dot(normalize(normal), normalize(light_dir)));
+	float slope = min(sqrt(1.0 - NoL * NoL) / max(NoL, 0.0001), SLOPE_BIAS_MAX_TAN);
+	return bias + slope_bias * slope;
+}
+
+//world size of a texel of a cascade (its orthographic projection: 2 / width)
+float csm_texel_world_size(uint id)
+{
+	float width = 2.0 / max(abs(direction_shadow_camera.m_projection[id][0][0]), 0.000001);
+	return width / textureSize2DArray(direction_shadow_map, 0).x;
 }
 
 #if defined(PCF_SHADOW) && PCF_SHADOW >= 1
@@ -96,13 +108,19 @@ Vec4 rh_mul_direction_light_view_projection(in Vec4 position, uint id)
 	return mul(position_new, rh_projection);
 }
 
-Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3 normal)
+//light_dir: to the light
+Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec3 normal)
 {
 	// Get cascade id
 	Vec4 view_fposition = mul(fposition, camera.m_view);
 	uint cascade_id = find_csm_layer(abs(view_fposition.z));
+	// Normal offset: along the normal, by texels of the cascade (more at grazing light)
+	Vec3  n = normalize(normal);
+	float NoL = saturate(dot(n, normalize(light_dir)));
+	float offset = csm_texel_world_size(cascade_id) * lerp(NORMAL_OFFSET_MIN, NORMAL_OFFSET_MAX, 1.0 - NoL);
+	Vec4  offset_position = Vec4(fposition.xyz / fposition.w + n * offset, 1.0);
 	// compute pos
-	Vec4 fposition_light_space = mul_direction_light_view_projection(fposition, cascade_id);
+	Vec4 fposition_light_space = mul_direction_light_view_projection(offset_position, cascade_id);
 	// perform perspective divide (homogenize position)
 	Vec3 proj_coords = fposition_light_space.xyz / fposition_light_space.w;
 	//(-1,1)->(0,1)
@@ -116,18 +134,19 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3
 	// DirectX y is inv
 	proj_coords = invY(proj_coords);
 	// Compute bias
-	float bias = bias_depth_driven(view_dir, normal, cascade_id);
+	float bias = bias_depth_driven(light_dir, normal, cascade_id);
 	// Shadow
 	float shadow = direction_light_shadow(proj_coords, cascade_id, bias);
 	// return
 	return shadow;
 }
 
-float direction_light_apply_shadow(in Vec4 fposition, in Vec3 view_dir, in Vec3 normal)
+//light_dir: to the light
+float direction_light_apply_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec3 normal)
 {
 	if (ignore_shadows > 0.5) return 1.0;
 	//factor
-	float shadow_factor = direction_light_compute_shadow(fposition, view_dir, normal);
+	float shadow_factor = direction_light_compute_shadow(fposition, light_dir, normal);
 	//add shadow
 	return shadow_factor;
 }

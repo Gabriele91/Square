@@ -138,6 +138,7 @@ public:
 			ssr_setting.half_resolution = true;
 			ssr_setting.max_distance = 100.0;
 			ssr_setting.steps = 128;
+			ssr_setting.blur = Render::SSR::Settings::BLUR_LOW;
 			m_ssr->settings(ssr_setting);
 			render_world->add_post_effect(m_ssr);
 			// bloom (forward and deferred): the lights and the emissive glow, H to turn it on/off
