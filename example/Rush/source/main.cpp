@@ -560,6 +560,9 @@ public:
 		m_ui_model.bind("bloom_debug", &m_ui.m_bloom_debug.m_value);
 		m_ui_model.bind("ssao_debug", &m_ui.m_ssao_debug.m_value);
 		m_ui_model.bind("ui_debugger", &m_ui.m_ui_debugger.m_value);
+		m_ui_model.bind("profiler", &m_ui.m_profiler.m_value);
+		m_ui_model.bind("profiler_available", &m_ui.m_profiler_available);
+		m_ui.m_profiler_available = ui_system->has_profiler();
 		//the documents
 		m_hud = ui.load("example/Rush/assets/ui.sqz/hud.rml");
 		m_hud.show();
@@ -777,6 +780,9 @@ public:
 		});
 		auto* ui_system = System::get<UISystem>(context());
 		sync_option(m_ui.m_ui_debugger, ui_system && ui_system->ui().debugger(), [ui_system](bool value) { if (ui_system) ui_system->ui().debugger(value); });
+		//the panel of the render profiler (of the engine)
+		sync_option(m_ui.m_profiler, ui_system && ui_system->profiler(), [ui_system](bool value) { if (ui_system) ui_system->profiler(value); });
+		static bool temp_profiler = false; if (!temp_profiler && ui_system && std::getenv("RUSH_PROFILE")) { temp_profiler = true; ui_system->profiler(true); }
 		//the frames per second
 		m_ui.m_fps = float(m_counter.get());
 		m_ui_model.dirty_all();
@@ -883,6 +889,9 @@ private:
 		UIOption<bool> m_bloom_debug;
 		UIOption<bool> m_ssao_debug;
 		UIOption<bool> m_ui_debugger;
+		//the panel of the render profiler
+		UIOption<bool> m_profiler;
+		bool           m_profiler_available{ false }; //the engine has the profiler
 	};
 	UIState                                   m_ui;
 	Square::UI::DataModel                     m_ui_model;

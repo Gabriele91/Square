@@ -673,6 +673,9 @@ namespace Render
 
 	void ContextDX11::close()
 	{
+#if defined(RENDER_PROFILER)
+		release_gpu_timer();
+#endif
 		for (auto blend_pair : m_blend_states) blend_pair.second->Release();
 		for (auto depth_pair : m_depth_states) depth_pair.second->Release();
 
@@ -3503,6 +3506,103 @@ namespace Render
 			}
         }
 	}
+
+#if defined(RENDER_PROFILER)
+	bool ContextDX11::gpu_timer_supported() const
+	{
+		//timestamp queries: every D3D11 device
+		return device() && device_context();
+	}
+
+	void ContextDX11::gpu_timer_begin_frame()
+	{
+		if (!gpu_timer_supported()) return;
+		//the slot of the frame: one still not read is lost (the GPU is too far behind)
+		GpuTimerFrame& frame = m_gpu_timer_frames[m_gpu_timer_frame_id % GPU_TIMER_FRAMES];
+		if (!frame.m_disjoint)
+		{
+			D3D11_QUERY_DESC desc{ D3D11_QUERY_TIMESTAMP_DISJOINT, 0 };
+			if (!dx_op_success(device()->CreateQuery(&desc, &frame.m_disjoint))) return;
+		}
+		frame.m_id = m_gpu_timer_frame_id++;
+		frame.m_count = 0;
+		frame.m_pending = false;
+		device_context()->Begin(frame.m_disjoint);
+		m_gpu_timer_in_frame = true;
+	}
+
+	void ContextDX11::gpu_timer_end_frame()
+	{
+		if (!m_gpu_timer_in_frame) return;
+		GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+		device_context()->End(frame.m_disjoint);
+		frame.m_pending = frame.m_count > 0;
+		m_gpu_timer_in_frame = false;
+	}
+
+	int ContextDX11::gpu_timer_timestamp()
+	{
+		if (!m_gpu_timer_in_frame) return -1;
+		GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+		if (frame.m_count >= GPU_TIMER_MAX_TIMESTAMPS) return -1;
+		if (frame.m_count == frame.m_queries.size())
+		{
+			ID3D11Query* query = nullptr;
+			D3D11_QUERY_DESC desc{ D3D11_QUERY_TIMESTAMP, 0 };
+			if (!dx_op_success(device()->CreateQuery(&desc, &query))) return -1;
+			frame.m_queries.push_back(query);
+		}
+		device_context()->End(frame.m_queries[frame.m_count]);
+		return int(frame.m_count++);
+	}
+
+	bool ContextDX11::gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms)
+	{
+		while (true)
+		{
+			//the oldest frame pending
+			GpuTimerFrame* oldest = nullptr;
+			for (GpuTimerFrame& frame : m_gpu_timer_frames)
+			{
+				if (frame.m_pending && (!oldest || frame.m_id < oldest->m_id)) oldest = &frame;
+			}
+			if (!oldest) return false;
+			//done when its disjoint query is (without a flush)
+			D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint{};
+			if (device_context()->GetData(oldest->m_disjoint, &disjoint, sizeof(disjoint), D3D11_ASYNC_GETDATA_DONOTFLUSH) != S_OK) return false;
+			//the clock has changed in the frame: its times are wrong
+			if (disjoint.Disjoint || !disjoint.Frequency)
+			{
+				oldest->m_pending = false;
+				continue;
+			}
+			//ticks -> ms from the first
+			timestamps_ms.resize(oldest->m_count);
+			UINT64 first = 0;
+			for (size_t i = 0; i != oldest->m_count; ++i)
+			{
+				UINT64 time = 0;
+				if (device_context()->GetData(oldest->m_queries[i], &time, sizeof(time), D3D11_ASYNC_GETDATA_DONOTFLUSH) != S_OK) return false;
+				if (i == 0) first = time;
+				timestamps_ms[i] = time >= first ? double(time - first) * 1000.0 / double(disjoint.Frequency) : 0.0;
+			}
+			frame_id = oldest->m_id;
+			oldest->m_pending = false;
+			return true;
+		}
+	}
+
+	void ContextDX11::release_gpu_timer()
+	{
+		for (GpuTimerFrame& frame : m_gpu_timer_frames)
+		{
+			if (frame.m_disjoint) frame.m_disjoint->Release();
+			for (ID3D11Query* query : frame.m_queries) if (query) query->Release();
+			frame = GpuTimerFrame();
+		}
+		m_gpu_timer_in_frame = false;
+	}
+#endif
 
 	bool ContextDX11::print_errors() const
 	{

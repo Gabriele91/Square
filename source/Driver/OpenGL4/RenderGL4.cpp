@@ -1076,6 +1076,13 @@ namespace Render
         compute_render_driver_info(this);
         //clean
         print_errors();
+#if defined(RENDER_PROFILER)
+		//GPU timer: GL_TIMESTAMP (core 3.3) with a counter
+		GLint timestamp_bits = 0;
+		glGetQueryiv(GL_TIMESTAMP, GL_QUERY_COUNTER_BITS, &timestamp_bits);
+		m_gpu_timer_supported = timestamp_bits > 0;
+		while (glGetError() != GL_NO_ERROR);
+#endif
 		//attributes vao
 		glGenVertexArrays(1, &s_vao_attributes);
 		glBindVertexArray(s_vao_attributes);
@@ -1118,6 +1125,13 @@ namespace Render
 	void ContextGL4::close()
 	{
 		if (s_vao_attributes) glDeleteVertexArrays(1, &s_vao_attributes);
+#if defined(RENDER_PROFILER)
+		for (GpuTimerFrame& frame : m_gpu_timer_frames)
+		{
+			if (!frame.m_queries.empty()) glDeleteQueries(GLsizei(frame.m_queries.size()), frame.m_queries.data());
+			frame = GpuTimerFrame();
+		}
+#endif
 	}
 
 	bool ContextGL4::is_srgb_framebuffer() const
@@ -3284,6 +3298,75 @@ namespace Render
 			//default FBO
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
+
+#if defined(RENDER_PROFILER)
+	bool ContextGL4::gpu_timer_supported() const
+	{
+		return m_gpu_timer_supported;
+	}
+
+	void ContextGL4::gpu_timer_begin_frame()
+	{
+		if (!m_gpu_timer_supported) return;
+		//the slot of the frame: one still not read is lost (the GPU is too far behind)
+		GpuTimerFrame& frame = m_gpu_timer_frames[m_gpu_timer_frame_id % GPU_TIMER_FRAMES];
+		frame.m_id = m_gpu_timer_frame_id++;
+		frame.m_count = 0;
+		frame.m_pending = false;
+		m_gpu_timer_in_frame = true;
+	}
+
+	void ContextGL4::gpu_timer_end_frame()
+	{
+		if (!m_gpu_timer_in_frame) return;
+		GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+		frame.m_pending = frame.m_count > 0;
+		m_gpu_timer_in_frame = false;
+	}
+
+	int ContextGL4::gpu_timer_timestamp()
+	{
+		if (!m_gpu_timer_in_frame) return -1;
+		GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+		if (frame.m_count >= GPU_TIMER_MAX_TIMESTAMPS) return -1;
+		if (frame.m_count == frame.m_queries.size())
+		{
+			const size_t first = frame.m_queries.size();
+			frame.m_queries.resize(first + 64, 0);
+			glGenQueries(64, frame.m_queries.data() + first);
+		}
+		glQueryCounter(frame.m_queries[frame.m_count], GL_TIMESTAMP);
+		return int(frame.m_count++);
+	}
+
+	bool ContextGL4::gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms)
+	{
+		//the oldest frame pending
+		GpuTimerFrame* oldest = nullptr;
+		for (GpuTimerFrame& frame : m_gpu_timer_frames)
+		{
+			if (frame.m_pending && (!oldest || frame.m_id < oldest->m_id)) oldest = &frame;
+		}
+		if (!oldest) return false;
+		//done when its last timestamp is (they are written in order)
+		GLint available = GL_FALSE;
+		glGetQueryObjectiv(oldest->m_queries[oldest->m_count - 1], GL_QUERY_RESULT_AVAILABLE, &available);
+		if (!available) return false;
+		//ns -> ms from the first
+		timestamps_ms.resize(oldest->m_count);
+		GLuint64 first = 0;
+		for (size_t i = 0; i != oldest->m_count; ++i)
+		{
+			GLuint64 time = 0;
+			glGetQueryObjectui64v(oldest->m_queries[i], GL_QUERY_RESULT, &time);
+			if (i == 0) first = time;
+			timestamps_ms[i] = time >= first ? double(time - first) * 1.0e-6 : 0.0;
+		}
+		frame_id = oldest->m_id;
+		oldest->m_pending = false;
+		return true;
+	}
+#endif
 
 	bool ContextGL4::print_errors() const
 	{

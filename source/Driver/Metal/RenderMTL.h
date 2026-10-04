@@ -8,6 +8,7 @@
 #include <vector>
 #include <unordered_map>
 #include <functional>
+#include <atomic>
 #include "Square/Config.h"
 #include "Square/Driver/Render.h"
 #include "Square/Driver/RenderInspector.h"
@@ -467,6 +468,18 @@ namespace Render
         virtual bool print_errors() const override { return false; }
         virtual bool print_errors(const char*, int) const override { return false; }
 
+#if defined(RENDER_PROFILER)
+        // GPU timer: counter sample buffers (timestamps) at the encoder boundaries (the Apple
+        // GPUs sample only there): a timestamp ends the open encoder and is the start of the
+        // next one (or of a blit at the end of the frame). The shader detail of the profiler
+        // (a timestamp per draw) makes an encoder per draw: its times are only indicative.
+        virtual bool gpu_timer_supported() const override;
+        virtual void gpu_timer_begin_frame() override;
+        virtual void gpu_timer_end_frame() override;
+        virtual int  gpu_timer_timestamp() override;
+        virtual bool gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms) override;
+#endif
+
         // ── Internal ─────────────────────────────────────────────────────────
         static constexpr int VERTEX_BUFFER_BINDING = 16;
 
@@ -526,6 +539,37 @@ namespace Render
 
         id<MTLBuffer> make_buffer(const void* data, size_t size);
         void generate_mipmaps(id<MTLTexture> tex);
+
+#if defined(RENDER_PROFILER)
+        // GPU timer
+        struct GpuTimerFrame
+        {
+            uint64                     m_id{ 0 };
+            id                         m_samples{ nil };   // id<MTLCounterSampleBuffer>
+            NSUInteger                 m_sample_count{ 0 };
+            std::vector<int>           m_timestamp_sample; // timestamp -> its sample (-1: none)
+            bool                       m_pending{ false };
+            std::atomic<uint64>        m_done_id{ ~0ull }; // by the completed handler
+        };
+        static constexpr size_t     GPU_TIMER_FRAMES = 4;
+        static constexpr NSUInteger GPU_TIMER_MAX_SAMPLES = 2048;
+        static constexpr size_t     GPU_TIMER_MAX_TIMESTAMPS = 8192;
+        GpuTimerFrame    m_gpu_timer_frames[GPU_TIMER_FRAMES];
+        uint64           m_gpu_timer_frame_id{ 0 };
+        bool             m_gpu_timer_in_frame{ false };
+        bool             m_gpu_timer_supported{ false };
+        id               m_gpu_timer_counter_set{ nil }; // id<MTLCounterSet>, the timestamps
+        id<MTLBuffer>    m_gpu_timer_dummy{ nil };       // the work of the blit at the end of a frame
+        std::vector<int> m_gpu_timer_waiting;            // timestamps waiting for the next sample
+        // GPU ticks -> ns: from two pairs of CPU / GPU timestamps
+        uint64           m_gpu_timer_cpu_origin{ 0 };
+        uint64           m_gpu_timer_gpu_origin{ 0 };
+        double           m_gpu_timer_ns_per_tick{ 1.0 };
+        void gpu_timer_init();
+        void gpu_timer_close();
+        void gpu_timer_attach(MTLRenderPassDescriptor* rpd);
+        int  gpu_timer_next_sample();
+#endif
     };
 
 } // Render

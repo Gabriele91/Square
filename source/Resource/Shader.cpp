@@ -16,6 +16,7 @@
 #include "Square/Core/Attribute.h"
 #include "Square/Data/ParserUtils.h"
 #include "Square/Resource/Shader.h"
+#include "Square/Render/Profiler.h"
 #include "Square/Core/ClassObjectRegistration.h"
 //Preprocess
 #include "ShaderPreprocess.h"
@@ -603,14 +604,39 @@ namespace Resource
 	void Shader::bind()
 	{
 		if (auto render = System::get<RenderSystem>(context())->render())
+		{
 			render->bind_shader(m_shader);
+			SQUARE_RENDER_SHADER(*render, profile_name().c_str());
+		}
+	}
+
+	//name in the profiler
+	const std::string& Shader::profile_name() const
+	{
+		if (m_profile_name.empty())
+		{
+			//the resource name without its type ("Shader:SSAO" -> "SSAO")
+			const std::string name = resource_name();
+			const size_t colon = name.find(':');
+			m_profile_name = colon == std::string::npos ? name : name.substr(colon + 1);
+			if (m_profile_name.empty()) m_profile_name = "(unnamed)";
+		}
+		return m_profile_name;
+	}
+
+	void Shader::profile_name(const std::string& name)
+	{
+		m_profile_name = name;
 	}
 
 	//unbind shader
 	void Shader::unbind()
 	{
 		if (auto render = System::get<RenderSystem>(context())->render())
+		{
 			render->unbind_shader(m_shader);
+			SQUARE_RENDER_SHADER(*render, nullptr);
+		}
 	}
 
 	//destoy shader

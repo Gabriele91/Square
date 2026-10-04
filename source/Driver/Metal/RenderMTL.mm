@@ -10,6 +10,7 @@
 #include <cstring>
 #include <cmath>
 #include <simd/simd.h>
+#include <chrono>
 
 using namespace Square;
 using namespace Square::Render;
@@ -421,6 +422,10 @@ MTLRenderPassDescriptor* ContextMTL::make_default_rp()
     rpd.depthAttachment.loadAction  = depth_load;
     rpd.depthAttachment.storeAction = MTLStoreActionDontCare;
     rpd.depthAttachment.clearDepth  = 1.0;
+#if defined(RENDER_PROFILER)
+    // the GPU timer splits the passes in more encoders: the depth goes to the next one
+    if (m_gpu_timer_in_frame) rpd.depthAttachment.storeAction = MTLStoreActionStore;
+#endif
 
     if (m_depth_fmt == MTLPixelFormatDepth32Float_Stencil8)
     {
@@ -507,6 +512,10 @@ void ContextMTL::ensure_encoder(MTLRenderPassDescriptor* rpd)
             rpd = make_default_rp();
     }
     if (!rpd) { SQMTL_LOG("ensure_encoder: rpd is NIL -> no encoder created"); return; }
+#if defined(RENDER_PROFILER)
+    // the timestamps waiting: the start of this encoder
+    gpu_timer_attach(rpd);
+#endif
     m_encoder = [m_cmd_buf renderCommandEncoderWithDescriptor:rpd];
     SQMTL_LOG("ensure_encoder: created encoder (" << (m_bind.render_target ? "TARGET" : "DEFAULT") << ")");
 }
@@ -810,6 +819,9 @@ bool ContextMTL::init(Video::DeviceResources* resource)
     m_driver_info.m_texture_astc = false;
     if (@available(macOS 11.0, iOS 16.4, *)) m_driver_info.m_texture_bc = [m_device supportsBCTextureCompression];
     if (@available(macOS 10.15, iOS 13.0, *)) m_driver_info.m_texture_astc = [m_device supportsFamily:MTLGPUFamilyApple2];
+#if defined(RENDER_PROFILER)
+    gpu_timer_init();
+#endif
 
     return true;
 }
@@ -818,6 +830,9 @@ void ContextMTL::close()
 {
     end_encoder();
     if (m_cmd_buf) { [m_cmd_buf commit]; m_cmd_buf = nil; }
+#if defined(RENDER_PROFILER)
+    gpu_timer_close();
+#endif
     m_drawable  = nil;
     m_depth_tex = nil;
     m_queue     = nil;
@@ -1857,3 +1872,235 @@ void ContextMTL::delete_render_target(Target*& t)
 }
 
 void ContextMTL::copy_target_to_target(const IVec4&, Target*, const IVec4&, Target*, TargetType) {}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// GPU timer (RENDER_PROFILER)
+// ──────────────────────────────────────────────────────────────────────────────
+#if defined(RENDER_PROFILER)
+static uint64 steady_clock_ns()
+{
+    return uint64(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
+}
+
+void ContextMTL::gpu_timer_init()
+{
+    m_gpu_timer_supported = false;
+    if (@available(macOS 11.0, iOS 14.0, *))
+    {
+        if (![m_device supportsCounterSampling:MTLCounterSamplingPointAtStageBoundary]) return;
+        // the counter set of the timestamps
+        for (id<MTLCounterSet> counter_set in m_device.counterSets)
+        {
+            if ([counter_set.name isEqualToString:MTLCommonCounterSetTimestamp])
+            {
+                m_gpu_timer_counter_set = [counter_set retain];
+                break;
+            }
+        }
+        if (!m_gpu_timer_counter_set) return;
+        // a sample buffer per frame of the ring
+        for (GpuTimerFrame& frame : m_gpu_timer_frames)
+        {
+            MTLCounterSampleBufferDescriptor* desc = [[MTLCounterSampleBufferDescriptor alloc] init];
+            desc.counterSet  = (id<MTLCounterSet>)m_gpu_timer_counter_set;
+            desc.storageMode = MTLStorageModeShared;
+            desc.sampleCount = GPU_TIMER_MAX_SAMPLES;
+            NSError* error = nil;
+            frame.m_samples = [m_device newCounterSampleBufferWithDescriptor:desc error:&error];
+            [desc release];
+            if (!frame.m_samples)
+            {
+                if (logger()) logger()->warning("Metal: no GPU timer, unable to create a counter sample buffer");
+                gpu_timer_close();
+                return;
+            }
+        }
+        m_gpu_timer_dummy = [m_device newBufferWithLength:16 options:MTLResourceStorageModePrivate];
+        // the origin of the conversion GPU ticks -> ns (against the steady clock)
+        MTLTimestamp cpu = 0, gpu = 0;
+        [m_device sampleTimestamps:&cpu gpuTimestamp:&gpu];
+        m_gpu_timer_cpu_origin = steady_clock_ns();
+        m_gpu_timer_gpu_origin = gpu;
+        m_gpu_timer_supported = true;
+    }
+}
+
+void ContextMTL::gpu_timer_close()
+{
+    // the completed handlers write in the frames: the GPU is done first
+    if (m_queue && m_gpu_timer_supported)
+    {
+        @autoreleasepool
+        {
+            id<MTLCommandBuffer> command_buffer = [m_queue commandBuffer];
+            [command_buffer commit];
+            [command_buffer waitUntilCompleted];
+        }
+    }
+    for (GpuTimerFrame& frame : m_gpu_timer_frames)
+    {
+        if (frame.m_samples) [frame.m_samples release];
+        frame.m_samples = nil;
+        frame.m_sample_count = 0;
+        frame.m_timestamp_sample.clear();
+        frame.m_pending = false;
+        frame.m_done_id = ~0ull;
+    }
+    if (m_gpu_timer_counter_set) [m_gpu_timer_counter_set release];
+    m_gpu_timer_counter_set = nil;
+    if (m_gpu_timer_dummy) [m_gpu_timer_dummy release];
+    m_gpu_timer_dummy = nil;
+    m_gpu_timer_waiting.clear();
+    m_gpu_timer_in_frame = false;
+    m_gpu_timer_supported = false;
+}
+
+bool ContextMTL::gpu_timer_supported() const
+{
+    return m_gpu_timer_supported;
+}
+
+void ContextMTL::gpu_timer_begin_frame()
+{
+    if (!m_gpu_timer_supported) return;
+    // the slot of the frame: one still not read is lost (the GPU is too far behind)
+    GpuTimerFrame& frame = m_gpu_timer_frames[m_gpu_timer_frame_id % GPU_TIMER_FRAMES];
+    frame.m_id = m_gpu_timer_frame_id++;
+    frame.m_sample_count = 0;
+    frame.m_timestamp_sample.clear();
+    frame.m_pending = false;
+    m_gpu_timer_waiting.clear();
+    m_gpu_timer_in_frame = true;
+}
+
+int ContextMTL::gpu_timer_next_sample()
+{
+    GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+    if (frame.m_sample_count >= GPU_TIMER_MAX_SAMPLES) return -1;
+    return int(frame.m_sample_count++);
+}
+
+int ContextMTL::gpu_timer_timestamp()
+{
+    if (!m_gpu_timer_in_frame) return -1;
+    GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+    if (frame.m_timestamp_sample.size() >= GPU_TIMER_MAX_TIMESTAMPS) return -1;
+    // sampled only at an encoder boundary: the open encoder ends here, the next one samples it
+    end_encoder();
+    const int index = int(frame.m_timestamp_sample.size());
+    frame.m_timestamp_sample.push_back(-1);
+    m_gpu_timer_waiting.push_back(index);
+    return index;
+}
+
+void ContextMTL::gpu_timer_attach(MTLRenderPassDescriptor* rpd)
+{
+    if (!m_gpu_timer_in_frame || m_gpu_timer_waiting.empty()) return;
+    if (@available(macOS 11.0, iOS 14.0, *))
+    {
+        GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+        const int sample = gpu_timer_next_sample();
+        if (sample >= 0)
+        {
+            MTLRenderPassSampleBufferAttachmentDescriptor* attachment = rpd.sampleBufferAttachments[0];
+            attachment.sampleBuffer               = (id<MTLCounterSampleBuffer>)frame.m_samples;
+            attachment.startOfVertexSampleIndex   = NSUInteger(sample);
+            attachment.endOfVertexSampleIndex     = MTLCounterDontSample;
+            attachment.startOfFragmentSampleIndex = MTLCounterDontSample;
+            attachment.endOfFragmentSampleIndex   = MTLCounterDontSample;
+            for (int index : m_gpu_timer_waiting) frame.m_timestamp_sample[index] = sample;
+        }
+        m_gpu_timer_waiting.clear();
+    }
+}
+
+void ContextMTL::gpu_timer_end_frame()
+{
+    if (!m_gpu_timer_in_frame) return;
+    GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+    // the timestamps after the last encoder: the end of a (small) blit
+    if (!m_gpu_timer_waiting.empty())
+    {
+        if (@available(macOS 11.0, iOS 14.0, *))
+        {
+            end_encoder();
+            ensure_command_buffer();
+            const int sample = gpu_timer_next_sample();
+            if (sample >= 0)
+            {
+                MTLBlitPassDescriptor* bpd = [MTLBlitPassDescriptor blitPassDescriptor];
+                bpd.sampleBufferAttachments[0].sampleBuffer              = (id<MTLCounterSampleBuffer>)frame.m_samples;
+                bpd.sampleBufferAttachments[0].startOfEncoderSampleIndex = MTLCounterDontSample;
+                bpd.sampleBufferAttachments[0].endOfEncoderSampleIndex   = NSUInteger(sample);
+                id<MTLBlitCommandEncoder> blit = [m_cmd_buf blitCommandEncoderWithDescriptor:bpd];
+                [blit fillBuffer:m_gpu_timer_dummy range:NSMakeRange(0, 16) value:0];
+                [blit endEncoding];
+                for (int index : m_gpu_timer_waiting) frame.m_timestamp_sample[index] = sample;
+            }
+        }
+        m_gpu_timer_waiting.clear();
+    }
+    // done with the command buffer of the frame (committed by the present)
+    frame.m_pending = frame.m_sample_count > 0;
+    if (frame.m_pending)
+    {
+        ensure_command_buffer();
+        GpuTimerFrame* done_frame = &frame;
+        const uint64 done_id = frame.m_id;
+        [m_cmd_buf addCompletedHandler:^(id<MTLCommandBuffer> command_buffer) { done_frame->m_done_id.store(done_id); }];
+    }
+    m_gpu_timer_in_frame = false;
+}
+
+bool ContextMTL::gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms)
+{
+    if (@available(macOS 11.0, iOS 14.0, *))
+    {
+        while (true)
+        {
+            // the oldest frame pending, done by the GPU
+            GpuTimerFrame* oldest = nullptr;
+            for (GpuTimerFrame& frame : m_gpu_timer_frames)
+            {
+                if (frame.m_pending && (!oldest || frame.m_id < oldest->m_id)) oldest = &frame;
+            }
+            if (!oldest || oldest->m_done_id.load() != oldest->m_id) return false;
+            oldest->m_pending = false;
+            NSData* data = [(id<MTLCounterSampleBuffer>)oldest->m_samples resolveCounterRange:NSMakeRange(0, oldest->m_sample_count)];
+            if (!data) continue;
+            const MTLCounterResultTimestamp* samples = (const MTLCounterResultTimestamp*)data.bytes;
+            const NSUInteger sample_count = data.length / sizeof(MTLCounterResultTimestamp);
+            // GPU ticks -> ns, from the origin to now
+            MTLTimestamp cpu = 0, gpu = 0;
+            [m_device sampleTimestamps:&cpu gpuTimestamp:&gpu];
+            const uint64 now = steady_clock_ns();
+            if (gpu > m_gpu_timer_gpu_origin && now > m_gpu_timer_cpu_origin)
+            {
+                m_gpu_timer_ns_per_tick = double(now - m_gpu_timer_cpu_origin) / double(gpu - m_gpu_timer_gpu_origin);
+            }
+            // the sample of a timestamp (false: not sampled)
+            auto sample_of = [&](size_t index, uint64& time) -> bool
+            {
+                const int sample = oldest->m_timestamp_sample[index];
+                if (sample < 0 || NSUInteger(sample) >= sample_count) return false;
+                time = samples[sample].timestamp;
+                return time != 0 && time != MTLCounterErrorValue;
+            };
+            uint64 first = ~0ull, time = 0;
+            for (size_t i = 0; i != oldest->m_timestamp_sample.size(); ++i)
+            {
+                if (sample_of(i, time)) first = std::min(first, time);
+            }
+            // ms from the first, -1 when not sampled
+            timestamps_ms.resize(oldest->m_timestamp_sample.size());
+            for (size_t i = 0; i != oldest->m_timestamp_sample.size(); ++i)
+            {
+                timestamps_ms[i] = sample_of(i, time) ? double(time - first) * m_gpu_timer_ns_per_tick * 1.0e-6 : -1.0;
+            }
+            frame_id = oldest->m_id;
+            return true;
+        }
+    }
+    return false;
+}
+#endif

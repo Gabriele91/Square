@@ -16,6 +16,7 @@
 #include "Square/Render/DrawerPassDeferred.h"
 #include "Square/Render/DrawerPassShadow.h"
 #include "Square/Render/PostEffect.h"
+#include "Square/Render/Profiler.h"
 #include "Square/Render/Camera.h"
 #include "Square/Render/Light.h"
 #include "Square/Render/Renderable.h"
@@ -144,6 +145,11 @@ namespace Square
 			m_render->set_inspector(m_inspector);
 		}
 		#endif
+		//render profiler (off until enabled)
+		#if defined(RENDER_PROFILER)
+		m_profiler = SQ_NEW(context().allocator(), Render::Profiler, AllocType::ALCT_DEFAULT) Render::Profiler(*m_render);
+		m_render->set_profiler(m_profiler);
+		#endif
 		//the shader converter, for all the shaders (its tables made once)
 		HLSL2ALL::initialize();
 		//flush errors, show info
@@ -173,6 +179,14 @@ namespace Square
 		m_ready = false;
 		//the loaded resources hold objects of the device: they go before it
 		context().clear_resources();
+		#if defined(RENDER_PROFILER)
+		if (m_profiler)
+		{
+			if (m_render) m_render->set_profiler(nullptr);
+			SQ_DELETE_NAMESPACE(context().allocator(), Render, Profiler, m_profiler);
+			m_profiler = nullptr;
+		}
+		#endif
 		if (m_render)
 		{
 			HLSL2ALL::shutdown();
@@ -192,11 +206,18 @@ namespace Square
 
 	void RenderSystem::late_update(double delta_time)
 	{
+		#if defined(RENDER_PROFILER)
+		if (m_profiler) m_profiler->begin_frame();
+		#endif
 		draw();
 		if (m_render)
 		{
+			SQUARE_RENDER_SCOPE(*m_render, "Overlays");
 			for (auto* overlay : m_overlays) overlay->draw_overlay(*m_render);
 		}
+		#if defined(RENDER_PROFILER)
+		if (m_profiler) m_profiler->end_frame();
+		#endif
 		present();
 	}
 
@@ -225,6 +246,11 @@ namespace Square
 	Render::Context* RenderSystem::render() const
 	{
 		return m_render;
+	}
+
+	Render::Profiler* RenderSystem::profiler() const
+	{
+		return m_profiler;
 	}
 
 	bool RenderSystem::ready() const

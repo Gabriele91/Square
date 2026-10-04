@@ -12,6 +12,7 @@
 #include "Square/Driver/Window.h"
 #include "Square/System/UISystem.h"
 #include "../UI/Backend.h"
+#include "../UI/ProfilerPanel.h"
 
 namespace Square
 {
@@ -158,6 +159,8 @@ namespace Square
 	{
 		if (auto* input_system = System::get<InputSystem>(context())) input_system->remove_listener(this);
 		if (auto* render_system = System::get<RenderSystem>(context())) render_system->remove_overlay(this);
+		//its document, before the contexts go
+		m_profiler_panel.reset();
 		if (m_backend)
 		{
 			//the documents, the contexts, the fonts: their GPU objects by the backend
@@ -176,6 +179,8 @@ namespace Square
 			const IVec2 size = window_size(context());
 			if (size.x > 0 && size.y > 0 && size != m_ui.size())
 				ui_context->SetDimensions(Rml::Vector2i(size.x, size.y));
+			//the profiler panel: its rows before the update (their layout)
+			if (m_profiler_panel) m_profiler_panel->update();
 			// Update
 			ui_context->Update();
 		}
@@ -194,6 +199,27 @@ namespace Square
 				m_backend->end_frame();
 			}
 		}
+	}
+
+	void UISystem::profiler(bool visible)
+	{
+		if (!m_profiler_panel)
+		{
+			if (!visible || !has_profiler() || !m_ui.valid()) return;
+			m_profiler_panel = std::make_unique<UI::ProfilerPanel>(context(), m_ui);
+		}
+		m_profiler_panel->show(visible);
+	}
+
+	bool UISystem::profiler() const
+	{
+		return m_profiler_panel && m_profiler_panel->visible();
+	}
+
+	bool UISystem::has_profiler() const
+	{
+		auto* render_system = System::get<RenderSystem>(context());
+		return render_system && render_system->profiler();
 	}
 
 	UI::Context& UISystem::ui()

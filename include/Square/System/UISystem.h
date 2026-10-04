@@ -20,6 +20,7 @@ namespace Square
 namespace UI
 {
 	class Backend;
+	class ProfilerPanel;
 }
 
 	class SQUARE_API UISystem : public System, public InputListener, public RenderOverlay
@@ -48,6 +49,13 @@ namespace UI
 		bool wants_mouse() const;
 		bool wants_keyboard() const;
 
+		//the panel of the render profiler over the frame (Render/Profiler.h): shown, the profiler
+		//is on. Without RENDER_PROFILER (no profiler) it is never shown
+		void profiler(bool visible);
+		bool profiler() const;
+		//the render profiler is compiled in the engine
+		bool has_profiler() const;
+
 	protected:
 		//InputListener
 		virtual void on_key(Video::KeyboardEvent key, short mode, Video::ActionEvent action) override;
@@ -58,7 +66,8 @@ namespace UI
 		//RenderOverlay
 		virtual void draw_overlay(Render::Context& render) override;
 
-		std::unique_ptr<UI::Backend> m_backend;
+		std::unique_ptr<UI::Backend>       m_backend;
+		std::unique_ptr<UI::ProfilerPanel> m_profiler_panel;
 		UI::Context                  m_ui;
 		int                          m_modifiers{ 0 };
 		bool                         m_wants_mouse{ false };

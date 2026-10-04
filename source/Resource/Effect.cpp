@@ -239,6 +239,19 @@ namespace Resource
 									success = !!this_pass.m_shader;
 								break;
 								}
+								//its name in the profiler: effect/technique[pass] and the light, the shadow
+								if (success && parser_pass.m_shader.m_type != Parser::Effect::ShaderField::S_RESOUCE)
+								{
+									static const char* light_names[] { "", " ambient", " direction", " point", " spot" };
+									this_pass.m_shader->profile_name
+									(
+										Filesystem::get_basename(path)
+										+ "/" + ptr_sub_effect->m_techniques[t].m_name
+										+ "[" + std::to_string(p) + "]"
+										+ light_names[current_shader_def]
+										+ (shadow ? " shadow" : "")
+									);
+								}
 								//load effect
 								if (!success)
 								{

@@ -15,6 +15,7 @@
 #include "Square/Render/Light.h"
 #include "Square/Render/Renderable.h"
 #include "Square/Render/ShadowBuffer.h"
+#include "Square/Render/Profiler.h"
 #include "Square/Geometry/OBoundingBox.h"
 #include "Square/Geometry/AABoundingBox.h"
 
@@ -210,6 +211,7 @@ namespace Render
         //shadow caster
         if(bool(draw_types & DrawerPassType::RPT_SHADOW))
         {
+            SQUARE_RENDER_SCOPE(render(), "Shadows");
             //pass counter
             int pass_shadow_count { 0 };
             //for each pass
@@ -221,6 +223,7 @@ namespace Render
                     if (light)
                     if (can_draw_shadow(light.get()))
                     {
+                        SQUARE_RENDER_SCOPE(render(), queue_type == RQ_SPOT_LIGHT ? "Spot light" : queue_type == RQ_POINT_LIGHT ? "Point light" : "Direction light");
                         // Clear
                         m_light_queue.clear();
                         //compute queue
@@ -255,6 +258,7 @@ namespace Render
             // RENDER Scene
             if (bool(draw_types & DrawerPassType::RPT_RENDER))
             {  
+                SQUARE_RENDER_SCOPE(render(), "Render");
                 //pass counter
                 int pass_render_count { 0 };
                 //draw all
@@ -273,6 +277,7 @@ namespace Render
             // UI
             if (bool(draw_types & DrawerPassType::RPT_UI))
             {
+                SQUARE_RENDER_SCOPE(render(), "UI");
                 //pass counter
                 int pass_ui_count { 0 };
                 //draw all
@@ -291,6 +296,7 @@ namespace Render
             // DEBUG
             if (bool(draw_types & DrawerPassType::RPT_DEBUG))
             {
+                SQUARE_RENDER_SCOPE(render(), "Debug");
                 //pass counter
                 int pass_debug_count{ 0 };
                 //draw all
