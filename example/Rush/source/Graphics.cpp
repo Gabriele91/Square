@@ -39,7 +39,7 @@ void Graphics::setup(Square::Scene::World& world)
 	Render::SSR::Settings ssr_settings;
 	ssr_settings.resolution   = Render::PER_HALF;
 	ssr_settings.max_distance = 60.0;
-	ssr_settings.steps        = 32;
+	ssr_settings.steps        = 40;
 	ssr_settings.denoise      = false;
 	ssr_settings.blur         = Render::SSR::Settings::BLUR_MEDIUM;
 	m_ssr->settings(ssr_settings);
