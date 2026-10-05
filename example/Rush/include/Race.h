@@ -2,7 +2,8 @@
 //  Race.h
 //  Rush
 //
-//  A race on a level (Arena): the light beam on its checkpoints (who touches it scores, the beam
+//  A race on a map (Arena), a component of the actor of the race in its level (it finds its level
+//  through its actor; it runs, its phases, while the level runs): the light beam on its checkpoints (who touches it scores, the beam
 //  goes to another checkpoint), the hovercraft (the player, the first, and the NPCs), the
 //  scores. Its phases:
 //   - START: the camera comes to the player, the hovercraft still (no controls);
@@ -22,9 +23,13 @@ class Arena;
 class Checkpoints;
 class SnowTrails;
 
-class Race
+class Race : public Square::Scene::Component
 {
 public:
+	SQUARE_OBJECT(Race)
+
+	//Registration in context
+	static void object_registration(Square::Context& ctx);
 
 	enum class Phase
 	{
@@ -42,16 +47,23 @@ public:
 		int                                  m_score{ 0 };
 	};
 
-	Race(Square::Context& context, Square::Scene::World& world);
+	Race(Square::Context& context);
 	~Race();
 
-	//the map, the light beam, the hovercraft at their starts (false: no map)
+	//the map, the light beam, the hovercraft at their starts, in the level of its actor (false:
+	//no map)
 	bool load(const RaceMap& map);
-	//all out of the world
+	//all out of the level
 	void unload();
 
-	//its phases, every frame
-	void update(double delta_time);
+	//its phases, every frame (while its level runs)
+	virtual void on_update(double delta_time) override;
+
+	//serialize (no attributes)
+	virtual void serialize(Square::Data::Archive& archive) override;
+	virtual void serialize_json(Square::Data::JsonValue& archive) override;
+	virtual void deserialize(Square::Data::Archive& archive) override;
+	virtual void deserialize_json(Square::Data::JsonValue& archive) override;
 
 	Phase  phase() const;
 	double phase_time() const; //seconds in the phase
@@ -84,8 +96,6 @@ private:
 	void controls(Phase phase);
 	static HovercraftDriver::Settings settings(size_t id);
 
-	Square::Context&                     m_context;
-	Square::Scene::World&                m_world;
 	Square::Shared<Square::Scene::Level> m_level;
 	std::unique_ptr<Arena>               m_arena;
 	std::unique_ptr<SnowTrails>          m_trails; //the map has snow: the grooves of the hovercraft

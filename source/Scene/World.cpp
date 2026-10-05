@@ -99,28 +99,43 @@ namespace Scene
 	}
 
 	//add an level	
-	Shared<Level> World::level()
+	Shared<Level> World::create_level(const std::string& name)
 	{
-		m_levels.push_back(MakeShared<Level>(context(), weak_from_this()));
+		m_levels.push_back(MakeShared<Level>(context(), weak_from_this(), name));
 		return m_levels.back();
 	}
 
 	//query
 	Shared<Level> World::level(size_t index)
 	{
-		return m_levels[index];
+		return index < m_levels.size() ? m_levels[index] : nullptr;
 	}
 	Shared<Level> World::level(const std::string& name)
 	{
-		//search
-		for (const Shared<Level>& level : m_levels) if (level->name() == name) return level;
-		//create
-		auto level = MakeShared<Level>(context(), weak_from_this(), name);
-		//add
-		m_levels.push_back(level);
-		//return
-		return level;
-	}		
+		for (const Shared<Level>& level : m_levels)
+		{
+			if (level->name() == name) return level;
+		}
+		return nullptr;
+	}
+
+	void World::active_levels(const std::vector<std::string>& names)
+	{
+		//off first: a level that goes on finds the systems free of the ones that went off
+		auto named = [&names](const Shared<Level>& level)
+		{
+			return std::find(names.begin(), names.end(), level->name()) != names.end();
+		};
+		for (const Shared<Level>& level : m_levels)
+		{
+			if (!named(level)) level->active(false);
+		}
+		for (const Shared<Level>& level : m_levels)
+		{
+			if (named(level)) level->active(true);
+		}
+	}
+
 	const LevelList& World::levels() const
 	{
 		return m_levels;
@@ -256,7 +271,7 @@ namespace Scene
 			archive % size;
 			for (uint64 i = 0; i != size; ++i)
 			{
-				level()->deserialize(archive);
+				create_level()->deserialize(archive);
 			}
 		}
 	}
@@ -274,7 +289,7 @@ namespace Scene
 		{
 			for (auto& jlevel : archive["levels"].array())
 			{
-				level()->deserialize_json(jlevel);
+				create_level()->deserialize_json(jlevel);
 			}
 		}
 	}

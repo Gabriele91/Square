@@ -175,7 +175,7 @@ public:
 		uint32_t window_width, window_height;
 		context().window()->get_size(window_width, window_height);
 		// level
-		m_level = world().level("main");
+		m_level = world().create_level("main");
 		// rendering pipeline of the world: SQUARE_RENDERING=forward|deferred (default: deferred)
 		if (auto render_world = world().instance<RenderInstance>())
 		{

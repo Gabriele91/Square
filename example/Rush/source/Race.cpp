@@ -52,11 +52,23 @@ namespace AuxRace
 	}
 }
 
-Race::Race(Square::Context& context, Square::Scene::World& world)
-: m_context(context)
-, m_world(world)
+SQUARE_CLASS_OBJECT_REGISTRATION(Race);
+
+void Race::object_registration(Square::Context& ctx)
+{
+	//factory: actor->component<Race>()
+	ctx.add_object<Race>();
+}
+
+Race::Race(Square::Context& context)
+: Component(context)
 {
 }
+
+void Race::serialize(Square::Data::Archive& archive)           { Square::Data::serialize(archive, this); }
+void Race::serialize_json(Square::Data::JsonValue& archive)    { Square::Data::serialize_json(archive, this); }
+void Race::deserialize(Square::Data::Archive& archive)         { Square::Data::deserialize(archive, this); }
+void Race::deserialize_json(Square::Data::JsonValue& archive)  { Square::Data::deserialize_json(archive, this); }
 
 Race::~Race()
 {
@@ -67,9 +79,11 @@ Race::~Race()
 //load
 bool Race::load(const RaceMap& map)
 {
-	m_level = m_world.level(s_race_world_level);
-	m_level->active(true);
-	m_arena = std::make_unique<Arena>(m_context);
+	//the level of its actor
+	auto owner = actor().lock();
+	m_level = owner ? owner->level().lock() : nullptr;
+	if (!m_level) return false;
+	m_arena = std::make_unique<Arena>(context());
 	if (!m_arena->load(m_level, map.m_name)) return false;
 	if (auto follow = m_arena->camera_follow()) follow->bounds(map.m_camera_bounds);
 	m_sink = map.m_trails ? s_snow_sink : 0.0f;
@@ -83,13 +97,13 @@ bool Race::load(const RaceMap& map)
 void Race::load_trails()
 {
 	//the field (radius ~85): a map a little larger, centered on the arena
-	m_trails = std::make_unique<SnowTrails>(m_context);
+	m_trails = std::make_unique<SnowTrails>(context());
 	SnowTrails::Settings settings;
 	const Square::Vec3 center = m_arena->center();
 	settings.center = Square::Vec2(center.x, center.z);
 	if (!m_trails->create(settings))
 	{
-		m_context.logger()->warning("snow trails: no texture");
+		context().logger()->warning("snow trails: no texture");
 		m_trails.reset();
 		return;
 	}
@@ -113,7 +127,7 @@ void Race::load_light_beam()
 	m_light_beam = m_level->load_actor("light_beam/scene");
 	if (!m_light_beam)
 	{
-		m_context.logger()->info("Error to load light_beam");
+		context().logger()->info("Error to load light_beam");
 		return;
 	}
 	// its light: a point light in the middle, a little over the ground, with shadow and a large
@@ -131,7 +145,7 @@ void Race::load_light_beam()
 	// the checkpoints of the level
 	m_checkpoints = m_light_beam->component<Checkpoints>();
 	const size_t count = m_checkpoints->collect(m_arena->actor());
-	m_context.logger()->info("checkpoints: " + std::to_string(count));
+	context().logger()->info("checkpoints: " + std::to_string(count));
 	m_checkpoints->on_reached([this](size_t index, Shared<Scene::Actor> who)
 	{
 		reached(index, who);
@@ -149,7 +163,7 @@ void Race::load_hovercraft()
 		racer.m_actor = m_level->load_actor("hovercraft/scene");
 		if (!racer.m_actor)
 		{
-			m_context.logger()->info("Error to load hovercraft");
+			context().logger()->info("Error to load hovercraft");
 			break;
 		}
 		racer.m_actor->name("hovercraft_" + std::to_string(id + 1));
@@ -183,13 +197,12 @@ void Race::unload()
 	m_checkpoints.reset();
 	if (m_arena) m_arena->unload(m_level);
 	m_arena.reset();
-	m_level->active(false);
 	m_level.reset();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //phases
-void Race::update(double delta_time)
+void Race::on_update(double delta_time)
 {
 	m_phase_time += std::min(delta_time, s_max_frame_time);
 	//the grooves of the hovercraft in the snow
@@ -257,11 +270,11 @@ void Race::reached(size_t checkpoint, Square::Shared<Square::Scene::Actor> who)
 	++it->m_score;
 	std::string board;
 	for (const auto& other : m_racers) board += " " + other.m_name + ":" + std::to_string(other.m_score);
-	m_context.logger()->info(it->m_name + " reached checkpoint " + std::to_string(checkpoint + 1) + " |" + board);
+	context().logger()->info(it->m_name + " reached checkpoint " + std::to_string(checkpoint + 1) + " |" + board);
 	if (it->m_score < s_winning_score) return;
 	//the end of the race
 	m_winner = size_t(it - m_racers.begin());
-	m_context.logger()->info(m_winner == 0 ? std::string("You win!") : "You lose! (" + it->m_name + " wins)");
+	context().logger()->info(m_winner == 0 ? std::string("You win!") : "You lose! (" + it->m_name + " wins)");
 	//in the update of the race: here the scene is updating its components (the controls change)
 	m_end = true;
 }
@@ -286,7 +299,7 @@ size_t Race::winner() const
 void Race::paint(size_t id)
 {
 	if (id >= m_racers.size() || !s_skins[id][0]) return;
-	paint(m_context, m_racers[id].m_actor, s_skins[id]);
+	paint(context(), m_racers[id].m_actor, s_skins[id]);
 }
 
 void Race::paint(Square::Context& context, Square::Shared<Square::Scene::Actor> hovercraft, const std::string& skin)

@@ -55,8 +55,11 @@ public:
 			m_ui.on_exit([this]() { m_next = State::MENU; });
 			if (m_demo) m_demo->setup(m_ui.menu_document(), m_ui.model());
 		}
-		//the title (its level), it starts in the menu
-		m_title.load(world());
+		//the levels of the game, made once: the title and the race (one runs at a time)
+		world().create_level(s_title_world_level);
+		world().create_level(s_race_world_level);
+		//the title in its level, it starts in the menu
+		m_title.load(world().level(s_title_world_level));
 		enter_menu();
 		//a map asked by the command line: its race at the next frame
 		if (!m_start_map.empty())
@@ -75,13 +78,7 @@ public:
 			if (m_next == State::RACE) enter_race();
 			else                       enter_menu();
 		}
-		//the state
-		switch (m_state)
-		{
-		case State::MENU: m_title.update(delta_time); break;
-		case State::RACE: if (m_race) m_race->update(delta_time); break;
-		default: break;
-		}
+		//the title and the race run in their levels (the one active): only the UI here
 		m_ui.update(m_race.get(), m_graphics, float(m_counter.get()));
 		if (m_demo) m_demo->update(m_race.get(), m_graphics);
 		return m_loop;
@@ -148,10 +145,11 @@ private:
 	void enter_menu()
 	{
 		if (m_demo) m_demo->race_ended();
-		m_race.reset();
+		end_race();
+		world().active_levels({ s_title_world_level });
 		m_graphics.fog(RaceFog{}, Square::Vec3(0.0f, -1.0f, 0.0f));
 		m_graphics.snow(false);
-		m_title.show(true, world());
+		m_title.show(true);
 		m_ui.title(true);
 		m_state = m_next = State::MENU;
 	}
@@ -161,14 +159,28 @@ private:
 	void enter_race()
 	{
 		m_ui.title(false);
-		m_title.show(false, world());
-		m_race = std::make_unique<Race>(context(), world());
+		m_title.show(false);
+		world().active_levels({ s_race_world_level });
+		//the race: a component of its actor in its level (it runs with the level)
+		auto race_actor = world().level(s_race_world_level)->actor();
+		race_actor->name("race");
+		m_race = race_actor->component<Race>();
 		const RaceMap& map = m_ui.race_map();
 		m_race->load(map);
 		m_graphics.fog(map.m_fog, m_race->arena().sun_direction());
 		m_graphics.snow(map.m_snow);
 		if (m_demo) m_demo->race_started(m_race->arena());
 		m_state = m_next = State::RACE;
+	}
+
+	//the race out of its level (its map, hovercraft, its actor)
+	void end_race()
+	{
+		if (!m_race) return;
+		auto race_actor = m_race->actor().lock();
+		m_race->unload();
+		if (race_actor) race_actor->remove_from_level();
+		m_race.reset();
 	}
 
 	//the end of a race (win or lose shown): a key, back to the menu
@@ -237,7 +249,7 @@ private:
 	Graphics                   m_graphics{ context() };
 	TitleScreen                m_title{ context() };
 	RushUI                     m_ui{ context() };
-	std::unique_ptr<Race>      m_race;
+	Square::Shared<Race>       m_race;    //the component of the actor of the race
 	std::unique_ptr<DemoTools> m_demo; //RUSH_DEMO only
 };
 

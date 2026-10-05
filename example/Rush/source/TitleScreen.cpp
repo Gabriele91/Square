@@ -6,6 +6,7 @@
 //
 #include <cmath>
 #include <TitleScreen.h>
+#include <Turntable.h>
 #include <Race.h>
 
 namespace AuxTitle
@@ -32,11 +33,10 @@ TitleScreen::TitleScreen(Square::Context& context)
 {
 }
 
-void TitleScreen::load(Square::Scene::World& world)
+void TitleScreen::load(Square::Shared<Square::Scene::Level> level)
 {
 	using namespace Square;
-	m_level = world.level(s_title_world_level);
-	auto level = m_level;
+	m_level = level;
 	m_root = level->actor();
 	m_root->name("title");
 	m_root->position(s_title_origin);
@@ -50,10 +50,13 @@ void TitleScreen::load(Square::Scene::World& world)
 		m_hovercraft->name("title_hovercraft");
 		m_hovercraft->position(Vec3(0.0f));
 		Race::paint(m_context, m_hovercraft, s_skins[0]);
+		//turning while the title runs
+		auto turntable = m_hovercraft->component<Turntable>();
+		turntable->speed(s_title_turn_speed);
+		turntable->yaw(30.0f);
 	}
 	setup_camera();
 	setup_light();
-	update(0.0);
 }
 
 void TitleScreen::setup_camera()
@@ -92,11 +95,11 @@ void TitleScreen::viewport(unsigned int width, unsigned int height)
 	camera->perspective(AuxTitle::s_camera_fov, float(width) / float(height), 0.1f, 200.0f);
 }
 
-void TitleScreen::show(bool show, Square::Scene::World& world)
+void TitleScreen::show(bool show)
 {
 	using namespace Square;
-	if (m_level) m_level->active(show);
-	auto render_world = world.instance<RenderInstance>();
+	auto world = m_level ? m_level->world().lock() : nullptr;
+	auto render_world = world ? world->instance<RenderInstance>() : nullptr;
 	//the background: black in the title, the one of before back
 	if (render_world && show)
 	{
@@ -104,12 +107,4 @@ void TitleScreen::show(bool show, Square::Scene::World& world)
 		render_world->clear_color(Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 	}
 	if (render_world && !show) render_world->clear_color(m_clear_color);
-}
-
-void TitleScreen::update(double delta_time)
-{
-	using namespace Square;
-	if (!m_hovercraft) return;
-	m_yaw = std::fmod(m_yaw + float(delta_time) * s_title_turn_speed, 360.0f);
-	m_hovercraft->rotation(angle_axis(radians(m_yaw), Constants::axis_y));
 }
