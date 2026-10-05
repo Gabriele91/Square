@@ -329,7 +329,7 @@ namespace
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //CollisionMesh: triangles
-void CollisionMesh::add(Context& context, const Shared<Scene::Actor>& actor)
+void CollisionMesh::add(Context& context, const Shared<Scene::Actor>& actor, bool solid_only)
 {
 	actor->visit([&](Shared<Scene::Actor> node) -> bool
 	{
@@ -372,7 +372,7 @@ void CollisionMesh::add(Context& context, const Shared<Scene::Actor>& actor)
 			if (submesh.m_draw_type != Render::DRAW_TRIANGLES) continue;
 			//only opaque surfaces are solid: not the translucent ones, nor the alpha tested ones
 			//(mask >= 0: grass, foliage, drawn as opaque)
-			if (auto material = static_mesh->material(submesh_id).lock())
+			if (auto material = solid_only ? static_mesh->material(submesh_id).lock() : nullptr)
 			{
 				const auto* mask       = material->parameter_by_name("mask");
 				const bool  opaque     = material->queue().m_type == Render::RQ_OPAQUE;

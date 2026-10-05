@@ -5,10 +5,13 @@
 //  A level of the race (the arena, by now the only one): its scene (solid, a mesh collider of
 //  the scene type), its sun, its bounds, the starts of the hovercraft (spawn_point_1..4) and its
 //  camera (the chase camera of the player, at the level root: it follows in world space).
-//  The "collider..." meshes of a scene are solid but not drawn (invisible walls).
+//  The "collider..." meshes of a scene are solid but not drawn (invisible walls); its "navmesh"
+//  (made in Blender: where the AI drives, the holes of the obstacles) is neither solid (an alpha
+//  tested material) nor drawn.
 //
 #pragma once
 #include <array>
+#include <vector>
 #include <Square/Square.h>
 #include <RushTypes.h>
 
@@ -41,9 +44,13 @@ public:
 	const Square::Vec3& center() const;
 	const Square::Vec3& start(size_t id) const;
 
+	//the triangles of its navmesh (world space); false: the map has none
+	bool navmesh(std::vector<Square::Vec3>& triangles) const;
+
 private:
 
-	void hide_colliders();
+	//the colliders and the navmesh not drawn
+	void hide_helpers();
 	void find_bounds();
 	void find_starts();
 	void setup_camera(Square::Shared<Square::Scene::Level> level);

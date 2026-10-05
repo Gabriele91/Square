@@ -38,6 +38,8 @@
 #include "Square/Geometry/Sphere.h"
 #include "Square/Geometry/Frustum.h"
 #include "Square/Geometry/OBoundingBox.h"
+/* --- Navigation --- */
+#include "Square/Navigation/NavGrid.h"
 #include "Square/Geometry/CreateBounding.h"
 #include "Square/Geometry/AABoundingBox.h"
 #include "Square/Geometry/Intersection.h"

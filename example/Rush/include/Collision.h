@@ -73,7 +73,9 @@ public:
 
 	//add the static meshes of an actor and its children, with their current world transform;
 	//sub meshes with a non opaque material (glass, glows...) are not solid and are skipped
-	void add(Square::Context& context, const Square::Shared<Square::Scene::Actor>& actor);
+	//solid_only: only the opaque surfaces (not the translucent, not the alpha tested ones);
+	//false: every surface (e.g. the triangles of a navmesh)
+	void add(Square::Context& context, const Square::Shared<Square::Scene::Actor>& actor, bool solid_only = true);
 	void clear();
 
 	//first contact of a sphere of radius moving along line, if before collision.m_time; with

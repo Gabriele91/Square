@@ -6,9 +6,11 @@
 //
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <Race.h>
 #include <SnowTrails.h>
 #include <Arena.h>
+#include <Collision.h>
 #include <Checkpoints.h>
 #include <HovercraftInput.h>
 #include <HovercraftAI.h>
@@ -87,6 +89,7 @@ bool Race::load(const RaceMap& map)
 	if (!m_arena->load(m_level, map.m_name)) return false;
 	if (auto follow = m_arena->camera_follow()) follow->bounds(map.m_camera_bounds);
 	m_sink = map.m_trails ? s_snow_sink : 0.0f;
+	load_navigation();
 	if (map.m_trails) load_trails();
 	load_light_beam();
 	load_hovercraft();
@@ -108,6 +111,45 @@ void Race::load_trails()
 		return;
 	}
 	m_trails->attach(m_arena->actor());
+}
+
+void Race::load_navigation()
+{
+	using namespace Square;
+	//the navmesh of the map (where the AI drives: its edges and holes the obstacles), else the
+	//triangles the hovercraft collide with (the invisible walls too, the obstacles found from
+	//them); an agent as wide as a hovercraft (and a little more): the edges kept that far
+	std::vector<Vec3> triangles;
+	const bool authored = m_arena->navmesh(triangles);
+	if (!authored) m_arena->actor()->component<MeshCollider>()->mesh().triangles(triangles);
+	Vec3 min = m_arena->min(), max = m_arena->max();
+	if (authored)
+	{
+		min = Vec3(std::numeric_limits<float>::max());
+		max = Vec3(std::numeric_limits<float>::lowest());
+		for (const Vec3& point : triangles)
+		{
+			min = glm::min(min, point);
+			max = glm::max(max, point);
+		}
+		//a cell of border: the edges of the navmesh inside the grid
+		min -= Vec3(2.0f, 0.0f, 2.0f);
+		max += Vec3(2.0f, 0.0f, 2.0f);
+	}
+	Navigation::NavGrid::Settings settings;
+	settings.cell_size    = 1.0f;
+	settings.agent_radius = 2.2f;
+	settings.agent_height = 2.5f;
+	settings.max_slope    = 30.0f;
+	settings.max_step     = 0.7f;
+	m_navigation = std::make_shared<Navigation::NavGrid>();
+	if (!m_navigation->build(triangles, min, max, settings))
+	{
+		context().logger()->warning("navigation: nothing walkable");
+		m_navigation.reset();
+		return;
+	}
+	context().logger()->info(std::string(authored ? "navigation (navmesh): " : "navigation (collisions): ") + std::to_string(m_navigation->width()) + "x" + std::to_string(m_navigation->height()) + " cells");
 }
 
 void Race::sink(Square::Shared<Square::Scene::Actor> hovercraft) const
@@ -249,11 +291,11 @@ void Race::controls(Phase phase)
 		case Phase::PLAY:
 			//the player its keys, the NPCs the light
 			if (player) actor->component<HovercraftInput>();
-			else        actor->component<HovercraftAI>()->checkpoints(m_checkpoints);
+			else        actor->component<HovercraftAI>()->race(m_checkpoints, m_navigation);
 		break;
 		case Phase::END:
 			//everyone the light: the player an NPC too
-			actor->component<HovercraftAI>()->checkpoints(m_checkpoints);
+			actor->component<HovercraftAI>()->race(m_checkpoints, m_navigation);
 		break;
 		case Phase::START:
 		default: break;

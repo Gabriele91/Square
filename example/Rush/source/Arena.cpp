@@ -32,20 +32,31 @@ bool Arena::load(Square::Shared<Square::Scene::Level> level, const std::string& 
 	auto collider = m_actor->component<MeshCollider>();
 	collider->type(TYPE_SCENE);
 	m_context.logger()->info("arena collision triangles: " + std::to_string(collider->mesh().size()));
-	hide_colliders();
+	hide_helpers();
 	find_bounds();
 	find_starts();
 	setup_camera(level);
 	return true;
 }
 
-void Arena::hide_colliders()
+namespace AuxArena
+{
+	//a node of a name that starts with prefix
+	static bool named(const Square::Shared<Square::Scene::Actor>& node, const char* prefix)
+	{
+		return node->name().rfind(prefix, 0) == 0;
+	}
+}
+
+void Arena::hide_helpers()
 {
 	using namespace Square;
-	//"collider..." nodes (and their children): solid (in the mesh collider), not drawn
+	//"collider..." nodes (solid: in the mesh collider) and "navmesh..." ones (and their
+	//children): not drawn
 	m_actor->visit([](Shared<Scene::Actor> node) -> bool
 	{
-		if (node->name().rfind("collider", 0) != 0) return true;
+		const bool helper = AuxArena::named(node, "collider") || AuxArena::named(node, "navmesh");
+		if (!helper) return true;
 		node->visit([](Shared<Scene::Actor> part) -> bool
 		{
 			//(StaticMesh overrides only the getter: the setter of the renderable)
@@ -125,6 +136,24 @@ void Arena::viewport(unsigned int width, unsigned int height) const
 	if (!m_camera || !m_camera->contains<Scene::Camera>()) return;
 	if (!width || !height) return;
 	m_camera->component<Scene::Camera>()->viewport({ 0, 0, width, height });
+}
+
+bool Arena::navmesh(std::vector<Square::Vec3>& triangles) const
+{
+	using namespace Square;
+	if (!m_actor) return false;
+	bool found = false;
+	m_actor->visit([&](Shared<Scene::Actor> node) -> bool
+	{
+		if (!AuxArena::named(node, "navmesh")) return true;
+		//every surface of it (its material is not solid)
+		CollisionMesh mesh;
+		mesh.add(m_context, node, false);
+		mesh.triangles(triangles);
+		found = true;
+		return false;
+	});
+	return found && !triangles.empty();
 }
 
 Square::Shared<Square::Scene::Actor> Arena::actor() const

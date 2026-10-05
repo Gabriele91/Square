@@ -27,6 +27,7 @@ file(GLOB SOURCES Core/*.cpp
                   Geometry/*.cpp
                   Driver/*.cpp
                   Math/*.cpp
+                  Navigation/*.cpp
                   Render/*.cpp
                   Resource/*.cpp
                   Scene/*.cpp
