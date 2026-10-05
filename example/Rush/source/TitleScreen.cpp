@@ -13,9 +13,9 @@
 namespace AuxTitle
 {
 	//the camera of the title: where it is and where it looks, from the hovercraft; it looks up
-	//and right of it, so the hovercraft is at the bottom left of the screen
-	const Square::Vec3 s_camera_offset{ -5.0f, 3.0f, -15.0f };
-	const Square::Vec3 s_look_offset{ 3.8f, 0.4f, 0.0f };
+	//and left of it, so the hovercraft is on the right of the screen (the menu on the left)
+	const Square::Vec3 s_camera_offset{ 5.0f, 3.0f, -15.0f };
+	const Square::Vec3 s_look_offset{ -3.8f, 0.4f, 0.0f };
 	constexpr float    s_camera_fov = 0.55f; //radians, vertical
 
 	//the rotation that looks along a direction (no roll; +z forward, as CameraFollow)
@@ -107,7 +107,7 @@ void TitleScreen::show(bool show)
 	if (render_world && show)
 	{
 		m_clear_color = render_world->clear_color();
-		render_world->clear_color(Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		render_world->clear_color(Vec4(0.015f, 0.025f, 0.05f, 1.0f)); //a dark navy (the shades of the menu over it)
 	}
 	if (render_world && !show) render_world->clear_color(m_clear_color);
 }

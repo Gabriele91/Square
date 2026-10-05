@@ -89,7 +89,14 @@ void Graphics::fog(const RaceFog& fog, const Square::Vec3& sun_direction)
 
 void Graphics::snow(bool snow)
 {
-	if (m_snow) m_snow->enabled(snow);
+	m_map_snow = snow;
+	if (m_snow) m_snow->enabled(m_map_snow && m_weather);
+}
+
+void Graphics::weather(bool weather)
+{
+	m_weather = weather;
+	if (m_snow) m_snow->enabled(m_map_snow && m_weather);
 }
 
 Square::Shared<Square::Render::SSAO> Graphics::ssao() const

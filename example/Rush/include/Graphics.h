@@ -23,8 +23,9 @@ public:
 
 	//the fog of a map (its sun: where its light goes), off when the map has none
 	void fog(const RaceFog& fog, const Square::Vec3& sun_direction);
-	//the falling snow of a map
+	//the falling snow of a map (shown if the weather is on: GameSettings)
 	void snow(bool snow);
+	void weather(bool weather);
 
 	Square::Shared<Square::Render::SSAO>  ssao() const;
 	Square::Shared<Square::Render::SSR>   ssr() const;
@@ -40,4 +41,6 @@ private:
 	Square::Shared<Square::Render::Fog>   m_fog;
 	Square::Shared<Square::Render::Snow>  m_snow;
 	Square::Shared<Square::Render::Bloom> m_bloom;
+	bool                                  m_map_snow{ false };
+	bool                                  m_weather{ true };
 };

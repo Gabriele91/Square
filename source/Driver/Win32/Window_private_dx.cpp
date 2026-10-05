@@ -468,6 +468,8 @@ namespace Win32
 			//save new size
 			m_info.m_size[0] = size[0];
 			m_info.m_size[1] = size[1];
+			//the back buffer: the new client area (else the frame stays of the old size)
+			if (m_device) m_device->resize_backbuffer(0, 0);
 		}
 	}
 

@@ -3,8 +3,9 @@
 //  Rush
 //
 //  The UI of the game (documents of assets/ui.sqz, the data model "rush"):
-//   - the title: Play Game (the chooser of the maps: their views, arrows and enter or a click
-//     plays, Esc back), Instructions, About, Exit (arrows and enter, or the mouse);
+//   - the title (over the 3D hovercraft of TitleScreen): Play Game (the modes: Races and Battle
+//     to come, Arena: the maps turning on a wheel, the one in front played), Settings (saved at
+//     every change: GameSettings), About, Exit; the arrows and enter, Esc back, or the mouse;
 //   - the HUD of a race: the score cards, the speed (0 to 100), the start (3, 2, 1, GO!), the
 //     end (win or lose, press a key);
 //   - the Esc menu of a race: with the demo (RUSH_DEMO, Debug) the full one of the engine
@@ -19,6 +20,7 @@
 #include <Square/Square.h>
 #include <RushTypes.h>
 #include <UIOption.h>
+#include <GameSettings.h>
 
 class Race;
 class Graphics;
@@ -55,31 +57,52 @@ public:
 	bool menu_visible() const;
 	void on_exit(const Callback& callback);
 
-	//the HUD of a race (none: the title), the options of the game, every frame
-	void update(const Race* race, const Graphics& graphics, float fps);
+	//the settings of the game (loaded at the start), applied to the window and the effects
+	const GameSettings& settings() const;
+	void load_settings(Graphics& graphics);
+
+	//the HUD of a race (none: the title), the options of the game (a change of the settings
+	//applied and saved), every frame
+	void update(const Race* race, Graphics& graphics, float fps);
 
 private:
 
 	void setup_title();
 	void update_hud(const Race& race);
-	void update_options(const Graphics& graphics);
+	void update_options(Graphics& graphics);
 
-	//the items of the title, in order
-	enum TitleItem : int
+	//the screens of the title
+	enum class Screen : int
 	{
-		TITLE_PLAY,
-		TITLE_INSTRUCTIONS,
-		TITLE_ABOUT,
-		TITLE_EXIT,
-		TITLE_COUNT
+		MAIN,
+		MODES,
+		ARENA,
+		SETTINGS,
+		ABOUT
 	};
-	void title_select(int item);
-	void title_activate(int item);
-	//a panel of the title (Instructions, About) shown, the others hidden (none: TITLE_COUNT)
-	void title_panel(int item);
-	//the chooser of the maps (instead of the items), the map selected, played
-	void maps(bool show);
-	void maps_key(Square::Video::KeyboardEvent key);
+	//the items of the main screen, in order
+	enum MainItem : int
+	{
+		MAIN_PLAY,
+		MAIN_SETTINGS,
+		MAIN_ABOUT,
+		MAIN_EXIT,
+		MAIN_COUNT
+	};
+	//the modes of Play, in order (only Arena plays now)
+	enum Mode : int
+	{
+		MODE_RACES,
+		MODE_ARENA,
+		MODE_BATTLE,
+		MODE_COUNT
+	};
+	void screen(Screen screen);
+	void main_select(int item);
+	void main_activate(int item);
+	void mode_select(int mode);
+	void mode_activate(int mode);
+	//the wheel of the maps: the map in front, the others around it; played
 	void map_select(size_t map);
 	void map_play(size_t map);
 
@@ -94,11 +117,14 @@ private:
 		std::string    m_result;                //the end: win or lose
 		bool           m_result_visible{ false };
 		float          m_fps{ 0.0f };
-		//options of the game
+		//options of the game (the menu of the demo)
 		UIOption<bool> m_ssr;
 		UIOption<bool> m_bloom;
 		UIOption<bool> m_ssao;
 		UIOption<bool> m_fullscreen;
+		//the settings (the controls of Settings), the ones applied
+		GameSettings   m_settings;
+		GameSettings   m_applied;
 	};
 
 	Square::Context&                 m_context;
@@ -107,11 +133,14 @@ private:
 	Square::UI::Document             m_title;
 	Square::UI::Document             m_hud;
 	Square::UI::Document             m_menu;
-	std::vector<Square::UI::Element> m_title_items;
-	int                              m_title_selected{ TITLE_PLAY };
+	Screen                           m_screen{ Screen::MAIN };
+	std::vector<Square::UI::Element> m_main_items;
+	int                              m_main_selected{ MAIN_PLAY };
+	std::vector<Square::UI::Element> m_modes;
+	int                              m_mode{ MODE_ARENA };
 	std::vector<Square::UI::Element> m_map_cards; //map_<n>, s_race_maps
+	std::vector<Square::UI::Element> m_map_infos; //info_<n>
 	size_t                           m_map{ 0 };  //the selected one
-	bool                             m_maps_shown{ false };
 	Callback                         m_on_play;
 	Callback                         m_on_quit;
 	Callback                         m_on_exit;

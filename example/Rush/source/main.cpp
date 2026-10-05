@@ -54,6 +54,8 @@ public:
 			m_ui.on_quit([this]() { m_loop = false; });
 			m_ui.on_exit([this]() { m_next = State::MENU; });
 			if (m_demo) m_demo->setup(m_ui.menu_document(), m_ui.model());
+			//the settings of the player (saved): the window, the effects
+			m_ui.load_settings(m_graphics);
 		}
 		//the levels of the game, made once: the title and the race (one runs at a time)
 		world().create_level(s_title_world_level);
@@ -169,6 +171,7 @@ private:
 		m_race->load(map);
 		m_graphics.fog(map.m_fog, m_race->arena().sun_direction());
 		m_graphics.snow(map.m_snow);
+		m_ui.settings().apply_shadows(m_race->arena().sun());
 		if (m_demo) m_demo->race_started(m_race->arena());
 		m_state = m_next = State::RACE;
 	}

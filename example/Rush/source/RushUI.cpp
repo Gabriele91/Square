@@ -48,6 +48,16 @@ bool RushUI::create()
 	m_model.bind("bloom", &m_state.m_bloom.m_value);
 	m_model.bind("ssao", &m_state.m_ssao.m_value);
 	m_model.bind("fullscreen", &m_state.m_fullscreen.m_value);
+	//the settings
+	m_model.bind("set_fullscreen", &m_state.m_settings.m_fullscreen);
+	m_model.bind("set_resolution", &m_state.m_settings.m_resolution);
+	m_model.bind("set_fps", &m_state.m_settings.m_show_fps);
+	m_model.bind("show_fps", &m_state.m_applied.m_show_fps);
+	m_model.bind("set_reflections", &m_state.m_settings.m_reflections);
+	m_model.bind("set_occlusion", &m_state.m_settings.m_occlusion);
+	m_model.bind("set_shadows", &m_state.m_settings.m_shadows);
+	m_model.bind("set_bloom", &m_state.m_settings.m_bloom);
+	m_model.bind("set_weather", &m_state.m_settings.m_weather);
 	return true;
 }
 
@@ -80,27 +90,48 @@ Square::UI::Document& RushUI::menu_document()
 void RushUI::setup_title()
 {
 	using namespace Square;
-	static const char* s_item_ids[TITLE_COUNT]{ "title_play", "title_instructions", "title_about", "title_exit" };
-	m_title_items.clear();
-	m_title_items.reserve(TITLE_COUNT);
-	for (int item = 0; item != TITLE_COUNT; ++item)
+	static const char* s_main_ids[MAIN_COUNT]{ "item_play", "item_settings", "item_about", "item_exit" };
+	m_main_items.clear();
+	m_main_items.reserve(MAIN_COUNT);
+	for (int item = 0; item != MAIN_COUNT; ++item)
 	{
-		UI::Element element = m_title.find(s_item_ids[item]);
-		element.on(UI::EventType::MOUSEOVER, [this, item](UI::Event&) { title_select(item); });
-		element.on(UI::EventType::CLICK, [this, item](UI::Event&) { title_activate(item); });
-		m_title_items.push_back(element);
+		UI::Element element = m_title.find(s_main_ids[item]);
+		element.on(UI::EventType::MOUSEOVER, [this, item](UI::Event&) { main_select(item); });
+		element.on(UI::EventType::CLICK, [this, item](UI::Event&) { main_activate(item); });
+		m_main_items.push_back(element);
 	}
-	title_select(TITLE_PLAY);
-	//the cards of the maps
+	//the modes
+	m_modes.clear();
+	m_modes.reserve(MODE_COUNT);
+	for (int mode = 0; mode != MODE_COUNT; ++mode)
+	{
+		UI::Element element = m_title.find("mode_" + std::to_string(mode));
+		element.on(UI::EventType::MOUSEOVER, [this, mode](UI::Event&) { mode_select(mode); });
+		element.on(UI::EventType::CLICK, [this, mode](UI::Event&) { mode_activate(mode); });
+		m_modes.push_back(element);
+	}
+	//the maps: a card on the wheel (a click: in front, again: played), its words
 	m_map_cards.clear();
+	m_map_infos.clear();
 	m_map_cards.reserve(s_race_maps_count);
+	m_map_infos.reserve(s_race_maps_count);
 	for (size_t map = 0; map != s_race_maps_count; ++map)
 	{
 		UI::Element element = m_title.find("map_" + std::to_string(map));
-		element.on(UI::EventType::MOUSEOVER, [this, map](UI::Event&) { map_select(map); });
-		element.on(UI::EventType::CLICK, [this, map](UI::Event&) { map_play(map); });
+		element.on(UI::EventType::CLICK, [this, map](UI::Event&)
+		{
+			if (m_map == map) map_play(map);
+			else              map_select(map);
+		});
 		m_map_cards.push_back(element);
+		m_map_infos.push_back(m_title.find("info_" + std::to_string(map)));
 	}
+	m_title.find("map_play").on(UI::EventType::CLICK, [this](UI::Event&) { map_play(m_map); });
+	m_title.find("settings_back").on(UI::EventType::CLICK, [this](UI::Event&) { screen(Screen::MAIN); });
+	m_title.find("about_back").on(UI::EventType::CLICK, [this](UI::Event&) { screen(Screen::MAIN); });
+	main_select(MAIN_PLAY);
+	mode_select(MODE_ARENA);
+	map_select(m_map);
 }
 
 void RushUI::title(bool show)
@@ -110,113 +141,115 @@ void RushUI::title(bool show)
 		m_menu.hide();
 		m_hud.hide();
 		m_title.show();
-		title_panel(TITLE_COUNT);
-		maps(false);
-		title_select(TITLE_PLAY);
+		screen(Screen::MAIN);
+		main_select(MAIN_PLAY);
 		return;
 	}
 	m_title.hide();
 	m_hud.show();
 }
 
+void RushUI::screen(Screen screen)
+{
+	m_screen = screen;
+	m_title.find("screen_main").set_class("hidden", screen != Screen::MAIN);
+	m_title.find("screen_modes").set_class("hidden", screen != Screen::MODES);
+	m_title.find("screen_arena").set_class("hidden", screen != Screen::ARENA);
+	m_title.find("screen_settings").set_class("hidden", screen != Screen::SETTINGS);
+	m_title.find("screen_about").set_class("hidden", screen != Screen::ABOUT);
+}
+
 void RushUI::title_key(Square::Video::KeyboardEvent key)
 {
 	using namespace Square;
-	if (m_maps_shown)
+	const bool previous = key == Video::KEY_LEFT || key == Video::KEY_UP;
+	const bool next = key == Video::KEY_RIGHT || key == Video::KEY_DOWN;
+	const bool enter = key == Video::KEY_ENTER || key == Video::KEY_KP_ENTER;
+	const bool back = key == Video::KEY_ESCAPE || key == Video::KEY_BACKSPACE;
+	switch (m_screen)
 	{
-		maps_key(key);
-		return;
-	}
-	switch (key)
-	{
-	case Video::KEY_LEFT:
-	case Video::KEY_UP:
-		title_select((m_title_selected + TITLE_COUNT - 1) % TITLE_COUNT);
+	case Screen::MAIN:
+		if (previous) main_select((m_main_selected + MAIN_COUNT - 1) % MAIN_COUNT);
+		if (next)     main_select((m_main_selected + 1) % MAIN_COUNT);
+		if (enter)    main_activate(m_main_selected);
 	break;
-	case Video::KEY_RIGHT:
-	case Video::KEY_DOWN:
-		title_select((m_title_selected + 1) % TITLE_COUNT);
+	case Screen::MODES:
+		if (previous) mode_select((m_mode + MODE_COUNT - 1) % MODE_COUNT);
+		if (next)     mode_select((m_mode + 1) % MODE_COUNT);
+		if (enter)    mode_activate(m_mode);
+		if (back)     screen(Screen::MAIN);
 	break;
-	case Video::KEY_ENTER:
-	case Video::KEY_KP_ENTER:
-		title_activate(m_title_selected);
+	case Screen::ARENA:
+		if (previous) map_select((m_map + s_race_maps_count - 1) % s_race_maps_count);
+		if (next)     map_select((m_map + 1) % s_race_maps_count);
+		if (enter)    map_play(m_map);
+		if (back)     screen(Screen::MODES);
 	break;
-	default: break;
+	case Screen::SETTINGS:
+	case Screen::ABOUT:
+	default:
+		if (back) screen(Screen::MAIN);
+	break;
 	}
 }
 
-void RushUI::title_select(int item)
+void RushUI::main_select(int item)
 {
-	m_title_selected = item;
-	for (int id = 0; id != int(m_title_items.size()); ++id)
+	m_main_selected = item;
+	for (int id = 0; id != int(m_main_items.size()); ++id)
 	{
-		m_title_items[id].set_class("selected", id == item);
+		m_main_items[id].set_class("selected", id == item);
 	}
 }
 
-void RushUI::title_activate(int item)
+void RushUI::main_activate(int item)
 {
 	switch (item)
 	{
-	case TITLE_PLAY:
-		maps(true);
-	break;
-	case TITLE_INSTRUCTIONS:
-	case TITLE_ABOUT:
-		title_panel(item);
-	break;
-	case TITLE_EXIT:
-		if (m_on_quit) m_on_quit();
-	break;
+	case MAIN_PLAY:     screen(Screen::MODES); break;
+	case MAIN_SETTINGS: screen(Screen::SETTINGS); break;
+	case MAIN_ABOUT:    screen(Screen::ABOUT); break;
+	case MAIN_EXIT:     if (m_on_quit) m_on_quit(); break;
 	default: break;
 	}
 }
 
-void RushUI::title_panel(int item)
+void RushUI::mode_select(int mode)
 {
-	m_title.find("panel_instructions").set_class("hidden", item != TITLE_INSTRUCTIONS);
-	m_title.find("panel_about").set_class("hidden", item != TITLE_ABOUT);
-}
-
-void RushUI::maps(bool show)
-{
-	m_maps_shown = show;
-	m_title.find("title_maps").set_class("hidden", !show);
-	m_title.find("title_items").set_class("hidden", show);
-	if (show) title_panel(TITLE_COUNT);
-	map_select(m_map);
-}
-
-void RushUI::maps_key(Square::Video::KeyboardEvent key)
-{
-	using namespace Square;
-	switch (key)
+	m_mode = mode;
+	for (int id = 0; id != int(m_modes.size()); ++id)
 	{
-	case Video::KEY_LEFT:
-	case Video::KEY_UP:
-		map_select((m_map + s_race_maps_count - 1) % s_race_maps_count);
-	break;
-	case Video::KEY_RIGHT:
-	case Video::KEY_DOWN:
-		map_select((m_map + 1) % s_race_maps_count);
-	break;
-	case Video::KEY_ENTER:
-	case Video::KEY_KP_ENTER:
-		map_play(m_map);
-	break;
-	case Video::KEY_ESCAPE:
-		maps(false);
-	break;
-	default: break;
+		m_modes[id].set_class("selected", id == mode);
 	}
+}
+
+void RushUI::mode_activate(int mode)
+{
+	mode_select(mode);
+	//only the arena plays now (races, battle: to come)
+	if (mode == MODE_ARENA) screen(Screen::ARENA);
 }
 
 void RushUI::map_select(size_t map)
 {
 	m_map = map;
-	for (size_t id = 0; id != m_map_cards.size(); ++id)
+	//the wheel: the one in front, the one before over it, the one after under it, the rest
+	//behind (hidden)
+	const size_t count = m_map_cards.size();
+	for (size_t id = 0; id != count; ++id)
 	{
-		m_map_cards[id].set_class("selected", id == map);
+		const size_t slot = (id + count - map) % count;
+		const bool front = slot == 0;
+		const bool after = slot == 1;
+		const bool before = slot == count - 1 && count > 2;
+		m_map_cards[id].set_class("slot_cur", front);
+		m_map_cards[id].set_class("slot_next", after);
+		m_map_cards[id].set_class("slot_prev", before);
+		m_map_cards[id].set_class("slot_far", !front && !after && !before);
+	}
+	for (size_t id = 0; id != m_map_infos.size(); ++id)
+	{
+		m_map_infos[id].set_class("shown", id == map);
 	}
 }
 
@@ -272,7 +305,20 @@ void RushUI::on_exit(const Callback& callback)
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //update
-void RushUI::update(const Race* race, const Graphics& graphics, float fps)
+const GameSettings& RushUI::settings() const
+{
+	return m_state.m_applied;
+}
+
+void RushUI::load_settings(Graphics& graphics)
+{
+	m_state.m_settings.load();
+	m_state.m_applied = m_state.m_settings;
+	m_state.m_applied.apply_window();
+	m_state.m_applied.apply_effects(graphics);
+}
+
+void RushUI::update(const Race* race, Graphics& graphics, float fps)
 {
 	if (!m_model.valid()) return;
 	m_state.m_fps = fps;
@@ -311,9 +357,19 @@ void RushUI::update_hud(const Race& race)
 	}
 }
 
-void RushUI::update_options(const Graphics& graphics)
+void RushUI::update_options(Graphics& graphics)
 {
 	using namespace Square;
+	//the settings changed (a control of Settings): applied, saved
+	if (m_state.m_settings != m_state.m_applied)
+	{
+		const bool window = m_state.m_settings.m_fullscreen != m_state.m_applied.m_fullscreen
+		                 || m_state.m_settings.m_resolution != m_state.m_applied.m_resolution;
+		m_state.m_applied = m_state.m_settings;
+		if (window) m_state.m_applied.apply_window();
+		m_state.m_applied.apply_effects(graphics);
+		m_state.m_applied.save();
+	}
 	auto ssr = graphics.ssr();
 	auto bloom = graphics.bloom();
 	auto ssao = graphics.ssao();
