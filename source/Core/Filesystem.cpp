@@ -130,10 +130,33 @@ namespace Filesystem
     std::string home_dir()
     {
         const char *home_dir = std::getenv("HOME");
-        if (home_dir) return home_dir;
-        else         return "";
+        if (home_dir && *home_dir) return home_dir;
+        #ifdef _WIN32
+        //Windows: HOME only in some shells (Git Bash), the profile of the user always
+        const char *profile = std::getenv("USERPROFILE");
+        if (profile && *profile) return profile;
+        #endif
+        return "";
     }
     
+    std::string app_data_dir()
+    {
+        #if defined(_WIN32)
+            const char *app_data = std::getenv("APPDATA");
+            if (app_data && *app_data) return app_data;
+            const std::string home = home_dir();
+            return home.size() ? join(join(home, "AppData"), "Roaming") : "";
+        #elif defined(__APPLE__)
+            const std::string home = home_dir();
+            return home.size() ? join(join(home, "Library"), "Application Support") : "";
+        #else
+            const char *data_home = std::getenv("XDG_DATA_HOME");
+            if (data_home && *data_home) return data_home;
+            const std::string home = home_dir();
+            return home.size() ? join(join(home, ".local"), "share") : "";
+        #endif
+    }
+
     std::string resource_dir()
     {
         #if defined(__APPLE__)
