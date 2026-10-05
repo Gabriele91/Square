@@ -38,6 +38,9 @@ namespace Win32
 		window_type m_type{ UNKNOW_WINDOW };
 		//info about init windows
 		WindowInfo m_info;
+		//a fullscreen without a mode of the screen of its size (borderless over the monitor): the
+		//frame of m_info.m_size stretched to the window (its size, its mouse: of the frame)
+		bool m_scaled{ false };
 		//virtual methods
 		virtual void swap() const = 0;
 		virtual void acquire_context() const = 0;
