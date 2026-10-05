@@ -80,7 +80,8 @@ public:
 			if (m_next == State::RACE) enter_race();
 			else                       enter_menu();
 		}
-		//the title and the race run in their levels (the one active): only the UI here
+		//the title and the race run in their levels (the one active): the shot of the title, the UI
+		if (m_state == State::MENU) m_title.update(delta_time);
 		m_ui.update(m_race.get(), m_graphics, float(m_counter.get()));
 		if (m_demo) m_demo->update(m_race.get(), m_graphics);
 		return m_loop;
@@ -149,7 +150,11 @@ private:
 		if (m_demo) m_demo->race_ended();
 		end_race();
 		world().active_levels({ s_title_world_level });
-		m_graphics.fog(RaceFog{}, Square::Vec3(0.0f, -1.0f, 0.0f));
+		//the haze of the sunset of the title (its sun glowing in it)
+		m_graphics.fog(s_title_fog, m_title.sun_direction());
+		m_graphics.depth_of_field(true, 15.0f);
+		//the menu: always smooth edges (its shot), whatever the settings
+		m_graphics.antialiasing(true);
 		m_graphics.snow(false);
 		m_title.show(true);
 		m_ui.title(true);
@@ -171,6 +176,8 @@ private:
 		m_race->load(map);
 		m_graphics.fog(map.m_fog, m_race->arena().sun_direction());
 		m_graphics.snow(map.m_snow);
+		m_graphics.depth_of_field(false);
+		m_graphics.antialiasing(m_ui.settings().m_antialiasing);
 		m_ui.settings().apply_shadows(m_race->arena().sun());
 		if (m_demo) m_demo->race_started(m_race->arena());
 		m_state = m_next = State::RACE;

@@ -58,6 +58,7 @@ bool RushUI::create()
 	m_model.bind("set_shadows", &m_state.m_settings.m_shadows);
 	m_model.bind("set_bloom", &m_state.m_settings.m_bloom);
 	m_model.bind("set_weather", &m_state.m_settings.m_weather);
+	m_model.bind("set_antialiasing", &m_state.m_settings.m_antialiasing);
 	return true;
 }
 

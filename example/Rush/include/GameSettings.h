@@ -27,6 +27,7 @@ struct GameSettings
 	int  m_shadows{ 2 };      //0 low (hard, two cascades), 1 medium (PCF), 2 high (PCSS)
 	bool m_bloom{ true };
 	bool m_weather{ true };   //the falling snow of the maps with snow
+	bool m_antialiasing{ true }; //FXAA (the menu always: its shot)
 
 	bool operator == (const GameSettings& other) const;
 	bool operator != (const GameSettings& other) const { return !(*this == other); }

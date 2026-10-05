@@ -32,7 +32,8 @@ bool GameSettings::operator == (const GameSettings& other) const
 	    && m_occlusion == other.m_occlusion
 	    && m_shadows == other.m_shadows
 	    && m_bloom == other.m_bloom
-	    && m_weather == other.m_weather;
+	    && m_weather == other.m_weather
+	    && m_antialiasing == other.m_antialiasing;
 }
 
 std::string GameSettings::path()
@@ -59,6 +60,7 @@ bool GameSettings::load()
 		else if (name == "shadows")     m_shadows = std::clamp(value, 0, 2);
 		else if (name == "bloom")       m_bloom = value != 0;
 		else if (name == "weather")     m_weather = value != 0;
+		else if (name == "antialiasing") m_antialiasing = value != 0;
 	}
 	return true;
 }
@@ -75,7 +77,8 @@ bool GameSettings::save() const
 	      << "occlusion "   << m_occlusion << "\n"
 	      << "shadows "     << m_shadows << "\n"
 	      << "bloom "       << int(m_bloom) << "\n"
-	      << "weather "     << int(m_weather) << "\n";
+	      << "weather "     << int(m_weather) << "\n"
+	      << "antialiasing " << int(m_antialiasing) << "\n";
 	return Filesystem::text_file_write_all(path(), lines.str());
 }
 
@@ -110,6 +113,7 @@ void GameSettings::apply_effects(Graphics& graphics) const
 	}
 	if (auto bloom = graphics.bloom()) bloom->enabled(m_bloom);
 	graphics.weather(m_weather);
+	graphics.antialiasing(m_antialiasing);
 }
 
 void GameSettings::apply_shadows(const Square::Shared<Square::Scene::DirectionLight>& sun) const

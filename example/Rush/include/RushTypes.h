@@ -112,4 +112,5 @@ inline constexpr double s_max_frame_time = 0.1;
 //the title screen: its scene far from the arena (out of its views and of its shadows), the
 //hovercraft turning in it (degrees per second)
 inline constexpr Square::Vec3 s_title_origin{ 0.0f, 0.0f, 5000.0f };
-inline constexpr float        s_title_turn_speed = 20.0f;
+//the haze of the title: warm, thin, low on the water
+inline const RaceFog          s_title_fog{ true, { 0.55f, 0.42f, 0.42f }, 0.00035f, 0.0f, 0.02f, { 0.7f, 0.45f, 0.25f } };

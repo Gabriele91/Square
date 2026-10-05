@@ -26,6 +26,10 @@ public:
 	//the falling snow of a map (shown if the weather is on: GameSettings)
 	void snow(bool snow);
 	void weather(bool weather);
+	//the anti-aliasing (FXAA)
+	void antialiasing(bool enable);
+	//the depth of field (the title: sharp at focus world units, the far blurred)
+	void depth_of_field(bool enable, float focus = 15.0f);
 
 	Square::Shared<Square::Render::SSAO>  ssao() const;
 	Square::Shared<Square::Render::SSR>   ssr() const;
@@ -41,6 +45,8 @@ private:
 	Square::Shared<Square::Render::Fog>   m_fog;
 	Square::Shared<Square::Render::Snow>  m_snow;
 	Square::Shared<Square::Render::Bloom> m_bloom;
+	Square::Shared<Square::Render::DOF>   m_dof;
+	Square::Shared<Square::Render::FXAA>  m_fxaa;
 	bool                                  m_map_snow{ false };
 	bool                                  m_weather{ true };
 };

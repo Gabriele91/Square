@@ -49,6 +49,11 @@ namespace Scene
 		void cascades(int cascades);
 		int  cascades() const;
 
+		//how far from the camera its shadow reaches (the cascades split over it, not over the
+		//whole view: sharper near); 0: as far as the camera sees
+		void  shadow_distance(float distance);
+		float shadow_distance() const;
+
 		//all events
 		virtual void on_attach(Actor& entity)      override;
 		virtual void on_deattch()                  override;
@@ -81,6 +86,7 @@ namespace Scene
 		//shadow
 		Render::ShadowBuffer m_buffer;
 		int m_cascades{ DIRECTION_SHADOW_CSM_DEFAULT_FACES };
+		float m_shadow_distance{ 0.0f };
 		Geometry::AABoundingBox m_scene_size;
 		mutable Render::UniformDirectionShadowLight m_cache_udirectionshadowlight;
 	};

@@ -61,12 +61,19 @@ void Graphics::setup(Square::Scene::World& world)
 	m_snow->settings(snow_settings);
 	m_snow->enabled(false);
 	render_world->add_post_effect(m_snow);
+	//depth of field: the title only (its shot sharp on the hovercraft, the far blurred)
+	m_dof = MakeShared<Render::DOF>(m_context);
+	m_dof->enabled(false);
+	render_world->add_post_effect(m_dof);
 	//bloom (forward and deferred): the lights and the emissive glow
 	m_bloom = MakeShared<Render::Bloom>(m_context);
 	Render::Bloom::Settings bloom_settings;
 	bloom_settings.levels = 5; //the widest level (1/64 of the frame) is the least visible
 	m_bloom->settings(bloom_settings);
 	render_world->add_post_effect(m_bloom);
+	//anti-aliasing, last (the edges of the frame as it is shown)
+	m_fxaa = MakeShared<Render::FXAA>(m_context);
+	render_world->add_post_effect(m_fxaa);
 }
 
 void Graphics::fog(const RaceFog& fog, const Square::Vec3& sun_direction)
@@ -107,6 +114,28 @@ Square::Shared<Square::Render::SSAO> Graphics::ssao() const
 Square::Shared<Square::Render::SSR> Graphics::ssr() const
 {
 	return m_ssr;
+}
+
+void Graphics::antialiasing(bool enable)
+{
+	if (m_fxaa) m_fxaa->enabled(enable);
+}
+
+void Graphics::depth_of_field(bool enable, float focus)
+{
+	if (!m_dof) return;
+	auto settings = m_dof->settings();
+	settings.focus_distance = focus;
+	settings.focus_range    = 10.0f;
+	settings.far_range      = 70.0f;
+	settings.max_radius     = 9.0f;
+	settings.samples        = 32;
+	//the hovercraft of the title fast: its back (the right of the screen) smeared
+	settings.motion         = enable ? 14.0f : 0.0f;
+	settings.motion_from    = 0.62f;
+	settings.motion_to      = 0.92f;
+	m_dof->settings(settings);
+	m_dof->enabled(enable);
 }
 
 Square::Shared<Square::Render::Bloom> Graphics::bloom() const
