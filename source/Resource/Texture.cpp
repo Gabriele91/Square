@@ -366,6 +366,19 @@ namespace Resource
 		return m_ctx_texture != nullptr;
 	}
 
+	bool Texture::update(const unsigned char* buffer)
+	{
+		if (!m_ctx_texture || !buffer) return false;
+		auto render = System::get<RenderSystem>(context())->render();
+		if (!render) return false;
+		render->update_texture
+		(
+			m_ctx_texture,
+			{ m_format, (unsigned int)m_width, (unsigned int)m_height, buffer, m_type, Render::TTF_UNSIGNED_BYTE, false }
+		);
+		return true;
+	}
+
 	bool Texture::load_compressed
 	(
 		const Attributes& attr,

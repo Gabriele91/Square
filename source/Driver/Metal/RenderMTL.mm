@@ -1354,6 +1354,18 @@ void ContextMTL::unbind_texture(int n)
         m_bind.shader->m_bound_textures[n] = nullptr;
 }
 
+void ContextMTL::update_texture(Texture* t, const TextureRawDataInformation& data)
+{
+    // a texture made with its pixels is Shared (upload_texture): written from the CPU
+    if (!t || !t->m_texture || !data.m_bytes || is_compressed_format(data.m_format)) return;
+    if (t->m_texture.storageMode == MTLStorageModePrivate) return;
+    const size_t bytes_per_row = data.m_width * mtl_pixel_format_size(t->m_texture.pixelFormat);
+    [t->m_texture replaceRegion:MTLRegionMake2D(0, 0, data.m_width, data.m_height)
+                    mipmapLevel:0
+                      withBytes:data.m_bytes
+                    bytesPerRow:bytes_per_row];
+}
+
 void ContextMTL::delete_texture(Texture*& t)
 {
 #if defined(TEXTURE_INTROSPECTION)
