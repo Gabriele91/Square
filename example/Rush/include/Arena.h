@@ -44,8 +44,8 @@ public:
 	const Square::Vec3& center() const;
 	const Square::Vec3& start(size_t id) const;
 
-	//the triangles of its navmesh (world space); false: the map has none
-	bool navmesh(std::vector<Square::Vec3>& triangles) const;
+	//its navmesh (made in Blender: where the AI drives), nullptr: the map has none
+	Square::Shared<Square::Scene::Actor> navmesh() const;
 
 private:
 

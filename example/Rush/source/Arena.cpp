@@ -138,22 +138,18 @@ void Arena::viewport(unsigned int width, unsigned int height) const
 	m_camera->component<Scene::Camera>()->viewport({ 0, 0, width, height });
 }
 
-bool Arena::navmesh(std::vector<Square::Vec3>& triangles) const
+Square::Shared<Square::Scene::Actor> Arena::navmesh() const
 {
 	using namespace Square;
-	if (!m_actor) return false;
-	bool found = false;
-	m_actor->visit([&](Shared<Scene::Actor> node) -> bool
+	Shared<Scene::Actor> found;
+	if (!m_actor) return found;
+	m_actor->visit([&found](Shared<Scene::Actor> node) -> bool
 	{
 		if (!AuxArena::named(node, "navmesh")) return true;
-		//every surface of it (its material is not solid)
-		CollisionMesh mesh;
-		mesh.add(m_context, node, false);
-		mesh.triangles(triangles);
-		found = true;
+		found = node;
 		return false;
 	});
-	return found && !triangles.empty();
+	return found;
 }
 
 Square::Shared<Square::Scene::Actor> Arena::actor() const

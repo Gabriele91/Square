@@ -116,26 +116,7 @@ void Race::load_trails()
 void Race::load_navigation()
 {
 	using namespace Square;
-	//the navmesh of the map (where the AI drives: its edges and holes the obstacles), else the
-	//triangles the hovercraft collide with (the invisible walls too, the obstacles found from
-	//them); an agent as wide as a hovercraft (and a little more): the edges kept that far
-	std::vector<Vec3> triangles;
-	const bool authored = m_arena->navmesh(triangles);
-	if (!authored) m_arena->actor()->component<MeshCollider>()->mesh().triangles(triangles);
-	Vec3 min = m_arena->min(), max = m_arena->max();
-	if (authored)
-	{
-		min = Vec3(std::numeric_limits<float>::max());
-		max = Vec3(std::numeric_limits<float>::lowest());
-		for (const Vec3& point : triangles)
-		{
-			min = glm::min(min, point);
-			max = glm::max(max, point);
-		}
-		//a cell of border: the edges of the navmesh inside the grid
-		min -= Vec3(2.0f, 0.0f, 2.0f);
-		max += Vec3(2.0f, 0.0f, 2.0f);
-	}
+	//an agent as wide as a hovercraft (and a little more): the edges kept that far
 	Navigation::NavGrid::Settings settings;
 	settings.cell_size    = 1.0f;
 	settings.agent_radius = 2.2f;
@@ -143,7 +124,22 @@ void Race::load_navigation()
 	settings.max_slope    = 30.0f;
 	settings.max_step     = 0.7f;
 	m_navigation = std::make_shared<Navigation::NavGrid>();
-	if (!m_navigation->build(triangles, min, max, settings))
+	//the navmesh of the map (where the AI drives: its edges and holes the obstacles), else the
+	//triangles the hovercraft collide with (the invisible walls too: the obstacles found there)
+	auto navmesh = m_arena->navmesh();
+	const bool authored = navmesh != nullptr;
+	bool built = false;
+	if (authored)
+	{
+		built = m_navigation->build(navmesh, settings);
+	}
+	else
+	{
+		std::vector<Vec3> triangles;
+		m_arena->actor()->component<MeshCollider>()->mesh().triangles(triangles);
+		built = m_navigation->build(triangles, m_arena->min(), m_arena->max(), settings);
+	}
+	if (!built)
 	{
 		context().logger()->warning("navigation: nothing walkable");
 		m_navigation.reset();

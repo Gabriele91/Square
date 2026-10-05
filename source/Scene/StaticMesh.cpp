@@ -4,6 +4,8 @@
 #include "Square/Scene/StaticMesh.h"
 #include "Square/Geometry/CreateBounding.h"
 #include "Square/Core/ClassObjectRegistration.h"
+#include "Square/Core/Filesystem.h"
+#include "Square/Data/ParserStaticMesh.h"
 
 namespace Square
 {
@@ -270,5 +272,62 @@ namespace Scene
 		m_obb_local = obb;
 	}
 
+	namespace AuxStaticMesh
+	{
+		static Vec3 to_vec3(const Vec2& v) { return Vec3(v, 0.0f); }
+		static Vec3 to_vec3(const Vec3& v) { return v; }
+	}
+
+	bool StaticMesh::triangles(std::vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter)
+	{
+		auto owner = actor().lock();
+		if (!m_mesh || !owner) return false;
+		//the mesh file
+		const std::string& path = context().resource_path<Resource::Mesh>(m_mesh->resource_untyped_name());
+		if (path.empty()) return false;
+		const bool compressed = Filesystem::get_extension(path) == ".sm3dgz";
+		const std::vector<unsigned char> bytes = compressed ? Filesystem::binary_compress_file_read_all(path)
+		                                                    : Filesystem::binary_file_read_all(path);
+		Parser::StaticMesh::Context mesh;
+		if (!Parser::StaticMesh().parse(mesh, bytes)) return false;
+		//positions in world space
+		const Mat4 model = owner->global_model_matrix();
+		std::vector<Vec3> positions;
+		std::visit([&](const auto& vertices)
+		{
+			positions.reserve(vertices.size());
+			for (const auto& vertex : vertices)
+			{
+				positions.push_back(Vec3(model * Vec4(AuxStaticMesh::to_vec3(vertex.m_position), 1.0f)));
+			}
+		}, mesh.m_vertex);
+		//its sub meshes (the whole mesh when there are none)
+		Render::Mesh::SubMeshList submeshes = mesh.m_submesh;
+		if (submeshes.empty())
+		{
+			const size_t count = mesh.m_index.empty() ? positions.size() : mesh.m_index.size();
+			submeshes.push_back(Render::SubMesh(Render::DRAW_TRIANGLES, (unsigned int)count, 0));
+		}
+		for (size_t submesh_id = 0; submesh_id < submeshes.size(); ++submesh_id)
+		{
+			const Render::SubMesh& submesh = submeshes[submesh_id];
+			if (submesh.m_draw_type != Render::DRAW_TRIANGLES) continue;
+			if (filter && !filter(submesh_id)) continue;
+			auto vertex_id = [&](unsigned int i) -> size_t
+			{
+				const size_t n = size_t(submesh.m_index_offset) + i;
+				return mesh.m_index.empty() ? n : size_t(mesh.m_index[n]);
+			};
+			for (unsigned int i = 0; i + 2 < submesh.m_index_count; i += 3)
+			{
+				const size_t a = vertex_id(i), b = vertex_id(i + 1), c = vertex_id(i + 2);
+				if (a >= positions.size() || b >= positions.size() || c >= positions.size()) continue;
+				out.push_back(positions[a]);
+				out.push_back(positions[b]);
+				out.push_back(positions[c]);
+			}
+		}
+		return true;
+	}
 }
 }
