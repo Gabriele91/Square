@@ -7,6 +7,8 @@
 #include "Square/Resource/Material.h"
 #include "Square/Render/Transform.h"
 #include "Square/Render/Renderable.h"
+#include <functional>
+#include <vector>
 
 namespace Square
 {
@@ -64,6 +66,10 @@ namespace Scene
 		virtual void deserialize(Square::Data::Archive& archive) override;
 		virtual void deserialize_json(Square::Data::JsonValue& archive) override;
 
+		//its triangles in world space (3 points each, added to out), read from the file of its mesh
+		//(the GPU mesh keeps no copy of them); filter: the sub meshes taken (by their index: e.g.
+		//by their material), none: all of them; false: no mesh, or it cannot be read
+		bool triangles(std::vector<Square::Vec3>& out, const std::function<bool(size_t submesh)>& filter = nullptr);
 		// build bbox
 		bool build_local_obounding_box(bool from_triangles=true);
 		void set_obounding_box(const Square::Geometry::OBoundingBox& obb);

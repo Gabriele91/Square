@@ -20,9 +20,14 @@
 #include <vector>
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
+#include "Square/Core/SmartPointers.h"
 
 namespace Square
 {
+namespace Scene
+{
+	class Actor;
+}
 namespace Navigation
 {
 	class SQUARE_API NavGrid
@@ -41,6 +46,10 @@ namespace Navigation
 		//the grid over min/max (x, z) of triangles (world space, 3 vertices each); false: nothing
 		//walkable
 		bool build(const std::vector<Vec3>& triangles, const Vec3& min, const Vec3& max, const Settings& settings);
+		//the grid of the geometry of an actor and its children (the triangles of their static
+		//meshes, world space; e.g. a navmesh made in an editor: the walkable area, the holes of
+		//the obstacles), over its bounds; false: nothing walkable
+		bool build(const Shared<Scene::Actor>& actor, const Settings& settings);
 		void clear();
 
 		const Settings& settings() const { return m_settings; }

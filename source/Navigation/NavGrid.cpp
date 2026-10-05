@@ -9,6 +9,8 @@
 #include <limits>
 #include <queue>
 #include "Square/Navigation/NavGrid.h"
+#include "Square/Scene/Actor.h"
+#include "Square/Scene/StaticMesh.h"
 
 namespace Square
 {
@@ -93,6 +95,28 @@ namespace Navigation
 		for (size_t i = 0; i + 2 < triangles.size(); i += 3) rasterize_obstacle(triangles[i], triangles[i + 1], triangles[i + 2]);
 		erode();
 		return std::any_of(m_cells.begin(), m_cells.end(), [](const Cell& cell) { return !cell.m_blocked; });
+	}
+
+	bool NavGrid::build(const Shared<Scene::Actor>& actor, const Settings& settings)
+	{
+		clear();
+		if (!actor) return false;
+		std::vector<Vec3> triangles;
+		actor->visit([&triangles](Shared<Scene::Actor> node) -> bool
+		{
+			if (node->contains<Scene::StaticMesh>()) node->component<Scene::StaticMesh>()->triangles(triangles);
+			return true;
+		});
+		if (triangles.empty()) return false;
+		//its bounds, a border (its edges inside the grid)
+		Vec3 min(std::numeric_limits<float>::max()), max(std::numeric_limits<float>::lowest());
+		for (const Vec3& point : triangles)
+		{
+			min = glm::min(min, point);
+			max = glm::max(max, point);
+		}
+		const float border = settings.agent_radius + settings.cell_size * 2.0f;
+		return build(triangles, min - Vec3(border, 0.0f, border), max + Vec3(border, 0.0f, border), settings);
 	}
 
 	void NavGrid::clear()
