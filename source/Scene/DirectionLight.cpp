@@ -67,6 +67,13 @@ namespace Scene
 		, int(DIRECTION_SHADOW_CSM_DEFAULT_FACES)
 		, [](const DirectionLight* plight) -> int      { return plight->cascades(); }
 		, [](DirectionLight* plight, const int& cascades){ plight->cascades(cascades); });
+
+		//(in the binary archives after cascades: the scenes converted before it must be converted again)
+		ctx.add_attribute_function<DirectionLight, float>
+		("shadow_distance"
+		, float(0.0f)
+		, [](const DirectionLight* plight) -> float         { return plight->shadow_distance(); }
+		, [](DirectionLight* plight, const float& distance){ plight->shadow_distance(distance); });
     }
 
 	//light
@@ -146,6 +153,16 @@ namespace Scene
 		return m_cascades;
 	}
 
+	void DirectionLight::shadow_distance(float distance)
+	{
+		m_shadow_distance = (std::max)(distance, 0.0f);
+	}
+
+	float DirectionLight::shadow_distance() const
+	{
+		return m_shadow_distance;
+	}
+
 	const IVec2& DirectionLight::shadow_size() const
 	{
 		return m_buffer.size();
@@ -196,11 +213,12 @@ namespace Scene
 
 	namespace CSMAux
 	{
-		CSMCascadeDepth compute_cascade_depth(const Render::Camera& camera, unsigned int cascades)
+		CSMCascadeDepth compute_cascade_depth(const Render::Camera& camera, unsigned int cascades, float distance)
 		{
 			CSMCascadeDepth cascade_depth;
 			const float cam_near = camera.viewport().near();
-			const float cam_far = camera.viewport().far();
+			//the shadow up to its distance (if any, within the view)
+			const float cam_far = distance > cam_near ? (std::min)(camera.viewport().far(), distance) : camera.viewport().far();
 			const float clip_range = cam_far - cam_near;
 			const float min_z = cam_near;
 			const float max_z = cam_far;
@@ -385,10 +403,11 @@ namespace Scene
 						const Mat3& rotation,
 						const Vec3& direction,
 						const IVec2& shadow_map_size,
-						unsigned int cascades)
+						unsigned int cascades,
+						float distance)
 		{
 			// Depths
-			auto cascade_vdepths = compute_cascade_depth(camera, cascades);
+			auto cascade_vdepths = compute_cascade_depth(camera, cascades, distance);
 			// multiply by inverse projection*view matrix to find frustum vertices in world space
 			// transform to light space
 			// same pass, find minimum along each axis
@@ -429,7 +448,7 @@ namespace Scene
 	{
 		if (auto ptr_actor = actor().lock() && draw_shadow_map)
 		{
-			CSMAux::set_uniform(m_cache_udirectionshadowlight, *camera, m_scene_size, m_buffer, m_rotation, m_direction, m_buffer.size(), (unsigned int)m_cascades);
+			CSMAux::set_uniform(m_cache_udirectionshadowlight, *camera, m_scene_size, m_buffer, m_rotation, m_direction, m_buffer.size(), (unsigned int)m_cascades, m_shadow_distance);
 		}
 		std::memcpy(data, &m_cache_udirectionshadowlight, sizeof(Render::UniformDirectionShadowLight));
 		//the filter and the cascades: every frame (the filter changes without a new shadow map)
