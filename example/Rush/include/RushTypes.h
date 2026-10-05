@@ -85,13 +85,16 @@ struct CameraBounds
 	float        m_radius{ 0.0f };    //CIRCLE
 };
 //a map of a race: its scene ("<name>/scene", assets/<name>.sqz), its name in the title, its fog,
-//the wall of its camera (a little inside its walls: the camera sphere, radius 1)
+//the wall of its camera (a little inside its walls: the camera sphere, radius 1), its falling snow
+//(a light one), the trails of the hovercraft in its snow (its ground a PBRSnow material)
 struct RaceMap
 {
 	const char*  m_name;
 	const char*  m_title;
 	RaceFog      m_fog;
 	CameraBounds m_camera_bounds;
+	bool         m_snow{ false };
+	bool         m_trails{ false };
 };
 inline const RaceMap s_race_maps[]
 {
@@ -101,8 +104,15 @@ inline const RaceMap s_race_maps[]
 	//placed), thin over the trees; the round field, its wall at radius 85
 	{ "backwash", "Backwash", { true, { 0.17f, 0.21f, 0.12f }, 0.012f, 3.5f, 0.08f, { 0.35f, 0.32f, 0.17f } },
 	                          { CameraBounds::CIRCLE, { 0.0f, 0.0f }, { 0.0f, 0.0f }, 83.5f } },
+	//the snowy canyon (origial_assets/containment): a cold light haze, thin; the round field, its
+	//cliffs from radius ~88 (an invisible ring at 86.5)
+	{ "containment", "Containment", { true, { 0.48f, 0.53f, 0.6f }, 0.0035f, 3.5f, 0.04f, { 0.35f, 0.33f, 0.26f } },
+	                                { CameraBounds::CIRCLE, { 0.0f, 0.0f }, { 0.0f, 0.0f }, 83.5f }, true, true },
 };
 inline constexpr size_t s_race_maps_count = sizeof(s_race_maps) / sizeof(s_race_maps[0]);
+//a map with trails (snow): the hovercraft shown this lower (world units, its meshes only: its
+//physics as on any map), in the snow, in its groove
+inline constexpr float s_snow_sink = 0.3f;
 //the phases of a race: the start (the camera comes to the player, the hovercraft still), then
 //"GO!" for a while
 inline constexpr double s_start_time = 3.0;

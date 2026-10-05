@@ -46,8 +46,9 @@ public:
 	//a map chosen to play, Exit of the title (the game)
 	void on_play(const Callback& callback);
 	void on_quit(const Callback& callback);
-	//the map chosen in the title (s_race_maps)
+	//the map chosen in the title (s_race_maps), or chosen by name (false: none of that name)
 	const RaceMap& race_map() const;
+	bool race_map(const std::string& name);
 
 	//the Esc menu of a race, Exit of it (to the title)
 	void menu(bool show);

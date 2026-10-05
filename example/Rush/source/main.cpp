@@ -24,6 +24,12 @@ class RushGame : public Square::AppInterface
 {
 public:
 
+	//map: a race on it at once (its name, --map), else the title
+	RushGame(const std::string& map)
+	: m_start_map(map)
+	{
+	}
+
 	void start()
 	{
 		using namespace Square;
@@ -52,6 +58,12 @@ public:
 		//the title (its level), it starts in the menu
 		m_title.load(world());
 		enter_menu();
+		//a map asked by the command line: its race at the next frame
+		if (!m_start_map.empty())
+		{
+			if (m_ui.race_map(m_start_map)) m_next = State::RACE;
+			else context().logger()->warning("no map named " + m_start_map);
+		}
 	}
 
 	bool run(double delta_time)
@@ -138,6 +150,7 @@ private:
 		if (m_demo) m_demo->race_ended();
 		m_race.reset();
 		m_graphics.fog(RaceFog{}, Square::Vec3(0.0f, -1.0f, 0.0f));
+		m_graphics.snow(false);
 		m_title.show(true, world());
 		m_ui.title(true);
 		m_state = m_next = State::MENU;
@@ -153,6 +166,7 @@ private:
 		const RaceMap& map = m_ui.race_map();
 		m_race->load(map);
 		m_graphics.fog(map.m_fog, m_race->arena().sun_direction());
+		m_graphics.snow(map.m_snow);
 		if (m_demo) m_demo->race_started(m_race->arena());
 		m_state = m_next = State::RACE;
 	}
@@ -215,6 +229,7 @@ private:
 		collision->debug(false);
 	}
 
+	std::string                m_start_map; //--map
 	bool                       m_loop{ true };
 	State                      m_state{ State::MENU };
 	State                      m_next{ State::MENU }; //asked by the UI, at the next frame
@@ -233,6 +248,7 @@ static Square::Shell::ParserCommands s_ShellCommands
 	, Square::Shell::Command{ "debug",  "d", "enable debug"               , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 	, Square::Shell::Command{ "srgb",   "c", "enable gamme correction"    , Square::Shell::ValueType::value_bool  , false, Square::Shell::Value_t(true) }
 	, Square::Shell::Command{ "verbose","v", "enable verbose"             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
+	, Square::Shell::Command{ "map",    "m", "start a race on a map [arena, backwash, containment]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("")) }
 	, Square::Shell::Command{ "help",   "h", "show help"                  , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 };
 
@@ -270,7 +286,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
 	, WindowMode::NOT_RESIZABLE
 	, render_driver
 	, "Rush"
-	, new RushGame()
+	, new RushGame(std::get<std::string>(args.at("map")))
 	);
 	return 0;
 }

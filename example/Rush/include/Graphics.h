@@ -5,7 +5,8 @@
 //  The rendering of the game: the pipeline of the world (SQUARE_RENDERING=forward|deferred,
 //  default deferred) and its post effects with the settings of the game: SSAO (a light shade in
 //  the creases), SSR (before the bloom: the reflected lights glow too), the fog of the map (off
-//  but in a map with fog; before the bloom: the lights in the fog glow), Bloom.
+//  but in a map with fog; before the bloom: the lights in the fog glow), the falling snow of the
+//  map (after the fog: the flakes in front of it), Bloom.
 //
 #pragma once
 #include <Square/Square.h>
@@ -22,11 +23,14 @@ public:
 
 	//the fog of a map (its sun: where its light goes), off when the map has none
 	void fog(const RaceFog& fog, const Square::Vec3& sun_direction);
+	//the falling snow of a map
+	void snow(bool snow);
 
 	Square::Shared<Square::Render::SSAO>  ssao() const;
 	Square::Shared<Square::Render::SSR>   ssr() const;
 	Square::Shared<Square::Render::Bloom> bloom() const;
 	Square::Shared<Square::Render::Fog>   fog() const;
+	Square::Shared<Square::Render::Snow>  snow() const;
 
 private:
 
@@ -34,5 +38,6 @@ private:
 	Square::Shared<Square::Render::SSAO>  m_ssao;
 	Square::Shared<Square::Render::SSR>   m_ssr;
 	Square::Shared<Square::Render::Fog>   m_fog;
+	Square::Shared<Square::Render::Snow>  m_snow;
 	Square::Shared<Square::Render::Bloom> m_bloom;
 };

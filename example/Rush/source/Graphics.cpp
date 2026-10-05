@@ -48,6 +48,19 @@ void Graphics::setup(Square::Scene::World& world)
 	m_fog = MakeShared<Render::Fog>(m_context);
 	m_fog->enabled(false);
 	render_world->add_post_effect(m_fog);
+	//the falling snow of the map (none in the menu)
+	m_snow = MakeShared<Render::Snow>(m_context);
+	Render::Snow::Settings snow_settings;
+	//light: few small flakes in the world (they pass by with the parallax of the hovercraft)
+	snow_settings.density      = 0.25f;
+	snow_settings.spacing      = 1.8f;
+	snow_settings.size         = 0.03f;
+	snow_settings.speed        = 1.2f;
+	snow_settings.max_distance = 28.0f;
+	snow_settings.intensity    = 0.7f;
+	m_snow->settings(snow_settings);
+	m_snow->enabled(false);
+	render_world->add_post_effect(m_snow);
 	//bloom (forward and deferred): the lights and the emissive glow
 	m_bloom = MakeShared<Render::Bloom>(m_context);
 	Render::Bloom::Settings bloom_settings;
@@ -74,6 +87,11 @@ void Graphics::fog(const RaceFog& fog, const Square::Vec3& sun_direction)
 	m_fog->settings(settings);
 }
 
+void Graphics::snow(bool snow)
+{
+	if (m_snow) m_snow->enabled(snow);
+}
+
 Square::Shared<Square::Render::SSAO> Graphics::ssao() const
 {
 	return m_ssao;
@@ -92,4 +110,9 @@ Square::Shared<Square::Render::Bloom> Graphics::bloom() const
 Square::Shared<Square::Render::Fog> Graphics::fog() const
 {
 	return m_fog;
+}
+
+Square::Shared<Square::Render::Snow> Graphics::snow() const
+{
+	return m_snow;
 }

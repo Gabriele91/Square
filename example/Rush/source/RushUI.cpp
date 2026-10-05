@@ -241,6 +241,17 @@ const RaceMap& RushUI::race_map() const
 	return s_race_maps[m_map];
 }
 
+bool RushUI::race_map(const std::string& name)
+{
+	for (size_t map = 0; map != s_race_maps_count; ++map)
+	{
+		if (name != s_race_maps[map].m_name) continue;
+		map_select(map);
+		return true;
+	}
+	return false;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 //menu
 void RushUI::menu(bool show)

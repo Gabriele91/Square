@@ -1,0 +1,89 @@
+//
+//  PBRSnow: PBR with the trails of the game pressed in it (trail_map, see PBR.hlsl)
+//
+parameters
+{
+    //the faces drawn: back, front or off (both)
+    cull cullface(back)
+    //the faces in the directional shadow map: back, front or off (both: the one sided meshes)
+    shadow_cull cullface(back)
+    albedo_map    texture("white")
+    metallic_map  texture("black")
+    emmisive_map  texture("black")
+    roughness_map texture("white")
+    occlusion_map texture("white")    
+    normal_map    texture("normal_up")
+
+    color Vec4(1.0,1.0,1.0,1.0)
+    metallic float(1.0)
+    roughness float(1.0)
+    emmisive Vec3(1.0,1.0,1.0)
+
+    mask         float(-1.0)
+    mask_shadow  float(-1.0)
+    //1 = lit without the shadows of the lights (glows, light beams); only forward/translucent passes
+    ignore_shadows float(0.0)
+    //dithered opacity: 1 = alpha (albedo_map.a * color.a) drops pixels with a pattern
+    dither       float(0.0)
+    //the trails pressed in it (drawn by the game, see PBR.hlsl; only where the albedo alpha is
+    //1: the snow, not the ice or the rock of the same texture): the map, where it is
+    //(corner x, z; 1 / size x, z), its look (darkening, slope of the sides, roughness kept,
+    //depth in world units: the parallax)
+    trail_map    texture("black")
+    trail_area   Vec4(0.0, 0.0, 0.0, 0.0)
+    trail_style  Vec4(0.2, 4.0, 0.6, 0.55)
+}
+
+sub_effect
+{	
+	//import shadow forward
+    technique "forward"
+    {
+        pass 
+        {
+            zbuffer less
+            blend off
+            cullface param(cull)
+            lights only_ambient
+            shader source 
+            {
+				#define FORWARD_RENDERING
+				#define SURFACE_TRAILS
+				#include "PBR.hlsl"
+            }
+        }
+        pass 
+        {
+            zbuffer equal
+            blend one one  
+            cullface param(cull)
+            lights spot_point_direction
+			shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+				#define SURFACE_TRAILS
+				#include "PBR.hlsl"
+            }
+		}
+    }
+	//deferred: single geometry pass, fills the G-Buffer (lighting done later)
+	technique "deferred"
+	{
+		pass
+		{
+			zbuffer less
+			blend off
+			cullface param(cull)
+			lights off
+			shader source
+			{
+				#define DEFERRED_RENDERING
+				#define SURFACE_TRAILS
+				#include "PBR.hlsl"
+			}
+		}
+	}
+	//import shadow caster
+	import <CastShadow>
+}

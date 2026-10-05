@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <Race.h>
+#include <SnowTrails.h>
 #include <Arena.h>
 #include <Checkpoints.h>
 #include <HovercraftInput.h>
@@ -71,10 +72,39 @@ bool Race::load(const RaceMap& map)
 	m_arena = std::make_unique<Arena>(m_context);
 	if (!m_arena->load(m_level, map.m_name)) return false;
 	if (auto follow = m_arena->camera_follow()) follow->bounds(map.m_camera_bounds);
+	m_sink = map.m_trails ? s_snow_sink : 0.0f;
+	if (map.m_trails) load_trails();
 	load_light_beam();
 	load_hovercraft();
 	phase(Phase::START);
 	return true;
+}
+
+void Race::load_trails()
+{
+	//the field (radius ~85): a map a little larger, centered on the arena
+	m_trails = std::make_unique<SnowTrails>(m_context);
+	SnowTrails::Settings settings;
+	const Square::Vec3 center = m_arena->center();
+	settings.center = Square::Vec2(center.x, center.z);
+	if (!m_trails->create(settings))
+	{
+		m_context.logger()->warning("snow trails: no texture");
+		m_trails.reset();
+		return;
+	}
+	m_trails->attach(m_arena->actor());
+}
+
+void Race::sink(Square::Shared<Square::Scene::Actor> hovercraft) const
+{
+	using namespace Square;
+	//its meshes (the children: the actor is the body of the physics), down along its up
+	for (const auto& child : hovercraft->childs())
+	{
+		if (!child->contains<Scene::StaticMesh>()) continue;
+		child->position(child->position() - Vec3(0.0f, m_sink, 0.0f));
+	}
 }
 
 void Race::load_light_beam()
@@ -131,6 +161,7 @@ void Race::load_hovercraft()
 		if (m_checkpoints) m_checkpoints->add_target(racer.m_actor);
 		m_racers.push_back(racer);
 		paint(id);
+		if (m_sink > 0.0f) sink(racer.m_actor);
 		spawn(id, false);
 	}
 	// the camera follows the player; at the start it is in its place of the scene: it glides
@@ -161,6 +192,16 @@ void Race::unload()
 void Race::update(double delta_time)
 {
 	m_phase_time += std::min(delta_time, s_max_frame_time);
+	//the grooves of the hovercraft in the snow
+	if (m_trails)
+	{
+		for (size_t id = 0; id != m_racers.size(); ++id)
+		{
+			const Racer& racer = m_racers[id];
+			m_trails->press(id, racer.m_actor->position(true), racer.m_driver && racer.m_driver->on_ground());
+		}
+		m_trails->update(delta_time);
+	}
 	switch (m_phase)
 	{
 	case Phase::START:

@@ -68,6 +68,8 @@ public:
 	const Input& input() const { return m_input; }
 	//speed along the body, per step (negative: backward)
 	float speed() const { return m_speed; }
+	//on the ground (a contact of the body under it, as for the throttle)
+	bool on_ground() const { return m_body && m_body->collided(m_settings.scene_type, m_settings.floor_normal_y); }
 
 	//drop it on the first surface under start, still, turned by yaw degrees around the up axis
 	//(0: forward along +z, 90: along +x)

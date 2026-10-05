@@ -116,6 +116,10 @@ namespace Resource
 			Render::TextureFormat format
 		);
 
+		//its pixels again (a texture built from a buffer, without mipmaps: all its pixels, its
+		//size and format), e.g. a map drawn by the CPU every frame; false: not built
+		bool update(const unsigned char* buffer);
+
 		Render::Texture* get_context_texture() const;
 		unsigned long    get_width() const;
 		unsigned long    get_height() const;

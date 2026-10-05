@@ -20,6 +20,7 @@
 
 class Arena;
 class Checkpoints;
+class SnowTrails;
 
 class Race
 {
@@ -72,6 +73,9 @@ public:
 
 private:
 
+	void load_trails();
+	//the meshes of a hovercraft lower (in the snow)
+	void sink(Square::Shared<Square::Scene::Actor> hovercraft) const;
 	void load_light_beam();
 	void load_hovercraft();
 	void reached(size_t checkpoint, Square::Shared<Square::Scene::Actor> who);
@@ -84,6 +88,8 @@ private:
 	Square::Scene::World&                m_world;
 	Square::Shared<Square::Scene::Level> m_level;
 	std::unique_ptr<Arena>               m_arena;
+	std::unique_ptr<SnowTrails>          m_trails; //the map has snow: the grooves of the hovercraft
+	float                                m_sink{ 0.0f }; //the hovercraft shown lower (in the snow)
 	Square::Shared<Square::Scene::Actor> m_light_beam;
 	std::vector<Racer>                   m_racers; //the first: the player
 	Square::Shared<Checkpoints>          m_checkpoints;
