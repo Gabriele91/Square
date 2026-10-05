@@ -357,8 +357,28 @@ namespace Video
 		}
 	}
 
+	//the process aware of the DPI: the sizes of the windows and the modes of the screens in
+	//pixels (not scaled by Windows: under a scaling, 125%, 175%..., a window of 2560x1440 asked
+	//was not 2560x1440, the fullscreen took a mode of another size than its back buffer)
+	static void helper_dpi_aware()
+	{
+		using SetContext = BOOL(WINAPI*)(HANDLE);
+		//Windows 10 1703+: per monitor (v2), else the whole system
+		if (HMODULE user32 = GetModuleHandle(TEXT("user32.dll")))
+		{
+			if (auto set_context = (SetContext)GetProcAddress(user32, "SetProcessDpiAwarenessContext"))
+			{
+				//DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+				if (set_context((HANDLE)-4)) return;
+			}
+		}
+		SetProcessDPIAware();
+	}
+
 	void init()
 	{
+		//pixels, not scaled (before any window, any screen asked)
+		helper_dpi_aware();
 		//Add a window class
 		WNDCLASS wmd_class;
 		wmd_class.cbClsExtra = 0;
@@ -1111,7 +1131,22 @@ namespace Video
 		}
 
 		case WM_MOUSEMOVE:
-		{ wnd_input->send_mouse_move_event(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)); return 0; }
+		{
+			int x = GET_X_LPARAM(lParam);
+			int y = GET_Y_LPARAM(lParam);
+			//stretched: from the pixels of the window to the ones of its frame
+			if (wnd_window->m_scaled)
+			{
+				RECT box{ 0, 0, 0, 0 };
+				GetClientRect(wnd_window->narive(), &box);
+				const int width = std::max<int>(box.right - box.left, 1);
+				const int height = std::max<int>(box.bottom - box.top, 1);
+				x = int(long long(x) * wnd_window->m_info.m_size[0] / width);
+				y = int(long long(y) * wnd_window->m_info.m_size[1] / height);
+			}
+			wnd_input->send_mouse_move_event(x, y);
+			return 0;
+		}
 
 		case WM_MOUSEWHEEL:
 		{ wnd_input->send_mouse_scroll_event((SHORT)GET_WHEEL_DELTA_WPARAM(wParam) / (double)WHEEL_DELTA); return 0; }

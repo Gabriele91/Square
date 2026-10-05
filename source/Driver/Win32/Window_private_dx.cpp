@@ -434,6 +434,13 @@ namespace Win32
 
 	void WindowDX::get_size(unsigned int size[2]) const
 	{
+		//stretched: the size of its frame (not of the monitor)
+		if (m_scaled)
+		{
+			size[0] = m_info.m_size[0];
+			size[1] = m_info.m_size[1];
+			return;
+		}
 		RECT window_box{ 0, 0, 0, 0 };
 		GetClientRect(m_hWnd, &window_box);
 		//get_rect_of_window_including_aero(m_hWnd, &window_box);
@@ -451,6 +458,14 @@ namespace Win32
 
 	void WindowDX::set_size(unsigned int size[2])
 	{
+		//stretched: the window stays over the monitor, only its frame of the new size
+		if (m_scaled)
+		{
+			m_info.m_size[0] = size[0];
+			m_info.m_size[1] = size[1];
+			if (m_device) m_device->resize_backbuffer(size[0], size[1]);
+			return;
+		}
 		//calc size window
 		unsigned int window_real_size[2] = { 0,0 };
 		compute_window_size(size, window_real_size);
@@ -559,12 +574,38 @@ namespace Win32
 				//took, not always the size asked)
 				if (m_device) m_device->go_fullscreen(0, 0);
 			}
+			else
+			{
+				//the screen has no mode of this size (a 4K monitor without 2560x1440...): borderless
+				//over the whole monitor, its frame of the size asked stretched to it
+				MONITORINFO monitor;
+				monitor.cbSize = sizeof(monitor);
+				GetMonitorInfo(MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST), &monitor);
+				const RECT& box = monitor.rcMonitor;
+				//(before its new size: its WM_SIZE keeps m_size, the size of the frame)
+				m_scaled = true;
+				m_info.m_fullscreen = true;
+				SetWindowLongPtr(m_hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW);
+				SetWindowLongPtr(m_hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+				SetWindowPos(m_hWnd, HWND_TOP, box.left, box.top, box.right - box.left, box.bottom - box.top, SWP_SHOWWINDOW | SWP_FRAMECHANGED);
+				if (m_device) m_device->resize_backbuffer(m_info.m_size[0], m_info.m_size[1]);
+				is_change_successful = true;
+			}
 		}
 		else
 		{
-			//DXGI out of the fullscreen first: it restores a window of its own
-			if (m_device) m_device->leave_fullscreen();
-			is_change_successful = ChangeDisplaySettings(NULL, CDS_RESET) == DISP_CHANGE_SUCCESSFUL;
+			if (m_scaled)
+			{
+				//borderless: no mode of the screen to restore
+				m_scaled = false;
+				is_change_successful = true;
+			}
+			else
+			{
+				//DXGI out of the fullscreen first: it restores a window of its own
+				if (m_device) m_device->leave_fullscreen();
+				is_change_successful = ChangeDisplaySettings(NULL, CDS_RESET) == DISP_CHANGE_SUCCESSFUL;
+			}
 			//change only if a success
 			if (is_change_successful)
 			{
