@@ -1150,6 +1150,10 @@ namespace Render
 		virtual void unbind_texture(Texture*) = 0;
 		virtual void unbind_texture(int n) = 0;
 		virtual void delete_texture(Texture*&) = 0;
+		//the pixels of the level 0 of a 2D texture again (not compressed): data as the one of
+		//create_texture (its format, size, bytes: all of them); the other levels unchanged (a
+		//texture updated has none)
+		virtual void update_texture(Texture* texture, const TextureRawDataInformation& data) = 0;
 
 		//shader
 		virtual Shader* create_shader(const std::vector< ShaderSourceInformation >& infos) = 0;

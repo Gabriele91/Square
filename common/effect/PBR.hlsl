@@ -37,6 +37,58 @@ float roughness;
 Vec3 emmisive;
 float mask;
 float dither;
+#ifdef SURFACE_SNOW_COVER
+// Snow cover (PBRSnowCover): snow laid on what faces up (the world normal), its edge broken by
+// the brightness of the surface under it (the snow in the hollows and on the ledges first, the
+// cracks out), the bumps of the surface smoothed under it; the snow a texture tiled from above
+Sampler2D(snow_cover_map);
+Vec4 snow_cover; // normal y where it starts, softness of its edge, 1 / size of its texture (world), its roughness
+#endif
+#ifdef SURFACE_TRAILS
+// Trails (PBRSnow): a map over the ground (from above, world x/z) of how deep it is pressed
+// (R, [0, 1]: a groove), drawn by the game: the pressed snow darker, smoother, its normal
+// following the sides of the groove
+Sampler2D(trail_map);
+Vec4 trail_area;  // x, z of its corner (world); 1 / its size along x, z
+Vec4 trail_style; // darkening, slope of the sides (normal), roughness kept, depth (world units)
+
+// the albedo alpha of a surface with trails is where they can be (1: the snow; ice, rock: 0)
+
+// the depth of the trails at a world point x/z, [0, 1]
+float trail_depth(Vec2 world_xz)
+{
+	return texture2DLod(trail_map, (world_xz - trail_area.xy) * trail_area.zw, 0.0).r;
+}
+
+// parallax into the grooves: from the surface the view ray goes down (layers of the depth of a
+// groove) until it is under the pressed snow; the point (x/z) seen there. On the flat snow (no
+// depth) it stops at once
+Vec2 trail_parallax(Vec3 world)
+{
+	const int steps = 14;
+	Vec3  view = normalize(world - camera.m_position);
+	// x/z of the ray per layer (grazing views clamped: no long smears)
+	Vec2  step_xz = view.xz / max(-view.y, 0.2) * (trail_style.w / float(steps));
+	float layer = 0.0;
+	Vec2  p = world.xz;
+	float depth = trail_depth(p);
+	Vec2  previous_p = p;
+	float previous_gap = depth;
+	for (int i = 0; i < steps; ++i)
+	{
+		if (layer >= depth) break;
+		previous_p = p;
+		previous_gap = depth - layer;
+		p += step_xz;
+		layer += 1.0 / float(steps);
+		depth = trail_depth(p);
+	}
+	// between the last two layers: where the ray met the snow
+	float gap = layer - depth;
+	float t = previous_gap + gap > 0.0001 ? previous_gap / (previous_gap + gap) : 1.0;
+	return lerp(previous_p, p, saturate(t));
+}
+#endif
 
 // Dithered opacity: 4x4 ordered (Bayer) threshold in (0,1) of a screen pixel.
 // A pixel is kept when its alpha is above the threshold, so the share of kept
@@ -101,6 +153,34 @@ surface(VertexShaderOutput input)
 	data.m_metallic = texture2D(metallic_map, input.m_uv).b * metallic; // glTF uses B channel for the metallic
 	// Roughness
 	data.m_roughness = texture2D(roughness_map, input.m_uv).g * roughness; // glTF uses G channel for the roughness
+#ifdef SURFACE_SNOW_COVER
+	{
+		Vec3  snow_albedo = to_rgb_space(texture2D(snow_cover_map, input.m_world_position.xz * snow_cover.z)).rgb;
+		float bright = dot(data.m_albedo, Vec3(0.333, 0.333, 0.333));
+		float up = data.m_normal.y + (bright - 0.25) * 0.5;
+		float cover = smoothstep(snow_cover.x - snow_cover.y, snow_cover.x + snow_cover.y, up);
+		data.m_albedo = lerp(data.m_albedo, snow_albedo, cover);
+		data.m_normal = normalize(lerp(data.m_normal, normalize(input.m_normal), cover * 0.7));
+		data.m_roughness = lerp(data.m_roughness, snow_cover.w, cover);
+		data.m_metallic *= 1.0 - cover;
+	}
+#endif
+#ifdef SURFACE_TRAILS
+	// Trails: only on the snow (the albedo alpha: not on the ice, the rock), not a transparency
+	float trail_snow = albedo_color.a;
+	data.m_alpha = color.a;
+	// the point of the groove seen (parallax), its depth, its slope from the texels around
+	Vec2  trail_seen = trail_snow > 0.0 ? trail_parallax(input.m_world_position.xyz) : input.m_world_position.xz;
+	Vec2  trail_uv = (trail_seen - trail_area.xy) * trail_area.zw;
+	Vec2  trail_texel = 1.0 / textureSize2D(trail_map, 0);
+	float trail = texture2DLod(trail_map, trail_uv, 0.0).r * trail_snow;
+	float trail_dx = texture2DLod(trail_map, trail_uv + Vec2(trail_texel.x, 0.0), 0.0).r - texture2DLod(trail_map, trail_uv - Vec2(trail_texel.x, 0.0), 0.0).r;
+	float trail_dz = texture2DLod(trail_map, trail_uv + Vec2(0.0, trail_texel.y), 0.0).r - texture2DLod(trail_map, trail_uv - Vec2(0.0, trail_texel.y), 0.0).r;
+	// the ground lower where it is deeper: the normal leans toward the deeper side
+	data.m_normal = normalize(data.m_normal + Vec3(trail_dx, 0.0, trail_dz) * (trail_style.y * trail_snow));
+	data.m_albedo *= 1.0 - trail * trail_style.x;
+	data.m_roughness = lerp(data.m_roughness, data.m_roughness * trail_style.z, trail);
+#endif
 	//return
 	surface_return(data);
 }
