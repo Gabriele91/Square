@@ -19,11 +19,12 @@ namespace AuxTitle
 	const Square::Vec3 s_look_offset{ -3.8f, 1.1f, 0.0f };
 	constexpr float    s_camera_fov = 0.55f; //radians, vertical
 	constexpr float    s_far = 2000.0f;      //the sky, the mountains far away
-	//the camera breathing (as the menus of Halo Reach: a scene, not a picture): a slow drift of
-	//its place and of where it looks (world units), their periods (seconds)
-	const Square::Vec3 s_drift{ 0.06f, 0.0f, 0.0f };      //right and left only, a few centimeters
-	const Square::Vec3 s_look_drift{ 0.0f, 0.0f, 0.0f };
-	constexpr float    s_drift_period = 30.0f;
+	//the camera breathing (as the menus of Halo Reach: a scene, not a picture): a slow loop of its
+	//place (an ellipse: right and left, up and down; world units), where it looks still (the
+	//hovercraft in place, the far plates shifting behind it: the depth); its period (seconds)
+	constexpr float    s_drift_side = 0.18f;
+	constexpr float    s_drift_up = 0.07f;
+	constexpr float    s_drift_period = 24.0f;
 	//the hovercraft: the player at the origin, heading to the left of the camera (degrees around
 	//y), the racer behind (at "racer_1" of the scene)
 	constexpr float    s_player_yaw = -116.0f;
@@ -152,8 +153,18 @@ void TitleScreen::update(double delta_time)
 	{
 		if (auto parameter = material->parameter_by_name("water_time")) parameter->set(seconds);
 	}
-	//the hovercraft still on the water (the painted water does not move under them)
-	(void)t;
+	//the camera: its loop (an ellipse across the view), looking at the same point
+	if (m_camera)
+	{
+		const float w = 2.0f * Constants::pi<float>() * t / AuxTitle::s_drift_period;
+		const Vec3 forward = normalize(AuxTitle::s_look_offset - AuxTitle::s_camera_offset);
+		const Vec3 side = normalize(cross(Constants::axis_y, forward));
+		const Vec3 position = AuxTitle::s_camera_offset
+		                    + side * (AuxTitle::s_drift_side * std::sin(w))
+		                    + Constants::axis_y * (AuxTitle::s_drift_up * std::cos(w));
+		m_camera->position(position);
+		m_camera->rotation(AuxTitle::look_rotation(AuxTitle::s_look_offset - position));
+	}
 }
 
 Square::Vec3 TitleScreen::sun_direction() const
