@@ -53,8 +53,8 @@ void SnowTrails::attach(Square::Shared<Square::Scene::Actor> actor) const
 		for (auto& material : node->component<Scene::StaticMesh>()->m_materials)
 		{
 			if (!material) continue;
-			auto map = material->parameter_by_name("trail_map");
-			auto where = material->parameter_by_name("trail_area");
+			auto map = material->parameter_by_name(m_settings.map);
+			auto where = material->parameter_by_name(m_settings.area);
 			if (!map || !where) continue;
 			map->set(texture);
 			where->set(area);

@@ -7,7 +7,9 @@
 //  each hovercraft on the ground presses a groove along its way (from where it was: as wide as
 //  its hull, deepest in the middle, as a ball rolled in the snow); the snow fills the grooves
 //  back slowly. The map is a texture (R8) given to the materials of the arena that read one
-//  (trail_map: the PBRSnow effect), uploaded in the frames it changed.
+//  (Settings::map: "trail_map" of the PBRSnow effect), uploaded in the frames it changed.
+//  The wakes on the water are one too (a map with water: RaceMap::m_wakes): "wake_map" of the
+//  PBRWater effect, small, filled back in a few seconds (the waves of the hull fading).
 //
 #pragma once
 #include <vector>
@@ -25,6 +27,8 @@ public:
 		float        radius{ 1.3f };       //half the width of a groove (world units): a little narrower than the hull
 		float        depth{ 1.0f };        //the middle of a groove, [0, 1]
 		float        refill{ 45.0f };      //seconds the snow takes to fill the deepest groove back
+		const char*  map{ "trail_map" };   //the parameters of the materials it is given to: the map,
+		const char*  area{ "trail_area" }; //where it is (corner x, z; 1 / its size)
 	};
 
 	SnowTrails(Square::Context& context);

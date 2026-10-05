@@ -81,6 +81,7 @@ struct RaceMap
 	RaceFog      m_fog;
 	bool         m_snow{ false };
 	bool         m_trails{ false };
+	bool         m_wakes{ false };  //the wakes of the hovercraft on its water (PBRWater)
 };
 inline const RaceMap s_race_maps[]
 {
@@ -94,7 +95,7 @@ inline const RaceMap s_race_maps[]
 	{ "containment", "Containment", { true, { 0.48f, 0.53f, 0.6f }, 0.0035f, 3.5f, 0.04f, { 0.35f, 0.33f, 0.26f } }, true, true },
 	//the forerunner ruins in a green crater (origial_assets/sanctuary): a light warm mist, low
 	//(the field near y 4 with the arena placed), the sun through it
-	{ "sanctuary", "Sanctuary", { true, { 0.8f, 0.82f, 0.76f }, 0.0006f, 4.0f, 0.05f, { 0.6f, 0.5f, 0.32f } } },
+	{ "sanctuary", "Sanctuary", { true, { 0.8f, 0.82f, 0.76f }, 0.0006f, 4.0f, 0.05f, { 0.6f, 0.5f, 0.32f } }, false, false, true },
 };
 inline constexpr size_t s_race_maps_count = sizeof(s_race_maps) / sizeof(s_race_maps[0]);
 //a map with trails (snow, clay): the hovercraft shown this lower (world units, its meshes only:

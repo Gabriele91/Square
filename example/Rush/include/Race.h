@@ -86,6 +86,8 @@ public:
 private:
 
 	void load_trails();
+
+	void load_wakes();
 	//the navigation of the map (the AI goes around its obstacles)
 	void load_navigation();
 	//the meshes of a hovercraft lower (in the snow)
@@ -101,6 +103,7 @@ private:
 	Square::Shared<Square::Scene::Level> m_level;
 	std::unique_ptr<Arena>               m_arena;
 	std::unique_ptr<SnowTrails>          m_trails; //the map has snow: the grooves of the hovercraft
+	std::unique_ptr<SnowTrails>          m_wakes;  //the map has water: the wakes of the hovercraft on it
 	Square::Shared<Square::Navigation::NavGrid> m_navigation; //where the AI can drive, its paths
 	float                                m_sink{ 0.0f }; //the hovercraft shown lower (in the snow)
 	Square::Shared<Square::Scene::Actor> m_light_beam;

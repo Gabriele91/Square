@@ -4,9 +4,12 @@
 //
 //  An NPC at the controls of a hovercraft, as a component of the hovercraft actor (the bots
 //  of Limit Rush, control_player_bots): always forward, it turns towards where it goes. With the
-//  navigation of the map (a NavGrid) it goes along a path to the current checkpoint, around the
-//  obstacles (a new path when the checkpoint changes and every replan seconds), towards its next
-//  point; without, straight to the checkpoint. Stuck (still while it drives) it backs up for a
+//  navigation of the map (a NavGrid) it makes a path to the current checkpoint (a line of points
+//  around the obstacles) and follows it (pure pursuit): its nearest point on the line, then a
+//  point lookahead further along it, where it steers (it keeps on the line, the corners rounded
+//  inside the cleared ground); a new path when the checkpoint changes, every replan seconds, or
+//  when it is off the line; in a sharp turn it lets the throttle go. Without, straight to the
+//  checkpoint. Stuck (still while it drives) it backs up for a
 //  while, its nose turning toward where it goes. It sets the Input of its HovercraftDriver every frame, as the
 //  player does with HovercraftInput.
 //
@@ -25,8 +28,10 @@ public:
 	struct Settings
 	{
 		float dead_zone{ 6.0f };    //degrees: nearer to the direction of the target it goes straight
-		float reach{ 5.0f };        //world units: nearer to a point of the path it goes to the next one
-		float replan{ 1.0f };       //seconds between two paths to the same checkpoint
+		float lookahead{ 7.0f };    //world units: how far along the path ahead of it it steers
+		float off_path{ 6.0f };     //world units: farther from its path, a new one
+		float replan{ 3.0f };       //seconds between two paths to the same checkpoint
+		float sharp_turn{ 60.0f };  //degrees: a turn sharper than this, it lets the throttle go
 		float stuck_speed{ 0.1f };  //share of the top speed: slower while driving is stuck
 		float stuck_time{ 1.0f };   //seconds stuck before it backs up
 		float reverse_time{ 0.8f }; //seconds it backs up
@@ -62,7 +67,7 @@ private:
 	Square::Weak<Square::Navigation::NavGrid>   m_navigation;
 	//the path to the checkpoint
 	std::vector<Square::Vec3>                   m_path;
-	size_t                                      m_next{ 0 };
+	size_t                                      m_segment{ 0 }; //the segment of the path it is on (only forward)
 	size_t                                      m_path_checkpoint{ size_t(-1) };
 	float                                       m_replan{ 0.0f };
 	//stuck: seconds still, seconds left backing up

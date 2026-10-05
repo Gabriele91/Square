@@ -5,6 +5,8 @@
 #include <HovercraftAI.h>
 #include <Hovercraft.h>
 #include <Checkpoints.h>
+#include <algorithm>
+#include <limits>
 #include <cmath>
 
 using namespace Square;
@@ -17,6 +19,15 @@ namespace AuxHovercraftAI
 	static float flat_distance(const Vec3& a, const Vec3& b)
 	{
 		return length(Vec2(a.x - b.x, a.z - b.z));
+	}
+
+	//the nearest point of the segment a-b to p (x/z), its share along it
+	static float project(const Vec3& a, const Vec3& b, const Vec3& p)
+	{
+		const Vec2 ab(b.x - a.x, b.z - a.z);
+		const float length2 = dot(ab, ab);
+		if (length2 < 1e-6f) return 0.0f;
+		return std::clamp(dot(Vec2(p.x - a.x, p.z - a.z), ab) / length2, 0.0f, 1.0f);
 	}
 }
 
@@ -51,20 +62,44 @@ Vec3 HovercraftAI::target(const Vec3& position, size_t checkpoint, const Vec3& g
 	using namespace AuxHovercraftAI;
 	auto navigation = m_navigation.lock();
 	if (!navigation) return goal;
-	//a new path: another checkpoint, its time, none
+	//where it is on its path: the nearest point of its segment or of the ones after it
+	float along = 0.0f;
+	float off = 0.0f;
+	if (m_path.size() >= 2)
+	{
+		float best = std::numeric_limits<float>::max();
+		for (size_t i = m_segment; i + 1 < m_path.size(); ++i)
+		{
+			const float t = project(m_path[i], m_path[i + 1], position);
+			const float d = flat_distance(position, m_path[i] + (m_path[i + 1] - m_path[i]) * t);
+			if (d < best) { best = d; m_segment = i; along = t; }
+		}
+		off = best;
+	}
+	//a new path: another checkpoint, its time, none, off it
 	m_replan -= float(delta_time);
 	const bool other_checkpoint = checkpoint != m_path_checkpoint;
-	if (other_checkpoint || m_replan <= 0.0f || m_path.empty())
+	if (other_checkpoint || m_replan <= 0.0f || m_path.size() < 2 || off > m_settings.off_path)
 	{
 		m_path_checkpoint = checkpoint;
 		m_replan = m_settings.replan;
-		m_next = 1;
+		m_segment = 0;
+		along = 0.0f;
 		if (!navigation->find_path(position, goal, m_path)) m_path.clear();
 	}
 	if (m_path.size() < 2) return goal;
-	//the next point of the path not reached yet (the last one: the checkpoint)
-	while (m_next + 1 < m_path.size() && flat_distance(position, m_path[m_next]) < m_settings.reach) ++m_next;
-	return m_next + 1 < m_path.size() ? m_path[m_next] : goal;
+	//pure pursuit: lookahead further along the path from its nearest point
+	float left = m_settings.lookahead;
+	size_t i = m_segment;
+	Vec3 point = m_path[i] + (m_path[i + 1] - m_path[i]) * along;
+	while (i + 1 < m_path.size())
+	{
+		const float rest = flat_distance(point, m_path[i + 1]);
+		if (rest >= left) return point + (m_path[i + 1] - point) * (left / std::max(rest, 1e-4f));
+		left -= rest;
+		point = m_path[++i];
+	}
+	return goal;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -100,7 +135,8 @@ void HovercraftAI::on_update(double delta_time)
 		//where it goes); atanfull(...) - yAng: left or right, straight within the dead zone
 		const bool reversing = m_reverse > 0.0f;
 		if (reversing) m_reverse -= float(delta_time);
-		controls.forward  = !reversing;
+		//a sharp turn: the throttle let go (it turns on the spot, not wide into a wall)
+		controls.forward  = !reversing && std::abs(angle) < m_settings.sharp_turn;
 		controls.backward = reversing;
 		controls.right    = angle >  m_settings.dead_zone;
 		controls.left     = angle < -m_settings.dead_zone;

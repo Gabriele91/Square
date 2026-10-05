@@ -94,10 +94,33 @@ bool Race::load(const RaceMap& map)
 	m_sink = map.m_trails ? s_snow_sink : 0.0f;
 	load_navigation();
 	if (map.m_trails) load_trails();
+	if (map.m_wakes) load_wakes();
 	load_light_beam();
 	load_hovercraft();
 	phase(Phase::START);
 	return true;
+}
+
+void Race::load_wakes()
+{
+	//the water of the field: a small map (the waves: small, soft), gone in less than a second
+	m_wakes = std::make_unique<SnowTrails>(context());
+	SnowTrails::Settings settings;
+	const Square::Vec3 center = m_arena->center();
+	settings.center = Square::Vec2(center.x, center.z);
+	settings.size = 220.0f;
+	settings.resolution = 512;
+	settings.radius = 1.4f;
+	settings.refill = 0.8f;
+	settings.map = "wake_map";
+	settings.area = "wake_area";
+	if (!m_wakes->create(settings))
+	{
+		context().logger()->warning("water wakes: no texture");
+		m_wakes.reset();
+		return;
+	}
+	m_wakes->attach(m_arena->actor());
 }
 
 void Race::load_trails()
@@ -260,6 +283,16 @@ void Race::on_update(double delta_time)
 			m_trails->press(id, racer.m_actor->position(true), racer.m_driver && racer.m_driver->on_ground());
 		}
 		m_trails->update(delta_time);
+	}
+	//the wakes on the water (where there is no water, nothing reads them)
+	if (m_wakes)
+	{
+		for (size_t id = 0; id != m_racers.size(); ++id)
+		{
+			const Racer& racer = m_racers[id];
+			m_wakes->press(id, racer.m_actor->position(true), racer.m_driver && racer.m_driver->on_ground());
+		}
+		m_wakes->update(delta_time);
 	}
 	switch (m_phase)
 	{
