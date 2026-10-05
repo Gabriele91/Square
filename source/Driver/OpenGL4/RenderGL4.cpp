@@ -2654,6 +2654,29 @@ namespace Render
         unbind_texture(s_bind_context.m_textures[n]);
     }
         
+	void ContextGL4::update_texture(Texture* texture, const TextureRawDataInformation& data)
+	{
+		if (!texture || !data.m_bytes || texture->m_type_texture != GL_TEXTURE_2D || is_compressed_format(data.m_format)) return;
+		//bound on the active unit for the upload, then the texture bound there before back (the
+		//bindings of the units stay as the context knows them)
+		GLint previous = 0;
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &previous);
+		glBindTexture(GL_TEXTURE_2D, texture->m_tbo);
+		glTexSubImage2D
+		(
+			GL_TEXTURE_2D,
+			0,
+			0, 0,
+			data.m_width,
+			data.m_height,
+			get_texture_type(data.m_type, data.m_is_srgb),
+			get_texture_type_format(data.m_type_format),
+			data.m_bytes
+		);
+		glBindTexture(GL_TEXTURE_2D, GLuint(previous));
+		print_errors();
+	}
+
 	void ContextGL4::delete_texture(Texture*& ctx_texture)
     {
 		square_assert(ctx_texture != nullptr);

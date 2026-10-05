@@ -2847,6 +2847,14 @@ namespace Render
         unbind_texture(s_bind_context.m_textures[n]);
     }
         
+	void ContextDX11::update_texture(Texture* texture, const TextureRawDataInformation& data)
+	{
+		//a 2D texture, not compressed (an RGB 8 bit one has its alpha added: not here)
+		if (!texture || !data.m_bytes || texture->m_type != DX_TEXTURE_2D || is_compressed_format(data.m_format)) return;
+		auto* texture2D = static_cast<Texture2D*>(texture);
+		device_context()->UpdateSubresource(texture2D->m_texture2D, 0, nullptr, data.m_bytes, data.m_width * get_textut_pixel_size(data.m_format), 0);
+	}
+
 	void ContextDX11::delete_texture(Texture*& ctx_texture)
     {
         //bind?

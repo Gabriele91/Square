@@ -444,6 +444,7 @@ namespace Render
         virtual void unbind_texture(Texture*) override;
         virtual void unbind_texture(int) override;
         virtual void delete_texture(Texture*&) override;
+        virtual void update_texture(Texture* texture, const TextureRawDataInformation& data) override;
 
         virtual Shader* create_shader(const std::vector<ShaderSourceInformation>&) override;
         virtual bool shader_compiled_with_errors(Shader*) override;
