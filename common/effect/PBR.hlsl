@@ -90,6 +90,25 @@ Vec2 trail_parallax(Vec3 world)
 }
 #endif
 
+#ifdef SURFACE_WATER
+// Water (PBRWater): its texture flowing (a waterfall: water_flow.xy), two layers of ripples of
+// the normal map moving across each other, a Fresnel: clear where looked at from above, the sky
+// reflected where looked at grazing (a gradient: its horizon, its top), the lights (the glint
+// of the sun) as on any surface. water_time.x: the seconds of the game (set every frame)
+Vec4 water_time;  // x: seconds
+Vec4 water_flow;  // xy: the speed of its uv (per second), z: the scale of the ripples (uv), w: their strength
+Vec4 water_style; // x: alpha looking down, y: alpha grazing, z: the reflection, w: the Fresnel power
+Vec4 water_sky;   // rgb: the sky at the horizon (linear)
+Vec4 water_top;   // rgb: the sky at the top (linear)
+// a waterfall (water_fall.x 1): its uv v from its top (0) to its foot (1), u across it (0 to 1);
+// its albedo map a noise (streaks along v) scrolled down in two layers (water_flow.xy, the
+// second faster): where they are bright the light water (color), else the deep one
+// (water_deep), sharp bands (the threshold); foam at its sides and at its foot, its sides
+// dissolving
+Vec4 water_fall;  // x: 1 a waterfall, y: the threshold of the bands, z: the foam of the sides (u), w: the foam of the foot (v)
+Vec4 water_deep;  // rgb: the deep water (linear), w: how many times the noise repeats down it
+#endif
+
 // Dithered opacity: 4x4 ordered (Bayer) threshold in (0,1) of a screen pixel.
 // A pixel is kept when its alpha is above the threshold, so the share of kept
 // pixels follows the alpha and the surface stays opaque (deferred, shadows...).
@@ -129,6 +148,11 @@ surface(VertexShaderOutput input)
 	SurfaceData data = DefaultSurfaceData();
 	// World position
 	data.m_position = input.m_world_position;
+#ifdef SURFACE_WATER
+	// the texture flows (the uv of the surface kept: the waterfall, its sides, its foot)
+	Vec2 water_uv = input.m_uv;
+	input.m_uv += water_flow.xy * water_time.x;
+#endif
 	// Diffuse/albedo
 	Vec4 albedo_color = to_rgb_space(texture2D(albedo_map, input.m_uv));
 	if (albedo_color.a <= mask) discard;
@@ -163,6 +187,44 @@ surface(VertexShaderOutput input)
 		data.m_normal = normalize(lerp(data.m_normal, normalize(input.m_normal), cover * 0.7));
 		data.m_roughness = lerp(data.m_roughness, snow_cover.w, cover);
 		data.m_metallic *= 1.0 - cover;
+	}
+#endif
+#ifdef SURFACE_WATER
+	{
+		// the ripples: two layers of the normal map, moving across each other
+		float t = water_time.x;
+		Vec2  uv = input.m_uv * water_flow.z;
+		Vec3  n1 = normal_from_texture(texture2D(normal_map, uv + Vec2(0.11, 0.07) * t));
+		Vec3  n2 = normal_from_texture(texture2D(normal_map, uv * 1.73 + Vec2(-0.08, 0.12) * t));
+		Vec3  ripple = normalize(Vec3((n1.xy + n2.xy) * water_flow.w, 1.0));
+		data.m_normal = normalize(mul(ripple, TBN));
+		// Fresnel: clear from above, the sky reflected grazing
+		Vec3  view = normalize(camera.m_position - input.m_world_position.xyz);
+		float facing = saturate(dot(data.m_normal, view));
+		float fresnel = 0.02 + 0.98 * pow(1.0 - facing, water_style.w);
+		Vec3  reflected = reflect(-view, data.m_normal);
+		Vec3  sky = lerp(water_sky.rgb, water_top.rgb, saturate(reflected.y));
+		data.m_alpha *= lerp(water_style.x, water_style.y, fresnel);
+		data.m_emmisive += sky * fresnel * water_style.z;
+		data.m_albedo *= 1.0 - fresnel;
+		if (water_fall.x > 0.5)
+		{
+			// the waterfall: two layers of the noise falling (the second faster, shifted)
+			Vec2  fall = Vec2(water_uv.x, water_uv.y * water_deep.w);
+			float a = to_rgb_space(texture2D(albedo_map, fall + water_flow.xy * t)).r;
+			float b = to_rgb_space(texture2D(albedo_map, fall * Vec2(1.37, 0.8) + water_flow.xy * t * 1.6 + Vec2(0.37, 0.11))).r;
+			float noise = (a + b) * 0.5;
+			float band = smoothstep(water_fall.y - 0.04, water_fall.y + 0.04, noise);
+			float across = min(water_uv.x, 1.0 - water_uv.x);
+			float side = 1.0 - smoothstep(0.0, water_fall.z, across);
+			float foot = smoothstep(1.0 - water_fall.w, 1.0, water_uv.y);
+			float foam = saturate(band + side * smoothstep(0.25, 0.55, noise) + foot * smoothstep(0.15, 0.45, noise));
+			data.m_albedo = lerp(water_deep.rgb, color.rgb, foam);
+			data.m_emmisive += data.m_albedo * 0.35;
+			// opaque where it foams, its sides dissolving into the noise
+			data.m_alpha = lerp(0.72, 1.0, foam) * color.a * smoothstep(0.0, water_fall.z * 0.6, across + (noise - 0.5) * water_fall.z * 0.8);
+			data.m_roughness = lerp(0.05, 0.5, foam);
+		}
 	}
 #endif
 #ifdef SURFACE_TRAILS

@@ -1,0 +1,111 @@
+//
+//  PBRWater: a translucent water (pools, waterfalls), see PBR.hlsl SURFACE_WATER
+//
+parameters
+{
+    //the faces drawn: back, front or off (both)
+    cull cullface(back)
+    //the faces in the directional shadow map: back, front or off (both: the one sided meshes)
+    shadow_cull cullface(back)
+    albedo_map    texture("white")
+    metallic_map  texture("black")
+    emmisive_map  texture("black")
+    roughness_map texture("white")
+    occlusion_map texture("white")
+    normal_map    texture("normal_up")
+
+    //alpha = albedo_map.a * color.a
+    color Vec4(1.0,1.0,1.0,0.5)
+    metallic float(0.0)
+    roughness float(1.0)
+    emmisive Vec3(1.0,1.0,1.0)
+
+    mask         float(-1.0)
+    mask_shadow  float(-1.0)
+    //1 = lit without the shadows of the lights (glows, light beams); only forward/translucent passes
+    ignore_shadows float(0.0)
+    dither       float(0.0)
+    //the water (see PBR.hlsl, SURFACE_WATER): the seconds (the game sets them), its flow (uv per
+    //second, the scale of the ripples, their strength), its look (alpha from above, grazing, the
+    //reflection, the Fresnel power), the sky reflected (horizon, top: linear)
+    water_time   Vec4(0.0, 0.0, 0.0, 0.0)
+    water_flow   Vec4(0.0, 0.0, 1.0, 0.6)
+    water_style  Vec4(0.35, 0.95, 1.0, 4.0)
+    water_sky    Vec4(0.75, 0.8, 0.82, 1.0)
+    water_top    Vec4(0.3, 0.5, 0.8, 1.0)
+    //a waterfall (1: on): the threshold of its bands, the foam of its sides, of its foot; its
+    //deep water (linear), how many times its noise repeats down it
+    water_fall   Vec4(0.0, 0.55, 0.18, 0.12)
+    water_deep   Vec4(0.12, 0.3, 0.36, 4.0)
+}
+
+//PBRWater: translucent PBR (see PBRTranslucent) with water: its texture flowing, ripples moving,
+//clear from above, the sky reflected grazing (PBR.hlsl, SURFACE_WATER).
+sub_effect
+{
+    queue { type translucent }
+    //forward rendering pipeline: drawn on the screen target
+    technique "forward"
+    {
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one_minus_src_alpha
+            cullface param(cull)
+            lights only_ambient
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define SURFACE_WATER
+                #include "PBR.hlsl"
+            }
+        }
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one
+            cullface param(cull)
+            lights spot_point_direction
+            shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define SURFACE_WATER
+                #include "PBR.hlsl"
+            }
+        }
+    }
+    //deferred rendering pipeline: drawn into the light buffer (linear, encoded by the present)
+    technique "translucent"
+    {
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one_minus_src_alpha
+            cullface param(cull)
+            lights only_ambient
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define OUTPUT_LINEAR_COLOR
+                #define SURFACE_WATER
+                #include "PBR.hlsl"
+            }
+        }
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one
+            cullface param(cull)
+            lights spot_point_direction
+            shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define OUTPUT_LINEAR_COLOR
+                #define SURFACE_WATER
+                #include "PBR.hlsl"
+            }
+        }
+    }
+}
