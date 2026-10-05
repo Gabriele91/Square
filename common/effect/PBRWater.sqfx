@@ -37,6 +37,11 @@ parameters
     //deep water (linear), how many times its noise repeats down it
     water_fall   Vec4(0.0, 0.55, 0.18, 0.12)
     water_deep   Vec4(0.12, 0.3, 0.36, 4.0)
+    //the wakes of the hovercraft (the game sets the map, where it is): the strength of their
+    //waves, their rings, their speed, their foam
+    wake_map     texture("black")
+    wake_area    Vec4(0.0, 0.0, 0.0, 0.0)
+    wake_style   Vec4(0.8, 22.0, 6.0, 0.15)
 }
 
 //PBRWater: translucent PBR (see PBRTranslucent) with water: its texture flowing, ripples moving,

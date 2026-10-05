@@ -107,6 +107,16 @@ Vec4 water_top;   // rgb: the sky at the top (linear)
 // dissolving
 Vec4 water_fall;  // x: 1 a waterfall, y: the threshold of the bands, z: the foam of the sides (u), w: the foam of the foot (v)
 Vec4 water_deep;  // rgb: the deep water (linear), w: how many times the noise repeats down it
+// the wakes of the hovercraft (drawn by the game, from above: world x/z, R how fresh): rings of
+// waves along them, moving out, foam where they are fresh
+Sampler2D(wake_map);
+Vec4 wake_area;   // x, z of its corner (world); 1 / its size along x, z
+Vec4 wake_style;  // x: the strength of its waves, y: their rings (per unit of the map), z: their speed, w: its foam
+float wake_height(Vec2 world_xz, float t)
+{
+	float w = texture2DLod(wake_map, (world_xz - wake_area.xy) * wake_area.zw, 0.0).r;
+	return w * sin(w * wake_style.y - t * wake_style.z);
+}
 #endif
 
 // Dithered opacity: 4x4 ordered (Bayer) threshold in (0,1) of a screen pixel.
@@ -204,6 +214,22 @@ surface(VertexShaderOutput input)
 		float fresnel = 0.02 + 0.98 * pow(1.0 - facing, water_style.w);
 		Vec3  reflected = reflect(-view, data.m_normal);
 		Vec3  sky = lerp(water_sky.rgb, water_top.rgb, saturate(reflected.y));
+		// the wakes: the slope of their waves bends the normal, foam where they are fresh
+		{
+			Vec2  xz = input.m_world_position.xz;
+			float e = 0.25;
+			float dx = wake_height(xz + Vec2(e, 0.0), t) - wake_height(xz - Vec2(e, 0.0), t);
+			float dz = wake_height(xz + Vec2(0.0, e), t) - wake_height(xz - Vec2(0.0, e), t);
+			data.m_normal = normalize(data.m_normal - Vec3(dx, 0.0, dz) * wake_style.x);
+			float fresh = texture2DLod(wake_map, (xz - wake_area.xy) * wake_area.zw, 0.0).r;
+			float foam = smoothstep(0.55, 1.0, fresh) * wake_style.w;
+			data.m_albedo = lerp(data.m_albedo, Vec3(0.9, 0.95, 0.95), foam);
+			data.m_alpha = lerp(data.m_alpha, 1.0, foam);
+			facing = saturate(dot(data.m_normal, view));
+			fresnel = 0.02 + 0.98 * pow(1.0 - facing, water_style.w);
+			reflected = reflect(-view, data.m_normal);
+			sky = lerp(water_sky.rgb, water_top.rgb, saturate(reflected.y));
+		}
 		data.m_alpha *= lerp(water_style.x, water_style.y, fresnel);
 		data.m_emmisive += sky * fresnel * water_style.z;
 		data.m_albedo *= 1.0 - fresnel;
