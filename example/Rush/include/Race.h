@@ -108,6 +108,7 @@ private:
 	Square::Shared<Checkpoints>          m_checkpoints;
 	Phase                                m_phase{ Phase::START };
 	double                               m_phase_time{ 0.0 };
+	double                               m_water_time{ 0.0 }; //seconds of the water (its waves, its falls)
 	size_t                               m_winner{ 0 };
 	bool                                 m_end{ false }; //a racer won: END at the next update
 };

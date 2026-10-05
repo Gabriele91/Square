@@ -7,6 +7,7 @@
 #include <cmath>
 #include <TitleScreen.h>
 #include <Turntable.h>
+#include <HovercraftFans.h>
 #include <Race.h>
 
 namespace AuxTitle
@@ -54,6 +55,8 @@ void TitleScreen::load(Square::Shared<Square::Scene::Level> level)
 		auto turntable = m_hovercraft->component<Turntable>();
 		turntable->speed(s_title_turn_speed);
 		turntable->yaw(30.0f);
+		//its fans at idle
+		m_hovercraft->component<HovercraftFans>();
 	}
 	setup_camera();
 	setup_light();

@@ -11,33 +11,6 @@ using namespace Square;
 
 SQUARE_CLASS_OBJECT_REGISTRATION(CameraFollow);
 
-namespace AuxCameraFollow
-{
-	//a point (x, z) in the bounds (none: everywhere)
-	static bool inside(const CameraBounds& bounds, const Vec2& point)
-	{
-		const Vec2 offset = point - bounds.m_center;
-		switch (bounds.m_shape)
-		{
-		case CameraBounds::BOX:    return std::abs(offset.x) <= bounds.m_half_size.x && std::abs(offset.y) <= bounds.m_half_size.y;
-		case CameraBounds::CIRCLE: return length(offset) <= bounds.m_radius;
-		default:                   return true;
-		}
-	}
-
-	//the nearest point (x, z) in the bounds
-	static Vec2 clamp(const CameraBounds& bounds, const Vec2& point)
-	{
-		const Vec2 offset = point - bounds.m_center;
-		switch (bounds.m_shape)
-		{
-		case CameraBounds::BOX:    return bounds.m_center + glm::clamp(offset, -bounds.m_half_size, bounds.m_half_size);
-		case CameraBounds::CIRCLE: return inside(bounds, point) ? point : bounds.m_center + normalize(offset) * bounds.m_radius;
-		default:                   return point;
-		}
-	}
-}
-
 void CameraFollow::object_registration(Context& ctx)
 {
 	//factory: actor->component<CameraFollow>()
@@ -51,7 +24,6 @@ CameraFollow::CameraFollow(Context& context) : Component(context)
 void CameraFollow::target(Shared<Scene::Actor> target)
 {
 	m_target = target;
-	m_in_bounds = false;
 	if (target) m_target_previous = target->position(true);
 	//from where it is now, it glides behind the target
 	m_intro = target ? 0.0f : -1.0f;
@@ -66,10 +38,8 @@ void CameraFollow::snap()
 	if (!camera || !target) return;
 	m_target_previous = target->position(true);
 	camera->position(m_target_previous + target->rotation(true) * m_settings.offset);
-	//behind the target: in the bounds (the target is inside them)
-	m_in_bounds = true;
-	keep_in_bounds();
-	//a teleport also for the camera sphere, if it has one
+	//a teleport also for the camera sphere, if it has one (behind the walls of the map: it comes
+	//in through them, one sided, at its next moves)
 	if (camera->contains<SphereCollider>()) camera->component<SphereCollider>()->reset();
 	camera->rotation(look_at_target());
 	m_intro = -1.0f;
@@ -107,23 +77,8 @@ void CameraFollow::on_update(double delta_time)
 		position += (pivot - position) * (1.0f - std::pow(1.0f - follow, steps));
 		camera->position(position);
 	}
-	//the wall (also after the collisions of the frame before pushed it out)
-	keep_in_bounds();
 	//looks at the target
 	camera->rotation(look_at_target());
-}
-
-void CameraFollow::keep_in_bounds()
-{
-	auto camera = actor().lock();
-	if (!camera) return;
-	const Vec3 position = camera->position();
-	const Vec2 point(position.x, position.z);
-	//from out of them (the start): free until it comes in
-	m_in_bounds = m_in_bounds || AuxCameraFollow::inside(m_bounds, point);
-	if (!m_in_bounds) return;
-	const Vec2 kept = AuxCameraFollow::clamp(m_bounds, point);
-	camera->position(Vec3(kept.x, position.y, kept.y));
 }
 
 Quat CameraFollow::look_at_target() const

@@ -9,13 +9,15 @@
 #include <cstddef>
 #include <Square/Square.h>
 
-//collision types (Const BODY=1,WHEEL=2,SCENE=3), and the camera
+//collision types (Const BODY=1,WHEEL=2,SCENE=3), the camera, the walls of the camera (the
+//"camera_bounds..." meshes of a map: only the camera hits them)
 enum CollisionType : int
 {
-	TYPE_BODY   = 1,
-	TYPE_WHEEL  = 2,
-	TYPE_SCENE  = 3,
-	TYPE_CAMERA = 4
+	TYPE_BODY          = 1,
+	TYPE_WHEEL         = 2,
+	TYPE_SCENE         = 3,
+	TYPE_CAMERA        = 4,
+	TYPE_CAMERA_BOUNDS = 5
 };
 
 //the hovercraft of a race: the player (the first) and the NPCs; the first to s_winning_score
@@ -69,49 +71,34 @@ struct RaceFog
 	float        m_falloff{ 0.0f };
 	Square::Vec3 m_sun{ 0.0f };     //the glow looking toward the sun of the map
 };
-//the invisible wall of the chase camera (x/z, world units, however high): once inside, the
-//camera does not go out of it (over the walls of the map)
-struct CameraBounds
-{
-	enum Shape : int
-	{
-		NONE,   //no wall
-		BOX,    //a box: center, half_size
-		CIRCLE  //a circle: center, radius
-	};
-	Shape        m_shape{ NONE };
-	Square::Vec2 m_center{ 0.0f };    //x, z
-	Square::Vec2 m_half_size{ 0.0f }; //BOX: half the sides (x, z)
-	float        m_radius{ 0.0f };    //CIRCLE
-};
 //a map of a race: its scene ("<name>/scene", assets/<name>.sqz), its name in the title, its fog,
-//the wall of its camera (a little inside its walls: the camera sphere, radius 1), its falling snow
-//(a light one), the trails of the hovercraft in its snow (its ground a PBRSnow material)
+//its falling snow (a light one), the trails of the hovercraft in its ground (a PBRSnow material).
+//The wall of its camera is in its scene: its "camera_bounds..." meshes (see Arena)
 struct RaceMap
 {
 	const char*  m_name;
 	const char*  m_title;
 	RaceFog      m_fog;
-	CameraBounds m_camera_bounds;
 	bool         m_snow{ false };
 	bool         m_trails{ false };
 };
 inline const RaceMap s_race_maps[]
 {
-	//the square field, its walls at +-82.4
-	{ "arena",    "Arena",    {}, { CameraBounds::BOX, { 0.0f, 0.0f }, { 81.0f, 81.0f }, 0.0f } },
+	//the stadium (origial_assets/arena): a light haze of desert dust, warm, dense in its pit (its
+	//field from y ~-12 to 0), thin over the stands; the grooves of the hovercraft in its clay
+	{ "arena",    "Arena",    { true, { 0.55f, 0.40f, 0.28f }, 0.0018f, -6.0f, 0.05f, { 0.45f, 0.30f, 0.18f } }, false, true },
 	//the swamp (origial_assets/backwash): green, dense on the water (y ~3.5 with the arena
-	//placed), thin over the trees; the round field, its wall at radius 85
-	{ "backwash", "Backwash", { true, { 0.17f, 0.21f, 0.12f }, 0.012f, 3.5f, 0.08f, { 0.35f, 0.32f, 0.17f } },
-	                          { CameraBounds::CIRCLE, { 0.0f, 0.0f }, { 0.0f, 0.0f }, 83.5f } },
-	//the snowy canyon (origial_assets/containment): a cold light haze, thin; the round field, its
-	//cliffs from radius ~88 (an invisible ring at 86.5)
-	{ "containment", "Containment", { true, { 0.48f, 0.53f, 0.6f }, 0.0035f, 3.5f, 0.04f, { 0.35f, 0.33f, 0.26f } },
-	                                { CameraBounds::CIRCLE, { 0.0f, 0.0f }, { 0.0f, 0.0f }, 83.5f }, true, true },
+	//placed), thin over the trees
+	{ "backwash", "Backwash", { true, { 0.17f, 0.21f, 0.12f }, 0.012f, 3.5f, 0.08f, { 0.35f, 0.32f, 0.17f } } },
+	//the snowy canyon (origial_assets/containment): a cold light haze, thin; its snow, its trails
+	{ "containment", "Containment", { true, { 0.48f, 0.53f, 0.6f }, 0.0035f, 3.5f, 0.04f, { 0.35f, 0.33f, 0.26f } }, true, true },
+	//the forerunner ruins in a green crater (origial_assets/sanctuary): a light warm mist, low
+	//(the field near y 4 with the arena placed), the sun through it
+	{ "sanctuary", "Sanctuary", { true, { 0.8f, 0.82f, 0.76f }, 0.0006f, 4.0f, 0.05f, { 0.6f, 0.5f, 0.32f } } },
 };
 inline constexpr size_t s_race_maps_count = sizeof(s_race_maps) / sizeof(s_race_maps[0]);
-//a map with trails (snow): the hovercraft shown this lower (world units, its meshes only: its
-//physics as on any map), in the snow, in its groove
+//a map with trails (snow, clay): the hovercraft shown this lower (world units, its meshes only:
+//its physics as on any map), in its groove
 inline constexpr float s_snow_sink = 0.3f;
 //the phases of a race: the start (the camera comes to the player, the hovercraft still), then
 //"GO!" for a while

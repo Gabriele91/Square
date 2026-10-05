@@ -154,12 +154,14 @@ namespace
 		return take_contact(collision, line, time, normalize(edge_basis * (contact - axis_point)));
 	}
 
-	//the sphere against a triangle, both faces: the face facing the move is used
-	bool triangle_collide(const Line& line, float radius, Vec3 a, Vec3 b, Vec3 c, CollisionMesh::Collision& collision)
+	//the sphere against a triangle, both faces: the face facing the move is used; one sided: only
+	//its front (its winding), from behind it is not there (its edges either)
+	bool triangle_collide(const Line& line, float radius, Vec3 a, Vec3 b, Vec3 c, bool one_sided, CollisionMesh::Collision& collision)
 	{
 		Plane plane = Plane::from(a, b, c);
 		if (dot(plane.m_normal, line.m_direction) >= 0.0f)
 		{
+			if (one_sided) return false;
 			//the other face
 			std::swap(b, c);
 			plane = Plane::from(a, b, c);
@@ -477,7 +479,7 @@ bool CollisionMesh::collide(const Line& line, float radius, float y_scale, const
 	{
 		const Triangle& triangle = m_triangles[id];
 		if (!boxes_overlap(box_min, box_max, triangle.m_min, triangle.m_max)) continue;
-		if (!triangle_collide(line, radius, triangle.m_a * scale, triangle.m_b * scale, triangle.m_c * scale, collision)) continue;
+		if (!triangle_collide(line, radius, triangle.m_a * scale, triangle.m_b * scale, triangle.m_c * scale, m_one_sided, collision)) continue;
 		collision.m_triangle = id;
 		hit = true;
 	}
@@ -570,7 +572,7 @@ const CollisionMesh& MeshCollider::mesh()
 	if (!m_built)
 	{
 		m_mesh.clear();
-		if (auto owner = actor().lock()) m_mesh.add(context(), owner);
+		if (auto owner = actor().lock()) m_mesh.add(context(), owner, m_solid_only);
 		m_built = true;
 	}
 	return m_mesh;

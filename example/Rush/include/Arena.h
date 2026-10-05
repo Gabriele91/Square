@@ -44,13 +44,22 @@ public:
 	const Square::Vec3& center() const;
 	const Square::Vec3& start(size_t id) const;
 
+	//the walls of its camera ("camera_bounds..." meshes: one sided, facing in), how many
+	//triangles (0: none, the camera goes anywhere)
+	size_t camera_bounds() const { return m_camera_bounds; }
+
 	//its navmesh (made in Blender: where the AI drives), nullptr: the map has none
 	Square::Shared<Square::Scene::Actor> navmesh() const;
+
+	//its water (PBRWater materials: their "water_time") moves: the seconds of the race
+	void animate(double time);
 
 private:
 
 	//the colliders and the navmesh not drawn
 	void hide_helpers();
+	void find_camera_bounds();
+	void find_water();
 	void find_bounds();
 	void find_starts();
 	void setup_camera(Square::Shared<Square::Scene::Level> level);
@@ -63,6 +72,9 @@ private:
 	Square::Vec3                          m_min{ 0.0f };
 	Square::Vec3                          m_max{ 0.0f };
 	Square::Vec3                          m_center{ 0.0f };
+	size_t m_camera_bounds{ 0 };
+	//the materials of its water (their water_time)
+	std::vector< Square::Shared<Square::Resource::Material> > m_water;
 	//spawn_point_1..4 of the arena, a fallback without them
 	std::array<Square::Vec3, s_racers>    m_starts{ s_start, s_start + Square::Vec3(10, 0, 0), s_start + Square::Vec3(0, 0, 10), s_start + Square::Vec3(10, 0, 10) };
 };

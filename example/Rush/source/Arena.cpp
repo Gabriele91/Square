@@ -4,6 +4,8 @@
 //
 //  See Arena.h.
 //
+#include <algorithm>
+#include <cmath>
 #include <limits>
 #include <Arena.h>
 #include <Collision.h>
@@ -33,6 +35,8 @@ bool Arena::load(Square::Shared<Square::Scene::Level> level, const std::string& 
 	collider->type(TYPE_SCENE);
 	m_context.logger()->info("arena collision triangles: " + std::to_string(collider->mesh().size()));
 	hide_helpers();
+	find_camera_bounds();
+	find_water();
 	find_bounds();
 	find_starts();
 	setup_camera(level);
@@ -51,11 +55,11 @@ namespace AuxArena
 void Arena::hide_helpers()
 {
 	using namespace Square;
-	//"collider..." nodes (solid: in the mesh collider) and "navmesh..." ones (and their
-	//children): not drawn
+	//"collider..." nodes (solid: in the mesh collider), "navmesh..." and "camera_bounds..." ones
+	//(and their children): not drawn
 	m_actor->visit([](Shared<Scene::Actor> node) -> bool
 	{
-		const bool helper = AuxArena::named(node, "collider") || AuxArena::named(node, "navmesh");
+		const bool helper = AuxArena::named(node, "collider") || AuxArena::named(node, "navmesh") || AuxArena::named(node, "camera_bounds");
 		if (!helper) return true;
 		node->visit([](Shared<Scene::Actor> part) -> bool
 		{
@@ -65,6 +69,54 @@ void Arena::hide_helpers()
 		});
 		return true;
 	});
+}
+
+void Arena::find_camera_bounds()
+{
+	using namespace Square;
+	//the walls of the camera: "camera_bounds..." meshes (alpha tested: not in the solid mesh
+	//collider of the scene), their own collider of the camera bounds type, one sided (facing in:
+	//the camera comes in from out of them, in them it stays)
+	m_camera_bounds = 0;
+	m_actor->visit([this](Shared<Scene::Actor> node) -> bool
+	{
+		if (!AuxArena::named(node, "camera_bounds")) return true;
+		auto collider = node->component<MeshCollider>();
+		collider->type(TYPE_CAMERA_BOUNDS);
+		collider->solid_only(false);
+		collider->one_sided(true);
+		m_camera_bounds += collider->mesh().size();
+		return false;
+	});
+	if (!m_camera_bounds) m_context.logger()->info("arena has no 'camera_bounds' mesh: the camera goes anywhere");
+	else m_context.logger()->info("arena camera bounds triangles: " + std::to_string(m_camera_bounds));
+}
+
+void Arena::find_water()
+{
+	using namespace Square;
+	//the materials with a water_time (PBRWater), each once
+	m_water.clear();
+	m_actor->visit([this](Shared<Scene::Actor> node) -> bool
+	{
+		if (!node->contains<Scene::StaticMesh>()) return true;
+		for (const auto& material : node->component<Scene::StaticMesh>()->m_materials)
+		{
+			if (!material || !material->parameter_by_name("water_time")) continue;
+			if (std::find(m_water.begin(), m_water.end(), material) == m_water.end()) m_water.push_back(material);
+		}
+		return true;
+	});
+}
+
+void Arena::animate(double time)
+{
+	using namespace Square;
+	const Vec4 seconds(float(std::fmod(time, 3600.0)), 0.0f, 0.0f, 0.0f);
+	for (const auto& material : m_water)
+	{
+		if (auto parameter = material->parameter_by_name("water_time")) parameter->set(seconds);
+	}
 }
 
 void Arena::find_bounds()

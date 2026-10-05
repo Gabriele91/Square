@@ -238,6 +238,7 @@ private:
 		collision->collisions(TYPE_WHEEL, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDEXZ);
 		collision->collisions(TYPE_BODY, TYPE_BODY, CollisionMethod::SPHERE, CollisionResponse::SLIDEXZ);
 		collision->collisions(TYPE_CAMERA, TYPE_SCENE, CollisionMethod::POLYGON, CollisionResponse::SLIDE);
+		collision->collisions(TYPE_CAMERA, TYPE_CAMERA_BOUNDS, CollisionMethod::POLYGON, CollisionResponse::SLIDE);
 		collision->debug(false);
 	}
 

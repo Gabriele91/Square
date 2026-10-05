@@ -14,6 +14,7 @@
 #include <Checkpoints.h>
 #include <HovercraftInput.h>
 #include <HovercraftAI.h>
+#include <HovercraftFans.h>
 #include <CameraFollow.h>
 
 namespace AuxRace
@@ -35,6 +36,9 @@ namespace AuxRace
 			for (auto& material : node->component<Scene::StaticMesh>()->m_materials)
 			{
 				if (!material) continue;
+				//the parts of their own (the skirt, the fans: "hovercraft_..." materials) not painted
+				const std::string& name = material->resource_name();
+				if (name.compare(name.find_last_of('/') + 1, 11, "hovercraft_") == 0) continue;
 				auto own = DynamicPointerCast<Resource::Material>(square_context.resource_instance(material->resource_name()));
 				if (!own) continue;
 				if (auto albedo = own->parameter_by_name("albedo_map")) albedo->set(skin_texture);
@@ -87,7 +91,6 @@ bool Race::load(const RaceMap& map)
 	if (!m_level) return false;
 	m_arena = std::make_unique<Arena>(context());
 	if (!m_arena->load(m_level, map.m_name)) return false;
-	if (auto follow = m_arena->camera_follow()) follow->bounds(map.m_camera_bounds);
 	m_sink = map.m_trails ? s_snow_sink : 0.0f;
 	load_navigation();
 	if (map.m_trails) load_trails();
@@ -209,6 +212,8 @@ void Race::load_hovercraft()
 		// it sets its input (from PLAY: the player its keys, an NPC the light)
 		racer.m_driver = racer.m_actor->component<HovercraftDriver>();
 		racer.m_driver->settings(settings(id));
+		//its fans spin with its speed
+		racer.m_actor->component<HovercraftFans>();
 		// who reaches the light scores
 		if (m_checkpoints) m_checkpoints->add_target(racer.m_actor);
 		m_racers.push_back(racer);
@@ -243,6 +248,9 @@ void Race::unload()
 void Race::on_update(double delta_time)
 {
 	m_phase_time += std::min(delta_time, s_max_frame_time);
+	//the water moves
+	m_water_time += delta_time;
+	if (m_arena) m_arena->animate(m_water_time);
 	//the grooves of the hovercraft in the snow
 	if (m_trails)
 	{

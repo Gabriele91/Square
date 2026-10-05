@@ -10,8 +10,8 @@
 //  It moves in on_update, before the CollisionSystem: with a SphereCollider on the camera, the
 //  collisions stop it on the map before it is drawn.
 //  While the target moves backward it holds its place (it looks at it, like the original).
-//  Its bounds (CameraBounds, x/z): once inside, it stays in them (a wall however high: it does
-//  not go out over the walls of the map); from out of them (the start) it comes in freely.
+//  Its walls are the "camera_bounds..." meshes of the map (one sided colliders of the camera
+//  bounds type, see Arena): from out of them (the start) it comes in, in them it stays.
 //
 #pragma once
 #include <Square/Square.h>
@@ -47,9 +47,6 @@ public:
 	//straight to the pivot (after a teleport of the target, or at the start)
 	void snap();
 
-	//the invisible wall of the camera
-	void bounds(const CameraBounds& bounds) { m_bounds = bounds; }
-	const CameraBounds& bounds() const { return m_bounds; }
 
 	//events
 	virtual void on_update(double delta_time) override;
@@ -63,13 +60,9 @@ public:
 private:
 	//rotation that looks at the target from where the camera is
 	Square::Quat look_at_target() const;
-	//the camera in its bounds, once it is inside them
-	void keep_in_bounds();
 
 	Settings                           m_settings;
 	Square::Weak<Square::Scene::Actor> m_target;
 	Square::Vec3                       m_target_previous{ 0.0f };
 	float                              m_intro{ -1.0f }; //seconds of the start glide (< 0: none)
-	CameraBounds                       m_bounds;
-	bool                               m_in_bounds{ false }; //it was inside: it stays inside
 };

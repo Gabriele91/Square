@@ -6,8 +6,8 @@
 //  - CollisionMesh: triangles in world space, in a tree of boxes (16 per leaf); a sphere
 //    moving along a segment against them: the face, the edges (cylinders) and the vertices
 //    (spheres), the first contact along the segment;
-//  - MeshCollider (component): the triangles of the meshes of its actor and children, and its
-//    collision type;
+//  - MeshCollider (component): the triangles of the meshes of its actor and children (the solid
+//    ones, or every one), its collision type, one sided or not;
 //  - SphereCollider (component): a moving sphere, its collision type, and the collisions of
 //    the last step (contact points and normals);
 //  - CollisionWorld (per world): the rules (source type, destination type, method, response)
@@ -83,6 +83,12 @@ public:
 	//space squeezed on y): the triangles are scaled too
 	bool collide(const Line& line, float radius, Collision& collision, float y_scale = 1.0f) const;
 
+	//one sided: a sphere hits only the front of its triangles (moving against their normal, the
+	//winding of the mesh); from behind it goes through (a wall: out of it free to come in, in it
+	//it does not go out); false: both faces
+	void one_sided(bool one_sided) { m_one_sided = one_sided; }
+	bool one_sided() const { return m_one_sided; }
+
 	//closest hit along origin + t * direction (direction normalized), t in [0, max_distance]
 	bool raycast(const Square::Vec3& origin, const Square::Vec3& direction, float max_distance, Hit& hit) const;
 
@@ -109,6 +115,7 @@ private:
 	};
 	std::vector<Triangle> m_triangles;
 	std::vector<Node>     m_nodes;
+	bool                  m_one_sided{ false };
 
 	void add_triangle(const Square::Vec3& a, const Square::Vec3& b, const Square::Vec3& c);
 	void build();
@@ -198,6 +205,15 @@ public:
 	int type() const { return m_type; }
 	void type(int type) { m_type = type; }
 
+	//its triangles: only the opaque surfaces (true, the default), or every surface (e.g. an
+	//invisible alpha tested wall); before its mesh is built
+	void solid_only(bool solid_only) { m_solid_only = solid_only; }
+	bool solid_only() const { return m_solid_only; }
+
+	//one sided (see CollisionMesh::one_sided)
+	void one_sided(bool one_sided) { m_mesh.one_sided(one_sided); }
+	bool one_sided() const { return m_mesh.one_sided(); }
+
 	//its triangles, in world space
 	const CollisionMesh& mesh();
 
@@ -211,6 +227,7 @@ private:
 	int           m_type{ 0 };
 	CollisionMesh m_mesh;
 	bool          m_built{ false };
+	bool          m_solid_only{ true };
 };
 
 //a component (also a Square::Scene::Component) moved at the fixed steps of the collisions
