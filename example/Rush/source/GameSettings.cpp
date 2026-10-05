@@ -6,6 +6,7 @@
 //
 #include <algorithm>
 #include <sstream>
+#include <Square/Data/Json.h>
 #include <GameSettings.h>
 #include <Graphics.h>
 
@@ -39,47 +40,69 @@ bool GameSettings::operator == (const GameSettings& other) const
 std::string GameSettings::path()
 {
 	using namespace Square::Filesystem;
-	return join(home_dir(), ".rush", "settings.cfg");
+	return join(join(join(app_data_dir(), "square"), "rush"), "setting.json");
+}
+
+namespace AuxGameSettings
+{
+	//a field of the file: its number if it has it, else as it was
+	static int field(const Square::Data::JsonValue& json, const std::string& name, int value)
+	{
+		if (!json.contains(name)) return value;
+		const auto& field = json[name];
+		if (field.is_number())  return int(field.number());
+		if (field.is_boolean()) return field.boolean() ? 1 : 0;
+		return value;
+	}
+
+	static bool field(const Square::Data::JsonValue& json, const std::string& name, bool value)
+	{
+		return field(json, name, int(value)) != 0;
+	}
 }
 
 bool GameSettings::load()
 {
 	using namespace Square;
+	using AuxGameSettings::field;
 	const std::string file = path();
 	if (!Filesystem::exists(file)) return false;
-	std::istringstream lines(Filesystem::text_file_read_all(file));
-	std::string name;
-	int value = 0;
-	while (lines >> name >> value)
-	{
-		if      (name == "fullscreen")  m_fullscreen = value != 0;
-		else if (name == "resolution")  m_resolution = std::clamp(value, 0, s_resolutions_count - 1);
-		else if (name == "show_fps")    m_show_fps = value != 0;
-		else if (name == "reflections") m_reflections = std::clamp(value, 0, 2);
-		else if (name == "occlusion")   m_occlusion = std::clamp(value, 0, 2);
-		else if (name == "shadows")     m_shadows = std::clamp(value, 0, 2);
-		else if (name == "bloom")       m_bloom = value != 0;
-		else if (name == "weather")     m_weather = value != 0;
-		else if (name == "antialiasing") m_antialiasing = value != 0;
-	}
+	Data::Json json;
+	if (!json.parser(Filesystem::text_file_read_all(file)) || !json.document().is_object()) return false;
+	const Data::JsonValue& root = json.document();
+	m_fullscreen   = field(root, "fullscreen", m_fullscreen);
+	m_resolution   = std::clamp(field(root, "resolution", m_resolution), 0, s_resolutions_count - 1);
+	m_show_fps     = field(root, "show_fps", m_show_fps);
+	m_reflections  = std::clamp(field(root, "reflections", m_reflections), 0, 2);
+	m_occlusion    = std::clamp(field(root, "occlusion", m_occlusion), 0, 2);
+	m_shadows      = std::clamp(field(root, "shadows", m_shadows), 0, 2);
+	m_bloom        = field(root, "bloom", m_bloom);
+	m_weather      = field(root, "weather", m_weather);
+	m_antialiasing = field(root, "antialiasing", m_antialiasing);
 	return true;
 }
 
 bool GameSettings::save() const
 {
 	using namespace Square;
-	Filesystem::makedir(Filesystem::get_directory(path()));
-	std::ostringstream lines;
-	lines << "fullscreen "  << int(m_fullscreen) << "\n"
-	      << "resolution "  << m_resolution << "\n"
-	      << "show_fps "    << int(m_show_fps) << "\n"
-	      << "reflections " << m_reflections << "\n"
-	      << "occlusion "   << m_occlusion << "\n"
-	      << "shadows "     << m_shadows << "\n"
-	      << "bloom "       << int(m_bloom) << "\n"
-	      << "weather "     << int(m_weather) << "\n"
-	      << "antialiasing " << int(m_antialiasing) << "\n";
-	return Filesystem::text_file_write_all(path(), lines.str());
+	//its folders: <home>/square, <home>/square/rush (one at a time)
+	const std::string rush = Filesystem::get_directory(path());
+	const std::string square = Filesystem::get_directory(rush);
+	if (!Filesystem::exists(square)) Filesystem::makedir(square);
+	if (!Filesystem::exists(rush)) Filesystem::makedir(rush);
+	std::ostringstream text;
+	text << "{\n";
+	text << "\t\"fullscreen\": " << (m_fullscreen ? "true" : "false") << ",\n";
+	text << "\t\"resolution\": " << m_resolution << ",\n";
+	text << "\t\"show_fps\": " << (m_show_fps ? "true" : "false") << ",\n";
+	text << "\t\"reflections\": " << m_reflections << ",\n";
+	text << "\t\"occlusion\": " << m_occlusion << ",\n";
+	text << "\t\"shadows\": " << m_shadows << ",\n";
+	text << "\t\"bloom\": " << (m_bloom ? "true" : "false") << ",\n";
+	text << "\t\"weather\": " << (m_weather ? "true" : "false") << ",\n";
+	text << "\t\"antialiasing\": " << (m_antialiasing ? "true" : "false") << "\n";
+	text << "}\n";
+	return Filesystem::text_file_write_all(path(), text.str());
 }
 
 void GameSettings::apply_window() const
@@ -87,11 +110,23 @@ void GameSettings::apply_window() const
 	using namespace Square;
 	auto* app = Application::instance();
 	if (!app) return;
-	if (app->fullscreen() != m_fullscreen) app->fullscreen(m_fullscreen);
-	//the size of the window (in the fullscreen: the one of the screen)
-	if (m_fullscreen) return;
 	const IVec2 size = s_resolutions[std::clamp(m_resolution, 0, s_resolutions_count - 1)];
-	if (app->window_size() != size) app->window_size(size);
+	if (m_fullscreen)
+	{
+		//the mode of the screen: the size of the window as it goes fullscreen (another size:
+		//out of the fullscreen, its size, in again)
+		if (app->fullscreen() && app->window_size() != size) app->fullscreen(false);
+		if (!app->fullscreen())
+		{
+			if (app->window_size() != size) app->window_size(size);
+			app->fullscreen(true);
+		}
+	}
+	else
+	{
+		if (app->fullscreen()) app->fullscreen(false);
+		if (app->window_size() != size) app->window_size(size);
+	}
 }
 
 void GameSettings::apply_effects(Graphics& graphics) const

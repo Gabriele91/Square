@@ -4,8 +4,9 @@
 //
 //  The settings of the game chosen in the title (Settings): the display (fullscreen, the size
 //  of the window, the frames per second shown) and the effects (reflections, ambient occlusion,
-//  shadows, bloom, the falling snow). Saved in the home of the user (.rush/settings.cfg: a line
-//  "name value" each) at every change, loaded at the start.
+//  shadows, bloom, the falling snow). Saved in the data of the user (square/rush/setting.json in
+//  Filesystem::app_data_dir: %APPDATA% on Windows)
+//  at every change, loaded at the start.
 //
 #pragma once
 #include <string>
