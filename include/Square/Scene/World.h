@@ -48,13 +48,16 @@ namespace Scene
 		const std::string& name() const;
 		void name(const std::string&);
 
-		//a new level of this world (the world is created with MakeShared: its levels keep it weak)
-		Shared<Level> level();
-
-		//query
+		//a new level of this world, named or not (the world is created with MakeShared: its levels
+		//keep it weak)
+		Shared<Level> create_level(const std::string& name = std::string());
+		//query (nullptr: no such level)
 		Shared<Level> level(size_t index);
 		Shared<Level> level(const std::string& name);
 		const LevelList& levels() const;
+		//the levels that run (updated, in the systems: render, collisions...): the ones named,
+		//the others not. The levels of a game are made once and switched (the menu, a race...)
+		void active_levels(const std::vector<std::string>& names);
 		Shared<Actor> find_actor(const std::string& name);
 
 		//contains an actor

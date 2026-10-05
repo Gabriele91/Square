@@ -37,7 +37,7 @@ namespace Scene
 		//Registration in context
 		static void object_registration(Context& ctx);
 
-		//constructor: a level is always of a world (World::level creates it)
+		//constructor: a level is always of a world (World::create_level creates it)
 		Level(Context& context, Weak<World> world, const std::string& name = std::string());
 		virtual ~Level();
 
