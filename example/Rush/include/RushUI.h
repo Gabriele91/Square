@@ -112,6 +112,7 @@ private:
 		int            m_winning_score{ s_winning_score };
 		int            m_scores[s_racers]{ 0, 0, 0, 0 };
 		int            m_speed{ 0 };
+		std::string    m_speed_bar{ "0%" }; //the width of its bar (of the HUD)
 		std::string    m_message;               //the start: 3, 2, 1, GO!
 		bool           m_message_visible{ false };
 		std::string    m_result;                //the end: win or lose

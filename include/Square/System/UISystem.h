@@ -56,6 +56,12 @@ namespace UI
 		//the render profiler is compiled in the engine
 		bool has_profiler() const;
 
+		//the size of the window the documents are made for: their dp scaled to the window (the
+		//smaller of the ratios of its width and its height: the proportions kept, all in the
+		//window); 0: a dp a pixel
+		void reference_size(const IVec2& size);
+		const IVec2& reference_size() const;
+
 	protected:
 		//InputListener
 		virtual void on_key(Video::KeyboardEvent key, short mode, Video::ActionEvent action) override;
@@ -71,5 +77,6 @@ namespace UI
 		UI::Context                  m_ui;
 		int                          m_modifiers{ 0 };
 		bool                         m_wants_mouse{ false };
+		IVec2                        m_reference_size{ 0, 0 };
 	};
 }

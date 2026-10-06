@@ -4,6 +4,7 @@
 //
 //  See RushUI.h.
 //
+#include <algorithm>
 #include <cmath>
 #include <RushUI.h>
 #include <Race.h>
@@ -29,6 +30,8 @@ bool RushUI::create()
 	using namespace Square;
 	auto* ui_system = System::get<UISystem>(m_context);
 	if (!ui_system || !ui_system->ui().valid()) return false;
+	//the documents made for 1920x1080: scaled to the window, their proportions kept
+	ui_system->reference_size({ 1920, 1080 });
 	UI::Context::load_font("common/ui/LatoLatin-Regular.ttf");
 	UI::Context::load_font("common/ui/LatoLatin-Bold.ttf");
 	//the model (before the documents)
@@ -39,6 +42,7 @@ bool RushUI::create()
 	m_model.bind("score_green", &m_state.m_scores[2]);
 	m_model.bind("score_yellow", &m_state.m_scores[3]);
 	m_model.bind("speed", &m_state.m_speed);
+	m_model.bind("speed_bar", &m_state.m_speed_bar);
 	m_model.bind("message", &m_state.m_message);
 	m_model.bind("message_visible", &m_state.m_message_visible);
 	m_model.bind("result", &m_state.m_result);
@@ -337,6 +341,7 @@ void RushUI::update_hud(const Race& race)
 		m_state.m_scores[id] = racers[id].m_score;
 	}
 	m_state.m_speed = race.player_speed();
+	m_state.m_speed_bar = std::to_string(std::clamp(m_state.m_speed, 0, 100)) + "%";
 	//the phase: the countdown of the start, GO! for a while, the result of the end
 	m_state.m_message_visible = false;
 	m_state.m_result_visible = false;
