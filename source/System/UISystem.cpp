@@ -4,6 +4,7 @@
 //
 //  See UISystem.h.
 //
+#include <algorithm>
 #include <RmlUi/Core.h>
 #include <RmlUi/Debugger.h>
 #include "Square/Core/Context.h"
@@ -179,6 +180,15 @@ namespace Square
 			const IVec2 size = window_size(context());
 			if (size.x > 0 && size.y > 0 && size != m_ui.size())
 				ui_context->SetDimensions(Rml::Vector2i(size.x, size.y));
+			//its dp: of the size of reference (if any) to the one of the window
+			if (size.x > 0 && size.y > 0)
+			{
+				float ratio = 1.0f;
+				if (m_reference_size.x > 0 && m_reference_size.y > 0)
+					ratio = std::min(float(size.x) / float(m_reference_size.x), float(size.y) / float(m_reference_size.y));
+				if (ratio != ui_context->GetDensityIndependentPixelRatio())
+					ui_context->SetDensityIndependentPixelRatio(ratio);
+			}
 			//the profiler panel: its rows before the update (their layout)
 			if (m_profiler_panel) m_profiler_panel->update();
 			// Update
@@ -209,6 +219,16 @@ namespace Square
 			m_profiler_panel = std::make_unique<UI::ProfilerPanel>(context(), m_ui);
 		}
 		m_profiler_panel->show(visible);
+	}
+
+	void UISystem::reference_size(const IVec2& size)
+	{
+		m_reference_size = size;
+	}
+
+	const IVec2& UISystem::reference_size() const
+	{
+		return m_reference_size;
 	}
 
 	bool UISystem::profiler() const
