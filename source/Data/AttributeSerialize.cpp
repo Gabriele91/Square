@@ -5,43 +5,105 @@
 //  Created by Gabriele Di Bari on 14/11/17.
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
+#include <sstream>
 #include "Square/Data/AttributeSerialize.h"
 
 namespace Square
 {
 namespace  Data
 {
+    namespace AuxAttributeSerialize
+    {
+        //an attribute of the files
+        inline bool in_file(const Attribute& attribute)
+        {
+            return (attribute.type() & Attribute::Type::FILE) != 0;
+        }
+
+        //an attribute of the files by its name, nullptr if the object has not it
+        const Attribute* find(const std::vector < Attribute >& attributes, const std::string& name)
+        {
+            for (const Attribute& attribute : attributes)
+            {
+                if (in_file(attribute) && attribute.name() == name) return &attribute;
+            }
+            return nullptr;
+        }
+
+        //the format 0: the values one after another, in the order of the attributes
+        bool deserialize_in_order(Archive& archive, Object* object, const std::vector < Attribute >& attributes)
+        {
+            for (const Attribute& attribute : attributes)
+            {
+                if (!in_file(attribute)) continue;
+                Variant value(attribute.value_type());
+                archive % value.as_variant_ref();
+                attribute.set(object, value.as_variant_ref());
+            }
+            return true;
+        }
+    }
+
     SQUARE_API bool attribute_serialize(Archive& archive, const Object* object, const std::vector < Attribute >* attributes)
     {
 		if (!attributes) return false;
-        //serialize
-        for(const Attribute& attr : *attributes)
-        if (attr.type() & Attribute::Type::FILE)
+        //their count, each one by name, its value in a block (unknown to the reader: skipped)
+        uint32 count = 0;
+        for (const Attribute& attribute : *attributes)
         {
-            //get
+            if (AuxAttributeSerialize::in_file(attribute)) ++count;
+        }
+        archive % count;
+        for (const Attribute& attribute : *attributes)
+        {
+            if (!AuxAttributeSerialize::in_file(attribute)) continue;
+            //its value
             VariantRef value;
-            attr.get(object, value);
-            //serialize
-            archive % value;
+            attribute.get(object, value);
+            std::ostringstream bytes(std::ios::out | std::ios::binary);
+            ArchiveBinWrite block(archive.context(), bytes, false);
+            block % value;
+            //its name, its block
+            std::string data = bytes.str();
+            archive % attribute.name();
+            archive.block(data);
         }
         return true;
     }
-    
+
     SQUARE_API bool attribute_deserialize(Archive& archive, Object* object, const std::vector < Attribute >* attributes)
     {
 		if (!attributes) return false;
-        //deserialize
-        for(const Attribute& attr : *attributes)
-        if (attr.type() & Attribute::FILE)
+        if (archive.version() == 0) return AuxAttributeSerialize::deserialize_in_order(archive, object, *attributes);
+        //by name: one the object has not (removed, renamed) skipped, one not in the stream (new)
+        //as it is
+        uint32 count = 0;
+        archive % count;
+        for (uint32 i = 0; i != count; ++i)
         {
-            //deserialize
-            Variant value(attr.value_type());
-            archive % value.as_variant_ref();
-            //set
-            attr.set(object, value.as_variant_ref());
+            std::string name;
+            std::string data;
+            archive % name;
+            archive.block(data);
+            const Attribute* attribute = AuxAttributeSerialize::find(*attributes, name);
+            if (!attribute) continue;
+            //its value: one not read (another type, a resource not found) as it is
+            try
+            {
+                std::istringstream bytes(data, std::ios::in | std::ios::binary);
+                ArchiveBinRead block(archive.context(), bytes, archive.version());
+                Variant value(attribute->value_type());
+                block % value.as_variant_ref();
+                attribute->set(object, value.as_variant_ref());
+            }
+            catch (const std::exception& error)
+            {
+                archive.context().logger()->warning("Attribute " + name + " not read: " + error.what());
+            }
         }
         return true;
     }
+
 
     namespace AuxSerializeJson
     {

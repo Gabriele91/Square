@@ -101,6 +101,11 @@ template class SQUARE_API std::vector< std::string >;
 #define square_assert(x) assert(x)
 #endif
 /////////////////////////////////////////////////////////////////////////////
+// VERSION of the engine (in the header of its binary archives)
+#define SQUARE_VERSION_MAJOR 0
+#define SQUARE_VERSION_MINOR 1
+#define SQUARE_VERSION_PATCH 0
+/////////////////////////////////////////////////////////////////////////////
 // TYPES
 namespace Square
 {

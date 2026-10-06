@@ -89,8 +89,12 @@ namespace Scene
             {
                 //serialize name
                 archive % component.second->object_name();
-                //serialize component
-                component.second->serialize(archive);
+                //serialize component, in a block (unknown to the reader: skipped)
+                std::ostringstream bytes(std::ios::out | std::ios::binary);
+                Data::ArchiveBinWrite block(context(), bytes, false);
+                component.second->serialize(block);
+                std::string data = bytes.str();
+                archive.block(data);
             }
         }
         //serialize childs
@@ -154,10 +158,26 @@ namespace Scene
                 std::string name;
                 //serialize name
                 archive % name;
-                //new component
+                //the format 0: in the stream, it must be known
+                if (archive.version() == 0)
+                {
+                    Shared<Component> component = this->component(name);
+                    if (!component) throw std::runtime_error("Actor, unknown component: " + name);
+                    component->deserialize(archive);
+                    continue;
+                }
+                //its block: unknown, skipped
+                std::string data;
+                archive.block(data);
                 Shared<Component> component = this->component(name);
-                //deserialize component
-                component->deserialize(archive);
+                if (!component)
+                {
+                    context().logger()->warning("Actor " + m_name + ", unknown component skipped: " + name);
+                    continue;
+                }
+                std::istringstream bytes(data, std::ios::in | std::ios::binary);
+                Data::ArchiveBinRead block(context(), bytes, archive.version());
+                component->deserialize(block);
             }
         }
         //deserialize childs

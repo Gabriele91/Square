@@ -11,7 +11,8 @@
 
 // Resource names taken from the model (Blender object/material/image names), made safe for a
 // file name and unique: a "_2", "_3"... suffix is added only when two names really clash.
-// The names are local to the model folder: the engine resolves them from there first.
+// Lowercase: the same file on any filesystem (Linux, macOS case sensitive: "Box.mat" is not
+// "box.mat"). The names are local to the model folder: the engine resolves them from there first.
 class UniqueNames
 {
     std::unordered_set<std::string> m_used;
@@ -19,9 +20,11 @@ class UniqueNames
     static std::string sanitize(const std::string& name)
     {
         std::string out;
+        out.reserve(name.size());
         for (const char c : name)
         {
-            out += (std::isalnum((unsigned char)c) || c == '_' || c == '-') ? c : '_';
+            const unsigned char letter = (unsigned char)c;
+            out += (std::isalnum(letter) || c == '_' || c == '-') ? char(std::tolower(letter)) : '_';
         }
         return out;
     }
