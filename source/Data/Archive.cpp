@@ -4,6 +4,7 @@
 //  Created by Gabriele Di Bari on 13/11/17.
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
+#include <cstring>
 #include "Square/Data/Archive.h"
 #include "Square/Core/Application.h"
 
@@ -11,6 +12,37 @@ namespace Square
 {
 namespace Data
 {
+    namespace AuxArchive
+    {
+        //the magic of the header
+        constexpr char s_magic[4]{ 'S', 'Q', 'A', 'R' };
+
+        //the type in the stream of a value (format 1): of a size by any compiler
+        inline VariantType stored_type(VariantType type)
+        {
+            switch (type)
+            {
+            case VR_LONG:                  return VR_LONGLONG;
+            case VR_ULONG:                 return VR_ULONGLONG;
+            case VR_LONG_DOUBLE:           return VR_DOUBLE;
+            case VR_STD_VECTOR_LONG:       return VR_STD_VECTOR_LONGLONG;
+            case VR_STD_VECTOR_ULONG:      return VR_STD_VECTOR_ULONGLONG;
+            case VR_STD_VECTOR_LONG_DOUBLE:return VR_STD_VECTOR_DOUBLE;
+            default:                       return type;
+            }
+        }
+
+        //a vector of another type
+        template < class To, class From >
+        std::vector< To > convert(const std::vector< From >& from)
+        {
+            std::vector< To > to;
+            to.reserve(from.size());
+            for (const From& value : from) to.push_back(To(value));
+            return to;
+        }
+    }
+
     template < class T >
     std::ostream& operator < (std::ostream& ostream, const T& value)
     {
@@ -84,9 +116,53 @@ namespace Data
         return ostream;
     }
     
-    ArchiveBinWrite::ArchiveBinWrite(Context& context, std::ostream& stream) : Archive(context), m_stream(stream) {}
+    ArchiveBinWrite::ArchiveBinWrite(Context& context, std::ostream& stream, bool header) : Archive(context), m_stream(stream)
+    {
+        if (!header) return;
+        m_stream.write(AuxArchive::s_magic, sizeof(AuxArchive::s_magic));
+        m_stream < uint32(format_version);
+        m_stream < uint32(SQUARE_VERSION_MAJOR);
+        m_stream < uint32(SQUARE_VERSION_MINOR);
+        m_stream < uint32(SQUARE_VERSION_PATCH);
+    }
+
+    Archive& ArchiveBinWrite::block(std::string& data)
+    {
+        m_stream < data;
+        return *this;
+    }
+
     Archive& ArchiveBinWrite::operator % (VariantRef value)
     {
+        //the types of the compiler: of their size by any compiler
+        switch (value.get_type())
+        {
+            case Square::VR_LONG:
+                m_stream < int(VR_LONGLONG);
+                m_stream < (long long)(value.get<long>());
+            return *this;
+            case Square::VR_ULONG:
+                m_stream < int(VR_ULONGLONG);
+                m_stream < (unsigned long long)(value.get<unsigned long>());
+            return *this;
+            case Square::VR_LONG_DOUBLE:
+                m_stream < int(VR_DOUBLE);
+                m_stream < double(value.get<long double>());
+            return *this;
+            case Square::VR_STD_VECTOR_LONG:
+                m_stream < int(VR_STD_VECTOR_LONGLONG);
+                m_stream < AuxArchive::convert<long long>(value.get<std::vector<long>>());
+            return *this;
+            case Square::VR_STD_VECTOR_ULONG:
+                m_stream < int(VR_STD_VECTOR_ULONGLONG);
+                m_stream < AuxArchive::convert<unsigned long long>(value.get<std::vector<unsigned long>>());
+            return *this;
+            case Square::VR_STD_VECTOR_LONG_DOUBLE:
+                m_stream < int(VR_STD_VECTOR_DOUBLE);
+                m_stream < AuxArchive::convert<double>(value.get<std::vector<long double>>());
+            return *this;
+            default: break;
+        }
         //type
         m_stream < int(value.get_type());
         //serialize
@@ -264,13 +340,98 @@ namespace Data
         return istream;
     }
     
-    ArchiveBinRead::ArchiveBinRead(Context& context, std::istream& stream) : Archive(context), m_stream(stream) {}
+    ArchiveBinRead::ArchiveBinRead(Context& context, std::istream& stream) : Archive(context, 0), m_stream(stream)
+    {
+        //its header, if it has it (else the format 0: from its start)
+        const std::streampos start = m_stream.tellg();
+        char magic[sizeof(AuxArchive::s_magic)]{};
+        m_stream.read(magic, sizeof(magic));
+        if (!m_stream || std::memcmp(magic, AuxArchive::s_magic, sizeof(magic)) != 0)
+        {
+            m_stream.clear();
+            m_stream.seekg(start);
+            return;
+        }
+        uint32 version = 0, major = 0, minor = 0, patch = 0;
+        m_stream > version;
+        m_stream > major;
+        m_stream > minor;
+        m_stream > patch;
+        m_engine_version = std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch);
+        //a format of a newer engine
+        if (version > format_version)
+            throw std::runtime_error("ArchiveBinRead, format " + std::to_string(version) + " of the engine " + m_engine_version + ", newer than this one");
+        m_version = version;
+    }
+
+    ArchiveBinRead::ArchiveBinRead(Context& context, std::istream& stream, uint32 version) : Archive(context, version), m_stream(stream)
+    {
+    }
+
+    Archive& ArchiveBinRead::block(std::string& data)
+    {
+        m_stream > data;
+        if (!m_stream) throw std::runtime_error("ArchiveBinRead, a block past the end of the stream");
+        return *this;
+    }
+
     Archive& ArchiveBinRead::operator % (VariantRef value)
     {
         //Type
         int type;
         //get type
         m_stream > type;
+        //the types of the compiler, stored of their size by any compiler (format 1)
+        if (m_version >= 1 && type != value.get_type() && type == AuxArchive::stored_type(value.get_type()))
+        {
+            switch (value.get_type())
+            {
+                case Square::VR_LONG:
+                {
+                    long long stored = 0;
+                    m_stream > stored;
+                    value.get<long>() = long(stored);
+                }
+                break;
+                case Square::VR_ULONG:
+                {
+                    unsigned long long stored = 0;
+                    m_stream > stored;
+                    value.get<unsigned long>() = (unsigned long)(stored);
+                }
+                break;
+                case Square::VR_LONG_DOUBLE:
+                {
+                    double stored = 0.0;
+                    m_stream > stored;
+                    value.get<long double>() = stored;
+                }
+                break;
+                case Square::VR_STD_VECTOR_LONG:
+                {
+                    std::vector<long long> stored;
+                    m_stream > stored;
+                    value.get<std::vector<long>>() = AuxArchive::convert<long>(stored);
+                }
+                break;
+                case Square::VR_STD_VECTOR_ULONG:
+                {
+                    std::vector<unsigned long long> stored;
+                    m_stream > stored;
+                    value.get<std::vector<unsigned long>>() = AuxArchive::convert<unsigned long>(stored);
+                }
+                break;
+                case Square::VR_STD_VECTOR_LONG_DOUBLE:
+                {
+                    std::vector<double> stored;
+                    m_stream > stored;
+                    value.get<std::vector<long double>>() = AuxArchive::convert<long double>(stored);
+                }
+                break;
+                default: break;
+            }
+            return *this;
+        }
         //error
         if(type != value.get_type())  throw std::runtime_error("ArchiveBinRead, Not valid type");
         //serialize
