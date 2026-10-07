@@ -120,4 +120,6 @@ void fragment(in FragmentShaderinput input)
 	//albedo/albedo
 	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
     if (albedo_color.a <= mask_shadow) discard;
+    //its level of detail fading in or out
+    lod_fade_clip(input.m_position.xy);
 }

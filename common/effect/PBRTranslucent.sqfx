@@ -22,6 +22,8 @@ parameters
     //1 = lit without the shadows of the lights (glows, light beams); only forward/translucent passes
     ignore_shadows float(0.0)
     dither       float(0.0)
+    //light of the sun through it (thin: leaves, cards), 0 none, 1 all
+    translucency float(0.0)
 }
 
 //Translucent PBR: alpha blended, drawn after the opaque scene, back to front.

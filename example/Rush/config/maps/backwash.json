@@ -2,6 +2,7 @@
 	"title": "Backwash",
 	"description": "the swamp (origial_assets/backwash): green, dense on the water, thin over the trees",
 	"mode": "arena",
+	"camera": { "near": 0.1, "far": 600.0 },
 	"fog": {
 		"color": [0.17, 0.21, 0.12],
 		"density": 0.012,

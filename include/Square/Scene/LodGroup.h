@@ -13,6 +13,9 @@
 //    thresholds[i] (they go up: 100, 200, 400).
 //  Its bounds (center, size: the largest side of the box of its renderables, in the space of its
 //  actor) from its renderables when not given.
+//  A change of level is a cross-fade (as Unity's animated cross-fade): for fade_duration seconds
+//  both levels are drawn, the pixels of a pattern of the screen going from one to the other
+//  (Render::Renderable::lod_fade); also a level that appears or goes (culled).
 //
 #pragma once
 #include "Square/Config.h"
@@ -65,6 +68,11 @@ namespace Scene
 
 		//the level drawn by the last camera (levels().size(): none)
 		size_t shown() const { return m_shown; }
+
+		//the seconds of a cross-fade of all the groups (0: a level at once)
+		static void  fade_duration(float seconds);
+		static float fade_duration();
+
 		//the level of a camera (by the mode)
 		size_t level(const Square::Render::Camera& camera) const;
 
@@ -95,7 +103,9 @@ namespace Scene
 		//the renderables of each level, found when needed (none yet, or one gone)
 		bool found() const;
 		void find();
+		//the level of a camera: a cross-fade to it (or at once), its renderables faded
 		void show(size_t level);
+		void apply();
 
 		LodMode                  m_mode{ LodMode::SCREEN };
 		std::vector<Level>       m_levels;
@@ -103,7 +113,11 @@ namespace Scene
 		float                    m_size{ 0.0f };
 		std::vector<Renderables> m_renderables;
 		bool                     m_found{ false };
-		size_t                   m_shown{ ~size_t(0) }; //(none applied yet)
+		size_t                   m_shown{ ~size_t(0) };    //(none applied yet)
+		size_t                   m_previous{ ~size_t(0) }; //the level fading out (none)
+		float                    m_fade{ 1.0f };           //how far the cross-fade is (1 done)
+		double                   m_time{ -1.0 };           //of the last select (seconds)
+		bool                     m_applied{ false };       //the fades of now on its renderables
 	};
 }
 }

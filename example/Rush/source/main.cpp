@@ -9,6 +9,7 @@
 //  (DemoTools, the full Esc menu).
 //
 #define SQUARE_MAIN
+#include <algorithm>
 #include <memory>
 #include <Square/Square.h>
 #include <RushTypes.h>
@@ -22,6 +23,23 @@
 #include <RushConfig.h>
 
 using namespace Rush;
+
+namespace AuxMain
+{
+	//the reach of the shadows of a map as far as its camera sees it: min(the largest side of the
+	//map, the far of the camera; none: the map)
+	static float shadow_view(const Arena& arena)
+	{
+		using namespace Square;
+		const Vec3  sides = arena.max() - arena.min();
+		const float map = std::max({ sides.x, sides.y, sides.z });
+		auto camera_actor = arena.camera();
+		if (!camera_actor || !camera_actor->contains<Scene::Camera>()) return map;
+		const float camera_far = camera_actor->component<Scene::Camera>()->viewport().near_and_far().y;
+		if (camera_far <= 0.0f) return map;
+		return std::min(map, camera_far);
+	}
+}
 
 class RushGame : public Square::AppInterface
 {
@@ -220,7 +238,7 @@ private:
 		m_graphics.snow(map.m_snow);
 		m_graphics.race_depth_of_field(true);
 		m_graphics.antialiasing(m_ui.settings().m_antialiasing);
-		m_ui.settings().apply_shadows(m_race->arena().sun());
+		m_ui.settings().apply_shadows(m_race->arena().sun(), AuxMain::shadow_view(m_race->arena()));
 		if (m_demo) m_demo->race_started(m_race->arena());
 		m_state = m_next = State::RACE;
 	}

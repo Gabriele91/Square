@@ -1,0 +1,43 @@
+{
+	"description": "The levels of the graphics settings of the title: for each effect, a level sets the fields of the settings of its engine effect (the same names; the ones not written stay as they are). resolution: full, half, quarter. blur: reflections off, low, medium, high; occlusion off, very_low, low, medium, high. god_rays: volumetric (the shadow map of the sun: steps, max_distance, anisotropy, air), color [r, g, b], intensity, resolution; on the screen (no shadow): threshold, sun_radius, density, decay, weight, samples, fade. shadows: filter none, pcf, pcss; map_scale: the size of the shadow map, a scale of the map's (2048: 0.5 is 1024, 2 is 4096; at most 8192). distance a share of the shadow distance of the map (0: the whole map as far as the camera sees it, min(the largest side of the map, the far of the camera)).",
+	"reflections": {
+		"super_low": { "resolution": "quarter", "steps": 20, "max_distance": 40.0, "blur": "low", "denoise": false },
+		"low":       { "resolution": "quarter", "steps": 40, "max_distance": 60.0, "blur": "medium", "denoise": false },
+		"medium":    { "resolution": "half", "steps": 28, "max_distance": 50.0, "blur": "low", "denoise": false },
+		"high":      { "resolution": "half", "steps": 40, "max_distance": 60.0, "blur": "medium", "denoise": false },
+		"ultra":     { "resolution": "full", "steps": 64, "max_distance": 90.0, "blur": "medium", "denoise": true },
+		"best":     { "resolution": "full", "steps": 128, "max_distance": 128.0, "blur": "high", "denoise": true }
+	},
+	"occlusion": {
+		"low":    { "resolution": "quarter", "blur": "low", "max_pixels": 32.0 },
+		"medium": { "resolution": "half", "blur": "low", "max_pixels": 32.0 },
+		"high":   { "resolution": "half", "blur": "medium", "max_pixels": 48.0 },
+		"ultra":  { "resolution": "full", "blur": "high", "max_pixels": 64.0 },
+		"best":  { "resolution": "full", "blur": "high", "max_pixels": 128.0 }
+	},
+	"bloom": {
+		"low":    { "levels": 3, "intensity": 0.28, "scatter": 0.6 },
+		"medium": { "levels": 5, "intensity": 0.35, "scatter": 0.7 },
+		"high":   { "levels": 6, "intensity": 0.38, "scatter": 0.75 }
+	},
+	"motion_blur": {
+		"low":  { "shutter": 0.35, "max_pixels": 28.0, "samples": 8 },
+		"medium":  { "shutter": 0.5, "max_pixels": 32.0, "samples": 12 },
+		"high": { "shutter": 0.6, "max_pixels": 48.0, "samples": 16 }
+	},
+	"god_rays": {
+		"low":    { "resolution": "quarter", "steps": 16, "max_distance": 80.0, "intensity": 0.1, "anisotropy": 0.45 },
+		"medium": { "resolution": "half", "steps": 24, "max_distance": 100.0, "intensity": 0.1, "anisotropy": 0.45 },
+		"high":   { "resolution": "half", "steps": 40, "max_distance": 120.0, "intensity": 0.1, "anisotropy": 0.45 },
+		"ultra":  { "resolution": "half", "steps": 64, "max_distance": 160.0, "intensity": 0.1, "anisotropy": 0.45 },
+		"best":  { "resolution": "full", "steps": 64, "max_distance": 160.0, "intensity": 0.1, "anisotropy": 0.45 }
+	},
+	"shadows": {
+		"very_low": { "filter": "none", "cascades": 2, "distance": 1.0, "map_scale": 0.5 },
+		"low":      { "filter": "pcf", "cascades": 3, "distance": 1.0, "map_scale": 1.0 },
+		"medium":   { "filter": "pcf", "cascades": 4, "distance": 1.6, "map_scale": 1.0 },
+		"high":     { "filter": "pcss", "cascades": 4, "distance": 1.6, "map_scale": 2.0 },
+		"ultra":    { "filter": "pcss", "cascades": 6, "distance": 3.0, "map_scale": 3.0 },
+		"best":     { "filter": "pcss", "cascades": 8, "distance": 3.0, "map_scale": 4.0 }
+	}
+}

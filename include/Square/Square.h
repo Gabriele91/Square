@@ -84,6 +84,7 @@
 #include "Square/Render/PostEffectFog.h"
 #include "Square/Render/PostEffectDOF.h"
 #include "Square/Render/PostEffectMotionBlur.h"
+#include "Square/Render/PostEffectGodRays.h"
 #include "Square/Render/PostEffectFXAA.h"
 #include "Square/Render/PostEffectSnow.h"
 #include "Square/Render/Profiler.h"

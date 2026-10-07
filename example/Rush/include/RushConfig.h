@@ -11,11 +11,14 @@
 //   - surfaces.json: the grips of the grounds (by their names: ground, dirt, sand, mud, shallow,
 //     water, ice);
 //   - maps/<name>.json: a map (RaceMap: its title, mode, laps, snow, trails, wakes, fog, zones);
-//     one without its scene (assets/<name>.sqz) is not in the title.
+//     one without its scene (assets/<name>.sqz) is not in the title;
+//   - graphics.json: the levels of the graphics settings (reflections, occlusion, bloom, motion
+//     blur, shadows): a level sets the fields of the settings of its effect (by their names).
 //  A file missing or wrong: its values as the defaults here (a warning).
 //
 #pragma once
 #include <array>
+#include <map>
 #include <string>
 #include <vector>
 #include <Square/Square.h>
@@ -24,6 +27,10 @@
 
 namespace Rush
 {
+	//the effects of the graphics with levels (graphics.json: their names, the keys of the
+	//settings of the player)
+	inline constexpr const char* s_graphics_effects[]{ "reflections", "occlusion", "shadows", "bloom", "motion_blur", "god_rays" };
+
 	//the engine of a hovercraft, shares of the driver's: acceleration, top speed, drag
 	struct Engine
 	{
@@ -76,6 +83,26 @@ namespace Rush
 		float m_acceleration{ 2.5f };
 	};
 
+	//the shadows of the sun of a level of the graphics: its filter, its cascades, its distance (a
+	//share of the shadow distance of the map; 0: the whole map as far as the camera sees it,
+	//min(the largest side of the map, the far of the camera)), its shadow map (a scale of the size
+	//of the map's, from 128 to 8192: each cascade a layer of it, 8192 x 8192 x 4 bytes = 256 MB)
+	struct ShadowSettings
+	{
+		Square::Render::ShadowFilter m_filter{ Square::Render::ShadowFilter::PCSS };
+		int                          m_cascades{ DIRECTION_SHADOW_CSM_DEFAULT_FACES };
+		float                        m_distance{ 1.0f };
+		float                        m_map_scale{ 1.0f };
+	};
+
+	//a level of an effect of the graphics (graphics.json): its name ("ultra"), its title in the
+	//menu (its "title", else from its name: "Ultra")
+	struct GraphicsLevel
+	{
+		std::string m_name;
+		std::string m_title;
+	};
+
 	class Config
 	{
 	public:
@@ -107,11 +134,27 @@ namespace Rush
 		//a map by its name (nullptr: none)
 		const RaceMap* map(const std::string& name) const;
 
+		//the levels of an effect of the graphics ("reflections", "occlusion", "shadows", "bloom",
+		//"motion_blur"), in order: super_low, very_low, low, medium, high, ultra, best, then the
+		//others by their names (none: the effect has no levels, only off)
+		const std::vector<GraphicsLevel>& levels(const std::string& effect) const;
+
+		//a level of the graphics (graphics.json, by its name: "low", "high"...) on the settings of
+		//its effect, the fields it has (false: no such level, the settings as they are)
+		bool reflections(const std::string& level, Square::Render::SSR::Settings& settings) const;
+		bool occlusion(const std::string& level, Square::Render::SSAO::Settings& settings) const;
+		bool bloom(const std::string& level, Square::Render::Bloom::Settings& settings) const;
+		bool motion_blur(const std::string& level, Square::Render::MotionBlur::Settings& settings) const;
+		bool god_rays(const std::string& level, Square::Render::GodRays::Settings& settings) const;
+		bool shadows(const std::string& level, ShadowSettings& settings) const;
+
 	private:
 		bool load_game(const Square::Data::JsonValue& root);
 		bool load_hovercraft(const Square::Data::JsonValue& root);
 		bool load_surfaces(const Square::Data::JsonValue& root);
 		bool load_map(const Square::Data::JsonValue& root, const std::string& name, RaceMap& map);
+		//a level of an effect of graphics.json (nullptr: none)
+		const Square::Data::JsonValue* graphics(const std::string& effect, const std::string& level) const;
 
 		Rules        m_rules;
 		CircuitRules m_circuit;
@@ -128,5 +171,7 @@ namespace Rush
 		std::vector<std::string> m_circuit_names;
 		std::vector<RaceMap>     m_arenas;
 		std::vector<RaceMap>     m_circuits;
+		Square::Data::JsonValue  m_graphics;
+		std::map< std::string, std::vector<GraphicsLevel> > m_levels;
 	};
 }

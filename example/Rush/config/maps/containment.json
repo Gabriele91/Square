@@ -2,6 +2,7 @@
 	"title": "Containment",
 	"description": "the snowy canyon (origial_assets/containment): a cold light haze, thin; its snow, its trails",
 	"mode": "arena",
+	"camera": { "near": 0.1, "far": 600.0 },
 	"snow": true,
 	"trails": true,
 	"fog": {

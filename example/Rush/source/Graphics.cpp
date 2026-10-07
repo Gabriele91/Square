@@ -50,6 +50,9 @@ void Graphics::setup(Square::Scene::World& world)
 	m_fog = MakeShared<Render::Fog>(m_context);
 	m_fog->enabled(false);
 	render_world->add_post_effect(m_fog);
+	//the god rays of the sun (its direction: the one of the map, Graphics::fog)
+	m_god_rays = MakeShared<Render::GodRays>(m_context);
+	render_world->add_post_effect(m_god_rays);
 	//the falling snow of the map (none in the menu)
 	m_snow = MakeShared<Render::Snow>(m_context);
 	Render::Snow::Settings snow_settings;
@@ -98,6 +101,18 @@ void Graphics::fog(const RaceFog& fog, const Square::Vec3& sun_direction)
 	settings.sun_direction = sun_direction;
 	settings.sun_exponent  = 6.0f;
 	m_fog->settings(settings);
+	//the god rays: from the sun of the map
+	if (m_god_rays)
+	{
+		Render::GodRays::Settings rays = m_god_rays->settings();
+		rays.sun_direction = sun_direction;
+		m_god_rays->settings(rays);
+	}
+}
+
+Square::Shared<Square::Render::GodRays> Graphics::god_rays() const
+{
+	return m_god_rays;
 }
 
 void Graphics::snow(bool snow)

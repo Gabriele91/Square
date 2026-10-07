@@ -5,6 +5,7 @@
 //  See RushConfig.h.
 //
 #include <algorithm>
+#include <cctype>
 #include <Square/Data/Json.h>
 #include <RushConfig.h>
 
@@ -117,6 +118,68 @@ namespace Rush
 			return result;
 		}
 
+		//a name of a field as one of its values (by their names); value: none of them
+		template < typename T >
+		static T named(const JsonValue& json, const std::string& name, const std::vector< std::pair<std::string, T> >& values, T value)
+		{
+			const std::string text = string(json, name, std::string());
+			for (const auto& entry : values)
+			{
+				if (entry.first == text) return entry.second;
+			}
+			return value;
+		}
+
+		static Square::Render::PostEffectResolution resolution(const JsonValue& json, Square::Render::PostEffectResolution value)
+		{
+			using namespace Square::Render;
+			return named<PostEffectResolution>(json, "resolution", { { "full", PER_FULL }, { "half", PER_HALF }, { "quarter", PER_QUARTER } }, value);
+		}
+
+		//the order of the levels of the graphics (the others after them)
+		static size_t level_rank(const std::string& name)
+		{
+			static const char* ranks[]{ "super_low", "very_low", "low", "medium", "high", "ultra", "best" };
+			for (size_t rank = 0; rank != sizeof(ranks) / sizeof(ranks[0]); ++rank)
+			{
+				if (name == ranks[rank]) return rank;
+			}
+			return sizeof(ranks) / sizeof(ranks[0]);
+		}
+
+		//the title of a level from its name: "super_low", "Super low"
+		static std::string level_title(const std::string& name)
+		{
+			std::string title = name;
+			for (char& c : title)
+			{
+				if (c == '_') c = ' ';
+			}
+			if (!title.empty()) title[0] = char(std::toupper((unsigned char)title[0]));
+			return title;
+		}
+
+		//the levels of an effect of graphics.json, in order
+		static std::vector<GraphicsLevel> levels(const JsonValue& graphics, const std::string& effect)
+		{
+			std::vector<GraphicsLevel> result;
+			const JsonValue* levels = object(graphics, effect);
+			if (!levels) return result;
+			for (const auto& entry : levels->object())
+			{
+				if (!entry.second.is_object()) continue;
+				result.push_back({ entry.first, string(entry.second, "title", level_title(entry.first)) });
+			}
+			std::sort(result.begin(), result.end(), [](const GraphicsLevel& a, const GraphicsLevel& b)
+			{
+				const size_t rank_a = level_rank(a.m_name);
+				const size_t rank_b = level_rank(b.m_name);
+				if (rank_a != rank_b) return rank_a < rank_b;
+				return a.m_name < b.m_name;
+			});
+			return result;
+		}
+
 		//a file of the folder parsed (false: missing, not an object)
 		static bool read(Square::Context& context, const std::string& path, Square::Data::Json& json)
 		{
@@ -194,6 +257,20 @@ namespace Rush
 		};
 		read_maps(config.m_arena_names, config.m_arenas);
 		read_maps(config.m_circuit_names, config.m_circuits);
+		//the levels of the graphics
+		Data::Json graphics;
+		if (AuxConfig::read(context, Filesystem::join(folder, "graphics.json"), graphics))
+		{
+			config.m_graphics = graphics.document();
+		}
+		else
+		{
+			loaded = false;
+		}
+		for (const char* effect : s_graphics_effects)
+		{
+			config.m_levels[effect] = AuxConfig::levels(config.m_graphics, effect);
+		}
 		return loaded;
 	}
 
@@ -319,6 +396,34 @@ namespace Rush
 		const bool circuit = AuxConfig::string(root, "mode", "arena") == "circuit";
 		map.m_mode = circuit ? RaceMode::CIRCUIT : RaceMode::ARENA;
 		if (const auto* fog = AuxConfig::object(root, "fog")) map.m_fog = AuxConfig::fog(*fog);
+		//its sun: where it is
+		if (const auto* sun = AuxConfig::object(root, "sun_position"))
+		{
+			map.m_sun_set       = true;
+			map.m_sun_azimuth   = AuxConfig::number(*sun, "azimuth", map.m_sun_azimuth);
+			map.m_sun_elevation = AuxConfig::number(*sun, "elevation", map.m_sun_elevation);
+			//its steps (an angle not written: the one of the sun)
+			if (sun->contains("steps") && (*sun)["steps"].is_array())
+			{
+				const auto& steps = (*sun)["steps"].array();
+				map.m_sun_steps.reserve(steps.size());
+				for (const auto& json : steps)
+				{
+					SunStep step;
+					step.m_time      = AuxConfig::number(json, "time", 0.0f);
+					step.m_azimuth   = AuxConfig::number(json, "azimuth", map.m_sun_azimuth);
+					step.m_elevation = AuxConfig::number(json, "elevation", map.m_sun_elevation);
+					map.m_sun_steps.push_back(step);
+				}
+				std::sort(map.m_sun_steps.begin(), map.m_sun_steps.end(), [](const SunStep& a, const SunStep& b) { return a.m_time < b.m_time; });
+			}
+		}
+		//its camera: its clip planes
+		if (const auto* camera = AuxConfig::object(root, "camera"))
+		{
+			map.m_camera_near = AuxConfig::number(*camera, "near", map.m_camera_near);
+			map.m_camera_far  = AuxConfig::number(*camera, "far", map.m_camera_far);
+		}
 		//the zones of a circuit (its fog: the first one's)
 		if (root.contains("zones") && root["zones"].is_array())
 		{
@@ -369,5 +474,132 @@ namespace Rush
 			if (map.m_name == name) return &map;
 		}
 		return nullptr;
+	}
+
+	const std::vector<GraphicsLevel>& Config::levels(const std::string& effect) const
+	{
+		static const std::vector<GraphicsLevel> none;
+		auto it = m_levels.find(effect);
+		if (it == m_levels.end()) return none;
+		return it->second;
+	}
+
+	const Square::Data::JsonValue* Config::graphics(const std::string& effect, const std::string& level) const
+	{
+		const Square::Data::JsonValue* levels = AuxConfig::object(m_graphics, effect);
+		if (!levels) return nullptr;
+		return AuxConfig::object(*levels, level);
+	}
+
+	bool Config::reflections(const std::string& level, Square::Render::SSR::Settings& settings) const
+	{
+		using namespace Square::Render;
+		using AuxConfig::number;
+		using AuxConfig::boolean;
+		const Square::Data::JsonValue* json = graphics("reflections", level);
+		if (!json) return false;
+		settings.intensity      = number(*json, "intensity", settings.intensity);
+		settings.max_distance   = number(*json, "max_distance", settings.max_distance);
+		settings.steps          = number(*json, "steps", settings.steps);
+		settings.thickness      = number(*json, "thickness", settings.thickness);
+		settings.max_roughness  = number(*json, "max_roughness", settings.max_roughness);
+		settings.edge_fade      = number(*json, "edge_fade", settings.edge_fade);
+		settings.resolution     = AuxConfig::resolution(*json, settings.resolution);
+		settings.screen_march   = boolean(*json, "screen_march", settings.screen_march);
+		settings.blur           = AuxConfig::named<SSR::Settings::BlurQuality>(*json, "blur",
+		{
+			  { "off", SSR::Settings::BLUR_OFF }, { "low", SSR::Settings::BLUR_LOW }
+			, { "medium", SSR::Settings::BLUR_MEDIUM }, { "high", SSR::Settings::BLUR_HIGH }
+		}, settings.blur);
+		settings.denoise        = boolean(*json, "denoise", settings.denoise);
+		settings.denoise_radius = number(*json, "denoise_radius", settings.denoise_radius);
+		return true;
+	}
+
+	bool Config::occlusion(const std::string& level, Square::Render::SSAO::Settings& settings) const
+	{
+		using namespace Square::Render;
+		using AuxConfig::number;
+		const Square::Data::JsonValue* json = graphics("occlusion", level);
+		if (!json) return false;
+		settings.radius         = number(*json, "radius", settings.radius);
+		settings.intensity      = number(*json, "intensity", settings.intensity);
+		settings.bias           = number(*json, "bias", settings.bias);
+		settings.contrast       = number(*json, "contrast", settings.contrast);
+		settings.max_pixels     = number(*json, "max_pixels", settings.max_pixels);
+		settings.resolution     = AuxConfig::resolution(*json, settings.resolution);
+		settings.blur           = AuxConfig::named<SSAO::Settings::BlurQuality>(*json, "blur",
+		{
+			  { "off", SSAO::Settings::BLUR_OFF }, { "very_low", SSAO::Settings::BLUR_VERY_LOW }
+			, { "low", SSAO::Settings::BLUR_LOW }, { "medium", SSAO::Settings::BLUR_MEDIUM }
+			, { "high", SSAO::Settings::BLUR_HIGH }
+		}, settings.blur);
+		settings.blur_sharpness = number(*json, "blur_sharpness", settings.blur_sharpness);
+		return true;
+	}
+
+	bool Config::bloom(const std::string& level, Square::Render::Bloom::Settings& settings) const
+	{
+		using AuxConfig::number;
+		const Square::Data::JsonValue* json = graphics("bloom", level);
+		if (!json) return false;
+		settings.threshold = number(*json, "threshold", settings.threshold);
+		settings.knee      = number(*json, "knee", settings.knee);
+		settings.intensity = number(*json, "intensity", settings.intensity);
+		settings.scatter   = number(*json, "scatter", settings.scatter);
+		settings.levels    = number(*json, "levels", settings.levels);
+		settings.clamp     = number(*json, "clamp", settings.clamp);
+		return true;
+	}
+
+	bool Config::motion_blur(const std::string& level, Square::Render::MotionBlur::Settings& settings) const
+	{
+		using AuxConfig::number;
+		const Square::Data::JsonValue* json = graphics("motion_blur", level);
+		if (!json) return false;
+		settings.shutter    = number(*json, "shutter", settings.shutter);
+		settings.max_pixels = number(*json, "max_pixels", settings.max_pixels);
+		settings.min_pixels = number(*json, "min_pixels", settings.min_pixels);
+		settings.samples    = number(*json, "samples", settings.samples);
+		return true;
+	}
+
+	bool Config::god_rays(const std::string& level, Square::Render::GodRays::Settings& settings) const
+	{
+		using AuxConfig::number;
+		const Square::Data::JsonValue* json = graphics("god_rays", level);
+		if (!json) return false;
+		settings.color      = AuxConfig::vec3(*json, "color", settings.color);
+		settings.intensity  = number(*json, "intensity", settings.intensity);
+		settings.threshold  = number(*json, "threshold", settings.threshold);
+		settings.sun_radius = number(*json, "sun_radius", settings.sun_radius);
+		settings.density    = number(*json, "density", settings.density);
+		settings.decay      = number(*json, "decay", settings.decay);
+		settings.weight     = number(*json, "weight", settings.weight);
+		settings.samples    = number(*json, "samples", settings.samples);
+		settings.resolution = AuxConfig::resolution(*json, settings.resolution);
+		settings.fade       = number(*json, "fade", settings.fade);
+		settings.volumetric   = AuxConfig::boolean(*json, "volumetric", settings.volumetric);
+		settings.max_distance = number(*json, "max_distance", settings.max_distance);
+		settings.steps        = number(*json, "steps", settings.steps);
+		settings.anisotropy   = number(*json, "anisotropy", settings.anisotropy);
+		settings.air          = number(*json, "air", settings.air);
+		return true;
+	}
+
+	bool Config::shadows(const std::string& level, ShadowSettings& settings) const
+	{
+		using namespace Square::Render;
+		using AuxConfig::number;
+		const Square::Data::JsonValue* json = graphics("shadows", level);
+		if (!json) return false;
+		settings.m_filter   = AuxConfig::named<ShadowFilter>(*json, "filter",
+		{
+			{ "none", ShadowFilter::NONE }, { "pcf", ShadowFilter::PCF }, { "pcss", ShadowFilter::PCSS }
+		}, settings.m_filter);
+		settings.m_cascades = number(*json, "cascades", settings.m_cascades);
+		settings.m_distance = number(*json, "distance", settings.m_distance);
+		settings.m_map_scale = number(*json, "map_scale", settings.m_map_scale);
+		return true;
 	}
 }

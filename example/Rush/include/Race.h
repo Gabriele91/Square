@@ -109,9 +109,12 @@ public:
 	double race_time() const;
 	//back on the track: a circuit on its guide a little behind where it is, an arena its start
 	void respawn(size_t id);
+	//the sun of the map on its steps (its time: the one of the race)
+	void update_sun();
 	//the haze where the player is on a circuit (its zone, blending into the next one); false:
 	//not a circuit (the haze of the map)
 	bool zone_fog(Rush::RaceFog& fog) const;
+
 
 private:
 

@@ -2,6 +2,7 @@
 	"title": "Arena",
 	"description": "the stadium (origial_assets/arena): a light haze of desert dust, warm, dense in its pit, thin over the stands; the grooves of the hovercraft in its clay",
 	"mode": "arena",
+	"camera": { "near": 0.1, "far": 800.0 },
 	"trails": true,
 	"fog": {
 		"color": [0.55, 0.4, 0.28],

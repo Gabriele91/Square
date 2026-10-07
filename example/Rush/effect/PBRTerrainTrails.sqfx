@@ -26,6 +26,8 @@ parameters
     ignore_shadows float(0.0)
     //dithered opacity: 1 = alpha (albedo_map.a * color.a) drops pixels with a pattern
     dither       float(0.0)
+    //light of the sun through it (thin: leaves, cards), 0 none, 1 all
+    translucency float(0.0)
     //the grounds (see TerrainPBR.hlsl): their albedo (roughness in alpha), their normal; 1 / the size
     //of their tile (world), the sharpness of their edges, the scale of the far variation
     layer0_map    texture("white")

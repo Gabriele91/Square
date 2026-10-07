@@ -6,7 +6,9 @@
 //
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
+#include <string>
 #include <limits>
 #include <Race.h>
 #include <SnowTrails.h>
@@ -107,6 +109,9 @@ bool Race::load(const RaceMap& map)
 	m_map = &map;
 	m_arena = std::make_unique<Arena>(context());
 	if (!m_arena->load(m_level, map.m_name)) return false;
+	m_arena->camera_clip(map.m_camera_near, map.m_camera_far);
+	if (map.m_sun_set) m_arena->sun_direction(Arena::sun_direction(map.m_sun_azimuth, map.m_sun_elevation));
+	update_sun();
 	m_sink = map.m_trails ? Config::get().trails_sink() : 0.0f;
 	//an arena: its navigation, the beam of light; a circuit: its course (the line of the AI)
 	if (!circuit())
@@ -298,8 +303,9 @@ void Race::on_update(double delta_time)
 {
 	const double max_frame_time = Config::get().rules().m_max_frame_time;
 	m_phase_time += std::min(delta_time, max_frame_time);
-	//the water moves
+	//the water moves, the sun goes on its way
 	m_water_time += delta_time;
+	update_sun();
 	if (m_arena) m_arena->animate(m_water_time);
 	//a circuit: its laps (while playing, and after: the others finish)
 	if (circuit() && m_phase != Phase::START)
@@ -668,6 +674,37 @@ void Race::respawn(size_t id)
 	racer.m_driver->spawn(start, degrees(std::atan2(way.x, way.z)));
 	auto follow = m_arena->camera_follow();
 	if (id == 0 && follow) follow->snap();
+}
+
+namespace AuxRace
+{
+	//where the sun is at a time along its steps: between two of them on its way, before the
+	//first one and after the last one there
+	static SunStep sun_at(const std::vector<SunStep>& steps, float time)
+	{
+		if (time <= steps.front().m_time) return steps.front();
+		for (size_t i = 1; i < steps.size(); ++i)
+		{
+			const SunStep& to = steps[i];
+			if (time > to.m_time) continue;
+			const SunStep& from = steps[i - 1];
+			const float span = std::max(to.m_time - from.m_time, 0.0001f);
+			const float t = (time - from.m_time) / span;
+			SunStep at;
+			at.m_time      = time;
+			at.m_azimuth   = from.m_azimuth + (to.m_azimuth - from.m_azimuth) * t;
+			at.m_elevation = from.m_elevation + (to.m_elevation - from.m_elevation) * t;
+			return at;
+		}
+		return steps.back();
+	}
+}
+
+void Race::update_sun()
+{
+	if (!m_map || !m_arena || m_map->m_sun_steps.empty()) return;
+	const SunStep at = AuxRace::sun_at(m_map->m_sun_steps, float(m_race_time));
+	m_arena->sun_direction(Arena::sun_direction(at.m_azimuth, at.m_elevation));
 }
 
 bool Race::zone_fog(RaceFog& fog) const

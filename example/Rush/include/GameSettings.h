@@ -23,32 +23,38 @@ struct GameSettings
 	bool m_fullscreen{ false };
 	int  m_resolution{ 2 };   //1920 x 1080
 	bool m_show_fps{ true };
-	//the levels of the effects (0 off)
-	enum EffectLevel : int { EFFECT_OFF, EFFECT_SUPER_LOW, EFFECT_LOW, EFFECT_MEDIUM, EFFECT_HIGH, EFFECT_ULTRA, EFFECT_LEVELS };
-	enum BloomLevel : int { BLOOM_OFF, BLOOM_LOW, BLOOM_MEDIUM, BLOOM_HIGH, BLOOM_LEVELS };
-	enum MotionBlurLevel : int { MOTION_BLUR_OFF, MOTION_BLUR_LOW, MOTION_BLUR_HIGH, MOTION_BLUR_LEVELS };
-	//the version of the file (1: the effects 0 off, 1 low, 2 high, the bloom on or off; 2: the
-	//effects without medium)
-	static constexpr int s_version = 3;
+	//the levels of the effects: 0 off, n the n-th level of the effect in config/graphics.json
+	//(Rush::Config::levels, in order: the options of the menu); in the file by their names
+	//(version 5; before: numbers of fixed levels)
+	static constexpr int s_version = 5;
 
-	int  m_reflections{ EFFECT_HIGH }; //EffectLevel
-	int  m_occlusion{ EFFECT_LOW };    //EffectLevel
-	int  m_shadows{ 2 };      //0 low (hard, two cascades), 1 medium (PCF), 2 high (PCSS)
-	int  m_bloom{ BLOOM_MEDIUM };      //BloomLevel
-	int  m_motion_blur{ MOTION_BLUR_LOW }; //MotionBlurLevel
+	int  m_reflections{ 0 };
+	int  m_occlusion{ 0 };
+	int  m_shadows{ 0 };
+	int  m_bloom{ 0 };
+	int  m_motion_blur{ 0 };
+	int  m_god_rays{ 0 };
 	bool m_weather{ true };   //the falling snow of the maps with snow
 	bool m_antialiasing{ true }; //FXAA (the menu always: its shot)
 
 	bool operator == (const GameSettings& other) const;
 	bool operator != (const GameSettings& other) const { return !(*this == other); }
 
-	//the file of the settings, read (false: none, the defaults kept), written
+	//the file of the settings, read (the defaults first: high reflections, low occlusion, high
+	//shadows, medium bloom, low motion blur, medium god rays; false: no file, the defaults), written
 	static std::string path();
 	bool load();
 	bool save() const;
 
-	//the window, the post effects; the shadows of a sun (of a map: at its load)
+	//a level of an effect ("reflections", "occlusion", "shadows", "bloom", "motion_blur") by its
+	//name ("off": 0; a name it does not have: its nearest higher level), its name
+	static int level(const std::string& effect, const std::string& name);
+	static std::string level_name(const std::string& effect, int level);
+
+	//the window, the post effects; the shadows of a sun (of a map: once, at its load: its
+	//distance from the one of the map, at most view: the map as far as the camera sees it,
+	//min(the largest side of the map, the far of the camera); a level with distance 0: view)
 	void apply_window() const;
 	void apply_effects(Graphics& graphics) const;
-	void apply_shadows(const Square::Shared<Square::Scene::DirectionLight>& sun) const;
+	void apply_shadows(const Square::Shared<Square::Scene::DirectionLight>& sun, float view) const;
 };

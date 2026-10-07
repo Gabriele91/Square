@@ -71,6 +71,7 @@ namespace Render
 			if (auto transform = randerable->transform().lock())
 			{
 				transform->set(&utransform);
+				utransform.m_lod_fade = randerable->lod_fade();
 				render.update_steam_CB(buffers.m_transform, (const unsigned char*)&utransform, sizeof(utransform));
 			}
 			//set id

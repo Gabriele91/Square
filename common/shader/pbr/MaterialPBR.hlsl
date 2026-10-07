@@ -43,6 +43,7 @@ float roughness;
 Vec3 emmisive;
 float mask;
 float dither;
+float translucency;
 
 // Dithered opacity: 4x4 ordered (Bayer) threshold in (0,1) of a screen pixel.
 // A pixel is kept when its alpha is above the threshold, so the share of kept
@@ -109,6 +110,8 @@ SurfaceData material_standard(VertexShaderOutput input, out float albedo_alpha)
 	// RGB (metallic, norma maps)
 	// SRGB (emmisive, albedo)
 	SurfaceData data = DefaultSurfaceData();
+	// Its level of detail fading in or out
+	lod_fade_clip(input.m_position.xy);
 	// World position
 	data.m_position = input.m_world_position;
 	// Diffuse/albedo
@@ -124,6 +127,8 @@ SurfaceData material_standard(VertexShaderOutput input, out float albedo_alpha)
 		if (data.m_alpha <= dither_threshold(input.m_position.xy)) discard;
 		data.m_alpha = 1.0;
 	}
+	// Light of the sun through it (thin: leaves)
+	data.m_translucency = translucency;
 	// Emmisive
 	data.m_emmisive = to_rgb_space(texture2D(emmisive_map, input.m_uv).rgb) * emmisive;
 	// Normal

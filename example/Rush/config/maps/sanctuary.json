@@ -2,6 +2,7 @@
 	"title": "Sanctuary",
 	"description": "the forerunner ruins in a green crater (origial_assets/sanctuary): a light warm mist, low, the sun through it; the wakes on its water",
 	"mode": "arena",
+	"camera": { "near": 0.1, "far": 700.0 },
 	"wakes": true,
 	"fog": {
 		"color": [0.8, 0.82, 0.76],

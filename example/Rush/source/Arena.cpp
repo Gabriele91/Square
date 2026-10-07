@@ -289,6 +289,19 @@ void Arena::viewport(unsigned int width, unsigned int height) const
 	m_camera->component<Scene::Camera>()->viewport({ 0, 0, width, height });
 }
 
+void Arena::camera_clip(float clip_near, float clip_far) const
+{
+	using namespace Square;
+	if (!m_camera || !m_camera->contains<Scene::Camera>()) return;
+	auto camera = m_camera->component<Scene::Camera>();
+	const Render::Viewport& viewport = camera->viewport();
+	//(its perspective as it is: its field of view, its aspect)
+	const Vec2  planes = viewport.near_and_far();
+	const float new_near = clip_near > 0.0f ? clip_near : planes.x;
+	const float new_far = clip_far > 0.0f ? clip_far : planes.y;
+	camera->perspective(viewport.fov(), viewport.aspect(), new_near, new_far);
+}
+
 Square::Shared<Square::Scene::Actor> Arena::navmesh() const
 {
 	using namespace Square;
@@ -322,6 +335,37 @@ Square::Vec3 Arena::sun_direction() const
 	//a direction light lights along its z axis
 	if (!m_sun) return Vec3(0.0f, -1.0f, 0.0f);
 	return m_sun->rotation(true) * Vec3(0.0f, 0.0f, 1.0f);
+}
+
+void Arena::sun_direction(const Square::Vec3& direction)
+{
+	using namespace Square;
+	if (!m_sun) return;
+	//a direction light lights along its z axis: z turned to the direction
+	const Vec3  from(0.0f, 0.0f, 1.0f);
+	const Vec3  to = normalize(direction);
+	const float cosine = std::clamp(dot(from, to), -1.0f, 1.0f);
+	const Vec3  axis = cross(from, to);
+	Quat turn = angle_axis(Constants::pi<float>(), Vec3(1.0f, 0.0f, 0.0f));
+	if (length(axis) > 0.0001f)
+	{
+		turn = angle_axis(std::acos(cosine), normalize(axis));
+	}
+	else if (cosine > 0.0f)
+	{
+		turn = Quat(0.0f, 0.0f, 0.0f, 1.0f);
+	}
+	m_sun->rotation(turn);
+}
+
+Square::Vec3 Arena::sun_direction(float azimuth, float elevation)
+{
+	using namespace Square;
+	const float a = radians(azimuth);
+	const float e = radians(elevation);
+	//toward the sun, its light the other way
+	const Vec3 toward(std::cos(e) * std::cos(a), std::sin(e), std::cos(e) * std::sin(a));
+	return -toward;
 }
 
 Square::Shared<Square::Scene::Actor> Arena::camera() const

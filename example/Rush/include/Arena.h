@@ -36,6 +36,10 @@ public:
 	Square::Shared<Square::Scene::DirectionLight> sun() const;
 	//where the light of the sun goes (no sun: down)
 	Square::Vec3                                sun_direction() const;
+	//its sun turned: where its light goes (world)
+	void sun_direction(const Square::Vec3& direction);
+	//... from where the sun is: azimuth (degrees, from +x toward +z), elevation over the horizon
+	static Square::Vec3 sun_direction(float azimuth, float elevation);
 	Square::Shared<Square::Scene::Actor>        camera() const;
 	Square::Shared<CameraFollow>                camera_follow() const;
 
@@ -58,6 +62,9 @@ public:
 	//the course of a circuit (its guide, its checkpoints, its other ways: see Course); not
 	//valid: an arena
 	const Course& course() const { return m_course; }
+
+	//the clip planes of its camera (world units; 0: the one of the scene)
+	void camera_clip(float clip_near, float clip_far) const;
 
 	//its boost pads ("boost_<n>" nodes, world)
 	const std::vector<Square::Vec3>& boosts() const { return m_boosts; }

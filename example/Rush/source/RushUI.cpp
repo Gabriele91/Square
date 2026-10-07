@@ -80,6 +80,7 @@ bool RushUI::create()
 	m_model.bind("set_weather", &m_state.m_settings.m_weather);
 	m_model.bind("set_antialiasing", &m_state.m_settings.m_antialiasing);
 	m_model.bind("set_motion_blur", &m_state.m_settings.m_motion_blur);
+	m_model.bind("set_god_rays", &m_state.m_settings.m_god_rays);
 	return true;
 }
 
@@ -362,6 +363,30 @@ const GameSettings& RushUI::settings() const
 void RushUI::load_settings(Graphics& graphics)
 {
 	m_state.m_settings.load();
+	//the levels of the effects: the options of their selects (config/graphics.json, "Off" first),
+	//made now, the one read selected (a select sets its value to the model as it is made)
+	const std::pair<const char*, int> chosen[]
+	{
+		  { "reflections", m_state.m_settings.m_reflections }, { "occlusion", m_state.m_settings.m_occlusion }
+		, { "shadows", m_state.m_settings.m_shadows }, { "bloom", m_state.m_settings.m_bloom }
+		, { "motion_blur", m_state.m_settings.m_motion_blur }, { "god_rays", m_state.m_settings.m_god_rays }
+	};
+	for (const auto& effect : chosen)
+	{
+		Square::UI::Element holder = m_title.find(std::string("levels_") + effect.first);
+		if (!holder) continue;
+		const auto& levels = Config::get().levels(effect.first);
+		std::string rml = std::string("<select data-value=\"set_") + effect.first + "\">";
+		for (size_t level = 0; level <= levels.size(); ++level)
+		{
+			const std::string title = level ? levels[level - 1].m_title : std::string("Off");
+			const std::string selected = int(level) == effect.second ? " selected" : "";
+			rml += "<option value=\"" + std::to_string(level) + "\"" + selected + ">" + title + "</option>";
+		}
+		rml += "</select>";
+		holder.set_html(rml);
+	}
+	m_model.dirty_all();
 	m_state.m_applied = m_state.m_settings;
 	m_state.m_applied.apply_window();
 	m_state.m_applied.apply_effects(graphics);

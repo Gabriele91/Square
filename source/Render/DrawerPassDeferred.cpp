@@ -205,10 +205,11 @@ namespace Render
 		{
 			//jump?
 			if (!randerable->can_draw()) continue;
-			//update transform
+			//update transform (and the cross-fade of its level of detail)
 			if (auto transform = randerable->transform().lock())
 			{
 				transform->set(&utransform);
+				utransform.m_lod_fade = randerable->lod_fade();
 				render().update_steam_CB(m_cb_transform.get(), (const unsigned char*)&utransform, sizeof(utransform));
 			}
 			//for each materials
@@ -373,6 +374,13 @@ namespace Render
 						Render::UniformDirectionShadowLight udirection_shadow_light;
 						light->set(&udirection_shadow_light, &camera, false);
 						Render::update_constant_buffer(&render(), m_cb_direction_shadow_light.get(), &udirection_shadow_light);
+						//the sun of the post effects: the first one (its cascades stay in the buffer)
+						if (!m_sun_shadow_map)
+						{
+							m_sun_shadow_map = light->shadow_buffer().texture();
+							m_sun_direction = udirection_light.m_direction;
+							m_sun_color = udirection_light.m_diffuse;
+						}
 						if (auto uniform_shadow_map = shader->uniform("direction_shadow_map"))
 						{
 							uniform_shadow_map->set(light->shadow_buffer().texture());
@@ -544,6 +552,7 @@ namespace Render
 		}
 		//1a) the velocity of the renderables with their own motion blur (an effect needs it)
 		m_velocity_drawn = false;
+		m_sun_shadow_map = nullptr;
 		if (PostEffectChain::any_velocity(post_effects))
 		{
 			SQUARE_RENDER_SCOPE(render(), "Velocity");
@@ -631,6 +640,10 @@ namespace Render
 		frame.m_occlusion     = m_occlusion_target;
 		frame.m_velocity      = m_velocity_drawn ? m_velocity_texture : nullptr;
 		frame.m_linear        = true; //the light buffer is linear HDR
+		frame.m_sun_direction = m_sun_direction;
+		frame.m_sun_color     = m_sun_color;
+		frame.m_sun_shadow_map = m_sun_shadow_map;
+		frame.m_sun_shadow_buffer = m_sun_shadow_map ? m_cb_direction_shadow_light.get() : nullptr;
 		return frame;
 	}
 

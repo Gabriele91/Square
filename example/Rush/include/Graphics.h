@@ -6,7 +6,8 @@
 //  default deferred) and its post effects with the settings of the game: SSAO (a light shade in
 //  the creases), SSR (before the bloom: the reflected lights glow too), the fog of the map (off
 //  but in a map with fog; before the bloom: the lights in the fog glow), the falling snow of the
-//  map (after the fog: the flakes in front of it), Bloom.
+//  map (after the fog: the flakes in front of it), the god rays of the sun (after the fog, its
+//  direction: the one of the map), Bloom.
 //
 #pragma once
 #include <Square/Square.h>
@@ -40,6 +41,7 @@ public:
 	Square::Shared<Square::Render::Fog>   fog() const;
 	Square::Shared<Square::Render::Snow>  snow() const;
 	Square::Shared<Square::Render::MotionBlur> motion_blur() const;
+	Square::Shared<Square::Render::GodRays> god_rays() const;
 
 private:
 
@@ -48,6 +50,7 @@ private:
 	Square::Shared<Square::Render::SSR>   m_ssr;
 	Square::Shared<Square::Render::Fog>   m_fog;
 	Square::Shared<Square::Render::Snow>  m_snow;
+	Square::Shared<Square::Render::GodRays> m_god_rays;
 	Square::Shared<Square::Render::Bloom> m_bloom;
 	Square::Shared<Square::Render::DOF>   m_dof;
 	Square::Shared<Square::Render::MotionBlur> m_motion_blur;

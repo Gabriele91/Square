@@ -81,6 +81,13 @@ namespace Render
 		Texture*          m_velocity{ nullptr };      //motion on the screen (uv, RG) of the renderables with their own motion blur, 0 elsewhere (nullptr: none drawn)
 		Target*           m_destination{ nullptr };   //the effect writes here
 		bool              m_linear{ true };           //source in linear space (false: already sRGB encoded)
+		//the sun (deferred: the first direction light with a shadow drawn): where its light goes,
+		//its color, its cascades (the "DirectionShadowCamera" cbuffer, updated for it) and its
+		//shadow map; nullptr: none
+		Vec3              m_sun_direction{ 0.0f, -1.0f, 0.0f };
+		Vec3              m_sun_color{ 0.0f };
+		ConstBuffer*      m_sun_shadow_buffer{ nullptr };
+		Texture*          m_sun_shadow_map{ nullptr };
 	};
 
 	class SQUARE_API PostEffect : public BaseObject

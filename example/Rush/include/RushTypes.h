@@ -65,6 +65,14 @@ namespace Rush
 	//ground (a PBRSnow material), the wakes on its water. The wall of its camera is in its scene:
 	//its "camera_bounds..." meshes (see Arena). A circuit: its laps, its zones (their hazes, by its
 	//gates; its fog the one of the first)
+	//where the sun of a map is at a time of the race (seconds, degrees)
+	struct SunStep
+	{
+		float m_time{ 0.0f };
+		float m_azimuth{ 0.0f };
+		float m_elevation{ 45.0f };
+	};
+
 	struct RaceMap
 	{
 		std::string              m_name;
@@ -76,5 +84,16 @@ namespace Rush
 		RaceMode                 m_mode{ RaceMode::ARENA };
 		int                      m_laps{ 3 };
 		std::vector<CircuitZone> m_zones;
+		//the clip planes of its camera (world units; 0: as in its scene)
+		float                    m_camera_near{ 0.0f };
+		float                    m_camera_far{ 0.0f };
+		//where its sun is (degrees; not set: as in its scene): azimuth from +x toward +z of the
+		//world (+y of Blender, seen from above), elevation over the horizon; its steps: where it
+		//is at a time of the race (seconds from the start), between them on its way, after the
+		//last one there (none: still)
+		bool                     m_sun_set{ false };
+		float                    m_sun_azimuth{ 0.0f };
+		float                    m_sun_elevation{ 45.0f };
+		std::vector<SunStep>     m_sun_steps;
 	};
 }

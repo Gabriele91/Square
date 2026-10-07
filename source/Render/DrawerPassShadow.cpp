@@ -168,6 +168,7 @@ namespace Render
 			if (auto transform = randerable->transform().lock())
 			{
 				transform->set(&utransform);
+				utransform.m_lod_fade = randerable->lod_fade();
 				render().update_steam_CB(m_cb_transform.get(), (const unsigned char*)&utransform, sizeof(utransform));
 			}
 			//for each materials

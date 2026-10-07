@@ -51,6 +51,15 @@ LightResult compute_light
                                       view_direction, 
                                       -light.m_direction, 
                                       light_color);
+    // Light through a thin surface (leaves): its back lit by the sun, more looking toward it
+    if (data.m_translucency > 0.0)
+    {
+        const Vec3  to_light = -light.m_direction;
+        const float back = saturate(dot(-data.m_normal, to_light));
+        const float toward = pow(saturate(dot(-view_direction, to_light)), 4.0);
+        const float through = data.m_translucency * (0.35 * back + toward);
+        result.m_radiance += data.m_albedo * light_color * through;
+    }
     //return
     return result;
 }

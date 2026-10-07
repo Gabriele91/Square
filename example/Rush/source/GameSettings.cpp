@@ -5,10 +5,12 @@
 //  See GameSettings.h.
 //
 #include <algorithm>
+#include <functional>
 #include <sstream>
 #include <Square/Data/Json.h>
 #include <GameSettings.h>
 #include <Graphics.h>
+#include <RushConfig.h>
 
 const Square::IVec2 GameSettings::s_resolutions[GameSettings::s_resolutions_count]
 {
@@ -17,142 +19,89 @@ const Square::IVec2 GameSettings::s_resolutions[GameSettings::s_resolutions_coun
 
 namespace AuxGameSettings
 {
-	//the reflections of a level: the size of the trace, its rays, its blur
-	static void reflections(Square::Render::SSR::Settings& settings, int level)
+	//the order of the levels (Rush::Config::levels: the same), a name not among them after
+	static size_t rank(const std::string& name)
 	{
-		using namespace Square::Render;
-		switch (level)
+		static const char* ranks[]{ "off", "super_low", "very_low", "low", "medium", "high", "ultra", "best" };
+		for (size_t i = 0; i != sizeof(ranks) / sizeof(ranks[0]); ++i)
 		{
-		case GameSettings::EFFECT_SUPER_LOW:
-			settings.resolution   = PER_QUARTER;
-			settings.steps        = 20;
-			settings.max_distance = 40.0f;
-			settings.blur         = SSR::Settings::BLUR_LOW;
-			settings.denoise      = false;
-		break;
-		case GameSettings::EFFECT_LOW:
-			settings.resolution   = PER_QUARTER;
-			settings.steps        = 40;
-			settings.max_distance = 60.0f;
-			settings.blur         = SSR::Settings::BLUR_MEDIUM;
-			settings.denoise      = false;
-		break;
-		case GameSettings::EFFECT_MEDIUM:
-			settings.resolution   = PER_HALF;
-			settings.steps        = 28;
-			settings.max_distance = 50.0f;
-			settings.blur         = SSR::Settings::BLUR_LOW;
-			settings.denoise      = false;
-		break;
-		case GameSettings::EFFECT_HIGH:
-			settings.resolution   = PER_HALF;
-			settings.steps        = 40;
-			settings.max_distance = 60.0f;
-			settings.blur         = SSR::Settings::BLUR_MEDIUM;
-			settings.denoise      = false;
-		break;
-		case GameSettings::EFFECT_ULTRA:
-			settings.resolution   = PER_FULL;
-			settings.steps        = 64;
-			settings.max_distance = 90.0f;
-			settings.blur         = SSR::Settings::BLUR_HIGH;
-			settings.denoise      = true;
-		break;
-		default: break;
+			if (name == ranks[i]) return i;
 		}
+		return sizeof(ranks) / sizeof(ranks[0]);
 	}
 
-	//the occlusion of a level: its size, its blur, its reach on the screen (no super low: its
-	//blur too light, the pattern of the samples shows; low instead)
-	static void occlusion(Square::Render::SSAO::Settings& settings, int level)
+	//the levels of the files before version 5 (numbers): their names
+	static std::string old_effect(int level, int version)
 	{
-		using namespace Square::Render;
-		switch (level)
-		{
-		case GameSettings::EFFECT_SUPER_LOW:
-		case GameSettings::EFFECT_LOW:
-			settings.resolution = PER_QUARTER;
-			settings.blur       = SSAO::Settings::BLUR_LOW;
-			settings.max_pixels = 32.0f;
-		break;
-		case GameSettings::EFFECT_MEDIUM:
-			settings.resolution = PER_HALF;
-			settings.blur       = SSAO::Settings::BLUR_LOW;
-			settings.max_pixels = 32.0f;
-		break;
-		case GameSettings::EFFECT_HIGH:
-			settings.resolution = PER_HALF;
-			settings.blur       = SSAO::Settings::BLUR_MEDIUM;
-			settings.max_pixels = 48.0f;
-		break;
-		case GameSettings::EFFECT_ULTRA:
-			settings.resolution = PER_FULL;
-			settings.blur       = SSAO::Settings::BLUR_HIGH;
-			settings.max_pixels = 64.0f;
-		break;
-		default: break;
-		}
-	}
-
-	//the bloom of a level: the levels of its chain (its width), how much of it
-	static void bloom(Square::Render::Bloom::Settings& settings, int level)
-	{
-		switch (level)
-		{
-		case GameSettings::BLOOM_LOW:
-			settings.levels    = 3;
-			settings.intensity = 0.4f;
-			settings.scatter   = 0.6f;
-		break;
-		case GameSettings::BLOOM_MEDIUM:
-			settings.levels    = 5;
-			settings.intensity = 0.5f;
-			settings.scatter   = 0.7f;
-		break;
-		case GameSettings::BLOOM_HIGH:
-			settings.levels    = 6;
-			settings.intensity = 0.55f;
-			settings.scatter   = 0.75f;
-		break;
-		default: break;
-		}
-	}
-
-	//the motion blur of a level: how much of the motion, its samples
-	static void motion_blur(Square::Render::MotionBlur::Settings& settings, int level)
-	{
-		switch (level)
-		{
-		case GameSettings::MOTION_BLUR_LOW:
-			settings.shutter    = 0.35f;
-			settings.max_pixels = 28.0f;
-			settings.samples    = 8;
-		break;
-		case GameSettings::MOTION_BLUR_HIGH:
-			settings.shutter    = 0.6f;
-			settings.max_pixels = 48.0f;
-			settings.samples    = 16;
-		break;
-		default: break;
-		}
-	}
-
-	//a level of an effect of an older file as a level of now (1: 0 off, 1 low, 2 high; 2: no
-	//medium, high and ultra one lower)
-	static int effect_from_version(int level, int version)
-	{
+		//(1: 0 off, 1 low, 2 high; 2: no medium, high and ultra one lower)
 		if (version <= 1)
 		{
 			switch (level)
 			{
-			case 1:  return GameSettings::EFFECT_LOW;
-			case 2:  return GameSettings::EFFECT_HIGH;
-			default: return GameSettings::EFFECT_OFF;
+			case 1:  return "low";
+			case 2:  return "high";
+			default: return "off";
 			}
 		}
-		if (version == 2 && level >= GameSettings::EFFECT_MEDIUM) return level + 1;
-		return level;
+		if (version == 2 && level >= 3) ++level;
+		static const char* names[]{ "off", "super_low", "low", "medium", "high", "ultra" };
+		return names[std::clamp(level, 0, 5)];
 	}
+
+	static std::string old_bloom(int level, int version)
+	{
+		//(1: on or off)
+		if (version <= 1) return level ? "medium" : "off";
+		static const char* names[]{ "off", "low", "medium", "high" };
+		return names[std::clamp(level, 0, 3)];
+	}
+
+	static std::string old_motion_blur(int level)
+	{
+		static const char* names[]{ "off", "low", "high" };
+		return names[std::clamp(level, 0, 2)];
+	}
+
+	static std::string old_shadows(int level, int version)
+	{
+		//(3 and before: 0 low, 1 medium, 2 high)
+		if (version <= 3)
+		{
+			switch (level)
+			{
+			case 0:  return "very_low";
+			case 1:  return "low";
+			default: return "high";
+			}
+		}
+		static const char* names[]{ "off", "very_low", "low", "medium", "high", "ultra", "best" };
+		return names[std::clamp(level, 0, 6)];
+	}
+}
+
+int GameSettings::level(const std::string& effect, const std::string& name)
+{
+	const auto& levels = Rush::Config::get().levels(effect);
+	if (name == "off" || levels.empty()) return 0;
+	for (size_t i = 0; i != levels.size(); ++i)
+	{
+		if (levels[i].m_name == name) return int(i) + 1;
+	}
+	//(not in the configuration: the nearest higher one, else the highest)
+	const size_t wanted = AuxGameSettings::rank(name);
+	for (size_t i = 0; i != levels.size(); ++i)
+	{
+		if (AuxGameSettings::rank(levels[i].m_name) >= wanted) return int(i) + 1;
+	}
+	return int(levels.size());
+}
+
+std::string GameSettings::level_name(const std::string& effect, int level)
+{
+	const auto& levels = Rush::Config::get().levels(effect);
+	if (level <= 0 || levels.empty()) return "off";
+	const size_t index = std::min(size_t(level), levels.size()) - 1;
+	return levels[index].m_name;
 }
 
 bool GameSettings::operator == (const GameSettings& other) const
@@ -165,6 +114,7 @@ bool GameSettings::operator == (const GameSettings& other) const
 	    && m_shadows == other.m_shadows
 	    && m_bloom == other.m_bloom
 	    && m_motion_blur == other.m_motion_blur
+	    && m_god_rays == other.m_god_rays
 	    && m_weather == other.m_weather
 	    && m_antialiasing == other.m_antialiasing;
 }
@@ -193,10 +143,31 @@ namespace AuxGameSettings
 	}
 }
 
+namespace AuxGameSettings
+{
+	//a level of an effect of the file: its name, or a number of an older file (by convert)
+	static int level(const Square::Data::JsonValue& json, const std::string& effect, int value, const std::function<std::string(int)>& convert)
+	{
+		if (!json.contains(effect)) return value;
+		const auto& field = json[effect];
+		if (field.is_string()) return GameSettings::level(effect, field.string());
+		if (field.is_number()) return GameSettings::level(effect, convert(int(field.number())));
+		if (field.is_boolean()) return GameSettings::level(effect, convert(field.boolean() ? 1 : 0));
+		return value;
+	}
+}
+
 bool GameSettings::load()
 {
 	using namespace Square;
 	using AuxGameSettings::field;
+	//the defaults (the levels of the configuration)
+	m_reflections = level("reflections", "high");
+	m_occlusion   = level("occlusion", "low");
+	m_shadows     = level("shadows", "high");
+	m_bloom       = level("bloom", "medium");
+	m_motion_blur = level("motion_blur", "low");
+	m_god_rays    = level("god_rays", "medium");
 	const std::string file = path();
 	if (!Filesystem::exists(file)) return false;
 	Data::Json json;
@@ -205,17 +176,15 @@ bool GameSettings::load()
 	m_fullscreen   = field(root, "fullscreen", m_fullscreen);
 	m_resolution   = std::clamp(field(root, "resolution", m_resolution), 0, s_resolutions_count - 1);
 	m_show_fps     = field(root, "show_fps", m_show_fps);
-	//(an older file: its levels as now; version 1, its bloom on: medium)
+	//the levels (an older file: numbers, as now)
 	const int version = field(root, "version", 1);
-	m_reflections  = AuxGameSettings::effect_from_version(field(root, "reflections", m_reflections), version);
-	m_reflections  = std::clamp(m_reflections, 0, int(EFFECT_LEVELS) - 1);
-	m_occlusion    = AuxGameSettings::effect_from_version(field(root, "occlusion", m_occlusion), version);
-	m_occlusion    = std::clamp(m_occlusion, 0, int(EFFECT_LEVELS) - 1);
-	if (m_occlusion == EFFECT_SUPER_LOW) m_occlusion = EFFECT_LOW;
-	m_shadows      = std::clamp(field(root, "shadows", m_shadows), 0, 2);
-	m_bloom        = std::clamp(field(root, "bloom", m_bloom), 0, int(BLOOM_LEVELS) - 1);
-	if (version <= 1) m_bloom = m_bloom ? BLOOM_MEDIUM : BLOOM_OFF;
-	m_motion_blur  = std::clamp(field(root, "motion_blur", m_motion_blur), 0, int(MOTION_BLUR_LEVELS) - 1);
+	using AuxGameSettings::level;
+	m_reflections  = level(root, "reflections", m_reflections, [version](int n) { return AuxGameSettings::old_effect(n, version); });
+	m_occlusion    = level(root, "occlusion", m_occlusion, [version](int n) { return AuxGameSettings::old_effect(n, version); });
+	m_shadows      = level(root, "shadows", m_shadows, [version](int n) { return AuxGameSettings::old_shadows(n, version); });
+	m_bloom        = level(root, "bloom", m_bloom, [version](int n) { return AuxGameSettings::old_bloom(n, version); });
+	m_motion_blur  = level(root, "motion_blur", m_motion_blur, [](int n) { return AuxGameSettings::old_motion_blur(n); });
+	m_god_rays     = level(root, "god_rays", m_god_rays, [](int n) { return n ? std::string("medium") : std::string("off"); });
 	m_weather      = field(root, "weather", m_weather);
 	m_antialiasing = field(root, "antialiasing", m_antialiasing);
 	return true;
@@ -235,11 +204,12 @@ bool GameSettings::save() const
 	text << "\t\"fullscreen\": " << (m_fullscreen ? "true" : "false") << ",\n";
 	text << "\t\"resolution\": " << m_resolution << ",\n";
 	text << "\t\"show_fps\": " << (m_show_fps ? "true" : "false") << ",\n";
-	text << "\t\"reflections\": " << m_reflections << ",\n";
-	text << "\t\"occlusion\": " << m_occlusion << ",\n";
-	text << "\t\"shadows\": " << m_shadows << ",\n";
-	text << "\t\"bloom\": " << m_bloom << ",\n";
-	text << "\t\"motion_blur\": " << m_motion_blur << ",\n";
+	text << "\t\"reflections\": \"" << level_name("reflections", m_reflections) << "\",\n";
+	text << "\t\"occlusion\": \"" << level_name("occlusion", m_occlusion) << "\",\n";
+	text << "\t\"shadows\": \"" << level_name("shadows", m_shadows) << "\",\n";
+	text << "\t\"bloom\": \"" << level_name("bloom", m_bloom) << "\",\n";
+	text << "\t\"motion_blur\": \"" << level_name("motion_blur", m_motion_blur) << "\",\n";
+	text << "\t\"god_rays\": \"" << level_name("god_rays", m_god_rays) << "\",\n";
 	text << "\t\"weather\": " << (m_weather ? "true" : "false") << ",\n";
 	text << "\t\"antialiasing\": " << (m_antialiasing ? "true" : "false") << "\n";
 	text << "}\n";
@@ -275,53 +245,80 @@ void GameSettings::apply_effects(Graphics& graphics) const
 	using namespace Square;
 	if (auto ssr = graphics.ssr())
 	{
-		ssr->enabled(m_reflections != EFFECT_OFF);
+		ssr->enabled(m_reflections != 0);
 		auto settings = ssr->settings();
-		AuxGameSettings::reflections(settings, m_reflections);
+		Rush::Config::get().reflections(level_name("reflections", m_reflections), settings);
 		ssr->settings(settings);
 	}
 	if (auto ssao = graphics.ssao())
 	{
-		ssao->enabled(m_occlusion != EFFECT_OFF);
+		ssao->enabled(m_occlusion != 0);
 		auto settings = ssao->settings();
-		AuxGameSettings::occlusion(settings, m_occlusion);
+		Rush::Config::get().occlusion(level_name("occlusion", m_occlusion), settings);
 		ssao->settings(settings);
 	}
 	if (auto bloom = graphics.bloom())
 	{
-		bloom->enabled(m_bloom != BLOOM_OFF);
+		bloom->enabled(m_bloom != 0);
 		auto settings = bloom->settings();
-		AuxGameSettings::bloom(settings, m_bloom);
+		Rush::Config::get().bloom(level_name("bloom", m_bloom), settings);
 		bloom->settings(settings);
 	}
 	if (auto motion_blur = graphics.motion_blur())
 	{
-		motion_blur->enabled(m_motion_blur != MOTION_BLUR_OFF);
+		motion_blur->enabled(m_motion_blur != 0);
 		auto settings = motion_blur->settings();
-		AuxGameSettings::motion_blur(settings, m_motion_blur);
+		Rush::Config::get().motion_blur(level_name("motion_blur", m_motion_blur), settings);
 		motion_blur->settings(settings);
+	}
+	if (auto god_rays = graphics.god_rays())
+	{
+		god_rays->enabled(m_god_rays != 0);
+		auto settings = god_rays->settings();
+		Rush::Config::get().god_rays(level_name("god_rays", m_god_rays), settings);
+		god_rays->settings(settings);
 	}
 	graphics.weather(m_weather);
 	graphics.antialiasing(m_antialiasing);
 }
 
-void GameSettings::apply_shadows(const Square::Shared<Square::Scene::DirectionLight>& sun) const
+void GameSettings::apply_shadows(const Square::Shared<Square::Scene::DirectionLight>& sun, float view) const
 {
 	using namespace Square;
 	if (!sun) return;
-	switch (m_shadows)
+	//none: no shadow map (the map loaded again: its own back)
+	if (m_shadows == 0)
 	{
-	case 0:
-		sun->shadow_filter(Render::ShadowFilter::NONE);
-		sun->cascades(2);
-	break;
-	case 1:
-		sun->shadow_filter(Render::ShadowFilter::PCF);
-		sun->cascades(DIRECTION_SHADOW_CSM_DEFAULT_FACES);
-	break;
-	default:
-		sun->shadow_filter(Render::ShadowFilter::PCSS);
-		sun->cascades(DIRECTION_SHADOW_CSM_DEFAULT_FACES);
-	break;
+		sun->shadow(IVec2(0));
+		return;
+	}
+	//its level (config/graphics.json; none: the sun of the map as it is)
+	Rush::ShadowSettings shadows;
+	if (!Rush::Config::get().shadows(level_name("shadows", m_shadows), shadows)) return;
+	sun->shadow_filter(shadows.m_filter);
+	sun->cascades(shadows.m_cascades);
+	//its shadow map: the map's scaled
+	const IVec2 size = sun->shadow_size();
+	if (shadows.m_map_scale != 1.0f && size.x > 0 && size.y > 0)
+	{
+		const Vec2 scaled_size = Vec2(size) * shadows.m_map_scale;
+		const IVec2 new_size = glm::clamp(IVec2(scaled_size), IVec2(128), IVec2(8192));
+		sun->shadow(new_size);
+	}
+	//its distance, never past the map as far as the camera sees it (view); 0, or a map without
+	//a distance of its own: that view
+	const float scaled = sun->shadow_distance() * shadows.m_distance;
+	const bool  whole = scaled <= 0.0f;
+	if (whole)
+	{
+		sun->shadow_distance(view);
+	}
+	else if (view > 0.0f)
+	{
+		sun->shadow_distance(std::min(scaled, view));
+	}
+	else
+	{
+		sun->shadow_distance(scaled);
 	}
 }
