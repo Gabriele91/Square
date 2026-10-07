@@ -18,7 +18,7 @@ Vec4 ssr_clip(in Vec3 world)
 Vec2 ssr_clip_to_uv(in Vec4 clip)
 {
 	Vec2 ndc = clip.xy / max(abs(clip.w), 0.00001);
-#ifdef GLSL_BACKEND
+#ifdef SQ_BACKEND_GLSL
 	return Vec2(0.5 + 0.5 * ndc.x, 0.5 + 0.5 * ndc.y);
 #else
 	return Vec2(0.5 + 0.5 * ndc.x, 0.5 - 0.5 * ndc.y);

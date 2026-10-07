@@ -8,6 +8,7 @@
 //  The background (no geometry): the fog the sky setting says.
 //
 #include <Camera>
+#include <GBufferPosition>
 #include <Vertex>
 #include <DeferredFullscreen>
 
@@ -41,7 +42,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 {
 	Vec2 uv = input.m_position.xy / fog_size;
 	Vec3 color = texture2DLod(g_source, uv, 0.0).rgb;
-	Vec4 g_pos = texture2DLod(g_position, uv, 0.0);
+	Vec4 g_pos = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
 	float max_opacity = fog_sun_direction.w;
 	//background: the fog of the sky
 	if (g_pos.w < 0.5) return Vec4(lerp(color, fog_color.rgb, fog_color.a * max_opacity), 1.0);

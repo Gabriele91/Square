@@ -7,8 +7,9 @@
 //  NOTE: <SurfacePBR> is not included: the include preprocessor does not
 //  evaluate #if, its forward branch would swallow <LightPBR>/<GammaCorrection>.
 //
-#define RENDERING_AMBIENT_LIGHT
+#define SQ_LIGHT_AMBIENT
 #include <Camera>
+#include <GBufferPosition>
 #include <Vertex>
 #include <GammaCorrection>
 #include <NDF>
@@ -22,7 +23,7 @@
 Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 {
 	Vec2 uv = deferred_screen_uv(input.m_position);
-	Vec4 gbuffer_position = texture2D(g_position, uv);
+	Vec4 gbuffer_position = gbuffer_world(texture2D(g_position, uv), uv);
 	//background: the G-Buffer holds the clear color, show it as-is
 	if (gbuffer_position.w < 0.5)
 	{

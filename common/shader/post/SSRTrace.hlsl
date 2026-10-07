@@ -16,6 +16,7 @@
 //  Debug 2: the projection of the pixel itself against its uv (black right, red wrong).
 //
 #include <Camera>
+#include <GBufferPosition>
 #include <Vertex>
 #include <DeferredFullscreen>
 
@@ -36,7 +37,7 @@ float ssr_surface_difference(in Vec3 ray_position, in Vec2 uv, out bool valid)
 {
 	valid = uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0;
 	if (!valid) return -1.0;
-	Vec4 surface = texture2DLod(g_position, uv, 0.0);
+	Vec4 surface = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
 	if (surface.w < 0.5) return -1.0; //background: nothing to hit
 	return length(ray_position - camera.m_position) - length(surface.xyz - camera.m_position);
 }
@@ -188,7 +189,7 @@ bool ssr_march_screen(in Vec3 origin, in Vec3 ray, in float jitter, out Vec2 hit
 Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 {
 	Vec2 uv = input.m_position.xy / ssr_size;
-	Vec4 g_pos = texture2DLod(g_position, uv, 0.0);
+	Vec4 g_pos = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
 	//background: no reflection
 	if (g_pos.w < 0.5) return Vec4(0.0, 0.0, 0.0, 0.0);
 	//projection check: the pixel back on the screen

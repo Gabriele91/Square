@@ -3,12 +3,12 @@
 //  Square
 //
 //  Deferred directional light pass with shadow mapping (full-screen).
-//  Same as <DeferredDirectionLight> plus RENDERING_SHADOW_ENABLE: the shared
+//  Same as <DeferredDirectionLight> plus SQ_SHADOW: the shared
 //  <DirectionShadowLight> (CSM) code is pulled in by <LightPBR>.
 //  <Transform> is required by <ShadowCamera> (mul_model_* helpers).
 //
-#define RENDERING_DIRECTION_LIGHT
-#define RENDERING_SHADOW_ENABLE
+#define SQ_LIGHT_DIRECTION
+#define SQ_SHADOW
 #include <Camera>
 #include <Transform>
 #include <Vertex>

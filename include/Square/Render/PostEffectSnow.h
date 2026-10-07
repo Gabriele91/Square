@@ -47,6 +47,8 @@ namespace Render
 		void settings(const Settings& settings) { m_settings = settings; }
 		const Settings& settings() const { return m_settings; }
 
+		//it draws only with a camera
+		virtual bool active(const PostEffectFrame& frame) const override { return frame.m_camera != nullptr; }
 		virtual void draw(PostEffectFrame& frame) override;
 
 	protected:

@@ -28,6 +28,7 @@ sub_effect
     //forward rendering pipeline: drawn on the screen target
     technique "forward"
     {
+        variants clip(mask)
         pass
         {
             zbuffer less_equal read_only
@@ -57,6 +58,7 @@ sub_effect
     //deferred rendering pipeline: drawn into the light buffer (linear, encoded by the present)
     technique "translucent"
     {
+        variants clip(mask)
         pass
         {
             zbuffer less_equal read_only

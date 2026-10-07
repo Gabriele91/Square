@@ -193,6 +193,8 @@ namespace Render
 		for (auto& effect : effects)
 		{
 			if (!effect || !effect->enabled() || effect->stage() != PES_COLOR) continue;
+			//(nothing to do on this frame: no copy, the next one reads the same)
+			if (!effect->active(frame)) continue;
 			frame.m_source = current;
 			frame.m_destination = m_targets[next];
 			SQUARE_RENDER_SCOPE(render(), effect->object_name().c_str());

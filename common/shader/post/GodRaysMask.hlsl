@@ -7,6 +7,7 @@
 //  screen; the rest black (it blocks the light).
 //
 #include <Camera>
+#include <GBufferPosition>
 #include <Vertex>
 #include <DeferredFullscreen>
 
@@ -23,7 +24,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 {
 	Vec2 uv = input.m_position.xy / rays_size;
 	//the geometry: no light through it (but a sky of geometry: black, only emissive)
-	Vec4 position = texture2DLod(g_position, uv, 0.0);
+	Vec4 position = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
 	if (position.w > 0.5)
 	{
 		Vec3  albedo = texture2DLod(g_albedo, uv, 0.0).rgb;

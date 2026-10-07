@@ -84,7 +84,9 @@ namespace Render
 				if (!material) continue;
 				//effect
 				auto effect = material->effect();
-				auto technique = effect->technique(technique_name, randerable->instanced());
+				//(the clip variant: by its material, or its level of detail is fading)
+				const bool fading = randerable->lod_fade() < 1.0f;
+				auto technique = effect->technique(technique_name, randerable->instanced(), *material->parameters(), fading);
 				if (!technique) continue;
 				//draw for each pass
 				for (auto& pass : *technique)

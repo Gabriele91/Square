@@ -180,9 +180,9 @@ namespace Resource
 		}
         //commond header
 		std::string                    shader_commond_header = "#pragma pack_matrix( row_major )\n";
-		     if (source.m_hlsl_target) shader_commond_header+= "#define HLSL_BACKEND\n";
-		else if (source.m_msl_target)  shader_commond_header+= "#define MSL_BACKEND\n";
-		else		              	   shader_commond_header+= "#define GLSL_BACKEND\n";
+		     if (source.m_hlsl_target) shader_commond_header+= "#define SQ_BACKEND_HLSL\n";
+		else if (source.m_msl_target)  shader_commond_header+= "#define SQ_BACKEND_MSL\n";
+		else		              	   shader_commond_header+= "#define SQ_BACKEND_GLSL\n";
 		// sRGB / gamma correction
 		if (auto window = context().window())
 		if (auto device = window->device())

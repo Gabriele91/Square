@@ -31,7 +31,7 @@ float ssao_view_depth(in Vec3 world)
 //D3D/Metal, up on OpenGL (as SSRCommon)
 Vec3 ssao_world(in Vec2 uv, in float depth)
 {
-#ifdef GLSL_BACKEND
+#ifdef SQ_BACKEND_GLSL
 	Vec2 ndc = Vec2(uv.x * 2.0 - 1.0, uv.y * 2.0 - 1.0);
 #else
 	Vec2 ndc = Vec2(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0);

@@ -18,7 +18,7 @@ cbuffer Light
     DirectionLight light;
 }
 
-#ifdef RENDERING_SHADOW_ENABLE
+#ifdef SQ_SHADOW
 #include <DirectionShadowLight>
 #else
 float direction_light_apply_shadow(in Vec4 fposition, in Vec3  view_dir, in Vec3  normal)

@@ -3,12 +3,12 @@
 //  Square
 //
 //  Deferred point light pass with shadow mapping (sphere volume).
-//  Same as <DeferredPointLight> plus RENDERING_SHADOW_ENABLE: the shared
+//  Same as <DeferredPointLight> plus SQ_SHADOW: the shared
 //  <PointShadowLight> (cube map) code is pulled in by <LightPBR>.
 //  <Transform> is required by <ShadowCamera> (mul_model_* helpers).
 //
-#define RENDERING_POINT_LIGHT
-#define RENDERING_SHADOW_ENABLE
+#define SQ_LIGHT_POINT
+#define SQ_SHADOW
 #include <Camera>
 #include <Transform>
 #include <Vertex>

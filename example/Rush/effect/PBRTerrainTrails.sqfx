@@ -55,6 +55,7 @@ sub_effect
 	//import shadow forward
     technique "forward"
     {
+        variants clip(mask, dither)
         pass 
         {
             zbuffer less
@@ -84,6 +85,7 @@ sub_effect
 	//deferred: single geometry pass, fills the G-Buffer (lighting done later)
 	technique "deferred"
 	{
+		variants clip(mask, dither)
 		pass
 		{
 			zbuffer less

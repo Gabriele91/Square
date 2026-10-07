@@ -108,6 +108,9 @@ namespace Render
 		//an effect off is not drawn
 		void enabled(bool enabled) { m_enabled = enabled; }
 		bool enabled() const { return m_enabled; }
+		//it has something to do on a frame (false: not drawn, the frame goes on as it is, no
+		//copy), e.g. no G-Buffer for a deferred one, no velocity for the motion blur
+		virtual bool active(const PostEffectFrame& frame) const { return true; }
 
 		//draw the effect on a frame (a PES_COLOR effect must write the destination)
 		virtual void draw(PostEffectFrame& frame) = 0;

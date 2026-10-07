@@ -4,7 +4,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 10/04/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"

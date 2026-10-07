@@ -61,6 +61,8 @@ namespace Render
 		void settings(const Settings& settings) { m_settings = settings; }
 		const Settings& settings() const { return m_settings; }
 
+		//it draws only with the deferred pipeline, rays
+		virtual bool active(const PostEffectFrame& frame) const override { return frame.m_gbuffer && frame.m_camera && m_settings.intensity > 0.0f; }
 		virtual void draw(PostEffectFrame& frame) override;
 
 	protected:

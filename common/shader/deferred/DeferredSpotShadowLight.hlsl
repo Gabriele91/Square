@@ -3,12 +3,12 @@
 //  Square
 //
 //  Deferred spot light pass with shadow mapping (cone volume).
-//  Same as <DeferredSpotLight> plus RENDERING_SHADOW_ENABLE: the shared
+//  Same as <DeferredSpotLight> plus SQ_SHADOW: the shared
 //  <SpotShadowLight> code is pulled in by <LightPBR>.
 //  <Transform> is required by <ShadowCamera> (mul_model_* helpers).
 //
-#define RENDERING_SPOT_LIGHT
-#define RENDERING_SHADOW_ENABLE
+#define SQ_LIGHT_SPOT
+#define SQ_SHADOW
 #include <Camera>
 #include <Transform>
 #include <Vertex>

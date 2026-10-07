@@ -218,7 +218,7 @@ namespace Render
 		virtual bool is_valid();
 
 		//type
-		EffectParameterType get_type();
+		EffectParameterType get_type() const;
 
 
 		virtual Shared<Resource::Texture> get_texture()  const;
@@ -480,9 +480,57 @@ namespace Render
 
 	};
 
-	//alias map of parameters and techniques
+	//alias map of parameters
 	using EffectParametersMap = std::unordered_map< std::string, int >;
-	using EffectTechniquesMap = std::unordered_map< std::string, EffectTechnique >;
+
+	//the variants of a technique: its passes compiled again with a define. A technique declares
+	//them in the .sqfx ("variants instanced clip"), each combination of them is compiled
+	enum EffectVariant : unsigned char
+	{
+		EV_NONE      = 0b00,
+		EV_INSTANCED = 0b01, //SQ_INSTANCED: a Scene::InstancedMesh, the matrix of each instance (Instances.hlsl)
+		EV_CLIP      = 0b10, //SQ_CLIP: the shaders can drop pixels (its mask, its dither, the fade
+		                     //of a level of detail); without it no discard (early-z)
+		EV_COUNT     = 4     //the combinations
+	};
+
+	//a technique and its variants, by combination (EV_NONE: the technique itself)
+	class SQUARE_API EffectTechniqueVariants
+	{
+	public:
+		//a combination of the variants (nullptr: not declared)
+		EffectTechnique* variant(unsigned char variant);
+		const EffectTechnique* variant(unsigned char variant) const;
+		//declare a combination: its technique, to fill
+		EffectTechnique& declare(unsigned char variant);
+
+		//the parameters that turn the clip variant on ("clip(mask, dither)" in the .sqfx): one of
+		//them over 0 in the parameters of a draw (its material)
+		void clip_parameters(const std::vector< std::string >& names);
+		const std::vector< std::string >& clip_parameters() const { return m_clip_parameters; }
+		//their ids in an effect (an imported technique: the importer)
+		void resolve_clip_parameters(const EffectParametersMap& parameters);
+		//one of them is on in the parameters
+		bool clips(const EffectParameters& parameters) const;
+		//each combination declared
+		template < typename F >
+		void for_each_declared(F function)
+		{
+			for (unsigned char variant = 0; variant != EV_COUNT; ++variant)
+			{
+				if (m_declared[variant]) function(m_techniques[variant]);
+			}
+		}
+
+	private:
+		EffectTechnique            m_techniques[EV_COUNT];
+		bool                       m_declared[EV_COUNT]{ false, false, false, false };
+		std::vector< std::string > m_clip_parameters;
+		std::vector< int >         m_clip_parameter_ids;
+	};
+
+	//alias map of techniques
+	using EffectTechniquesMap = std::unordered_map< std::string, EffectTechniqueVariants >;
 
 	//Effect
 	class SQUARE_API Effect : public BaseObject
@@ -508,13 +556,15 @@ namespace Render
 		void  queue(const EffectQueueType& queue) { m_queue = queue; }
 		const EffectQueueType& queue() const { return m_queue; }
 
-		//get technique
+		//get technique (without variants)
 		EffectTechnique* technique(const std::string& technique);
 		const EffectTechnique* technique(const std::string& technique) const;
-		//the technique of a renderable: its "<technique>_instanced" one when it is drawn instanced
-		EffectTechnique* technique(const std::string& technique, bool instanced);
+		//the technique of a draw: its EV_INSTANCED variant when it is drawn instanced (nullptr: not
+		//declared); its EV_CLIP variant, if declared, when one of its clip parameters is on in the
+		//parameters (its material) or when fading (a level of detail)
+		EffectTechnique* technique(const std::string& technique, bool instanced, const EffectParameters& parameters, bool fading);
 
-		//all techniques
+		//all techniques, with their variants
 		const EffectTechniquesMap& techniques() const { return m_techniques_map; }
 
 		//get parameter

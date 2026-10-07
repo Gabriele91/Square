@@ -132,23 +132,20 @@ namespace Scene
 		using namespace Square::Render;
 		using namespace Square::Render::Layout;
 		
-		size_t num_sub_meshs_to_draw = (std::min<size_t>)(m_mesh->number_of_sub_meshs(), m_materials.size());
-		//bind
-		for (size_t i = 0; i < num_sub_meshs_to_draw; ++i)
+		//the sub mesh of the material (the passes call it for each material: each one its own,
+		//with the technique of its own material)
+		const size_t num_sub_meshs_to_draw = (std::min<size_t>)(m_mesh->number_of_sub_meshs(), m_materials.size());
+		if (material_id >= num_sub_meshs_to_draw) return;
+		if (!m_materials[material_id])
 		{
-			if (m_materials[i])
-			{
-				pass.bind(render, input, m_materials[i]->parameters(), draw_id);
-				//draw (instanced when the pass declares "instances N")
-				m_mesh->draw(render, i, (unsigned int)pass.m_instances);
-				//unbind
-				pass.unbind();
-			}
-			else
-			{
-				context().logger()->debug("Mesh draw with invalid material: " + std::to_string(i));
-			}
+			context().logger()->debug("Mesh draw with invalid material: " + std::to_string(material_id));
+			return;
 		}
+		pass.bind(render, input, m_materials[material_id]->parameters(), draw_id);
+		//draw (instanced when the pass declares "instances N")
+		m_mesh->draw(render, material_id, (unsigned int)pass.m_instances);
+		//unbind
+		pass.unbind();
 	}
 
 	bool StaticMesh::support_culling() const

@@ -41,7 +41,7 @@ struct FragmentShaderInput
 	Vec4 m_position       : SV_POSITION;
 	Vec4 m_world_position : POSITION1;
 	Vec2 m_uv             : TEXCOORD0;
-#ifdef HLSL_BACKEND
+#ifdef SQ_BACKEND_HLSL
 	uint m_layer          : SV_RenderTargetArrayIndex;
 #endif
 };
@@ -50,9 +50,11 @@ float fragment(in FragmentShaderInput input) : SV_Depth
 {
 	//albedo
 	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
+#ifdef SQ_CLIP
+	//(the clip variant: its mask of the shadow, its level of detail fading)
 	if (albedo_color.a <= mask_shadow) discard;
-	//its level of detail fading in or out
 	lod_fade_clip(input.m_position.xy);
+#endif
 	//compute distance between world and light source
 	float light_distance = length(point_shadow_camera.m_position - input.m_world_position.xyz);
 	//[0,1] range

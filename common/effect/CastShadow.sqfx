@@ -22,6 +22,7 @@ sub_effect
     }
     technique "SpotShadow"
     {
+        variants instanced clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -33,6 +34,7 @@ sub_effect
     }
     technique "PointShadow"
     {
+        variants instanced clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -44,6 +46,7 @@ sub_effect
     }
     technique "DirectionShadow"
     {
+        variants instanced clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -51,52 +54,6 @@ sub_effect
             cullface param(shadow_cull)
             lights off
             shader "CastDirectionShadow.hlsl"
-        }
-    }
-    //the same, instanced (Scene::InstancedMesh: the matrix of each instance, see Instances.hlsl)
-    technique "SpotShadow_instanced"
-    {
-        pass
-        {
-            zbuffer less
-            blend off
-            cullface front
-            lights off
-            shader source
-            {
-                #define INSTANCED
-                #include "CastSpotShadow.hlsl"
-            }
-        }
-    }
-    technique "PointShadow_instanced"
-    {
-        pass
-        {
-            zbuffer less
-            blend off
-            cullface front
-            lights off
-            shader source
-            {
-                #define INSTANCED
-                #include "CastPointShadow.hlsl"
-            }
-        }
-    }
-    technique "DirectionShadow_instanced"
-    {
-        pass
-        {
-            zbuffer less
-            blend off
-            cullface param(shadow_cull)
-            lights off
-            shader source
-            {
-                #define INSTANCED
-                #include "CastDirectionShadow.hlsl"
-            }
         }
     }
 }
@@ -114,6 +71,7 @@ sub_effect
     }
     technique "SpotShadow"
     {
+        variants clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -125,6 +83,7 @@ sub_effect
     }
     technique "PointShadow"
     {
+        variants clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -137,6 +96,7 @@ sub_effect
     }
     technique "DirectionShadow"
     {
+        variants clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -161,6 +121,7 @@ sub_effect
     }
     technique "SpotShadow"
     {
+        variants clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -172,6 +133,7 @@ sub_effect
     }
     technique "PointShadow"
     {
+        variants clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -184,6 +146,7 @@ sub_effect
     }
     technique "DirectionShadow"
     {
+        variants clip(mask_shadow)
         pass
         {
             zbuffer less

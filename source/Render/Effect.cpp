@@ -70,7 +70,7 @@ namespace Render
 	EffectParameter::~EffectParameter() {}
 
 	bool EffectParameter::is_valid() { return m_id >= 0; }
-	EffectParameterType EffectParameter::get_type() { return m_type; }
+	EffectParameterType EffectParameter::get_type() const { return m_type; }
 
 	template< class T >
 	inline static const T& none_const_t_return()
@@ -642,7 +642,68 @@ namespace Render
 		return ContainerByDraw(*this);
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
-	// EffectTechnique
+	// EffectTechniqueVariants
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	EffectTechnique* EffectTechniqueVariants::variant(unsigned char variant)
+	{
+		if (variant >= EV_COUNT || !m_declared[variant]) return nullptr;
+		return &m_techniques[variant];
+	}
+
+	const EffectTechnique* EffectTechniqueVariants::variant(unsigned char variant) const
+	{
+		if (variant >= EV_COUNT || !m_declared[variant]) return nullptr;
+		return &m_techniques[variant];
+	}
+
+	EffectTechnique& EffectTechniqueVariants::declare(unsigned char variant)
+	{
+		m_declared[variant] = true;
+		return m_techniques[variant];
+	}
+
+	void EffectTechniqueVariants::clip_parameters(const std::vector< std::string >& names)
+	{
+		m_clip_parameters = names;
+		m_clip_parameter_ids.clear();
+	}
+
+	void EffectTechniqueVariants::resolve_clip_parameters(const EffectParametersMap& parameters)
+	{
+		m_clip_parameter_ids.clear();
+		m_clip_parameter_ids.reserve(m_clip_parameters.size());
+		for (const std::string& name : m_clip_parameters)
+		{
+			auto it_param = parameters.find(name);
+			if (it_param != parameters.end()) m_clip_parameter_ids.push_back(it_param->second);
+		}
+	}
+
+	namespace AuxClip
+	{
+		//a parameter on: its value over 0 (a float or an int)
+		bool on(const EffectParameter& parameter)
+		{
+			switch (parameter.get_type())
+			{
+			case EffectParameterType::PT_FLOAT: return parameter.get_float() > 0.0f;
+			case EffectParameterType::PT_INT:   return parameter.get_int() > 0;
+			default:                            return false;
+			}
+		}
+	}
+
+	bool EffectTechniqueVariants::clips(const EffectParameters& parameters) const
+	{
+		for (int id : m_clip_parameter_ids)
+		{
+			const bool known = id >= 0 && size_t(id) < parameters.size() && parameters[id];
+			if (known && AuxClip::on(*parameters[id])) return true;
+		}
+		return false;
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Effect
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	//contructor
 	Effect::Effect(Allocator* allocator)
@@ -654,19 +715,28 @@ namespace Render
 	EffectTechnique* Effect::technique(const std::string& technique_name)
 	{
 		auto it_tech = m_techniques_map.find(technique_name);
-		if (it_tech != m_techniques_map.end()) return &it_tech->second;
-		return nullptr;
+		if (it_tech == m_techniques_map.end()) return nullptr;
+		return it_tech->second.variant(EV_NONE);
 	}
 	const EffectTechnique* Effect::technique(const std::string& technique_name) const
 	{
 		auto it_tech = m_techniques_map.find(technique_name);
-		if (it_tech != m_techniques_map.end()) return &it_tech->second;
-		return nullptr;
+		if (it_tech == m_techniques_map.end()) return nullptr;
+		return it_tech->second.variant(EV_NONE);
 	}
-	EffectTechnique* Effect::technique(const std::string& technique_name, bool instanced)
+	EffectTechnique* Effect::technique(const std::string& technique_name, bool instanced, const EffectParameters& parameters, bool fading)
 	{
-		if (!instanced) return technique(technique_name);
-		return technique(technique_name + "_instanced");
+		auto it_tech = m_techniques_map.find(technique_name);
+		if (it_tech == m_techniques_map.end()) return nullptr;
+		EffectTechniqueVariants& variants = it_tech->second;
+		const unsigned char base = instanced ? EV_INSTANCED : EV_NONE;
+		//the clip variant: it drops pixels; without it no discard
+		const bool clip = fading || variants.clips(parameters);
+		if (clip)
+		{
+			if (EffectTechnique* clipped = variants.variant(base | EV_CLIP)) return clipped;
+		}
+		return variants.variant(base);
 	}
 
 	//get parameters
@@ -720,20 +790,21 @@ namespace Render
 	bool Effect::import_technique(const Effect& effect,const std::string& name)
 	{
 		//get
-		const EffectTechnique* in_technique = effect.technique(name);
+		auto it_tech = effect.techniques().find(name);
 		//test
-		if (!in_technique) return false;
-		//copy
-		auto& new_technique = (m_techniques_map[name] = *in_technique);
+		if (it_tech == effect.techniques().end()) return false;
+		//copy, with its variants
+		EffectTechniqueVariants& variants = (m_techniques_map[name] = it_tech->second);
 		//rebuild ids
-		for_each_pass_build_params_id(new_technique);
+		variants.for_each_declared([this](EffectTechnique& technique) { for_each_pass_build_params_id(technique); });
+		variants.resolve_clip_parameters(m_parameters_map);
 		return true;
 	}
 
-	//copy pass (import) 
+	//copy pass (import)
 	bool Effect::import_techniques(const Effect& effect)
 	{
-		for (auto technique : effect.techniques())
+		for (const auto& technique : effect.techniques())
 		{
 			if (!import_technique(effect, technique.first))
 				return false;
@@ -754,7 +825,10 @@ namespace Render
 	void Effect::for_each_pass_build_params_id()
 	{
 		for (auto& technique : m_techniques_map)
-			for_each_pass_build_params_id(technique.second);
+		{
+			technique.second.for_each_declared([this](EffectTechnique& variant) { for_each_pass_build_params_id(variant); });
+			technique.second.resolve_clip_parameters(m_parameters_map);
+		}
 	}
 	void Effect::for_each_pass_build_params_id(EffectTechnique& technique)
 	{

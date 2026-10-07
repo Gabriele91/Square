@@ -38,7 +38,7 @@ struct FragmentShaderInput
 {
 	Vec4 m_position : SV_POSITION;
 	Vec2 m_uv       : TEXCOORD0;
-#ifdef HLSL_BACKEND
+#ifdef SQ_BACKEND_HLSL
 	uint m_layer    : SV_RenderTargetArrayIndex;
 #endif
 };
@@ -47,7 +47,9 @@ void fragment(in FragmentShaderInput input)
 {
 	//albedo
 	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
+#ifdef SQ_CLIP
+	//(the clip variant: its mask of the shadow, its level of detail fading)
 	if (albedo_color.a <= mask_shadow) discard;
-	//its level of detail fading in or out
 	lod_fade_clip(input.m_position.xy);
+#endif
 }

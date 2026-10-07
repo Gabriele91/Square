@@ -74,7 +74,7 @@ namespace Render
 		inline bool  lod_shown() const { return m_lod_fade != 0.0f; }
 
 		//drawn instanced (many copies in a draw call: Scene::InstancedMesh): the passes take the
-		//"<technique>_instanced" techniques of its effects
+		//instanced variant of the techniques of its effects (Render::EV_INSTANCED)
 		virtual bool instanced() const { return false; }
 
 		//motion blur of its own (a PostEffect that needs the velocity, Render::MotionBlur): its

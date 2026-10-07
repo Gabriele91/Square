@@ -27,7 +27,7 @@ R"HLSLCODE(
 //sample of a mip level: no derivatives, also in loops and branches (D3D does not allow the others there)
 #define texture2DLod(name,pos,lod) name.SampleLevel(sempler_ ## name,pos,lod)
 
-#ifdef GLSL_BACKEND
+#ifdef SQ_BACKEND_GLSL
 	#define shadow2D(name,pos) name.Sample(sempler_ ## name,invY(pos))
 	#define draw2D(name,pos) name.Sample(sempler_ ## name,invY(pos))	
 
@@ -41,7 +41,7 @@ R"HLSLCODE(
 	#define ONLY_GLSL( x ) x 
 	#define ONLY_MSL( x )
 	#define ONLY_HLSL( x )
-#elif defined(MSL_BACKEND)
+#elif defined(SQ_BACKEND_MSL)
 	#define shadow2D(name,pos) name.Sample(sempler_ ## name, pos)
 	#define draw2D(name,pos) name.Sample(sempler_ ## name, pos)
 
@@ -55,7 +55,7 @@ R"HLSLCODE(
 	#define ONLY_GLSL( x )
 	#define ONLY_MSL( x ) x
 	#define ONLY_HLSL( x )
-#elif defined(HLSL_BACKEND)
+#elif defined(SQ_BACKEND_HLSL)
 	#define shadow2D(name,pos) name.Sample(sempler_ ## name, pos)
 	#define draw2D(name,pos) name.Sample(sempler_ ## name, pos)
 

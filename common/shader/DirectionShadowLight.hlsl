@@ -60,7 +60,7 @@ float csm_texel_world_size(uint id)
 float direction_light_shadow_pcf(in Vec3 proj_coords, uint id, const float bias)
 {
 	//depth of current pos
-#ifdef GLSL_BACKEND
+#ifdef SQ_BACKEND_GLSL
 	float current_depth = proj_coords.z * 0.5 + 0.5;
 #else
 	float current_depth = proj_coords.z;
@@ -95,7 +95,7 @@ float direction_light_shadow_none(in Vec3 proj_coords, uint id, const float bias
 	// depth of shadow map
 	float closest_depth = shadow2DArray(direction_shadow_map, Vec3(proj_coords.xy, id)).r;
 	// depth of current pos
-#ifdef GLSL_BACKEND
+#ifdef SQ_BACKEND_GLSL
 	float current_depth = proj_coords.z * 0.5 + 0.5;
 #else
 	float current_depth = proj_coords.z;
@@ -123,7 +123,7 @@ static const Vec2 pcss_poisson[PCSS_SAMPLES] =
 float csm_depth_per_world(uint id)
 {
 	float scale = abs(direction_shadow_camera.m_projection[id][2][2]);
-#ifdef GLSL_BACKEND
+#ifdef SQ_BACKEND_GLSL
 	scale *= 0.5;
 #endif
 	return max(scale, 0.000001);
@@ -139,7 +139,7 @@ Vec2 pcss_rotate(in Vec2 v, in float angle)
 // PCSS: the casters around the point give the penumbra (wider far from them), then a PCF of it
 float direction_light_shadow_pcss(in Vec3 proj_coords, uint id, const float bias)
 {
-#ifdef GLSL_BACKEND
+#ifdef SQ_BACKEND_GLSL
 	float current_depth = proj_coords.z * 0.5 + 0.5;
 #else
 	float current_depth = proj_coords.z;

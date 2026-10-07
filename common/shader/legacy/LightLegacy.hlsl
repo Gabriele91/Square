@@ -13,7 +13,7 @@ struct LightResult
     Vec3 m_specular;
 };
 //include the required light type
-#if defined(RENDERING_COLOR)
+#if defined(SQ_LIGHT_COLOR)
 LightResult compute_light
 (
 	in Vec4  fposition,
@@ -28,12 +28,12 @@ LightResult compute_light
 	result.m_specular = Vec4(0.0, 0.0, 0.0, 0.0);
 	return result;
 }
-#elif defined(RENDERING_AMBIENT_LIGHT)
+#elif defined(SQ_LIGHT_AMBIENT)
 #include <AmbientLightLegacy>
-#elif defined(RENDERING_DIRECTION_LIGHT)
+#elif defined(SQ_LIGHT_DIRECTION)
 #include <DirectionLightLegacy>
-#elif defined(RENDERING_POINT_LIGHT)
+#elif defined(SQ_LIGHT_POINT)
 #include <PointLightLegacy>
-#elif defined(RENDERING_SPOT_LIGHT)
+#elif defined(SQ_LIGHT_SPOT)
 #include <SpotLightLegacy>
 #endif

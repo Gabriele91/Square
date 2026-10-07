@@ -11,7 +11,8 @@
 //   - compute_surface_output() : the geometry-pass entry that packs SurfaceData.
 //
 //  G-Buffer layout (all float targets, values kept in LINEAR space):
-//   GT0 : world position (rgb) | 1                (RGBA32F)
+//   GT0 : depth along the view (r) | model (g)   (RG32F: <GBufferPosition>, the world position
+//         from the depth and the camera)
 //   GT1 : world normal   (rgb) | roughness (a)    (RGBA16F)
 //   GT2 : albedo         (rgb) | metallic  (a)    (RGBA8)
 //   GT3 : emissive       (rgb) | occlusion (a)    (RGBA16F)
@@ -19,6 +20,7 @@
 //
 #pragma once
 #include <SurfaceDataPBR>
+#include <GBufferPosition>
 
 // Target indices, kept in sync with the GBuffer build list in DrawerPassDeferred.
 #define GBUFFER_POSITION 0
@@ -54,7 +56,7 @@ struct SurfaceOutput
 SurfaceOutput encode_gbuffer(in SurfaceData data)
 {
 	SurfaceOutput output;
-	output.m_position = Vec4(data.m_position.xyz, GBUFFER_MODEL_PBR + saturate(data.m_translucency) * GBUFFER_TRANSLUCENCY_SCALE);
+	output.m_position = gbuffer_encode_world(data.m_position.xyz, GBUFFER_MODEL_PBR + saturate(data.m_translucency) * GBUFFER_TRANSLUCENCY_SCALE);
 	output.m_normal   = Vec4(normalize(data.m_normal), data.m_roughness);
 	output.m_albedo   = Vec4(data.m_albedo, data.m_metallic);
 	output.m_emissive = Vec4(data.m_emmisive, data.m_occlusion);

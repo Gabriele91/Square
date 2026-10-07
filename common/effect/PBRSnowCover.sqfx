@@ -38,6 +38,7 @@ sub_effect
 	//import shadow forward
     technique "forward"
     {
+        variants instanced clip(mask, dither)
         pass 
         {
             zbuffer less
@@ -67,6 +68,7 @@ sub_effect
 	//deferred: single geometry pass, fills the G-Buffer (lighting done later)
 	technique "deferred"
 	{
+		variants instanced clip(mask, dither)
 		pass
 		{
 			zbuffer less
@@ -76,53 +78,6 @@ sub_effect
 			shader source
 			{
 				#define DEFERRED_RENDERING
-				#include "PBRSnowCover.hlsl"
-			}
-		}
-	}
-	//the same, instanced (Scene::InstancedMesh: the matrix of each instance, see Instances.hlsl)
-	technique "forward_instanced"
-    {
-        pass 
-        {
-            zbuffer less
-            blend off
-            cullface param(cull)
-            lights only_ambient
-            shader source 
-            {
-				#define FORWARD_RENDERING
-				#define INSTANCED
-				#include "PBRSnowCover.hlsl"
-            }
-        }
-        pass 
-        {
-            zbuffer equal
-            blend one one  
-            cullface param(cull)
-            lights spot_point_direction
-			shadows spot_point_direction
-            shader source
-            {
-                #define FORWARD_RENDERING
-				#define INSTANCED
-				#include "PBRSnowCover.hlsl"
-            }
-		}
-    }
-	technique "deferred_instanced"
-	{
-		pass
-		{
-			zbuffer less
-			blend off
-			cullface param(cull)
-			lights off
-			shader source
-			{
-				#define DEFERRED_RENDERING
-				#define INSTANCED
 				#include "PBRSnowCover.hlsl"
 			}
 		}

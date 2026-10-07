@@ -29,7 +29,7 @@ float point_light_compute_attenuation(in Vec3  light_relative)
     return pow(smoothstep(light.m_radius, light.m_inside_radius, light_distance), light.m_constant);
 }
 
-#ifdef RENDERING_SHADOW_ENABLE
+#ifdef SQ_SHADOW
 #include <PointShadowLight>
 #else
 float point_light_apply_shadow(in Vec4 fposition)

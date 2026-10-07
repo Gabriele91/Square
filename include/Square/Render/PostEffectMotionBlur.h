@@ -38,6 +38,8 @@ namespace Render
 		const Settings& settings() const { return m_settings; }
 
 		virtual bool needs_velocity() const override { return true; }
+		//it draws only with a velocity drawn (something with its motion blur on)
+		virtual bool active(const PostEffectFrame& frame) const override { return frame.m_velocity != nullptr; }
 		virtual void draw(PostEffectFrame& frame) override;
 
 	protected:
