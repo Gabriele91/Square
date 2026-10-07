@@ -72,6 +72,10 @@ namespace Scene
 		//the seconds of a cross-fade of all the groups (0: a level at once)
 		static void  fade_duration(float seconds);
 		static float fade_duration();
+		//a level of all the groups, wherever the camera is (a photo: 0, the most detailed; a
+		//group with fewer levels: its last one); -1: by the camera (the default)
+		static void force_level(int level);
+		static int  force_level();
 
 		//the level of a camera (by the mode)
 		size_t level(const Square::Render::Camera& camera) const;

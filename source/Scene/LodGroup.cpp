@@ -187,8 +187,27 @@ namespace Scene
 		}
 	}
 
+	namespace AuxLodGroupForce
+	{
+		//the level of all the groups (-1: by the camera)
+		static int s_level = -1;
+	}
+
+	void LodGroup::force_level(int level)
+	{
+		AuxLodGroupForce::s_level = std::max(level, -1);
+	}
+
+	int LodGroup::force_level()
+	{
+		return AuxLodGroupForce::s_level;
+	}
+
 	size_t LodGroup::level(const Square::Render::Camera& camera) const
 	{
+		//forced (a photo): that one, wherever the camera is
+		const int forced = AuxLodGroupForce::s_level;
+		if (forced >= 0 && !m_levels.empty()) return std::min(size_t(forced), m_levels.size() - 1);
 		auto owner = actor().lock();
 		if (!owner) return m_levels.size();
 		const Mat4& model = owner->global_model_matrix();
