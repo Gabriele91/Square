@@ -95,7 +95,7 @@ namespace Render
     {
 		CBArrMat4        m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 		CBArrMat4        m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
-		CBArrVec3        m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // > hlsl packet rule: float4 for a float in array
+		CBArrVec3        m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // x: the depth (view) where the cascade ends; y, z: free (> hlsl packet rule: float4 for a float in array)
 		IVec4            m_options{ 0, DIRECTION_SHADOW_CSM_DEFAULT_FACES, 0, 0 }; //x: the ShadowFilter, y: the cascades (a vector: its own register after the array)
 	};
 

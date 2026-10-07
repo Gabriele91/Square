@@ -62,7 +62,7 @@ struct DirectionShadowCameraStruct
 {
 	Mat4 m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 	Mat4 m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
-	Vec3 m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+	Vec3 m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // x: the depth (view) where the cascade ends; y, z: free
 	IVec4 m_options; // x: the filter (0 none, 1 PCF, 2 PCSS), y: the cascades
 };
 

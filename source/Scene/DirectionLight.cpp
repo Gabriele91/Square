@@ -283,10 +283,8 @@ namespace Scene
 			const Mat4& frustum_mat, 
 			const Mat4& light_space_transform,
 			float texture_size, 
-			const Mat4& sceneAABB, 
-			float& world_space_dim,
-			float& world_space_depth, 
-			bool square = true, 
+			const Mat4& sceneAABB,
+			bool square = true,
 			bool round_to_pixel_size = true,
 			bool use_constant_size = true
 		) 
@@ -361,9 +359,6 @@ namespace Scene
 				actual_size = std::max(r - l, t - b);
 			}
 
-			world_space_dim = actual_size;
-			world_space_depth = f - n;
-
 			// make it square
 			if (square) 
 			{
@@ -417,29 +412,18 @@ namespace Scene
 			scene_matrix *= Square::scale(Vec3{1.1f,1.1f,1.1f});
 			// Cam view
 			const Mat4& cam_view = camera.view();
-			// Const
-			const float base_bias = 0.0000020000f;
-			const float slope_bias = 0.0000060000f;
-			// Copy values
+			// Copy values (the depth bias: the shader, in texels of each cascade)
 			for (unsigned int i = 0; i < cascades; ++i)
 			{
 				Mat4 cam_projection = Square::perspective(camera.viewport().fov(), camera.viewport().aspect(), cascade_vdepths[i], cascade_vdepths[i + 1]);
 				Mat4 cascade_cam = inverse(cam_projection * cam_view);
-				float fs_size = 0;
-				float fs_depth = 0;
 				const auto& [l_proj,l_view] = fit_light_proj_mat_to_camera_frustum(cascade_cam,
-                                                                                   light_space_transform, 
-                                                                                   shadow_map_size.x, 
-                                                                                   scene_matrix,
-                                                                                   fs_size, 
-                                                                                   fs_depth);
-				const unsigned int index = i+1;
-				const float distance_factor = float(index) * index;
+                                                                                   light_space_transform,
+                                                                                   shadow_map_size.x,
+                                                                                   scene_matrix);
 				data.m_projection[i] = l_proj;
 				data.m_view[i] = l_view;
-				data.m_data[i] = Vec3(cascade_vdepths[index],
-									  base_bias * fs_size / distance_factor,
-					                  slope_bias * fs_size / distance_factor);
+				data.m_data[i] = Vec3(cascade_vdepths[i + 1], 0.0f, 0.0f);
 			}
 		}
 	}
