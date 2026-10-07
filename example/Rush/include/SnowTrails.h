@@ -43,6 +43,11 @@ public:
 	void press(size_t id, const Square::Vec3& position, bool on_ground);
 	//the snow filled back, the texture of the map uploaded if it changed
 	void update(double delta_time);
+	//the map moved (a window following the player over a large map): around a new center,
+	//emptied, its materials told where it is now
+	void recenter(const Square::Vec2& center);
+	const Square::Vec2& center() const { return m_settings.center; }
+	float size() const { return m_settings.size; }
 
 private:
 
@@ -63,6 +68,8 @@ private:
 	std::vector<unsigned char>                 m_map;
 	Square::Shared<Square::Resource::Texture>  m_texture;
 	std::vector<Track>                         m_tracks;
+	//the materials it was given to (where it is: told again when it moves)
+	mutable std::vector< Square::Shared<Square::Resource::Material> > m_materials;
 	float                                      m_fill{ 0.0f }; //levels of the map to fill back (a fraction left)
 	bool                                       m_changed{ false };
 };

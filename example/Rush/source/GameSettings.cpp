@@ -17,10 +17,141 @@ const Square::IVec2 GameSettings::s_resolutions[GameSettings::s_resolutions_coun
 
 namespace AuxGameSettings
 {
-	//the resolution of an effect of a level (1 low: a quarter of the frame, 2 high: half)
-	static Square::Render::PostEffectResolution resolution(int level)
+	//the reflections of a level: the size of the trace, its rays, its blur
+	static void reflections(Square::Render::SSR::Settings& settings, int level)
 	{
-		return level >= 2 ? Square::Render::PER_HALF : Square::Render::PER_QUARTER;
+		using namespace Square::Render;
+		switch (level)
+		{
+		case GameSettings::EFFECT_SUPER_LOW:
+			settings.resolution   = PER_QUARTER;
+			settings.steps        = 20;
+			settings.max_distance = 40.0f;
+			settings.blur         = SSR::Settings::BLUR_LOW;
+			settings.denoise      = false;
+		break;
+		case GameSettings::EFFECT_LOW:
+			settings.resolution   = PER_QUARTER;
+			settings.steps        = 40;
+			settings.max_distance = 60.0f;
+			settings.blur         = SSR::Settings::BLUR_MEDIUM;
+			settings.denoise      = false;
+		break;
+		case GameSettings::EFFECT_MEDIUM:
+			settings.resolution   = PER_HALF;
+			settings.steps        = 28;
+			settings.max_distance = 50.0f;
+			settings.blur         = SSR::Settings::BLUR_LOW;
+			settings.denoise      = false;
+		break;
+		case GameSettings::EFFECT_HIGH:
+			settings.resolution   = PER_HALF;
+			settings.steps        = 40;
+			settings.max_distance = 60.0f;
+			settings.blur         = SSR::Settings::BLUR_MEDIUM;
+			settings.denoise      = false;
+		break;
+		case GameSettings::EFFECT_ULTRA:
+			settings.resolution   = PER_FULL;
+			settings.steps        = 64;
+			settings.max_distance = 90.0f;
+			settings.blur         = SSR::Settings::BLUR_HIGH;
+			settings.denoise      = true;
+		break;
+		default: break;
+		}
+	}
+
+	//the occlusion of a level: its size, its blur, its reach on the screen (no super low: its
+	//blur too light, the pattern of the samples shows; low instead)
+	static void occlusion(Square::Render::SSAO::Settings& settings, int level)
+	{
+		using namespace Square::Render;
+		switch (level)
+		{
+		case GameSettings::EFFECT_SUPER_LOW:
+		case GameSettings::EFFECT_LOW:
+			settings.resolution = PER_QUARTER;
+			settings.blur       = SSAO::Settings::BLUR_LOW;
+			settings.max_pixels = 32.0f;
+		break;
+		case GameSettings::EFFECT_MEDIUM:
+			settings.resolution = PER_HALF;
+			settings.blur       = SSAO::Settings::BLUR_LOW;
+			settings.max_pixels = 32.0f;
+		break;
+		case GameSettings::EFFECT_HIGH:
+			settings.resolution = PER_HALF;
+			settings.blur       = SSAO::Settings::BLUR_MEDIUM;
+			settings.max_pixels = 48.0f;
+		break;
+		case GameSettings::EFFECT_ULTRA:
+			settings.resolution = PER_FULL;
+			settings.blur       = SSAO::Settings::BLUR_HIGH;
+			settings.max_pixels = 64.0f;
+		break;
+		default: break;
+		}
+	}
+
+	//the bloom of a level: the levels of its chain (its width), how much of it
+	static void bloom(Square::Render::Bloom::Settings& settings, int level)
+	{
+		switch (level)
+		{
+		case GameSettings::BLOOM_LOW:
+			settings.levels    = 3;
+			settings.intensity = 0.4f;
+			settings.scatter   = 0.6f;
+		break;
+		case GameSettings::BLOOM_MEDIUM:
+			settings.levels    = 5;
+			settings.intensity = 0.5f;
+			settings.scatter   = 0.7f;
+		break;
+		case GameSettings::BLOOM_HIGH:
+			settings.levels    = 6;
+			settings.intensity = 0.55f;
+			settings.scatter   = 0.75f;
+		break;
+		default: break;
+		}
+	}
+
+	//the motion blur of a level: how much of the motion, its samples
+	static void motion_blur(Square::Render::MotionBlur::Settings& settings, int level)
+	{
+		switch (level)
+		{
+		case GameSettings::MOTION_BLUR_LOW:
+			settings.shutter    = 0.35f;
+			settings.max_pixels = 28.0f;
+			settings.samples    = 8;
+		break;
+		case GameSettings::MOTION_BLUR_HIGH:
+			settings.shutter    = 0.6f;
+			settings.max_pixels = 48.0f;
+			settings.samples    = 16;
+		break;
+		default: break;
+		}
+	}
+
+	//a level of an effect of an older file as a level of now (1: 0 off, 1 low, 2 high; 2: no
+	//medium, high and ultra one lower)
+	static int effect_from_version(int level, int version)
+	{
+		if (version <= 1)
+		{
+			switch (level)
+			{
+			case 1:  return GameSettings::EFFECT_LOW;
+			case 2:  return GameSettings::EFFECT_HIGH;
+			default: return GameSettings::EFFECT_OFF;
+			}
+		}
+		if (version == 2 && level >= GameSettings::EFFECT_MEDIUM) return level + 1;
+		return level;
 	}
 }
 
@@ -33,6 +164,7 @@ bool GameSettings::operator == (const GameSettings& other) const
 	    && m_occlusion == other.m_occlusion
 	    && m_shadows == other.m_shadows
 	    && m_bloom == other.m_bloom
+	    && m_motion_blur == other.m_motion_blur
 	    && m_weather == other.m_weather
 	    && m_antialiasing == other.m_antialiasing;
 }
@@ -73,10 +205,17 @@ bool GameSettings::load()
 	m_fullscreen   = field(root, "fullscreen", m_fullscreen);
 	m_resolution   = std::clamp(field(root, "resolution", m_resolution), 0, s_resolutions_count - 1);
 	m_show_fps     = field(root, "show_fps", m_show_fps);
-	m_reflections  = std::clamp(field(root, "reflections", m_reflections), 0, 2);
-	m_occlusion    = std::clamp(field(root, "occlusion", m_occlusion), 0, 2);
+	//(an older file: its levels as now; version 1, its bloom on: medium)
+	const int version = field(root, "version", 1);
+	m_reflections  = AuxGameSettings::effect_from_version(field(root, "reflections", m_reflections), version);
+	m_reflections  = std::clamp(m_reflections, 0, int(EFFECT_LEVELS) - 1);
+	m_occlusion    = AuxGameSettings::effect_from_version(field(root, "occlusion", m_occlusion), version);
+	m_occlusion    = std::clamp(m_occlusion, 0, int(EFFECT_LEVELS) - 1);
+	if (m_occlusion == EFFECT_SUPER_LOW) m_occlusion = EFFECT_LOW;
 	m_shadows      = std::clamp(field(root, "shadows", m_shadows), 0, 2);
-	m_bloom        = field(root, "bloom", m_bloom);
+	m_bloom        = std::clamp(field(root, "bloom", m_bloom), 0, int(BLOOM_LEVELS) - 1);
+	if (version <= 1) m_bloom = m_bloom ? BLOOM_MEDIUM : BLOOM_OFF;
+	m_motion_blur  = std::clamp(field(root, "motion_blur", m_motion_blur), 0, int(MOTION_BLUR_LEVELS) - 1);
 	m_weather      = field(root, "weather", m_weather);
 	m_antialiasing = field(root, "antialiasing", m_antialiasing);
 	return true;
@@ -92,13 +231,15 @@ bool GameSettings::save() const
 	if (!Filesystem::exists(rush)) Filesystem::makedir(rush);
 	std::ostringstream text;
 	text << "{\n";
+	text << "\t\"version\": " << s_version << ",\n";
 	text << "\t\"fullscreen\": " << (m_fullscreen ? "true" : "false") << ",\n";
 	text << "\t\"resolution\": " << m_resolution << ",\n";
 	text << "\t\"show_fps\": " << (m_show_fps ? "true" : "false") << ",\n";
 	text << "\t\"reflections\": " << m_reflections << ",\n";
 	text << "\t\"occlusion\": " << m_occlusion << ",\n";
 	text << "\t\"shadows\": " << m_shadows << ",\n";
-	text << "\t\"bloom\": " << (m_bloom ? "true" : "false") << ",\n";
+	text << "\t\"bloom\": " << m_bloom << ",\n";
+	text << "\t\"motion_blur\": " << m_motion_blur << ",\n";
 	text << "\t\"weather\": " << (m_weather ? "true" : "false") << ",\n";
 	text << "\t\"antialiasing\": " << (m_antialiasing ? "true" : "false") << "\n";
 	text << "}\n";
@@ -134,19 +275,32 @@ void GameSettings::apply_effects(Graphics& graphics) const
 	using namespace Square;
 	if (auto ssr = graphics.ssr())
 	{
-		ssr->enabled(m_reflections > 0);
+		ssr->enabled(m_reflections != EFFECT_OFF);
 		auto settings = ssr->settings();
-		settings.resolution = AuxGameSettings::resolution(m_reflections);
+		AuxGameSettings::reflections(settings, m_reflections);
 		ssr->settings(settings);
 	}
 	if (auto ssao = graphics.ssao())
 	{
-		ssao->enabled(m_occlusion > 0);
+		ssao->enabled(m_occlusion != EFFECT_OFF);
 		auto settings = ssao->settings();
-		settings.resolution = AuxGameSettings::resolution(m_occlusion);
+		AuxGameSettings::occlusion(settings, m_occlusion);
 		ssao->settings(settings);
 	}
-	if (auto bloom = graphics.bloom()) bloom->enabled(m_bloom);
+	if (auto bloom = graphics.bloom())
+	{
+		bloom->enabled(m_bloom != BLOOM_OFF);
+		auto settings = bloom->settings();
+		AuxGameSettings::bloom(settings, m_bloom);
+		bloom->settings(settings);
+	}
+	if (auto motion_blur = graphics.motion_blur())
+	{
+		motion_blur->enabled(m_motion_blur != MOTION_BLUR_OFF);
+		auto settings = motion_blur->settings();
+		AuxGameSettings::motion_blur(settings, m_motion_blur);
+		motion_blur->settings(settings);
+	}
 	graphics.weather(m_weather);
 	graphics.antialiasing(m_antialiasing);
 }

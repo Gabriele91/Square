@@ -79,6 +79,11 @@ install(DIRECTORY assets/
         DESTINATION example/Rush/assets/
         COMPONENT RushAssets)
 
+#the configuration, the effects and the shaders of the game
+install(DIRECTORY config effect shader
+        DESTINATION example/Rush/
+        COMPONENT RushAssets)
+
 install(FILES resources.rs
         DESTINATION example/Rush/
         COMPONENT RushAssets)

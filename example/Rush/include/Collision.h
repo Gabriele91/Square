@@ -44,6 +44,24 @@ enum class CollisionResponse
 	SLIDEXZ  //slides, as far as it moved on x/z: it does not slide down a slope by falling
 };
 
+//the grounds of a map, by the names of its meshes: "water..." (deep water), "shallow..." (shallow
+//water), "mud...", "sand...", "dirt...", any other the ground (rock, road, grass). The water ones
+//are solid for the collisions also with a translucent material (the hovercraft glide on them)
+enum class Surface : unsigned char
+{
+	GROUND,
+	DIRT,
+	SAND,
+	MUD,
+	SHALLOW,
+	WATER,
+	ICE,
+	COUNT
+};
+Surface surface_of(const std::string& name);
+//water: solid though not opaque
+bool is_water(Surface surface);
+
 class CollisionMesh
 {
 public:
@@ -53,6 +71,7 @@ public:
 		float        m_time{ 1.0f };
 		Square::Vec3 m_normal{ Square::Constants::axis_y };
 		int          m_triangle{ -1 };
+		Surface      m_surface{ Surface::GROUND };
 	};
 
 	//a ray hit
@@ -61,6 +80,7 @@ public:
 		float        m_distance{ 0.0f };
 		Square::Vec3 m_point{ 0.0f };
 		Square::Vec3 m_normal{ Square::Constants::axis_y };
+		Surface      m_surface{ Surface::GROUND };
 	};
 
 	//a segment: origin + direction * t
@@ -72,7 +92,8 @@ public:
 	};
 
 	//add the static meshes of an actor and its children, with their current world transform;
-	//sub meshes with a non opaque material (glass, glows...) are not solid and are skipped
+	//sub meshes with a non opaque material (glass, glows...) are not solid and are skipped (not
+	//the water: its surface by the name of its node, see Surface)
 	//solid_only: only the opaque surfaces (not the translucent, not the alpha tested ones);
 	//false: every surface (e.g. the triangles of a navmesh)
 	void add(Square::Context& context, const Square::Shared<Square::Scene::Actor>& actor, bool solid_only = true);
@@ -105,6 +126,7 @@ private:
 	{
 		Square::Vec3 m_a, m_b, m_c;
 		Square::Vec3 m_min, m_max;
+		Surface      m_surface{ Surface::GROUND };
 	};
 	//tree of boxes: a leaf has triangles, a node two children
 	struct Node
@@ -117,7 +139,7 @@ private:
 	std::vector<Node>     m_nodes;
 	bool                  m_one_sided{ false };
 
-	void add_triangle(const Square::Vec3& a, const Square::Vec3& b, const Square::Vec3& c);
+	void add_triangle(const Square::Vec3& a, const Square::Vec3& b, const Square::Vec3& c, Surface surface = Surface::GROUND);
 	void build();
 	int  build_node(std::vector<int>& triangles);
 	bool collide(const Line& line, float radius, float y_scale, const Square::Vec3& box_min, const Square::Vec3& box_max, int node, Collision& collision) const;
@@ -260,6 +282,11 @@ public:
 	void settings(const Settings& settings) { m_settings = settings; }
 	const Settings& settings() const { return m_settings; }
 
+	//paused: no steps, its time not counted (a pause of the game: nothing moves, nothing to
+	//catch up after)
+	void paused(bool paused) { m_paused = paused; }
+	bool paused() const { return m_paused; }
+
 	//a rule: the sphere colliders of src_type against the colliders of dst_type, with method
 	//(SPHERE: the other sphere colliders, POLYGON: the mesh colliders) and response
 	void collisions(int src_type, int dst_type, CollisionMethod method, CollisionResponse response);
@@ -295,6 +322,7 @@ private:
 	std::unordered_map< int, std::vector<Rule> > m_rules;
 	Settings m_settings;
 	double   m_time{ 0.0 }; //time not stepped yet
+	bool     m_paused{ false };
 
 	//the colliders and the listeners in the levels of the world (kept by the add/remove events,
 	//like the render collection of a level)

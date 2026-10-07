@@ -21,6 +21,17 @@ struct VertexShaderOutput
 };
 
 //draw
+#ifdef INSTANCED
+// instanced (PointShadow_instanced: Scene::InstancedMesh): the matrix of the instance first
+#include <Instances>
+VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input, uint instance_id : SV_InstanceID)
+{
+	VertexShaderOutput output;
+	output.m_position = mul_instance_model(input.m_position, instance_id);
+	output.m_uv = input.m_uv;
+	return output;
+}
+#else
 VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input)
 {
 	VertexShaderOutput output;
@@ -29,6 +40,7 @@ VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input)
 	output.m_uv = input.m_uv;
 	return output;
 }
+#endif
 
 struct GeometryShaderOutput
 {

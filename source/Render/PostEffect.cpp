@@ -132,6 +132,15 @@ namespace Render
 		return false;
 	}
 
+	bool PostEffectChain::any_velocity(const std::vector< Shared<PostEffect> >& effects)
+	{
+		for (auto& effect : effects)
+		{
+			if (effect && effect->enabled() && effect->needs_velocity()) return true;
+		}
+		return false;
+	}
+
 	Texture* PostEffectChain::debug_texture(const std::vector< Shared<PostEffect> >& effects)
 	{
 		for (auto& effect : effects)

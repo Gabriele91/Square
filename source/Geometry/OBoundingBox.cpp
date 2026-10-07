@@ -53,9 +53,10 @@ namespace Geometry
 	std::array< Vec3, 8 > OBoundingBox::get_bounding_box() const
 	{
 		std::array< Vec3, 8 > p;
-		Vec3 r(m_rotation[0][0], m_rotation[1][0], m_rotation[2][0]);
-		Vec3 u(m_rotation[0][1], m_rotation[1][1], m_rotation[2][1]);
-		Vec3 f(m_rotation[0][2], m_rotation[1][2], m_rotation[2][2]);
+		//its axes: the columns of the rotation
+		const Vec3& r = m_rotation[0];
+		const Vec3& u = m_rotation[1];
+		const Vec3& f = m_rotation[2];
 		p[0] = m_position - r*m_extension[0] - u*m_extension[1] - f*m_extension[2];
 		p[1] = m_position + r*m_extension[0] - u*m_extension[1] - f*m_extension[2];
 		p[2] = m_position + r*m_extension[0] - u*m_extension[1] + f*m_extension[2];
@@ -70,9 +71,10 @@ namespace Geometry
 	std::array< Vec3, 8 > OBoundingBox::get_bounding_box(const Mat4& model) const
 	{
 		std::array< Vec3, 8 > p;
-		Vec3 r(m_rotation[0][0], m_rotation[1][0], m_rotation[2][0]);
-		Vec3 u(m_rotation[0][1], m_rotation[1][1], m_rotation[2][1]);
-		Vec3 f(m_rotation[0][2], m_rotation[1][2], m_rotation[2][2]);
+		//its axes: the columns of the rotation
+		const Vec3& r = m_rotation[0];
+		const Vec3& u = m_rotation[1];
+		const Vec3& f = m_rotation[2];
 		p[0] = m_position - r*m_extension[0] - u*m_extension[1] - f*m_extension[2];
 		p[1] = m_position + r*m_extension[0] - u*m_extension[1] - f*m_extension[2];
 		p[2] = m_position + r*m_extension[0] - u*m_extension[1] + f*m_extension[2];
@@ -161,8 +163,8 @@ namespace Geometry
 		Vec3 d = target - m_position;
 		// Start at the center point of the OBB.
 		Vec3 closest_point = m_position;
-		//axis
-		const Mat3& axis = transpose(m_rotation);
+		//its axes: the columns of the rotation
+		const Mat3& axis = m_rotation;
 		// Project the target onto the OBB axes and walk towards that point.
 		for (int i = 0; i < 3; ++i)
 		{

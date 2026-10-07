@@ -78,6 +78,7 @@ namespace Render
 		Target*           m_occlusion{ nullptr };     //PES_GBUFFER: the G-Buffer occlusion (GT3); a (ZERO, SRC_COLOR) blend with rgb 1 multiplies it by alpha
 		//PES_COLOR
 		Texture*          m_source{ nullptr };        //color of the frame
+		Texture*          m_velocity{ nullptr };      //motion on the screen (uv, RG) of the renderables with their own motion blur, 0 elsewhere (nullptr: none drawn)
 		Target*           m_destination{ nullptr };   //the effect writes here
 		bool              m_linear{ true };           //source in linear space (false: already sRGB encoded)
 	};
@@ -92,6 +93,10 @@ namespace Render
 		virtual ~PostEffect();
 
 		PostEffectStage stage() const { return m_stage; }
+
+		//it reads the velocity of the frame (PostEffectFrame::m_velocity): the deferred pass draws it
+		//only for an effect on that needs it
+		virtual bool needs_velocity() const { return false; }
 
 		//an effect off is not drawn
 		void enabled(bool enabled) { m_enabled = enabled; }
@@ -151,6 +156,8 @@ namespace Render
 		Texture* draw_color(const std::vector< Shared<PostEffect> >& effects, PostEffectFrame frame, Texture* source);
 		//an effect of the stage is on
 		static bool any(const std::vector< Shared<PostEffect> >& effects, PostEffectStage stage);
+		//an effect on needs the velocity of the frame
+		static bool any_velocity(const std::vector< Shared<PostEffect> >& effects);
 		//the debug texture of the first effect on that has one (nullptr: none)
 		static Texture* debug_texture(const std::vector< Shared<PostEffect> >& effects);
 

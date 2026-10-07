@@ -1,0 +1,9 @@
+{
+	"ground":  { "acceleration": 1.00, "max_speed": 1.00, "drag": 1.000, "turn": 1.00, "follow": 1.00 },
+	"dirt":    { "acceleration": 0.92, "max_speed": 0.94, "drag": 1.000, "turn": 1.00, "follow": 0.85 },
+	"sand":    { "acceleration": 0.85, "max_speed": 0.88, "drag": 0.995, "turn": 0.95, "follow": 0.75 },
+	"mud":     { "acceleration": 0.55, "max_speed": 0.62, "drag": 0.970, "turn": 0.90, "follow": 0.80 },
+	"shallow": { "acceleration": 0.96, "max_speed": 1.00, "drag": 1.006, "turn": 0.95, "follow": 0.45 },
+	"water":   { "acceleration": 1.10, "max_speed": 1.16, "drag": 1.012, "turn": 0.82, "follow": 0.22 },
+	"ice":     { "acceleration": 0.80, "max_speed": 1.05, "drag": 1.010, "turn": 0.85, "follow": 0.15 }
+}

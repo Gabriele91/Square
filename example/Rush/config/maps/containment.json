@@ -1,0 +1,14 @@
+{
+	"title": "Containment",
+	"description": "the snowy canyon (origial_assets/containment): a cold light haze, thin; its snow, its trails",
+	"mode": "arena",
+	"snow": true,
+	"trails": true,
+	"fog": {
+		"color": [0.48, 0.53, 0.6],
+		"density": 0.0035,
+		"height": 3.5,
+		"falloff": 0.04,
+		"sun": [0.35, 0.33, 0.26]
+	}
+}

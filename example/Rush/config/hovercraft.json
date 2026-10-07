@@ -1,0 +1,20 @@
+{
+	"racers": [
+		{ "name": "You",    "color": "red",    "skin": "hovercraft_skins/hovercraft_red",    "engine": { "acceleration": 1.00, "max_speed": 1.00, "drag": 1.000 }, "courage": 0.0 },
+		{ "name": "Blue",   "color": "blue",   "skin": "hovercraft_skins/hovercraft_blue",   "engine": { "acceleration": 0.73, "max_speed": 0.96, "drag": 1.006 }, "courage": 0.75 },
+		{ "name": "Green",  "color": "green",  "skin": "hovercraft_skins/hovercraft_green",  "engine": { "acceleration": 0.80, "max_speed": 0.83, "drag": 1.001 }, "courage": 0.35 },
+		{ "name": "Yellow", "color": "yellow", "skin": "hovercraft_skins/hovercraft_yellow", "engine": { "acceleration": 0.93, "max_speed": 0.69, "drag": 0.991 }, "courage": 0.55 }
+	],
+	"driver": {
+		"gravity": -0.007,
+		"acceleration": 0.065,
+		"drag": 0.9725,
+		"air_drag": 0.99,
+		"max_speed": 0.7,
+		"max_reverse": -0.55,
+		"turn": 2.2,
+		"idle_turn": 1.8,
+		"floor_normal_y": 0.5,
+		"body_radius_scale": [0.8, 1.0]
+	}
+}

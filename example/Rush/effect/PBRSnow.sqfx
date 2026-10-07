@@ -1,5 +1,5 @@
 //
-//  PBRSnow: PBR with the trails of the game pressed in it (trail_map, see PBR.hlsl)
+//  PBRSnow: PBR with the trails of the game pressed in it (trail_map, see TrailsPBR.hlsl)
 //
 parameters
 {
@@ -25,7 +25,7 @@ parameters
     ignore_shadows float(0.0)
     //dithered opacity: 1 = alpha (albedo_map.a * color.a) drops pixels with a pattern
     dither       float(0.0)
-    //the trails pressed in it (drawn by the game, see PBR.hlsl; only where the albedo alpha is
+    //the trails pressed in it (drawn by the game, see TrailsPBR.hlsl; only where the albedo alpha is
     //1: the snow, not the ice or the rock of the same texture): the map, where it is
     //(corner x, z; 1 / size x, z), its look (darkening, slope of the sides, roughness kept,
     //depth in world units: the parallax)
@@ -48,8 +48,7 @@ sub_effect
             shader source 
             {
 				#define FORWARD_RENDERING
-				#define SURFACE_TRAILS
-				#include "PBR.hlsl"
+				#include "PBRSnow.hlsl"
             }
         }
         pass 
@@ -62,8 +61,7 @@ sub_effect
             shader source
             {
                 #define FORWARD_RENDERING
-				#define SURFACE_TRAILS
-				#include "PBR.hlsl"
+				#include "PBRSnow.hlsl"
             }
 		}
     }
@@ -79,8 +77,7 @@ sub_effect
 			shader source
 			{
 				#define DEFERRED_RENDERING
-				#define SURFACE_TRAILS
-				#include "PBR.hlsl"
+				#include "PBRSnow.hlsl"
 			}
 		}
 	}

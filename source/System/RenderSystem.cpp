@@ -20,6 +20,7 @@
 #include "Square/Render/Camera.h"
 #include "Square/Render/Light.h"
 #include "Square/Render/Renderable.h"
+#include "Square/Render/LevelOfDetail.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/World.h"
 #include "Square/Scene/Level.h"
@@ -431,6 +432,11 @@ namespace Square
 	//the cameras, lights and renderables of all the levels of the world
 	void RenderInstance::on_add_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component)
 	{
+		//(a group of levels of detail: its renderables are components of their own)
+		if (auto lod = DynamicPointerCast<Render::LevelOfDetail, Scene::Component>(component))
+		{
+			m_collection.m_levels_of_detail.push_back(lod);
+		}
 		if (auto renderable = DynamicPointerCast<Render::Renderable, Scene::Component>(component))
 		{
 			m_collection.m_renderables.push_back(renderable);
@@ -448,6 +454,15 @@ namespace Square
 	void RenderInstance::on_remove_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component)
 	{
 		//it, and the ones gone
+		if (auto lod = DynamicPointerCast<Render::LevelOfDetail, Scene::Component>(component))
+		{
+			auto& lods = m_collection.m_levels_of_detail;
+			lods.erase(std::remove_if(lods.begin(), lods.end(), [&](const Weak<Render::LevelOfDetail>& weak_lod)
+			{
+				auto other = weak_lod.lock();
+				return !other || other == lod;
+			}), lods.end());
+		}
 		if (auto renderable = DynamicPointerCast<Render::Renderable, Scene::Component>(component))
 		{
 			auto& renderables = m_collection.m_renderables;

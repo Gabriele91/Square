@@ -43,7 +43,7 @@ void SnowTrails::attach(Square::Shared<Square::Scene::Actor> actor) const
 {
 	using namespace Square;
 	if (!m_texture || !actor) return;
-	//the corner of the map, 1 / its size: the uv of a world point (PBR.hlsl, SURFACE_TRAILS)
+	//the corner of the map, 1 / its size: the uv of a world point (TrailsPBR.hlsl)
 	const float half = m_settings.size * 0.5f;
 	const Vec4  area(m_settings.center.x - half, m_settings.center.y - half, 1.0f / m_settings.size, 1.0f / m_settings.size);
 	auto texture = m_texture;
@@ -55,6 +55,7 @@ void SnowTrails::attach(Square::Shared<Square::Scene::Actor> actor) const
 			if (!material) continue;
 			auto map = material->parameter_by_name(m_settings.map);
 			auto where = material->parameter_by_name(m_settings.area);
+			if (map && where && std::find(m_materials.begin(), m_materials.end(), material) == m_materials.end()) m_materials.push_back(material);
 			if (!map || !where) continue;
 			map->set(texture);
 			where->set(area);
@@ -75,6 +76,38 @@ void SnowTrails::press(size_t id, const Square::Vec3& position, bool on_ground)
 	if (on_ground && track.m_on_ground && near) groove(track.m_previous, point);
 	track.m_previous = point;
 	track.m_on_ground = on_ground;
+}
+
+void SnowTrails::recenter(const Square::Vec2& center)
+{
+	using namespace Square;
+	//the window moved by whole texels: what is pressed stays where it is in the world (the map
+	//shifted), what comes into the window empty
+	const int   side = m_settings.resolution;
+	const float texel = m_settings.size / float(side);
+	const int   shift_x = int(std::round((center.x - m_settings.center.x) / texel));
+	const int   shift_y = int(std::round((center.y - m_settings.center.y) / texel));
+	m_settings.center += Vec2(float(shift_x), float(shift_y)) * texel;
+	std::vector<unsigned char> moved(m_map.size(), (unsigned char)(0));
+	for (int y = 0; y < side; ++y)
+	{
+		const int from_y = y + shift_y;
+		if (from_y < 0 || from_y >= side) continue;
+		for (int x = 0; x < side; ++x)
+		{
+			const int from_x = x + shift_x;
+			if (from_x < 0 || from_x >= side) continue;
+			moved[size_t(y) * size_t(side) + size_t(x)] = m_map[size_t(from_y) * size_t(side) + size_t(from_x)];
+		}
+	}
+	m_map.swap(moved);
+	m_changed = true;
+	const float half = m_settings.size * 0.5f;
+	const Vec4  area(center.x - half, center.y - half, 1.0f / m_settings.size, 1.0f / m_settings.size);
+	for (const auto& material : m_materials)
+	{
+		if (auto where = material->parameter_by_name(m_settings.area)) where->set(area);
+	}
 }
 
 void SnowTrails::update(double delta_time)

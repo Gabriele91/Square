@@ -26,6 +26,7 @@ namespace Render
         m_cameras.clear();
         m_lights.clear();
         m_renderables.clear();
+        m_levels_of_detail.clear();
     }
     
     //compute distance

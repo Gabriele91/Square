@@ -24,6 +24,7 @@ set(SOURCE_FILES
     TextureManager.cpp
     MaterialManager.cpp
     MeshManager.cpp
+    LodGroups.cpp
 )
 
 # Create executable

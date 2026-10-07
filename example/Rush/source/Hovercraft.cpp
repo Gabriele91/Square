@@ -105,6 +105,8 @@ void HovercraftDriver::place_wheels()
 	}
 	top += m_body->radius_y();
 	int off_ground = 0;
+	//the surfaces under the wheels (the one of most of them)
+	std::array<int, size_t(Surface::COUNT)> surfaces{};
 	for (int wheel_id = 0; wheel_id < 4; ++wheel_id)
 	{
 		const float radius = m_wheels[wheel_id]->component<SphereCollider>()->radius();
@@ -113,7 +115,10 @@ void HovercraftDriver::place_wheels()
 		hits[wheel_id] = collision && collision->raycast(origin, -Constants::axis_y, top - bottom + radius, hit);
 		grounds[wheel_id] = hits[wheel_id] ? hit.m_point.y + radius : corners[wheel_id].y;
 		if (!hits[wheel_id] || grounds[wheel_id] < corners[wheel_id].y) ++off_ground;
+		if (hits[wheel_id]) ++surfaces[size_t(hit.m_surface)];
 	}
+	const auto most = std::max_element(surfaces.begin(), surfaces.end());
+	if (*most > 0) m_surface = Surface(most - surfaces.begin());
 	const bool lifted = off_ground == 3;
 	for (int wheel_id = 0; wheel_id < 4; ++wheel_id)
 	{
@@ -186,6 +191,7 @@ void HovercraftDriver::spawn(const Vec3& start, float yaw)
 	place_wheels();
 	m_speed = 0.0f;
 	m_velocity = Vec3(0.0f);
+	m_drive = Vec3(0.0f);
 	m_has_previous = false;
 	//no pose to interpolate from
 	m_pose_previous = m_pose_current = pose();
@@ -255,12 +261,21 @@ void HovercraftDriver::update(float steps)
 	m_has_previous = true;
 }
 
+void HovercraftDriver::boost(float seconds, float speed, float acceleration)
+{
+	m_boost = seconds;
+	m_boost_speed = speed;
+	m_boost_acceleration = acceleration;
+	m_speed = std::max(m_speed, m_settings.max_speed * speed * 0.9f);
+}
+
 void HovercraftDriver::update_input(float steps)
 {
 	auto hovercraft = actor().lock();
 	//steering: faster the faster it goes forward, at least idle_turn (left handed, +x right:
 	//a positive angle around +y turns to the right)
-	const float rate = std::max(m_speed > 0.0f ? m_speed * m_settings.turn : 0.0f, m_settings.idle_turn) * steps;
+	const Settings::Grip& grip = m_settings.grips[size_t(m_surface)];
+	const float rate = std::max(m_speed > 0.0f ? m_speed * m_settings.turn : 0.0f, m_settings.idle_turn) * grip.turn * steps;
 	const float yaw = (m_input.right ? rate : 0.0f) - (m_input.left ? rate : 0.0f);
 	if (yaw != 0.0f)
 	{
@@ -273,18 +288,31 @@ void HovercraftDriver::update_input(float steps)
 	Vec3 velocity(0.0f);
 	if (m_body->collided(m_settings.scene_type, m_settings.floor_normal_y))
 	{
-		if (m_input.forward)       m_speed = std::min(m_speed + m_settings.acceleration * steps, m_settings.max_speed);
-		else if (m_input.backward) m_speed = std::max(m_speed - m_settings.acceleration * steps, m_settings.max_reverse);
-		else                       m_speed *= std::pow(m_settings.drag, steps);
-		velocity = hovercraft->rotation() * (Constants::axis_z * m_speed) + Constants::axis_y * m_settings.gravity;
+		//the ground under it: its acceleration, its top speed, its drag
+		//(a boost: faster, quicker)
+		const bool  boosted = m_boost > 0.0f;
+		const float acceleration = m_settings.acceleration * grip.acceleration * (boosted ? m_boost_acceleration : 1.0f);
+		const float max_speed = m_settings.max_speed * grip.max_speed * (boosted ? m_boost_speed : 1.0f);
+		const float drag = std::min(m_settings.drag * grip.drag, 0.999f);
+		if (m_input.forward || boosted) m_speed = std::min(m_speed + acceleration * steps, std::max(max_speed, m_speed * std::pow(drag, steps)));
+		else if (m_input.backward) m_speed = std::max(m_speed - acceleration * steps, m_settings.max_reverse * grip.max_speed);
+		else                       m_speed *= std::pow(drag, steps);
+		//its velocity toward its nose, at once with a full grip, sliding with a low one
+		const Vec3 nose = hovercraft->rotation() * (Constants::axis_z * m_speed);
+		const float follow = 1.0f - std::pow(1.0f - std::clamp(grip.follow, 0.0f, 1.0f), steps);
+		m_drive = m_drive + (Vec3(nose.x, 0.0f, nose.z) - m_drive) * follow;
+		velocity = Vec3(m_drive.x, nose.y, m_drive.z) + Constants::axis_y * m_settings.gravity;
 	}
 	else
 	{
 		const float keep = std::pow(m_settings.air_drag, steps);
 		m_speed *= keep;
 		velocity = Vec3(m_velocity.x * keep, m_velocity.y + m_settings.gravity * steps, m_velocity.z * keep);
+		//landing: it goes on the way it flew
+		m_drive = Vec3(velocity.x, 0.0f, velocity.z);
 	}
 	hovercraft->position(hovercraft->position() + velocity * steps);
+	m_boost = std::max(m_boost - float(steps * m_settings.step), 0.0f);
 	//the wheels back under the body (where the hovercraft is now)
 	place_wheels();
 }

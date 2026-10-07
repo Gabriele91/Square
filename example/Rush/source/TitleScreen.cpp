@@ -9,6 +9,9 @@
 #include <TitleScreen.h>
 #include <HovercraftFans.h>
 #include <Race.h>
+#include <RushConfig.h>
+
+using namespace Rush;
 
 namespace AuxTitle
 {
@@ -52,7 +55,7 @@ void TitleScreen::load(Square::Shared<Square::Scene::Level> level)
 	m_level = level;
 	m_root = level->actor();
 	m_root->name("title");
-	m_root->position(s_title_origin);
+	m_root->position(Config::get().title_origin());
 	//the shot: its scene under the root of the title
 	m_scene = level->load_actor("title/scene");
 	if (m_scene)
@@ -73,9 +76,9 @@ void TitleScreen::load(Square::Shared<Square::Scene::Level> level)
 	}
 	//the hovercraft: the player (red), the racer behind (blue)
 	m_riders.clear();
-	hovercraft(s_skins[0], Vec3(0.0f), AuxTitle::s_player_yaw);
+	hovercraft(Config::get().racer(0).m_skin, Vec3(0.0f), AuxTitle::s_player_yaw);
 	auto racer = m_scene ? m_scene->child("racer_1") : nullptr;
-	if (racer) hovercraft(s_skins[1], racer->position(), AuxTitle::s_racer_yaw);
+	if (racer) hovercraft(Config::get().racer(1).m_skin, racer->position(), AuxTitle::s_racer_yaw);
 	find_water();
 	setup_camera();
 }

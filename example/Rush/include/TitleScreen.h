@@ -7,7 +7,7 @@
 //  far things sprites) with the hovercraft of the player on the right, a racer behind it
 //  ("racer_1" of the scene), still on the painted water, their fans turning. A
 //  scene of its own in the level it is given (s_title_world_level: the game runs it only in the
-//  menu, out of the rendering and of the shadows of a race), far from the race (s_title_origin),
+//  menu, out of the rendering and of the shadows of a race), far from the race (its origin in the config),
 //  with its camera; its water moved (PBRWater: water_time).
 //
 #pragma once

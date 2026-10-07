@@ -156,6 +156,19 @@ namespace Scene
 		return true;
 	}
 
+	bool StaticMesh::draw_geometry(Square::Render::Context& render) const
+	{
+		if (m_mesh)
+		{
+			for (size_t i = 0; i != m_mesh->number_of_sub_meshs(); ++i)
+			{ 
+				m_mesh->draw(render, i);
+			}
+			return true;
+		}
+		return false;
+	}
+
 	bool StaticMesh::visible() const
 	{ 
 		return Square::Render::Renderable::visible() && m_mesh;

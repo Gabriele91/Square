@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <Graphics.h>
 
+using namespace Rush;
+
 Graphics::Graphics(Square::Context& context)
 : m_context(context)
 {
@@ -65,6 +67,10 @@ void Graphics::setup(Square::Scene::World& world)
 	m_dof = MakeShared<Render::DOF>(m_context);
 	m_dof->enabled(false);
 	render_world->add_post_effect(m_dof);
+	//motion blur of the camera (the settings: its level): before the bloom, the lights smear too
+	m_motion_blur = MakeShared<Render::MotionBlur>(m_context);
+	m_motion_blur->enabled(false);
+	render_world->add_post_effect(m_motion_blur);
 	//bloom (forward and deferred): the lights and the emissive glow
 	m_bloom = MakeShared<Render::Bloom>(m_context);
 	Render::Bloom::Settings bloom_settings;
@@ -138,6 +144,21 @@ void Graphics::depth_of_field(bool enable, float focus)
 	m_dof->enabled(enable);
 }
 
+void Graphics::race_depth_of_field(bool enable)
+{
+	if (!m_dof) return;
+	auto settings = m_dof->settings();
+	settings.focus_distance = 70.0f;
+	settings.focus_range    = 140.0f;
+	settings.far_range      = 450.0f;
+	settings.max_radius     = 5.0f;
+	settings.samples        = 12; //a small blur: few samples cover its disc (half the cost of 24)
+	settings.near           = false;
+	settings.motion         = 0.0f;
+	m_dof->settings(settings);
+	m_dof->enabled(enable);
+}
+
 Square::Shared<Square::Render::Bloom> Graphics::bloom() const
 {
 	return m_bloom;
@@ -151,4 +172,9 @@ Square::Shared<Square::Render::Fog> Graphics::fog() const
 Square::Shared<Square::Render::Snow> Graphics::snow() const
 {
 	return m_snow;
+}
+
+Square::Shared<Square::Render::MotionBlur> Graphics::motion_blur() const
+{
+	return m_motion_blur;
 }

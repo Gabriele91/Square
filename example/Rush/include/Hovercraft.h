@@ -51,6 +51,18 @@ public:
 		float floor_normal_y{ 0.5f };  //a body contact with normal.y under it is a wall (in front, or pushing down): no drive, it falls
 		Square::Vec2 body_radius_scale{ 1.0f, 1.0f }; //radii of the body from the hull: x the x/z radius (half the longer side), y the y radius (half the height)
 		double step{ 1.0 / 60.0 };     //seconds of a step of the values above (a fixed step of another length scales them)
+		//on each surface (Surface): shares of the acceleration, of the top speed, of the drag (the
+		//speed kept without throttle, at most 0.999), of the turn; follow: how fast its velocity
+		//turns with its nose (1: at once; less: it slides, as on water)
+		struct Grip
+		{
+			float acceleration{ 1.0f };
+			float max_speed{ 1.0f };
+			float drag{ 1.0f };
+			float turn{ 1.0f };
+			float follow{ 1.0f };
+		};
+		std::array<Grip, size_t(Surface::COUNT)> grips{};
 	};
 
 	//Registration in context
@@ -68,8 +80,16 @@ public:
 	const Input& input() const { return m_input; }
 	//speed along the body, per step (negative: backward)
 	float speed() const { return m_speed; }
+	//how it really moved in the last step (after the collisions: still against a wall), per step
+	const Square::Vec3& velocity() const { return m_velocity; }
 	//on the ground (a contact of the body under it, as for the throttle)
 	bool on_ground() const { return m_body && m_body->collided(m_settings.scene_type, m_settings.floor_normal_y); }
+	//the ground under it (the one under most of its wheels, the last one in the air)
+	Surface surface() const { return m_surface; }
+	//a boost: for seconds faster (shares of its top speed, of its acceleration), at once at its
+	//top speed
+	void boost(float seconds, float speed, float acceleration);
+	bool boosting() const { return m_boost > 0.0f; }
 
 	//drop it on the first surface under start, still, turned by yaw degrees around the up axis
 	//(0: forward along +z, 90: along +x)
@@ -119,6 +139,12 @@ private:
 	//state
 	float        m_speed{ 0.0f };
 	Square::Vec3 m_velocity{ 0.0f };          //of the last step, per step
+	Square::Vec3 m_drive{ 0.0f };             //its velocity on the ground (x/z, per step): toward its nose, sliding where the grip is low
+	Surface      m_surface{ Surface::GROUND };
+	//a boost: seconds left, its shares
+	float        m_boost{ 0.0f };
+	float        m_boost_speed{ 1.0f };
+	float        m_boost_acceleration{ 1.0f };
 	Square::Vec3 m_previous{ 0.0f };
 	bool         m_has_previous{ false };
 	//poses of the last two steps (the actor shows a pose between them)

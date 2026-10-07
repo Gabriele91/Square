@@ -13,6 +13,8 @@
 #include <Graphics.h>
 #include <Collision.h>
 
+using namespace Rush;
+
 DemoTools::DemoTools(Square::Context& context, Square::Scene::World& world)
 : m_context(context)
 , m_world(world)

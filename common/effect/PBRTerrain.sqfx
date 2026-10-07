@@ -1,0 +1,93 @@
+//
+//  PBRTerrain: five grounds blended by a map of their weights (albedo_map), each tiled in world
+//  x/z (see TerrainPBR.hlsl)
+//
+parameters
+{
+    //the faces drawn: back, front or off (both)
+    cull cullface(back)
+    //the faces in the directional shadow map: back, front or off (both: the one sided meshes)
+    shadow_cull cullface(back)
+    albedo_map    texture("white")
+    metallic_map  texture("black")
+    emmisive_map  texture("black")
+    roughness_map texture("white")
+    occlusion_map texture("white")    
+    normal_map    texture("normal_up")
+
+    color Vec4(1.0,1.0,1.0,1.0)
+    metallic float(1.0)
+    roughness float(1.0)
+    emmisive Vec3(1.0,1.0,1.0)
+
+    mask         float(-1.0)
+    mask_shadow  float(-1.0)
+    //1 = lit without the shadows of the lights (glows, light beams); only forward/translucent passes
+    ignore_shadows float(0.0)
+    //dithered opacity: 1 = alpha (albedo_map.a * color.a) drops pixels with a pattern
+    dither       float(0.0)
+    //the grounds (see TerrainPBR.hlsl): their albedo (roughness in alpha), their normal; 1 / the size
+    //of their tile (world), the sharpness of their edges, the scale of the far variation
+    layer0_map    texture("white")
+    layer0_normal texture("normal_up")
+    layer1_map    texture("white")
+    layer1_normal texture("normal_up")
+    layer2_map    texture("white")
+    layer2_normal texture("normal_up")
+    layer3_map    texture("white")
+    layer3_normal texture("normal_up")
+    layer4_map    texture("white")
+    layer4_normal texture("normal_up")
+    terrain_tiling Vec4(0.1, 1.5, 0.07, 0.0)
+}
+
+sub_effect
+{	
+	//import shadow forward
+    technique "forward"
+    {
+        pass 
+        {
+            zbuffer less
+            blend off
+            cullface param(cull)
+            lights only_ambient
+            shader source 
+            {
+				#define FORWARD_RENDERING
+				#include "PBRTerrain.hlsl"
+            }
+        }
+        pass 
+        {
+            zbuffer equal
+            blend one one  
+            cullface param(cull)
+            lights spot_point_direction
+			shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+				#include "PBRTerrain.hlsl"
+            }
+		}
+    }
+	//deferred: single geometry pass, fills the G-Buffer (lighting done later)
+	technique "deferred"
+	{
+		pass
+		{
+			zbuffer less
+			blend off
+			cullface param(cull)
+			lights off
+			shader source
+			{
+				#define DEFERRED_RENDERING
+				#include "PBRTerrain.hlsl"
+			}
+		}
+	}
+	//import shadow caster
+	import <CastShadow>
+}

@@ -179,7 +179,7 @@ namespace Render
 				if (!material) continue;
 				//effect
 				auto effect = material->effect();
-				auto technique = effect->technique(technique_name);
+				auto technique = effect->technique(technique_name, randerable->instanced());
 				if (!technique) continue;
 				//draw for each pass; multi-pass passes are drawn draw_count times,
 				//one per cube face / cascade (the shader routes via the pass index).

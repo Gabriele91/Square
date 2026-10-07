@@ -1,0 +1,13 @@
+{
+	"title": "Arena",
+	"description": "the stadium (origial_assets/arena): a light haze of desert dust, warm, dense in its pit, thin over the stands; the grooves of the hovercraft in its clay",
+	"mode": "arena",
+	"trails": true,
+	"fog": {
+		"color": [0.55, 0.4, 0.28],
+		"density": 0.0018,
+		"height": -6.0,
+		"falloff": 0.05,
+		"sun": [0.45, 0.3, 0.18]
+	}
+}

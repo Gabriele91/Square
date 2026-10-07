@@ -44,6 +44,9 @@ namespace Scene
 			, int draw_id = 0
 		) override;
 
+		//its sub meshes, the shader bound by the caller (the velocity pass)
+		virtual bool draw_geometry(Square::Render::Context& render) const override;
+
 		virtual bool support_culling() const override;
 		virtual bool visible() const override;
 		virtual void on_transform() override;
@@ -73,6 +76,8 @@ namespace Scene
 		// build bbox
 		bool build_local_obounding_box(bool from_triangles=true);
 		void set_obounding_box(const Square::Geometry::OBoundingBox& obb);
+		//the box of its mesh in its own space
+		const Square::Geometry::OBoundingBox& local_bounding_box() const { return m_obb_local; }
 	};
 }
 }

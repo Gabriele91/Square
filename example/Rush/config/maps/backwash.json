@@ -1,0 +1,12 @@
+{
+	"title": "Backwash",
+	"description": "the swamp (origial_assets/backwash): green, dense on the water, thin over the trees",
+	"mode": "arena",
+	"fog": {
+		"color": [0.17, 0.21, 0.12],
+		"density": 0.012,
+		"height": 3.5,
+		"falloff": 0.08,
+		"sun": [0.35, 0.32, 0.17]
+	}
+}

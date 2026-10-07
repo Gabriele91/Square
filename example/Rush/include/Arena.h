@@ -14,6 +14,7 @@
 #include <vector>
 #include <Square/Square.h>
 #include <RushTypes.h>
+#include <Course.h>
 
 class CameraFollow;
 
@@ -54,10 +55,21 @@ public:
 	//its water (PBRWater materials: their "water_time") moves: the seconds of the race
 	void animate(double time);
 
+	//the course of a circuit (its guide, its checkpoints, its other ways: see Course); not
+	//valid: an arena
+	const Course& course() const { return m_course; }
+
+	//its boost pads ("boost_<n>" nodes, world)
+	const std::vector<Square::Vec3>& boosts() const { return m_boosts; }
+
 private:
 
 	//the colliders and the navmesh not drawn
 	void hide_helpers();
+	void find_course();
+	//the props of a library (the same mesh many times in a chunk, "props_..."): one instanced
+	//mesh a mesh a chunk (a draw call for all of them), their nodes out (after the collision)
+	void instance_props();
 	void find_camera_bounds();
 	void find_water();
 	void find_bounds();
@@ -75,6 +87,8 @@ private:
 	size_t m_camera_bounds{ 0 };
 	//the materials of its water (their water_time)
 	std::vector< Square::Shared<Square::Resource::Material> > m_water;
+	Course                                m_course;
+	std::vector<Square::Vec3>             m_boosts;
 	//spawn_point_1..4 of the arena, a fallback without them
-	std::array<Square::Vec3, s_racers>    m_starts{ s_start, s_start + Square::Vec3(10, 0, 0), s_start + Square::Vec3(0, 0, 10), s_start + Square::Vec3(10, 0, 10) };
+	std::array<Square::Vec3, Rush::s_racers> m_starts; //(no spawn point: around the fallback of the config)
 };

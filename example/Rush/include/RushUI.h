@@ -48,8 +48,9 @@ public:
 	//a map chosen to play, Exit of the title (the game)
 	void on_play(const Callback& callback);
 	void on_quit(const Callback& callback);
-	//the map chosen in the title (s_race_maps), or chosen by name (false: none of that name)
-	const RaceMap& race_map() const;
+	//the map chosen in the title (the arenas of the config), or chosen by name (false: none of
+	//that name)
+	const Rush::RaceMap& race_map() const;
 	bool race_map(const std::string& name);
 
 	//the Esc menu of a race, Exit of it (to the title)
@@ -69,6 +70,7 @@ private:
 
 	void setup_title();
 	void update_hud(const Race& race);
+	void update_circuit(const Race& race);
 	void update_options(Graphics& graphics);
 
 	//the screens of the title
@@ -89,7 +91,7 @@ private:
 		MAIN_EXIT,
 		MAIN_COUNT
 	};
-	//the modes of Play, in order (only Arena plays now)
+	//the modes of Play, in order (Races: the circuit, Arena: its maps; Battle to come)
 	enum Mode : int
 	{
 		MODE_RACES,
@@ -105,14 +107,26 @@ private:
 	//the wheel of the maps: the map in front, the others around it; played
 	void map_select(size_t map);
 	void map_play(size_t map);
+	//the circuit of the mode Races, played
+	void circuit_play(size_t circuit);
 
 	struct State
 	{
 		//HUD
-		int            m_winning_score{ s_winning_score };
-		int            m_scores[s_racers]{ 0, 0, 0, 0 };
+		int            m_winning_score{ 0 };
+		int            m_scores[Rush::s_racers]{ 0, 0, 0, 0 };
 		int            m_speed{ 0 };
 		std::string    m_speed_bar{ "0%" }; //the width of its bar (of the HUD)
+		//a circuit: its lap, the place of the player (its number, its suffix), the time, the
+		//racers in their order (their colors, their names), the player the wrong way
+		bool           m_circuit{ false };
+		std::string    m_lap;
+		std::string    m_place;
+		std::string    m_place_suffix;
+		std::string    m_race_time;
+		std::string    m_standing_colors[Rush::s_racers];
+		std::string    m_standing_names[Rush::s_racers];
+		bool           m_wrong_way{ false };
 		std::string    m_message;               //the start: 3, 2, 1, GO!
 		bool           m_message_visible{ false };
 		std::string    m_result;                //the end: win or lose
@@ -139,9 +153,10 @@ private:
 	int                              m_main_selected{ MAIN_PLAY };
 	std::vector<Square::UI::Element> m_modes;
 	int                              m_mode{ MODE_ARENA };
-	std::vector<Square::UI::Element> m_map_cards; //map_<n>, s_race_maps
+	std::vector<Square::UI::Element> m_map_cards; //map_<n>, the arenas of the config
 	std::vector<Square::UI::Element> m_map_infos; //info_<n>
 	size_t                           m_map{ 0 };  //the selected one
+	const Rush::RaceMap*             m_race_map{ nullptr }; //the map played: an arena (m_map), a circuit
 	Callback                         m_on_play;
 	Callback                         m_on_quit;
 	Callback                         m_on_exit;

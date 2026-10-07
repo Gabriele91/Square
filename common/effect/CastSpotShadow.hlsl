@@ -18,6 +18,17 @@ float mask_shadow;
 Sampler2D(albedo_map);
 
 //draw
+#ifdef INSTANCED
+// instanced (SpotShadow_instanced: Scene::InstancedMesh): the matrix of the instance first
+#include <Instances>
+VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input, uint instance_id : SV_InstanceID)
+{
+	VertexShaderOutput output;
+	output.m_position = mul_spot_light_view_projection(mul_instance_model(input.m_position, instance_id));
+	output.m_uv = input.m_uv;
+	return output;
+}
+#else
 VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input)
 {
 	VertexShaderOutput output;
@@ -25,6 +36,7 @@ VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input)
 	output.m_uv = input.m_uv;
 	return output;
 }
+#endif
 
 void fragment(in VertexShaderOutput input)
 {

@@ -308,10 +308,10 @@ namespace Scene
 		return m_active;
 	}
 
-	//every frame: the components of the actors (an active level)
+	//every frame: the components of the actors (an active level, not paused)
 	void Level::update(double delta_time)
 	{
-		if (!m_active) return;
+		if (!m_active || m_paused) return;
 		visit([delta_time](Shared<Actor> actor) -> bool
 		{
 			for (auto& component : actor->components()) component.second->on_update(delta_time);
@@ -320,7 +320,7 @@ namespace Scene
 	}
 	void Level::late_update(double delta_time)
 	{
-		if (!m_active) return;
+		if (!m_active || m_paused) return;
 		visit([delta_time](Shared<Actor> actor) -> bool
 		{
 			for (auto& component : actor->components()) component.second->on_late_update(delta_time);

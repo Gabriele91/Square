@@ -663,6 +663,11 @@ namespace Render
 		if (it_tech != m_techniques_map.end()) return &it_tech->second;
 		return nullptr;
 	}
+	EffectTechnique* Effect::technique(const std::string& technique_name, bool instanced)
+	{
+		if (!instanced) return technique(technique_name);
+		return technique(technique_name + "_instanced");
+	}
 
 	//get parameters
 	EffectParameters* Effect::parameters()

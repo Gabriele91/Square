@@ -5,6 +5,7 @@
 //  Moving spheres against triangles and spheres: the first contact along the move, then a
 //  slide on the contact planes, with the vectors of Square.
 //
+#include <cstring>
 #include <Collision.h>
 #include <CollisionDebug.h>
 #include <algorithm>
@@ -331,12 +332,54 @@ namespace
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //CollisionMesh: triangles
+Surface surface_of(const std::string& name)
+{
+	static const std::pair<const char*, Surface> s_prefixes[]
+	{
+		{ "water", Surface::WATER },
+		{ "shallow", Surface::SHALLOW },
+		{ "mud", Surface::MUD },
+		{ "sand", Surface::SAND },
+		{ "dirt", Surface::DIRT },
+		{ "ice", Surface::ICE },
+	};
+	//the prefix alone, or before a "_" ("water", "water_lagoon": not "waterfall")
+	for (const auto& prefix : s_prefixes)
+	{
+		const size_t length = std::strlen(prefix.first);
+		if (name.rfind(prefix.first, 0) != 0) continue;
+		if (name.size() == length || name[length] == '_' || name[length] == '-' || name[length] == '.') return prefix.second;
+	}
+	return Surface::GROUND;
+}
+
+bool is_water(Surface surface)
+{
+	return surface == Surface::WATER || surface == Surface::SHALLOW;
+}
+
+//a wall of a map ("blocker", "blocker_<n>"): solid whatever its material (invisible: translucent)
+bool is_blocker(const std::string& name)
+{
+	static const std::string s_prefix = "blocker";
+	if (name.rfind(s_prefix, 0) != 0) return false;
+	return name.size() == s_prefix.size() || name[s_prefix.size()] == '_' || name[s_prefix.size()] == '.';
+}
+
 void CollisionMesh::add(Context& context, const Shared<Scene::Actor>& actor, bool solid_only)
 {
 	actor->visit([&](Shared<Scene::Actor> node) -> bool
 	{
 		if (!node->contains<Scene::StaticMesh>()) return true;
 		auto static_mesh = node->component<Scene::StaticMesh>();
+		//its ground (by its name, or by the one of its parent: a node of the exporter under it)
+		Surface surface = surface_of(node->name());
+		bool blocker = is_blocker(node->name());
+		{
+			auto parent = node->parent().lock();
+			if (parent && surface == Surface::GROUND) surface = surface_of(parent->name());
+			if (parent) blocker = blocker || is_blocker(parent->name());
+		}
 		//only opaque surfaces are solid: not the translucent ones, nor the alpha tested ones
 		//(mask >= 0: grass, foliage, drawn as opaque)
 		auto solid = [&static_mesh](size_t submesh_id) -> bool
@@ -349,12 +392,14 @@ void CollisionMesh::add(Context& context, const Shared<Scene::Actor>& actor, boo
 			return opaque && !alpha_test;
 		};
 		std::vector<Vec3> points;
-		if (!static_mesh->triangles(points, solid_only ? std::function<bool(size_t)>(solid) : nullptr))
+		//the water, the walls: solid, also translucent
+		const bool every = !solid_only || is_water(surface) || blocker;
+		if (!static_mesh->triangles(points, every ? nullptr : std::function<bool(size_t)>(solid)))
 		{
 			if (static_mesh->m_mesh) context.logger()->warning("CollisionMesh: unable to read the mesh of " + node->name());
 			return true;
 		}
-		for (size_t i = 0; i + 2 < points.size(); i += 3) add_triangle(points[i], points[i + 1], points[i + 2]);
+		for (size_t i = 0; i + 2 < points.size(); i += 3) add_triangle(points[i], points[i + 1], points[i + 2], surface);
 		return true;
 	});
 	//the tree of the triangles
@@ -367,7 +412,7 @@ void CollisionMesh::clear()
 	m_nodes.clear();
 }
 
-void CollisionMesh::add_triangle(const Vec3& a, const Vec3& b, const Vec3& c)
+void CollisionMesh::add_triangle(const Vec3& a, const Vec3& b, const Vec3& c, Surface surface)
 {
 	//degenerate triangle
 	if (length(cross(b - a, c - a)) < 1e-8f) return;
@@ -377,6 +422,7 @@ void CollisionMesh::add_triangle(const Vec3& a, const Vec3& b, const Vec3& c)
 	triangle.m_c = c;
 	triangle.m_min = glm::min(a, glm::min(b, c));
 	triangle.m_max = glm::max(a, glm::max(b, c));
+	triangle.m_surface = surface;
 	m_triangles.push_back(triangle);
 }
 
@@ -498,6 +544,7 @@ bool CollisionMesh::raycast(const Vec3& origin, const Vec3& direction, float max
 	hit.m_distance = collision.m_time * max_distance;
 	hit.m_point = line.at(collision.m_time);
 	hit.m_normal = collision.m_normal;
+	if (collision.m_triangle >= 0) hit.m_surface = m_triangles[size_t(collision.m_triangle)].m_surface;
 	return true;
 }
 
@@ -653,6 +700,7 @@ void CollisionWorld::on_remove_component(const Shared<Scene::Actor>& actor, cons
 
 void CollisionWorld::update(double delta_time)
 {
+	if (m_paused) return;
 	//the steps the time of the frame holds
 	m_time += delta_time;
 	int steps = 0;

@@ -23,6 +23,7 @@
 #include "Square/Render/GBuffer.h"
 #include "Square/Render/Mesh.h"
 #include "Square/Render/PostEffect.h"
+#include <unordered_map>
 
 namespace Square
 {
@@ -79,6 +80,9 @@ namespace Render
 		bool build_buffers(const IVec2& size);
 		//geometry pass: fill the G-Buffer with the "deferred" technique
 		void geometry_pass(const Vec4& clear_color, int num_of_pass, const Camera& camera, const PoolQueues& queues);
+		//velocity pass: the renderables with their own motion blur (Renderable::motion_blur) on the
+		//G-Buffer depth, their motion on the screen since the last frame; false: none drawn
+		bool velocity_pass(const Camera& camera, const PoolQueues& queues);
 		//light passes: accumulate all lights into the light buffer
 		void light_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues);
 		//translucent pass: the translucent renderables, forward shaded ("translucent" technique)
@@ -101,6 +105,17 @@ namespace Render
 		Render::Target*  m_light_target{ nullptr };
 		//the G-Buffer occlusion (GT3) alone, for the G-Buffer post effects
 		Render::Target*  m_occlusion_target{ nullptr };
+		//the velocity (RG16F: uv on the screen) with the G-Buffer depth; drawn this frame
+		Render::Texture* m_velocity_texture{ nullptr };
+		Render::Target*  m_velocity_target{ nullptr };
+		bool             m_velocity_drawn{ false };
+		//the last frame: the model of each renderable drawn in the velocity, the camera
+		std::unordered_map<const Renderable*, Mat4> m_previous_models;
+		std::unordered_map<const Renderable*, Mat4> m_current_models;
+		Mat4             m_previous_view{ 1.0f };
+		Mat4             m_previous_projection{ 1.0f };
+		Vec3             m_previous_eye{ 0.0f };
+		bool             m_previous_camera{ false };
 		IVec2            m_size{ 0, 0 };
 		//post effects: the color chain
 		PostEffectChain  m_post_effects;
@@ -112,6 +127,7 @@ namespace Render
 		Shared<Render::ConstBuffer> m_cb_point_light;
 		Shared<Render::ConstBuffer> m_cb_spot_light;
 		Shared<Render::ConstBuffer> m_cb_light_volume;
+		Shared<Render::ConstBuffer> m_cb_velocity;
 		//shadow constant buffers
 		Shared<Render::ConstBuffer> m_cb_direction_shadow_light;
 		Shared<Render::ConstBuffer> m_cb_point_shadow_light;
@@ -127,6 +143,7 @@ namespace Render
 		Shared<Resource::Shader> m_shader_point_shadow;
 		Shared<Resource::Shader> m_shader_spot_shadow;
 		Shared<Resource::Shader> m_shader_present;
+		Shared<Resource::Shader> m_shader_velocity;
 
 		//light volume meshes
 		Shared<Mesh> m_quad;

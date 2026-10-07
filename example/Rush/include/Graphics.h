@@ -22,7 +22,7 @@ public:
 	void setup(Square::Scene::World& world);
 
 	//the fog of a map (its sun: where its light goes), off when the map has none
-	void fog(const RaceFog& fog, const Square::Vec3& sun_direction);
+	void fog(const Rush::RaceFog& fog, const Square::Vec3& sun_direction);
 	//the falling snow of a map (shown if the weather is on: GameSettings)
 	void snow(bool snow);
 	void weather(bool weather);
@@ -30,12 +30,16 @@ public:
 	void antialiasing(bool enable);
 	//the depth of field (the title: sharp at focus world units, the far blurred)
 	void depth_of_field(bool enable, float focus = 15.0f);
+	//the depth of field of a race: the hovercraft and the way ahead sharp, the far land soft
+	//(no smear of the speed: that is of the title)
+	void race_depth_of_field(bool enable);
 
 	Square::Shared<Square::Render::SSAO>  ssao() const;
 	Square::Shared<Square::Render::SSR>   ssr() const;
 	Square::Shared<Square::Render::Bloom> bloom() const;
 	Square::Shared<Square::Render::Fog>   fog() const;
 	Square::Shared<Square::Render::Snow>  snow() const;
+	Square::Shared<Square::Render::MotionBlur> motion_blur() const;
 
 private:
 
@@ -46,6 +50,7 @@ private:
 	Square::Shared<Square::Render::Snow>  m_snow;
 	Square::Shared<Square::Render::Bloom> m_bloom;
 	Square::Shared<Square::Render::DOF>   m_dof;
+	Square::Shared<Square::Render::MotionBlur> m_motion_blur;
 	Square::Shared<Square::Render::FXAA>  m_fxaa;
 	bool                                  m_map_snow{ false };
 	bool                                  m_weather{ true };

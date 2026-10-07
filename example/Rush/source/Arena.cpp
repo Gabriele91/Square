@@ -6,10 +6,15 @@
 //
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <limits>
+#include <map>
 #include <Arena.h>
 #include <Collision.h>
 #include <CameraFollow.h>
+#include <RushConfig.h>
+
+using namespace Rush;
 
 Arena::Arena(Square::Context& context)
 : m_context(context)
@@ -35,10 +40,12 @@ bool Arena::load(Square::Shared<Square::Scene::Level> level, const std::string& 
 	collider->type(TYPE_SCENE);
 	m_context.logger()->info("arena collision triangles: " + std::to_string(collider->mesh().size()));
 	hide_helpers();
+	instance_props();
 	find_camera_bounds();
 	find_water();
 	find_bounds();
 	find_starts();
+	find_course();
 	setup_camera(level);
 	return true;
 }
@@ -140,6 +147,15 @@ void Arena::find_starts()
 	//the spawn points of the scene (after the arena is placed): spawn_point_1 the player, the
 	//others the NPCs; they start facing the middle
 	m_center = m_actor->position(true);
+	//(none: around the fallback of the config, it drops on what is under it)
+	const Vec3 fallback = Config::get().spawn_fallback();
+	m_starts = 
+	{ 
+		fallback, 
+		fallback + Vec3(10, 0, 0), 
+		fallback + Vec3(0, 0, 10), 
+		fallback + Vec3(10, 0, 10) 
+	};
 	m_actor->visit([&](Shared<Scene::Actor> node) -> bool
 	{
 		for (size_t id = 0; id != s_racers; ++id)
@@ -148,6 +164,89 @@ void Arena::find_starts()
 		}
 		return true;
 	});
+}
+
+void Arena::find_course()
+{
+	using namespace Square;
+	//its boost pads
+	m_boosts.clear();
+	m_actor->visit([this](Shared<Scene::Actor> node) -> bool
+	{
+		if (AuxArena::named(node, "boost_")) m_boosts.push_back(node->position(true));
+		return true;
+	});
+	//a circuit: its guide, its checkpoints, its other ways (none: an arena)
+	if (!m_course.collect(m_actor)) return;
+	m_context.logger()->info("course: " + std::to_string(m_course.checkpoints().size()) + " checkpoints, " + std::to_string(m_course.routes().size())
+	                         + " other ways, " + std::to_string(int(m_course.length())) + (m_course.closed() ? " a lap" : " start to finish"));
+}
+
+void Arena::instance_props()
+{
+	using namespace Square;
+	//the chunks of the props of a library ("props_<i>_<j>_lod<n>": instances of its meshes)
+	std::vector< Shared<Scene::Actor> > chunks;
+	m_actor->visit([&chunks](Shared<Scene::Actor> node) -> bool
+	{
+		//(the group of its levels of detail, "props_<i>_<j>": a chunk is a level of it)
+		if (node->contains<Scene::LodGroup>()) return true;
+		if (!AuxArena::named(node, "props_")) return true;
+		chunks.push_back(node);
+		return false;
+	});
+	//a mesh of a chunk: its first static mesh (its materials), where each one is in the chunk,
+	//their nodes
+	struct Group
+	{
+		Shared<Scene::StaticMesh>          m_first;
+		std::vector<Mat4>                  m_models;
+		std::vector< Shared<Scene::Actor> > m_nodes;
+	};
+	size_t meshes = 0, instances = 0;
+	for (const auto& chunk : chunks)
+	{
+		const Mat4 to_chunk = inverse(chunk->global_model_matrix());
+		std::map<const void*, Group> groups;
+		const Scene::ActorList children = chunk->childs();
+		for (const auto& child : children)
+		{
+			//(its mesh: on it, or on a node of the exporter under it)
+			Shared<Scene::Actor> holder;
+			child->visit([&holder](Shared<Scene::Actor> part) -> bool
+			{
+				if (!part->contains<Scene::StaticMesh>()) return true;
+				holder = part;
+				return false;
+			});
+			if (!holder) continue;
+			auto mesh = holder->component<Scene::StaticMesh>();
+			if (!mesh->m_mesh) continue;
+			Group& group = groups[mesh->m_mesh.get()];
+			if (!group.m_first) group.m_first = mesh;
+			group.m_models.push_back(to_chunk * holder->global_model_matrix());
+			group.m_nodes.push_back(child);
+		}
+		for (auto& entry : groups)
+		{
+			Group& group = entry.second;
+			auto node = MakeShared<Scene::Actor>(m_context, "instances");
+			auto instanced = node->component<Scene::InstancedMesh>();
+			instanced->mesh(group.m_first->m_mesh, group.m_first->m_materials);
+			instanced->instances(group.m_models, group.m_first->local_bounding_box());
+			for (const auto& old : group.m_nodes) chunk->remove(old);
+			chunk->add(node);
+			++meshes;
+			instances += group.m_models.size();
+		}
+		//its group: its meshes changed
+		auto parent = chunk->parent().lock();
+		if (parent && parent->contains<Scene::LodGroup>())
+		{
+			parent->component<Scene::LodGroup>()->refresh();
+		}
+	}
+	if (meshes) m_context.logger()->info("props instanced: " + std::to_string(instances) + " in " + std::to_string(meshes) + " draws");
 }
 
 void Arena::setup_camera(Square::Shared<Square::Scene::Level> level)

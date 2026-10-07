@@ -19,6 +19,9 @@
 #include <RushUI.h>
 #include <TitleScreen.h>
 #include <DemoTools.h>
+#include <RushConfig.h>
+
+using namespace Rush;
 
 class RushGame : public Square::AppInterface
 {
@@ -38,6 +41,13 @@ public:
 		context().add_resources(join(resource_dir(), "/resources.rs"));
 		context().add_resources(join(resource_dir(), "common/resources.rs"));
 		context().add_resources(join(resource_dir(), "example/Rush/resources.rs"));
+		//the configuration of the game (config/: its rules, its hovercraft, its maps)
+		const std::string config = join(resource_dir(), "example/Rush/config");
+		const std::string assets = join(resource_dir(), "example/Rush/assets");
+		if (!Config::load(context(), config, assets))
+		{
+			context().logger()->warning("Rush: the configuration is not complete (" + config + "), its defaults kept");
+		}
 		//the game
 		setup_controls();
 		setup_collisions();
@@ -77,13 +87,37 @@ public:
 		//a state asked (by the UI: out of its events) at the start of the frame
 		if (m_next != m_state)
 		{
-			if (m_next == State::RACE) enter_race();
-			else                       enter_menu();
+			switch (m_next)
+			{
+			case State::RACE: enter_race(); break;
+			case State::MENU:
+			default:          enter_menu(); break;
+			}
 		}
-		//the title and the race run in their levels (the one active): the shot of the title, the UI
-		if (m_state == State::MENU) m_title.update(delta_time);
+		//the title and the race run in their levels (the one active)
+		switch (m_state)
+		{
+		case State::MENU:
+			//the shot of the title
+			pause(false);
+			m_title.update(delta_time);
+		break;
+		case State::RACE:
+		{
+			//its menu open: paused (nothing moves, its time stopped)
+			pause(m_ui.menu_visible());
+			//a circuit: the haze of where the player is (the biomes along the lap)
+			RaceFog zone_fog;
+			if (m_race && m_race->zone_fog(zone_fog)) 
+				m_graphics.fog(zone_fog, m_race->arena().sun_direction());
+		}
+		break;
+		default: break;
+		}
+		//the UI
 		m_ui.update(m_race.get(), m_graphics, float(m_counter.get()));
-		if (m_demo) m_demo->update(m_race.get(), m_graphics);
+		if (m_demo)
+			m_demo->update(m_race.get(), m_graphics);
 		return m_loop;
 	}
 
@@ -144,6 +178,14 @@ private:
 		RACE
 	};
 
+	//the pause of a race: its level (the components: the race, the drivers, the camera) and the
+	//collisions (the steps of the physics) stopped, still drawn
+	void pause(bool paused)
+	{
+		if (auto level = world().level(s_race_world_level)) level->paused(paused);
+		if (auto collision = world().instance<CollisionWorld>()) collision->paused(paused);
+	}
+
 	//the menu: no race, the level of the title active
 	void enter_menu()
 	{
@@ -151,7 +193,7 @@ private:
 		end_race();
 		world().active_levels({ s_title_world_level });
 		//the haze of the sunset of the title (its sun glowing in it)
-		m_graphics.fog(s_title_fog, m_title.sun_direction());
+		m_graphics.fog(Config::get().title_fog(), m_title.sun_direction());
 		m_graphics.depth_of_field(true, 15.0f);
 		//the menu: always smooth edges (its shot), whatever the settings
 		m_graphics.antialiasing(true);
@@ -176,7 +218,7 @@ private:
 		m_race->load(map);
 		m_graphics.fog(map.m_fog, m_race->arena().sun_direction());
 		m_graphics.snow(map.m_snow);
-		m_graphics.depth_of_field(false);
+		m_graphics.race_depth_of_field(true);
 		m_graphics.antialiasing(m_ui.settings().m_antialiasing);
 		m_ui.settings().apply_shadows(m_race->arena().sun());
 		if (m_demo) m_demo->race_started(m_race->arena());
@@ -214,8 +256,8 @@ private:
 			m_ui.menu(!m_ui.menu_visible());
 		break;
 		case Video::KEY_SPACE:
-			//back on the ground at the start
-			if (m_race && m_race->phase() == Race::Phase::PLAY) m_race->spawn(0);
+			//back on the ground: at the start (an arena), at the last gate (a circuit)
+			if (m_race && m_race->phase() == Race::Phase::PLAY) m_race->respawn(0);
 		break;
 		default: break;
 		}
@@ -271,7 +313,7 @@ static Square::Shell::ParserCommands s_ShellCommands
 	, Square::Shell::Command{ "debug",  "d", "enable debug"               , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 	, Square::Shell::Command{ "srgb",   "c", "enable gamme correction"    , Square::Shell::ValueType::value_bool  , false, Square::Shell::Value_t(true) }
 	, Square::Shell::Command{ "verbose","v", "enable verbose"             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
-	, Square::Shell::Command{ "map",    "m", "start a race on a map [arena, backwash, containment]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("")) }
+	, Square::Shell::Command{ "map",    "m", "start a race on a map [arena, backwash, containment, sanctuary, valley]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("")) }
 	, Square::Shell::Command{ "help",   "h", "show help"                  , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 };
 

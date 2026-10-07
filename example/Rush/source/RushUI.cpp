@@ -5,10 +5,14 @@
 //  See RushUI.h.
 //
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <RushUI.h>
 #include <Race.h>
 #include <Graphics.h>
+#include <RushConfig.h>
+
+using namespace Rush;
 
 namespace AuxRushUI
 {
@@ -36,6 +40,7 @@ bool RushUI::create()
 	UI::Context::load_font("common/ui/LatoLatin-Bold.ttf");
 	//the model (before the documents)
 	m_model = ui_system->ui().create_data_model("rush");
+	m_state.m_winning_score = Config::get().rules().m_winning_score;
 	m_model.bind("winning_score", &m_state.m_winning_score);
 	m_model.bind("score_red", &m_state.m_scores[0]);
 	m_model.bind("score_blue", &m_state.m_scores[1]);
@@ -43,6 +48,17 @@ bool RushUI::create()
 	m_model.bind("score_yellow", &m_state.m_scores[3]);
 	m_model.bind("speed", &m_state.m_speed);
 	m_model.bind("speed_bar", &m_state.m_speed_bar);
+	m_model.bind("circuit", &m_state.m_circuit);
+	m_model.bind("lap", &m_state.m_lap);
+	m_model.bind("place", &m_state.m_place);
+	m_model.bind("place_suffix", &m_state.m_place_suffix);
+	m_model.bind("race_time", &m_state.m_race_time);
+	m_model.bind("wrong_way", &m_state.m_wrong_way);
+	for (size_t row = 0; row != s_racers; ++row)
+	{
+		m_model.bind("standing_" + std::to_string(row + 1), &m_state.m_standing_colors[row]);
+		m_model.bind("standing_name_" + std::to_string(row + 1), &m_state.m_standing_names[row]);
+	}
 	m_model.bind("message", &m_state.m_message);
 	m_model.bind("message_visible", &m_state.m_message_visible);
 	m_model.bind("result", &m_state.m_result);
@@ -63,6 +79,7 @@ bool RushUI::create()
 	m_model.bind("set_bloom", &m_state.m_settings.m_bloom);
 	m_model.bind("set_weather", &m_state.m_settings.m_weather);
 	m_model.bind("set_antialiasing", &m_state.m_settings.m_antialiasing);
+	m_model.bind("set_motion_blur", &m_state.m_settings.m_motion_blur);
 	return true;
 }
 
@@ -118,9 +135,10 @@ void RushUI::setup_title()
 	//the maps: a card on the wheel (a click: in front, again: played), its words
 	m_map_cards.clear();
 	m_map_infos.clear();
-	m_map_cards.reserve(s_race_maps_count);
-	m_map_infos.reserve(s_race_maps_count);
-	for (size_t map = 0; map != s_race_maps_count; ++map)
+	const size_t arenas = Config::get().arenas().size();
+	m_map_cards.reserve(arenas);
+	m_map_infos.reserve(arenas);
+	for (size_t map = 0; map != arenas; ++map)
 	{
 		UI::Element element = m_title.find("map_" + std::to_string(map));
 		element.on(UI::EventType::CLICK, [this, map](UI::Event&)
@@ -185,10 +203,13 @@ void RushUI::title_key(Square::Video::KeyboardEvent key)
 		if (back)     screen(Screen::MAIN);
 	break;
 	case Screen::ARENA:
-		if (previous) map_select((m_map + s_race_maps_count - 1) % s_race_maps_count);
-		if (next)     map_select((m_map + 1) % s_race_maps_count);
+	{
+		const size_t arenas = Config::get().arenas().size();
+		if (previous) map_select((m_map + arenas - 1) % arenas);
+		if (next)     map_select((m_map + 1) % arenas);
 		if (enter)    map_play(m_map);
 		if (back)     screen(Screen::MODES);
+	}
 	break;
 	case Screen::SETTINGS:
 	case Screen::ABOUT:
@@ -231,13 +252,21 @@ void RushUI::mode_select(int mode)
 void RushUI::mode_activate(int mode)
 {
 	mode_select(mode);
-	//only the arena plays now (races, battle: to come)
-	if (mode == MODE_ARENA) screen(Screen::ARENA);
+	//races: the circuit at once; the arena: its maps (battle: to come)
+	switch (mode)
+	{
+	case MODE_RACES: circuit_play(0); break;
+	case MODE_ARENA: screen(Screen::ARENA); break;
+	default: break;
+	}
 }
 
 void RushUI::map_select(size_t map)
 {
+	const auto& arenas = Config::get().arenas();
+	if (map >= arenas.size()) return;
 	m_map = map;
+	m_race_map = &arenas[map];
 	//the wheel: the one in front, the one before over it, the one after under it, the rest
 	//behind (hidden)
 	const size_t count = m_map_cards.size();
@@ -264,6 +293,14 @@ void RushUI::map_play(size_t map)
 	if (m_on_play) m_on_play();
 }
 
+void RushUI::circuit_play(size_t circuit)
+{
+	const auto& circuits = Config::get().circuits();
+	if (circuits.empty()) return;
+	m_race_map = &circuits[circuit % circuits.size()];
+	if (m_on_play) m_on_play();
+}
+
 void RushUI::on_play(const Callback& callback)
 {
 	m_on_play = callback;
@@ -276,15 +313,22 @@ void RushUI::on_quit(const Callback& callback)
 
 const RaceMap& RushUI::race_map() const
 {
-	return s_race_maps[m_map];
+	return *m_race_map;
 }
 
 bool RushUI::race_map(const std::string& name)
 {
-	for (size_t map = 0; map != s_race_maps_count; ++map)
+	const auto& arenas = Config::get().arenas();
+	for (size_t map = 0; map != arenas.size(); ++map)
 	{
-		if (name != s_race_maps[map].m_name) continue;
+		if (name != arenas[map].m_name) continue;
 		map_select(map);
+		return true;
+	}
+	for (const RaceMap& circuit : Config::get().circuits())
+	{
+		if (name != circuit.m_name) continue;
+		m_race_map = &circuit;
 		return true;
 	}
 	return false;
@@ -332,6 +376,61 @@ void RushUI::update(const Race* race, Graphics& graphics, float fps)
 	m_model.dirty_all();
 }
 
+namespace AuxRushUI
+{
+	//a name of a racer in the standings (upper case)
+	static std::string upper(std::string name)
+	{
+		for (char& c : name)
+		{
+			c = char(std::toupper((unsigned char)c));
+		}
+		return name;
+	}
+
+	//1st, 2nd, 3rd, 4th
+	static const char* suffix(size_t place)
+	{
+		switch (place)
+		{
+		case 1:  return "ST";
+		case 2:  return "ND";
+		case 3:  return "RD";
+		default: return "TH";
+		}
+	}
+
+	//m:ss.d
+	static std::string time(double seconds)
+	{
+		const int tenths = int(seconds * 10.0);
+		const int minutes = tenths / 600;
+		const int rest = tenths % 600;
+		std::string text = std::to_string(minutes) + ":";
+		if (rest < 100) text += "0";
+		return text + std::to_string(rest / 10) + "." + std::to_string(rest % 10);
+	}
+}
+
+void RushUI::update_circuit(const Race& race)
+{
+	const auto& player = race.racers().front();
+	const size_t place = race.place(0);
+	m_state.m_lap = std::to_string(std::min(player.m_lap, race.laps())) + "/" + std::to_string(race.laps());
+	m_state.m_place = std::to_string(place);
+	m_state.m_place_suffix = AuxRushUI::suffix(place);
+	m_state.m_race_time = AuxRushUI::time(player.m_finished ? player.m_finish_time : race.race_time());
+	const auto& standings = race.standings();
+	for (size_t row = 0; row != s_racers; ++row)
+	{
+		const size_t id = row < standings.size() ? standings[row] : row;
+		const Racer& racer = Config::get().racer(id);
+		m_state.m_standing_colors[row] = racer.m_color;
+		m_state.m_standing_names[row] = AuxRushUI::upper(racer.m_name);
+	}
+	m_state.m_wrong_way = race.wrong_way() && race.phase() == Race::Phase::PLAY;
+}
+
 void RushUI::update_hud(const Race& race)
 {
 	//scores, speed of the player
@@ -341,22 +440,31 @@ void RushUI::update_hud(const Race& race)
 		m_state.m_scores[id] = racers[id].m_score;
 	}
 	m_state.m_speed = race.player_speed();
-	m_state.m_speed_bar = std::to_string(std::clamp(m_state.m_speed, 0, 100)) + "%";
+	//(the bar full at the top speed: a circuit's 130)
+	const int top = race.circuit() ? int(std::round(Config::get().circuit().m_speed * 100.0f)) : 100;
+	m_state.m_speed_bar = std::to_string(std::clamp(m_state.m_speed * 100 / top, 0, 100)) + "%";
+	//a circuit: the lap, the place, the time, the order of the racers
+	m_state.m_circuit = race.circuit();
+	if (m_state.m_circuit) update_circuit(race);
 	//the phase: the countdown of the start, GO! for a while, the result of the end
 	m_state.m_message_visible = false;
 	m_state.m_result_visible = false;
 	switch (race.phase())
 	{
 	case Race::Phase::START:
-		m_state.m_message = std::to_string(int(std::ceil(s_start_time - race.phase_time())));
+	{
+		const double left = Config::get().rules().m_start_time - race.phase_time();
+		m_state.m_message = std::to_string(int(std::ceil(left)));
 		m_state.m_message_visible = true;
+	}
 	break;
 	case Race::Phase::PLAY:
 		m_state.m_message = "GO!";
-		m_state.m_message_visible = race.phase_time() < s_go_time;
+		m_state.m_message_visible = race.phase_time() < Config::get().rules().m_go_time;
 	break;
 	case Race::Phase::END:
-		m_state.m_result = race.winner() == 0 ? "YOU WIN!" : "YOU LOSE!";
+		if (race.circuit()) m_state.m_result = m_state.m_place + m_state.m_place_suffix + " PLACE";
+		else                m_state.m_result = race.winner() == 0 ? "YOU WIN!" : "YOU LOSE!";
 		m_state.m_result_visible = true;
 	break;
 	default: break;

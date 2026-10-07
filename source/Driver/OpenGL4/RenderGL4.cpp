@@ -2807,6 +2807,9 @@ namespace Render
 	//get uniform
 	Uniform* Shader::uniform(const std::string& uname)
 	{
+		//already asked (the effects that share this shader keep its pointer: never made again)
+		auto cached = m_uniform_map.find(uname);
+		if (cached != m_uniform_map.end()) return cached->second.get();
 		if (m_global_buffer_ref)
 		{
 			std::string real_name = "_Global." + uname;
