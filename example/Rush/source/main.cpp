@@ -45,9 +45,11 @@ class RushGame : public Square::AppInterface
 {
 public:
 
-	//map: a race on it at once (its name, --map), else the title
-	RushGame(const std::string& map)
+	//map: a race on it at once (its name, --map), else the title; view: the view of that map
+	//(--view: its photo) instead of its race
+	RushGame(const std::string& map, bool view)
 	: m_start_map(map)
+	, m_view(view && !map.empty())
 	{
 	}
 
@@ -122,8 +124,14 @@ public:
 		break;
 		case State::RACE:
 		{
-			//its menu open: paused (nothing moves, its time stopped)
-			pause(m_ui.menu_visible());
+			//its menu open, the view of its map: paused (nothing moves, its time stopped)
+			pause(m_view || m_ui.menu_visible());
+			//the view: its camera there (whatever moved it before the pause)
+			if (m_view && m_race)
+			{
+				const RaceMap& map = m_ui.race_map();
+				m_race->arena().view(map.m_view_from, map.m_view_to, map.m_view_lens);
+			}
 			//a circuit: the haze of where the player is (the biomes along the lap)
 			RaceFog zone_fog;
 			if (m_race && m_race->zone_fog(zone_fog)) 
@@ -241,6 +249,30 @@ private:
 		m_ui.settings().apply_shadows(m_race->arena().sun(), AuxMain::shadow_view(m_race->arena()));
 		if (m_demo) m_demo->race_started(m_race->arena());
 		m_state = m_next = State::RACE;
+		if (m_view) enter_view(map);
+	}
+
+	//the view of a map (its photo): the race stopped (paused: nothing moves), no HUD, the camera on
+	//the view of the map, the effects at their best (the settings of the player not changed)
+	void enter_view(const RaceMap& map)
+	{
+		m_ui.hud(false);
+		GameSettings best = m_ui.settings();
+		best.m_reflections  = int(Config::get().levels("reflections").size());
+		best.m_occlusion    = int(Config::get().levels("occlusion").size());
+		best.m_shadows      = int(Config::get().levels("shadows").size());
+		best.m_bloom        = int(Config::get().levels("bloom").size());
+		best.m_god_rays     = int(Config::get().levels("god_rays").size());
+		best.m_antialiasing = true;
+		//(still: no motion to blur)
+		best.m_motion_blur  = 0;
+		best.apply_effects(m_graphics);
+		m_graphics.antialiasing(true);
+		best.apply_shadows(m_race->arena().sun(), AuxMain::shadow_view(m_race->arena()));
+		//every thing at its most detailed level, at once
+		Square::Scene::LodGroup::force_level(0);
+		Square::Scene::LodGroup::fade_duration(0.0f);
+		context().logger()->info("view of the map " + map.m_name + (map.m_view_set ? "" : " (no view in its config: the default one)"));
 	}
 
 	//the race out of its level (its map, hovercraft, its actor)
@@ -313,6 +345,7 @@ private:
 	}
 
 	std::string                m_start_map; //--map
+	bool                       m_view{ false }; //--view: the view of the map of --map (its photo)
 	bool                       m_loop{ true };
 	State                      m_state{ State::MENU };
 	State                      m_next{ State::MENU }; //asked by the UI, at the next frame
@@ -332,6 +365,7 @@ static Square::Shell::ParserCommands s_ShellCommands
 	, Square::Shell::Command{ "srgb",   "c", "enable gamme correction"    , Square::Shell::ValueType::value_bool  , false, Square::Shell::Value_t(true) }
 	, Square::Shell::Command{ "verbose","v", "enable verbose"             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 	, Square::Shell::Command{ "map",    "m", "start a race on a map [arena, backwash, containment, sanctuary, valley]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("")) }
+	, Square::Shell::Command{ "view",   "w", "the view of the map of --map (its photo): still, no HUD, the effects at their best", Square::Shell::ValueType::value_none, false, Square::Shell::Value_t(false) }
 	, Square::Shell::Command{ "help",   "h", "show help"                  , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 };
 
@@ -369,7 +403,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
 	, WindowMode::NOT_RESIZABLE
 	, render_driver
 	, "Rush"
-	, new RushGame(std::get<std::string>(args.at("map")))
+	, new RushGame(std::get<std::string>(args.at("map")), std::get<bool>(args.at("view")))
 	);
 	return 0;
 }

@@ -173,6 +173,12 @@ void RushUI::title(bool show)
 	m_hud.show();
 }
 
+void RushUI::hud(bool show)
+{
+	if (show) m_hud.show();
+	else      m_hud.hide();
+}
+
 void RushUI::screen(Screen screen)
 {
 	m_screen = screen;

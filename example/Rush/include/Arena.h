@@ -65,6 +65,9 @@ public:
 
 	//the clip planes of its camera (world units; 0: the one of the scene)
 	void camera_clip(float clip_near, float clip_far) const;
+	//the camera on a view of the map (its photo): from, to in the coordinates of its scene
+	//(Blender: z up), its lens (mm, a film 36 mm wide: the field of view across)
+	void view(const Square::Vec3& from, const Square::Vec3& to, float lens) const;
 
 	//its boost pads ("boost_<n>" nodes, world)
 	const std::vector<Square::Vec3>& boosts() const { return m_boosts; }

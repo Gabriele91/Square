@@ -302,6 +302,28 @@ void Arena::camera_clip(float clip_near, float clip_far) const
 	camera->perspective(viewport.fov(), viewport.aspect(), new_near, new_far);
 }
 
+void Arena::view(const Square::Vec3& from, const Square::Vec3& to, float lens) const
+{
+	using namespace Square;
+	if (!m_camera || !m_camera->contains<Scene::Camera>() || !m_actor) return;
+	//Blender (z up) to the game (y up: the exporter), where the map is placed
+	auto to_game = [this](const Vec3& p) { return m_actor->position() + Vec3(p.x, p.z, -p.y); };
+	const Vec3 eye = to_game(from);
+	const Vec3 direction = to_game(to) - eye;
+	const float horizontal = std::sqrt(direction.x * direction.x + direction.z * direction.z);
+	const float yaw = std::atan2(direction.x, direction.z);
+	const float pitch = -std::atan2(direction.y, std::max(horizontal, 0.001f));
+	m_camera->position(eye);
+	m_camera->rotation(angle_axis(yaw, Constants::axis_y) * angle_axis(pitch, Constants::axis_x));
+	//the lens: the field of view across the film, the one up by the aspect
+	auto camera = m_camera->component<Scene::Camera>();
+	const Render::Viewport& viewport = camera->viewport();
+	const float across = 2.0f * std::atan(18.0f / std::max(lens, 1.0f));
+	const float up = 2.0f * std::atan(std::tan(across * 0.5f) / std::max(viewport.aspect(), 0.01f));
+	const Vec2 planes = viewport.near_and_far();
+	camera->perspective(up, viewport.aspect(), planes.x, planes.y);
+}
+
 Square::Shared<Square::Scene::Actor> Arena::navmesh() const
 {
 	using namespace Square;

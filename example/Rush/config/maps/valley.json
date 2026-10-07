@@ -11,6 +11,7 @@
 		] 
 	},
 	"camera": { "near": 0.5, "far": 1500.0 },
+	"view": { "from": [-40.0, -320.0, 600.0], "to": [-40.0, 320.0, -72.0], "lens": 22.0 },
 	"laps": 3,
 	"trails": true,
 	"wakes": true,

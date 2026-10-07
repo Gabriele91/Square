@@ -43,6 +43,8 @@ public:
 
 	//the title shown (the HUD and the menu hidden), or the HUD
 	void title(bool show);
+	//the HUD of a race shown (false: none, the view of a map)
+	void hud(bool show);
 	//a key in the title: left/right (up/down) the item (the map), enter its action (play it)
 	void title_key(Square::Video::KeyboardEvent key);
 	//a map chosen to play, Exit of the title (the game)

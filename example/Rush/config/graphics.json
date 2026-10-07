@@ -2,9 +2,9 @@
 	"description": "The levels of the graphics settings of the title: for each effect, a level sets the fields of the settings of its engine effect (the same names; the ones not written stay as they are). resolution: full, half, quarter. blur: reflections off, low, medium, high; occlusion off, very_low, low, medium, high. god_rays: volumetric (the shadow map of the sun: steps, max_distance, anisotropy, air), color [r, g, b], intensity, resolution; on the screen (no shadow): threshold, sun_radius, density, decay, weight, samples, fade. shadows: filter none, pcf, pcss; map_scale: the size of the shadow map, a scale of the map's (2048: 0.5 is 1024, 2 is 4096; at most 8192). distance a share of the shadow distance of the map (0: the whole map as far as the camera sees it, min(the largest side of the map, the far of the camera)).",
 	"reflections": {
 		"super_low": { "resolution": "quarter", "steps": 20, "max_distance": 40.0, "blur": "low", "denoise": false },
-		"low":       { "resolution": "quarter", "steps": 40, "max_distance": 60.0, "blur": "medium", "denoise": false },
-		"medium":    { "resolution": "half", "steps": 28, "max_distance": 50.0, "blur": "low", "denoise": false },
-		"high":      { "resolution": "half", "steps": 40, "max_distance": 60.0, "blur": "medium", "denoise": false },
+		"low":       { "resolution": "quarter", "steps": 30, "max_distance": 60.0, "blur": "medium", "denoise": false },
+		"medium":    { "resolution": "half", "steps": 40, "max_distance": 50.0, "blur": "high", "denoise": false },
+		"high":      { "resolution": "half", "steps": 50, "max_distance": 60.0, "blur": "medium", "denoise": true },
 		"ultra":     { "resolution": "full", "steps": 64, "max_distance": 90.0, "blur": "medium", "denoise": true },
 		"best":     { "resolution": "full", "steps": 128, "max_distance": 128.0, "blur": "high", "denoise": true }
 	},

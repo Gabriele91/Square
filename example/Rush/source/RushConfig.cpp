@@ -424,6 +424,14 @@ namespace Rush
 			map.m_camera_near = AuxConfig::number(*camera, "near", map.m_camera_near);
 			map.m_camera_far  = AuxConfig::number(*camera, "far", map.m_camera_far);
 		}
+		//its view (the photo of the map)
+		if (const auto* view = AuxConfig::object(root, "view"))
+		{
+			map.m_view_set  = true;
+			map.m_view_from = AuxConfig::vec3(*view, "from", map.m_view_from);
+			map.m_view_to   = AuxConfig::vec3(*view, "to", map.m_view_to);
+			map.m_view_lens = AuxConfig::number(*view, "lens", map.m_view_lens);
+		}
 		//the zones of a circuit (its fog: the first one's)
 		if (root.contains("zones") && root["zones"].is_array())
 		{

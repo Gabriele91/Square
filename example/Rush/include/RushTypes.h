@@ -95,5 +95,12 @@ namespace Rush
 		float                    m_sun_azimuth{ 0.0f };
 		float                    m_sun_elevation{ 45.0f };
 		std::vector<SunStep>     m_sun_steps;
+		//its view (--view: the photo of the map): where the camera is, what it looks at (in the
+		//coordinates of its scene, Blender: z up, as the thumbnail of its build script), its lens
+		//(mm, a film 36 mm wide); not set: from over a side of the map to its middle
+		bool                     m_view_set{ false };
+		Square::Vec3             m_view_from{ 60.0f, -75.0f, 46.0f };
+		Square::Vec3             m_view_to{ 0.0f, 0.0f, 0.0f };
+		float                    m_view_lens{ 22.0f };
 	};
 }
