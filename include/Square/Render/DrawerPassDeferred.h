@@ -109,6 +109,10 @@ namespace Render
 		Render::Texture* m_velocity_texture{ nullptr };
 		Render::Target*  m_velocity_target{ nullptr };
 		bool             m_velocity_drawn{ false };
+		//the sun of the frame (the first direction light with a shadow): for the post effects
+		Vec3             m_sun_direction{ 0.0f, -1.0f, 0.0f };
+		Vec3             m_sun_color{ 0.0f };
+		Render::Texture* m_sun_shadow_map{ nullptr };
 		//the last frame: the model of each renderable drawn in the velocity, the camera
 		std::unordered_map<const Renderable*, Mat4> m_previous_models;
 		std::unordered_map<const Renderable*, Mat4> m_current_models;

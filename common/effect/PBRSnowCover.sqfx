@@ -25,6 +25,8 @@ parameters
     ignore_shadows float(0.0)
     //dithered opacity: 1 = alpha (albedo_map.a * color.a) drops pixels with a pattern
     dither       float(0.0)
+    //light of the sun through it (thin: leaves, cards), 0 none, 1 all
+    translucency float(0.0)
     //the snow over it (see SnowCoverPBR.hlsl): its texture (tiled from above), where it starts (the
     //normal y), the softness of its edge, 1 / the size of its texture (world), its roughness
     snow_cover_map texture("white")

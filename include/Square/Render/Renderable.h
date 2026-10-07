@@ -63,12 +63,15 @@ namespace Render
 
 		virtual void visible(bool enable)  { m_visible = enable; }
 
-		virtual bool can_draw() const { return visible() && m_lod_shown && material().lock() && transform().lock(); }
+		virtual bool can_draw() const { return visible() && lod_shown() && material().lock() && transform().lock(); }
 
-		//shown by its level of detail (a LevelOfDetail, Scene::LodGroup: on only in the level it
-		//selects for the camera drawn), apart from visible
-		inline void lod_shown(bool shown) { m_lod_shown = shown; }
-		inline bool lod_shown() const { return m_lod_shown; }
+		//its fade by its level of detail (a LevelOfDetail, Scene::LodGroup: the level it selects
+		//for the camera drawn), apart from visible: 1 drawn, 0 not; t in (0, 1) fading in, drawn
+		//on the pixels of a pattern of the screen under t; -t fading out, on the others (a level
+		//fading in and one fading out: every pixel once). The shaders read it (Transform.hlsl)
+		inline void  lod_fade(float fade) { m_lod_fade = fade; }
+		inline float lod_fade() const { return m_lod_fade; }
+		inline bool  lod_shown() const { return m_lod_fade != 0.0f; }
 
 		//drawn instanced (many copies in a draw call: Scene::InstancedMesh): the passes take the
 		//"<technique>_instanced" techniques of its effects
@@ -85,7 +88,7 @@ namespace Render
 	private:
         
 		bool m_visible{ true };
-		bool m_lod_shown{ true };
+		float m_lod_fade{ 1.0f };
 		bool m_motion_blur{ false };
 	};
 }

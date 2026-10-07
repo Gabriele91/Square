@@ -21,6 +21,7 @@ namespace Render
 		Mat4 m_rotation;
 		CBAlignas Vec3 m_position;
 		CBAlignas Vec3 m_scale;
+		float          m_lod_fade{ 1.0f }; //(after the scale, in its register) Renderable::lod_fade
     };
     //Transform cpu class
 	class SQUARE_API Transform : public BaseObject

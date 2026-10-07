@@ -23,6 +23,7 @@ struct SurfaceData
 	half   m_metallic;    // from 0=non-metal, to 1=metal
 	half   m_roughness;   // from 0=smooth, to 1=rough
 	float  m_alpha;       // alpha for transparencies
+	half   m_translucency; // light of the sun through it (thin: leaves), 0 none, 1 all
 };
 
 SurfaceData DefaultSurfaceData()
@@ -36,5 +37,6 @@ SurfaceData DefaultSurfaceData()
 	output.m_metallic = 0.0;
 	output.m_roughness = 0.0;
 	output.m_alpha = 1.0;
+	output.m_translucency = 0.0;
 	return output;
 }

@@ -22,6 +22,8 @@ parameters
     ignore_shadows float(0.0)
     //dithered opacity: 1 = alpha (albedo_map.a * color.a) drops pixels with a pattern
     dither       float(0.0)
+    //light of the sun through it (thin: leaves, cards), 0 none, 1 all
+    translucency float(0.0)
 }
 
 sub_effect

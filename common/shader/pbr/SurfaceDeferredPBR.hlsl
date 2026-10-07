@@ -37,6 +37,9 @@
 #define GBUFFER_MODEL_BACKGROUND 0.0
 #define GBUFFER_MODEL_PBR        1.0
 #define GBUFFER_MODEL_LEGACY     2.0
+// PBR packs its translucency in position.w: 1 + translucency * GBUFFER_TRANSLUCENCY_SCALE (under
+// 1.5: still PBR for every pass, they compare with 0.5 and 1.5)
+#define GBUFFER_TRANSLUCENCY_SCALE 0.45
 
 // Geometry-pass output: the four MRT targets.
 struct SurfaceOutput
@@ -51,7 +54,7 @@ struct SurfaceOutput
 SurfaceOutput encode_gbuffer(in SurfaceData data)
 {
 	SurfaceOutput output;
-	output.m_position = Vec4(data.m_position.xyz, GBUFFER_MODEL_PBR);
+	output.m_position = Vec4(data.m_position.xyz, GBUFFER_MODEL_PBR + saturate(data.m_translucency) * GBUFFER_TRANSLUCENCY_SCALE);
 	output.m_normal   = Vec4(normalize(data.m_normal), data.m_roughness);
 	output.m_albedo   = Vec4(data.m_albedo, data.m_metallic);
 	output.m_emissive = Vec4(data.m_emmisive, data.m_occlusion);
@@ -73,6 +76,7 @@ SurfaceData decode_gbuffer(in Vec4 g_position,
 	data.m_emmisive  = g_emissive.rgb;
 	data.m_occlusion = g_emissive.a;
 	data.m_alpha     = 1.0;
+	data.m_translucency = saturate((g_position.w - GBUFFER_MODEL_PBR) / GBUFFER_TRANSLUCENCY_SCALE);
 	return data;
 }
 

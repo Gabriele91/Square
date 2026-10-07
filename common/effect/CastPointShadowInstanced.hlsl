@@ -52,6 +52,8 @@ float fragment(in FragmentShaderInput input) : SV_Depth
 	//albedo
 	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
 	if (albedo_color.a <= mask_shadow) discard;
+	//its level of detail fading in or out
+	lod_fade_clip(input.m_position.xy);
 	//compute distance between world and light source
 	float light_distance = length(point_shadow_camera.m_position - input.m_world_position.xyz);
 	//[0,1] range

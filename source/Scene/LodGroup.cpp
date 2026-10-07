@@ -8,6 +8,7 @@
 #include "Square/Core/ClassObjectRegistration.h"
 #include <algorithm>
 #include <cmath>
+#include <chrono>
 #include <limits>
 
 namespace Square
@@ -258,6 +259,9 @@ namespace Scene
 		m_renderables.resize(m_levels.size());
 		m_found = true;
 		m_shown = ~size_t(0);
+		m_previous = ~size_t(0);
+		m_fade = 1.0f;
+		m_applied = false;
 		auto owner = actor().lock();
 		if (!owner) return;
 		for (size_t i = 0; i != m_levels.size(); ++i)
@@ -280,17 +284,98 @@ namespace Scene
 		}
 	}
 
+	namespace AuxLodGroupFade
+	{
+		//the seconds of a cross-fade of all the groups
+		static float s_duration = 0.5f;
+		//none: no level applied, no level fading out
+		static constexpr size_t s_none = ~size_t(0);
+
+		//the time now (seconds)
+		static double seconds()
+		{
+			using namespace std::chrono;
+			return duration<double>(steady_clock::now().time_since_epoch()).count();
+		}
+	}
+
+	void LodGroup::fade_duration(float seconds)
+	{
+		AuxLodGroupFade::s_duration = std::max(seconds, 0.0f);
+	}
+
+	float LodGroup::fade_duration()
+	{
+		return AuxLodGroupFade::s_duration;
+	}
+
 	void LodGroup::show(size_t level)
 	{
-		if (level == m_shown) return;
-		m_shown = level;
+		using AuxLodGroupFade::s_none;
+		//the time since the last camera
+		const double now = AuxLodGroupFade::seconds();
+		const float  elapsed = m_time < 0.0 ? 0.0f : float(now - m_time);
+		m_time = now;
+		const float duration = AuxLodGroupFade::s_duration;
+		if (level == m_shown)
+		{
+			//its cross-fade going on
+			if (m_fade < 1.0f)
+			{
+				m_fade = duration > 0.0f ? std::min(m_fade + elapsed / duration, 1.0f) : 1.0f;
+				m_applied = false;
+			}
+		}
+		else if (m_shown == s_none || duration <= 0.0f)
+		{
+			//the first one (or no cross-fade): at once
+			m_shown = level;
+			m_previous = s_none;
+			m_fade = 1.0f;
+			m_applied = false;
+		}
+		else if (level == m_previous && m_fade < 1.0f)
+		{
+			//back to the one fading out: the same cross-fade the other way
+			m_previous = m_shown;
+			m_shown = level;
+			m_fade = 1.0f - m_fade;
+			m_applied = false;
+		}
+		else
+		{
+			//a new cross-fade (the one going on: at its end)
+			m_previous = m_shown;
+			m_shown = level;
+			m_fade = 0.0f;
+			m_applied = false;
+		}
+		apply();
+	}
+
+	void LodGroup::apply()
+	{
+		if (m_applied) return;
+		m_applied = true;
+		//(a share of 0 would be nothing: at least a little)
+		const float fading = std::max(m_fade, 0.001f);
+		const bool  done = m_fade >= 1.0f;
 		for (size_t i = 0; i != m_renderables.size(); ++i)
 		{
+			float fade = 0.0f;
+			if (i == m_shown)
+			{
+				fade = done ? 1.0f : fading;
+			}
+			else if (i == m_previous && !done)
+			{
+				fade = -fading;
+			}
 			for (const auto& weak_renderable : m_renderables[i])
 			{
 				if (auto renderable = weak_renderable.lock())
 				{
-					renderable->lod_shown(i == level);
+					renderable->lod_fade(fade);
 				}
 			}
 		}
@@ -311,7 +396,7 @@ namespace Scene
 			{
 				if (auto renderable = weak_renderable.lock())
 				{
-					renderable->lod_shown(true);
+					renderable->lod_fade(1.0f);
 				}
 			}
 		}
