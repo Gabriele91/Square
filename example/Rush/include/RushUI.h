@@ -45,6 +45,10 @@ public:
 	void title(bool show);
 	//the HUD of a race shown (false: none, the view of a map)
 	void hud(bool show);
+	//the loading screen of a map (its title, its card behind), shown by its opacity (0: hidden,
+	//1: it covers everything)
+	void loading(const Rush::RaceMap& map);
+	void loading_opacity(float opacity);
 	//a key in the title: left/right (up/down) the item (the map), enter its action (play it)
 	void title_key(Square::Video::KeyboardEvent key);
 	//a map chosen to play, Exit of the title (the game)
@@ -134,6 +138,7 @@ private:
 		std::string    m_result;                //the end: win or lose
 		bool           m_result_visible{ false };
 		float          m_fps{ 0.0f };
+		std::string    m_loading_title;         //the map loading
 		//options of the game (the menu of the demo)
 		UIOption<bool> m_ssr;
 		UIOption<bool> m_bloom;
@@ -150,7 +155,8 @@ private:
 	Square::UI::Document             m_title;
 	Square::UI::Document             m_hud;
 	Square::UI::Document             m_menu;
-	Screen                           m_screen{ Screen::MAIN };
+	Square::UI::Document             m_loading;
+	Screen                          m_screen{ Screen::MAIN };
 	std::vector<Square::UI::Element> m_main_items;
 	int                              m_main_selected{ MAIN_PLAY };
 	std::vector<Square::UI::Element> m_modes;

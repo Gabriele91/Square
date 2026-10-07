@@ -83,6 +83,15 @@ namespace Rush
 		float m_acceleration{ 2.5f };
 	};
 
+	//the loading screen of a race: the seconds it takes to come (over the title) and to go, the
+	//frames it stays after the load (the first ones of a map are slow)
+	struct LoadingScreen
+	{
+		float m_fade_in{ 0.35f };
+		float m_fade_out{ 0.5f };
+		int   m_hold_frames{ 3 };
+	};
+
 	//the shadows of the sun of a level of the graphics: its filter, its cascades, its distance (a
 	//share of the shadow distance of the map; 0: the whole map as far as the camera sees it,
 	//min(the largest side of the map, the far of the camera)), its shadow map (a scale of the size
@@ -121,6 +130,8 @@ namespace Rush
 		//the title: its scene far from the race, its haze
 		const Square::Vec3& title_origin() const { return m_title_origin; }
 		const RaceFog&      title_fog() const { return m_title_fog; }
+		//the loading screen of a race
+		const LoadingScreen& loading() const { return m_loading; }
 
 		const std::array<Racer, s_racers>& racers() const { return m_racers; }
 		const Racer& racer(size_t id) const { return m_racers[id % s_racers]; }
@@ -163,6 +174,7 @@ namespace Rush
 		Square::Vec3 m_spawn_fallback{ 0.0f, 50.0f, 0.0f };
 		Square::Vec3 m_title_origin{ 0.0f, 0.0f, 5000.0f };
 		RaceFog      m_title_fog;
+		LoadingScreen m_loading;
 
 		std::array<Racer, s_racers> m_racers;
 		HovercraftDriver::Settings  m_driver;

@@ -317,6 +317,12 @@ namespace Rush
 			m_title_origin = AuxConfig::vec3(*title, "origin", m_title_origin);
 			if (const auto* fog = object(*title, "fog")) m_title_fog = AuxConfig::fog(*fog);
 		}
+		if (const auto* loading = object(root, "loading"))
+		{
+			m_loading.m_fade_in     = number(*loading, "fade_in", m_loading.m_fade_in);
+			m_loading.m_fade_out    = number(*loading, "fade_out", m_loading.m_fade_out);
+			m_loading.m_hold_frames = number(*loading, "hold_frames", m_loading.m_hold_frames);
+		}
 		const auto* maps = object(root, "maps");
 		if (!maps) return false;
 		m_arena_names = AuxConfig::names(*maps, "arenas");

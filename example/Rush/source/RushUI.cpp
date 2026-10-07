@@ -64,6 +64,7 @@ bool RushUI::create()
 	m_model.bind("result", &m_state.m_result);
 	m_model.bind("result_visible", &m_state.m_result_visible);
 	m_model.bind("fps", &m_state.m_fps);
+	m_model.bind("loading_title", &m_state.m_loading_title);
 	m_model.bind("ssr", &m_state.m_ssr.m_value);
 	m_model.bind("bloom", &m_state.m_bloom.m_value);
 	m_model.bind("ssao", &m_state.m_ssao.m_value);
@@ -93,6 +94,7 @@ void RushUI::load_documents()
 	m_title = ui.load("example/Rush/assets/ui.sqz/title.rml");
 	m_hud = ui.load("example/Rush/assets/ui.sqz/hud.rml");
 	m_menu = ui.load(AuxRushUI::s_menu_document);
+	m_loading = ui.load("example/Rush/assets/ui.sqz/loading.rml");
 	setup_title();
 	m_menu.find("resume").on(UI::EventType::CLICK, [this](UI::Event&) { menu(false); });
 	m_menu.find("exit").on(UI::EventType::CLICK, [this](UI::Event&) { if (m_on_exit) m_on_exit(); });
@@ -177,6 +179,28 @@ void RushUI::hud(bool show)
 {
 	if (show) m_hud.show();
 	else      m_hud.hide();
+}
+
+void RushUI::loading(const Rush::RaceMap& map)
+{
+	if (!m_loading.valid()) return;
+	m_state.m_loading_title = map.m_title;
+	m_model.dirty("loading_title");
+	//its card (the photo of the map in the pack of the UI)
+	m_loading.find("loading_map").set_property("decorator", "image(map_" + map.m_name + ".png)");
+	loading_opacity(0.0f);
+}
+
+void RushUI::loading_opacity(float opacity)
+{
+	if (!m_loading.valid()) return;
+	if (opacity <= 0.0f)
+	{
+		m_loading.hide();
+		return;
+	}
+	m_loading.set_property("opacity", std::to_string(std::min(opacity, 1.0f)));
+	if (!m_loading.visible()) m_loading.show();
 }
 
 void RushUI::screen(Screen screen)

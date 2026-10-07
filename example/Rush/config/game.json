@@ -27,6 +27,11 @@
 		"origin": [0.0, 0.0, 5000.0],
 		"fog": { "color": [0.55, 0.42, 0.42], "density": 0.00035, "height": 0.0, "falloff": 0.02, "sun": [0.7, 0.45, 0.25] }
 	},
+	"loading": {
+		"fade_in": 0.35,
+		"fade_out": 0.5,
+		"hold_frames": 3
+	},
 	"maps": {
 		"arenas": ["arena", "backwash", "containment", "sanctuary"],
 		"circuits": ["valley", "wildwater"]
