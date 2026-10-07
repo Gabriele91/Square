@@ -59,7 +59,9 @@ surface(VertexShaderOutput input)
     // SRGB (specular)
 	//Albedo
 	Vec4 albedo_color = to_rgb_space(texture2D(albedo_map, input.m_uv)); // sRGB
+#ifdef SQ_CLIP
 	if (albedo_color.a <= mask) discard;
+#endif
 	//material info
 	Vec4 normal_color = texture2D(normal_map, input.m_uv);
 	Vec4 specular_color = to_rgb_space(texture2D(specular_map, input.m_uv)); // sRGB

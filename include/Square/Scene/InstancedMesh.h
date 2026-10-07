@@ -3,9 +3,9 @@
 //  Square
 //
 //  A mesh drawn many times in a draw call (GPU instancing): its instances, each its matrix in the
-//  space of its actor. Its materials' effects draw it with their "<technique>_instanced"
-//  techniques (forward_instanced, deferred_instanced, DirectionShadow_instanced...: their vertex
-//  shaders read the matrix of each instance, Instances.hlsl), at most instances_max a draw (more:
+//  space of its actor. Its materials' effects draw it with the instanced variant of their
+//  techniques ("variants instanced" in the .sqfx, SQ_INSTANCED defined: their vertex shaders read
+//  the matrix of each instance, Instances.hlsl), at most instances_max a draw (more:
 //  more draws). Culled as one: the box of all its instances.
 //
 #pragma once

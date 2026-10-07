@@ -15,7 +15,7 @@ Vec2 rays_sun_uv(out float w)
 	Vec4 clip = mul(mul(Vec4(rays_sun.xyz, 0.0), camera.m_view), camera.m_projection);
 	w = clip.w;
 	Vec2 ndc = clip.xy / max(abs(clip.w), 0.00001);
-#ifdef GLSL_BACKEND
+#ifdef SQ_BACKEND_GLSL
 	return Vec2(0.5 + 0.5 * ndc.x, 0.5 + 0.5 * ndc.y);
 #else
 	return Vec2(0.5 + 0.5 * ndc.x, 0.5 - 0.5 * ndc.y);

@@ -12,7 +12,7 @@ struct LightResult
     Vec3 m_radiance;
 };
 //include the required light type
-#if defined(RENDERING_COLOR)
+#if defined(SQ_LIGHT_COLOR)
 LightResult compute_light
 (
  	in Vec3 view_direction,
@@ -23,12 +23,12 @@ LightResult compute_light
 	result.m_radiance = data.m_albedo;
 	return result;
 }
-#elif defined(RENDERING_AMBIENT_LIGHT)
+#elif defined(SQ_LIGHT_AMBIENT)
 #include <AmbientLightPBR>
-#elif defined(RENDERING_DIRECTION_LIGHT)
+#elif defined(SQ_LIGHT_DIRECTION)
 #include <DirectionLightPBR>
-#elif defined(RENDERING_POINT_LIGHT)
+#elif defined(SQ_LIGHT_POINT)
 #include <PointLightPBR>
-#elif defined(RENDERING_SPOT_LIGHT)
+#elif defined(SQ_LIGHT_SPOT)
 #include <SpotLightPBR>
 #endif

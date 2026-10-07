@@ -8,6 +8,7 @@
 //  on the G-Buffer occlusion target: rgb kept, alpha *= ao.
 //
 #include <Camera>
+#include <GBufferPosition>
 #include <Vertex>
 #include <DeferredFullscreen>
 
@@ -23,7 +24,7 @@ float ssao_debug;     //1: debug view, the occlusion in grey (drawn without blen
 Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 {
 	Vec2 uv = input.m_position.xy / ssao_full_size;
-	Vec4 g_pos = texture2DLod(g_position, uv, 0.0);
+	Vec4 g_pos = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
 	//background: unchanged
 	if (g_pos.w < 0.5) return Vec4(1.0, 1.0, 1.0, 1.0);
 	float ao;

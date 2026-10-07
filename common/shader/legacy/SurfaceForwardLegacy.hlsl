@@ -31,7 +31,7 @@ SurfaceOutput compute_surface_output(in SurfaceData data)
 		  data.m_albedo * (light_results.m_diffuse + light_results.m_specular * data.m_specular)
 		, data.m_alpha
 	);
-#if defined(RENDERING_AMBIENT_LIGHT)
+#if defined(SQ_LIGHT_AMBIENT)
 	// Emission, once: in the ambient pass (as the PBR surfaces do)
 	output.m_color.rgb += data.m_emmisive;
 #endif

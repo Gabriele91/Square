@@ -10,6 +10,7 @@
 //  The trace in, the trace out (color, confidence), averaged premultiplied by the confidence.
 //
 #include <Camera>
+#include <GBufferPosition>
 #include <Vertex>
 #include <DeferredFullscreen>
 
@@ -29,7 +30,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 {
 	Vec2 uv = input.m_position.xy / ssr_size;
 	Vec4 center = texture2DLod(g_source, uv, 0.0);
-	Vec4 g_pos = texture2DLod(g_position, uv, 0.0);
+	Vec4 g_pos = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
 	//background: nothing to denoise
 	if (g_pos.w < 0.5) return center;
 	Vec3  n0 = normalize(texture2DLod(g_normal, uv, 0.0).xyz);
@@ -47,7 +48,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		if (abs(i) > radius) continue;
 		Vec2 sample_uv = uv + texel * float(i);
 		if (sample_uv.x < 0.0 || sample_uv.x > 1.0 || sample_uv.y < 0.0 || sample_uv.y > 1.0) continue;
-		Vec4 p1 = texture2DLod(g_position, sample_uv, 0.0);
+		Vec4 p1 = gbuffer_world(texture2DLod(g_position, sample_uv, 0.0), sample_uv);
 		if (p1.w < 0.5) continue; //the background is not a surface
 		Vec3  n1 = normalize(texture2DLod(g_normal, sample_uv, 0.0).xyz);
 		Vec3  offset = p1.xyz - g_pos.xyz;

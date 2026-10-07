@@ -13,6 +13,7 @@
 //   GT3 : specular color | occlusion
 //
 #pragma once
+#include <GBufferPosition>
 
 // Target indices, kept in sync with the GBuffer build list in DrawerPassDeferred.
 #define GBUFFER_POSITION 0
@@ -38,7 +39,7 @@ struct SurfaceOutput
 SurfaceOutput compute_surface_output(in SurfaceData data)
 {
 	SurfaceOutput output;
-	output.m_position = Vec4(data.m_position.xyz, GBUFFER_MODEL_LEGACY);
+	output.m_position = gbuffer_encode_world(data.m_position.xyz, GBUFFER_MODEL_LEGACY);
 	output.m_normal   = Vec4(normalize(data.m_normal), data.m_shininess);
 	output.m_albedo   = Vec4(data.m_albedo, 0.0);
 	output.m_emissive = Vec4(data.m_specular, data.m_occlusion);

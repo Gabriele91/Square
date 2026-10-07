@@ -10,6 +10,7 @@
 //  pixel (G-Buffer positions), lit by the frame behind it.
 //
 #include <Camera>
+#include <GBufferPosition>
 #include <Vertex>
 #include <DeferredFullscreen>
 
@@ -57,11 +58,11 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	float scene = 1e6;
 	if (snow_extra.x > 0.5)
 	{
-		Vec4 g_pos = texture2DLod(g_position, uv, 0.0);
+		Vec4 g_pos = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
 		if (g_pos.w > 0.5) scene = length(g_pos.xyz - camera.m_position);
 	}
 	//the view ray of the pixel
-#ifdef GLSL_BACKEND
+#ifdef SQ_BACKEND_GLSL
 	Vec2 ndc = Vec2(uv.x * 2.0 - 1.0, uv.y * 2.0 - 1.0);
 #else
 	Vec2 ndc = Vec2(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0);

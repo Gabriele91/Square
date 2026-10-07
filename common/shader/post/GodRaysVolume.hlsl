@@ -9,6 +9,7 @@
 //  density of the air. The background (no geometry): nothing.
 //
 #include <Camera>
+#include <GBufferPosition>
 #include <Transform>
 #include <Vertex>
 #include <DirectionShadowLight>
@@ -39,7 +40,7 @@ float rays_lit(in Vec3 position)
 	if (coords.x <= 0.0 || coords.x >= 1.0 || coords.y <= 0.0 || coords.y >= 1.0) return 1.0;
 	coords = invY(coords);
 	float closest = shadow2DArray(direction_shadow_map, Vec3(coords.xy, cascade)).r;
-#ifdef GLSL_BACKEND
+#ifdef SQ_BACKEND_GLSL
 	float current = coords.z * 0.5 + 0.5;
 #else
 	float current = coords.z;
@@ -50,7 +51,7 @@ float rays_lit(in Vec3 position)
 Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 {
 	Vec2 uv = input.m_position.xy / rays_size;
-	Vec4 g_pos = texture2DLod(g_position, uv, 0.0);
+	Vec4 g_pos = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
 	if (g_pos.w < 0.5) return Vec4(0.0, 0.0, 0.0, 1.0);
 	//the ray in the air
 	Vec3  from = camera.m_position;

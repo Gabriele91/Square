@@ -11,6 +11,7 @@
 //  compute_light() and the per-type attenuation/shadow helpers are available.
 //
 #pragma once
+#include <GBufferPosition>
 
 //G-Buffer inputs (bound by DrawerPassDeferred)
 Sampler2D(g_position);
@@ -36,7 +37,7 @@ struct LegacyLightResult
 	Vec3 m_specular;
 };
 
-#if defined(RENDERING_AMBIENT_LIGHT)
+#if defined(SQ_LIGHT_AMBIENT)
 //forward: AmbientLightLegacy
 LegacyLightResult legacy_compute_light
 (
@@ -54,7 +55,7 @@ LegacyLightResult legacy_compute_light
 	//return
 	return result;
 }
-#elif defined(RENDERING_DIRECTION_LIGHT)
+#elif defined(SQ_LIGHT_DIRECTION)
 //forward: DirectionLightLegacy
 LegacyLightResult legacy_compute_light
 (
@@ -81,7 +82,7 @@ LegacyLightResult legacy_compute_light
 	//return
 	return result;
 }
-#elif defined(RENDERING_POINT_LIGHT)
+#elif defined(SQ_LIGHT_POINT)
 //forward: PointLightLegacy
 LegacyLightResult legacy_compute_light
 (
@@ -120,7 +121,7 @@ LegacyLightResult legacy_compute_light
 	//return
 	return result;
 }
-#elif defined(RENDERING_SPOT_LIGHT)
+#elif defined(SQ_LIGHT_SPOT)
 //forward: SpotLightLegacy
 LegacyLightResult legacy_compute_light
 (
@@ -185,7 +186,7 @@ Vec3 deferred_shade_legacy
 //per-pixel shading model
 Vec4 deferred_shade(in Vec2 uv)
 {
-	Vec4 gbuffer_position = texture2D(g_position, uv);
+	Vec4 gbuffer_position = gbuffer_world(texture2D(g_position, uv), uv);
 	//background: no geometry was written here
 	if (gbuffer_position.w < 0.5)
 	{

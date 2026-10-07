@@ -6,7 +6,7 @@
 //  NOTE: <SurfacePBR> is not included: the include preprocessor does not
 //  evaluate #if, its forward branch would swallow <LightPBR>/<GammaCorrection>.
 //
-#define RENDERING_DIRECTION_LIGHT
+#define SQ_LIGHT_DIRECTION
 #include <Camera>
 #include <Vertex>
 #include <GammaCorrection>

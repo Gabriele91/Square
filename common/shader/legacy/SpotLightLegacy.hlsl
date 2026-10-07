@@ -25,7 +25,7 @@ cbuffer Light
     SpotLightStruct light;
 }
 
-#ifdef RENDERING_SHADOW_ENABLE
+#ifdef SQ_SHADOW
 #include <SpotShadowLight>
 #else
 float spot_light_apply_shadow(in Vec4 fposition)

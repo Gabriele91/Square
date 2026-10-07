@@ -122,12 +122,13 @@ namespace Render
 		m_size = size;
 		//the occlusion target is on the G-Buffer that is replaced
 		if (m_occlusion_target) render().delete_render_target(m_occlusion_target);
-		//G-Buffer: position/normal/albedo/emissive + depth (36 bytes per pixel): the world position
-		//needs 32 bit floats (lights, shadows, SSAO and SSR far from the origin); normal and
+		//G-Buffer: depth/normal/albedo/emissive + depth (28 bytes per pixel): the depth along the
+		//view as a 32 bit float and the shading model (the world position comes back from it and
+		//the camera: GBufferPosition.hlsl, precise far from the camera); normal and
 		//roughness/shininess and the HDR emissive fit 16 bit floats; albedo and metallic are in [0, 1]
 		std::vector<GBuffer::BufferFormat> formats
 		{
-			GBuffer::BufferFormat(TF_RGBA32F, TT_RGBA, TTF_FLOAT, RT_COLOR),          // GB_POSITION
+			GBuffer::BufferFormat(TF_RG32F,   TT_RG,   TTF_FLOAT, RT_COLOR),          // GB_POSITION (depth, model)
 			GBuffer::BufferFormat(TF_RGBA16F, TT_RGBA, TTF_FLOAT, RT_COLOR),          // GB_NORMAL
 			GBuffer::BufferFormat(TF_RGBA8,   TT_RGBA, TTF_UNSIGNED_BYTE, RT_COLOR),  // GB_ALBEDO
 			GBuffer::BufferFormat(TF_RGBA16F, TT_RGBA, TTF_FLOAT, RT_COLOR),          // GB_EMISSIVE
@@ -220,7 +221,9 @@ namespace Render
 				if (!material) continue;
 				//effect
 				auto effect = material->effect();
-				auto technique = effect->technique("deferred", randerable->instanced());
+				//(the clip variant: by its material, or its level of detail is fading)
+				const bool fading = randerable->lod_fade() < 1.0f;
+				auto technique = effect->technique("deferred", randerable->instanced(), *material->parameters(), fading);
 				if (!technique) continue;
 				//draw for each pass
 				for (auto& pass : *technique)

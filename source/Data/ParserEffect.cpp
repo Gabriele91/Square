@@ -567,6 +567,10 @@ namespace Parser
                     //append
                     t_field.m_pass.push_back(pass);
                 }
+                else if (cstr_cmp_skip(ptr, "variants"))
+                {
+                    if (!parse_variants(ptr, t_field)) return false;
+                }
                 else
                 {
                     push_error("Keyword not valid");
@@ -588,6 +592,62 @@ namespace Parser
         //end
         return true;
     }
+	//////////////////////////////////////////////////////
+	namespace AuxVariants
+	{
+		//a variant by its name, skipped (EV_NONE: not a variant)
+		Render::EffectVariant skip_variant(const char*& ptr)
+		{
+			if (cstr_cmp_skip(ptr, "instanced")) return Render::EV_INSTANCED;
+			if (cstr_cmp_skip(ptr, "clip"))      return Render::EV_CLIP;
+			return Render::EV_NONE;
+		}
+	}
+
+	bool Effect::parse_variants(const char*& ptr, TechniqueField& technique)
+	{
+		//the names on its line: instanced, clip (its parameters)
+		skip_line_space(m_context->m_line, ptr);
+		Render::EffectVariant variant = AuxVariants::skip_variant(ptr);
+		if (variant == Render::EV_NONE)
+		{
+			push_error("variants: instanced or clip expected");
+			return false;
+		}
+		while (variant != Render::EV_NONE)
+		{
+			technique.m_variants |= variant;
+			if (variant == Render::EV_CLIP && !parse_clip_parameters(ptr, technique)) return false;
+			skip_line_space(m_context->m_line, ptr);
+			variant = AuxVariants::skip_variant(ptr);
+		}
+		return true;
+	}
+
+	bool Effect::parse_clip_parameters(const char*& ptr, TechniqueField& technique)
+	{
+		//"(name, name...)" (none: only the fade of a level of detail turns the clip on)
+		skip_line_space(m_context->m_line, ptr);
+		if (*ptr != '(') return true;
+		++ptr;
+		skip_line_space(m_context->m_line, ptr);
+		while (*ptr != ')')
+		{
+			std::string name;
+			if (!parse_name(ptr, name))
+			{
+				push_error("clip: a parameter name or ) expected");
+				return false;
+			}
+			technique.m_clip_parameters.push_back(name);
+			skip_line_space(m_context->m_line, ptr);
+			if (*ptr == ',') ++ptr;
+			skip_line_space(m_context->m_line, ptr);
+		}
+		//skip )
+		++ptr;
+		return true;
+	}
 	//////////////////////////////////////////////////////
 	bool Effect::parse_import(const char*& ptr, SubEffectField& subeffect)
 	{

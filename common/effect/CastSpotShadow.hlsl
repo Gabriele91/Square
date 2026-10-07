@@ -18,8 +18,8 @@ float mask_shadow;
 Sampler2D(albedo_map);
 
 //draw
-#ifdef INSTANCED
-// instanced (SpotShadow_instanced: Scene::InstancedMesh): the matrix of the instance first
+#ifdef SQ_INSTANCED
+// instanced (the instanced variant of SpotShadow: Scene::InstancedMesh): the matrix of the instance first
 #include <Instances>
 VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input, uint instance_id : SV_InstanceID)
 {
@@ -42,7 +42,9 @@ void fragment(in VertexShaderOutput input)
 {
 	//albedo/albedo
 	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
+#ifdef SQ_CLIP
+	//(the clip variant: its mask of the shadow, its level of detail fading)
 	if (albedo_color.a <= mask_shadow) discard;
-	//its level of detail fading in or out
 	lod_fade_clip(input.m_position.xy);
+#endif
 }

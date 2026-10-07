@@ -8,6 +8,7 @@
 //  sharp thing in front does not smear over the blur behind it).
 //
 #include <Camera>
+#include <GBufferPosition>
 #include <Vertex>
 #include <DeferredFullscreen>
 
@@ -32,11 +33,11 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 {
 	Vec2  uv = input.m_position.xy / dof_size;
 	Vec2  texel = 1.0 / dof_size;
-	float coc = dof_coc(texture2DLod(g_position, uv, 0.0));
+	float coc = dof_coc(gbuffer_world(texture2DLod(g_position, uv, 0.0), uv));
 	Vec3  center = texture2DLod(g_source, uv, 0.0).rgb;
 	float radius = coc * dof_params.x;
 	//the motion: along x, on what is near (in focus or nearer), growing to the right
-	Vec4  g_center = texture2DLod(g_position, uv, 0.0);
+	Vec4  g_center = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
 	float near_focus = g_center.w > 0.5 && length(g_center.xyz - camera.m_position) < dof_focus.y + 4.0 ? 1.0 : 0.0;
 	float motion = dof_motion.x * near_focus * smoothstep(dof_motion.y, dof_motion.z, uv.x);
 	if (motion >= 1.0)
@@ -47,7 +48,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		{
 			float s = (float(m) / 15.0 - 0.5) * motion;
 			Vec2  suv = uv + Vec2(s * texel.x, 0.0);
-			Vec4  sg = texture2DLod(g_position, suv, 0.0);
+			Vec4  sg = gbuffer_world(texture2DLod(g_position, suv, 0.0), suv);
 			//only the near things smeared (not the far background into them)
 			float w = sg.w > 0.5 && length(sg.xyz - camera.m_position) < dof_focus.y + 4.0 ? 1.0 : 0.15;
 			msum += texture2DLod(g_source, suv, 0.0).rgb * w;
@@ -67,7 +68,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		float a = float(i) * 2.39996323;
 		Vec2  offset = Vec2(cos(a), sin(a)) * r * radius;
 		Vec2  suv = uv + offset * texel;
-		float scoc = dof_coc(texture2DLod(g_position, suv, 0.0)) * dof_params.x;
+		float scoc = dof_coc(gbuffer_world(texture2DLod(g_position, suv, 0.0), suv)) * dof_params.x;
 		//a sample counts as far as its own blur reaches the pixel (a sharp one in front: little)
 		float w = saturate(scoc - r * radius + 1.0);
 		sum += texture2DLod(g_source, suv, 0.0).rgb * w;

@@ -9,6 +9,7 @@
 //  (Legacy). Debug 1: only the reflection; 2: the projection check of the trace.
 //
 #include <Camera>
+#include <GBufferPosition>
 #include <Vertex>
 #include <DeferredFullscreen>
 
@@ -73,7 +74,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	Vec2 uv = input.m_position.xy / ssr_size;
 	Vec3 color = texture2DLod(g_source, uv, 0.0).rgb;
 	if (ssr_debug > 1.5) return Vec4(texture2DLod(g_reflection, uv, 0.0).rgb, 1.0);
-	Vec4 g_pos = texture2DLod(g_position, uv, 0.0);
+	Vec4 g_pos = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
 	//background: the frame
 	if (g_pos.w < 0.5) return Vec4(ssr_debug > 0.5 ? Vec3(0.0, 0.0, 0.0) : color, 1.0);
 	Vec4  g_nor = texture2DLod(g_normal, uv, 0.0);

@@ -61,7 +61,7 @@ float dither_threshold(Vec2 pixel)
 	return (bayer[p.y * 4 + p.x] + 0.5) / 16.0;
 }
 
-#ifdef INSTANCED
+#ifdef SQ_INSTANCED
 // instanced (the "_instanced" techniques: Scene::InstancedMesh): the matrix of the instance first
 #include <Instances>
 VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input, uint instance_id : SV_InstanceID)
@@ -110,23 +110,29 @@ SurfaceData material_standard(VertexShaderOutput input, out float albedo_alpha)
 	// RGB (metallic, norma maps)
 	// SRGB (emmisive, albedo)
 	SurfaceData data = DefaultSurfaceData();
-	// Its level of detail fading in or out
+#ifdef SQ_CLIP
+	// Its level of detail fading in or out (the clip variant: else no discard, early-z)
 	lod_fade_clip(input.m_position.xy);
+#endif
 	// World position
 	data.m_position = input.m_world_position;
 	// Diffuse/albedo
 	Vec4 albedo_color = to_rgb_space(texture2D(albedo_map, input.m_uv));
+#ifdef SQ_CLIP
 	if (albedo_color.a <= mask) discard;
+#endif
 	albedo_alpha = albedo_color.a;
 	data.m_albedo = albedo_color.rgb * color.rgb;
 	// Alpha
 	data.m_alpha = albedo_color.a * color.a;
 	// Dithered opacity: drop the pixels of the pattern above the alpha
+#ifdef SQ_CLIP
 	if (dither > 0.5)
 	{
 		if (data.m_alpha <= dither_threshold(input.m_position.xy)) discard;
 		data.m_alpha = 1.0;
 	}
+#endif
 	// Light of the sun through it (thin: leaves)
 	data.m_translucency = translucency;
 	// Emmisive

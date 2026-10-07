@@ -107,6 +107,11 @@ namespace Parser
 		{
 			std::string m_name;
 			std::vector< PassField > m_pass;
+			//"variants instanced clip": the Render::EffectVariant declared (each combination is compiled)
+			unsigned char m_variants{ Render::EV_NONE };
+			//"clip(mask, dither)": the parameters that turn the clip variant on (none: only the fade
+			//of a level of detail)
+			std::vector< std::string > m_clip_parameters;
 		};
 
 		struct ImportField
@@ -164,6 +169,8 @@ namespace Parser
         bool parse_requirement_block(const char*& ptr, RequirementField& r_field);
 		//////////////////////////////////////////////////////
         bool parse_techniques_block(const char*& ptr, SubEffectField& subeffect);
+        bool parse_variants(const char*& ptr, TechniqueField& technique);
+        bool parse_clip_parameters(const char*& ptr, TechniqueField& technique);
 		//////////////////////////////////////////////////////
 		bool parse_import(const char*& ptr, SubEffectField& subeffect);
 		bool parse_from(const char*& ptr, SubEffectField& subeffect);
