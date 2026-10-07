@@ -1,17 +1,18 @@
 #pragma once
 #define PCF_SHADOW 5
 #define DEPTH 0
-#define BIAS 1
-#define SLOPE_BIAS 2
 #define NORMAL_OFFSET_MIN 0.5   // texels of the cascade the point moves along its normal, light from above
 #define NORMAL_OFFSET_MAX 2.0   // ... at grazing light
-#define SLOPE_BIAS_MAX_TAN 10.0 // slope term of the depth bias at most (tan of the light angle)
+#define BIAS_TEXELS 1.0         // depth bias: texels of the cascade (the same in each cascade)
+#define SLOPE_BIAS_TEXELS 1.5   // ... more by the slope (tan of the light angle)
+#define SLOPE_BIAS_MAX_TAN 3.0  // slope term of the depth bias at most (tan of the light angle)
 #define PCSS_LIGHT_SIZE 0.02    // PCSS: size of the light (tan of its angle), more is softer
 #define PCSS_BLOCKER_TEXELS 8.0 // PCSS: texels of the search of the casters
-#define PCSS_MAX_TEXELS 16.0    // PCSS: penumbra at most (texels)
+#define PCSS_MAX_TEXELS 8.0    // PCSS: penumbra at most (texels)
 #define PCSS_SAMPLES 16         // PCSS: samples of the search and of the filter
 #define SHADOW_FADE_START 0.85  // the shadow fades from this fraction of the last cascade to its end
 #define SHADOW_FADE_BORDER 0.03 // ... and toward the border of the map of a cascade (uv)
+#define SHADOW_FADE_ON 1        // 1: the fades above on; 0: off (test: the shadow as it is)
 #include <ShadowCamera>
 Sampler2DArray(direction_shadow_map)
 // Material option: 1 = lit by this light without its shadow (e.g. glows, light beams).
@@ -33,22 +34,32 @@ uint find_csm_layer(in float depth)
 	return cascades - 1;
 }
 
-//light_dir: to the light
-float bias_depth_driven(in Vec3 light_dir, in Vec3 normal, in uint id)
-{
-	float bias = direction_shadow_camera.m_data[id][BIAS];
-	float slope_bias = direction_shadow_camera.m_data[id][SLOPE_BIAS];
-	// slope scale biasing: tan(acos(NoL)), clamped
-	float NoL = saturate(dot(normalize(normal), normalize(light_dir)));
-	float slope = min(sqrt(1.0 - NoL * NoL) / max(NoL, 0.0001), SLOPE_BIAS_MAX_TAN);
-	return bias + slope_bias * slope;
-}
-
 //world size of a texel of a cascade (its orthographic projection: 2 / width)
 float csm_texel_world_size(uint id)
 {
 	float width = 2.0 / max(abs(direction_shadow_camera.m_projection[id][0][0]), 0.000001);
 	return width / textureSize2DArray(direction_shadow_map, 0).x;
+}
+
+// normalized depth of the shadow map per world unit (orthographic: |m22|, z in -1..1 on GL)
+float csm_depth_per_world(uint id)
+{
+	float scale = abs(direction_shadow_camera.m_projection[id][2][2]);
+#ifdef SQ_BACKEND_GLSL
+	scale *= 0.5;
+#endif
+	return max(scale, 0.000001);
+}
+
+//light_dir: to the light. The depth bias in texels of the cascade (world: its texel size), so
+//the same in each cascade: no shadow lighter in the nearer ones
+float bias_depth_driven(in Vec3 light_dir, in Vec3 normal, in uint id)
+{
+	// slope scale biasing: tan(acos(NoL)), clamped
+	float NoL = saturate(dot(normalize(normal), normalize(light_dir)));
+	float slope = min(sqrt(1.0 - NoL * NoL) / max(NoL, 0.0001), SLOPE_BIAS_MAX_TAN);
+	float texels = BIAS_TEXELS + SLOPE_BIAS_TEXELS * slope;
+	return texels * csm_texel_world_size(id) * csm_depth_per_world(id);
 }
 
 // the filters (direction_shadow_camera.m_options.x)
@@ -118,16 +129,6 @@ static const Vec2 pcss_poisson[PCSS_SAMPLES] =
 	Vec2(-0.24188840,  0.99706507), Vec2(-0.81409955,  0.91437590),
 	Vec2( 0.19984126,  0.78641367), Vec2( 0.14383161, -0.14100790)
 };
-
-// normalized depth of the shadow map per world unit (orthographic: |m22|, z in -1..1 on GL)
-float csm_depth_per_world(uint id)
-{
-	float scale = abs(direction_shadow_camera.m_projection[id][2][2]);
-#ifdef SQ_BACKEND_GLSL
-	scale *= 0.5;
-#endif
-	return max(scale, 0.000001);
-}
 
 Vec2 pcss_rotate(in Vec2 v, in float angle)
 {
@@ -240,7 +241,11 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec
 	default:                 shadow = direction_light_shadow_pcf(proj_coords, cascade_id, bias); break;
 	}
 	// return
+#if SHADOW_FADE_ON
 	return lerp(shadow, 1.0, fade);
+#else
+	return shadow;
+#endif
 }
 
 //light_dir: to the light
