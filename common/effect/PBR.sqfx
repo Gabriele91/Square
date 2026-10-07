@@ -71,6 +71,53 @@ sub_effect
 			}
 		}
 	}
+	//the same, instanced (Scene::InstancedMesh: the matrix of each instance, see Instances.hlsl)
+	technique "forward_instanced"
+    {
+        pass 
+        {
+            zbuffer less
+            blend off
+            cullface param(cull)
+            lights only_ambient
+            shader source 
+            {
+				#define FORWARD_RENDERING
+				#define INSTANCED
+				#include "PBR.hlsl"
+            }
+        }
+        pass 
+        {
+            zbuffer equal
+            blend one one  
+            cullface param(cull)
+            lights spot_point_direction
+			shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+				#define INSTANCED
+				#include "PBR.hlsl"
+            }
+		}
+    }
+	technique "deferred_instanced"
+	{
+		pass
+		{
+			zbuffer less
+			blend off
+			cullface param(cull)
+			lights off
+			shader source
+			{
+				#define DEFERRED_RENDERING
+				#define INSTANCED
+				#include "PBR.hlsl"
+			}
+		}
+	}
 	//import shadow caster
 	import <CastShadow>
 }

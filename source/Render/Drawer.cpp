@@ -206,6 +206,14 @@ namespace Render
         // Test camera pointer, a disabled camera is not drawn
         if (!camera) return;
         if (!camera->enable()) return;
+        //the levels of detail of this camera (its shadows and its render draw them)
+        for (const Weak<LevelOfDetail>& weak_lod : collection.m_levels_of_detail)
+        {
+            if (auto lod = weak_lod.lock())
+            {
+                lod->select(*camera);
+            }
+        }
         //build queues
         CollectionQuery::lights(collection, m_camera_queue, *camera);
         CollectionQuery::renderables(collection, m_camera_queue, *camera);

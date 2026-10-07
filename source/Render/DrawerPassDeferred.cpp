@@ -33,6 +33,17 @@ namespace Render
 		Mat4 m_model;
 	};
 
+	//the velocity pass: the model of a renderable and the camera in the last frame
+	struct UniformVelocity
+	{
+		Mat4 m_previous_model;
+		Mat4 m_previous_view;
+		Mat4 m_previous_projection;
+	};
+
+	//a camera that moves farther than this in a frame is a cut: no motion from the last frame
+	static constexpr float s_velocity_camera_cut = 20.0f;
+
 	
 	//////////////////////////////////////////////////////////////////////
 	// Draw volume meshes 
@@ -64,6 +75,7 @@ namespace Render
 		m_cb_point_light     = Render::stream_constant_buffer<Render::UniformPointLight>(&render());
 		m_cb_spot_light      = Render::stream_constant_buffer<Render::UniformSpotLight>(&render());
 		m_cb_light_volume    = Render::stream_constant_buffer<UniformLightVolume>(&render());
+		m_cb_velocity        = Render::stream_constant_buffer<UniformVelocity>(&render());
 		m_cb_direction_shadow_light = Render::stream_constant_buffer<Render::UniformDirectionShadowLight>(&render());
 		m_cb_point_shadow_light     = Render::stream_constant_buffer<Render::UniformPointShadowLight>(&render());
 		m_cb_spot_shadow_light      = Render::stream_constant_buffer<Render::UniformSpotShadowLight>(&render());
@@ -76,6 +88,7 @@ namespace Render
 		m_shader_point_shadow     = context.resource<Resource::Shader>("DeferredPointShadowLight");
 		m_shader_spot_shadow      = context.resource<Resource::Shader>("DeferredSpotShadowLight");
 		m_shader_present   = context.resource<Resource::Shader>("DeferredPresent");
+		m_shader_velocity  = context.resource<Resource::Shader>("DeferredVelocity");
 		//volume meshes
 		m_quad   = BasicMesh::build_quad(context);
 		m_sphere = LightVolume::build_sphere(context);
@@ -87,6 +100,8 @@ namespace Render
 		if (auto render_driver = System::get<RenderSystem>(context())->render())
 		{
 			if (m_occlusion_target) render_driver->delete_render_target(m_occlusion_target);
+			if (m_velocity_target)  render_driver->delete_render_target(m_velocity_target);
+			if (m_velocity_texture) render_driver->delete_texture(m_velocity_texture);
 			if (m_light_target)  render_driver->delete_render_target(m_light_target);
 			if (m_light_texture) render_driver->delete_texture(m_light_texture);
 		}
@@ -136,6 +151,18 @@ namespace Render
 		});
 		//the G-Buffer occlusion alone (GT3: emissive | occlusion), for the G-Buffer post effects
 		m_occlusion_target = render().create_render_target({ Render::TargetField{ m_gbuffer->texture(GB_EMISSIVE), RT_COLOR } });
+		//the velocity (uv on the screen) sharing the G-Buffer depth
+		if (m_velocity_target)  render().delete_render_target(m_velocity_target);
+		if (m_velocity_texture) render().delete_texture(m_velocity_texture);
+		m_velocity_texture = render().create_texture(
+			{ TF_RG16F, (unsigned int)size.x, (unsigned int)size.y, nullptr, TT_RG, TTF_FLOAT, false },
+			{ TMIN_NEAREST, TMAG_NEAREST, TEDGE_CLAMP, TEDGE_CLAMP, TEDGE_CLAMP }
+		);
+		m_velocity_target = render().create_render_target(
+		{
+			  Render::TargetField{ m_velocity_texture, RT_COLOR }
+			, Render::TargetField{ m_gbuffer->texture(GB_DEPTH), RT_DEPTH }
+		});
 		return m_light_target != nullptr && m_occlusion_target != nullptr;
 	}
 
@@ -192,7 +219,7 @@ namespace Render
 				if (!material) continue;
 				//effect
 				auto effect = material->effect();
-				auto technique = effect->technique("deferred");
+				auto technique = effect->technique("deferred", randerable->instanced());
 				if (!technique) continue;
 				//draw for each pass
 				for (auto& pass : *technique)
@@ -204,6 +231,63 @@ namespace Render
 		}
 		//unbind G-Buffer
 		render().disable_render_target(m_gbuffer->target());
+	}
+
+	bool DrawerPassDeferred::velocity_pass(const Camera& camera, const PoolQueues& queues)
+	{
+		if (!m_velocity_target || !m_shader_velocity || !m_shader_velocity->base_shader()) return false;
+		//the camera of the last frame (the first one, a cut: this one, no motion of the camera)
+		const Mat4& view = camera.view();
+		const Mat4& projection = camera.projection();
+		const Vec3  eye = Vec3(inverse(view)[3]);
+		if (!m_previous_camera || length(eye - m_previous_eye) > s_velocity_camera_cut)
+		{
+			m_previous_view = view;
+			m_previous_projection = projection;
+			m_previous_models.clear();
+		}
+		//the target: 0 everywhere, the G-Buffer depth read only (the same projection: equal)
+		render().enable_render_target(m_velocity_target);
+		render().set_viewport_state({ camera.viewport().viewport() });
+		render().set_clear_color_state({ Vec4(0.0f) });
+		render().clear(CLEAR_COLOR);
+		render().set_depth_buffer_state({ DT_LESS_EQUAL, DM_ENABLE_ONLY_READ });
+		render().set_blend_state({});
+		render().set_cullface_state({ CF_BACK });
+		m_shader_velocity->bind();
+		render().bind_uniform_CB(m_cb_camera.get(), m_shader_velocity->base_shader(), "Camera");
+		render().bind_uniform_CB(m_cb_transform.get(), m_shader_velocity->base_shader(), "Transform");
+		render().bind_uniform_CB(m_cb_velocity.get(), m_shader_velocity->base_shader(), "Velocity");
+		Render::UniformBufferTransform utransform;
+		UniformVelocity uvelocity;
+		uvelocity.m_previous_view = m_previous_view;
+		uvelocity.m_previous_projection = m_previous_projection;
+		bool drawn = false;
+		m_current_models.clear();
+		for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE }))
+		{
+			if (!randerable || !randerable->motion_blur() || !randerable->can_draw()) continue;
+			auto transform = randerable->transform().lock();
+			if (!transform) continue;
+			transform->set(&utransform);
+			render().update_steam_CB(m_cb_transform.get(), (const unsigned char*)&utransform, sizeof(utransform));
+			//its model in the last frame (new: this one)
+			const Mat4& model = transform->global_model_matrix();
+			auto previous = m_previous_models.find(randerable.get());
+			uvelocity.m_previous_model = previous != m_previous_models.end() ? previous->second : model;
+			Render::update_constant_buffer(&render(), m_cb_velocity.get(), &uvelocity);
+			drawn |= randerable->draw_geometry(render());
+			m_current_models[randerable.get()] = model;
+		}
+		m_shader_velocity->unbind();
+		render().disable_render_target(m_velocity_target);
+		//this frame: the last one of the next
+		std::swap(m_previous_models, m_current_models);
+		m_previous_view = view;
+		m_previous_projection = projection;
+		m_previous_eye = eye;
+		m_previous_camera = true;
+		return drawn;
 	}
 
 	void DrawerPassDeferred::light_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues)
@@ -458,6 +542,13 @@ namespace Render
 			SQUARE_RENDER_SCOPE(render(), "G-Buffer");
 			geometry_pass(clear_color, num_of_pass, camera, queues);
 		}
+		//1a) the velocity of the renderables with their own motion blur (an effect needs it)
+		m_velocity_drawn = false;
+		if (PostEffectChain::any_velocity(post_effects))
+		{
+			SQUARE_RENDER_SCOPE(render(), "Velocity");
+			m_velocity_drawn = velocity_pass(camera, queues);
+		}
 		//1b) G-Buffer post effects (SSAO...)
 		if (PostEffectChain::any(post_effects, PES_GBUFFER))
 		{
@@ -538,6 +629,7 @@ namespace Render
 		frame.m_quad          = m_quad.get();
 		frame.m_gbuffer       = m_gbuffer.get();
 		frame.m_occlusion     = m_occlusion_target;
+		frame.m_velocity      = m_velocity_drawn ? m_velocity_texture : nullptr;
 		frame.m_linear        = true; //the light buffer is linear HDR
 		return frame;
 	}

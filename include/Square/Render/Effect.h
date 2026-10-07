@@ -511,6 +511,8 @@ namespace Render
 		//get technique
 		EffectTechnique* technique(const std::string& technique);
 		const EffectTechnique* technique(const std::string& technique) const;
+		//the technique of a renderable: its "<technique>_instanced" one when it is drawn instanced
+		EffectTechnique* technique(const std::string& technique, bool instanced);
 
 		//all techniques
 		const EffectTechniquesMap& techniques() const { return m_techniques_map; }

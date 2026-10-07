@@ -1,5 +1,5 @@
 //
-//  PBRSnowCover: PBR with snow laid on what faces up (snow_cover_map, see PBR.hlsl)
+//  PBRSnowCover: PBR with snow laid on what faces up (snow_cover_map, see SnowCoverPBR.hlsl)
 //
 parameters
 {
@@ -25,7 +25,7 @@ parameters
     ignore_shadows float(0.0)
     //dithered opacity: 1 = alpha (albedo_map.a * color.a) drops pixels with a pattern
     dither       float(0.0)
-    //the snow over it (see PBR.hlsl): its texture (tiled from above), where it starts (the
+    //the snow over it (see SnowCoverPBR.hlsl): its texture (tiled from above), where it starts (the
     //normal y), the softness of its edge, 1 / the size of its texture (world), its roughness
     snow_cover_map texture("white")
     snow_cover     Vec4(0.55, 0.15, 0.08, 0.75)
@@ -45,8 +45,7 @@ sub_effect
             shader source 
             {
 				#define FORWARD_RENDERING
-				#define SURFACE_SNOW_COVER
-				#include "PBR.hlsl"
+				#include "PBRSnowCover.hlsl"
             }
         }
         pass 
@@ -59,8 +58,7 @@ sub_effect
             shader source
             {
                 #define FORWARD_RENDERING
-				#define SURFACE_SNOW_COVER
-				#include "PBR.hlsl"
+				#include "PBRSnowCover.hlsl"
             }
 		}
     }
@@ -76,8 +74,54 @@ sub_effect
 			shader source
 			{
 				#define DEFERRED_RENDERING
-				#define SURFACE_SNOW_COVER
-				#include "PBR.hlsl"
+				#include "PBRSnowCover.hlsl"
+			}
+		}
+	}
+	//the same, instanced (Scene::InstancedMesh: the matrix of each instance, see Instances.hlsl)
+	technique "forward_instanced"
+    {
+        pass 
+        {
+            zbuffer less
+            blend off
+            cullface param(cull)
+            lights only_ambient
+            shader source 
+            {
+				#define FORWARD_RENDERING
+				#define INSTANCED
+				#include "PBRSnowCover.hlsl"
+            }
+        }
+        pass 
+        {
+            zbuffer equal
+            blend one one  
+            cullface param(cull)
+            lights spot_point_direction
+			shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+				#define INSTANCED
+				#include "PBRSnowCover.hlsl"
+            }
+		}
+    }
+	technique "deferred_instanced"
+	{
+		pass
+		{
+			zbuffer less
+			blend off
+			cullface param(cull)
+			lights off
+			shader source
+			{
+				#define DEFERRED_RENDERING
+				#define INSTANCED
+				#include "PBRSnowCover.hlsl"
 			}
 		}
 	}

@@ -13,6 +13,7 @@
 #include "Square/Render/Camera.h"
 #include "Square/Render/Light.h"
 #include "Square/Render/Renderable.h"
+#include "Square/Render/LevelOfDetail.h"
 
 namespace Square
 {
@@ -38,9 +39,12 @@ namespace Render
         using Cameras = std::vector < Weak<Camera> >;
         using Lights = std::vector < Weak<Light> >;
 		using Renderables = std::vector < Weak<Renderable> >;
+		using LevelsOfDetail = std::vector < Weak<LevelOfDetail> >;
         Cameras m_cameras;
 		Lights m_lights;
 		Renderables m_renderables;
+		//the groups of levels of detail: their level selected for each camera (before its queues)
+		LevelsOfDetail m_levels_of_detail;
         //clear
         void clear();        
     };

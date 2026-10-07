@@ -156,7 +156,7 @@ namespace Scene
         //local
         struct Tranform
         {
-            bool m_dirty   { false                  };
+            bool m_dirty   { true                   }; //(a new actor: its matrices not made yet)
             Vec3 m_position{ 0.0f, 0.0f, 0.0f       };
             Quat m_rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
             Vec3 m_scale   { 1.0f, 1.0f, 1.0f       };

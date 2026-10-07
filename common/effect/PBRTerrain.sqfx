@@ -1,5 +1,6 @@
 //
-//  PBRSnow: PBR with the trails of the game pressed in it (trail_map, see PBR.hlsl)
+//  PBRTerrain: five grounds blended by a map of their weights (albedo_map), each tiled in world
+//  x/z (see TerrainPBR.hlsl)
 //
 parameters
 {
@@ -25,13 +26,19 @@ parameters
     ignore_shadows float(0.0)
     //dithered opacity: 1 = alpha (albedo_map.a * color.a) drops pixels with a pattern
     dither       float(0.0)
-    //the trails pressed in it (drawn by the game, see PBR.hlsl; only where the albedo alpha is
-    //1: the snow, not the ice or the rock of the same texture): the map, where it is
-    //(corner x, z; 1 / size x, z), its look (darkening, slope of the sides, roughness kept,
-    //depth in world units: the parallax)
-    trail_map    texture("black")
-    trail_area   Vec4(0.0, 0.0, 0.0, 0.0)
-    trail_style  Vec4(0.2, 4.0, 0.6, 0.55)
+    //the grounds (see TerrainPBR.hlsl): their albedo (roughness in alpha), their normal; 1 / the size
+    //of their tile (world), the sharpness of their edges, the scale of the far variation
+    layer0_map    texture("white")
+    layer0_normal texture("normal_up")
+    layer1_map    texture("white")
+    layer1_normal texture("normal_up")
+    layer2_map    texture("white")
+    layer2_normal texture("normal_up")
+    layer3_map    texture("white")
+    layer3_normal texture("normal_up")
+    layer4_map    texture("white")
+    layer4_normal texture("normal_up")
+    terrain_tiling Vec4(0.1, 1.5, 0.07, 0.0)
 }
 
 sub_effect
@@ -48,8 +55,7 @@ sub_effect
             shader source 
             {
 				#define FORWARD_RENDERING
-				#define SURFACE_TRAILS
-				#include "PBR.hlsl"
+				#include "PBRTerrain.hlsl"
             }
         }
         pass 
@@ -62,8 +68,7 @@ sub_effect
             shader source
             {
                 #define FORWARD_RENDERING
-				#define SURFACE_TRAILS
-				#include "PBR.hlsl"
+				#include "PBRTerrain.hlsl"
             }
 		}
     }
@@ -79,8 +84,7 @@ sub_effect
 			shader source
 			{
 				#define DEFERRED_RENDERING
-				#define SURFACE_TRAILS
-				#include "PBR.hlsl"
+				#include "PBRTerrain.hlsl"
 			}
 		}
 	}

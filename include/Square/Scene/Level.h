@@ -73,6 +73,11 @@ namespace Scene
 		void active(bool active);
 		bool active() const;
 
+		//paused: its components not updated, still in the systems of the world (drawn as they
+		//are: a pause menu over it)
+		void paused(bool paused) { m_paused = paused; }
+		bool paused() const { return m_paused; }
+
 		//message
 		void send_message(const VariantRef& value, bool brodcast = false);
 		void send_message(const Message& msg, bool brodcast = false);
@@ -96,6 +101,7 @@ namespace Scene
 		//name
 		std::string m_name;
 		bool        m_active{ true };
+		bool        m_paused{ false };
 
 		//actor list
 		ActorList m_actors;

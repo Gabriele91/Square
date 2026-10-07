@@ -53,6 +53,52 @@ sub_effect
             shader "CastDirectionShadow.hlsl"
         }
     }
+    //the same, instanced (Scene::InstancedMesh: the matrix of each instance, see Instances.hlsl)
+    technique "SpotShadow_instanced"
+    {
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface front
+            lights off
+            shader source
+            {
+                #define INSTANCED
+                #include "CastSpotShadow.hlsl"
+            }
+        }
+    }
+    technique "PointShadow_instanced"
+    {
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface front
+            lights off
+            shader source
+            {
+                #define INSTANCED
+                #include "CastPointShadow.hlsl"
+            }
+        }
+    }
+    technique "DirectionShadow_instanced"
+    {
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface param(shadow_cull)
+            lights off
+            shader source
+            {
+                #define INSTANCED
+                #include "CastDirectionShadow.hlsl"
+            }
+        }
+    }
 }
 
 // ── Backends with INSTANCED draw + vertex layer output (Metal, GL with the ext) ──

@@ -165,7 +165,15 @@ size_t MeshManager::add_mesh(const Square::Data::GLTF::Mesh& mesh, const Square:
     const unsigned char* points = reinterpret_cast<const unsigned char*>(context_mesh.data());
     const size_t vertex_size = sizeof(Render::Layout::Position3DNormalTangetBinomialUV);
     const size_t position_offset = offsetof(Render::Layout::Position3DNormalTangetBinomialUV, m_position);
-    m_mesh_obbs.push_back(Geometry::obounding_box_from_points(points, position_offset, vertex_size, context_mesh.size()));
+    Geometry::OBoundingBox obb = Geometry::obounding_box_from_points(points, position_offset, vertex_size, context_mesh.size());
+    // At worst its axis aligned box (a mesh the fit fails on: every mesh has a box)
+    if (!obb.valid())
+    {
+        const Geometry::AABoundingBox aabb = Geometry::aabounding_from_points(points, position_offset, vertex_size, context_mesh.size());
+        obb = Geometry::OBoundingBox(Mat3(1.0f), aabb.get_center(), aabb.get_extension());
+        m_context.logger()->info("mesh " + mesh.name + ": its OBB from its AABB");
+    }
+    m_mesh_obbs.push_back(obb);
     // Serialize
     std::vector<unsigned char> buffer;
     size_t mesh_id = m_mesh_names.size();

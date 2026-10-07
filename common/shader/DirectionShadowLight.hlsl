@@ -10,6 +10,8 @@
 #define PCSS_BLOCKER_TEXELS 8.0 // PCSS: texels of the search of the casters
 #define PCSS_MAX_TEXELS 16.0    // PCSS: penumbra at most (texels)
 #define PCSS_SAMPLES 16         // PCSS: samples of the search and of the filter
+#define SHADOW_FADE_START 0.85  // the shadow fades from this fraction of the last cascade to its end
+#define SHADOW_FADE_BORDER 0.03 // ... and toward the border of the map of a cascade (uv)
 #include <ShadowCamera>
 Sampler2DArray(direction_shadow_map)
 // Material option: 1 = lit by this light without its shadow (e.g. glows, light beams).
@@ -193,7 +195,13 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec
 {
 	// Get cascade id
 	Vec4 view_fposition = mul(fposition, camera.m_view);
-	uint cascade_id = find_csm_layer(abs(view_fposition.z));
+	float view_depth = abs(view_fposition.z);
+	uint cascade_id = find_csm_layer(view_depth);
+	// Beyond the last cascade no shadow (not its border stretched), faded toward it
+	uint  cascades = uint(clamp(direction_shadow_camera.m_options.y, 1, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
+	float shadow_distance = abs(direction_shadow_camera.m_data[cascades - 1][DEPTH]);
+	if (view_depth >= shadow_distance) return 1.0;
+	float fade = saturate((view_depth - shadow_distance * SHADOW_FADE_START) / (shadow_distance * (1.0 - SHADOW_FADE_START)));
 	// Normal offset: along the normal, by texels of the cascade (more at grazing light)
 	Vec3  n = normalize(normal);
 	float NoL = saturate(dot(n, normalize(light_dir)));
@@ -205,6 +213,14 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec
 	Vec3 proj_coords = fposition_light_space.xyz / fposition_light_space.w;
 	//(-1,1)->(0,1)
 	proj_coords.xy = proj_coords.xy * 0.5 + 0.5;
+	// Out of the map of the last cascade no shadow, faded toward its border (the inner ones: the
+	// next cascade covers their border)
+	if (cascade_id == cascades - 1)
+	{
+		float border = min(min(proj_coords.x, 1.0 - proj_coords.x), min(proj_coords.y, 1.0 - proj_coords.y));
+		if (border <= 0.0) return 1.0;
+		fade = max(fade, 1.0 - saturate(border / SHADOW_FADE_BORDER));
+	}
 	//clamp
 #if 0 // defined in the Render\ShadowBuffer.cpp TBO description
 	if (proj_coords.x <= 0.0f || proj_coords.x >= 1.0) return 1.0;
@@ -224,7 +240,7 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec
 	default:                 shadow = direction_light_shadow_pcf(proj_coords, cascade_id, bias); break;
 	}
 	// return
-	return shadow;
+	return lerp(shadow, 1.0, fade);
 }
 
 //light_dir: to the light

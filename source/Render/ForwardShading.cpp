@@ -83,7 +83,7 @@ namespace Render
 				if (!material) continue;
 				//effect
 				auto effect = material->effect();
-				auto technique = effect->technique(technique_name);
+				auto technique = effect->technique(technique_name, randerable->instanced());
 				if (!technique) continue;
 				//draw for each pass
 				for (auto& pass : *technique)

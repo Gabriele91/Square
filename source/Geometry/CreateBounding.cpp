@@ -49,6 +49,17 @@ namespace Geometry
 			return cov / float(n_points);
 		}
 
+		namespace AuxEigen
+		{
+			// a step of the power iteration: the new direction, the last one if it vanishes (no
+			// spread along it, e.g. the normal of a flat mesh: any direction is as good)
+			inline Vec3 refined(const Vec3& next, const Vec3& last)
+			{
+				const float size = length(next);
+				return size > 1e-12f ? next / size : last;
+			}
+		}
+
 		// Calculate eigenvectors using power iteration method
 		Mat3 calculate_eigenvectors(const Mat3& cov)
 		{
@@ -56,22 +67,24 @@ namespace Geometry
 			eigenbasis.reserve(3);
 
 			// Find dominant eigenvector
-			Vec3 v1(1.0f);
+			Vec3 v1 = normalize(Vec3(1.0f));
 			for (int iter = 0; iter < 10; ++iter) 
 			{
-				v1 = normalize(cov * v1);
+				v1 = AuxEigen::refined(cov * v1, v1);
 			}
 			eigenbasis.push_back(v1);
 
-			// Find second eigenvector in the plane perpendicular to first
-			Vec3 v2;
-			if (std::abs(eigenbasis[0].x) > std::abs(eigenbasis[0].y)) 
-			{
-				v2 = Constants::axis_y;
-			}
-			else 
+			// Find second eigenvector in the plane perpendicular to first: from the axis least
+			// aligned with it
+			const Vec3 abs_v1 = abs(eigenbasis[0]);
+			Vec3 v2 = Constants::axis_z;
+			if (abs_v1.x <= abs_v1.y && abs_v1.x <= abs_v1.z)
 			{
 				v2 = Constants::axis_x;
+			}
+			else if (abs_v1.y <= abs_v1.z)     
+			{
+				v2 = Constants::axis_y;
 			}
 			v2 = normalize(v2 - glm::dot(v2, eigenbasis[0]) * eigenbasis[0]);
 
@@ -79,7 +92,7 @@ namespace Geometry
 			Mat3 proj = Mat3(1.0f) - glm::outerProduct(eigenbasis[0], eigenbasis[0]);
 			for (int iter = 0; iter < 10; ++iter) 
 			{
-				v2 = normalize(proj * (cov * v2));
+				v2 = AuxEigen::refined(proj * (cov * v2), v2);
 			}
 			eigenbasis.push_back(v2);
 
@@ -184,9 +197,9 @@ namespace Geometry
             vertex_min.y = std::min(vertex_min.y, att_vertex(i).y);
             vertex_min.z = std::min(vertex_min.z, att_vertex(i).z);
             
-            vertex_max.x = std::min(vertex_max.x, att_vertex(i).x);
-            vertex_max.y = std::min(vertex_max.y, att_vertex(i).y);
-            vertex_max.z = std::min(vertex_max.z, att_vertex(i).z);
+            vertex_max.x = std::max(vertex_max.x, att_vertex(i).x);
+            vertex_max.y = std::max(vertex_max.y, att_vertex(i).y);
+            vertex_max.z = std::max(vertex_max.z, att_vertex(i).z);
         }
 #undef att_vertex
         return AABoundingBox(vertex_min, vertex_max);

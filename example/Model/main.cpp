@@ -18,6 +18,7 @@
 #include "TextureManager.h"
 #include "MaterialManager.h"
 #include "MeshManager.h"
+#include "LodGroups.h"
 
 enum class OutputFormat
 {
@@ -124,11 +125,19 @@ public:
         context().add_resource_map<Resource::Material>(material_manager.resource_map());
         Shared<Actor> main_node = Square::MakeShared<Actor>(context());
         main_node->name(m_output_model_name);
+        // The custom properties of the levels of detail ("square_lod...", by their actor)
+        LodGroups::Extras lod_extras;
         GLTF::Import::visit_default_scene< Shared<Actor> >(gltf_model, main_node,
             [&](const GLTF::Node* const parent, const GLTF::Node& node, Shared<Actor>& parent_actor) -> Shared<Actor>
             {
                 Shared<Actor> actor = MakeShared<Actor>(context());
                 actor->name(node.name);
+                const bool lod_properties = node.extras.find(SquareExtras::PREFIX + "lod") != node.extras.end()
+                                         || node.extras.find(SquareExtras::PREFIX + "lod_mode") != node.extras.end();
+                if (lod_properties)
+                {
+                    lod_extras[actor.get()] = node.extras;
+                }
                 Vec3 translation{ 0.0f,0.0f,0.0f }, scale{ 1.0f,1.0f,1.0f };
                 Quat rotation(0.0f,0.0f,0.0f,1.0f);
                 if (node.transform_type & GLTF::TransformType::MATRIX)
@@ -320,6 +329,11 @@ public:
                 parent_actor->add(actor);
                 return actor;
             });
+        // The levels of detail: "<name>_lod<n>" nodes under a LodGroup
+        if (const size_t groups = LodGroups::build(context(), main_node, lod_extras))
+        {
+            context().logger()->info("Levels of detail: " + std::to_string(groups) + " groups");
+        }
         // Serialize
         switch (m_output_model_format)
         {
