@@ -320,6 +320,20 @@ namespace Square
 		rebuild_drawer();
 	}
 
+	const Render::LevelOfDetailSettings& RenderInstance::levels_of_detail() const
+	{
+		return m_levels_of_detail;
+	}
+
+	void RenderInstance::levels_of_detail(const Render::LevelOfDetailSettings& settings)
+	{
+		m_levels_of_detail = settings;
+		if (m_drawer)
+		{
+			m_drawer->levels_of_detail(m_levels_of_detail);
+		}
+	}
+
 	const Vec4& RenderInstance::clear_color() const
 	{
 		return m_clear_color;
@@ -390,6 +404,7 @@ namespace Square
 		const unsigned char debug_flags = m_debug_pass ? m_debug_pass->draw_flags() : 0;
 		m_drawer = MakeShared<Render::Drawer>(context());
 		m_drawer->post_effects(m_post_effects);
+		m_drawer->levels_of_detail(m_levels_of_detail);
 		if ((m_pipeline & RP_FORWARD) && !(m_pipeline & RP_DEFERRED))
 		{
 			context().logger()->info("Rendering: forward");

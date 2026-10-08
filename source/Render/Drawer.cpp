@@ -211,7 +211,7 @@ namespace Render
         {
             if (auto lod = weak_lod.lock())
             {
-                lod->select(*camera);
+                lod->select(*camera, m_levels_of_detail);
             }
         }
         //build queues

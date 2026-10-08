@@ -133,6 +133,10 @@ namespace Square
 		bool visible() const;
 		void visible(bool visible);
 
+		//how the levels of detail of the world are chosen (their cross-fade, a level forced)
+		const Render::LevelOfDetailSettings& levels_of_detail() const;
+		void levels_of_detail(const Render::LevelOfDetailSettings& settings);
+
 		//post effects of the world, in the order they are drawn (see Render/PostEffect.h):
 		//the effects of the pipeline stage (G-Buffer effects only in deferred)
 		void add_post_effect(Shared<Render::PostEffect> effect);
@@ -159,6 +163,7 @@ namespace Square
 		Vec4        m_clear_color{ 0.25f, 0.5f, 1.0f, 1.0f };
 		Vec4        m_ambient_color{ 0.1f, 0.1f, 0.1f, 1.0f };
 		bool        m_visible{ true };
+		Render::LevelOfDetailSettings m_levels_of_detail;
 		std::vector< Shared<Render::PostEffect> > m_post_effects;
 		//drawer
 		Shared<Render::Drawer>          m_drawer;

@@ -425,8 +425,13 @@ private:
 		m_graphics.antialiasing(true);
 		best.apply_shadows(m_race->arena().sun(), AuxMain::shadow_view(m_race->arena()));
 		//every thing at its most detailed level, at once
-		Square::Scene::LodGroup::force_level(0);
-		Square::Scene::LodGroup::fade_duration(0.0f);
+		if (auto render_world = world().instance<Square::RenderInstance>())
+		{
+			Square::Render::LevelOfDetailSettings detailed;
+			detailed.m_fade_duration = 0.0f;
+			detailed.m_force_level = 0;
+			render_world->levels_of_detail(detailed);
+		}
 		context().logger()->info("view of the map " + map.m_name + (map.m_view_set ? "" : " (no view in its config: the default one)"));
 	}
 

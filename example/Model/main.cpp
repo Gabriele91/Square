@@ -19,6 +19,7 @@
 #include "MaterialManager.h"
 #include "MeshManager.h"
 #include "LodGroups.h"
+#include "InstanceGroups.h"
 
 enum class OutputFormat
 {
@@ -131,6 +132,8 @@ public:
         main_node->set_static(m_static);
         // The custom properties of the levels of detail ("square_lod...", by their actor)
         LodGroups::Extras lod_extras;
+        // The nodes of instances ("square_instances")
+        InstanceGroups::Nodes instance_nodes;
         GLTF::Import::visit_default_scene< Shared<Actor> >(gltf_model, main_node,
             [&](const GLTF::Node* const parent, const GLTF::Node& node, Shared<Actor>& parent_actor) -> Shared<Actor>
             {
@@ -144,6 +147,11 @@ public:
                 }
                 //static: its "square_static", else --static (the engine: only if its parents are too)
                 actor->set_static(SquareExtras::flag(node.extras, "static").value_or(m_static));
+                //instances: its children by their mesh (InstanceGroups)
+                if (SquareExtras::flag(node.extras, "instances").value_or(false))
+                {
+                    instance_nodes.insert(actor.get());
+                }
                 Vec3 translation{ 0.0f,0.0f,0.0f }, scale{ 1.0f,1.0f,1.0f };
                 Quat rotation(0.0f,0.0f,0.0f,1.0f);
                 if (node.transform_type & GLTF::TransformType::MATRIX)
@@ -335,6 +343,12 @@ public:
                 parent_actor->add(actor);
                 return actor;
             });
+        // The instances: the children of a node "square_instances" by their mesh
+        size_t instances = 0;
+        if (const size_t meshes = InstanceGroups::build(context(), main_node, instance_nodes, instances))
+        {
+            context().logger()->info("Instances: " + std::to_string(instances) + " in " + std::to_string(meshes) + " meshes");
+        }
         // The levels of detail: "<name>_lod<n>" nodes under a LodGroup
         if (const size_t groups = LodGroups::build(context(), main_node, lod_extras))
         {

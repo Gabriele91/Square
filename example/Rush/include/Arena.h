@@ -77,9 +77,6 @@ private:
 	//the colliders and the navmesh not drawn
 	void hide_helpers();
 	void find_course();
-	//the props of a library (the same mesh many times in a chunk, "props_..."): one instanced
-	//mesh a mesh a chunk (a draw call for all of them), their nodes out (after the collision)
-	void instance_props();
 	void find_camera_bounds();
 	void find_water();
 	void find_bounds();

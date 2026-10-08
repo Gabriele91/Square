@@ -6,7 +6,9 @@
 //  space of its actor. Its materials' effects draw it with the instanced variant of their
 //  techniques ("variants instanced" in the .sqfx, SQ_INSTANCED defined: their vertex shaders read
 //  the matrix of each instance, Instances.hlsl), at most instances_max a draw (more:
-//  more draws). Culled as one: the box of all its instances.
+//  more draws). Culled as one: the box of all its instances. Saved with its scene (its mesh, its
+//  materials, the box of its mesh, its instances): the converter makes it from the children of a
+//  node "square_instances" that share a mesh.
 //
 #pragma once
 #include "Square/Config.h"
@@ -17,6 +19,7 @@
 #include "Square/Resource/Material.h"
 #include "Square/Render/Transform.h"
 #include "Square/Render/Renderable.h"
+#include <functional>
 #include <vector>
 
 namespace Square
@@ -42,11 +45,20 @@ namespace Scene
 		//the mesh, its materials (one a sub mesh)
 		void mesh(const Square::Shared<Square::Resource::Mesh>& mesh, const std::vector< Square::Shared<Square::Resource::Material> >& materials);
 		const Square::Shared<Square::Resource::Mesh>& mesh() const { return m_mesh; }
+		const std::vector< Square::Shared<Square::Resource::Material> >& materials() const { return m_materials; }
 
-		//its instances: their matrices in the space of the actor; mesh_box: the box of the mesh
-		//(its own space: the box of all the instances from it)
-		void instances(const std::vector<Square::Mat4>& models, const Square::Geometry::OBoundingBox& mesh_box);
+		//the box of the mesh (its own space: the box of all the instances from it)
+		void mesh_box(const Square::Geometry::OBoundingBox& box);
+		const Square::Geometry::OBoundingBox& mesh_box() const { return m_mesh_box; }
+
+		//its instances: their matrices in the space of the actor
+		void instances(const std::vector<Square::Mat4>& models);
 		const std::vector<Square::Mat4>& instances() const { return m_instances; }
+
+		//the triangles of all its instances in world space (3 points each, added to out), read from
+		//the file of its mesh; filter: the sub meshes taken (by their index), none: all of them;
+		//false: no mesh, or it cannot be read
+		bool triangles(std::vector<Square::Vec3>& out, const std::function<bool(size_t submesh)>& filter = nullptr);
 
 		//Renderable
 		virtual size_t materials_count() const override;
@@ -73,7 +85,7 @@ namespace Scene
 		//regs
 		static void object_registration(Square::Context& ctx);
 
-		//serialize (not saved: made at runtime)
+		//serialize
 		virtual void serialize(Square::Data::Archive& archive)  override;
 		virtual void serialize_json(Square::Data::JsonValue& archive) override;
 		virtual void deserialize(Square::Data::Archive& archive) override;
@@ -81,11 +93,15 @@ namespace Scene
 
 	private:
 
+		//the box of all the instances (the space of the actor), from the box of the mesh
+		void build_local_box();
+
 		Square::Shared< Square::Resource::Mesh >                    m_mesh;
 		std::vector< Square::Shared< Square::Resource::Material > > m_materials;
 		std::vector< Square::Mat4 >                                 m_instances;
 		Square::Shared< Square::Render::ConstBuffer >               m_buffer;   //the matrices of a draw
 		std::vector< Square::Mat4 >                                 m_batch;    //... on the CPU (instances_max)
+		Square::Geometry::OBoundingBox                              m_mesh_box;
 		Square::Geometry::OBoundingBox                              m_obb_local;
 		Square::Geometry::OBoundingBox                              m_obb_global;
 		Square::Weak< Square::Render::Transform >                   m_transform;

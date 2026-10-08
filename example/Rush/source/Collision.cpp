@@ -366,40 +366,82 @@ bool is_blocker(const std::string& name)
 	return name.size() == s_prefix.size() || name[s_prefix.size()] == '_' || name[s_prefix.size()] == '.';
 }
 
+namespace AuxCollisionMesh
+{
+	//a sub mesh solid: only the opaque surfaces, not the translucent ones, nor the alpha tested
+	//ones (mask >= 0: grass, foliage, drawn as opaque)
+	static bool solid(const Render::Renderable& renderable, size_t submesh_id)
+	{
+		bool solid = true;
+		if (auto material = renderable.material(submesh_id).lock())
+		{
+			const auto* mask       = material->parameter_by_name("mask");
+			const bool  opaque     = material->queue().m_type == Render::RQ_OPAQUE;
+			const bool  alpha_test = mask && mask->get_float() >= 0.0f;
+			solid = opaque && !alpha_test;
+		}
+		return solid;
+	}
+
+	//the triangles of a node in world space: its static mesh, its instanced mesh (false: none, or
+	//not read)
+	static bool triangles(const Shared<Scene::Actor>& node, std::vector<Vec3>& points, bool every)
+	{
+		bool read = false;
+		if (node->contains<Scene::StaticMesh>())
+		{
+			auto mesh = node->component<Scene::StaticMesh>();
+			auto filter = [&mesh](size_t submesh_id) { return solid(*mesh, submesh_id); };
+			read = mesh->triangles(points, every ? nullptr : std::function<bool(size_t)>(filter));
+		}
+		if (node->contains<Scene::InstancedMesh>())
+		{
+			auto mesh = node->component<Scene::InstancedMesh>();
+			auto filter = [&mesh](size_t submesh_id) { return solid(*mesh, submesh_id); };
+			read = mesh->triangles(points, every ? nullptr : std::function<bool(size_t)>(filter)) || read;
+		}
+		return read;
+	}
+
+	//a node with something drawn (its triangles)
+	static bool drawn(const Shared<Scene::Actor>& node)
+	{
+		return node->contains<Scene::StaticMesh>() || node->contains<Scene::InstancedMesh>();
+	}
+}
+
 void CollisionMesh::add(Context& context, const Shared<Scene::Actor>& actor, bool solid_only)
 {
 	actor->visit([&](Shared<Scene::Actor> node) -> bool
 	{
-		if (!node->contains<Scene::StaticMesh>()) return true;
-		auto static_mesh = node->component<Scene::StaticMesh>();
-		//its ground (by its name, or by the one of its parent: a node of the exporter under it)
-		Surface surface = surface_of(node->name());
-		bool blocker = is_blocker(node->name());
+		if (AuxCollisionMesh::drawn(node))
 		{
-			auto parent = node->parent().lock();
-			if (parent && surface == Surface::GROUND) surface = surface_of(parent->name());
-			if (parent) blocker = blocker || is_blocker(parent->name());
+			//its ground (by its name, or by the one of its parent: a node of the exporter under it)
+			Surface surface = surface_of(node->name());
+			bool blocker = is_blocker(node->name());
+			if (auto parent = node->parent().lock())
+			{
+				if (surface == Surface::GROUND)
+				{
+					surface = surface_of(parent->name());
+				}
+				blocker = blocker || is_blocker(parent->name());
+			}
+			//the water, the walls: solid, also translucent
+			const bool every = !solid_only || is_water(surface) || blocker;
+			std::vector<Vec3> points;
+			if (AuxCollisionMesh::triangles(node, points, every))
+			{
+				for (size_t i = 0; i + 2 < points.size(); i += 3)
+				{
+					add_triangle(points[i], points[i + 1], points[i + 2], surface);
+				}
+			}
+			else
+			{
+				context.logger()->warning("CollisionMesh: unable to read the mesh of " + node->name());
+			}
 		}
-		//only opaque surfaces are solid: not the translucent ones, nor the alpha tested ones
-		//(mask >= 0: grass, foliage, drawn as opaque)
-		auto solid = [&static_mesh](size_t submesh_id) -> bool
-		{
-			auto material = static_mesh->material(submesh_id).lock();
-			if (!material) return true;
-			const auto* mask       = material->parameter_by_name("mask");
-			const bool  opaque     = material->queue().m_type == Render::RQ_OPAQUE;
-			const bool  alpha_test = mask && mask->get_float() >= 0.0f;
-			return opaque && !alpha_test;
-		};
-		std::vector<Vec3> points;
-		//the water, the walls: solid, also translucent
-		const bool every = !solid_only || is_water(surface) || blocker;
-		if (!static_mesh->triangles(points, every ? nullptr : std::function<bool(size_t)>(solid)))
-		{
-			if (static_mesh->m_mesh) context.logger()->warning("CollisionMesh: unable to read the mesh of " + node->name());
-			return true;
-		}
-		for (size_t i = 0; i + 2 < points.size(); i += 3) add_triangle(points[i], points[i + 1], points[i + 2], surface);
 		return true;
 	});
 	//the tree of the triangles

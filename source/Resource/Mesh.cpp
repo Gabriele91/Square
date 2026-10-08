@@ -26,6 +26,98 @@ namespace Resource
 		//factory
 		ctx.add_resource<Mesh>({ ".sm3d", ".sm3dgz"});
 	}
+	namespace AuxMeshTriangles
+	{
+		static Vec3 to_vec3(const Vec2& v) { return Vec3(v, 0.0f); }
+		static Vec3 to_vec3(const Vec3& v) { return v; }
+
+		//the vertex of the i-th index of a sub mesh (no indices: in order)
+		static size_t vertex_id(const Parser::StaticMesh::Context& mesh, const Render::SubMesh& submesh, unsigned int i)
+		{
+			size_t id = size_t(submesh.m_index_offset) + i;
+			if (!mesh.m_index.empty())
+			{
+				id = size_t(mesh.m_index[id]);
+			}
+			return id;
+		}
+
+		//the triangles of a sub mesh (its positions)
+		static void add(std::vector<Vec3>& out, const Parser::StaticMesh::Context& mesh, const Render::SubMesh& submesh, const std::vector<Vec3>& positions)
+		{
+			for (unsigned int i = 0; i + 2 < submesh.m_index_count; i += 3)
+			{
+				const size_t a = vertex_id(mesh, submesh, i);
+				const size_t b = vertex_id(mesh, submesh, i + 1);
+				const size_t c = vertex_id(mesh, submesh, i + 2);
+				const size_t count = positions.size();
+				if (a < count && b < count && c < count)
+				{
+					out.push_back(positions[a]);
+					out.push_back(positions[b]);
+					out.push_back(positions[c]);
+				}
+			}
+		}
+	}
+
+	bool Mesh::local_triangles(std::vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter) const
+	{
+		//its file
+		const std::string& path = const_cast<Mesh*>(this)->context().resource_path<Mesh>(resource_untyped_name());
+		if (path.empty())
+		{
+			return false;
+		}
+		const bool compressed = Filesystem::get_extension(path) == ".sm3dgz";
+		std::vector<unsigned char> bytes;
+		if (compressed)
+		{
+			bytes = Filesystem::binary_compress_file_read_all(path);
+		}
+		else
+		{
+			bytes = Filesystem::binary_file_read_all(path);
+		}
+		Parser::StaticMesh::Context mesh;
+		if (!Parser::StaticMesh().parse(mesh, bytes))
+		{
+			return false;
+		}
+		//its positions
+		std::vector<Vec3> positions;
+		std::visit([&positions](const auto& vertices)
+		{
+			positions.reserve(vertices.size());
+			for (const auto& vertex : vertices)
+			{
+				positions.push_back(AuxMeshTriangles::to_vec3(vertex.m_position));
+			}
+		}, mesh.m_vertex);
+		//its sub meshes (the whole mesh when there are none)
+		Render::Mesh::SubMeshList submeshes = mesh.m_submesh;
+		if (submeshes.empty())
+		{
+			size_t count = positions.size();
+			if (!mesh.m_index.empty())
+			{
+				count = mesh.m_index.size();
+			}
+			submeshes.push_back(Render::SubMesh(Render::DRAW_TRIANGLES, (unsigned int)count, 0));
+		}
+		for (size_t submesh_id = 0; submesh_id < submeshes.size(); ++submesh_id)
+		{
+			const Render::SubMesh& submesh = submeshes[submesh_id];
+			const bool triangles = submesh.m_draw_type == Render::DRAW_TRIANGLES;
+			const bool taken = !filter || filter(submesh_id);
+			if (triangles && taken)
+			{
+				AuxMeshTriangles::add(out, mesh, submesh, positions);
+			}
+		}
+		return true;
+	}
+
 	//////////////////////////////////////////////////////////////
 	//constructor
 	Mesh::Mesh(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_mesh(context) {}

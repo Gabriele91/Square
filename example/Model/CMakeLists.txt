@@ -25,6 +25,7 @@ set(SOURCE_FILES
     MaterialManager.cpp
     MeshManager.cpp
     LodGroups.cpp
+    InstanceGroups.cpp
 )
 
 # Create executable

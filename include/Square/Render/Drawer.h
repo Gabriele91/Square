@@ -134,6 +134,9 @@ namespace Render
         
         //add a pass
         void add(Shared<DrawerPass> pass);
+        //how the levels of detail are chosen (RenderInstance::levels_of_detail)
+        void levels_of_detail(const LevelOfDetailSettings& settings) { m_levels_of_detail = settings; }
+        const LevelOfDetailSettings& levels_of_detail() const { return m_levels_of_detail; }
         //post effects of the frame (drawn by the render passes, see PostEffect.h)
         void post_effects(const std::vector< Shared<PostEffect> >& effects) { m_post_effects = effects; }
         const std::vector< Shared<PostEffect> >& post_effects() const { return m_post_effects; }
@@ -152,6 +155,7 @@ namespace Render
         Square::Context& m_context;
         std::vector< Shared<DrawerPass> > m_rendering_pass[RPT_MAX];
         std::vector< Shared<PostEffect> > m_post_effects;
+        LevelOfDetailSettings m_levels_of_detail;
 
         //Cache objects to draw
         PoolQueues m_camera_queue;
