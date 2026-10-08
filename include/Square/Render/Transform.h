@@ -47,6 +47,10 @@ namespace Render
         
         //set gpu buffer
         virtual void set(UniformBufferTransform* gpubuffer) const = 0;
+
+		//it does not move (its place, its shape): what is drawn with it is kept in the caches of
+		//the shadow maps (Renderable::is_static); false by default
+		virtual bool is_static() const { return false; }
 	};
 }
 }

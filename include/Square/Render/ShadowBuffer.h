@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 15/06/18.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -58,9 +58,12 @@ namespace Render
 
 		unsigned int layers() const;
 
+		Type type() const;
+
 	protected:
 
 		IVec2 m_size;
+		Type m_type{ SB_TEXTURE_2D };
 		unsigned int m_layers{ 1 };
 		Render::Target*  m_target{ nullptr };
 		Render::Texture* m_texture{ nullptr };

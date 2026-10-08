@@ -43,8 +43,12 @@ namespace AuxMain
 	//the share of a fade: its time over its length (no length: done at once)
 	static float fade_share(float time, float length)
 	{
-		if (length <= 0.0f) return 1.0f;
-		return std::min(time / length, 1.0f);
+		float share = 1.0f;
+		if (length > 0.0f)
+		{
+			share = std::min(time / length, 1.0f);
+		}
+		return share;
 	}
 
 	//the loading screen of a race: it comes over the title, it covers it (the race loads under it),
@@ -102,7 +106,10 @@ namespace AuxMain
 		{
 			m_time += delta_time;
 			const float shown = fade_share(m_time, loading.m_fade_in);
-			if (shown >= 1.0f) m_phase = Phase::COVERED;
+			if (shown >= 1.0f)
+			{
+				m_phase = Phase::COVERED;
+			}
 			return shown;
 		}
 
@@ -122,7 +129,10 @@ namespace AuxMain
 		{
 			m_time += delta_time;
 			const float gone = fade_share(m_time, loading.m_fade_out);
-			if (gone >= 1.0f) m_phase = Phase::HIDDEN;
+			if (gone >= 1.0f)
+			{
+				m_phase = Phase::HIDDEN;
+			}
 			return 1.0f - gone;
 		}
 
@@ -216,7 +226,10 @@ public:
 		}
 		//the UI
 		m_ui.update(m_race.get(), m_graphics, float(m_counter.get()));
-		if (m_demo) m_demo->update(m_race.get(), m_graphics);
+		if (m_demo)
+		{
+			m_demo->update(m_race.get(), m_graphics);
+		}
 		return m_loop;
 	}
 
@@ -301,9 +314,11 @@ private:
 		if (m_loading.phase() == AuxMain::LoadingFade::Phase::COVERED)
 		{
 			enter_race();
-			return;
 		}
-		m_ui.loading_opacity(m_loading.update(float(delta_time), Config::get().loading()));
+		else
+		{
+			m_ui.loading_opacity(m_loading.update(float(delta_time), Config::get().loading()));
+		}
 	}
 
 	void update_race(double delta_time)
@@ -311,27 +326,32 @@ private:
 		//its loading screen going
 		m_ui.loading_opacity(m_loading.update(float(delta_time), Config::get().loading()));
 		pause(race_paused());
-		if (!m_race) return;
-		//the view: its camera there (whatever moved it before the pause)
-		if (m_view)
+		if (m_race)
 		{
-			const RaceMap& map = m_ui.race_map();
-			m_race->arena().view(map.m_view_from, map.m_view_to, map.m_view_lens);
+			//the view: its camera there (whatever moved it before the pause)
+			if (m_view)
+			{
+				const RaceMap& map = m_ui.race_map();
+				m_race->arena().view(map.m_view_from, map.m_view_to, map.m_view_lens);
+			}
+			//a circuit: the haze of where the player is (the biomes along the lap)
+			RaceFog zone_fog;
+			if (m_race->zone_fog(zone_fog))
+			{
+				m_graphics.fog(zone_fog, m_race->arena().sun_direction());
+			}
 		}
-		//a circuit: the haze of where the player is (the biomes along the lap)
-		RaceFog zone_fog;
-		if (m_race->zone_fog(zone_fog)) m_graphics.fog(zone_fog, m_race->arena().sun_direction());
 	}
 
 	//a race still: nothing moves, its time stopped
 	bool race_paused() const
 	{
-		//the view of its map (its photo)
-		if (m_view) return true;
-		//its menu open
-		if (m_ui.menu_visible()) return true;
-		//under its loading screen (its first frames)
-		return m_loading.phase() == AuxMain::LoadingFade::Phase::HOLDING;
+		//the view of its map (its photo), its menu open, under its loading screen (its first
+		//frames)
+		const bool view = m_view;
+		const bool menu = m_ui.menu_visible();
+		const bool loading = m_loading.phase() == AuxMain::LoadingFade::Phase::HOLDING;
+		return view || menu || loading;
 	}
 
 	//the pause of a race: its level (the components: the race, the drivers, the camera) and the

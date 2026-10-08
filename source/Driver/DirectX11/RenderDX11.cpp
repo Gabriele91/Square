@@ -2772,6 +2772,35 @@ namespace Render
 		return output;
 	}
 
+	namespace AuxCopyTexture
+	{
+		//the resource of a texture of DirectX (nullptr: none)
+		static ID3D11Resource* resource(Texture* texture)
+		{
+			switch (texture->m_type)
+			{
+			case DX_TEXTURE_1D: return ((Texture1D*)texture)->m_texture1D;
+			case DX_TEXTURE_2D: return ((Texture2D*)texture)->m_texture2D;
+			case DX_TEXTURE_3D: return ((Texture3D*)texture)->m_texture3D;
+			default:            return nullptr;
+			}
+		}
+	}
+
+	void ContextDX11::copy_texture(Texture* source, Texture* destination)
+	{
+		if (source && destination)
+		{
+			ID3D11Resource* from = AuxCopyTexture::resource(source);
+			ID3D11Resource* to = AuxCopyTexture::resource(destination);
+			if (from && to)
+			{
+				//(all of it: its faces, its layers, its levels; the same size and format)
+				device_context()->CopyResource(to, from);
+			}
+		}
+	}
+
 	std::vector< unsigned char > ContextDX11::get_texture(Texture* tex, int cube, int level)
 	{
 		D3D11_MAPPED_SUBRESOURCE source;

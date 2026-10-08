@@ -177,30 +177,43 @@ void RushUI::title(bool show)
 
 void RushUI::hud(bool show)
 {
-	if (show) m_hud.show();
-	else      m_hud.hide();
+	if (show)
+	{
+		m_hud.show();
+	}
+	else
+	{
+		m_hud.hide();
+	}
 }
 
 void RushUI::loading(const Rush::RaceMap& map)
 {
-	if (!m_loading.valid()) return;
-	m_state.m_loading_title = map.m_title;
-	m_model.dirty("loading_title");
-	//its card (the photo of the map in the pack of the UI)
-	m_loading.find("loading_map").set_property("decorator", "image(map_" + map.m_name + ".png)");
-	loading_opacity(0.0f);
+	if (m_loading.valid())
+	{
+		m_state.m_loading_title = map.m_title;
+		m_model.dirty("loading_title");
+		//its card (the photo of the map in the pack of the UI)
+		m_loading.find("loading_map").set_property("decorator", "image(map_" + map.m_name + ".png)");
+		loading_opacity(0.0f);
+	}
 }
 
 void RushUI::loading_opacity(float opacity)
 {
-	if (!m_loading.valid()) return;
-	if (opacity <= 0.0f)
+	const bool shown = opacity > 0.0f;
+	if (m_loading.valid() && shown)
+	{
+		m_loading.set_property("opacity", std::to_string(std::min(opacity, 1.0f)));
+		if (!m_loading.visible())
+		{
+			m_loading.show();
+		}
+	}
+	else if (m_loading.valid())
 	{
 		m_loading.hide();
-		return;
 	}
-	m_loading.set_property("opacity", std::to_string(std::min(opacity, 1.0f)));
-	if (!m_loading.visible()) m_loading.show();
 }
 
 void RushUI::screen(Screen screen)

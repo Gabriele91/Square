@@ -31,6 +31,17 @@ namespace SquareExtras
         return value.is_number() ? value.number() : 0.0;
     }
 
+    std::optional<bool> flag(const Square::Data::JsonObject& extras, const std::string& key)
+    {
+        std::optional<bool> value;
+        auto it = extras.find(PREFIX + key);
+        if (it != extras.end())
+        {
+            value = number(it->second) != 0.0;
+        }
+        return value;
+    }
+
     double component(const Square::Data::JsonValue& value, size_t i)
     {
         if (!value.is_array()) return number(value);

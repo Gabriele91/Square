@@ -41,6 +41,7 @@ static Square::Shell::ParserCommands s_ShellCommands
     , Square::Shell::Command{ "images",  "m", "texture images [bc, astc, png, keep]"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("bc"))  }
     , Square::Shell::Command{ "pack",    "p", "pack the output folder in an archive (.sqz)", Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
     , Square::Shell::Command{ "cascades","c", "cascades of the directional lights [1-8]"  , Square::Shell::ValueType::value_int   , false, Square::Shell::Value_t(0)                  }
+    , Square::Shell::Command{ "static",  "t", "the nodes static by default (they do not move: cached in the shadows; a node: its \"square_static\")", Square::Shell::ValueType::value_none, false, Square::Shell::Value_t(false) }
     , Square::Shell::Command{ "help",    "h", "show help"                                , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
 };
 
@@ -57,6 +58,7 @@ public:
     ImageConverter::Compression m_compression;
     bool m_pack{ false }; //--pack: the folder in <folder>.sqz (the engine reads it as the folder)
     int  m_cascades{ 0 }; //--cascades: of the directional lights (0: the default of the engine)
+    bool m_static{ false }; //--static: the nodes static when they do not say ("square_static")
 
     struct Consts
     {
@@ -125,6 +127,8 @@ public:
         context().add_resource_map<Resource::Material>(material_manager.resource_map());
         Shared<Actor> main_node = Square::MakeShared<Actor>(context());
         main_node->name(m_output_model_name);
+        //(the root: static with --static, its nodes can be so only under it)
+        main_node->set_static(m_static);
         // The custom properties of the levels of detail ("square_lod...", by their actor)
         LodGroups::Extras lod_extras;
         GLTF::Import::visit_default_scene< Shared<Actor> >(gltf_model, main_node,
@@ -138,6 +142,8 @@ public:
                 {
                     lod_extras[actor.get()] = node.extras;
                 }
+                //static: its "square_static", else --static (the engine: only if its parents are too)
+                actor->set_static(SquareExtras::flag(node.extras, "static").value_or(m_static));
                 Vec3 translation{ 0.0f,0.0f,0.0f }, scale{ 1.0f,1.0f,1.0f };
                 Quat rotation(0.0f,0.0f,0.0f,1.0f);
                 if (node.transform_type & GLTF::TransformType::MATRIX)
@@ -506,6 +512,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
     auto* importer = new ModelImporter(input_model_path, output_model_path, output_model_name, output_model_format, modes, shadow_resoluction, convert_images, compression);
     if (auto pack_it = args.find("pack"); pack_it != args.end()) importer->m_pack = std::get<bool>(pack_it->second);
     if (auto cascades_it = args.find("cascades"); cascades_it != args.end()) importer->m_cascades = std::get<int>(cascades_it->second);
+    if (auto static_it = args.find("static"); static_it != args.end()) importer->m_static = std::get<bool>(static_it->second);
     //srgb on
     const bool srgb = true;
     //a tool: no splash screen

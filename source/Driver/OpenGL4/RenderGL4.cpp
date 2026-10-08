@@ -2575,6 +2575,102 @@ namespace Render
 		return output;
 	}
 
+	namespace AuxCopyTexture
+	{
+		//the binding query of a type of texture
+		static GLenum binding_of(GLenum type)
+		{
+			switch (type)
+			{
+			case GL_TEXTURE_CUBE_MAP: return GL_TEXTURE_BINDING_CUBE_MAP;
+			case GL_TEXTURE_2D_ARRAY: return GL_TEXTURE_BINDING_2D_ARRAY;
+			case GL_TEXTURE_2D:
+			default:                  return GL_TEXTURE_BINDING_2D;
+			}
+		}
+
+		//its size at level 0 (z: its layers; a cube: its 6 faces), the binding of the unit kept
+		static IVec3 size_of(const Texture* texture)
+		{
+			const GLenum type = texture->m_type_texture;
+			GLint previous = 0;
+			glGetIntegerv(binding_of(type), &previous);
+			glBindTexture(type, texture->m_tbo);
+			GLint width = 0, height = 0, depth = 1;
+			switch (type)
+			{
+			case GL_TEXTURE_CUBE_MAP:
+				glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_TEXTURE_WIDTH, &width);
+				glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_TEXTURE_HEIGHT, &height);
+				depth = 6;
+			break;
+			case GL_TEXTURE_2D_ARRAY:
+				glGetTexLevelParameteriv(type, 0, GL_TEXTURE_WIDTH, &width);
+				glGetTexLevelParameteriv(type, 0, GL_TEXTURE_HEIGHT, &height);
+				glGetTexLevelParameteriv(type, 0, GL_TEXTURE_DEPTH, &depth);
+			break;
+			default:
+				glGetTexLevelParameteriv(type, 0, GL_TEXTURE_WIDTH, &width);
+				glGetTexLevelParameteriv(type, 0, GL_TEXTURE_HEIGHT, &height);
+			break;
+			}
+			glBindTexture(type, GLuint(previous));
+			return IVec3(width, height, depth);
+		}
+
+		//a face or a layer of a texture as the depth of the framebuffer bound to a slot
+		static void attach(GLenum slot, const Texture* texture, int layer)
+		{
+			switch (texture->m_type_texture)
+			{
+			case GL_TEXTURE_CUBE_MAP:
+				glFramebufferTexture2D(slot, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + layer, texture->m_tbo, 0);
+			break;
+			case GL_TEXTURE_2D_ARRAY:
+				glFramebufferTextureLayer(slot, GL_DEPTH_ATTACHMENT, texture->m_tbo, 0, layer);
+			break;
+			case GL_TEXTURE_2D:
+			default:
+				glFramebufferTexture2D(slot, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texture->m_tbo, 0);
+			break;
+			}
+		}
+	}
+
+	void ContextGL4::copy_texture(Texture* source, Texture* destination)
+	{
+		const bool both = source && destination;
+		if (both && source->m_type_texture == destination->m_type_texture)
+		{
+			//(no glCopyImageSubData in GL 4.1: a blit of the depth, a face or a layer at a time)
+			const IVec3 size = AuxCopyTexture::size_of(source);
+			GLint read_previous = 0, draw_previous = 0;
+			glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &read_previous);
+			glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &draw_previous);
+			const GLboolean scissor = glIsEnabled(GL_SCISSOR_TEST);
+			glDisable(GL_SCISSOR_TEST);
+			GLuint framebuffers[2]{ 0, 0 };
+			glGenFramebuffers(2, framebuffers);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffers[0]);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffers[1]);
+			glReadBuffer(GL_NONE);
+			glDrawBuffer(GL_NONE);
+			for (int layer = 0; layer != size.z; ++layer)
+			{
+				AuxCopyTexture::attach(GL_READ_FRAMEBUFFER, source, layer);
+				AuxCopyTexture::attach(GL_DRAW_FRAMEBUFFER, destination, layer);
+				glBlitFramebuffer(0, 0, size.x, size.y, 0, 0, size.x, size.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+			}
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, GLuint(read_previous));
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GLuint(draw_previous));
+			glDeleteFramebuffers(2, framebuffers);
+			if (scissor)
+			{
+				glEnable(GL_SCISSOR_TEST);
+			}
+		}
+	}
+
 	std::vector< unsigned char > ContextGL4::get_texture(Texture* tex, int cube, int level)
 	{
 		// get last bind

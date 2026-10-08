@@ -124,7 +124,10 @@ namespace LodGroups
                 //the group: a node of the base, the levels under it (in their place: it is where
                 //their parent is)
                 auto group_node = MakeShared<Actor>(context, set.first);
+                //(static as its levels: its first one, still under its parent)
+                group_node->set_static(levels.begin()->second->is_static());
                 parent->add(group_node);
+                // build the group
                 std::vector<LodGroup::Level> group_levels;
                 group_levels.reserve(levels.size());
                 for (const auto& level : levels)

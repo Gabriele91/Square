@@ -46,6 +46,7 @@ namespace Render
         {
             //save size
             m_size = size;
+            m_type = type;
             m_layers = std::max(layers, 1u);
 			//texture data
 			Render::TextureRawDataInformation raw_data
@@ -107,10 +108,11 @@ namespace Render
         {
             if (m_target)  render->delete_render_target(m_target);
 			if (m_texture) render->delete_texture(m_texture);
-            //to null
-            m_size = {0,0};
         }
-
+        //to null
+        m_target = nullptr;
+        m_texture = nullptr;
+        m_size = {0,0};
     }
     
     Render::Target* ShadowBuffer::target() const
@@ -141,6 +143,11 @@ namespace Render
     unsigned int ShadowBuffer::layers() const
     {
     	return m_layers;
+    }
+
+    ShadowBuffer::Type ShadowBuffer::type() const
+    {
+    	return m_type;
     }
 }
 }

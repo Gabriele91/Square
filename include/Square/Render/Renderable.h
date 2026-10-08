@@ -59,6 +59,11 @@ namespace Render
 
 		virtual Weak<Transform> transform() const = 0;
         
+		//static: its transform does not move (Transform::is_static: an actor "static"): kept in
+		//the caches of the shadow maps of the lights that do not move; else drawn in them every
+		//frame
+		bool is_static() const;
+
 		virtual bool visible() const { return m_visible; }
 
 		virtual void visible(bool enable)  { m_visible = enable; }
@@ -86,10 +91,10 @@ namespace Render
 		virtual bool draw_geometry(Render::Context& render) const { return false; }
 
 	private:
-        
-		bool m_visible{ true };
+
+		bool  m_visible{ true };
 		float m_lod_fade{ 1.0f };
-		bool m_motion_blur{ false };
+		bool  m_motion_blur{ false };
 	};
 }
 }
