@@ -187,26 +187,10 @@ namespace Scene
 		}
 	}
 
-	namespace AuxLodGroupForce
-	{
-		//the level of all the groups (-1: by the camera)
-		static int s_level = -1;
-	}
-
-	void LodGroup::force_level(int level)
-	{
-		AuxLodGroupForce::s_level = std::max(level, -1);
-	}
-
-	int LodGroup::force_level()
-	{
-		return AuxLodGroupForce::s_level;
-	}
-
-	size_t LodGroup::level(const Square::Render::Camera& camera) const
+	size_t LodGroup::level(const Square::Render::Camera& camera, const Square::Render::LevelOfDetailSettings& settings) const
 	{
 		//forced (a photo): that one, wherever the camera is
-		const int forced = AuxLodGroupForce::s_level;
+		const int forced = settings.m_force_level;
 		if (forced >= 0 && !m_levels.empty())
 		{
 			return std::min(size_t(forced), m_levels.size() - 1);
@@ -248,7 +232,7 @@ namespace Scene
 		m_shown = ~size_t(0);
 	}
 
-	void LodGroup::select(const Square::Render::Camera& camera)
+	void LodGroup::select(const Square::Render::Camera& camera, const Square::Render::LevelOfDetailSettings& settings)
 	{
 		if (!found())
 		{
@@ -259,7 +243,7 @@ namespace Scene
 				recalculate_bounds();
 			}
 		}
-		show(level(camera));
+		show(level(camera, settings), std::max(settings.m_fade_duration, 0.0f));
 	}
 
 	bool LodGroup::found() const
@@ -308,8 +292,6 @@ namespace Scene
 
 	namespace AuxLodGroupFade
 	{
-		//the seconds of a cross-fade of all the groups
-		static float s_duration = 0.5f;
 		//none: no level applied, no level fading out
 		static constexpr size_t s_none = ~size_t(0);
 
@@ -321,24 +303,13 @@ namespace Scene
 		}
 	}
 
-	void LodGroup::fade_duration(float seconds)
-	{
-		AuxLodGroupFade::s_duration = std::max(seconds, 0.0f);
-	}
-
-	float LodGroup::fade_duration()
-	{
-		return AuxLodGroupFade::s_duration;
-	}
-
-	void LodGroup::show(size_t level)
+	void LodGroup::show(size_t level, float duration)
 	{
 		using AuxLodGroupFade::s_none;
 		//the time since the last camera
 		const double now = AuxLodGroupFade::seconds();
 		const float  elapsed = m_time < 0.0 ? 0.0f : float(now - m_time);
 		m_time = now;
-		const float duration = AuxLodGroupFade::s_duration;
 		if (level == m_shown)
 		{
 			//its cross-fade going on

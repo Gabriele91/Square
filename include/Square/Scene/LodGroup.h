@@ -13,8 +13,8 @@
 //    thresholds[i] (they go up: 100, 200, 400).
 //  Its bounds (center, size: the largest side of the box of its renderables, in the space of its
 //  actor) from its renderables when not given.
-//  A change of level is a cross-fade (as Unity's animated cross-fade): for fade_duration seconds
-//  both levels are drawn, the pixels of a pattern of the screen going from one to the other
+//  A change of level is a cross-fade (as Unity's animated cross-fade): for the fade duration of
+//  the settings of its world (Render::LevelOfDetailSettings) both levels are drawn, the pixels of a pattern of the screen going from one to the other
 //  (Render::Renderable::lod_fade); also a level that appears or goes (culled).
 //
 #pragma once
@@ -69,22 +69,14 @@ namespace Scene
 		//the level drawn by the last camera (levels().size(): none)
 		size_t shown() const { return m_shown; }
 
-		//the seconds of a cross-fade of all the groups (0: a level at once)
-		static void  fade_duration(float seconds);
-		static float fade_duration();
-		//a level of all the groups, wherever the camera is (a photo: 0, the most detailed; a
-		//group with fewer levels: its last one); -1: by the camera (the default)
-		static void force_level(int level);
-		static int  force_level();
-
-		//the level of a camera (by the mode)
-		size_t level(const Square::Render::Camera& camera) const;
+		//the level of a camera (by the mode; a level forced by the settings: that one)
+		size_t level(const Square::Render::Camera& camera, const Square::Render::LevelOfDetailSettings& settings) const;
 
 		//the renderables of its levels found again (its children changed)
 		void refresh();
 
 		//LevelOfDetail
-		virtual void select(const Square::Render::Camera& camera) override;
+		virtual void select(const Square::Render::Camera& camera, const Square::Render::LevelOfDetailSettings& settings) override;
 
 		//events
 		virtual void on_attach(Square::Scene::Actor& entity) override;
@@ -107,8 +99,8 @@ namespace Scene
 		//the renderables of each level, found when needed (none yet, or one gone)
 		bool found() const;
 		void find();
-		//the level of a camera: a cross-fade to it (or at once), its renderables faded
-		void show(size_t level);
+		//the level of a camera: a cross-fade to it (its seconds; 0: at once), its renderables faded
+		void show(size_t level, float fade_duration);
 		void apply();
 
 		LodMode                  m_mode{ LodMode::SCREEN };
