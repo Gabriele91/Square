@@ -143,6 +143,11 @@ namespace Scene
         //set
         void set(Render::UniformBufferTransform* gpubuffer) const override;
 
+		//static: it does not move (attribute "static"; the converter: "square_static"); it is so
+		//only if its parents are too (one that moves moves it)
+		void set_static(bool is_static);
+		bool is_static() const override;
+
         //load actor
         bool load(const std::string& path) override;
 
@@ -174,6 +179,8 @@ namespace Scene
         void    send_dirty();
         //node name
         std::string m_name;
+        //static (its own flag: is_static also asks its parents)
+        bool m_static{ false };
         //parent
         Weak<Actor> m_parent;
         //child list

@@ -1145,6 +1145,9 @@ namespace Render
 			const TextureGpuDataInformation& info
 		) = 0;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int level = 0) = 0;
+		//all of a texture (its faces, its layers; level 0) into another of its size and format, on
+		//the GPU (e.g. the cache of a shadow map into the shadow map); neither bound to a target
+		virtual void copy_texture(Texture* source, Texture* destination) = 0;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int face = 0, int level = 0) = 0;
 		virtual void bind_texture(Texture*, int texture_id, int sample_id) = 0;
 		virtual void unbind_texture(Texture*) = 0;

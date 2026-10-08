@@ -207,7 +207,10 @@ namespace Scene
 	{
 		//forced (a photo): that one, wherever the camera is
 		const int forced = AuxLodGroupForce::s_level;
-		if (forced >= 0 && !m_levels.empty()) return std::min(size_t(forced), m_levels.size() - 1);
+		if (forced >= 0 && !m_levels.empty())
+		{
+			return std::min(size_t(forced), m_levels.size() - 1);
+		}
 		auto owner = actor().lock();
 		if (!owner) return m_levels.size();
 		const Mat4& model = owner->global_model_matrix();

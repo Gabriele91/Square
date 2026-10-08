@@ -16,7 +16,6 @@
 #include "Square/Scene/Level.h"
 #include <algorithm>
 #include <cmath>
-#include <algorithm>
 #include <fstream>
 #include <sstream>
 
@@ -54,6 +53,13 @@ namespace Scene
 		, Quat()
 		, [](const Actor* actor) -> Quat  { return actor->rotation(); }
 		, [](Actor* actor,const Quat& rot){ actor->rotation(rot);     });
+
+		//(its own flag; is_static also asks its parents)
+		ctx.add_attribute_function<Actor, bool>
+		("static"
+		, false
+		, [](const Actor* actor) -> bool          { return actor->m_static; }
+		, [](Actor* actor, const bool& is_static) { actor->set_static(is_static); });
 	}
 
 	Actor::Actor(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) {}
@@ -643,6 +649,25 @@ namespace Scene
             m_tranform.m_dirty = true;
             send_dirty();
         }
+    }
+
+    void Actor::set_static(bool is_static)
+    {
+        m_static = is_static;
+    }
+
+    bool Actor::is_static() const
+    {
+        //its flag, and its parents' (a parent that moves moves it)
+        bool is_static = m_static;
+        if (is_static)
+        {
+            if (auto parent = m_parent.lock())
+            {
+                is_static = parent->is_static();
+            }
+        }
+        return is_static;
     }
     
     void Actor::send_dirty()

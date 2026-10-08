@@ -577,6 +577,7 @@ namespace Render
 			const TextureGpuDataInformation& info
 		) override;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int level = 0) override;
+		virtual void copy_texture(Texture* source, Texture* destination) override;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int cube = 0, int level = 0) override;
 		virtual void bind_texture(Texture*, int texture_id, int sample_id) override;
 		virtual void unbind_texture(Texture*) override;

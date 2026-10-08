@@ -440,6 +440,7 @@ namespace Render
         virtual Texture* create_cube_texture(const TextureRawDataInformation[6], const TextureGpuDataInformation&) override;
         virtual std::vector<unsigned char> get_texture(Texture*, int) override;
         virtual std::vector<unsigned char> get_texture(Texture*, int, int) override;
+        virtual void copy_texture(Texture* source, Texture* destination) override;
         virtual void bind_texture(Texture*, int, int) override;
         virtual void unbind_texture(Texture*) override;
         virtual void unbind_texture(int) override;

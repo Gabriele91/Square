@@ -1238,6 +1238,34 @@ void ContextMTL::generate_mipmaps(id<MTLTexture> tex)
     [cb waitUntilCompleted];
 }
 
+void ContextMTL::copy_texture(Texture* source, Texture* destination)
+{
+    const bool both = source && destination;
+    if (both && source->m_texture && destination->m_texture)
+    {
+        id<MTLTexture> from = source->m_texture;
+        id<MTLTexture> to   = destination->m_texture;
+        // in the command buffer of the frame, after what it drew (its render encoder ended)
+        end_encoder();
+        ensure_command_buffer();
+        // its slices: the faces of a cube, the layers of an array (level 0)
+        NSUInteger faces = 1;
+        if (from.textureType == MTLTextureTypeCube)
+        {
+            faces = 6;
+        }
+        const NSUInteger slices = faces * std::max<NSUInteger>(from.arrayLength, 1);
+        const MTLSize size = MTLSizeMake(from.width, from.height, 1);
+        id<MTLBlitCommandEncoder> blit = [m_cmd_buf blitCommandEncoder];
+        for (NSUInteger slice = 0; slice != slices; ++slice)
+        {
+            [blit copyFromTexture:from sourceSlice:slice sourceLevel:0 sourceOrigin:MTLOriginMake(0, 0, 0) sourceSize:size
+                        toTexture:to destinationSlice:slice destinationLevel:0 destinationOrigin:MTLOriginMake(0, 0, 0)];
+        }
+        [blit endEncoding];
+    }
+}
+
 Texture* ContextMTL::create_texture(const TextureRawDataInformation& raw, const TextureGpuDataInformation& gpu)
 {
     auto* t = new Texture();
