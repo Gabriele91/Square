@@ -2,12 +2,13 @@
 	"title": "Rush Valley",
 	"description": "laps through five biomes (origial_assets/valley), each its haze by its checkpoints (gate: cp_<n>, n - 1): the stadium in the desert, the red canyon, the ice pass, the jungle and its lake, the dunes",
 	"mode": "circuit",
+	"shadow_fit": { "moving": "follow", "still": "stable" },
 	"sun_position": { 
 		"azimuth": 134.0, 
 		"elevation": 40.0, 
 		"steps": [ 
 			{ "time": 0.0, "elevation": 40.0, "azimuth": 134.0 }, 
-			{ "time": 90.0, "elevation": 18.0, "azimuth": 200.0 } 
+			{ "time": 75.0, "elevation": 18.0, "azimuth": 200.0 } 
 		] 
 	},
 	"camera": { "near": 0.5, "far": 1500.0 },

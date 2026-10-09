@@ -102,6 +102,10 @@ namespace Rush
 		int                          m_cascades{ DIRECTION_SHADOW_CSM_DEFAULT_FACES };
 		float                        m_distance{ 1.0f };
 		float                        m_map_scale{ 1.0f };
+		//how its cascades follow the camera ("follow": every frame; "stable": they stay, a margin
+		//larger, their static casters in a cache)
+		Square::Scene::CascadeFit    m_fit{ Square::Scene::CascadeFit::FOLLOW };
+		float                        m_margin{ 0.2f };
 	};
 
 	//a level of an effect of the graphics (graphics.json): its name ("ultra"), its title in the

@@ -1266,6 +1266,24 @@ void ContextMTL::copy_texture(Texture* source, Texture* destination)
     }
 }
 
+void ContextMTL::copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer)
+{
+    const bool both = source && destination;
+    if (both && source->m_texture && destination->m_texture)
+    {
+        id<MTLTexture> from = source->m_texture;
+        id<MTLTexture> to   = destination->m_texture;
+        // in the command buffer of the frame, after what it drew (its render encoder ended)
+        end_encoder();
+        ensure_command_buffer();
+        const MTLSize size = MTLSizeMake(from.width, from.height, 1);
+        id<MTLBlitCommandEncoder> blit = [m_cmd_buf blitCommandEncoder];
+        [blit copyFromTexture:from sourceSlice:source_layer sourceLevel:0 sourceOrigin:MTLOriginMake(0, 0, 0) sourceSize:size
+                    toTexture:to destinationSlice:destination_layer destinationLevel:0 destinationOrigin:MTLOriginMake(0, 0, 0)];
+        [blit endEncoding];
+    }
+}
+
 Texture* ContextMTL::create_texture(const TextureRawDataInformation& raw, const TextureGpuDataInformation& gpu)
 {
     auto* t = new Texture();

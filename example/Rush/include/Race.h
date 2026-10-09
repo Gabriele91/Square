@@ -111,6 +111,8 @@ public:
 	void respawn(size_t id);
 	//the sun of the map on its steps (its time: the one of the race)
 	void update_sun();
+	//its sun moving now (between the first step of its map and the last one)
+	bool sun_moving() const;
 	//the haze where the player is on a circuit (its zone, blending into the next one); false:
 	//not a circuit (the haze of the map)
 	bool zone_fog(Rush::RaceFog& fog) const;

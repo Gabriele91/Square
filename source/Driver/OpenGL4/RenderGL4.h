@@ -612,6 +612,7 @@ namespace Render
 		) override;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int level = 0) override;
 		virtual void copy_texture(Texture* source, Texture* destination) override;
+		virtual void copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer) override;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int face = 0, int level = 0) override;
 		virtual void bind_texture(Texture*, int texture_id, int sempler_id) override;
 		virtual void unbind_texture(Texture*) override;

@@ -40,6 +40,17 @@ namespace AuxMain
 		return std::min(map, camera_far);
 	}
 
+	//the fit of the cascades of the sun of a map, if it chooses one (as its sun moves now or
+	//stays: the race changes it on the way); else the one of the settings
+	static void map_shadow_fit(const Race& race, const RaceMap& map)
+	{
+		auto sun = race.arena().sun();
+		if (sun && map.m_shadow_fit_set)
+		{
+			sun->cascade_fit(map.shadow_fit(race.sun_moving()));
+		}
+	}
+
 	//the share of a fade: its time over its length (no length: done at once)
 	static float fade_share(float time, float length)
 	{
@@ -400,6 +411,7 @@ private:
 		m_graphics.race_depth_of_field(true);
 		m_graphics.antialiasing(m_ui.settings().m_antialiasing);
 		m_ui.settings().apply_shadows(m_race->arena().sun(), AuxMain::shadow_view(m_race->arena()));
+		AuxMain::map_shadow_fit(*m_race, map);
 		if (m_demo) m_demo->race_started(m_race->arena());
 		m_state = m_next = State::RACE;
 		//its loading screen stays a little, then it goes
@@ -424,6 +436,7 @@ private:
 		best.apply_effects(m_graphics);
 		m_graphics.antialiasing(true);
 		best.apply_shadows(m_race->arena().sun(), AuxMain::shadow_view(m_race->arena()));
+		AuxMain::map_shadow_fit(*m_race, map);
 		//every thing at its most detailed level, at once
 		if (auto render_world = world().instance<Square::RenderInstance>())
 		{

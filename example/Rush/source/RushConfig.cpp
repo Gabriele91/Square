@@ -430,6 +430,25 @@ namespace Rush
 			map.m_camera_near = AuxConfig::number(*camera, "near", map.m_camera_near);
 			map.m_camera_far  = AuxConfig::number(*camera, "far", map.m_camera_far);
 		}
+		//how the cascades of its sun follow the camera, moving and still (none: as the settings)
+		if (root.contains("shadow_fit"))
+		{
+			map.m_shadow_fit_set = true;
+			const std::vector< std::pair<std::string, Square::Scene::CascadeFit> > fits
+			{
+				{ "follow", Square::Scene::CascadeFit::FOLLOW }, { "stable", Square::Scene::CascadeFit::STABLE }
+			};
+			if (const auto* fit = AuxConfig::object(root, "shadow_fit"))
+			{
+				map.m_shadow_fit_moving = AuxConfig::named(*fit, "moving", fits, map.m_shadow_fit_moving);
+				map.m_shadow_fit_still = AuxConfig::named(*fit, "still", fits, map.m_shadow_fit_still);
+			}
+			else
+			{
+				map.m_shadow_fit_moving = AuxConfig::named(root, "shadow_fit", fits, map.m_shadow_fit_moving);
+				map.m_shadow_fit_still = map.m_shadow_fit_moving;
+			}
+		}
 		//its view (the photo of the map)
 		if (const auto* view = AuxConfig::object(root, "view"))
 		{
@@ -614,6 +633,11 @@ namespace Rush
 		settings.m_cascades = number(*json, "cascades", settings.m_cascades);
 		settings.m_distance = number(*json, "distance", settings.m_distance);
 		settings.m_map_scale = number(*json, "map_scale", settings.m_map_scale);
+		settings.m_fit = AuxConfig::named<Square::Scene::CascadeFit>(*json, "fit",
+		{
+			{ "follow", Square::Scene::CascadeFit::FOLLOW }, { "stable", Square::Scene::CascadeFit::STABLE }
+		}, settings.m_fit);
+		settings.m_margin = number(*json, "margin", settings.m_margin);
 		return true;
 	}
 }

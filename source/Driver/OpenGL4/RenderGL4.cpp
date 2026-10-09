@@ -2637,13 +2637,13 @@ namespace Render
 		}
 	}
 
-	void ContextGL4::copy_texture(Texture* source, Texture* destination)
+	namespace AuxCopyTexture
 	{
-		const bool both = source && destination;
-		if (both && source->m_type_texture == destination->m_type_texture)
+		//the layers of a texture, pairs (from, to), blitted (its depth): its framebuffers made and
+		//its bindings kept (no glCopyImageSubData in GL 4.1)
+		static void blit_layers(const Texture* source, const Texture* destination, const std::vector<IVec2>& layers)
 		{
-			//(no glCopyImageSubData in GL 4.1: a blit of the depth, a face or a layer at a time)
-			const IVec3 size = AuxCopyTexture::size_of(source);
+			const IVec3 size = size_of(source);
 			GLint read_previous = 0, draw_previous = 0;
 			glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &read_previous);
 			glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &draw_previous);
@@ -2655,10 +2655,10 @@ namespace Render
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffers[1]);
 			glReadBuffer(GL_NONE);
 			glDrawBuffer(GL_NONE);
-			for (int layer = 0; layer != size.z; ++layer)
+			for (const IVec2& layer : layers)
 			{
-				AuxCopyTexture::attach(GL_READ_FRAMEBUFFER, source, layer);
-				AuxCopyTexture::attach(GL_DRAW_FRAMEBUFFER, destination, layer);
+				attach(GL_READ_FRAMEBUFFER, source, layer.x);
+				attach(GL_DRAW_FRAMEBUFFER, destination, layer.y);
 				glBlitFramebuffer(0, 0, size.x, size.y, 0, 0, size.x, size.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 			}
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, GLuint(read_previous));
@@ -2668,6 +2668,32 @@ namespace Render
 			{
 				glEnable(GL_SCISSOR_TEST);
 			}
+		}
+	}
+
+	void ContextGL4::copy_texture(Texture* source, Texture* destination)
+	{
+		const bool both = source && destination;
+		if (both && source->m_type_texture == destination->m_type_texture)
+		{
+			//all of its layers (its faces)
+			const int count = AuxCopyTexture::size_of(source).z;
+			std::vector<IVec2> layers;
+			layers.reserve(size_t(count));
+			for (int layer = 0; layer != count; ++layer)
+			{
+				layers.push_back(IVec2(layer, layer));
+			}
+			AuxCopyTexture::blit_layers(source, destination, layers);
+		}
+	}
+
+	void ContextGL4::copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer)
+	{
+		const bool both = source && destination;
+		if (both && source->m_type_texture == destination->m_type_texture)
+		{
+			AuxCopyTexture::blit_layers(source, destination, { IVec2(int(source_layer), int(destination_layer)) });
 		}
 	}
 

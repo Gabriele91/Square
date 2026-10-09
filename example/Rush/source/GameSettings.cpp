@@ -297,6 +297,8 @@ void GameSettings::apply_shadows(const Square::Shared<Square::Scene::DirectionLi
 	if (!Rush::Config::get().shadows(level_name("shadows", m_shadows), shadows)) return;
 	sun->shadow_filter(shadows.m_filter);
 	sun->cascades(shadows.m_cascades);
+	sun->cascade_fit(shadows.m_fit);
+	sun->cascade_margin(shadows.m_margin);
 	//its shadow map: the map's scaled
 	const IVec2 size = sun->shadow_size();
 	if (shadows.m_map_scale != 1.0f && size.x > 0 && size.y > 0)

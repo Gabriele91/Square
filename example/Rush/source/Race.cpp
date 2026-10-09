@@ -700,11 +700,34 @@ namespace AuxRace
 	}
 }
 
+bool Race::sun_moving() const
+{
+	bool moving = false;
+	if (m_map && !m_map->m_sun_steps.empty())
+	{
+		//between its first step and its last one
+		const float time = float(m_race_time);
+		moving = time >= m_map->m_sun_steps.front().m_time && time < m_map->m_sun_steps.back().m_time;
+	}
+	return moving;
+}
+
 void Race::update_sun()
 {
-	if (!m_map || !m_arena || m_map->m_sun_steps.empty()) return;
-	const SunStep at = AuxRace::sun_at(m_map->m_sun_steps, float(m_race_time));
-	m_arena->sun_direction(Arena::sun_direction(at.m_azimuth, at.m_elevation));
+	if (m_map && m_arena)
+	{
+		if (!m_map->m_sun_steps.empty())
+		{
+			const SunStep at = AuxRace::sun_at(m_map->m_sun_steps, float(m_race_time));
+			m_arena->sun_direction(Arena::sun_direction(at.m_azimuth, at.m_elevation));
+		}
+		//the fit of its cascades: while it moves, once it stays (as the map chooses)
+		auto sun = m_arena->sun();
+		if (sun && m_map->m_shadow_fit_set)
+		{
+			sun->cascade_fit(m_map->shadow_fit(sun_moving()));
+		}
+	}
 }
 
 bool Race::zone_fog(RaceFog& fog) const

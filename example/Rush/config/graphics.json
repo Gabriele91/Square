@@ -33,11 +33,11 @@
 		"best":  { "resolution": "full", "steps": 64, "max_distance": 160.0, "intensity": 0.1, "anisotropy": 0.45 }
 	},
 	"shadows": {
-		"very_low": { "filter": "none", "cascades": 2, "distance": 1.0, "map_scale": 0.5 },
-		"low":      { "filter": "pcf", "cascades": 3, "distance": 1.0, "map_scale": 1.0 },
-		"medium":   { "filter": "pcf", "cascades": 4, "distance": 1.6, "map_scale": 1.0 },
-		"high":     { "filter": "pcss", "cascades": 4, "distance": 1.6, "map_scale": 2.0 },
-		"ultra":    { "filter": "pcss", "cascades": 6, "distance": 3.0, "map_scale": 3.0 },
-		"best":     { "filter": "pcss", "cascades": 8, "distance": 3.0, "map_scale": 4.0 }
+		"very_low": { "filter": "none", "cascades": 2, "distance": 1.0, "map_scale": 0.5, "fit": "stable", "margin": 0.2 },
+		"low":      { "filter": "pcf", "cascades": 3, "distance": 1.0, "map_scale": 1.0, "fit": "stable", "margin": 0.2 },
+		"medium":   { "filter": "pcf", "cascades": 4, "distance": 1.6, "map_scale": 1.0, "fit": "stable", "margin": 0.2 },
+		"high":     { "filter": "pcss", "cascades": 4, "distance": 1.6, "map_scale": 2.0, "fit": "stable", "margin": 0.2 },
+		"ultra":    { "filter": "pcss", "cascades": 6, "distance": 3.0, "map_scale": 3.0, "fit": "stable", "margin": 0.2 },
+		"best":     { "filter": "pcss", "cascades": 8, "distance": 3.0, "map_scale": 4.0, "fit": "stable", "margin": 0.2 }
 	}
 }

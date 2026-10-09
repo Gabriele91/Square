@@ -95,6 +95,24 @@ namespace Rush
 		float                    m_sun_azimuth{ 0.0f };
 		float                    m_sun_elevation{ 45.0f };
 		std::vector<SunStep>     m_sun_steps;
+		//how the cascades of its sun follow the camera, while it moves (between its steps) and while
+		//it stays ("shadow_fit": a name for both, or { "moving": ..., "still": ... }; "follow": no
+		//cache, "stable": a cache); not set: as the level of the shadows of the settings
+		bool                      m_shadow_fit_set{ false };
+		Square::Scene::CascadeFit m_shadow_fit_moving{ Square::Scene::CascadeFit::FOLLOW };
+		Square::Scene::CascadeFit m_shadow_fit_still{ Square::Scene::CascadeFit::STABLE };
+
+		//the fit of the cascades of its sun, moving or not
+		Square::Scene::CascadeFit shadow_fit(bool moving) const
+		{
+			Square::Scene::CascadeFit fit = m_shadow_fit_still;
+			if (moving)
+			{
+				fit = m_shadow_fit_moving;
+			}
+			return fit;
+		}
+
 		//its view (--view: the photo of the map): where the camera is, what it looks at (in the
 		//coordinates of its scene, Blender: z up, as the thumbnail of its build script), its lens
 		//(mm, a film 36 mm wide); not set: from over a side of the map to its middle
