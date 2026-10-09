@@ -2801,6 +2801,22 @@ namespace Render
 		}
 	}
 
+	void ContextDX11::copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer)
+	{
+		ID3D11Texture2D* from = source ? source->id3d11_texture2D() : nullptr;
+		ID3D11Texture2D* to = destination ? destination->id3d11_texture2D() : nullptr;
+		if (from && to)
+		{
+			//(a layer, a face: a sub resource of level 0)
+			D3D11_TEXTURE2D_DESC from_desc, to_desc;
+			from->GetDesc(&from_desc);
+			to->GetDesc(&to_desc);
+			const UINT from_sub = D3D11CalcSubresource(0, source_layer, from_desc.MipLevels);
+			const UINT to_sub = D3D11CalcSubresource(0, destination_layer, to_desc.MipLevels);
+			device_context()->CopySubresourceRegion(to, to_sub, 0, 0, 0, from, from_sub, nullptr);
+		}
+	}
+
 	std::vector< unsigned char > ContextDX11::get_texture(Texture* tex, int cube, int level)
 	{
 		D3D11_MAPPED_SUBRESOURCE source;

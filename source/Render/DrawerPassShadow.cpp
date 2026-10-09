@@ -116,6 +116,25 @@ namespace Render
             return built && size && type && layers;
         }
 
+        //the caches of a map not used for a while: gone
+        template < typename Map >
+        void forget(Map& caches, size_t draws)
+        {
+            auto it = caches.begin();
+            while (it != caches.end())
+            {
+                const bool old = draws - it->second.m_used > s_forget_after;
+                if (old)
+                {
+                    it = caches.erase(it);
+                }
+                else
+                {
+                    ++it;
+                }
+            }
+        }
+
         //the buffer of a cache made as the shadow map of its light, if it is not (true: made)
         bool fit(std::unique_ptr<ShadowBuffer>& cache, const ShadowBuffer& shadow, Square::Context& context)
         {
@@ -138,6 +157,26 @@ namespace Render
     bool DrawerPassShadow::static_cache() const
     {
         return m_static_cache;
+    }
+
+    void DrawerPassShadow::cascades_cache(bool enable)
+    {
+        m_cascades_cache = enable;
+    }
+
+    bool DrawerPassShadow::cascades_cache() const
+    {
+        return m_cascades_cache;
+    }
+
+    void DrawerPassShadow::dynamic_cascades(int cascades)
+    {
+        m_dynamic_cascades = std::clamp(cascades, 0, int(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
+    }
+
+    int DrawerPassShadow::dynamic_cascades() const
+    {
+        return m_dynamic_cascades;
     }
 
     //draw
@@ -203,15 +242,26 @@ namespace Render
 		break;
 		case LightType::DIRECTION:
 		{
-			//(its cascades follow the camera: all of its casters, every frame)
 			Render::UniformDirectionShadowLight udirectionshadow;
 			light.set(&udirectionshadow, &camera);
 			render().update_steam_CB(m_cb_direction_light.get(), (const unsigned char*)&udirectionshadow, sizeof(udirectionshadow));
 			render().set_viewport_state(light.shadow_viewport());
-			render().enable_render_target(light.shadow_buffer().target());
-			render().clear(Render::CLEAR_DEPTH);
-			draw_casters(queues, technique_name, inputs, &udirectionshadow, Casters::ALL);
-			render().disable_render_target(light.shadow_buffer().target());
+			if (m_cascades_cache && light.stable_cascades())
+			{
+				//its cascades stay: their caches
+				draw_cascades(light, udirectionshadow, queues, technique_name, inputs);
+			}
+			else
+			{
+				//its cascades follow the camera: all of its casters, every frame; its caches no more
+				//as its shadow map (the dynamic casters in every layer, other cascades): forgotten,
+				//made again if its cascades stay again
+				m_cascade_caches.erase(&light);
+				render().enable_render_target(light.shadow_buffer().target());
+				render().clear(Render::CLEAR_DEPTH);
+				draw_casters(queues, technique_name, inputs, &udirectionshadow, Casters::ALL);
+				render().disable_render_target(light.shadow_buffer().target());
+			}
 		}
 		break;
 		default:
@@ -276,6 +326,130 @@ namespace Render
 		}
     }
 
+    bool DrawerPassShadow::settled(const Renderable& renderable) const
+    {
+		//its fade: 1 shown, t coming (drawn from half of it), -t going (drawn until half of it)
+		const float fade = renderable.lod_fade();
+		bool shown = false;
+		if (fade > 0.0f)
+		{
+			shown = fade >= 0.5f;
+		}
+		else if (fade < 0.0f)
+		{
+			shown = -fade < 0.5f;
+		}
+		return shown;
+    }
+
+    void DrawerPassShadow::cascades_casters(const PoolQueues& queues, const UniformDirectionShadowLight& cascades, std::array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>& hashes) const
+    {
+		//(FNV-1a: its offset basis)
+		hashes.fill(14695981039346656037ull);
+		for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
+		{
+			const bool caster = randerable && randerable->is_static() && randerable->can_draw() && settled(*randerable);
+			if (caster)
+			{
+				//which one, where: in the cascades it is in
+				const Renderable* identity = randerable.get();
+				Mat4 model(1.0f);
+				if (auto transform = randerable->transform().lock())
+				{
+					model = transform->global_model_matrix();
+				}
+				const uint32 layers = AuxCascades::mask(randerable->bounding_box().to_aabb(), cascades);
+				for (size_t i = 0; i != hashes.size(); ++i)
+				{
+					if (MULTI_PASS_HAS_LAYER(layers, i))
+					{
+						AuxShadowCache::hash(hashes[i], &identity, sizeof(identity));
+						AuxShadowCache::hash(hashes[i], &model, sizeof(model));
+					}
+				}
+			}
+		}
+    }
+
+    void DrawerPassShadow::draw_cascades
+    (
+      const Light& light
+    , const UniformDirectionShadowLight& cascades
+    , const PoolQueues& queues
+    , const std::string& technique_name
+    , EffectPassInputs& inputs
+    )
+    {
+		const ShadowBuffer& shadow = light.shadow_buffer();
+		CascadeCache& cache = m_cascade_caches[&light];
+		cache.m_used = m_draws;
+		//its buffers: a layer for each cascade, a layer at the far depth (cleared once)
+		const bool made = AuxShadowCache::fit(cache.m_buffer, shadow, m_context);
+		if (!cache.m_blank || cache.m_blank->size() != shadow.size())
+		{
+			cache.m_blank = std::make_unique<ShadowBuffer>(m_context);
+			cache.m_blank->build(shadow.size(), ShadowBuffer::SB_TEXTURE_CSM, 1);
+			render().enable_render_target(cache.m_blank->target());
+			render().clear(Render::CLEAR_DEPTH);
+			render().disable_render_target(cache.m_blank->target());
+		}
+		//the cascades out of date: new, moved, their static casters changed
+		const int count = std::clamp(cascades.m_options.y, 1, int(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
+		std::array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> hashes;
+		cascades_casters(queues, cascades, hashes);
+		uint32 dirty = 0;
+		for (int i = 0; i != count; ++i)
+		{
+			std::vector<unsigned char> key = AuxShadowCache::key(cascades.m_projection[i]);
+			const std::vector<unsigned char> view = AuxShadowCache::key(cascades.m_view[i]);
+			key.insert(key.end(), view.begin(), view.end());
+			const bool moved = cache.m_keys[i] != key;
+			const bool changed = cache.m_casters[i] != hashes[i];
+			if (made || moved || changed)
+			{
+				dirty |= MULTI_PASS_LAYER_BIT(i);
+				cache.m_keys[i] = key;
+				cache.m_casters[i] = hashes[i];
+			}
+		}
+		//their static casters again (each layer cleared: the far depth copied in)
+		if (dirty != 0)
+		{
+			for (int i = 0; i != count; ++i)
+			{
+				if (MULTI_PASS_HAS_LAYER(dirty, i))
+				{
+					render().copy_texture_layer(cache.m_blank->texture(), 0, cache.m_buffer->texture(), (unsigned int)i);
+				}
+			}
+			render().enable_render_target(cache.m_buffer->target());
+			draw_casters(queues, technique_name, inputs, &cascades, Casters::STATIC, dirty, true);
+			render().disable_render_target(cache.m_buffer->target());
+		}
+		//into the shadow map: the nearer ones (the dynamic casters over them, every frame), the
+		//farther ones only when drawn again (nothing over them: as their caches)
+		const int nearer = std::min(m_dynamic_cascades, count);
+		uint32 dynamic = 0;
+		for (int i = 0; i != nearer; ++i)
+		{
+			dynamic |= MULTI_PASS_LAYER_BIT(i);
+		}
+		for (int i = 0; i != count; ++i)
+		{
+			const bool copied = MULTI_PASS_HAS_LAYER(dirty, i) || MULTI_PASS_HAS_LAYER(dynamic, i);
+			if (copied)
+			{
+				render().copy_texture_layer(cache.m_buffer->texture(), (unsigned int)i, shadow.texture(), (unsigned int)i);
+			}
+		}
+		if (dynamic != 0)
+		{
+			render().enable_render_target(shadow.target());
+			draw_casters(queues, technique_name, inputs, &cascades, Casters::DYNAMIC, dynamic, false);
+			render().disable_render_target(shadow.target());
+		}
+    }
+
     uint64 DrawerPassShadow::static_casters(const PoolQueues& queues) const
     {
 		//(FNV-1a: its offset basis)
@@ -302,19 +476,8 @@ namespace Render
 
     void DrawerPassShadow::forget_old_caches()
     {
-		auto it = m_caches.begin();
-		while (it != m_caches.end())
-		{
-			const bool old = m_draws - it->second.m_used > AuxShadowCache::s_forget_after;
-			if (old)
-			{
-				it = m_caches.erase(it);
-			}
-			else
-			{
-				++it;
-			}
-		}
+		AuxShadowCache::forget(m_caches, m_draws);
+		AuxShadowCache::forget(m_cascade_caches, m_draws);
     }
 
     void DrawerPassShadow::draw_casters
@@ -324,24 +487,27 @@ namespace Render
     , EffectPassInputs& inputs
     , const UniformDirectionShadowLight* cascades
     , Casters casters
+    , uint32 layers
+    , bool settle
     )
     {
 		Render::UniformBufferTransform utransform;
 		//for each elements of opaque and translucent queues
 		for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
 		{
-			const bool drawn = randerable && randerable->can_draw() && takes(*randerable, casters);
+			const bool caster = randerable && randerable->can_draw() && takes(*randerable, casters);
+			const bool drawn = caster && (!settle || settled(*randerable));
 			if (drawn)
 			{
-				//the cascades of the caster (none: not drawn)
-				inputs.m_layer_mask = MULTI_PASS_ALL_LAYERS;
+				//the cascades of the caster, of the ones asked (none: not drawn)
+				inputs.m_layer_mask = layers;
 				if (cascades)
 				{
-					inputs.m_layer_mask = AuxCascades::mask(randerable->bounding_box().to_aabb(), *cascades);
+					inputs.m_layer_mask &= AuxCascades::mask(randerable->bounding_box().to_aabb(), *cascades);
 				}
 				if (inputs.m_layer_mask != 0)
 				{
-					draw_caster(*randerable, technique_name, inputs, utransform);
+					draw_caster(*randerable, technique_name, inputs, utransform, settle);
 				}
 			}
 		}
@@ -353,18 +519,25 @@ namespace Render
     , const std::string& technique_name
     , EffectPassInputs& inputs
     , UniformBufferTransform& utransform
+    , bool settle
     )
     {
+		//its fade (settled: whole)
+		float fade = randerable.lod_fade();
+		if (settle)
+		{
+			fade = 1.0f;
+		}
 		//its transform
 		if (auto transform = randerable.transform().lock())
 		{
 			transform->set(&utransform);
-			utransform.m_lod_fade = randerable.lod_fade();
+			utransform.m_lod_fade = fade;
 			render().update_steam_CB(m_cb_transform.get(), (const unsigned char*)&utransform, sizeof(utransform));
 		}
 		//each of its materials: the technique of its effect (the clip variant: by its material, or
 		//its level of detail fading)
-		const bool fading = randerable.lod_fade() < 1.0f;
+		const bool fading = fade < 1.0f;
 		for (size_t material_id = 0; material_id != randerable.materials_count(); ++material_id)
 		{
 			auto material = randerable.material(material_id).lock();
