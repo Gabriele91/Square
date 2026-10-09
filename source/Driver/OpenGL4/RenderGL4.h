@@ -675,6 +675,9 @@ namespace Render
 		GLuint             s_vao_attributes;
 		RenderDriverInfo   s_render_driver_info;
 		bool               m_srgb_fb{ false };
+		//glCopyImageSubData (GL 4.3, GL_ARB_copy_image; not on macOS GL 4.1): the copies of the
+		//textures by it, else blitted
+		bool               m_copy_image{ false };
 
 #if defined(RENDER_PROFILER)
 		//GPU timer
