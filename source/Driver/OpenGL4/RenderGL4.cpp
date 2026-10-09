@@ -962,6 +962,10 @@ namespace Render
 		//macOS), ASTC its extension (Apple GPUs, some Intel)
 		context->s_render_driver_info.m_texture_bc = has_gl_extension("GL_EXT_texture_compression_s3tc");
 		context->s_render_driver_info.m_texture_astc = has_gl_extension("GL_KHR_texture_compression_astc_ldr");
+		//the copies of the textures: glCopyImageSubData if the driver has it (loaded by glad)
+#if defined( _WIN32 ) ||  defined( __linux )
+		context->m_copy_image = GLAD_GL_ARB_copy_image && glCopyImageSubData != nullptr;
+#endif
     }
     
 #if defined( WIN32 )
@@ -1074,6 +1078,7 @@ namespace Render
 		print_errors();
         //get info
         compute_render_driver_info(this);
+		logger()->info(m_copy_image ? "OGL texture copies: glCopyImageSubData" : "OGL texture copies: blit");
         //clean
         print_errors();
 #if defined(RENDER_PROFILER)
@@ -2640,7 +2645,7 @@ namespace Render
 	namespace AuxCopyTexture
 	{
 		//the layers of a texture, pairs (from, to), blitted (its depth): its framebuffers made and
-		//its bindings kept (no glCopyImageSubData in GL 4.1)
+		//its bindings kept (no glCopyImageSubData: GL 4.1, macOS)
 		static void blit_layers(const Texture* source, const Texture* destination, const std::vector<IVec2>& layers)
 		{
 			const IVec3 size = size_of(source);
@@ -2671,6 +2676,24 @@ namespace Render
 		}
 	}
 
+	namespace AuxCopyTexture
+	{
+		//layers of a texture, from one of them on, copied as they are into another one (its faces:
+		//its layers; glCopyImageSubData, GL 4.3)
+		static void copy_layers(const Texture* source, int source_layer, const Texture* destination, int destination_layer, int count)
+		{
+#if defined( _WIN32 ) ||  defined( __linux )
+			const IVec3 size = size_of(source);
+			glCopyImageSubData
+			(
+			  source->m_tbo, source->m_type_texture, 0, 0, 0, source_layer
+			, destination->m_tbo, destination->m_type_texture, 0, 0, 0, destination_layer
+			, size.x, size.y, count
+			);
+#endif
+		}
+	}
+
 	void ContextGL4::copy_texture(Texture* source, Texture* destination)
 	{
 		const bool both = source && destination;
@@ -2678,13 +2701,20 @@ namespace Render
 		{
 			//all of its layers (its faces)
 			const int count = AuxCopyTexture::size_of(source).z;
-			std::vector<IVec2> layers;
-			layers.reserve(size_t(count));
-			for (int layer = 0; layer != count; ++layer)
+			if (m_copy_image)
 			{
-				layers.push_back(IVec2(layer, layer));
+				AuxCopyTexture::copy_layers(source, 0, destination, 0, count);
 			}
-			AuxCopyTexture::blit_layers(source, destination, layers);
+			else
+			{
+				std::vector<IVec2> layers;
+				layers.reserve(size_t(count));
+				for (int layer = 0; layer != count; ++layer)
+				{
+					layers.push_back(IVec2(layer, layer));
+				}
+				AuxCopyTexture::blit_layers(source, destination, layers);
+			}
 		}
 	}
 
@@ -2693,7 +2723,14 @@ namespace Render
 		const bool both = source && destination;
 		if (both && source->m_type_texture == destination->m_type_texture)
 		{
-			AuxCopyTexture::blit_layers(source, destination, { IVec2(int(source_layer), int(destination_layer)) });
+			if (m_copy_image)
+			{
+				AuxCopyTexture::copy_layers(source, int(source_layer), destination, int(destination_layer), 1);
+			}
+			else
+			{
+				AuxCopyTexture::blit_layers(source, destination, { IVec2(int(source_layer), int(destination_layer)) });
+			}
 		}
 	}
 
