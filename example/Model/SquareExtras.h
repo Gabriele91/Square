@@ -37,4 +37,9 @@ namespace SquareExtras
     //the attributes of an object (a light...) from the extras "square_<attribute>": the value
     //is turned into the type of the attribute (a number for an IVec2 fills both components)
     void apply(Square::Object& object, const Square::Data::JsonObject& extras);
+
+    //the properties for the game ("game_<name>", the prefix out) in a Scene::Properties of the
+    //actor (made only if there is one); how many
+    extern const std::string GAME_PREFIX;
+    size_t game_properties(Square::Scene::Actor& actor, const Square::Data::JsonObject& extras);
 }

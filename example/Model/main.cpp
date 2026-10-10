@@ -159,6 +159,8 @@ public:
                 {
                     lod_extras[actor.get()] = node.extras;
                 }
+                //the properties for the game ("game_<name>": a Scene::Properties, the engine ignores them)
+                SquareExtras::game_properties(*actor, node.extras);
                 //static: its "square_static", else --static (the engine: only if its parents are too)
                 actor->set_static(SquareExtras::flag(node.extras, "static").value_or(m_static));
                 //instances: its children by their mesh (InstanceGroups)

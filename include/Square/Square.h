@@ -113,6 +113,7 @@
 #include "Square/Scene/ParticleEmitter.h"
 #include "Square/Scene/Animator.h"
 #include "Square/Scene/SkinnedMesh.h"
+#include "Square/Scene/Properties.h"
 #include "Square/Scene/LodGroup.h"
 #include "Square/Scene/World.h"
 /* main defines */

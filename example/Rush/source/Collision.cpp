@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <map>
 
 using namespace Square;
 
@@ -368,6 +369,51 @@ bool is_blocker(const std::string& name)
 
 namespace AuxCollisionMesh
 {
+	//items in a leaf of a tree: the triangles of a shape, the objects
+	static constexpr size_t s_shape_leaf = 8;
+	static constexpr size_t s_object_leaf = 4;
+
+	//how a node collides (the property of the game "collision", its children too)
+	enum class Mode
+	{
+		SOLID,  //its triangles, only the solid ones (or every one: not solid only)
+		EVERY,  //its triangles, every one (also not opaque)
+		BOX,    //its box
+		SPHERE, //a sphere in its box
+		NONE    //not solid
+	};
+
+	//the mode of a node: its property "collision", else the one of its parent
+	static Mode mode_of(const Shared<Scene::Actor>& node, Mode parent)
+	{
+		Mode mode = parent;
+		if (node->contains<Scene::Properties>())
+		{
+			auto properties = node->component<Scene::Properties>();
+			if (properties->has("collision"))
+			{
+				const std::string value = properties->string("collision", "true");
+				if (value == "false" || value == "0" || value == "none")
+				{
+					mode = Mode::NONE;
+				}
+				else if (value == "box")
+				{
+					mode = Mode::BOX;
+				}
+				else if (value == "sphere")
+				{
+					mode = Mode::SPHERE;
+				}
+				else
+				{
+					mode = Mode::EVERY;
+				}
+			}
+		}
+		return mode;
+	}
+
 	//a sub mesh solid: only the opaque surfaces, not the translucent ones, nor the alpha tested
 	//ones (mask >= 0: grass, foliage, drawn as opaque)
 	static bool solid(const Render::Renderable& renderable, size_t submesh_id)
@@ -383,38 +429,152 @@ namespace AuxCollisionMesh
 		return solid;
 	}
 
-	//the triangles of a node in world space: its static mesh, its instanced mesh (false: none, or
-	//not read)
-	static bool triangles(const Shared<Scene::Actor>& node, std::vector<Vec3>& points, bool every)
+	//the sub meshes taken of a renderable (a bit each, the first 64), every one or the solid ones
+	static uint64 taken(const Render::Renderable& renderable, size_t submeshes, bool every)
 	{
-		bool read = false;
-		if (node->contains<Scene::StaticMesh>())
+		uint64 mask = 0;
+		for (size_t i = 0; i < submeshes && i < 64; ++i)
 		{
-			auto mesh = node->component<Scene::StaticMesh>();
-			auto filter = [&mesh](size_t submesh_id) { return solid(*mesh, submesh_id); };
-			read = mesh->triangles(points, every ? nullptr : std::function<bool(size_t)>(filter));
+			if (every || solid(renderable, i))
+			{
+				mask |= uint64(1) << i;
+			}
 		}
-		if (node->contains<Scene::InstancedMesh>())
-		{
-			auto mesh = node->component<Scene::InstancedMesh>();
-			auto filter = [&mesh](size_t submesh_id) { return solid(*mesh, submesh_id); };
-			read = mesh->triangles(points, every ? nullptr : std::function<bool(size_t)>(filter)) || read;
-		}
-		return read;
+		return mask;
 	}
 
-	//a node with something drawn (its triangles)
+	//the shapes made by an add, by their mesh and what of it (its sub meshes, or its box: ~0 + 1)
+	using ShapeKey = std::pair<const Resource::Mesh*, uint64>;
+	using Shapes = std::map<ShapeKey, Shared<const CollisionMesh::Shape>>;
+	static constexpr uint64 s_box_key = ~uint64(0) - 1;
+
+	//a shape of triangles, its tree
+	static Shared<CollisionMesh::Shape> shape_of(std::vector<CollisionMesh::Triangle>&& triangles)
+	{
+		auto shape = std::make_shared<CollisionMesh::Shape>();
+		shape->m_triangles = std::move(triangles);
+		std::vector<Vec3> mins, maxs;
+		mins.reserve(shape->m_triangles.size());
+		maxs.reserve(shape->m_triangles.size());
+		for (const auto& triangle : shape->m_triangles)
+		{
+			mins.push_back(glm::min(triangle.m_a, glm::min(triangle.m_b, triangle.m_c)));
+			maxs.push_back(glm::max(triangle.m_a, glm::max(triangle.m_b, triangle.m_c)));
+		}
+		shape->m_tree.build(mins, maxs, s_shape_leaf);
+		return shape;
+	}
+
+	//the triangles of the sub meshes taken of a mesh (its own space); nullptr: none, not read
+	static Shared<const CollisionMesh::Shape> mesh_shape(const Resource::Mesh& mesh, uint64 mask, Shapes& shapes)
+	{
+		const ShapeKey key(&mesh, mask);
+		auto found = shapes.find(key);
+		if (found != shapes.end())
+		{
+			return found->second;
+		}
+		std::vector<Vec3> points;
+		Shared<const CollisionMesh::Shape> made;
+		const bool read = mesh.local_triangles(points, [mask](size_t submesh) { return submesh < 64 && (mask >> submesh) & 1; });
+		if (read)
+		{
+			std::vector<CollisionMesh::Triangle> triangles;
+			triangles.reserve(points.size() / 3);
+			for (size_t i = 0; i + 2 < points.size(); i += 3)
+			{
+				//(degenerate: none)
+				if (length(cross(points[i + 1] - points[i], points[i + 2] - points[i])) >= 1e-8f)
+				{
+					triangles.push_back({ points[i], points[i + 1], points[i + 2] });
+				}
+			}
+			made = shape_of(std::move(triangles));
+		}
+		shapes[key] = made;
+		return made;
+	}
+
+	//the 12 triangles of a box (its own space)
+	static Shared<const CollisionMesh::Shape> box_shape(const Resource::Mesh& mesh, const Geometry::OBoundingBox& box, Shapes& shapes)
+	{
+		const ShapeKey key(&mesh, s_box_key);
+		auto found = shapes.find(key);
+		if (found != shapes.end())
+		{
+			return found->second;
+		}
+		const Mat3 axes = box.get_rotation_matrix();
+		const Vec3 center = box.get_position();
+		const Vec3 half = box.get_extension();
+		Vec3 corner[8];
+		for (int i = 0; i < 8; ++i)
+		{
+			const Vec3 sign((i & 1) ? 1.0f : -1.0f, (i & 2) ? 1.0f : -1.0f, (i & 4) ? 1.0f : -1.0f);
+			corner[i] = center + axes[0] * (half.x * sign.x) + axes[1] * (half.y * sign.y) + axes[2] * (half.z * sign.z);
+		}
+		//its faces (two triangles each), out of the box
+		static const int faces[6][4] = { {0,2,6,4}, {1,5,7,3}, {0,4,5,1}, {2,3,7,6}, {0,1,3,2}, {4,6,7,5} };
+		std::vector<CollisionMesh::Triangle> triangles;
+		for (const auto& face : faces)
+		{
+			triangles.push_back({ corner[face[0]], corner[face[1]], corner[face[2]] });
+			triangles.push_back({ corner[face[0]], corner[face[2]], corner[face[3]] });
+		}
+		Shared<const CollisionMesh::Shape> made = shape_of(std::move(triangles));
+		shapes[key] = made;
+		return made;
+	}
+
+	//the box of points by a matrix (the box of the corners of a box)
+	static void transformed_box(const Mat4& matrix, const Vec3& low, const Vec3& high, Vec3& out_min, Vec3& out_max)
+	{
+		out_min = Vec3(std::numeric_limits<float>::max());
+		out_max = Vec3(std::numeric_limits<float>::lowest());
+		for (int i = 0; i < 8; ++i)
+		{
+			const Vec3 corner((i & 1) ? high.x : low.x, (i & 2) ? high.y : low.y, (i & 4) ? high.z : low.z);
+			const Vec3 point = Vec3(matrix * Vec4(corner, 1.0f));
+			out_min = glm::min(out_min, point);
+			out_max = glm::max(out_max, point);
+		}
+	}
+
+	//a node with something drawn
 	static bool drawn(const Shared<Scene::Actor>& node)
 	{
 		return node->contains<Scene::StaticMesh>() || node->contains<Scene::InstancedMesh>();
+	}
+
+	//the levels of detail of a node not taken (all but the first one): their names
+	static std::vector<std::string> other_levels(const Shared<Scene::Actor>& node)
+	{
+		std::vector<std::string> names;
+		if (node->contains<Scene::LodGroup>())
+		{
+			const auto& levels = node->component<Scene::LodGroup>()->levels();
+			for (size_t i = 1; i < levels.size(); ++i)
+			{
+				names.push_back(levels[i].m_actor);
+			}
+		}
+		return names;
 	}
 }
 
 void CollisionMesh::add(Context& context, const Shared<Scene::Actor>& actor, bool solid_only)
 {
-	actor->visit([&](Shared<Scene::Actor> node) -> bool
+	using namespace AuxCollisionMesh;
+	Shapes shapes;
+	//a node and its children (its mode passed to them)
+	std::function<void(const Shared<Scene::Actor>&, Mode)> walk = [&](const Shared<Scene::Actor>& node, Mode parent_mode)
 	{
-		if (AuxCollisionMesh::drawn(node))
+		const Mode mode = mode_of(node, parent_mode);
+		if (mode == Mode::NONE)
+		{
+			return;
+		}
+		if (drawn(node))
 		{
 			//its ground (by its name, or by the one of its parent: a node of the exporter under it)
 			Surface surface = surface_of(node->name());
@@ -427,155 +587,347 @@ void CollisionMesh::add(Context& context, const Shared<Scene::Actor>& actor, boo
 				}
 				blocker = blocker || is_blocker(parent->name());
 			}
-			//the water, the walls: solid, also translucent
-			const bool every = !solid_only || is_water(surface) || blocker;
-			std::vector<Vec3> points;
-			if (AuxCollisionMesh::triangles(node, points, every))
+			//the water, the walls, the property: solid, also translucent
+			const bool every = !solid_only || is_water(surface) || blocker || mode == Mode::EVERY;
+			const Mat4& model = node->global_model_matrix();
+			//its mesh, its box, its places (a static mesh: one, an instanced one: its instances)
+			Shared<Resource::Mesh> mesh;
+			Geometry::OBoundingBox box;
+			std::vector<Mat4> places;
+			uint64 mask = 0;
+			if (node->contains<Scene::StaticMesh>())
 			{
-				for (size_t i = 0; i + 2 < points.size(); i += 3)
-				{
-					add_triangle(points[i], points[i + 1], points[i + 2], surface);
-				}
+				auto static_mesh = node->component<Scene::StaticMesh>();
+				mesh = static_mesh->m_mesh;
+				box = static_mesh->local_bounding_box();
+				places.push_back(model);
+				mask = mesh ? taken(*static_mesh, mesh->number_of_sub_meshs(), every) : 0;
 			}
 			else
 			{
-				context.logger()->warning("CollisionMesh: unable to read the mesh of " + node->name());
+				auto instanced = node->component<Scene::InstancedMesh>();
+				mesh = instanced->mesh();
+				box = instanced->mesh_box();
+				for (const Mat4& instance : instanced->instances())
+				{
+					places.push_back(model * instance);
+				}
+				mask = mesh ? taken(*instanced, mesh->number_of_sub_meshs(), every) : 0;
+			}
+			Shared<const Shape> shape;
+			if (mesh && mask && mode == Mode::BOX)
+			{
+				shape = box_shape(*mesh, box, shapes);
+			}
+			else if (mesh && mask && mode != Mode::SPHERE)
+			{
+				shape = mesh_shape(*mesh, mask, shapes);
+				if (!shape)
+				{
+					context.logger()->warning("CollisionMesh: unable to read the mesh of " + node->name());
+				}
+			}
+			const bool sphere = mesh && mask && mode == Mode::SPHERE;
+			for (const Mat4& place : places)
+			{
+				Object object;
+				object.m_surface = surface;
+				if (sphere)
+				{
+					//the sphere in its box: its center, its half side the longest in the world
+					object.m_sphere = true;
+					object.m_center = Vec3(place * Vec4(box.get_position(), 1.0f));
+					const Mat3 axes = box.get_rotation_matrix();
+					const Vec3 half = box.get_extension();
+					for (int axis = 0; axis < 3; ++axis)
+					{
+						object.m_radius = std::max(object.m_radius, length(Vec3(place * Vec4(axes[axis] * half[axis], 0.0f))));
+					}
+					add_object(object);
+				}
+				else if (shape && !shape->m_triangles.empty())
+				{
+					object.m_shape = shape;
+					object.m_model = place;
+					add_object(object);
+				}
 			}
 		}
-		return true;
-	});
-	//the tree of the triangles
+		//its children, but the other levels of detail
+		const std::vector<std::string> skipped = other_levels(node);
+		for (const auto& child : node->childs())
+		{
+			if (std::find(skipped.begin(), skipped.end(), child->name()) == skipped.end())
+			{
+				walk(child, mode);
+			}
+		}
+	};
+	walk(actor, Mode::SOLID);
+	m_shapes += shapes.size();
+	//the tree of the objects
 	build();
+}
+
+void CollisionMesh::add_object(Object object)
+{
+	if (object.m_sphere)
+	{
+		object.m_min = object.m_center - Vec3(object.m_radius);
+		object.m_max = object.m_center + Vec3(object.m_radius);
+	}
+	else
+	{
+		object.m_inverse = inverse(object.m_model);
+		object.m_mirrored = determinant(Mat3(object.m_model)) < 0.0f;
+		//a similarity: its axes as long, square to each other (the moves tested in its space)
+		const Mat3 axes(object.m_model);
+		const float x = length(axes[0]), y = length(axes[1]), z = length(axes[2]);
+		const float tolerance = 1e-4f * std::max(x, 1e-6f);
+		object.m_scale = x;
+		object.m_similar = x > 1e-6f
+		                && std::abs(x - y) < tolerance && std::abs(x - z) < tolerance
+		                && std::abs(dot(axes[0], axes[1])) < tolerance * x
+		                && std::abs(dot(axes[0], axes[2])) < tolerance * x
+		                && std::abs(dot(axes[1], axes[2])) < tolerance * x;
+		const Node& root = object.m_shape->m_tree.m_nodes.front();
+		AuxCollisionMesh::transformed_box(object.m_model, root.m_min, root.m_max, object.m_min, object.m_max);
+		m_triangle_count += object.m_shape->m_triangles.size();
+	}
+	m_objects.push_back(std::move(object));
 }
 
 void CollisionMesh::clear()
 {
-	m_triangles.clear();
-	m_nodes.clear();
-}
-
-void CollisionMesh::add_triangle(const Vec3& a, const Vec3& b, const Vec3& c, Surface surface)
-{
-	//degenerate triangle
-	if (length(cross(b - a, c - a)) < 1e-8f) return;
-	Triangle triangle;
-	triangle.m_a = a;
-	triangle.m_b = b;
-	triangle.m_c = c;
-	triangle.m_min = glm::min(a, glm::min(b, c));
-	triangle.m_max = glm::max(a, glm::max(b, c));
-	triangle.m_surface = surface;
-	m_triangles.push_back(triangle);
+	m_objects.clear();
+	m_tree = Tree();
+	m_shapes = 0;
+	m_triangle_count = 0;
 }
 
 void CollisionMesh::triangles(std::vector<Vec3>& out) const
 {
-	out.reserve(out.size() + m_triangles.size() * 3);
-	for (const Triangle& triangle : m_triangles)
+	out.reserve(out.size() + m_triangle_count * 3);
+	for (const Object& object : m_objects)
 	{
-		out.push_back(triangle.m_a);
-		out.push_back(triangle.m_b);
-		out.push_back(triangle.m_c);
+		if (object.m_shape)
+		{
+			for (const Triangle& triangle : object.m_shape->m_triangles)
+			{
+				out.push_back(Vec3(object.m_model * Vec4(triangle.m_a, 1.0f)));
+				out.push_back(Vec3(object.m_model * Vec4(triangle.m_b, 1.0f)));
+				out.push_back(Vec3(object.m_model * Vec4(triangle.m_c, 1.0f)));
+			}
+		}
 	}
 }
 
 bool CollisionMesh::bounds(const Mat4& transform, Vec3& out_min, Vec3& out_max) const
 {
-	if (m_triangles.empty()) return false;
+	if (m_objects.empty()) return false;
 	out_min = Vec3(std::numeric_limits<float>::max());
 	out_max = Vec3(std::numeric_limits<float>::lowest());
-	for (const Triangle& triangle : m_triangles)
+	for (const Object& object : m_objects)
 	{
-		for (const Vec3& vertex : { triangle.m_a, triangle.m_b, triangle.m_c })
+		if (object.m_shape)
 		{
-			const Vec3 point = Vec3(transform * Vec4(vertex, 1.0f));
-			out_min = glm::min(out_min, point);
-			out_max = glm::max(out_max, point);
+			const Mat4 matrix = transform * object.m_model;
+			for (const Triangle& triangle : object.m_shape->m_triangles)
+			{
+				for (const Vec3& vertex : { triangle.m_a, triangle.m_b, triangle.m_c })
+				{
+					const Vec3 point = Vec3(matrix * Vec4(vertex, 1.0f));
+					out_min = glm::min(out_min, point);
+					out_max = glm::max(out_max, point);
+				}
+			}
+		}
+		else
+		{
+			Vec3 low, high;
+			AuxCollisionMesh::transformed_box(transform, object.m_min, object.m_max, low, high);
+			out_min = glm::min(out_min, low);
+			out_max = glm::max(out_max, high);
 		}
 	}
 	return true;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-//CollisionMesh: tree
-void CollisionMesh::build()
+//CollisionMesh: trees
+void CollisionMesh::Tree::build(const std::vector<Vec3>& mins, const std::vector<Vec3>& maxs, size_t leaf)
 {
 	m_nodes.clear();
-	if (m_triangles.empty()) return;
-	std::vector<int> all(m_triangles.size());
-	for (size_t i = 0; i < all.size(); ++i) all[i] = int(i);
-	build_node(all);
+	m_order.resize(mins.size());
+	for (size_t i = 0; i < m_order.size(); ++i) m_order[i] = int(i);
+	if (!mins.empty())
+	{
+		m_nodes.reserve(mins.size() * 2 / std::max<size_t>(leaf, 1) + 1);
+		build_node(mins, maxs, 0, int(mins.size()), leaf);
+	}
 }
 
-int CollisionMesh::build_node(std::vector<int>& triangles)
+int CollisionMesh::Tree::build_node(const std::vector<Vec3>& mins, const std::vector<Vec3>& maxs, int first, int count, size_t leaf)
 {
 	const int node_id = int(m_nodes.size());
 	m_nodes.emplace_back();
-	//box of the triangles
+	//box of the items
 	Vec3 box_min(std::numeric_limits<float>::max()), box_max(std::numeric_limits<float>::lowest());
-	for (int id : triangles)
+	for (int i = first; i < first + count; ++i)
 	{
-		box_min = glm::min(box_min, m_triangles[id].m_min);
-		box_max = glm::max(box_max, m_triangles[id].m_max);
+		box_min = glm::min(box_min, mins[m_order[i]]);
+		box_max = glm::max(box_max, maxs[m_order[i]]);
 	}
 	m_nodes[node_id].m_min = box_min;
 	m_nodes[node_id].m_max = box_max;
-	//leaf
-	if (triangles.size() <= MAX_LEAF_TRIANGLES)
+	if (size_t(count) <= leaf)
 	{
-		m_nodes[node_id].m_triangles = triangles;
-		return node_id;
+		//a leaf
+		m_nodes[node_id].m_first = first;
+		m_nodes[node_id].m_count = count;
 	}
-	//split on the longest axis, by the centers of the triangles
-	const Vec3 size = box_max - box_min;
-	const int axis = (size.y > size.x && size.y >= size.z) ? 1 : (size.z > size.x && size.z > size.y) ? 2 : 0;
-	auto center = [&](int id) { const Triangle& t = m_triangles[id]; return (t.m_a[axis] + t.m_b[axis] + t.m_c[axis]) / 3.0f; };
-	std::sort(triangles.begin(), triangles.end(), [&](int l, int r) { return center(l) < center(r); });
-	std::vector<int> left(triangles.begin(), triangles.begin() + triangles.size() / 2);
-	std::vector<int> right(triangles.begin() + triangles.size() / 2, triangles.end());
-	const int left_id = build_node(left);
-	const int right_id = build_node(right);
-	m_nodes[node_id].m_left = left_id;
-	m_nodes[node_id].m_right = right_id;
+	else
+	{
+		//split on the longest axis, at the middle item by the centers of the boxes
+		const Vec3 size = box_max - box_min;
+		const int axis = (size.y > size.x && size.y >= size.z) ? 1 : (size.z > size.x && size.z > size.y) ? 2 : 0;
+		auto begin = m_order.begin() + first;
+		std::nth_element(begin, begin + count / 2, begin + count, [&](int l, int r)
+		{
+			return mins[l][axis] + maxs[l][axis] < mins[r][axis] + maxs[r][axis];
+		});
+		const int left = build_node(mins, maxs, first, count / 2, leaf);
+		const int right = build_node(mins, maxs, first + count / 2, count - count / 2, leaf);
+		m_nodes[node_id].m_left = left;
+		m_nodes[node_id].m_right = right;
+	}
 	return node_id;
 }
 
-bool CollisionMesh::collide(const Line& line, float radius, Collision& collision, float y_scale) const
+void CollisionMesh::build()
 {
-	if (m_nodes.empty()) return false;
-	//box of the move, back in world space (the tree is in world space)
-	const Vec3 end = line.at(1.0f);
-	const Vec3 unscale(1.0f, 1.0f / y_scale, 1.0f);
-	const Vec3 box_min = (glm::min(line.m_origin, end) - Vec3(radius)) * unscale;
-	const Vec3 box_max = (glm::max(line.m_origin, end) + Vec3(radius)) * unscale;
-	return collide(line, radius, y_scale, box_min, box_max, 0, collision);
-}
-
-bool CollisionMesh::collide(const Line& line, float radius, float y_scale, const Vec3& box_min, const Vec3& box_max, int node_id, Collision& collision) const
-{
-	const Node& node = m_nodes[node_id];
-	if (!boxes_overlap(box_min, box_max, node.m_min, node.m_max)) return false;
-	bool hit = false;
-	if (node.m_triangles.empty())
+	std::vector<Vec3> mins, maxs;
+	mins.reserve(m_objects.size());
+	maxs.reserve(m_objects.size());
+	for (const Object& object : m_objects)
 	{
-		if (node.m_left >= 0)  hit |= collide(line, radius, y_scale, box_min, box_max, node.m_left, collision);
-		if (node.m_right >= 0) hit |= collide(line, radius, y_scale, box_min, box_max, node.m_right, collision);
-		return hit;
+		mins.push_back(object.m_min);
+		maxs.push_back(object.m_max);
 	}
-	const Vec3 scale(1.0f, y_scale, 1.0f);
-	for (int id : node.m_triangles)
-	{
-		const Triangle& triangle = m_triangles[id];
-		if (!boxes_overlap(box_min, box_max, triangle.m_min, triangle.m_max)) continue;
-		if (!triangle_collide(line, radius, triangle.m_a * scale, triangle.m_b * scale, triangle.m_c * scale, m_one_sided, collision)) continue;
-		collision.m_triangle = id;
-		hit = true;
-	}
-	return hit;
+	m_tree.build(mins, maxs, AuxCollisionMesh::s_object_leaf);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //CollisionMesh: queries
+bool CollisionMesh::collide(const Line& line, float radius, Collision& collision, float y_scale) const
+{
+	if (m_tree.m_nodes.empty()) return false;
+	//box of the move, back in world space (the trees are in world space, or in their own)
+	const Vec3 end = line.at(1.0f);
+	const Vec3 unscale(1.0f, 1.0f / y_scale, 1.0f);
+	const Vec3 box_min = (glm::min(line.m_origin, end) - Vec3(radius)) * unscale;
+	const Vec3 box_max = (glm::max(line.m_origin, end) + Vec3(radius)) * unscale;
+	bool hit = false;
+	int stack[64];
+	int top = 0;
+	stack[top++] = 0;
+	while (top > 0)
+	{
+		const Node& node = m_tree.m_nodes[stack[--top]];
+		if (!boxes_overlap(box_min, box_max, node.m_min, node.m_max)) continue;
+		if (node.m_left >= 0)
+		{
+			stack[top++] = node.m_left;
+			stack[top++] = node.m_right;
+			continue;
+		}
+		for (int i = node.m_first; i < node.m_first + node.m_count; ++i)
+		{
+			const Object& object = m_objects[m_tree.m_order[i]];
+			if (!boxes_overlap(box_min, box_max, object.m_min, object.m_max)) continue;
+			hit |= collide(object, line, radius, y_scale, box_min, box_max, collision);
+		}
+	}
+	return hit;
+}
+
+bool CollisionMesh::collide(const Object& object, const Line& line, float radius, float y_scale, const Vec3& box_min, const Vec3& box_max, Collision& collision) const
+{
+	const Vec3 scale(1.0f, y_scale, 1.0f);
+	bool hit = false;
+	if (object.m_sphere)
+	{
+		//a point against a sphere of the two radii (in the space of the ellipsoid)
+		hit = sphere_collide(line, radius + object.m_radius, object.m_center * scale, collision);
+	}
+	else
+	{
+		//the box of the move in the space of the shape, its triangles there
+		Vec3 local_min, local_max;
+		AuxCollisionMesh::transformed_box(object.m_inverse, box_min, box_max, local_min, local_max);
+		const Shape& shape = *object.m_shape;
+		//a similarity and a sphere (not an ellipsoid): the move in the space of the shape (the
+		//time along it the same, the radius by its scale), else its triangles in the world
+		const bool local = object.m_similar && y_scale == 1.0f;
+		Line local_line;
+		Collision local_collision;
+		float local_radius = radius;
+		if (local)
+		{
+			local_line.m_origin = Vec3(object.m_inverse * Vec4(line.m_origin, 1.0f));
+			local_line.m_direction = Vec3(object.m_inverse * Vec4(line.m_direction, 0.0f));
+			local_radius = radius / object.m_scale;
+			local_collision.m_time = collision.m_time;
+		}
+		int stack[64];
+		int top = 0;
+		stack[top++] = 0;
+		while (top > 0)
+		{
+			const Node& node = shape.m_tree.m_nodes[stack[--top]];
+			if (!boxes_overlap(local_min, local_max, node.m_min, node.m_max)) continue;
+			if (node.m_left >= 0)
+			{
+				stack[top++] = node.m_left;
+				stack[top++] = node.m_right;
+				continue;
+			}
+			for (int i = node.m_first; i < node.m_first + node.m_count; ++i)
+			{
+				const Triangle& triangle = shape.m_triangles[shape.m_tree.m_order[i]];
+				const Vec3 low = glm::min(triangle.m_a, glm::min(triangle.m_b, triangle.m_c));
+				const Vec3 high = glm::max(triangle.m_a, glm::max(triangle.m_b, triangle.m_c));
+				if (!boxes_overlap(local_min, local_max, low, high)) continue;
+				if (local)
+				{
+					hit |= triangle_collide(local_line, local_radius, triangle.m_a, triangle.m_b, triangle.m_c, m_one_sided, local_collision);
+					continue;
+				}
+				const Vec3 a = Vec3(object.m_model * Vec4(triangle.m_a, 1.0f)) * scale;
+				Vec3 b = Vec3(object.m_model * Vec4(triangle.m_b, 1.0f)) * scale;
+				Vec3 c = Vec3(object.m_model * Vec4(triangle.m_c, 1.0f)) * scale;
+				//(a mirror: its front the same face)
+				if (object.m_mirrored)
+				{
+					std::swap(b, c);
+				}
+				hit |= triangle_collide(line, radius, a, b, c, m_one_sided, collision);
+			}
+		}
+		//the contact back in the world
+		if (local && hit)
+		{
+			collision.m_time = local_collision.m_time;
+			collision.m_normal = normalize(Vec3(object.m_model * Vec4(local_collision.m_normal, 0.0f)));
+		}
+	}
+	if (hit)
+	{
+		collision.m_surface = object.m_surface;
+	}
+	return hit;
+}
+
 bool CollisionMesh::raycast(const Vec3& origin, const Vec3& direction, float max_distance, Hit& hit) const
 {
 	Line line;
@@ -586,7 +938,7 @@ bool CollisionMesh::raycast(const Vec3& origin, const Vec3& direction, float max
 	hit.m_distance = collision.m_time * max_distance;
 	hit.m_point = line.at(collision.m_time);
 	hit.m_normal = collision.m_normal;
-	if (collision.m_triangle >= 0) hit.m_surface = m_triangles[size_t(collision.m_triangle)].m_surface;
+	hit.m_surface = collision.m_surface;
 	return true;
 }
 

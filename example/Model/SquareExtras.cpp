@@ -114,4 +114,40 @@ namespace SquareExtras
             attribute.set(&object, variant.as_variant_ref());
         }
     }
+
+    const std::string GAME_PREFIX = "game_";
+
+    size_t game_properties(Square::Scene::Actor& actor, const Square::Data::JsonObject& extras)
+    {
+        using namespace Square;
+        size_t count = 0;
+        for (const auto& [key, value] : extras)
+        {
+            if (key.rfind(GAME_PREFIX, 0) != 0 || key.size() == GAME_PREFIX.size())
+            {
+                continue;
+            }
+            const std::string name = key.substr(GAME_PREFIX.size());
+            auto properties = actor.component<Scene::Properties>();
+            if (value.is_boolean())
+            {
+                properties->set(name, value.boolean());
+            }
+            else if (value.is_number())
+            {
+                properties->set(name, float(value.number()));
+            }
+            else if (value.is_string())
+            {
+                properties->set(name, value.string());
+            }
+            else if (value.is_array() && !value.array().empty())
+            {
+                const int components = int(std::min<size_t>(value.array().size(), 4));
+                properties->set(name, Vec4(float(component(value, 0)), float(component(value, 1)), float(component(value, 2)), float(component(value, 3))), components);
+            }
+            count += 1;
+        }
+        return count;
+    }
 }

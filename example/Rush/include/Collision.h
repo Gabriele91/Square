@@ -3,9 +3,11 @@
 //  Rush
 //
 //  Collisions of moving spheres (and ellipsoids) against triangle meshes and other spheres:
-//  - CollisionMesh: triangles in world space, in a tree of boxes (16 per leaf); a sphere
-//    moving along a segment against them: the face, the edges (cylinders) and the vertices
-//    (spheres), the first contact along the segment;
+//  - CollisionMesh: objects (a mesh where it is, or a sphere) in a tree of their boxes in the
+//    world; each mesh its triangles in its own space in a tree of boxes, shared by its objects
+//    (the instances of a prop: one tree); a sphere moving along a segment: the objects its box
+//    meets, in each one the triangles (in the world) the face, the edges (cylinders) and the
+//    vertices (spheres), the first contact along the segment;
 //  - MeshCollider (component): the triangles of the meshes of its actor and children (the solid
 //    ones, or every one), its collision type, one sided or not;
 //  - SphereCollider (component): a moving sphere, its collision type, and the collisions of
@@ -91,9 +93,13 @@ public:
 		Square::Vec3 at(float t) const { return m_origin + m_direction * t; }
 	};
 
-	//add the static meshes of an actor and its children, with their current world transform;
-	//sub meshes with a non opaque material (glass, glows...) are not solid and are skipped (not
-	//the water: its surface by the name of its node, see Surface)
+	//add the meshes of an actor and its children (static and instanced: an object each, each
+	//instance one), where they are now; sub meshes with a non opaque material (glass, glows...)
+	//are not solid and are skipped (not the water: its surface by the name of its node, see
+	//Surface). Only the first level of a level of detail (Scene::LodGroup). The property of the
+	//game "collision" of a node (Scene::Properties, Blender "game_collision"), its children too:
+	//false not solid, true / "mesh" its triangles (also not opaque), "box" its box, "sphere" a
+	//sphere in its box.
 	//solid_only: only the opaque surfaces (not the translucent, not the alpha tested ones);
 	//false: every surface (e.g. the triangles of a navmesh)
 	void add(Square::Context& context, const Square::Shared<Square::Scene::Actor>& actor, bool solid_only = true);
@@ -116,33 +122,70 @@ public:
 	//bounds of the triangles transformed by transform (e.g. world to hull space); false if empty
 	bool bounds(const Square::Mat4& transform, Square::Vec3& out_min, Square::Vec3& out_max) const;
 
-	size_t size() const { return m_triangles.size(); }
+	//its triangles in the world (the ones of every object), its objects, its shapes (the meshes:
+	//the objects of the same mesh share one)
+	size_t size() const { return m_triangle_count; }
+	size_t objects() const { return m_objects.size(); }
+	size_t shapes() const { return m_shapes; }
 
-	//the triangles in world space, three vertices each (e.g. to draw them)
+	//the triangles in world space, three vertices each (e.g. to draw them; not the spheres)
 	void triangles(std::vector<Square::Vec3>& out) const;
 
-private:
+	//a box of a tree: its two children, or its items (first, count: in the order of the tree)
+	struct Node
+	{
+		Square::Vec3 m_min{ 0.0f }, m_max{ 0.0f };
+		int          m_left{ -1 }, m_right{ -1 };
+		int          m_first{ 0 }, m_count{ 0 };
+	};
+	//a tree of boxes over some items (by their boxes)
+	struct Tree
+	{
+		std::vector<Node> m_nodes;
+		std::vector<int>  m_order;
+		void build(const std::vector<Square::Vec3>& mins, const std::vector<Square::Vec3>& maxs, size_t leaf);
+		int  build_node(const std::vector<Square::Vec3>& mins, const std::vector<Square::Vec3>& maxs, int first, int count, size_t leaf);
+	};
+	//a triangle in the space of its shape
 	struct Triangle
 	{
 		Square::Vec3 m_a, m_b, m_c;
-		Square::Vec3 m_min, m_max;
-		Surface      m_surface{ Surface::GROUND };
 	};
-	//tree of boxes: a leaf has triangles, a node two children
-	struct Node
+	//the triangles of a mesh in its own space and their tree (the objects of that mesh share it)
+	struct Shape
 	{
-		Square::Vec3     m_min{ 0.0f }, m_max{ 0.0f };
-		int              m_left{ -1 }, m_right{ -1 };
-		std::vector<int> m_triangles;
+		std::vector<Triangle> m_triangles;
+		Tree                  m_tree;
 	};
-	std::vector<Triangle> m_triangles;
-	std::vector<Node>     m_nodes;
-	bool                  m_one_sided{ false };
 
-	void add_triangle(const Square::Vec3& a, const Square::Vec3& b, const Square::Vec3& c, Surface surface = Surface::GROUND);
+private:
+	//an object: a shape where it is (its matrix), or a sphere; its box in the world, its ground
+	struct Object
+	{
+		Square::Shared<const Shape> m_shape;
+		Square::Mat4                m_model{ 1.0f };
+		Square::Mat4                m_inverse{ 1.0f };
+		bool                        m_mirrored{ false }; //(its matrix turns the winding)
+		bool                        m_similar{ false };  //its matrix turns, moves and scales the same on every axis
+		float                       m_scale{ 1.0f };     //(its scale then)
+		bool                        m_sphere{ false };
+		Square::Vec3                m_center{ 0.0f };
+		float                       m_radius{ 0.0f };
+		Square::Vec3                m_min{ 0.0f }, m_max{ 0.0f };
+		Surface                     m_surface{ Surface::GROUND };
+	};
+	std::vector<Object> m_objects;
+	Tree                m_tree;  //of the objects
+	size_t              m_shapes{ 0 };
+	size_t              m_triangle_count{ 0 };
+	bool                m_one_sided{ false };
+
+	//an object added (its box in the world made)
+	void add_object(Object object);
+	//the tree of the objects
 	void build();
-	int  build_node(std::vector<int>& triangles);
-	bool collide(const Line& line, float radius, float y_scale, const Square::Vec3& box_min, const Square::Vec3& box_max, int node, Collision& collision) const;
+	//the first contact with an object, if before collision.m_time
+	bool collide(const Object& object, const Line& line, float radius, float y_scale, const Square::Vec3& box_min, const Square::Vec3& box_max, Collision& collision) const;
 };
 
 //a collision of the last step of a sphere collider
