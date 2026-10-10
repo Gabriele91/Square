@@ -26,6 +26,7 @@ set(SOURCE_FILES
     MeshManager.cpp
     LodGroups.cpp
     InstanceGroups.cpp
+    Occluders.cpp
 )
 
 # Create executable

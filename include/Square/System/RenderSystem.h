@@ -14,6 +14,7 @@
 #include "Square/Math/Linear.h"
 #include "Square/System/System.h"
 #include "Square/Render/Collection.h"
+#include "Square/Render/Pipeline/SoftwareOcclusion.h"
 
 namespace Square
 {
@@ -85,6 +86,9 @@ namespace Square
 		void add_overlay(RenderOverlay* overlay);
 		void remove_overlay(RenderOverlay* overlay);
 
+		//the instances alive (the worlds drawn)
+		std::vector< Shared<RenderInstance> > instances();
+
 	protected:
 		//device
 		Render::Context*         m_render{ nullptr };
@@ -95,8 +99,6 @@ namespace Square
 		//worlds
 		std::vector< Weak<RenderInstance> > m_instances;
 		std::vector< RenderOverlay* >       m_overlays;
-		//the instances alive
-		std::vector< Shared<RenderInstance> > instances();
 	};
 
 	class SQUARE_API RenderInstance : public SystemInstance
@@ -136,6 +138,11 @@ namespace Square
 		//how the levels of detail of the world are chosen (their cross-fade, a level forced)
 		const Render::LevelOfDetailSettings& levels_of_detail() const;
 		void levels_of_detail(const Render::LevelOfDetailSettings& settings);
+		//the occlusion culling of its cameras on the CPU (Render::SoftwareOcclusion)
+		const Render::SoftwareOcclusion::Settings& occlusion() const;
+		void occlusion(const Render::SoftwareOcclusion::Settings& settings);
+		//what the occlusion of the last camera drawn did (none: all 0)
+		Render::SoftwareOcclusion::Stats occlusion_stats() const;
 
 		//post effects of the world, in the order they are drawn (see Render/PostEffect.h):
 		//the effects of the pipeline stage (G-Buffer effects only in deferred)
@@ -148,6 +155,8 @@ namespace Square
 		//nullptr out of it (and the debug pass without RP_DEBUG)
 		Shared<Render::Drawer> drawer() const;
 		Shared<Render::DrawerPassDebug> debug_pass() const;
+		//its cameras, lights, renderables and occluders (as the levels give them)
+		const Render::Collection& collection() const { return m_collection; }
 
 		//draw the levels of the world
 		void draw();
@@ -164,6 +173,7 @@ namespace Square
 		Vec4        m_ambient_color{ 0.1f, 0.1f, 0.1f, 1.0f };
 		bool        m_visible{ true };
 		Render::LevelOfDetailSettings m_levels_of_detail;
+		Render::SoftwareOcclusion::Settings m_occlusion;
 		std::vector< Shared<Render::PostEffect> > m_post_effects;
 		//drawer
 		Shared<Render::Drawer>          m_drawer;

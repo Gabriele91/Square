@@ -8,10 +8,8 @@
 //     every change: GameSettings), About, Exit; the arrows and enter, Esc back, or the mouse;
 //   - the HUD of a race: the score cards, the speed (0 to 100), the start (3, 2, 1, GO!), the
 //     end (win or lose, press a key);
-//   - the Esc menu of a race: with the demo (RUSH_DEMO, Debug) the full one of the engine
-//     demo, else the pause (resume, exit to the title).
-//  The demo binds its own variables to the same model (DemoTools), before the documents are
-//  loaded.
+//   - the Esc menu of a race: the pause (resume, exit to the title).
+//  The debug tools are the ones of the engine (F1), the game adds its sections (RushDebug).
 //
 #pragma once
 #include <functional>

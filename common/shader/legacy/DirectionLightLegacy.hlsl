@@ -25,6 +25,10 @@ float direction_light_apply_shadow(in Vec4 fposition, in Vec3  view_dir, in Vec3
 {
     return 1.0;
 }
+Vec3 direction_light_shadow_tint(in Vec4 fposition)
+{
+    return Vec3(1.0, 1.0, 1.0);
+}
 #endif
 
 
@@ -48,8 +52,9 @@ LightResult compute_light
     float shadow_factor = direction_light_apply_shadow(fposition, light_dir, normal);
     // Combine results
     LightResult result;
-    result.m_diffuse  = light.m_diffuse  * diff * shadow_factor;
-    result.m_specular = light.m_specular * spec * shadow_factor;
+    const Vec3 tint = direction_light_shadow_tint(fposition);
+    result.m_diffuse  = light.m_diffuse  * diff * shadow_factor * tint;
+    result.m_specular = light.m_specular * spec * shadow_factor * tint;
     //return
     return result;
 }

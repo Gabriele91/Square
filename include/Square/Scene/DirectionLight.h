@@ -61,6 +61,9 @@ namespace Scene
 		//the cascades of its shadow (1 to DIRECTION_SHADOW_CSM_NUMBER_OF_FACES)
 		void cascades(int cascades);
 		int  cascades() const;
+		//its light tinted by the cascade of each point (debug: a color a cascade)
+		void cascade_colors(bool enable) { m_cascade_colors = enable; }
+		bool cascade_colors() const { return m_cascade_colors; }
 
 		//how far from the camera its shadow reaches (the cascades split over it, not over the
 		//whole view: sharper near); 0: as far as the camera sees
@@ -117,6 +120,7 @@ namespace Scene
 		Geometry::AABoundingBox m_scene_size;
 		CascadeFit m_cascade_fit{ CascadeFit::FOLLOW };
 		float m_cascade_margin{ 0.2f };
+		bool m_cascade_colors{ false };
 		mutable Render::UniformDirectionShadowLight m_cache_udirectionshadowlight;
 		//a stable cascade: where it is (its center in the space of the light), its half side; what
 		//all of them were made for (a change: made again); the depth of the light (its scene)

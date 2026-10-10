@@ -10,12 +10,12 @@
 #include "Square/Core/StringUtilities.h"
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/System/RenderSystem.h"
-#include "Square/Render/Drawer.h"
-#include "Square/Render/DrawerPassDebug.h"
-#include "Square/Render/DrawerPassForward.h"
-#include "Square/Render/DrawerPassDeferred.h"
-#include "Square/Render/DrawerPassShadow.h"
-#include "Square/Render/PostEffect.h"
+#include "Square/Render/Pipeline/Drawer.h"
+#include "Square/Render/Pipeline/DrawerPassDebug.h"
+#include "Square/Render/Pipeline/DrawerPassForward.h"
+#include "Square/Render/Pipeline/DrawerPassDeferred.h"
+#include "Square/Render/Pipeline/DrawerPassShadow.h"
+#include "Square/Render/PostEffect/PostEffect.h"
 #include "Square/Render/Profiler.h"
 #include "Square/Render/Camera.h"
 #include "Square/Render/Light.h"
@@ -138,13 +138,11 @@ namespace Square
 			m_render = nullptr;
 			return false;
 		}
-		//textures inspector, in debug
+		//textures inspector (the tab Textures of the debug panel): with TEXTURE_INTROSPECTION (Debug,
+		//Release), whatever the debug of the driver
 		#if defined(TEXTURE_INTROSPECTION)
-		if (driver.m_debug)
-		{
-			m_inspector = SQ_NEW(context().allocator(), Render::RegistryInspector, AllocType::ALCT_DEFAULT) Render::RegistryInspector();
-			m_render->set_inspector(m_inspector);
-		}
+		m_inspector = SQ_NEW(context().allocator(), Render::RegistryInspector, AllocType::ALCT_DEFAULT) Render::RegistryInspector();
+		m_render->set_inspector(m_inspector);
 		#endif
 		//render profiler (off until enabled)
 		#if defined(RENDER_PROFILER)
@@ -325,6 +323,30 @@ namespace Square
 		return m_levels_of_detail;
 	}
 
+	const Render::SoftwareOcclusion::Settings& RenderInstance::occlusion() const
+	{
+		return m_occlusion;
+	}
+
+	Render::SoftwareOcclusion::Stats RenderInstance::occlusion_stats() const
+	{
+		Render::SoftwareOcclusion::Stats stats;
+		if (m_drawer)
+		{
+			stats = m_drawer->occlusion().stats();
+		}
+		return stats;
+	}
+
+	void RenderInstance::occlusion(const Render::SoftwareOcclusion::Settings& settings)
+	{
+		m_occlusion = settings;
+		if (m_drawer)
+		{
+			m_drawer->occlusion(m_occlusion);
+		}
+	}
+
 	void RenderInstance::levels_of_detail(const Render::LevelOfDetailSettings& settings)
 	{
 		m_levels_of_detail = settings;
@@ -401,10 +423,11 @@ namespace Square
 	void RenderInstance::build_drawer()
 	{
 		//the debug flags survive a rebuild
-		const unsigned char debug_flags = m_debug_pass ? m_debug_pass->draw_flags() : 0;
+		const unsigned short debug_flags = m_debug_pass ? m_debug_pass->draw_flags() : 0;
 		m_drawer = MakeShared<Render::Drawer>(context());
 		m_drawer->post_effects(m_post_effects);
 		m_drawer->levels_of_detail(m_levels_of_detail);
+		m_drawer->occlusion(m_occlusion);
 		if ((m_pipeline & RP_FORWARD) && !(m_pipeline & RP_DEFERRED))
 		{
 			context().logger()->info("Rendering: forward");
@@ -417,7 +440,12 @@ namespace Square
 		}
 		if (m_shadows) m_drawer->create<Render::DrawerPassShadow>();
 		m_debug_pass = nullptr;
-		if (m_pipeline & RP_DEBUG)
+#if defined(SQUARE_DEBUG_TOOLS)
+		const bool debug_tools = true;
+#else
+		const bool debug_tools = false;
+#endif
+		if (debug_tools && (m_pipeline & RP_DEBUG))
 		{
 			m_debug_pass = m_drawer->create<Render::DrawerPassDebug>();
 			m_debug_pass->draw_flags(debug_flags);
@@ -452,6 +480,11 @@ namespace Square
 		{
 			m_collection.m_levels_of_detail.push_back(lod);
 		}
+		//(an occluder: never drawn)
+		if (auto occluder = DynamicPointerCast<Render::Occluder, Scene::Component>(component))
+		{
+			m_collection.m_occluders.push_back(occluder);
+		}
 		if (auto renderable = DynamicPointerCast<Render::Renderable, Scene::Component>(component))
 		{
 			m_collection.m_renderables.push_back(renderable);
@@ -477,6 +510,15 @@ namespace Square
 				auto other = weak_lod.lock();
 				return !other || other == lod;
 			}), lods.end());
+		}
+		if (auto occluder = DynamicPointerCast<Render::Occluder, Scene::Component>(component))
+		{
+			auto& occluders = m_collection.m_occluders;
+			occluders.erase(std::remove_if(occluders.begin(), occluders.end(), [&](const Weak<Render::Occluder>& weak_occluder)
+			{
+				auto other = weak_occluder.lock();
+				return !other || other == occluder;
+			}), occluders.end());
 		}
 		if (auto renderable = DynamicPointerCast<Render::Renderable, Scene::Component>(component))
 		{

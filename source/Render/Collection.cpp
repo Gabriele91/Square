@@ -14,6 +14,7 @@
 #include "Square/Render/Light.h"
 #include "Square/Render/Transform.h"
 #include "Square/Render/Collection.h"
+#include "Square/Render/Pipeline/SoftwareOcclusion.h"
 #include "Square/Render/Material.h"
 
 namespace Square
@@ -196,6 +197,11 @@ namespace Render
     
     void CollectionQuery::renderables(const Collection& collection,PoolQueues& queues, const Geometry::Frustum& view_frustum)
     {
+		renderables(collection, queues, view_frustum, nullptr);
+    }
+
+    void CollectionQuery::renderables(const Collection& collection, PoolQueues& queues, const Geometry::Frustum& view_frustum, const SoftwareOcclusion* occlusion)
+    {
 		//clear
 		queues[RQ_BACKGROUND].clear();
 		queues[RQ_OPAQUE].clear();
@@ -212,6 +218,7 @@ namespace Render
             auto renderable = weak_renderable.lock();
 			if (renderable->can_draw())
 			if (!renderable->support_culling() || Intersection::check(view_frustum, renderable->bounding_box()) != Intersection::OUTSIDE)
+			if (!renderable->support_culling() || !occlusion || !occlusion->hidden(renderable->bounding_box().to_aabb()))
 			{
 				//gate distance
 				auto transform = renderable->transform().lock();
@@ -266,7 +273,12 @@ namespace Render
     
     void CollectionQuery::renderables(const Collection& collection, PoolQueues& queues, const Camera&  in_camera)
     {
-        renderables(collection, queues, in_camera.frustum());
+        renderables(collection, queues, in_camera.frustum(), nullptr);
+    }
+
+    void CollectionQuery::renderables(const Collection& collection, PoolQueues& queues, const Camera&  in_camera, const SoftwareOcclusion* occlusion)
+    {
+        renderables(collection, queues, in_camera.frustum(), occlusion);
     }
     
 	void CollectionQuery::opaque_renderables(const Collection& collection,PoolQueues& queues, const Vec3& position)

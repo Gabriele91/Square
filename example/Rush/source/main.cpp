@@ -5,8 +5,8 @@
 //  Copyright © 2017 Gabriele Di Bari. All rights reserved.
 //
 //  Rush: the menu (the title: TitleScreen, RushUI) and the race (Race on a level, Arena; its
-//  phases START, PLAY, END), the Graphics of both; in Debug (RUSH_DEMO) the engine demo over it
-//  (DemoTools, the full Esc menu).
+//  phases START, PLAY, END), the Graphics of both; with the debug tools of the engine (not in
+//  Retail) its sections in the debug panel (F1: RushDebug).
 //
 #define SQUARE_MAIN
 #include <algorithm>
@@ -19,7 +19,7 @@
 #include <Graphics.h>
 #include <RushUI.h>
 #include <TitleScreen.h>
-#include <DemoTools.h>
+#include <RushDebug.h>
 #include <RushConfig.h>
 
 using namespace Rush;
@@ -184,24 +184,22 @@ public:
 		setup_controls();
 		setup_collisions();
 		m_graphics.setup(world());
-		//the UI: the model of the game (and of the demo), then the documents
+		//the UI: the model of the game, then the documents
 		if (m_ui.create())
 		{
-#if defined(RUSH_DEMO)
-			m_demo = std::make_unique<DemoTools>(context(), world());
-			m_demo->bind(m_ui.model());
-#endif
 			m_ui.load_documents();
 			m_ui.on_play([this]() { m_next = State::RACE; });
 			m_ui.on_quit([this]() { m_loop = false; });
 			m_ui.on_exit([this]() { m_next = State::MENU; });
-			if (m_demo) m_demo->setup(m_ui.menu_document(), m_ui.model());
 			//the settings of the player (saved): the window, the effects
 			m_ui.load_settings(m_graphics);
 		}
 		//the levels of the game, made once: the title and the race (one runs at a time)
 		world().create_level(s_title_world_level);
 		world().create_level(s_race_world_level);
+#if defined(SQUARE_DEBUG_TOOLS)
+		m_debug = std::make_unique<RushDebug>(context(), world(), [this]() { return m_race.get(); });
+#endif
 		//the title in its level, it starts in the menu
 		m_title.load(world().level(s_title_world_level));
 		enter_menu();
@@ -237,10 +235,6 @@ public:
 		}
 		//the UI
 		m_ui.update(m_race.get(), m_graphics, float(m_counter.get()));
-		if (m_demo)
-		{
-			m_demo->update(m_race.get(), m_graphics);
-		}
 		return m_loop;
 	}
 
@@ -290,7 +284,6 @@ public:
 
 	void mouse_scroll_event(double scroll)
 	{
-		if (m_demo) m_demo->mouse_scroll(scroll);
 	}
 
 private:
@@ -376,7 +369,7 @@ private:
 	//the menu: no race, the level of the title active
 	void enter_menu()
 	{
-		if (m_demo) m_demo->race_ended();
+		if (m_debug) m_debug->race_ended();
 		end_race();
 		//(a loading screen still going: gone)
 		m_loading.hide();
@@ -412,7 +405,6 @@ private:
 		m_graphics.antialiasing(m_ui.settings().m_antialiasing);
 		m_ui.settings().apply_shadows(m_race->arena().sun(), AuxMain::shadow_view(m_race->arena()));
 		AuxMain::map_shadow_fit(*m_race, map);
-		if (m_demo) m_demo->race_started(m_race->arena());
 		m_state = m_next = State::RACE;
 		//its loading screen stays a little, then it goes
 		m_loading.hold();
@@ -528,7 +520,7 @@ private:
 	TitleScreen                m_title{ context() };
 	RushUI                     m_ui{ context() };
 	Square::Shared<Race>       m_race;    //the component of the actor of the race
-	std::unique_ptr<DemoTools> m_demo; //RUSH_DEMO only
+	std::unique_ptr<RushDebug> m_debug; //its sections in the debug panel (not in Retail)
 };
 
 static Square::Shell::ParserCommands s_ShellCommands

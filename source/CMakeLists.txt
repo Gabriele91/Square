@@ -3,10 +3,12 @@ project(Square VERSION 1.0.0 DESCRIPTION "Square render engine")
 
 # C++17
 set (CMAKE_CXX_STANDARD 17)
-# Add debug prefix
-if(NOT CMAKE_DEBUG_POSTFIX)
-  set(CMAKE_DEBUG_POSTFIX d)
-endif()
+# The libraries of each configuration a name of their own (Square and its drivers: never
+# overwritten by another configuration): Debug "d" (Squared.dll), Release "r" (Squarer.dll),
+# Retail none (Square.dll). The drivers are found by their exports, whatever their names
+set(CMAKE_DEBUG_POSTFIX d)
+set(CMAKE_RELEASE_POSTFIX r)
+set(CMAKE_RETAIL_POSTFIX "")
 # Flags
 if(MSVC)
   set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Ob2 /DNDEBUG /MD")
@@ -29,6 +31,8 @@ file(GLOB SOURCES Core/*.cpp
                   Math/*.cpp
                   Navigation/*.cpp
                   Render/*.cpp
+                  Render/PostEffect/*.cpp
+                  Render/Pipeline/*.cpp
                   Resource/*.cpp
                   Scene/*.cpp
                   System/*.cpp

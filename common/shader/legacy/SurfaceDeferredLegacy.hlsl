@@ -3,12 +3,12 @@
 //  Square
 //
 //  Deferred branch of the Legacy surface shader.
-//  The deferred G-Buffer stores a shading model ID in position.w (see
+//  The deferred G-Buffer stores a shading model ID in normal.w (see
 //  <SurfaceDeferredPBR> for the layout); legacy pixels are lit with the same
 //  Blinn-Phong math as the forward renderer, so a legacy material looks the
 //  same in both pipelines:
-//   GT0 : world position | GBUFFER_MODEL_LEGACY
-//   GT1 : world normal   | shininess (raw Blinn-Phong exponent)
+//   GT0 : depth along the view
+//   GT1 : world normal (octahedral) | shininess (raw Blinn-Phong exponent) | GBUFFER_MODEL_LEGACY
 //   GT2 : albedo         | 0
 //   GT3 : specular color | occlusion
 //
@@ -39,8 +39,8 @@ struct SurfaceOutput
 SurfaceOutput compute_surface_output(in SurfaceData data)
 {
 	SurfaceOutput output;
-	output.m_position = gbuffer_encode_world(data.m_position.xyz, GBUFFER_MODEL_LEGACY);
-	output.m_normal   = Vec4(normalize(data.m_normal), data.m_shininess);
+	output.m_position = gbuffer_encode_world(data.m_position.xyz);
+	output.m_normal   = gbuffer_encode_normal(data.m_normal, data.m_shininess, GBUFFER_MODEL_LEGACY);
 	output.m_albedo   = Vec4(data.m_albedo, 0.0);
 	output.m_emissive = Vec4(data.m_specular, data.m_occlusion);
 	return output;

@@ -5,6 +5,8 @@
 #include "Square/Render/Effect.h"
 #include "Square/Resource/Shader.h"
 #include "Square/Geometry/AABoundingBox.h"
+#include "Square/Geometry/Intersection.h"
+#include "Square/Render/Pipeline/SoftwareOcclusion.h"
 #include "Square/Core/ClassObjectRegistration.h"
 #include <algorithm>
 
@@ -12,6 +14,18 @@ namespace Square
 {
 namespace Scene
 {
+	namespace AuxInstancedMesh
+	{
+		//the largest scale of a matrix (the longest of its axes): a sphere by it stays around
+		static float largest_scale(const Mat4& model)
+		{
+			const float x = length(Vec3(model[0]));
+			const float y = length(Vec3(model[1]));
+			const float z = length(Vec3(model[2]));
+			return std::max(x, std::max(y, z));
+		}
+	}
+
 	SQUARE_CLASS_OBJECT_REGISTRATION(InstancedMesh);
 
 	//regs
@@ -141,7 +155,73 @@ namespace Scene
 			const Vec3 half = (box.get_max() - box.get_min()) * 0.5f;
 			m_obb_local.set(Mat3(1.0f), center, half);
 		}
+		//the sphere of each instance: around the box of the mesh, by its matrix (its largest scale)
+		m_spheres_local.clear();
+		m_spheres_local.reserve(m_instances.size());
+		const float mesh_radius = length(m_mesh_box.get_extension());
+		for (const Mat4& instance : m_instances)
+		{
+			const Vec3 center = Vec3(instance * Vec4(m_mesh_box.get_position(), 1.0f));
+			m_spheres_local.push_back(Geometry::Sphere(center, mesh_radius * AuxInstancedMesh::largest_scale(instance)));
+		}
 		m_obb_dirty = true;
+		m_spheres_dirty = true;
+		m_visible_valid = false;
+	}
+
+	const std::vector<Geometry::Sphere>& InstancedMesh::world_spheres()
+	{
+		if (m_spheres_dirty)
+		{
+			Mat4 model(1.0f);
+			if (auto transform = m_transform.lock())
+			{
+				model = transform->global_model_matrix();
+			}
+			const float scale = AuxInstancedMesh::largest_scale(model);
+			m_spheres_world.clear();
+			m_spheres_world.reserve(m_spheres_local.size());
+			for (const Geometry::Sphere& sphere : m_spheres_local)
+			{
+				const Vec3 center = Vec3(model * Vec4(sphere.get_position(), 1.0f));
+				m_spheres_world.push_back(Geometry::Sphere(center, sphere.get_radius() * scale));
+			}
+			m_spheres_dirty = false;
+		}
+		return m_spheres_world;
+	}
+
+	const std::vector<Mat4>& InstancedMesh::visible_instances(const Geometry::Frustum& frustum, const Render::SoftwareOcclusion* occlusion)
+	{
+		//the frustum and the occlusion of the last selection, the same ones: as it was
+		const uint64 version = occlusion ? occlusion->version() : 0;
+		bool same = m_visible_valid && !m_spheres_dirty && m_visible_occlusion == occlusion && m_visible_version == version;
+		for (size_t plane = 0; plane != m_visible_planes.size() && same; ++plane)
+		{
+			same = m_visible_planes[plane] == frustum.plane(Geometry::Frustum::PlaneType(plane));
+		}
+		if (!same)
+		{
+			const std::vector<Geometry::Sphere>& spheres = world_spheres();
+			m_visible.clear();
+			m_visible.reserve(m_instances.size());
+			for (size_t i = 0; i != m_instances.size(); ++i)
+			{
+				const bool seen = Geometry::Intersection::check(frustum, spheres[i]) != Geometry::Intersection::OUTSIDE;
+				if (seen && !(occlusion && occlusion->hidden(spheres[i])))
+				{
+					m_visible.push_back(m_instances[i]);
+				}
+			}
+			for (size_t plane = 0; plane != m_visible_planes.size(); ++plane)
+			{
+				m_visible_planes[plane] = frustum.plane(Geometry::Frustum::PlaneType(plane));
+			}
+			m_visible_occlusion = occlusion;
+			m_visible_version = version;
+			m_visible_valid = true;
+		}
+		return m_visible;
 	}
 
 	bool InstancedMesh::triangles(std::vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter)
@@ -204,11 +284,13 @@ namespace Scene
 		}
 		if (drawable && m_buffer)
 		{
+			//the ones the pass sees (none said: all of them)
+			const std::vector<Mat4>& drawn = input.m_frustum ? visible_instances(*input.m_frustum, input.m_occlusion) : m_instances;
 			//in batches: their matrices, a draw each
-			for (size_t first = 0; first < m_instances.size(); first += instances_max)
+			for (size_t first = 0; first < drawn.size(); first += instances_max)
 			{
-				const size_t count = std::min(instances_max, m_instances.size() - first);
-				std::copy(m_instances.begin() + first, m_instances.begin() + first + count, m_batch.begin());
+				const size_t count = std::min(instances_max, drawn.size() - first);
+				std::copy(drawn.begin() + first, drawn.begin() + first + count, m_batch.begin());
 				pass.bind(render, input, m_materials[material_id]->parameters(), draw_id);
 				if (auto uniform = pass.m_shader->constant_buffer("Instances"))
 				{
@@ -254,18 +336,21 @@ namespace Scene
 	void InstancedMesh::on_transform()
 	{
 		m_obb_dirty = true;
+		m_spheres_dirty = true;
 	}
 
 	void InstancedMesh::on_attach(Actor& entity)
 	{
 		m_transform = DynamicPointerCast<Render::Transform>(entity.shared_from_this());
 		m_obb_dirty = true;
+		m_spheres_dirty = true;
 	}
 
 	void InstancedMesh::on_deattch()
 	{
 		m_transform.reset();
 		m_obb_dirty = true;
+		m_spheres_dirty = true;
 	}
 
 	//serialize

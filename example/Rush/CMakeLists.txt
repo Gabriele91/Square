@@ -23,8 +23,6 @@ file(GLOB INCLUDE_FILES include/*.h)
 
 # Create executable
 add_executable(Rush ${SOURCE_FILES} ${INCLUDE_FILES})
-# the engine demo over the game (DemoTools, the full Esc menu): only in Debug
-target_compile_definitions(Rush PRIVATE $<$<CONFIG:Debug>:RUSH_DEMO>)
 
 # Include directories
 target_include_directories(Rush PRIVATE 

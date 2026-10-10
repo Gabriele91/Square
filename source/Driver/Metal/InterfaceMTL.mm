@@ -9,6 +9,11 @@ using namespace Square::Render;
 
 extern "C"
 {
+    DLL_EXPORT const char* square_render_build()
+    {
+        return SQUARE_BUILD_ID;
+    }
+
     DLL_EXPORT RenderDriver square_render_get_type()
     {
         return DR_METAL;

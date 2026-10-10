@@ -155,6 +155,8 @@ void Graphics::depth_of_field(bool enable, float focus)
 	settings.motion         = enable ? 14.0f : 0.0f;
 	settings.motion_from    = 0.62f;
 	settings.motion_to      = 0.92f;
+	//its blur near and large: at the size of the frame
+	settings.resolution     = Square::Render::PER_FULL;
 	m_dof->settings(settings);
 	m_dof->enabled(enable);
 }
@@ -170,6 +172,8 @@ void Graphics::race_depth_of_field(bool enable)
 	settings.samples        = 12; //a small blur: few samples cover its disc (half the cost of 24)
 	settings.near           = false;
 	settings.motion         = 0.0f;
+	//the blur of the far at half size (a quarter of its pixels), the sharp ones as they are
+	settings.resolution     = Square::Render::PER_HALF;
 	m_dof->settings(settings);
 	m_dof->enabled(enable);
 }

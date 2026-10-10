@@ -5,7 +5,8 @@
 //  Debug texture panel: draws the six faces of a cube texture side by side
 //  (+X -X +Y -Y +Z -Z) inside a screen-space rect.
 //  rect.xy = bottom-left corner in NDC, rect.zw = size in NDC;
-//  params.x = grayscale (depth textures), params.y = flip V.
+//  params.x = grayscale (depth textures), params.y = flip V, params.w = normalized and colored
+//  (DebugTextureCommon).
 //
 #include <Vertex>
 
@@ -13,6 +14,8 @@ SamplerCube(g_texture);
 
 Vec4 rect;
 Vec4 params;
+
+#include <DebugTextureCommon>
 
 struct DebugTextureVSOutput
 {
@@ -44,7 +47,5 @@ Vec4 fragment(DebugTextureVSOutput input) : SV_TARGET0
 	else if (face == 4) dir = Vec3( st.x,  st.y,  1.0); //+Z
 	else                dir = Vec3(-st.x,  st.y, -1.0); //-Z
 	Vec4 color = textureCube(g_texture, dir);
-	if (params.x > 0.5) color = Vec4(color.rrr, 1.0);
-	color.a = 1.0;
-	return color;
+	return debug_texture_color(color);
 }

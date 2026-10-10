@@ -14,13 +14,15 @@
 #include "Square/System/InputSystem.h"
 #include "Square/System/RenderSystem.h"
 #include "Square/UI/Context.h"
+#include "Square/Core/DebugOptions.h"
 
 namespace Square
 {
 namespace UI
 {
 	class Backend;
-	class ProfilerPanel;
+	class DebugPanel;
+	struct DebugProvider;
 }
 
 	class SQUARE_API UISystem : public System, public InputListener, public RenderOverlay
@@ -49,9 +51,22 @@ namespace UI
 		bool wants_mouse() const;
 		bool wants_keyboard() const;
 
-		//the panel of the render profiler over the frame (Render/Profiler.h): shown, the profiler
-		//is on. Without RENDER_PROFILER (no profiler) it is never shown
-		void profiler(bool visible);
+		//the debug panel of the engine over the frame (F1: its key, on by default): the render
+		//profiler, the pipeline of the worlds, the debug views, the UI, the tabs of the game.
+		//Not in Retail (SQUARE_DEBUG_TOOLS not defined): never shown, its sections not asked
+		void debug_panel(bool visible);
+		bool debug_panel() const;
+		//F1 opens and closes it (false: only debug_panel does)
+		void debug_panel_key(bool enabled);
+		bool debug_panel_key() const;
+		//the sections a game gives to a tab of it (an engine tab: "Pipeline", "Debug draw", "UI",
+		//or a tab of its own), by a key (given again: replaced); asked when the panel is made
+		void debug_sections(const std::string& tab, const std::string& key, DebugSections sections);
+		void remove_debug_sections(const std::string& key);
+
+		//the render profiler (Render/Profiler.h) on, the debug panel shown with it. Without
+		//RENDER_PROFILER (no profiler) it is never on
+		void profiler(bool enable);
 		bool profiler() const;
 		//the render profiler is compiled in the engine
 		bool has_profiler() const;
@@ -73,7 +88,11 @@ namespace UI
 		virtual void draw_overlay(Render::Context& render) override;
 
 		std::unique_ptr<UI::Backend>       m_backend;
-		std::unique_ptr<UI::ProfilerPanel> m_profiler_panel;
+		std::unique_ptr<UI::DebugPanel>    m_debug_panel;
+		std::vector<UI::DebugProvider>     m_debug_providers;
+		bool                               m_debug_panel_key{ true };
+		//the debug panel, made the first time it is needed (nullptr: no UI)
+		UI::DebugPanel* debug_panel_instance();
 		UI::Context                  m_ui;
 		int                          m_modifiers{ 0 };
 		bool                         m_wants_mouse{ false };

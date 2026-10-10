@@ -1,0 +1,11 @@
+<rml>
+<head>
+	<title>Square debug</title>
+	<link type="text/rcss" href="default.rcss"/>
+	<link type="text/rcss" href="debug.rcss"/>
+</head>
+<body id="square_debug">
+	<div class="title">SQUARE DEBUG <span class="hint">F1 to close</span></div>
+	<div id="content"></div>
+</body>
+</rml>

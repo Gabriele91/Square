@@ -5,6 +5,7 @@
 //  See UISystem.h.
 //
 #include <algorithm>
+#include <cstdlib>
 #include <RmlUi/Core.h>
 #include <RmlUi/Debugger.h>
 #include "Square/Core/Context.h"
@@ -13,7 +14,7 @@
 #include "Square/Driver/Window.h"
 #include "Square/System/UISystem.h"
 #include "../UI/Backend.h"
-#include "../UI/ProfilerPanel.h"
+#include "../UI/DebugPanel.h"
 
 namespace Square
 {
@@ -150,6 +151,11 @@ namespace Square
 		}
 		Rml::Debugger::Initialise(ui_context);
 		m_ui = UI::Context(context(), ui_context);
+		//the images of the textures of the engine (the thumbnails of the debug panel)
+		m_backend->external_textures([this](const std::string& source, IVec2& size) -> Render::Texture*
+		{
+			return m_debug_panel ? m_debug_panel->preview(source, size) : nullptr;
+		});
 		//the input, the frame
 		if (input_system) input_system->add_listener(this);
 		render_system->add_overlay(this);
@@ -161,7 +167,7 @@ namespace Square
 		if (auto* input_system = System::get<InputSystem>(context())) input_system->remove_listener(this);
 		if (auto* render_system = System::get<RenderSystem>(context())) render_system->remove_overlay(this);
 		//its document, before the contexts go
-		m_profiler_panel.reset();
+		m_debug_panel.reset();
 		if (m_backend)
 		{
 			//the documents, the contexts, the fonts: their GPU objects by the backend
@@ -189,8 +195,8 @@ namespace Square
 				if (ratio != ui_context->GetDensityIndependentPixelRatio())
 					ui_context->SetDensityIndependentPixelRatio(ratio);
 			}
-			//the profiler panel: its rows before the update (their layout)
-			if (m_profiler_panel) m_profiler_panel->update();
+			//the debug panel: its controls before the update (their layout)
+			if (m_debug_panel) m_debug_panel->update();
 			// Update
 			ui_context->Update();
 		}
@@ -204,6 +210,8 @@ namespace Square
 			const IVec2 size = m_ui.size();
 			if (size.x > 0 && size.y > 0)
 			{
+				//the thumbnails of the debug panel, before the UI shows them
+				if (m_debug_panel) m_debug_panel->draw(render);
 				m_backend->begin_frame(size);
 				ui_context->Render();
 				m_backend->end_frame();
@@ -211,14 +219,87 @@ namespace Square
 		}
 	}
 
-	void UISystem::profiler(bool visible)
+	UI::DebugPanel* UISystem::debug_panel_instance()
 	{
-		if (!m_profiler_panel)
+#if defined(SQUARE_DEBUG_TOOLS)
+		if (!m_debug_panel && m_ui.valid())
 		{
-			if (!visible || !has_profiler() || !m_ui.valid()) return;
-			m_profiler_panel = std::make_unique<UI::ProfilerPanel>(context(), m_ui);
+			m_debug_panel = std::make_unique<UI::DebugPanel>(context(), m_ui, m_debug_providers);
 		}
-		m_profiler_panel->show(visible);
+#endif
+		return m_debug_panel.get();
+	}
+
+	void UISystem::debug_panel(bool visible)
+	{
+		if (visible)
+		{
+			if (UI::DebugPanel* panel = debug_panel_instance())
+			{
+				panel->show(true);
+			}
+		}
+		else if (m_debug_panel)
+		{
+			m_debug_panel->show(false);
+		}
+	}
+
+	bool UISystem::debug_panel() const
+	{
+		return m_debug_panel && m_debug_panel->visible();
+	}
+
+	void UISystem::debug_panel_key(bool enabled)
+	{
+		m_debug_panel_key = enabled;
+	}
+
+	bool UISystem::debug_panel_key() const
+	{
+		return m_debug_panel_key;
+	}
+
+	void UISystem::debug_sections(const std::string& tab, const std::string& key, DebugSections sections)
+	{
+		auto it = std::find_if(m_debug_providers.begin(), m_debug_providers.end(), [&](const UI::DebugProvider& provider) { return provider.m_key == key; });
+		if (it != m_debug_providers.end())
+		{
+			it->m_tab = tab;
+			it->m_sections = sections;
+		}
+		else
+		{
+			m_debug_providers.push_back({ tab, key, sections });
+		}
+		if (m_debug_panel)
+		{
+			m_debug_panel->providers_changed();
+		}
+	}
+
+	void UISystem::remove_debug_sections(const std::string& key)
+	{
+		m_debug_providers.erase(std::remove_if(m_debug_providers.begin(), m_debug_providers.end(), [&](const UI::DebugProvider& provider)
+		{
+			return provider.m_key == key;
+		}), m_debug_providers.end());
+		if (m_debug_panel)
+		{
+			m_debug_panel->providers_changed();
+		}
+	}
+
+	void UISystem::profiler(bool enable)
+	{
+		if (enable && has_profiler())
+		{
+			debug_panel(true);
+		}
+		if (m_debug_panel)
+		{
+			m_debug_panel->profile(enable && has_profiler());
+		}
 	}
 
 	void UISystem::reference_size(const IVec2& size)
@@ -233,7 +314,7 @@ namespace Square
 
 	bool UISystem::profiler() const
 	{
-		return m_profiler_panel && m_profiler_panel->visible();
+		return m_debug_panel && m_debug_panel->profiling();
 	}
 
 	bool UISystem::has_profiler() const
@@ -267,7 +348,18 @@ namespace Square
 	//input
 	void UISystem::on_key(Video::KeyboardEvent key, short mode, Video::ActionEvent action)
 	{
-		if (Rml::Context* ui_context = m_ui.native())
+		//F1: the debug panel (the key is not given to the documents; no panel in Retail)
+#if defined(SQUARE_DEBUG_TOOLS)
+		const bool panel_key = m_debug_panel_key && key == Video::KEY_F1;
+#else
+		const bool panel_key = false;
+#endif
+		if (panel_key && action == Video::PRESS)
+		{
+			debug_panel(!debug_panel());
+		}
+		Rml::Context* ui_context = panel_key ? nullptr : m_ui.native();
+		if (ui_context)
 		{
 			m_modifiers = to_rml_modifiers(mode);
 			const Rml::Input::KeyIdentifier rml_key = to_rml_key(key);

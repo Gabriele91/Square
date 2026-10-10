@@ -248,6 +248,33 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec
 #endif
 }
 
+//the light tinted by the cascade of a point (debug: m_options.z, the cascades in colors; out of
+//the shadow white), else white
+Vec3 direction_light_shadow_tint(in Vec4 fposition)
+{
+	Vec3 tint = Vec3(1.0, 1.0, 1.0);
+	if (direction_shadow_camera.m_options.z != 0)
+	{
+		const float view_depth = abs(mul(fposition, camera.m_view).z);
+		const uint  cascades = uint(clamp(direction_shadow_camera.m_options.y, 1, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
+		if (view_depth < abs(direction_shadow_camera.m_data[cascades - 1][DEPTH]))
+		{
+			switch (find_csm_layer(view_depth))
+			{
+			case 0:  tint = Vec3(1.0, 0.25, 0.25); break;
+			case 1:  tint = Vec3(0.25, 1.0, 0.25); break;
+			case 2:  tint = Vec3(0.3, 0.45, 1.0); break;
+			case 3:  tint = Vec3(1.0, 1.0, 0.25); break;
+			case 4:  tint = Vec3(1.0, 0.3, 1.0); break;
+			case 5:  tint = Vec3(0.25, 1.0, 1.0); break;
+			case 6:  tint = Vec3(1.0, 0.6, 0.2); break;
+			default: tint = Vec3(0.6, 0.35, 1.0); break;
+			}
+		}
+	}
+	return tint;
+}
+
 //light_dir: to the light
 float direction_light_apply_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec3 normal)
 {

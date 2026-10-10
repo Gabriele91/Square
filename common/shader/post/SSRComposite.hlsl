@@ -78,7 +78,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	//background: the frame
 	if (g_pos.w < 0.5) return Vec4(ssr_debug > 0.5 ? Vec3(0.0, 0.0, 0.0) : color, 1.0);
 	Vec4  g_nor = texture2DLod(g_normal, uv, 0.0);
-	float roughness = ssr_roughness(g_nor.w, g_pos.w);
+	float roughness = ssr_roughness(gbuffer_material(g_nor), gbuffer_model(g_nor));
 	float max_roughness = ssr_params.w;
 	//the reflection, blurred by the roughness
 	float rough = saturate(roughness / max_roughness);
@@ -91,7 +91,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	if (ssr_debug > 0.5) return Vec4(reflection * confidence, 1.0);
 	//Fresnel (Schlick): F0 of the material
 	Vec3 f0;
-	if (g_pos.w > 1.5)
+	if (gbuffer_model(g_nor) > 1.5)
 	{
 		f0 = texture2DLod(g_emissive, uv, 0.0).rgb; //Legacy: the specular color
 	}
@@ -100,7 +100,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		Vec4 g_alb = texture2DLod(g_albedo, uv, 0.0);
 		f0 = lerp(Vec3(0.04, 0.04, 0.04), g_alb.rgb, saturate(g_alb.a));
 	}
-	Vec3  n = normalize(g_nor.xyz);
+	Vec3  n = gbuffer_decode_normal(g_nor);
 	Vec3  to_camera = normalize(camera.m_position - g_pos.xyz);
 	float n_dot_v = saturate(dot(n, to_camera));
 	Vec3  fresnel = f0 + (Vec3(1.0, 1.0, 1.0) - f0) * pow(1.0 - n_dot_v, 5.0);

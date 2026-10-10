@@ -20,6 +20,7 @@
 #include "MeshManager.h"
 #include "LodGroups.h"
 #include "InstanceGroups.h"
+#include "Occluders.h"
 
 enum class OutputFormat
 {
@@ -134,6 +135,8 @@ public:
         LodGroups::Extras lod_extras;
         // The nodes of instances ("square_instances")
         InstanceGroups::Nodes instance_nodes;
+        // The nodes of occluders ("square_occluder": true, or "proxy")
+        Occluders::Nodes occluder_nodes;
         GLTF::Import::visit_default_scene< Shared<Actor> >(gltf_model, main_node,
             [&](const GLTF::Node* const parent, const GLTF::Node& node, Shared<Actor>& parent_actor) -> Shared<Actor>
             {
@@ -151,6 +154,12 @@ public:
                 if (SquareExtras::flag(node.extras, "instances").value_or(false))
                 {
                     instance_nodes.insert(actor.get());
+                }
+                //an occluder: its meshes ("proxy": only the occluder, the meshes gone)
+                const bool occluder_proxy = SquareExtras::string(node.extras, "occluder").value_or("") == "proxy";
+                if (occluder_proxy || SquareExtras::flag(node.extras, "occluder").value_or(false))
+                {
+                    occluder_nodes[actor.get()] = occluder_proxy;
                 }
                 Vec3 translation{ 0.0f,0.0f,0.0f }, scale{ 1.0f,1.0f,1.0f };
                 Quat rotation(0.0f,0.0f,0.0f,1.0f);
@@ -343,6 +352,12 @@ public:
                 parent_actor->add(actor);
                 return actor;
             });
+        // The occluders: the meshes of a node "square_occluder" (before the instances take them)
+        size_t occluder_triangles = 0;
+        if (const size_t occluders = Occluders::build(context(), main_node, occluder_nodes, occluder_triangles))
+        {
+            context().logger()->info("Occluders: " + std::to_string(occluders) + ", " + std::to_string(occluder_triangles) + " triangles");
+        }
         // The instances: the children of a node "square_instances" by their mesh
         size_t instances = 0;
         if (const size_t meshes = InstanceGroups::build(context(), main_node, instance_nodes, instances))

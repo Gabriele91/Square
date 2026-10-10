@@ -16,12 +16,8 @@ using namespace Rush;
 
 namespace AuxRushUI
 {
-	//the Esc menu of a race: the demo one, or the pause
-#if defined(RUSH_DEMO)
-	const char* s_menu_document = "example/Rush/assets/ui.sqz/menu.rml";
-#else
+	//the Esc menu of a race: the pause
 	const char* s_menu_document = "example/Rush/assets/ui.sqz/pause.rml";
-#endif
 }
 
 RushUI::RushUI(Square::Context& context)

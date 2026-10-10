@@ -596,7 +596,7 @@ namespace Scene
 		}
 		std::memcpy(data, &m_cache_udirectionshadowlight, sizeof(Render::UniformDirectionShadowLight));
 		//the filter and the cascades: every frame (the filter changes without a new shadow map)
-		data->m_options = IVec4(int(shadow_filter()), m_cascades, 0, 0);
+		data->m_options = IVec4(int(shadow_filter()), m_cascades, m_cascade_colors ? 1 : 0, 0);
 	}
 
 	void DirectionLight::set_scene_size(const Geometry::AABoundingBox& scene)
