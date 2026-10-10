@@ -20,6 +20,7 @@
 #include <RushUI.h>
 #include <TitleScreen.h>
 #include <RushDebug.h>
+#include <RushBench.h>
 #include <RushConfig.h>
 
 using namespace Rush;
@@ -199,6 +200,12 @@ public:
 		world().create_level(s_race_world_level);
 #if defined(SQUARE_DEBUG_TOOLS)
 		m_debug = std::make_unique<RushDebug>(context(), world(), [this]() { return m_race.get(); });
+		//a benchmark of the map of --map (RUSH_BENCH: its report)
+		const char* bench = std::getenv("RUSH_BENCH");
+		if (bench && !m_start_map.empty())
+		{
+			m_bench = std::make_unique<RushBench>(context(), world(), bench);
+		}
 #endif
 		//the title in its level, it starts in the menu
 		m_title.load(world().level(s_title_world_level));
@@ -338,6 +345,12 @@ private:
 				const RaceMap& map = m_ui.race_map();
 				m_race->arena().view(map.m_view_from, map.m_view_to, map.m_view_lens);
 			}
+			//the benchmark: its step once the race is shown, the game quits at its end
+			const bool shown = m_loading.phase() == AuxMain::LoadingFade::Phase::HIDDEN;
+			if (m_bench && shown && m_bench->update(*m_race, m_ui.race_map(), delta_time))
+			{
+				m_loop = false;
+			}
 			//a circuit: the haze of where the player is (the biomes along the lap)
 			RaceFog zone_fog;
 			if (m_race->zone_fog(zone_fog))
@@ -352,7 +365,7 @@ private:
 	{
 		//the view of its map (its photo), its menu open, under its loading screen (its first
 		//frames)
-		const bool view = m_view;
+		const bool view = m_view || m_bench;
 		const bool menu = m_ui.menu_visible();
 		const bool loading = m_loading.phase() == AuxMain::LoadingFade::Phase::HOLDING;
 		return view || menu || loading;
@@ -521,6 +534,7 @@ private:
 	RushUI                     m_ui{ context() };
 	Square::Shared<Race>       m_race;    //the component of the actor of the race
 	std::unique_ptr<RushDebug> m_debug; //its sections in the debug panel (not in Retail)
+	std::unique_ptr<RushBench> m_bench; //the benchmark of a map (RUSH_BENCH, not in Retail)
 };
 
 static Square::Shell::ParserCommands s_ShellCommands
