@@ -82,6 +82,13 @@ namespace Render
 		//instanced variant of the techniques of its effects (Render::EV_INSTANCED)
 		virtual bool instanced() const { return false; }
 
+		//its vertices moved by joints (Scene::SkinnedMesh): the passes take the skinned variant of
+		//the techniques of its effects (Render::EV_SKINNED)
+		virtual bool skinned() const { return false; }
+
+		//the variant of the techniques of its draws (Render::EffectVariant: instanced, skinned)
+		unsigned char variant() const;
+
 		//motion blur of its own (a PostEffect that needs the velocity, Render::MotionBlur): its
 		//motion on the screen written (deferred, after the G-Buffer), only by the ones on
 		inline void motion_blur(bool enable) { m_motion_blur = enable; }

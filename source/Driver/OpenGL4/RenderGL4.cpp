@@ -2136,10 +2136,13 @@ namespace Render
 			square_assert(s_bind_context.m_shader);
 			//get 
 			InputLayout::GLLayout* gllayout = layout->get(s_bind_context.m_shader);
-            //unbind
-            for (const Attribute& data : gllayout->m_attributes)
+            //unbind (the arrays by their locations in the shader, as bind_IL enabled them)
+            if (gllayout)
             {
-                glDisableVertexAttribArray(data.m_attribute);
+                for (GLint location : gllayout->m_locations)
+                {
+                    glDisableVertexAttribArray(location);
+                }
             }
             //safe
             s_bind_context.m_input_layout = nullptr;

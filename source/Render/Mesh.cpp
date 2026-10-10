@@ -90,6 +90,23 @@ namespace Render
 		return true;
 	}
 
+	bool Mesh::build(const Mesh::Vertex3DNTBUVSkinList& vertexs, bool cpu_access)
+	{
+		if (!build_vertex_layout
+		(
+			  Layout::LF_POSITION_3D
+			| Layout::LF_NORMAL
+			| Layout::LF_TANGENT
+			| Layout::LF_BINOMIAL
+			| Layout::LF_UVMAP
+			| Layout::LF_EXTRA0
+			| Layout::LF_EXTRA1
+		)) return false;
+		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
+		m_sub_meshs.emplace_back(vertexs.size());
+		return true;
+	}
+
 	bool Mesh::build(const Mesh::Vertex2DList& vertexs, const Mesh::SubMeshList& submeshs, bool cpu_access)
 	{
 		if (!build(vertexs, cpu_access)) return false;
@@ -121,6 +138,13 @@ namespace Render
 		return true;
 	}
 	bool Mesh::build(const Mesh::Vertex3DNTBUVList& vertexs, const Mesh::SubMeshList& submeshs, bool cpu_access)
+	{
+		if (!build(vertexs, cpu_access)) return false;
+		m_sub_meshs = submeshs;
+		return true;
+	}
+
+	bool Mesh::build(const Mesh::Vertex3DNTBUVSkinList& vertexs, const Mesh::SubMeshList& submeshs, bool cpu_access)
 	{
 		if (!build(vertexs, cpu_access)) return false;
 		m_sub_meshs = submeshs;
@@ -202,6 +226,24 @@ namespace Render
 		return true;
 	}
 
+	bool Mesh::build(const Vertex3DNTBUVSkinList& vertexs, const IndexList& indexs, bool cpu_access)
+	{
+		if (!build_vertex_layout
+		(
+			  Layout::LF_POSITION_3D
+			| Layout::LF_NORMAL
+			| Layout::LF_TANGENT
+			| Layout::LF_BINOMIAL
+			| Layout::LF_UVMAP
+			| Layout::LF_EXTRA0
+			| Layout::LF_EXTRA1
+		)) return false;
+		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
+		if (!build_index_buffer(indexs, cpu_access)) return false;
+		m_sub_meshs.emplace_back(indexs.size());
+		return true;
+	}
+
 	bool Mesh::build(const Vertex2DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access)
 	{
 		if (!build(vertexs, indexs, cpu_access)) return false;
@@ -233,6 +275,13 @@ namespace Render
 		return true;
 	}
 	bool Mesh::build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access)
+	{
+		if (!build(vertexs, indexs, cpu_access)) return false;
+		m_sub_meshs = submeshs;
+		return true;
+	}
+
+	bool Mesh::build(const Vertex3DNTBUVSkinList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access)
 	{
 		if (!build(vertexs, indexs, cpu_access)) return false;
 		m_sub_meshs = submeshs;

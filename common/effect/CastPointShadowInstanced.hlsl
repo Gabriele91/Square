@@ -2,6 +2,7 @@
 #pragma once
 #include <Vertex>
 #include <Transform>
+#include <MeshVertex>
 #include <Matrix>
 #include <ShadowCamera>
 ////////////////
@@ -26,10 +27,10 @@ struct VertexShaderOutput
 };
 
 //draw
-VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input, uint instance_id : SV_InstanceID)
+VertexShaderOutput vertex(in MeshVertex input, uint instance_id : SV_InstanceID)
 {
 	VertexShaderOutput output;
-	Vec4 world_position = mul(Vec4(input.m_position, 1.0), transform.m_model);
+	Vec4 world_position = mesh_world_position(input);
 	output.m_world_position = world_position;
 	output.m_position       = mul_point_light_view_projection(world_position, instance_id);
 	output.m_uv             = input.m_uv;

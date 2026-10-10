@@ -33,6 +33,7 @@ namespace Square
 		// 			Position2DUV                     (3)
 		//			Position3DUV                     (4)
 		// 			Position3DNormalTangetBinomialUV (5)
+		// 			Position3DNormalTangetBinomialUVSkin (6: + its joints, their weights)
 		// 8 bytes: body offset
 		// 
 		// Body
@@ -54,6 +55,7 @@ namespace Square
 			SMLTYPE_POSITON2DUV = 2,
 			SMLTYPE_POSITON3DUV = 3,
 			SMLTYPE_POSITON3DTANGENTBINOMIALUV = 4,
+			SMLTYPE_POSITON3DTANGENTBINOMIALUVSKIN = 5,
 			SMLTYPE_UNKNOWN = ~0
 		};
 
@@ -271,6 +273,13 @@ namespace Square
 					context.m_vertex = std::move(vertex);
 				}
 				break;
+				case StaticMeshLayoutType::SMLTYPE_POSITON3DTANGENTBINOMIALUVSKIN:
+				{
+					std::vector<Render::Layout::Position3DNormalTangetBinomialUVSkin> vertex;
+					if (!read_array(reader, vertex)) return false;
+					context.m_vertex = std::move(vertex);
+				}
+				break;
 				default: return false;
 			}
 			// Index
@@ -322,7 +331,8 @@ namespace Square
 				[&](Render::Mesh::Vertex3DList& varray) { write_a_vector(varray, binary); },
 				[&](Render::Mesh::Vertex2DUVList& varray) { write_a_vector(varray, binary); },
 				[&](Render::Mesh::Vertex3DUVList& varray) { write_a_vector(varray, binary); },
-				[&](Render::Mesh::Vertex3DNTBUVList& varray) { write_a_vector(varray, binary); }
+				[&](Render::Mesh::Vertex3DNTBUVList& varray) { write_a_vector(varray, binary); },
+				[&](Render::Mesh::Vertex3DNTBUVSkinList& varray) { write_a_vector(varray, binary); }
 			);
 			return status;
 		}
@@ -336,7 +346,8 @@ namespace Square
 				[&](Render::Mesh::Vertex3DList&) { type = StaticMeshLayoutType::SMLTYPE_POSITON3D; },
 				[&](Render::Mesh::Vertex2DUVList&) { type = StaticMeshLayoutType::SMLTYPE_POSITON2DUV; },
 				[&](Render::Mesh::Vertex3DUVList&) { type = StaticMeshLayoutType::SMLTYPE_POSITON3DUV; },
-				[&](Render::Mesh::Vertex3DNTBUVList&) { type = StaticMeshLayoutType::SMLTYPE_POSITON3DTANGENTBINOMIALUV; }
+				[&](Render::Mesh::Vertex3DNTBUVList&) { type = StaticMeshLayoutType::SMLTYPE_POSITON3DTANGENTBINOMIALUV; },
+				[&](Render::Mesh::Vertex3DNTBUVSkinList&) { type = StaticMeshLayoutType::SMLTYPE_POSITON3DTANGENTBINOMIALUVSKIN; }
 			);
 			return type;
 		}

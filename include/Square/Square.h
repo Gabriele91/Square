@@ -70,6 +70,7 @@
 #include "Square/Render/Transform.h"
 #include "Square/Render/Renderable.h"
 #include "Square/Render/Occluder.h"
+#include "Square/Render/SpriteBatch.h"
 #include "Square/Render/LevelOfDetail.h"
 #include "Square/Render/VertexLayout.h"
 #include "Square/Render/Pipeline/Drawer.h"
@@ -108,6 +109,10 @@
 #include "Square/Scene/StaticMesh.h"
 #include "Square/Scene/InstancedMesh.h"
 #include "Square/Scene/Occluder.h"
+#include "Square/Scene/Sprite.h"
+#include "Square/Scene/ParticleEmitter.h"
+#include "Square/Scene/Animator.h"
+#include "Square/Scene/SkinnedMesh.h"
 #include "Square/Scene/LodGroup.h"
 #include "Square/Scene/World.h"
 /* main defines */

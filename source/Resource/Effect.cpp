@@ -66,6 +66,8 @@ namespace Resource
             case Render::EV_INSTANCED:                  return name + " (instanced)";
             case Render::EV_CLIP:                       return name + " (clip)";
             case Render::EV_INSTANCED | Render::EV_CLIP: return name + " (instanced, clip)";
+            case Render::EV_SKINNED:                    return name + " (skinned)";
+            case Render::EV_SKINNED | Render::EV_CLIP:   return name + " (skinned, clip)";
             default:                                    return name;
             }
         }
@@ -183,6 +185,10 @@ namespace Resource
 								if (variant & Render::EV_CLIP)
 								{
 									shader_defines.push_back(std::make_tuple(std::string("define"), std::string("SQ_CLIP")));
+								}
+								if (variant & Render::EV_SKINNED)
+								{
+									shader_defines.push_back(std::make_tuple(std::string("define"), std::string("SQ_SKINNED")));
 								}
 								//shader
 								this_pass.m_shader = MakeShared<Shader>(context);
@@ -409,7 +415,7 @@ namespace Resource
             {
                 //only the variants declared
                 const bool declared = (variant & parser_technique.m_variants) == variant;
-                if (!declared) continue;
+                if (!declared || !Render::effect_variant_valid(variant)) continue;
                 if (!AuxEffect::build_technique(context(), path, *ptr_sub_effect, parser_technique, variant, variants.declare(variant)))
                 {
                     return false;

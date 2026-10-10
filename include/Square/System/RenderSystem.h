@@ -78,7 +78,8 @@ namespace Square
 		//effects added by AppInterface::start) to pre_shutdown
 		bool ready() const;
 
-		//draw all the worlds, and show the frame (the loop calls them)
+		//draw all the worlds (their time on by the seconds of the last frame), and show the frame
+		//(the loop calls them)
 		void draw();
 		void present();
 
@@ -96,6 +97,8 @@ namespace Square
 		Render::Profiler*        m_profiler{ nullptr };
 		//between post_initialize and pre_shutdown
 		bool m_ready{ false };
+		//the seconds of the last frame (the time of the worlds)
+		double m_delta_time{ 0.0 };
 		//worlds
 		std::vector< Weak<RenderInstance> > m_instances;
 		std::vector< RenderOverlay* >       m_overlays;
@@ -158,8 +161,10 @@ namespace Square
 		//its cameras, lights, renderables and occluders (as the levels give them)
 		const Render::Collection& collection() const { return m_collection; }
 
-		//draw the levels of the world
-		void draw();
+		//draw the levels of the world; its time on by the seconds of a frame
+		void draw(double delta_time);
+		//the time of the world: seconds drawn (its materials animated by it)
+		double time() const { return m_time; }
 
 		//the cameras, lights and renderables that join / leave the levels of the world
 		virtual void on_add_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component) override;
@@ -172,6 +177,7 @@ namespace Square
 		Vec4        m_clear_color{ 0.25f, 0.5f, 1.0f, 1.0f };
 		Vec4        m_ambient_color{ 0.1f, 0.1f, 0.1f, 1.0f };
 		bool        m_visible{ true };
+		double      m_time{ 0.0 };
 		Render::LevelOfDetailSettings m_levels_of_detail;
 		Render::SoftwareOcclusion::Settings m_occlusion;
 		std::vector< Shared<Render::PostEffect> > m_post_effects;

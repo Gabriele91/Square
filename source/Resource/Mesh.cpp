@@ -225,7 +225,8 @@ namespace Resource
 			vertex_gpu_build<Render::Mesh::Vertex2DUVList>(m_mesh, static_mesh_context, gpu_build_status),
 			vertex_gpu_build<Render::Mesh::Vertex3DUVList>(m_mesh, static_mesh_context, gpu_build_status),
 			vertex_gpu_build<Render::Mesh::Vertex3DNUVList>(m_mesh, static_mesh_context, gpu_build_status),
-			vertex_gpu_build<Render::Mesh::Vertex3DNTBUVList>(m_mesh, static_mesh_context, gpu_build_status)
+			vertex_gpu_build<Render::Mesh::Vertex3DNTBUVList>(m_mesh, static_mesh_context, gpu_build_status),
+			vertex_gpu_build<Render::Mesh::Vertex3DNTBUVSkinList>(m_mesh, static_mesh_context, gpu_build_status)
 		);
 		// Return status
 		return gpu_build_status;

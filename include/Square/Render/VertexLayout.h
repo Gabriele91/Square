@@ -341,6 +341,58 @@ namespace Layout
             return LF_POSITION_3D | LF_NORMAL | LF_TANGENT | LF_BINOMIAL | LF_UVMAP;
         }
     };
+
+    //vertex (3D) + normal + tangent + bitangent + uv + its joints and their weights (a skinned
+    //mesh: Scene::SkinnedMesh): 4 joints (their indices in its skin, as floats), their weights
+    //(their sum 1)
+    struct Position3DNormalTangetBinomialUVSkin
+    {
+        SQUARE_STATIC_OBJECT(Position3DNormalTangetBinomialUVSkin)
+
+        Vec3 m_position;
+        Vec3 m_normal;
+        Vec3 m_tangent;
+        Vec3 m_binomial;
+        Vec2 m_uvmap;
+        Vec4 m_joints;
+        Vec4 m_weights;
+
+        Position3DNormalTangetBinomialUVSkin() = default;
+
+        Position3DNormalTangetBinomialUVSkin
+        (
+            const Position3DNormalTangetBinomialUV& vertex,
+            const Vec4& joints,
+            const Vec4& weights
+        )
+        {
+            m_position = vertex.m_position;
+            m_normal = vertex.m_normal;
+            m_tangent = vertex.m_tangent;
+            m_binomial = vertex.m_binomial;
+            m_uvmap = vertex.m_uvmap;
+            m_joints = joints;
+            m_weights = weights;
+        }
+
+        static inline AttributeList attributes()
+        {
+            return Render::AttributeList{
+                { Render::ATT_POSITION,  Render::AST_FLOAT3, offsetof(Position3DNormalTangetBinomialUVSkin,m_position)},
+                { Render::ATT_NORMAL0,   Render::AST_FLOAT3, offsetof(Position3DNormalTangetBinomialUVSkin,m_normal)  },
+                { Render::ATT_TANGENT0,  Render::AST_FLOAT3, offsetof(Position3DNormalTangetBinomialUVSkin,m_tangent) },
+                { Render::ATT_BINORMAL0, Render::AST_FLOAT3, offsetof(Position3DNormalTangetBinomialUVSkin,m_binomial)},
+                { Render::ATT_TEXCOORD0, Render::AST_FLOAT2, offsetof(Position3DNormalTangetBinomialUVSkin,m_uvmap)   },
+                { Render::ATT_TEXCOORD1, Render::AST_FLOAT4, offsetof(Position3DNormalTangetBinomialUVSkin,m_joints)  },
+                { Render::ATT_TEXCOORD2, Render::AST_FLOAT4, offsetof(Position3DNormalTangetBinomialUVSkin,m_weights) }
+            };
+        }
+
+        static inline unsigned long type()
+        {
+            return LF_POSITION_3D | LF_NORMAL | LF_TANGENT | LF_BINOMIAL | LF_UVMAP | LF_EXTRA0 | LF_EXTRA1;
+        }
+    };
     
 }
 }

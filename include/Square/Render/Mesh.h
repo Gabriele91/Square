@@ -43,6 +43,7 @@ namespace Render
 		using Vertex3DUVList    = std::vector< Layout::Position3DUV >;
 		using Vertex3DNUVList   = std::vector< Layout::Position3DNormalUV >;
 		using Vertex3DNTBUVList = std::vector< Layout::Position3DNormalTangetBinomialUV >;
+		using Vertex3DNTBUVSkinList = std::vector< Layout::Position3DNormalTangetBinomialUVSkin >;
 		using IndexList   = std::vector<unsigned int>;
 		using SubMeshList = std::vector< SubMesh >;
 
@@ -60,6 +61,7 @@ namespace Render
 		bool build(const Vertex3DUVList& vertexs, bool cpu_access = false);
 		bool build(const Vertex3DNUVList& vertexs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVSkinList& vertexs, bool cpu_access = false);
 
 		bool build(const Vertex2DList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
@@ -67,6 +69,7 @@ namespace Render
 		bool build(const Vertex3DUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DNUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVSkinList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 
 		bool build(const Vertex2DList& vertexs, const IndexList& indexs, bool cpu_access = false);
 		bool build(const Vertex3DList& vertexs, const IndexList& indexs, bool cpu_access = false);
@@ -74,6 +77,7 @@ namespace Render
 		bool build(const Vertex3DUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
 		bool build(const Vertex3DNUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVSkinList& vertexs, const IndexList& indexs, bool cpu_access = false);
 
 		bool build(const Vertex2DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
@@ -81,6 +85,7 @@ namespace Render
 		bool build(const Vertex3DUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DNUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVSkinList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 
 		//info
 		unsigned int layout_type() const;

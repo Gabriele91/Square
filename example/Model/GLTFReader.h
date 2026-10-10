@@ -90,12 +90,14 @@ namespace GLTF
         size_t offset;
         size_t length;
         size_t target;
+        size_t stride{ 0 }; // bytes between two elements (0: packed)
 
-        View(size_t buffer, size_t offset, size_t length, size_t target)
+        View(size_t buffer, size_t offset, size_t length, size_t target, size_t stride = 0)
         : buffer(buffer)
         , offset(offset)
         , length(length)
         , target(target)
+        , stride(stride)
         {
         }
     };
@@ -455,6 +457,7 @@ namespace GLTF
         std::string name;                   // Name of the node
         NodeList children;                  // Indices of child nodes
         std::optional<NodeContent> content; // Index of the mesh this node references (if any)
+        std::optional<size_t> skin;         // Index of the skin of its mesh (if any)
         Vec3 translation = { 0,0,0 };
         Quat rotation = { 0,0,0,1 };
         Vec3 scale = { 1,1,1 };
@@ -494,7 +497,56 @@ namespace GLTF
         {}
     };
 
+    // Structure for GLTF animation: its channels (a property of a node) by their samplers (the
+    // times and the values of the keys, their interpolation)
+    struct Animation
+    {
+        enum class Path
+        {
+            TRANSLATION,
+            ROTATION,
+            SCALE,
+            WEIGHTS
+        };
+
+        enum class Interpolation
+        {
+            STEP,
+            LINEAR,
+            CUBICSPLINE
+        };
+
+        struct Sampler
+        {
+            size_t input{ 0 };                               // accessor of the times (seconds)
+            size_t output{ 0 };                              // accessor of the values
+            Interpolation interpolation{ Interpolation::LINEAR };
+        };
+
+        struct Channel
+        {
+            size_t sampler{ 0 };
+            std::optional<size_t> node; // its target (none: ignored)
+            Path path{ Path::TRANSLATION };
+        };
+
+        std::string name;
+        std::vector<Sampler> samplers;
+        std::vector<Channel> channels;
+    };
+
+    // Structure for GLTF skin: its joints (nodes), the inverse of their bind matrices
+    struct Skin
+    {
+        std::string name;
+        NodeList joints;
+        std::optional<size_t> inverse_bind_matrices; // accessor (none: identities)
+        std::optional<size_t> skeleton;              // the root of the joints (if given)
+    };
+
     // Aliases for vectors of Views, Buffers, Nodes and Scenes
+    using Animations = std::vector<Animation>;
+    using Skins = std::vector<Skin>;
     using Views = std::vector<View>;
     using Buffers = std::vector<std::vector<unsigned char>>;
     using Accessors = std::vector<Accessor>;
@@ -525,6 +577,8 @@ namespace GLTF
         Nodes nodes;            // List of all nodes in the GLTF model
         Scenes scenes;          // List of all scenes in the GLTF model
         size_t default_scene;   // Index of the default scene
+        Animations animations;  // Its animations
+        Skins skins;            // Its skins
 
         GLTF() = default;
         GLTF(GLTF&&) = default;
@@ -597,7 +651,8 @@ namespace GLTF
                 jview.find("buffer") != jview.end() ? jview.at("buffer").number(0) : 0,
                 jview.find("byteOffset") != jview.end() ? jview.at("byteOffset").number(0) : 0,
                 jview.find("byteLength") != jview.end() ? jview.at("byteLength").number(0) : 0,
-                jview.find("target") != jview.end() ? jview.at("target").number(0) : 0
+                jview.find("target") != jview.end() ? jview.at("target").number(0) : 0,
+                jview.find("byteStride") != jview.end() ? jview.at("byteStride").number(0) : 0
             );
         }
         return out_views;
@@ -1215,9 +1270,121 @@ namespace GLTF
             {
                 out_nodes.back().extras = node.at("extras").object({});
             }
+            if (node.find("skin") != node.end())
+            {
+                out_nodes.back().skin = static_cast<size_t>(node.at("skin").number(0));
+            }
         }
 
         return out_nodes;
+    }
+
+    // Function to decode GLTF animations from JSON data
+    static Animations decode_animations(const JsonValue& animations)
+    {
+        Animations out_animations;
+        auto& janimations = animations.array({});
+        out_animations.reserve(janimations.size());
+
+        for (auto& janimation : janimations)
+        {
+            auto& animation = janimation.object({});
+            Animation out_animation;
+            if (animation.find("name") != animation.end())
+            {
+                out_animation.name = animation.at("name").string({});
+            }
+            if (animation.find("samplers") != animation.end())
+            {
+                for (auto& jsampler : animation.at("samplers").array({}))
+                {
+                    auto& sampler = jsampler.object({});
+                    Animation::Sampler out_sampler;
+                    out_sampler.input = static_cast<size_t>(sampler.at("input").number(0));
+                    out_sampler.output = static_cast<size_t>(sampler.at("output").number(0));
+                    if (sampler.find("interpolation") != sampler.end())
+                    {
+                        const std::string interpolation = sampler.at("interpolation").string("LINEAR");
+                        if (interpolation == "STEP")
+                        {
+                            out_sampler.interpolation = Animation::Interpolation::STEP;
+                        }
+                        else if (interpolation == "CUBICSPLINE")
+                        {
+                            out_sampler.interpolation = Animation::Interpolation::CUBICSPLINE;
+                        }
+                    }
+                    out_animation.samplers.push_back(out_sampler);
+                }
+            }
+            if (animation.find("channels") != animation.end())
+            {
+                for (auto& jchannel : animation.at("channels").array({}))
+                {
+                    auto& channel = jchannel.object({});
+                    Animation::Channel out_channel;
+                    out_channel.sampler = static_cast<size_t>(channel.at("sampler").number(0));
+                    auto& target = channel.at("target").object({});
+                    if (target.find("node") != target.end())
+                    {
+                        out_channel.node = static_cast<size_t>(target.at("node").number(0));
+                    }
+                    const std::string path = target.find("path") != target.end() ? target.at("path").string({}) : std::string();
+                    if (path == "rotation")
+                    {
+                        out_channel.path = Animation::Path::ROTATION;
+                    }
+                    else if (path == "scale")
+                    {
+                        out_channel.path = Animation::Path::SCALE;
+                    }
+                    else if (path == "weights")
+                    {
+                        out_channel.path = Animation::Path::WEIGHTS;
+                    }
+                    out_animation.channels.push_back(out_channel);
+                }
+            }
+            out_animations.push_back(std::move(out_animation));
+        }
+
+        return out_animations;
+    }
+
+    // Function to decode GLTF skins from JSON data
+    static Skins decode_skins(const JsonValue& skins)
+    {
+        Skins out_skins;
+        auto& jskins = skins.array({});
+        out_skins.reserve(jskins.size());
+
+        for (auto& jskin : jskins)
+        {
+            auto& skin = jskin.object({});
+            Skin out_skin;
+            if (skin.find("name") != skin.end())
+            {
+                out_skin.name = skin.at("name").string({});
+            }
+            if (skin.find("joints") != skin.end())
+            {
+                for (auto& joint : skin.at("joints").array({}))
+                {
+                    out_skin.joints.push_back(static_cast<size_t>(joint.number(0)));
+                }
+            }
+            if (skin.find("inverseBindMatrices") != skin.end())
+            {
+                out_skin.inverse_bind_matrices = static_cast<size_t>(skin.at("inverseBindMatrices").number(0));
+            }
+            if (skin.find("skeleton") != skin.end())
+            {
+                out_skin.skeleton = static_cast<size_t>(skin.at("skeleton").number(0));
+            }
+            out_skins.push_back(std::move(out_skin));
+        }
+
+        return out_skins;
     }
 
     // Function to decode GLTF scenes from JSON data
@@ -1265,8 +1432,8 @@ namespace GLTF
             JsonObject extensions = document["extensions"].object({});
             JsonObject KHR_lights_punctual = extensions["KHR_lights_punctual"].object({});
             // Get all components
-            return GLTF
-            {   
+            GLTF gltf
+            {
                 path
                 , std::move(buffers)
                 , std::move(decode_views(document["bufferViews"]))
@@ -1282,6 +1449,9 @@ namespace GLTF
                 , std::move(decode_scenes(document["scenes"]))
                 , decode_scene(document)
             };
+            gltf.animations = decode_animations(document["animations"]);
+            gltf.skins = decode_skins(document["skins"]);
+            return gltf;
         }
     }
 

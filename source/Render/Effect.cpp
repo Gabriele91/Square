@@ -724,12 +724,12 @@ namespace Render
 		if (it_tech == m_techniques_map.end()) return nullptr;
 		return it_tech->second.variant(EV_NONE);
 	}
-	EffectTechnique* Effect::technique(const std::string& technique_name, bool instanced, const EffectParameters& parameters, bool fading)
+	EffectTechnique* Effect::technique(const std::string& technique_name, unsigned char variant, const EffectParameters& parameters, bool fading)
 	{
 		auto it_tech = m_techniques_map.find(technique_name);
 		if (it_tech == m_techniques_map.end()) return nullptr;
 		EffectTechniqueVariants& variants = it_tech->second;
-		const unsigned char base = instanced ? EV_INSTANCED : EV_NONE;
+		const unsigned char base = variant & (EV_INSTANCED | EV_SKINNED);
 		//the clip variant: it drops pixels; without it no discard
 		const bool clip = fading || variants.clips(parameters);
 		if (clip)

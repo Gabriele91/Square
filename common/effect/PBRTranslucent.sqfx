@@ -24,6 +24,10 @@ parameters
     dither       float(0.0)
     //light of the sun through it (thin: leaves, cards), 0 none, 1 all
     translucency float(0.0)
+    //the uv animated by the time (AnimatedUV.hlsl): scrolled (uv a second); a flipbook (columns,
+    //rows, frames a second, frames used: 0 all)
+    uv_scroll    Vec2(0.0, 0.0)
+    flipbook     Vec4(1.0, 1.0, 0.0, 0.0)
 }
 
 //Translucent PBR: alpha blended, drawn after the opaque scene, back to front.
@@ -34,7 +38,7 @@ sub_effect
     //forward rendering pipeline: drawn on the screen target
     technique "forward"
     {
-        variants clip(mask, dither)
+        variants skinned clip(mask, dither)
         pass
         {
             zbuffer less_equal read_only
@@ -64,7 +68,7 @@ sub_effect
     //deferred rendering pipeline: drawn into the light buffer (linear, encoded by the present)
     technique "translucent"
     {
-        variants clip(mask, dither)
+        variants skinned clip(mask, dither)
         pass
         {
             zbuffer less_equal read_only

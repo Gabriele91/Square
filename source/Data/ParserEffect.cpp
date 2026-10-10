@@ -599,6 +599,7 @@ namespace Parser
 		Render::EffectVariant skip_variant(const char*& ptr)
 		{
 			if (cstr_cmp_skip(ptr, "instanced")) return Render::EV_INSTANCED;
+			if (cstr_cmp_skip(ptr, "skinned"))   return Render::EV_SKINNED;
 			if (cstr_cmp_skip(ptr, "clip"))      return Render::EV_CLIP;
 			return Render::EV_NONE;
 		}
@@ -606,12 +607,12 @@ namespace Parser
 
 	bool Effect::parse_variants(const char*& ptr, TechniqueField& technique)
 	{
-		//the names on its line: instanced, clip (its parameters)
+		//the names on its line: instanced, skinned, clip (its parameters)
 		skip_line_space(m_context->m_line, ptr);
 		Render::EffectVariant variant = AuxVariants::skip_variant(ptr);
 		if (variant == Render::EV_NONE)
 		{
-			push_error("variants: instanced or clip expected");
+			push_error("variants: instanced, skinned or clip expected");
 			return false;
 		}
 		while (variant != Render::EV_NONE)

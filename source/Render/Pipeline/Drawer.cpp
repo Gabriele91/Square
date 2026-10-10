@@ -206,6 +206,8 @@ namespace Render
         // Test camera pointer, a disabled camera is not drawn
         if (!camera) return;
         if (!camera->enable()) return;
+        //the time of the world (the animations of its materials)
+        camera->time(m_time);
         //the levels of detail of this camera (its shadows and its render draw them)
         for (const Weak<LevelOfDetail>& weak_lod : collection.m_levels_of_detail)
         {

@@ -544,7 +544,7 @@ namespace Render
 			EffectTechnique* technique = nullptr;
 			if (material)
 			{
-				technique = material->effect()->technique(technique_name, randerable.instanced(), *material->parameters(), fading);
+				technique = material->effect()->technique(technique_name, randerable.variant(), *material->parameters(), fading);
 			}
 			if (technique)
 			{
