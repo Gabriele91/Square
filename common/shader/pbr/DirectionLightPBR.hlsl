@@ -25,6 +25,10 @@ float direction_light_apply_shadow(in Vec4 fposition, in Vec3  view_dir, in Vec3
 {
     return 1.0;
 }
+Vec3 direction_light_shadow_tint(in Vec4 fposition)
+{
+    return Vec3(1.0, 1.0, 1.0);
+}
 #endif
 
 
@@ -40,8 +44,8 @@ LightResult compute_light
     // Shadow
     float shadow_factor = direction_light_apply_shadow(data.m_position, normalize(-light.m_direction), data.m_normal);
 
-    // Lgiht final color
-    Vec3 light_color = light.m_diffuse * shadow_factor;
+    // Light final color (the cascades in colors: debug)
+    Vec3 light_color = light.m_diffuse * shadow_factor * direction_light_shadow_tint(data.m_position);
 
     // Compute PBR material
     result.m_radiance = calculate_PBR(data.m_albedo, 

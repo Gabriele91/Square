@@ -16,21 +16,28 @@ namespace Square
 {
 namespace UI
 {
-	//the document of the panel (its style: profiler.rcss, next to it)
-	static const char* s_profiler_rml = "common/ui/profiler.rml";
-
 	//shaders on the panel, at most
 	static constexpr size_t s_max_shaders = 12;
 
-	ProfilerPanel::ProfilerPanel(Square::Context& context, UI::Context& ui)
+	ProfilerPanel::ProfilerPanel(Square::Context& context)
 	: m_context(context)
-	, m_ui(ui)
 	{
 	}
 
 	ProfilerPanel::~ProfilerPanel()
 	{
-		if (m_document.valid()) m_document.close();
+	}
+
+	std::string ProfilerPanel::rml()
+	{
+		return
+			"<div class=\"controls\">"
+				"<input type=\"checkbox\" id=\"profile\"/>profile "
+				"<input type=\"checkbox\" id=\"shaders\"/>cost per shader"
+				"<button id=\"log\">report to log</button>"
+			"</div>"
+			"<div><span id=\"note\"></span></div>"
+			"<div id=\"rows\"></div>";
 	}
 
 	Render::Profiler* ProfilerPanel::profiler() const
@@ -39,56 +46,92 @@ namespace UI
 		return render_system ? render_system->profiler() : nullptr;
 	}
 
-	bool ProfilerPanel::create()
+	void ProfilerPanel::attach(Document& document)
 	{
-		if (m_document.valid()) return true;
-		if (!m_ui.valid()) return false;
-		m_document = m_ui.load(s_profiler_rml);
-		if (!m_document.valid())
+		//its elements (the old ones gone with the panel made again)
+		m_pool.clear();
+		m_profile = document.find("profile");
+		m_shaders = document.find("shaders");
+		m_rows = document.find("rows");
+		m_note = document.find("note");
+		m_attached = m_profile.valid() && m_shaders.valid() && m_rows.valid() && m_note.valid();
+		m_version = ~0ull;
+		if (m_attached)
 		{
-			m_context.logger()->warning("UI: unable to load the profiler panel " + std::string(s_profiler_rml));
-			return false;
+			Element profile = m_profile;
+			m_profile.on(EventType::CHANGE, [this, profile](Event&)
+			{
+				if (!m_showing)
+				{
+					enable(profile.has_attribute("checked"));
+				}
+			});
+			Element shaders = m_shaders;
+			m_shaders.on(EventType::CHANGE, [this, shaders](Event&)
+			{
+				auto* render_profiler = profiler();
+				if (!m_showing && render_profiler)
+				{
+					render_profiler->shader_detail(shaders.has_attribute("checked"));
+				}
+			});
+			//the report in the log
+			document.find("log").on(EventType::CLICK, [this](Event&)
+			{
+				if (auto* render_profiler = profiler()) m_context.logger()->info("Render profiler\n" + render_profiler->report());
+			});
+			if (!profiler())
+			{
+				m_note.set_text("(no render profiler: the engine is built without RENDER_PROFILER)");
+			}
+			show_state();
 		}
-		m_rows = m_document.find("rows");
-		m_note = m_document.find("note");
-		//per shader
-		Element shaders = m_document.find("shaders");
-		shaders.on(EventType::CHANGE, [this, shaders](Event&)
-		{
-			if (auto* render_profiler = profiler()) render_profiler->shader_detail(shaders.has_attribute("checked"));
-		});
-		//the report in the log
-		m_document.find("log").on(EventType::CLICK, [this](Event&)
-		{
-			if (auto* render_profiler = profiler()) m_context.logger()->info("Render profiler\n" + render_profiler->report());
-		});
-		return true;
 	}
 
-	void ProfilerPanel::show(bool visible)
+	void ProfilerPanel::detach()
+	{
+		m_attached = false;
+		m_pool.clear();
+		m_profile = Element();
+		m_shaders = Element();
+		m_rows = Element();
+		m_note = Element();
+	}
+
+	void ProfilerPanel::enable(bool enable)
 	{
 		Render::Profiler* render_profiler = profiler();
-		if (visible && (!render_profiler || !create())) return;
-		m_visible = visible;
-		if (render_profiler) render_profiler->enable(visible);
-		if (!m_document.valid()) return;
-		if (visible)
+		m_requested = enable && render_profiler;
+		if (render_profiler)
 		{
+			render_profiler->enable(m_requested);
 			m_version = ~0ull;
-			Element shaders = m_document.find("shaders");
-			if (render_profiler && render_profiler->shader_detail()) shaders.set_attribute("checked", "");
-			else shaders.remove_attribute("checked");
-			m_document.show();
 		}
-		else
+		if (m_attached)
 		{
-			m_document.hide();
+			show_state();
+			if (!enable)
+			{
+				for (Row& row : m_pool) row.m_row.set_property("display", "none");
+			}
 		}
 	}
 
-	bool ProfilerPanel::visible() const
+	bool ProfilerPanel::enabled() const
 	{
-		return m_visible;
+		return m_requested;
+	}
+
+	void ProfilerPanel::show_state()
+	{
+		//(their change events: from here, not from the user)
+		m_showing = true;
+		Render::Profiler* render_profiler = profiler();
+		if (m_requested) m_profile.set_attribute("checked", "");
+		else m_profile.remove_attribute("checked");
+		if (render_profiler && render_profiler->shader_detail()) m_shaders.set_attribute("checked", "");
+		else m_shaders.remove_attribute("checked");
+		m_showing = false;
 	}
 
 	ProfilerPanel::Row& ProfilerPanel::row(size_t index)
@@ -132,9 +175,8 @@ namespace UI
 
 	void ProfilerPanel::update()
 	{
-		if (!m_visible || !m_document.valid()) return;
 		Render::Profiler* render_profiler = profiler();
-		if (!render_profiler || render_profiler->version() == m_version) return;
+		if (!m_attached || !render_profiler || !render_profiler->enabled() || render_profiler->version() == m_version) return;
 		m_version = render_profiler->version();
 		//the note
 		m_note.set_text(render_profiler->gpu()

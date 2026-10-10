@@ -10,6 +10,7 @@
 //  Output: occlusion in r (1 = open, 0 = closed).
 //
 #include <Camera>
+#include <GBufferPosition>
 #include <Vertex>
 #include <DeferredFullscreen>
 
@@ -50,7 +51,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	if (depth <= 0.0) return Vec4(1.0, 1.0, 1.0, 1.0);
 	Vec2 source_uv = ssao_source_uv(uv, ssao_size);
 	Vec3 p = ssao_world(source_uv, depth);
-	Vec3 n = normalize(texture2DLod(g_normal, source_uv, 0.0).xyz);
+	Vec3 n = gbuffer_decode_normal(texture2DLod(g_normal, source_uv, 0.0));
 	//radius on the screen (pixels of the frame): smaller far away
 	float distance = max(length(p - camera.m_position), 0.1);
 	float radius = min(ssao_params.x * ssao_pixels.x / distance, ssao_pixels.y);

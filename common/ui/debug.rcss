@@ -1,0 +1,92 @@
+/*
+ * debug.rcss
+ * Square
+ *
+ * The debug panel of the engine (F1, see source/UI/DebugPanel.h): on the right of the frame,
+ * its tabs (Profiler, Pipeline, Debug draw, UI, the ones of the game), their sections of
+ * options; the rows of the render profiler (source/UI/ProfilerPanel.h).
+ */
+body#square_debug
+{
+	position: absolute;
+	right: 20dp;
+	top: 20dp;
+	width: 620dp;
+	max-height: 92%;
+	padding: 10dp 12dp;
+	background-color: rgba(10, 14, 22, 225);
+	border-radius: 6dp;
+	font-size: 13dp;
+	color: #d8dee9;
+	z-index: 100;
+	overflow-y: auto;
+}
+.title { font-weight: bold; color: #ffffff; margin-bottom: 4dp; }
+.hint, #note { font-weight: normal; color: #9aa6b8; }
+
+/* the tabs */
+tabset { display: block; }
+tabset tabs { display: block; margin-bottom: 8dp; border-bottom: 2dp #26303d; }
+tabset tab
+{
+	display: inline-block;
+	padding: 0 10dp;
+	height: 24dp;
+	line-height: 24dp;
+	margin-right: 3dp;
+	border-radius: 4dp 4dp 0 0;
+	color: #9aa6b8;
+	background-color: #1a212b;
+	cursor: pointer;
+}
+tabset tab:hover    { color: #ffffff; background-color: #232c38; }
+tabset tab:selected { color: #ffffff; background-color: #2c3746; border-bottom: 2dp #e8a33c; }
+tabset panels { display: block; }
+tabset panel  { display: block; }
+
+/* the sections, their options */
+.section { display: block; margin-bottom: 8dp; }
+.section h3 { font-size: 13dp; color: #e8a33c; margin: 4dp 0 2dp 0; }
+.option { display: block; height: 22dp; line-height: 22dp; white-space: nowrap; }
+.option .name { display: inline-block; width: 220dp; color: #c0c8d4; }
+.option input.checkbox { width: 12dp; height: 12dp; border-width: 1dp; }
+.option input.checkbox:checked { background-color: #e8a33c; border-color: #e8a33c; }
+.option select { width: 180dp; height: 18dp; line-height: 18dp; padding: 0 6dp; vertical-align: middle; }
+.option select selectbox option { height: 18dp; line-height: 18dp; padding: 0 6dp; }
+.option .text { color: #ffffff; }
+.empty { color: #9aa6b8; }
+button
+{
+	padding: 1dp 8dp;
+	margin-right: 6dp;
+	color: #d8dee9;
+	background-color: rgba(255, 255, 255, 30);
+	border-radius: 3dp;
+	cursor: pointer;
+}
+button:hover { background-color: rgba(255, 255, 255, 60); }
+
+/* the render profiler */
+.controls { display: block; margin: 4dp 0 6dp 0; color: #9aa6b8; }
+.controls input { margin-right: 4dp; }
+.controls input.checkbox { width: 12dp; height: 12dp; border-width: 1dp; }
+.controls input.checkbox:checked { background-color: #e8a33c; border-color: #e8a33c; }
+.controls button { margin-left: 14dp; }
+.row { display: block; height: 17dp; white-space: nowrap; }
+.row.head { color: #9aa6b8; margin-top: 4dp; }
+.row span { display: inline-block; text-align: right; }
+.row .name  { width: 230dp; text-align: left; overflow: hidden; }
+.row .gpu   { width: 110dp; }
+.row .cpu   { width: 70dp; }
+.row .draws { width: 55dp; }
+.row .bar   { width: 80dp; height: 8dp; margin-left: 12dp; background-color: rgba(255, 255, 255, 25); }
+.row .bar .fill { display: block; height: 8dp; background-color: #e8a33c; text-align: left; }
+.row.head .bar { background-color: transparent; }
+
+/* the textures: thumbnails, two a row */
+.thumbs { display: block; }
+.thumb  { display: inline-block; width: 296dp; margin: 0 4dp 8dp 0; vertical-align: top; }
+.thumb img { display: block; width: 288dp; height: 162dp; }
+.thumb .caption { display: block; height: 16dp; color: #9aa6b8; font-size: 12dp; }
+.pages { display: block; text-align: center; margin: 2dp 0 6dp 0; }
+.pages span { display: inline-block; width: 120dp; color: #c0c8d4; }

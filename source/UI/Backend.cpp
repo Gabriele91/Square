@@ -201,6 +201,14 @@ namespace UI
 
 	Rml::TextureHandle Backend::LoadTexture(Rml::Vector2i& texture_dimensions, const Rml::String& source)
 	{
+		//a texture of the engine (not a file)
+		IVec2 external_size(0, 0);
+		if (Render::Texture* external = m_external ? m_external(source, external_size) : nullptr)
+		{
+			m_external_textures.push_back(external);
+			texture_dimensions = Rml::Vector2i(external_size.x, external_size.y);
+			return (Rml::TextureHandle)external;
+		}
 		//the image (PNG, JPEG, BMP, TGA) to premultiplied RGBA
 		std::vector<unsigned char> file = Filesystem::binary_file_read_all(source);
 		std::vector<unsigned char> pixels;
@@ -250,6 +258,13 @@ namespace UI
 	{
 		auto* texture = (Render::Texture*)handle;
 		if (!texture) return;
+		//a texture of the engine: not ours
+		auto external = std::find(m_external_textures.begin(), m_external_textures.end(), texture);
+		if (external != m_external_textures.end())
+		{
+			m_external_textures.erase(external);
+			return;
+		}
 		m_textures.erase(std::remove(m_textures.begin(), m_textures.end(), texture), m_textures.end());
 		if (auto* render = this->render()) render->delete_texture(texture);
 	}

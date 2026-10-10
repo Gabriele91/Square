@@ -61,14 +61,6 @@ public:
 					render_debug()->draw_flags(0);
 			}
 		break;
-		case Square::Video::KEY_T:
-			//toggle the texture panel (images/TBO/RBO)
-			if (action == Square::Video::ActionEvent::PRESS)
-			if (render_debug())
-			{
-				render_debug()->draw_flags(render_debug()->draw_flags() ^ Render::DB_DRAW_TEXTURES);
-			}
-		break;
 		case Square::Video::KEY_C:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
@@ -156,8 +148,6 @@ public:
 	
 	void mouse_scroll_event(double scroll)
 	{
-		//scroll the debug texture panel
-		if (render_debug()) render_debug()->panel_scroll((float)scroll * 20.0f);
 	}
 
     void start()

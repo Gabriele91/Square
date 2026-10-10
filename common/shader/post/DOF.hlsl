@@ -5,41 +5,25 @@
 //  The depth of field (see PostEffectDOF): the circle of confusion of a pixel from the distance
 //  of its world position (G-Buffer) to the camera, a gather of a disc of samples around it (a
 //  golden angle spiral), each sample weighted by whether its own circle reaches the pixel (a
-//  sharp thing in front does not smear over the blur behind it).
+//  sharp thing in front does not smear over the blur behind it). At the size of the frame (the
+//  result), or smaller (DOFComposite puts it over the frame).
 //
 #include <Camera>
 #include <GBufferPosition>
 #include <Vertex>
 #include <DeferredFullscreen>
-
-Sampler2D(g_source);
-Sampler2D(g_position);
-Vec2 dof_size;    //pixels of the frame
-Vec4 dof_focus;   //start, end of the sharp range; the near range, the far range (world units)
-Vec4 dof_params;  //max radius (pixels), samples, near on
-Vec4 dof_motion;  //motion blur: pixels at its most, from, to (screen x shares)
-
-//the circle of confusion of a world position (background: the farthest), [0, 1]
-float dof_coc(in Vec4 g_pos)
-{
-	if (g_pos.w < 0.5) return 1.0;
-	float distance = length(g_pos.xyz - camera.m_position);
-	float far = saturate((distance - dof_focus.y) / dof_focus.w);
-	float near = saturate((dof_focus.x - distance) / dof_focus.z) * dof_params.z;
-	return max(far, near);
-}
+#include <DOFCommon>
 
 Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 {
 	Vec2  uv = input.m_position.xy / dof_size;
 	Vec2  texel = 1.0 / dof_size;
-	float coc = dof_coc(gbuffer_world(texture2DLod(g_position, uv, 0.0), uv));
+	Vec4  g_center = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
+	float coc = dof_coc(g_center);
 	Vec3  center = texture2DLod(g_source, uv, 0.0).rgb;
 	float radius = coc * dof_params.x;
 	//the motion: along x, on what is near (in focus or nearer), growing to the right
-	Vec4  g_center = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
-	float near_focus = g_center.w > 0.5 && length(g_center.xyz - camera.m_position) < dof_focus.y + 4.0 ? 1.0 : 0.0;
-	float motion = dof_motion.x * near_focus * smoothstep(dof_motion.y, dof_motion.z, uv.x);
+	float motion = dof_motion_pixels(g_center, uv);
 	if (motion >= 1.0)
 	{
 		Vec3  msum = Vec3(0.0, 0.0, 0.0);
@@ -50,7 +34,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 			Vec2  suv = uv + Vec2(s * texel.x, 0.0);
 			Vec4  sg = gbuffer_world(texture2DLod(g_position, suv, 0.0), suv);
 			//only the near things smeared (not the far background into them)
-			float w = sg.w > 0.5 && length(sg.xyz - camera.m_position) < dof_focus.y + 4.0 ? 1.0 : 0.15;
+			float w = dof_near_focus(sg) > 0.5 ? 1.0 : 0.15;
 			msum += texture2DLod(g_source, suv, 0.0).rgb * w;
 			mweight += w;
 		}

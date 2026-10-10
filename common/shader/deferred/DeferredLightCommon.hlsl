@@ -3,7 +3,7 @@
 //  Square
 //
 //  Shared by every deferred light pass: G-Buffer samplers and the shading entry
-//  that lights each pixel with the shading model stored in position.w (see
+//  that lights each pixel with the shading model stored in normal.w (see
 //  <SurfaceDeferredPBR>): PBR reuses compute_light from <LightPBR>, LEGACY
 //  reuses the forward Blinn-Phong math (see <LightLegacy>).
 //
@@ -75,10 +75,11 @@ LegacyLightResult legacy_compute_light
 	float spec = pow(max(dot(normal, halfway_dir), 0.0), shininess);
 	// Apply shadow
 	float shadow_factor = direction_light_apply_shadow(fposition, light_dir, normal);
+	const Vec3 tint = direction_light_shadow_tint(fposition);
 	// Combine results
 	LegacyLightResult result;
-	result.m_diffuse  = light.m_diffuse  * diff * shadow_factor;
-	result.m_specular = light.m_specular * spec * shadow_factor;
+	result.m_diffuse  = light.m_diffuse  * diff * shadow_factor * tint;
+	result.m_specular = light.m_specular * spec * shadow_factor * tint;
 	//return
 	return result;
 }
@@ -198,17 +199,17 @@ Vec4 deferred_shade(in Vec2 uv)
 	//view direction (same as the forward surface shaders)
 	Vec3 view_dir = normalize(camera.m_position - gbuffer_position.xyz);
 	//LEGACY (Blinn-Phong)
-	if (gbuffer_position.w > 1.5)
+	if (gbuffer_model(gbuffer_normal) > 1.5)
 	{
 		Vec3 color = deferred_shade_legacy
 		(
 			  Vec4(gbuffer_position.xyz, 1.0)
 			, view_dir
-			, normalize(gbuffer_normal.xyz)
+			, gbuffer_decode_normal(gbuffer_normal)
 			, gbuffer_albedo.rgb    //albedo
 			, gbuffer_emissive.rgb  //specular color
 			, gbuffer_emissive.a    //occlusion
-			, gbuffer_normal.w      //shininess
+			, gbuffer_material(gbuffer_normal) //shininess
 		);
 		return Vec4(color, 1.0);
 	}

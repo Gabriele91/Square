@@ -26,9 +26,18 @@ namespace Resource
 
 namespace Square
 {
+namespace Geometry
+{
+	class Frustum;
+}
+}
+
+namespace Square
+{
 namespace Render
 {
 	//declaretion
+	class SoftwareOcclusion;
 	class Effect;
 	class EffectPass;
 	class EffectTechnique;
@@ -295,6 +304,12 @@ namespace Render
 		Render::ConstBuffer*   m_spot_shadow_light{ nullptr };
 		//the layers of a multi-pass draw (CSM: the cascades a caster is in), bit i: layer i
 		uint32                 m_layer_mask{ MULTI_PASS_ALL_LAYERS };
+		//what the pass sees (world space; the camera of a view pass): a renderable of many parts
+		//draws only the ones in it (InstancedMesh: its instances); nullptr: all of them
+		const Geometry::Frustum* m_frustum{ nullptr };
+		//what the occluders of the camera hide (with m_frustum): its parts hidden not drawn;
+		//nullptr: none hidden
+		const SoftwareOcclusion* m_occlusion{ nullptr };
 
 		EffectPassInputs() = default;
 

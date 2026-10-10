@@ -32,12 +32,12 @@ Vec2 ssr_project(in Vec3 world, out float w)
 	return ssr_clip_to_uv(clip);
 }
 
-//roughness of a G-Buffer pixel: PBR (model 1) keeps it in normal.w, Legacy (model 2) the
-//Blinn-Phong exponent (roughness = sqrt(2 / (shininess + 2)))
-float ssr_roughness(in float normal_w, in float model)
+//roughness of a G-Buffer pixel (its material: gbuffer_material): PBR (model 1) keeps it,
+//Legacy (model 2) the Blinn-Phong exponent (roughness = sqrt(2 / (shininess + 2)))
+float ssr_roughness(in float material, in float model)
 {
-	if (model > 1.5) return sqrt(2.0 / (max(normal_w, 0.0) + 2.0));
-	return saturate(normal_w);
+	if (model > 1.5) return sqrt(2.0 / (max(material, 0.0) + 2.0));
+	return saturate(material);
 }
 
 //interleaved gradient noise of a pixel, [0, 1)

@@ -33,8 +33,9 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	Vec4 g_pos = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
 	//background: nothing to denoise
 	if (g_pos.w < 0.5) return center;
-	Vec3  n0 = normalize(texture2DLod(g_normal, uv, 0.0).xyz);
-	float roughness = saturate(ssr_roughness(texture2DLod(g_normal, uv, 0.0).w, g_pos.w) / ssr_params.w);
+	Vec4  g_nor = texture2DLod(g_normal, uv, 0.0);
+	Vec3  n0 = gbuffer_decode_normal(g_nor);
+	float roughness = saturate(ssr_roughness(gbuffer_material(g_nor), gbuffer_model(g_nor)) / ssr_params.w);
 	//the kernel: one pixel at least (the noise of the rays), wider with the roughness
 	int   radius = int(clamp(floor(ssr_radius * roughness), 1.0, min(ssr_radius, float(SSR_DENOISE_MAX_RADIUS))));
 	Vec3  to_camera = camera.m_position - g_pos.xyz;
@@ -50,7 +51,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		if (sample_uv.x < 0.0 || sample_uv.x > 1.0 || sample_uv.y < 0.0 || sample_uv.y > 1.0) continue;
 		Vec4 p1 = gbuffer_world(texture2DLod(g_position, sample_uv, 0.0), sample_uv);
 		if (p1.w < 0.5) continue; //the background is not a surface
-		Vec3  n1 = normalize(texture2DLod(g_normal, sample_uv, 0.0).xyz);
+		Vec3  n1 = gbuffer_decode_normal(texture2DLod(g_normal, sample_uv, 0.0));
 		Vec3  offset = p1.xyz - g_pos.xyz;
 		//the same surface: the normals near, near in world (relative to the camera distance)
 		float normal_weight = pow(saturate(dot(n0, n1)), 5.0);

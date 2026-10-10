@@ -31,7 +31,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	}
 	Vec4 color = deferred_shade(uv);
 	//add emissive to PBR pixels only: for legacy pixels GT3.rgb is the specular color
-	if (gbuffer_position.w < 1.5)
+	if (gbuffer_model(texture2D(g_normal, uv)) < 1.5)
 	{
 		color.rgb += texture2D(g_emissive, uv).rgb;
 	}

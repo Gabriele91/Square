@@ -6,7 +6,9 @@
 //  space of its actor. Its materials' effects draw it with the instanced variant of their
 //  techniques ("variants instanced" in the .sqfx, SQ_INSTANCED defined: their vertex shaders read
 //  the matrix of each instance, Instances.hlsl), at most instances_max a draw (more:
-//  more draws). Culled as one: the box of all its instances. Saved with its scene (its mesh, its
+//  more draws). Culled as one (the box of all its instances), then, in a pass that says what it
+//  sees (EffectPassInputs::m_frustum: the camera), each instance by its sphere: only the ones in
+//  it drawn (the shadows: all of them). Saved with its scene (its mesh, its
 //  materials, the box of its mesh, its instances): the converter makes it from the children of a
 //  node "square_instances" that share a mesh.
 //
@@ -15,6 +17,9 @@
 #include "Square/Core/Context.h"
 #include "Square/Scene/Component.h"
 #include "Square/Geometry/OBoundingBox.h"
+#include "Square/Geometry/Sphere.h"
+#include "Square/Geometry/Frustum.h"
+#include <array>
 #include "Square/Resource/Mesh.h"
 #include "Square/Resource/Material.h"
 #include "Square/Render/Transform.h"
@@ -27,6 +32,7 @@ namespace Square
 namespace Render
 {
 	class ConstBuffer;
+	class SoftwareOcclusion;
 }
 namespace Scene
 {
@@ -93,8 +99,14 @@ namespace Scene
 
 	private:
 
-		//the box of all the instances (the space of the actor), from the box of the mesh
+		//the box of all the instances (the space of the actor), from the box of the mesh; the
+		//sphere of each instance
 		void build_local_box();
+		//the spheres of the instances in world space (again when the actor moved)
+		const std::vector<Square::Geometry::Sphere>& world_spheres();
+		//the instances in a frustum not hidden by an occlusion (none: nothing hidden; the last ones
+		//while they, the frustum and the actor stay)
+		const std::vector<Square::Mat4>& visible_instances(const Square::Geometry::Frustum& frustum, const Square::Render::SoftwareOcclusion* occlusion);
 
 		Square::Shared< Square::Resource::Mesh >                    m_mesh;
 		std::vector< Square::Shared< Square::Resource::Material > > m_materials;
@@ -106,6 +118,16 @@ namespace Scene
 		Square::Geometry::OBoundingBox                              m_obb_global;
 		Square::Weak< Square::Render::Transform >                   m_transform;
 		bool                                                        m_obb_dirty{ true };
+		//the sphere of each instance: in the space of the actor, in world space
+		std::vector< Square::Geometry::Sphere >                     m_spheres_local;
+		std::vector< Square::Geometry::Sphere >                     m_spheres_world;
+		bool                                                        m_spheres_dirty{ true };
+		//the instances in the last frustum (its planes), still right while valid
+		std::vector< Square::Mat4 >                                 m_visible;
+		std::array< Square::Vec4, Square::Geometry::Frustum::N_PLANES > m_visible_planes;
+		const Square::Render::SoftwareOcclusion*                    m_visible_occlusion{ nullptr };
+		Square::uint64                                              m_visible_version{ 0 };
+		bool                                                        m_visible_valid{ false };
 	};
 }
 }

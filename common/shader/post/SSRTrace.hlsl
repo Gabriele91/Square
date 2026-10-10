@@ -201,10 +201,10 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		return Vec4(saturate(length((projected - uv) * ssr_size) - 0.75), 0.0, 0.0, 1.0);
 	}
 	Vec4  g_nor = texture2DLod(g_normal, uv, 0.0);
-	float roughness = ssr_roughness(g_nor.w, g_pos.w);
+	float roughness = ssr_roughness(gbuffer_material(g_nor), gbuffer_model(g_nor));
 	float max_roughness = ssr_params.w;
 	if (roughness >= max_roughness) return Vec4(0.0, 0.0, 0.0, 0.0);
-	Vec3  n = normalize(g_nor.xyz);
+	Vec3  n = gbuffer_decode_normal(g_nor);
 	Vec3  view = normalize(g_pos.xyz - camera.m_position);
 	Vec3  ray = reflect(view, n);
 	//rays back to the camera leave the screen: they fade
@@ -219,7 +219,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	                            : ssr_march_world(origin, ray, jitter, hit_uv, hit_t);
 	if (!hit) return Vec4(0.0, 0.0, 0.0, 0.0);
 	//a back face (the ray hits it from behind): nothing
-	Vec3 hit_normal = normalize(texture2DLod(g_normal, hit_uv, 0.0).xyz);
+	Vec3 hit_normal = gbuffer_decode_normal(texture2DLod(g_normal, hit_uv, 0.0));
 	if (dot(hit_normal, ray) > 0.0) return Vec4(0.0, 0.0, 0.0, 0.0);
 	//confidence: screen border, distance along the ray, rays to the camera, roughness
 	Vec2  border = min(hit_uv, 1.0 - hit_uv) / ssr_fade;

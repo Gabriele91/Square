@@ -4,7 +4,8 @@
 //
 //  Debug texture panel: draws a 2D texture inside a screen-space rect.
 //  rect.xy = bottom-left corner in NDC, rect.zw = size in NDC;
-//  params.x = grayscale (depth textures), params.y = flip V.
+//  params.x = grayscale (depth textures), params.y = flip V, params.w = normalized and colored
+//  (DebugTextureCommon).
 //
 #include <Vertex>
 
@@ -12,6 +13,8 @@ Sampler2D(g_texture);
 
 Vec4 rect;
 Vec4 params;
+
+#include <DebugTextureCommon>
 
 struct DebugTextureVSOutput
 {
@@ -32,7 +35,5 @@ Vec4 fragment(DebugTextureVSOutput input) : SV_TARGET0
 {
 	Vec2 uv = Vec2(input.m_uv.x, params.y > 0.5 ? 1.0 - input.m_uv.y : input.m_uv.y);
 	Vec4 color = texture2D(g_texture, uv);
-	if (params.x > 0.5) color = Vec4(color.rrr, 1.0);
-	color.a = 1.0;
-	return color;
+	return debug_texture_color(color);
 }

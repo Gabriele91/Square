@@ -14,6 +14,8 @@ Sampler2DArray(g_texture);
 Vec4 rect;
 Vec4 params;
 
+#include <DebugTextureCommon>
+
 struct DebugTextureVSOutput
 {
 	Vec4 m_position : SV_POSITION;
@@ -38,7 +40,5 @@ Vec4 fragment(DebugTextureVSOutput input) : SV_TARGET0
 	float layer     = floor(layer_pos);
 	Vec2  st        = Vec2(layer_pos - layer, uv.y);
 	Vec4  color     = texture2DArray(g_texture, Vec3(st, layer));
-	if (params.x > 0.5) color = Vec4(color.rrr, 1.0);
-	color.a = 1.0;
-	return color;
+	return debug_texture_color(color);
 }

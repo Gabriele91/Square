@@ -99,7 +99,11 @@ namespace Square
         }
 
     protected:
+#if defined(SQUARE_RETAIL)
+        bool m_verbose{ false };
+#else
         bool m_verbose{ true };
+#endif
 
     private:
         void print(FILE* const stream, const char* tag, const std::string& value) const
@@ -184,7 +188,11 @@ namespace Square
         }
 
     protected:
+#if defined(SQUARE_RETAIL)
+        bool m_verbose{ false };
+#else
         bool m_verbose{ true };
+#endif
 
     private:
         // Multi thread
