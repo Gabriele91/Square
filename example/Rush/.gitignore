@@ -1,0 +1,4 @@
+*.sq
+# Wildwater: still in the works, heavy (its config stays: the map is hidden without its scene)
+assets/wildwater.sqz
+config/maps/wildwater.json

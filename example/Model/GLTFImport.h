@@ -565,6 +565,85 @@ namespace Import
         // Ok
         return vertexes;
     }
+    // The values of an accessor as floats, num_components a element (its view's stride
+    // followed); the integers as they are, or in [0, 1] / [-1, 1] when normalized (the weights
+    // of the joints in bytes or shorts, the keys of a rotation in bytes or shorts)
+    inline std::vector<float> read_floats(const GLTF& gltf, size_t accessor_id, bool normalized)
+    {
+        std::vector<float> values;
+        if (accessor_id < gltf.accessors.size())
+        {
+            const Accessor& accessor = gltf.accessors[accessor_id];
+            const View& view = gltf.views[accessor.buffer_view];
+            const auto& buffer = gltf.buffers[view.buffer];
+            size_t component_size = 4;
+            switch (accessor.component_type)
+            {
+            case ComponentType::SIGNED_BYTE:
+            case ComponentType::UNSIGNED_BYTE:  component_size = 1; break;
+            case ComponentType::SIGNED_SHORT:
+            case ComponentType::UNSIGNED_SHORT: component_size = 2; break;
+            default:                            component_size = 4; break;
+            }
+            const size_t components = accessor.num_components;
+            const size_t stride = view.stride ? view.stride : components * component_size;
+            const unsigned char* data = buffer.data() + view.offset + accessor.byte_offset;
+            values.resize(accessor.count * components);
+            for (size_t i = 0; i < accessor.count; ++i)
+            {
+                const unsigned char* element = data + i * stride;
+                for (size_t c = 0; c < components; ++c)
+                {
+                    const unsigned char* at = element + c * component_size;
+                    float value = 0.0f;
+                    switch (accessor.component_type)
+                    {
+                    case ComponentType::SIGNED_BYTE:
+                    {
+                        const int8_t raw = *reinterpret_cast<const int8_t*>(at);
+                        value = normalized ? std::max(float(raw) / 127.0f, -1.0f) : float(raw);
+                    }
+                    break;
+                    case ComponentType::UNSIGNED_BYTE:
+                    {
+                        const uint8_t raw = *at;
+                        value = normalized ? float(raw) / 255.0f : float(raw);
+                    }
+                    break;
+                    case ComponentType::SIGNED_SHORT:
+                    {
+                        int16_t raw = 0;
+                        std::memcpy(&raw, at, sizeof(raw));
+                        value = normalized ? std::max(float(raw) / 32767.0f, -1.0f) : float(raw);
+                    }
+                    break;
+                    case ComponentType::UNSIGNED_SHORT:
+                    {
+                        uint16_t raw = 0;
+                        std::memcpy(&raw, at, sizeof(raw));
+                        value = normalized ? float(raw) / 65535.0f : float(raw);
+                    }
+                    break;
+                    case ComponentType::UNSIGNED_INT:
+                    {
+                        uint32_t raw = 0;
+                        std::memcpy(&raw, at, sizeof(raw));
+                        value = float(raw);
+                    }
+                    break;
+                    default:
+                    {
+                        std::memcpy(&value, at, sizeof(value));
+                    }
+                    break;
+                    }
+                    values[i * components + c] = value;
+                }
+            }
+        }
+        return values;
+    }
+
     inline Render::Mesh::IndexList get_Index(const GLTF& gltf, const Primitive& primitive)
     {
         const auto& accessor = gltf.accessors[primitive.indices];

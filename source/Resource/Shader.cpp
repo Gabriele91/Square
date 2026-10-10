@@ -473,7 +473,20 @@ namespace Resource
 			});
 		}
 
-		
+#ifdef SQUARE_DEBUG_TOOLS
+		//the GLSL made, in a folder (SQUARE_DUMP_GLSL): what the driver compiles, by stage, named
+		//by the hash of the vertex source (the stages of a shader together)
+		if (const char* dump = std::getenv("SQUARE_DUMP_GLSL"))
+		{
+			const size_t id = std::hash<std::string>()(shader_sources[Render::ST_VERTEX_SHADER] + shader_sources[Render::ST_FRAGMENT_SHADER]);
+			for (const auto& info : shader_info)
+			{
+				const std::string file = Filesystem::join(dump, std::to_string(id) + "." + shader_target_name[info.m_type] + ".glsl");
+				Filesystem::text_file_write_all(file, info.m_shader_header + info.m_shader_source);
+			}
+		}
+#endif
+
 		////////////////////////////////////////////////////////////////////////////////
 		// load shaders from files
 		if (auto render = System::get<RenderSystem>(context())->render())

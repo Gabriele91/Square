@@ -33,7 +33,7 @@
 		"hold_frames": 3
 	},
 	"maps": {
-		"arenas": ["arena", "backwash", "containment", "sanctuary"],
+		"arenas": ["arena", "backwash", "containment", "sanctuary", "canyon"],
 		"circuits": ["valley", "wildwater"]
 	}
 }

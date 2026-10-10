@@ -1,0 +1,22 @@
+{
+	"title": "Red Canyon",
+	"description": "a closed basin at the bottom of a red canyon at sunset (origial_assets/canyon): mesas, waterfalls, a river looping around the platform in the middle, a natural arch over it, a ring wall with towers; a warm haze, low over the floor",
+	"mode": "arena",
+	"shadow_fit": { "moving": "stable", "still": "stable" },
+	"sun_position": {
+		"azimuth": 70.0,
+		"elevation": 16.0
+	},
+	"camera": { "near": 0.1, "far": 800.0 },
+	"view": { "from": [30.0, -128.0, 112.0], "to": [-2.0, 8.0, -12.0], "lens": 22.0 },
+	"snow": false,
+	"trails": false,
+	"wakes": true,
+	"fog": {
+		"color": [0.72, 0.42, 0.26],
+		"density": 0.0025,
+		"height": 7.0,
+		"falloff": 0.06,
+		"sun": [0.85, 0.50, 0.22]
+	}
+}

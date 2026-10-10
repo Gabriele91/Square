@@ -2,6 +2,7 @@
 #pragma once
 #include <Vertex>
 #include <Transform>
+#include <MeshVertex>
 #include <Matrix>
 #include <ShadowCamera>
 ////////////////
@@ -24,7 +25,7 @@ struct VertexShaderOutput
 #ifdef SQ_INSTANCED
 // instanced (the instanced variant of PointShadow: Scene::InstancedMesh): the matrix of the instance first
 #include <Instances>
-VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input, uint instance_id : SV_InstanceID)
+VertexShaderOutput vertex(in MeshVertex input, uint instance_id : SV_InstanceID)
 {
 	VertexShaderOutput output;
 	output.m_position = mul_instance_model(input.m_position, instance_id);
@@ -32,11 +33,10 @@ VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input, uint instan
 	return output;
 }
 #else
-VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input)
+VertexShaderOutput vertex(in MeshVertex input)
 {
 	VertexShaderOutput output;
-	Vec4 position = Vec4(input.m_position, 1.0);
-	output.m_position = mul(position, transform.m_model);
+	output.m_position = mesh_world_position(input);
 	output.m_uv = input.m_uv;
 	return output;
 }

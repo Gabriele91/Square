@@ -21,6 +21,10 @@
 #include "LodGroups.h"
 #include "InstanceGroups.h"
 #include "Occluders.h"
+#include "Sprites.h"
+#include "Particles.h"
+#include "Animations.h"
+#include "Skins.h"
 
 enum class OutputFormat
 {
@@ -137,11 +141,18 @@ public:
         InstanceGroups::Nodes instance_nodes;
         // The nodes of occluders ("square_occluder": true, or "proxy")
         Occluders::Nodes occluder_nodes;
+        // The nodes of sprites ("square_sprite")
+        Sprites::Nodes sprite_nodes;
+        // The nodes of emitters of particles ("square_particles") and their properties
+        Particles::Nodes particle_nodes;
+        // The actor of each node (the animations, the skins: by the index of the node)
+        Animations::NodeActors node_actors(gltf_model.nodes.size());
         GLTF::Import::visit_default_scene< Shared<Actor> >(gltf_model, main_node,
             [&](const GLTF::Node* const parent, const GLTF::Node& node, Shared<Actor>& parent_actor) -> Shared<Actor>
             {
                 Shared<Actor> actor = MakeShared<Actor>(context());
                 actor->name(node.name);
+                node_actors[size_t(&node - gltf_model.nodes.data())] = actor;
                 const bool lod_properties = node.extras.find(SquareExtras::PREFIX + "lod") != node.extras.end()
                                          || node.extras.find(SquareExtras::PREFIX + "lod_mode") != node.extras.end();
                 if (lod_properties)
@@ -160,6 +171,16 @@ public:
                 if (occluder_proxy || SquareExtras::flag(node.extras, "occluder").value_or(false))
                 {
                     occluder_nodes[actor.get()] = occluder_proxy;
+                }
+                //a sprite: its plane (Sprites)
+                if (SquareExtras::flag(node.extras, "sprite").value_or(false))
+                {
+                    sprite_nodes.insert(actor.get());
+                }
+                //an emitter of particles: its plane, its settings (Particles)
+                if (SquareExtras::flag(node.extras, "particles").value_or(false))
+                {
+                    particle_nodes[actor.get()] = node.extras;
                 }
                 Vec3 translation{ 0.0f,0.0f,0.0f }, scale{ 1.0f,1.0f,1.0f };
                 Quat rotation(0.0f,0.0f,0.0f,1.0f);
@@ -182,20 +203,8 @@ public:
                         scale = node.scale;
                     }
                 }
-                if (m_mode & M_SWAP_ZY)
-                {
-                    // Swap Y Z
-                    const Quat swap_zy = angle_axis(radians(90.0f), Constants::axis_x);
-                    // Swap all
-                    std::swap(translation.z, translation.y);
-                    rotation = swap_zy * rotation * conjugate(swap_zy);
-                    std::swap(scale.z, scale.y);
-                }
-                if (m_mode & M_TO_LHS)
-                {
-                    translation.z = translation.z != 0.0f ? -translation.z : translation.z;
-                    rotation = Quat(rotation.x, rotation.y, -rotation.z, -rotation.w);
-                }
+                // The axes of the scene (swap y z, left hand)
+                Animations::turn(translation, rotation, scale, m_mode);
                 actor->position(translation);
                 actor->rotation(rotation);
                 actor->scale(scale);
@@ -352,6 +361,21 @@ public:
                 parent_actor->add(actor);
                 return actor;
             });
+        // The skins: the meshes of a node with a skin (before the instances: never one of them)
+        if (const size_t skinned = Skins::build(context(), gltf_model, node_actors, mesh_manager, m_mode))
+        {
+            context().logger()->info("Skinned meshes: " + std::to_string(skinned));
+        }
+        // The sprites: the planes of a node "square_sprite"
+        if (const size_t sprites = Sprites::build(context(), main_node, sprite_nodes))
+        {
+            context().logger()->info("Sprites: " + std::to_string(sprites));
+        }
+        // The emitters of particles: the planes of a node "square_particles"
+        if (const size_t emitters = Particles::build(context(), main_node, particle_nodes, m_mode))
+        {
+            context().logger()->info("Particle emitters: " + std::to_string(emitters));
+        }
         // The occluders: the meshes of a node "square_occluder" (before the instances take them)
         size_t occluder_triangles = 0;
         if (const size_t occluders = Occluders::build(context(), main_node, occluder_nodes, occluder_triangles))
@@ -368,6 +392,11 @@ public:
         if (const size_t groups = LodGroups::build(context(), main_node, lod_extras))
         {
             context().logger()->info("Levels of detail: " + std::to_string(groups) + " groups");
+        }
+        // The animations: an animator at the root (after the nodes are moved: their paths)
+        if (const size_t clips = Animations::build(context(), main_node, gltf_model, node_actors, m_mode))
+        {
+            context().logger()->info("Animations: " + std::to_string(clips) + " clips");
         }
         // Serialize
         switch (m_output_model_format)

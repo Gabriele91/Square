@@ -22,7 +22,7 @@ sub_effect
     }
     technique "SpotShadow"
     {
-        variants instanced clip(mask_shadow)
+        variants instanced skinned clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -34,7 +34,7 @@ sub_effect
     }
     technique "PointShadow"
     {
-        variants instanced clip(mask_shadow)
+        variants instanced skinned clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -46,7 +46,7 @@ sub_effect
     }
     technique "DirectionShadow"
     {
-        variants instanced clip(mask_shadow)
+        variants instanced skinned clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -71,7 +71,7 @@ sub_effect
     }
     technique "SpotShadow"
     {
-        variants clip(mask_shadow)
+        variants skinned clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -83,7 +83,7 @@ sub_effect
     }
     technique "PointShadow"
     {
-        variants clip(mask_shadow)
+        variants skinned clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -96,7 +96,7 @@ sub_effect
     }
     technique "DirectionShadow"
     {
-        variants clip(mask_shadow)
+        variants skinned clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -121,7 +121,7 @@ sub_effect
     }
     technique "SpotShadow"
     {
-        variants clip(mask_shadow)
+        variants skinned clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -133,7 +133,7 @@ sub_effect
     }
     technique "PointShadow"
     {
-        variants clip(mask_shadow)
+        variants skinned clip(mask_shadow)
         pass
         {
             zbuffer less
@@ -146,7 +146,7 @@ sub_effect
     }
     technique "DirectionShadow"
     {
-        variants clip(mask_shadow)
+        variants skinned clip(mask_shadow)
         pass
         {
             zbuffer less

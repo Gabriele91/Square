@@ -7,6 +7,7 @@
 ////////////////
 #pragma once
 #include <Camera>
+#include <AnimatedUV>
 #include <Transform>
 #include <Vertex>
 #include <Support>
@@ -69,12 +70,29 @@ VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input, uint instance_
 	VertexShaderOutput output;
 	output.m_world_position = mul_instance_model(input.m_position, instance_id);
 	output.m_position = mul_view_projection(output.m_world_position.xyz);
-	output.m_uv = input.m_uv;
+	output.m_uv = animated_uv(input.m_uv);
 
 	Mat3 normal3x3    = (Mat3)transform.m_inv_model;
 	output.m_normal   = mul(normal3x3, mul_instance_direction(input.m_normal, instance_id));
 	output.m_tangent  = mul(normal3x3, mul_instance_direction(input.m_tangent, instance_id));
 	output.m_binomial = mul(normal3x3, mul_instance_direction(input.m_binomial, instance_id));
+
+	return output;
+}
+#elif defined(SQ_SKINNED)
+// skinned (Scene::SkinnedMesh): moved by its joints, already in the world
+#include <Skin>
+VertexShaderOutput vertex(Position3DNormalTangetBinomialUVSkin input)
+{
+	VertexShaderOutput output;
+	const Mat4 skin = skin_matrix(input.m_joints, input.m_weights);
+	output.m_world_position = mul_skin(input.m_position, skin);
+	output.m_position = mul_view_projection(output.m_world_position.xyz);
+	output.m_uv = animated_uv(input.m_uv);
+
+	output.m_normal   = mul_skin_direction(input.m_normal, skin);
+	output.m_tangent  = mul_skin_direction(input.m_tangent, skin);
+	output.m_binomial = mul_skin_direction(input.m_binomial, skin);
 
 	return output;
 }
@@ -84,7 +102,7 @@ VertexShaderOutput vertex(Position3DNormalTangetBinomialUV input)
 	VertexShaderOutput output;
 	output.m_world_position = mul_model(input.m_position);
 	output.m_position = mul_view_projection(output.m_world_position.xyz);
-	output.m_uv = input.m_uv;
+	output.m_uv = animated_uv(input.m_uv);
 
 	Mat3 normal3x3    = (Mat3)transform.m_inv_model;
 	output.m_normal   = mul(normal3x3, input.m_normal);

@@ -138,6 +138,9 @@ namespace Render
         //how the levels of detail are chosen (RenderInstance::levels_of_detail)
         void levels_of_detail(const LevelOfDetailSettings& settings) { m_levels_of_detail = settings; }
         const LevelOfDetailSettings& levels_of_detail() const { return m_levels_of_detail; }
+        //the time of the world (x: seconds, y: the seconds of the frame): its cameras have it
+        void time(const Vec2& time) { m_time = time; }
+        const Vec2& time() const { return m_time; }
         //the occlusion culling of its cameras (RenderInstance::occlusion); the one of the camera
         //drawn now (what it hides)
         void occlusion(const SoftwareOcclusion::Settings& settings) { m_occlusion.settings(settings); }
@@ -161,6 +164,7 @@ namespace Render
         std::vector< Shared<DrawerPass> > m_rendering_pass[RPT_MAX];
         std::vector< Shared<PostEffect> > m_post_effects;
         LevelOfDetailSettings m_levels_of_detail;
+        Vec2 m_time{ 0.0f, 0.0f };
         SoftwareOcclusion m_occlusion;
 
         //Cache objects to draw

@@ -38,6 +38,9 @@ namespace Render
         Mat4 m_model;
         //position
         CBAlignas Vec3 m_position;
+        //the time of the world: x its seconds, y the seconds of the frame (the animations of the
+        //materials: AnimatedUV.hlsl)
+        CBAlignas Vec4 m_time{ 0.0f };
     };
     //Camera info
     class SQUARE_API Camera : public BaseObject
@@ -63,9 +66,15 @@ namespace Render
         void enable(bool enable){ m_enable = enable; }
         bool enable() const { return m_enable; }
 
+        //the time of the world it draws (x: seconds, y: the seconds of the frame), set by the
+        //drawer before it draws; its buffer has it (UniformBufferCamera::m_time)
+        void time(const Vec2& time) { m_time = time; }
+        const Vec2& time() const { return m_time; }
+
     private:
         
         bool m_enable{true};
+        Vec2 m_time{ 0.0f, 0.0f };
     };
 }
 }

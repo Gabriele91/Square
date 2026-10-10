@@ -208,6 +208,7 @@ namespace Square
 		#if defined(RENDER_PROFILER)
 		if (m_profiler) m_profiler->begin_frame();
 		#endif
+		m_delta_time = delta_time;
 		draw();
 		if (m_render)
 		{
@@ -273,7 +274,7 @@ namespace Square
 	{
 		for (auto& instance : instances())
 		{
-			if (instance->visible()) instance->draw();
+			if (instance->visible()) instance->draw(m_delta_time);
 		}
 	}
 
@@ -466,9 +467,11 @@ namespace Square
 		if (m_drawer) build_drawer();
 	}
 
-	void RenderInstance::draw()
+	void RenderInstance::draw(double delta_time)
 	{
 		if (!m_drawer) return;
+		m_time += delta_time;
+		m_drawer->time(Vec2(float(m_time), float(delta_time)));
 		m_drawer->draw(m_clear_color, m_ambient_color, m_collection);
 	}
 

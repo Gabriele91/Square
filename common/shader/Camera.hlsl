@@ -14,6 +14,7 @@ struct CameraStruct
 	Mat4 m_view;
 	Mat4 m_model;
 	Vec3 m_position;
+	Vec4 m_time; //x: the seconds of the world, y: the seconds of the frame
 };
 cbuffer Camera
 {

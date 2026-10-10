@@ -24,6 +24,10 @@ parameters
     dither       float(0.0)
     //light of the sun through it (thin: leaves, cards), 0 none, 1 all
     translucency float(0.0)
+    //the uv animated by the time (AnimatedUV.hlsl): scrolled (uv a second); a flipbook (columns,
+    //rows, frames a second, frames used: 0 all)
+    uv_scroll    Vec2(0.0, 0.0)
+    flipbook     Vec4(1.0, 1.0, 0.0, 0.0)
 }
 
 sub_effect
@@ -31,7 +35,7 @@ sub_effect
 	//import shadow forward
     technique "forward"
     {
-        variants instanced clip(mask, dither)
+        variants instanced skinned clip(mask, dither)
         pass 
         {
             zbuffer less
@@ -61,7 +65,7 @@ sub_effect
 	//deferred: single geometry pass, fills the G-Buffer (lighting done later)
 	technique "deferred"
 	{
-		variants instanced clip(mask, dither)
+		variants instanced skinned clip(mask, dither)
 		pass
 		{
 			zbuffer less

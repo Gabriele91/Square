@@ -27,6 +27,10 @@ set(SOURCE_FILES
     LodGroups.cpp
     InstanceGroups.cpp
     Occluders.cpp
+    Sprites.cpp
+    Particles.cpp
+    Animations.cpp
+    Skins.cpp
 )
 
 # Create executable

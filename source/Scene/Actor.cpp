@@ -404,6 +404,40 @@ namespace Scene
     {
         return m_childs.size() ? m_childs[index] : nullptr;
     }
+    Shared<Actor> Actor::find(const std::string& path)
+    {
+        Shared<Actor> at = shared_from_this();
+        size_t start = 0;
+        while (at && start < path.size())
+        {
+            size_t end = path.find('/', start);
+            if (end == std::string::npos)
+            {
+                end = path.size();
+            }
+            const std::string name = path.substr(start, end - start);
+            if (name == "..")
+            {
+                at = at->parent().lock();
+            }
+            else if (name.size())
+            {
+                Shared<Actor> found;
+                for (auto& child : at->m_childs)
+                {
+                    if (child->name() == name)
+                    {
+                        found = child;
+                        break;
+                    }
+                }
+                at = found;
+            }
+            start = end + 1;
+        }
+        return at;
+    }
+
     Shared<Actor> Actor::child(const std::string& name)
     {
         //search

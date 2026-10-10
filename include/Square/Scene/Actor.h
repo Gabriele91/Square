@@ -91,8 +91,11 @@ namespace Scene
         //get child
         Shared<Actor> child();
         Shared<Actor> child(size_t index);
-        Shared<Actor> child(const std::string& name);        
+        Shared<Actor> child(const std::string& name);
 		const ActorList& childs() const;
+		//an actor by its path from this one, its names split by '/' ("arm/hand"; ".." the parent,
+		//"" this one), nothing made (nullptr: not there)
+		Shared<Actor> find(const std::string& path);
 
         //name        
         const std::string& name() const;

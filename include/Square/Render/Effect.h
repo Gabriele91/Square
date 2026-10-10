@@ -502,12 +502,20 @@ namespace Render
 	//them in the .sqfx ("variants instanced clip"), each combination of them is compiled
 	enum EffectVariant : unsigned char
 	{
-		EV_NONE      = 0b00,
-		EV_INSTANCED = 0b01, //SQ_INSTANCED: a Scene::InstancedMesh, the matrix of each instance (Instances.hlsl)
-		EV_CLIP      = 0b10, //SQ_CLIP: the shaders can drop pixels (its mask, its dither, the fade
-		                     //of a level of detail); without it no discard (early-z)
-		EV_COUNT     = 4     //the combinations
+		EV_NONE      = 0b000,
+		EV_INSTANCED = 0b001, //SQ_INSTANCED: a Scene::InstancedMesh, the matrix of each instance (Instances.hlsl)
+		EV_CLIP      = 0b010, //SQ_CLIP: the shaders can drop pixels (its mask, its dither, the fade
+		                      //of a level of detail); without it no discard (early-z)
+		EV_SKINNED   = 0b100, //SQ_SKINNED: a Scene::SkinnedMesh, its vertices moved by its joints
+		                      //(Skin.hlsl); never with EV_INSTANCED
+		EV_COUNT     = 8      //the combinations
 	};
+
+	//a combination of the variants made (instanced and skinned: never)
+	inline bool effect_variant_valid(unsigned char variant)
+	{
+		return (variant & (EV_INSTANCED | EV_SKINNED)) != (EV_INSTANCED | EV_SKINNED);
+	}
 
 	//a technique and its variants, by combination (EV_NONE: the technique itself)
 	class SQUARE_API EffectTechniqueVariants
@@ -539,7 +547,7 @@ namespace Render
 
 	private:
 		EffectTechnique            m_techniques[EV_COUNT];
-		bool                       m_declared[EV_COUNT]{ false, false, false, false };
+		bool                       m_declared[EV_COUNT]{ false, false, false, false, false, false, false, false };
 		std::vector< std::string > m_clip_parameters;
 		std::vector< int >         m_clip_parameter_ids;
 	};
@@ -574,10 +582,10 @@ namespace Render
 		//get technique (without variants)
 		EffectTechnique* technique(const std::string& technique);
 		const EffectTechnique* technique(const std::string& technique) const;
-		//the technique of a draw: its EV_INSTANCED variant when it is drawn instanced (nullptr: not
-		//declared); its EV_CLIP variant, if declared, when one of its clip parameters is on in the
-		//parameters (its material) or when fading (a level of detail)
-		EffectTechnique* technique(const std::string& technique, bool instanced, const EffectParameters& parameters, bool fading);
+		//the technique of a draw: the variant of its renderable (Renderable::variant: EV_INSTANCED,
+		//EV_SKINNED; nullptr: not declared); its EV_CLIP variant, if declared, when one of its clip
+		//parameters is on in the parameters (its material) or when fading (a level of detail)
+		EffectTechnique* technique(const std::string& technique, unsigned char variant, const EffectParameters& parameters, bool fading);
 
 		//all techniques, with their variants
 		const EffectTechniquesMap& techniques() const { return m_techniques_map; }

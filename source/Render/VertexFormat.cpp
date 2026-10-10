@@ -21,6 +21,7 @@ namespace Layout
     SQUARE_REGISTERED_VERTEX(Position3DUV)
     SQUARE_REGISTERED_VERTEX(Position3DNormalUV)
     SQUARE_REGISTERED_VERTEX(Position3DNormalTangetBinomialUV)
+    SQUARE_REGISTERED_VERTEX(Position3DNormalTangetBinomialUVSkin)
 
     //item
     struct VertexItem
