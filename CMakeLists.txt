@@ -1,5 +1,22 @@
 cmake_minimum_required(VERSION 3.14...3.31)
 
+# The configurations (as the games do):
+# - Debug: not optimized, with the debug tools of the engine;
+# - Release: optimized, with the debug tools (the debug panel F1, the render profiler, the debug
+#   pass, the logs);
+# - Retail: optimized as Release, without any debug tool (SQUARE_RETAIL; only warnings and errors
+#   in the log). Single configuration generators: -DCMAKE_BUILD_TYPE=Retail (its own build folder)
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release;Retail" CACHE STRING "The configurations" FORCE)
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release Retail)
+foreach(language C CXX)
+    set(CMAKE_${language}_FLAGS_RETAIL "${CMAKE_${language}_FLAGS_RELEASE}" CACHE STRING "Flags of ${language} in Retail (as Release)" FORCE)
+endforeach()
+foreach(kind EXE SHARED MODULE STATIC)
+    set(CMAKE_${kind}_LINKER_FLAGS_RETAIL "${CMAKE_${kind}_LINKER_FLAGS_RELEASE}" CACHE STRING "Linker flags of ${kind} in Retail (as Release)" FORCE)
+endforeach()
+# imported libraries without a Retail configuration: their Release
+set(CMAKE_MAP_IMPORTED_CONFIG_RETAIL Release)
+
 # Force flags and paths
 
 # GLM
@@ -71,16 +88,21 @@ set(RMLUI_BACKEND "native" CACHE STRING "No RmlUi backend (the one of Square)" F
 add_subdirectory(${PROJECT_SOURCE_DIR}/dependencies/RmlUi EXCLUDE_FROM_ALL)
 set(SQUARE_RMLUI_LIBRARIES RmlUi::Core RmlUi::Debugger)
 
-# Driver texture/render target introspection (debug texture panel):
+# Driver texture/render target introspection (the tab Textures of the debug panel):
 # defined here so EVERY target in the tree inherits it (Square, the render
-# backends — C++ and Objective-C++ — and the examples/game), only in Debug.
-add_compile_definitions($<$<CONFIG:Debug>:TEXTURE_INTROSPECTION>)
+# backends — C++ and Objective-C++ — and the examples/game), in Debug and Release, never in Retail.
+add_compile_definitions($<$<NOT:$<CONFIG:Retail>>:TEXTURE_INTROSPECTION>)
+
+# The debug tools (the debug panel, the debug pass...): every configuration but Retail
+add_compile_definitions($<$<NOT:$<CONFIG:Retail>>:SQUARE_DEBUG_TOOLS>)
+add_compile_definitions($<$<CONFIG:Retail>:SQUARE_RETAIL>)
 
 # Render profiler (Render/Profiler.h: CPU/GPU times of the render passes and of the shaders):
-# on in every configuration, off (-DSQUARE_RENDER_PROFILER=OFF) it is not compiled at all
+# on in Debug and Release (never in Retail), off (-DSQUARE_RENDER_PROFILER=OFF) it is not
+# compiled at all
 option(SQUARE_RENDER_PROFILER "Compile the render profiler (CPU/GPU times of the passes)" ON)
 if(SQUARE_RENDER_PROFILER)
-    add_compile_definitions(RENDER_PROFILER)
+    add_compile_definitions($<$<NOT:$<CONFIG:Retail>>:RENDER_PROFILER>)
 endif()
 
 # Add square
