@@ -423,6 +423,12 @@ namespace Render
                   , EffectParameters* params = nullptr
                   ) const;
 
+		//the multi-pass index and the layers of a draw (the "MultiPass" buffer of its shader, if it
+		//has one), the pass bound: a draw of a batch (Render::DrawList) with its own ones
+		void bind_multi_pass(Render::Context& render, const EffectPassInputs& inputs, int draw_id) const;
+		//its shader reads them (a multi-pass technique, the cascades of a caster)
+		bool multi_pass() const;
+
 		void unbind() const;
 	};
 

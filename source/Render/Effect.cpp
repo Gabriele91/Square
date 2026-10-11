@@ -379,10 +379,20 @@ namespace Render
 		{
 			m_uniform_spot_shadow->bind(inputs.m_spot_shadow_light);
 		}
-		//multi-pass index (cube face / cascade): write the draw_id into our own
-		//buffer and bind it. The shader routes the draw to the matching layer via
-		//SV_RenderTargetArrayIndex.
-		if (m_cb_multipass && m_uniform_multipass && m_uniform_multipass->is_valid())
+		//multi-pass index (cube face / cascade), the layers of the draw
+		bind_multi_pass(render, inputs, draw_id);
+	}
+
+	bool EffectPass::multi_pass() const
+	{
+		return m_cb_multipass && m_uniform_multipass && m_uniform_multipass->is_valid();
+	}
+
+	void EffectPass::bind_multi_pass(Render::Context& render, const EffectPassInputs& inputs, int draw_id) const
+	{
+		//write the draw_id into our own buffer and bind it: the shader routes the draw to the
+		//matching layer (SV_RenderTargetArrayIndex), or culls the layers of the mask
+		if (multi_pass())
 		{
 			Render::UniformMultiPass umultipass;
 			umultipass.m_id = (uint32)draw_id;

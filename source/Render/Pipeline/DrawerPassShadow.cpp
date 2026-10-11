@@ -37,6 +37,9 @@ namespace Render
 		m_cb_direction_light = Render::stream_constant_buffer<Render::UniformDirectionShadowLight>(&render());
 		m_cb_point_light = Render::stream_constant_buffer<Render::UniformPointShadowLight>(&render());
 		m_cb_spot_light = Render::stream_constant_buffer<Render::UniformSpotShadowLight>(&render());
+		#if defined(SQUARE_DEBUG_TOOLS)
+		m_caster_draws.test("SQUARE_TEST_SHADOWS");
+		#endif
 	}
     //context
     Square::Context& DrawerPassShadow::context(){ return m_context; }
@@ -527,76 +530,27 @@ namespace Render
     , bool settle
     )
     {
-		Render::UniformBufferTransform utransform;
-		//for each elements of opaque and translucent queues
+		//the casters of the queues, each in the cascades it is in of the ones asked (none: not
+		//drawn), in batches (by pass and material)
+		m_caster_draws.clear();
 		for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
 		{
 			const bool caster = randerable && randerable->can_draw() && randerable->casts_shadow() && takes(*randerable, casters);
 			const bool drawn = caster && (!settle || settled(*randerable));
 			if (drawn)
 			{
-				//the cascades of the caster, of the ones asked (none: not drawn)
-				inputs.m_layer_mask = layers;
+				uint32 mask = layers;
 				if (cascades)
 				{
-					inputs.m_layer_mask &= AuxCascades::mask(randerable->bounding_box().to_aabb(), *cascades);
+					mask &= AuxCascades::mask(randerable->bounding_box().to_aabb(), *cascades);
 				}
-				if (inputs.m_layer_mask != 0)
+				if (mask != 0)
 				{
-					draw_caster(*randerable, technique_name, inputs, utransform, settle);
+					m_caster_draws.add(randerable, technique_name, mask, settle);
 				}
 			}
 		}
-    }
-
-    void DrawerPassShadow::draw_caster
-    (
-      Renderable& randerable
-    , const std::string& technique_name
-    , EffectPassInputs& inputs
-    , UniformBufferTransform& utransform
-    , bool settle
-    )
-    {
-		//its fade (settled: whole)
-		float fade = randerable.lod_fade();
-		if (settle)
-		{
-			fade = 1.0f;
-		}
-		//its transform
-		if (auto transform = randerable.transform().lock())
-		{
-			transform->set(&utransform);
-			utransform.m_lod_fade = fade;
-			render().update_steam_CB(m_cb_transform.get(), (const unsigned char*)&utransform, sizeof(utransform));
-		}
-		//each of its materials: the technique of its effect (the clip variant: by its material, or
-		//its level of detail fading)
-		const bool fading = fade < 1.0f;
-		for (size_t material_id = 0; material_id != randerable.materials_count(); ++material_id)
-		{
-			auto material = randerable.material(material_id).lock();
-			EffectTechnique* technique = nullptr;
-			if (material)
-			{
-				technique = material->effect()->technique(technique_name, randerable.variant(), *material->parameters(), fading);
-			}
-			if (technique)
-			{
-				//each pass; a multi-pass one drawn draw_count times, one per cube face / cascade
-				//of the caster (the shader routes via the pass index)
-				for (auto[pass, draw_id] : technique->iterate_draws())
-				{
-					const bool multi_pass = pass.m_draw_count > 1;
-					const bool in_layer = MULTI_PASS_HAS_LAYER(inputs.m_layer_mask, draw_id);
-					if (!multi_pass || in_layer)
-					{
-						randerable.draw(render(), material_id, inputs, pass, draw_id);
-					}
-				}
-			}
-		}
+		m_caster_draws.draw(render(), inputs);
     }
 }
 }

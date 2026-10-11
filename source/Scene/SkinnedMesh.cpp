@@ -204,28 +204,43 @@ namespace Scene
 	)
 	{
 		const bool drawable = m_mesh && material_id < m_materials.size() && m_materials[material_id] && material_id < m_mesh->number_of_sub_meshs();
+		if (drawable)
+		{
+			pass.bind(render, input, m_materials[material_id]->parameters(), draw_id);
+			draw_bound(render, material_id, input, pass, draw_id);
+			pass.unbind();
+		}
+	}
+
+	bool SkinnedMesh::draw_bound
+	(
+		  Render::Context& render
+		, size_t material_id
+		, Render::EffectPassInputs& input
+		, Render::EffectPass& pass
+		, int draw_id
+	)
+	{
+		const bool drawable = m_mesh && material_id < m_materials.size() && m_materials[material_id] && material_id < m_mesh->number_of_sub_meshs();
 		//the buffer of its joints (made once: the size of Skin.hlsl)
 		if (drawable && !m_buffer)
 		{
 			m_buffer = Render::stream_constant_buffer(&render, sizeof(Mat4) * joints_max);
 		}
-		if (drawable && m_buffer)
+		auto uniform = drawable && m_buffer ? pass.m_shader->constant_buffer("Skin") : nullptr;
+		if (uniform)
 		{
-			pass.bind(render, input, m_materials[material_id]->parameters(), draw_id);
-			if (auto uniform = pass.m_shader->constant_buffer("Skin"))
+			//its joints once a frame (the passes after the first share them), only the ones it has
+			if (!m_uploaded)
 			{
-				//its joints once a frame (the passes after the first share them), only the ones it has
-				if (!m_uploaded)
-				{
-					const size_t joints = std::max<size_t>(m_joints.size(), 1);
-					render.update_steam_CB(m_buffer.get(), (const unsigned char*)m_joint_matrices.data(), sizeof(Mat4) * joints);
-					m_uploaded = true;
-				}
-				uniform->bind(m_buffer.get());
-				m_mesh->draw(render, material_id, (unsigned int)pass.m_instances);
+				const size_t joints = std::max<size_t>(m_joints.size(), 1);
+				render.update_steam_CB(m_buffer.get(), (const unsigned char*)m_joint_matrices.data(), sizeof(Mat4) * joints);
+				m_uploaded = true;
 			}
-			pass.unbind();
+			uniform->bind(m_buffer.get());
+			m_mesh->draw(render, material_id, (unsigned int)pass.m_instances);
 		}
+		return true;
 	}
 
 	bool SkinnedMesh::visible() const

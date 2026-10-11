@@ -105,7 +105,7 @@ namespace Render
     static std::array<bool, RQ_MAX> query_from_select_queues(const std::vector<QueueType>& select_queues)
     {
         square_assert(select_queues.size());
-        static std::array<bool, RQ_MAX> queues_types{ false };
+        std::array<bool, RQ_MAX> queues_types{ false };
         for (QueueType qtype : select_queues)
         {
             queues_types[qtype] = true;
@@ -209,18 +209,27 @@ namespace Render
         //the time of the world (the animations of its materials)
         camera->time(m_time);
         //the levels of detail of this camera (its shadows and its render draw them)
-        for (const Weak<LevelOfDetail>& weak_lod : collection.m_levels_of_detail)
         {
-            if (auto lod = weak_lod.lock())
+            SQUARE_RENDER_SCOPE(render(), "Levels of detail");
+            for (const Weak<LevelOfDetail>& weak_lod : collection.m_levels_of_detail)
             {
-                lod->select(*camera, m_levels_of_detail);
+                if (auto lod = weak_lod.lock())
+                {
+                    lod->select(*camera, m_levels_of_detail);
+                }
             }
         }
         //what its occluders hide (the levels of detail chosen: the same boxes)
-        m_occlusion.draw(*camera, collection.m_occluders);
+        {
+            SQUARE_RENDER_SCOPE(render(), "Occlusion");
+            m_occlusion.draw(*camera, collection.m_occluders);
+        }
         //build queues
-        CollectionQuery::lights(collection, m_camera_queue, *camera);
-        CollectionQuery::renderables(collection, m_camera_queue, *camera, &m_occlusion);
+        {
+            SQUARE_RENDER_SCOPE(render(), "Culling");
+            CollectionQuery::lights(collection, m_camera_queue, *camera);
+            CollectionQuery::renderables(collection, m_camera_queue, *camera, &m_occlusion);
+        }
         //shadow caster
         if(bool(draw_types & DrawerPassType::RPT_SHADOW))
         {
@@ -237,13 +246,16 @@ namespace Render
                     if (can_draw_shadow(light.get()))
                     {
                         SQUARE_RENDER_SCOPE(render(), queue_type == RQ_SPOT_LIGHT ? "Spot light" : queue_type == RQ_POINT_LIGHT ? "Point light" : "Direction light");
-                        // Clear
-                        m_light_queue.clear();
-                        //compute queue
-                        CollectionQuery::renderables(collection, m_light_queue, *light);
-                        //set scene size
-                        if(queue_type == RQ_DIRECTION_LIGHT)
-                            light->set_scene_size(scene_size(m_light_queue));
+                        //its casters (the scene size of the sun: of them)
+                        {
+                            SQUARE_RENDER_SCOPE(render(), "Culling");
+                            m_light_queue.clear();
+                            CollectionQuery::renderables(collection, m_light_queue, *light);
+                            if (queue_type == RQ_DIRECTION_LIGHT)
+                            {
+                                light->set_scene_size(scene_size(m_light_queue));
+                            }
+                        }
                         //draw
                         pass->draw(  *this
                                     , pass_shadow_count++

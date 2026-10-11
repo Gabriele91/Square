@@ -23,6 +23,7 @@
 #include "Square/Config.h"
 #include "Square/Render/Effect.h"
 #include "Square/Render/Pipeline/Drawer.h"
+#include "Square/Render/Pipeline/DrawList.h"
 #include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/Transform.h"
 
@@ -136,16 +137,6 @@ namespace Render
 		, uint32 layers = MULTI_PASS_ALL_LAYERS
 		, bool settle = false
 		);
-		//a caster (in the cascades of the inputs): its transform, its materials, their passes;
-		//settle: drawn whole (no fade)
-		void draw_caster
-		(
-		  Renderable& randerable
-		, const std::string& technique_name
-		, EffectPassInputs& inputs
-		, UniformBufferTransform& utransform
-		, bool settle
-		);
 		//the shadow map of a directional light with stable cascades: the caches of the cascades
 		//(drawn again if out of date), the nearer ones copied in, the dynamic casters over them
 		void draw_cascades
@@ -184,6 +175,8 @@ namespace Render
 		Shared<Render::ConstBuffer> m_cb_spot_light;
 		Shared<Render::ConstBuffer> m_cb_point_light;
 		Shared<Render::ConstBuffer> m_cb_direction_light;
+		//the draws of the casters in batches (by pass and material)
+		DrawList                                     m_caster_draws;
 		//the caches of the static casters, by light
 		bool                                         m_static_cache{ true };
 		std::unordered_map<const Light*, StaticCache> m_caches;

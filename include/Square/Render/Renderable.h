@@ -106,6 +106,17 @@ namespace Render
 		//its geometry alone (no material, the shader bound by the caller): the velocity pass;
 		//false if it cannot (nothing drawn)
 		virtual bool draw_geometry(Render::Context& render) const { return false; }
+		//its draw of a material with the pass bound by the caller, with the parameters of that
+		//material (Render::DrawList: a batch of the renderables that share them): its own buffers
+		//(its instances, its joints) and its geometry; false: it cannot (the caller draws it by
+		//draw(), that binds its pass)
+		virtual bool draw_bound(
+			  Render::Context& render
+			, size_t material_id
+			, EffectPassInputs& current_input
+			, EffectPass& current_pass
+			, int draw_id = 0
+		) { return false; }
 
 	private:
 

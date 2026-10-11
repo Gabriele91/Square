@@ -76,6 +76,9 @@ namespace Render
 		m_cb_spot_light      = Render::stream_constant_buffer<Render::UniformSpotLight>(&render());
 		m_cb_light_volume    = Render::stream_constant_buffer<UniformLightVolume>(&render());
 		m_cb_velocity        = Render::stream_constant_buffer<UniformVelocity>(&render());
+		#if defined(SQUARE_DEBUG_TOOLS)
+		m_gbuffer_draws.test("SQUARE_TEST_GBUFFER");
+		#endif
 		m_cb_direction_shadow_light = Render::stream_constant_buffer<Render::UniformDirectionShadowLight>(&render());
 		m_cb_point_shadow_light     = Render::stream_constant_buffer<Render::UniformPointShadowLight>(&render());
 		m_cb_spot_shadow_light      = Render::stream_constant_buffer<Render::UniformSpotShadowLight>(&render());
@@ -195,9 +198,8 @@ namespace Render
 			render().set_clear_color_state({ Vec4(clear_color.x, clear_color.y, clear_color.z, 0.0f) });
 			render().clear();
 		}
-		//buffers
+		//buffers (the transforms: by the list of the draws)
 		Render::UniformBufferCamera ucamera;
-		Render::UniformBufferTransform utransform;
 		//parameters (only camera + transform are needed by the geometry technique)
 		EffectPassInputs inputs{ m_cb_camera.get(), m_cb_transform.get(), Vec4(1.0f) };
 		//what the camera sees: the parts of a renderable out of it, or hidden, not drawn
@@ -206,39 +208,18 @@ namespace Render
 		//update camera
 		camera.set(&ucamera);
 		render().update_steam_CB(m_cb_camera.get(), (const unsigned char*)&ucamera, sizeof(ucamera));
-		//for each elements of the opaque queue
+		//the opaque queue in batches (by pass and material; front to back in a batch), each
+		//renderable its transform (and the cross-fade of its level of detail)
+		static const std::string s_technique{ "deferred" };
+		m_gbuffer_draws.clear();
 		for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE }))
-		if (randerable)
 		{
-			//jump?
-			if (!randerable->can_draw()) continue;
-			//update transform (and the cross-fade of its level of detail)
-			if (auto transform = randerable->transform().lock())
+			if (randerable && randerable->can_draw())
 			{
-				transform->set(&utransform);
-				utransform.m_lod_fade = randerable->lod_fade();
-				render().update_steam_CB(m_cb_transform.get(), (const unsigned char*)&utransform, sizeof(utransform));
-			}
-			//for each materials
-			for (size_t material_id = 0; material_id != randerable->materials_count(); ++material_id)
-			{
-				//material
-				auto material = randerable->material(material_id).lock();
-				if (!material) continue;
-				//effect
-				auto effect = material->effect();
-				//(the clip variant: by its material, or its level of detail is fading)
-				const bool fading = randerable->lod_fade() < 1.0f;
-				auto technique = effect->technique("deferred", randerable->variant(), *material->parameters(), fading);
-				if (!technique) continue;
-				//draw for each pass
-				for (auto& pass : *technique)
-				for (size_t draw_id = 0; draw_id < pass.m_draw_count; ++draw_id)
-				{
-					randerable->draw(render(), material_id, inputs, pass, draw_id);
-				}
+				m_gbuffer_draws.add(randerable, s_technique);
 			}
 		}
+		m_gbuffer_draws.draw(render(), inputs);
 		//unbind G-Buffer
 		render().disable_render_target(m_gbuffer->target());
 	}

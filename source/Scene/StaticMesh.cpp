@@ -130,28 +130,37 @@ namespace Scene
 		, int draw_id
 	)
 	{
-
-		using namespace Square;
-		using namespace Square::Data;
-		using namespace Square::Scene;
-		using namespace Square::Resource;
-		using namespace Square::Render;
-		using namespace Square::Render::Layout;
-		
 		//the sub mesh of the material (the passes call it for each material: each one its own,
 		//with the technique of its own material)
 		const size_t num_sub_meshs_to_draw = (std::min<size_t>)(m_mesh->number_of_sub_meshs(), m_materials.size());
-		if (material_id >= num_sub_meshs_to_draw) return;
-		if (!m_materials[material_id])
+		if (material_id < num_sub_meshs_to_draw && m_materials[material_id])
+		{
+			pass.bind(render, input, m_materials[material_id]->parameters(), draw_id);
+			draw_bound(render, material_id, input, pass, draw_id);
+			pass.unbind();
+		}
+		else if (material_id < num_sub_meshs_to_draw)
 		{
 			context().logger()->debug("Mesh draw with invalid material: " + std::to_string(material_id));
-			return;
 		}
-		pass.bind(render, input, m_materials[material_id]->parameters(), draw_id);
-		//draw (instanced when the pass declares "instances N")
-		m_mesh->draw(render, material_id, (unsigned int)pass.m_instances);
-		//unbind
-		pass.unbind();
+	}
+
+	bool StaticMesh::draw_bound
+	(
+		  Square::Render::Context& render
+		, size_t material_id
+		, Square::Render::EffectPassInputs& input
+		, Square::Render::EffectPass& pass
+		, int draw_id
+	)
+	{
+		//its sub mesh (instanced when the pass declares "instances N")
+		const size_t num_sub_meshs_to_draw = (std::min<size_t>)(m_mesh->number_of_sub_meshs(), m_materials.size());
+		if (material_id < num_sub_meshs_to_draw && m_materials[material_id])
+		{
+			m_mesh->draw(render, material_id, (unsigned int)pass.m_instances);
+		}
+		return true;
 	}
 
 	bool StaticMesh::support_culling() const

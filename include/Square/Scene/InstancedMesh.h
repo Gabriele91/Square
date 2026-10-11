@@ -77,6 +77,15 @@ namespace Scene
 			, Square::Render::EffectPass& pass
 			, int draw_id = 0
 		) override;
+		//its draw with the pass bound by the caller (Render::DrawList)
+		virtual bool draw_bound
+		(
+			  Square::Render::Context& render
+			, size_t material_id
+			, Square::Render::EffectPassInputs& input
+			, Square::Render::EffectPass& pass
+			, int draw_id = 0
+		) override;
 		virtual bool support_culling() const override;
 		virtual bool visible() const override;
 		virtual bool instanced() const override { return true; }

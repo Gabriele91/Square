@@ -20,6 +20,7 @@
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
 #include "Square/Render/Pipeline/Drawer.h"
+#include "Square/Render/Pipeline/DrawList.h"
 #include "Square/Render/Pipeline/GBuffer.h"
 #include "Square/Render/Mesh.h"
 #include "Square/Render/PostEffect/PostEffect.h"
@@ -124,6 +125,8 @@ namespace Render
 		//post effects: the color chain
 		PostEffectChain  m_post_effects;
 
+		//the draws of the G-Buffer in batches (by pass and material)
+		DrawList         m_gbuffer_draws;
 		//constant buffers
 		Shared<Render::ConstBuffer> m_cb_camera;
 		Shared<Render::ConstBuffer> m_cb_transform;

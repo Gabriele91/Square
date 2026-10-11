@@ -282,13 +282,33 @@ namespace Scene
 	{
 		const bool material = material_id < m_materials.size() && m_materials[material_id];
 		const bool drawable = m_mesh && !m_instances.empty() && material && material_id < m_mesh->number_of_sub_meshs();
+		if (drawable)
+		{
+			pass.bind(render, input, m_materials[material_id]->parameters(), draw_id);
+			draw_bound(render, material_id, input, pass, draw_id);
+			pass.unbind();
+		}
+	}
+
+	bool InstancedMesh::draw_bound
+	(
+		  Render::Context& render
+		, size_t material_id
+		, Render::EffectPassInputs& input
+		, Render::EffectPass& pass
+		, int draw_id
+	)
+	{
+		const bool material = material_id < m_materials.size() && m_materials[material_id];
+		const bool drawable = m_mesh && !m_instances.empty() && material && material_id < m_mesh->number_of_sub_meshs();
 		//the buffer of the matrices of a draw (made once: the size of Instances.hlsl)
 		if (drawable && !m_buffer)
 		{
 			m_buffer = Render::stream_constant_buffer(&render, sizeof(Mat4) * instances_max);
 			m_batch.resize(instances_max, Mat4(1.0f));
 		}
-		if (drawable && m_buffer)
+		auto uniform = drawable && m_buffer ? pass.m_shader->constant_buffer("Instances") : nullptr;
+		if (uniform)
 		{
 			//the ones the pass sees (none said: all of them)
 			const std::vector<Mat4>& drawn = input.m_frustum ? visible_instances(*input.m_frustum, input.m_occlusion) : m_instances;
@@ -297,16 +317,12 @@ namespace Scene
 			{
 				const size_t count = std::min(instances_max, drawn.size() - first);
 				std::copy(drawn.begin() + first, drawn.begin() + first + count, m_batch.begin());
-				pass.bind(render, input, m_materials[material_id]->parameters(), draw_id);
-				if (auto uniform = pass.m_shader->constant_buffer("Instances"))
-				{
-					render.update_steam_CB(m_buffer.get(), (const unsigned char*)m_batch.data(), sizeof(Mat4) * instances_max);
-					uniform->bind(m_buffer.get());
-					m_mesh->draw(render, material_id, (unsigned int)count);
-				}
-				pass.unbind();
+				render.update_steam_CB(m_buffer.get(), (const unsigned char*)m_batch.data(), sizeof(Mat4) * instances_max);
+				uniform->bind(m_buffer.get());
+				m_mesh->draw(render, material_id, (unsigned int)count);
 			}
 		}
+		return true;
 	}
 
 	bool InstancedMesh::support_culling() const
