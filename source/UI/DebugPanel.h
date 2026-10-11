@@ -100,6 +100,8 @@ namespace UI
 		//the sections of the engine
 		void pipeline_sections(std::vector<DebugSection>& sections) const;
 		void draw_sections(std::vector<DebugSection>& sections) const;
+		//the loads of the resources (BaseContext::resource_load_stats): their time by kind
+		void loading_sections(std::vector<DebugSection>& sections) const;
 		void ui_sections(std::vector<DebugSection>& sections) const;
 		void textures_sections(std::vector<DebugSection>& sections);
 		//the tab Textures shown; its thumbnails as the filter and the page

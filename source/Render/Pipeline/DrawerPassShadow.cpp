@@ -257,10 +257,7 @@ namespace Render
 				//as its shadow map (the dynamic casters in every layer, other cascades): forgotten,
 				//made again if its cascades stay again
 				m_cascade_caches.erase(&light);
-				render().enable_render_target(light.shadow_buffer().target());
-				render().clear(Render::CLEAR_DEPTH);
-				draw_casters(queues, technique_name, inputs, &udirectionshadow, Casters::ALL);
-				render().disable_render_target(light.shadow_buffer().target());
+				draw_into(light.shadow_buffer(), true, queues, technique_name, inputs, &udirectionshadow, Casters::ALL);
 			}
 		}
 		break;
@@ -292,26 +289,18 @@ namespace Render
 			const bool changed = cache.m_casters != casters;
 			if (made || moved || changed)
 			{
-				render().enable_render_target(cache.m_buffer->target());
-				render().clear(Render::CLEAR_DEPTH);
-				draw_casters(queues, technique_name, inputs, nullptr, Casters::STATIC);
-				render().disable_render_target(cache.m_buffer->target());
+				draw_into(*cache.m_buffer, true, queues, technique_name, inputs, nullptr, Casters::STATIC);
 				cache.m_key = key;
 				cache.m_casters = casters;
 			}
 			//the static ones as they were, the dynamic ones over them
 			render().copy_texture(cache.m_buffer->texture(), shadow.texture());
-			render().enable_render_target(shadow.target());
-			draw_casters(queues, technique_name, inputs, nullptr, Casters::DYNAMIC);
-			render().disable_render_target(shadow.target());
+			draw_into(shadow, false, queues, technique_name, inputs, nullptr, Casters::DYNAMIC);
 		}
 		else
 		{
 			//no cache: all of them, every frame
-			render().enable_render_target(shadow.target());
-			render().clear(Render::CLEAR_DEPTH);
-			draw_casters(queues, technique_name, inputs, nullptr, Casters::ALL);
-			render().disable_render_target(shadow.target());
+			draw_into(shadow, true, queues, technique_name, inputs, nullptr, Casters::ALL);
 		}
     }
 
@@ -426,9 +415,7 @@ namespace Render
 					render().copy_texture_layer(cache.m_blank->texture(), 0, cache.m_buffer->texture(), (unsigned int)i);
 				}
 			}
-			render().enable_render_target(cache.m_buffer->target());
-			draw_casters(queues, technique_name, inputs, &cascades, Casters::STATIC, dirty, true);
-			render().disable_render_target(cache.m_buffer->target());
+			draw_into(*cache.m_buffer, false, queues, technique_name, inputs, &cascades, Casters::STATIC, dirty, true);
 		}
 		//into the shadow map: the nearer ones (the dynamic casters over them, every frame), the
 		//farther ones only when drawn again (nothing over them: as their caches)
@@ -448,9 +435,7 @@ namespace Render
 		}
 		if (dynamic != 0)
 		{
-			render().enable_render_target(shadow.target());
-			draw_casters(queues, technique_name, inputs, &cascades, Casters::DYNAMIC, dynamic, false);
-			render().disable_render_target(shadow.target());
+			draw_into(shadow, false, queues, technique_name, inputs, &cascades, Casters::DYNAMIC, dynamic, false);
 		}
     }
 
@@ -485,6 +470,50 @@ namespace Render
     {
 		AuxShadowCache::forget(m_caches, m_draws);
 		AuxShadowCache::forget(m_cascade_caches, m_draws);
+    }
+
+    void DrawerPassShadow::draw_into
+    (
+      const ShadowBuffer& buffer
+    , bool clear
+    , const PoolQueues& queues
+    , const std::string& technique_name
+    , EffectPassInputs& inputs
+    , const UniformDirectionShadowLight* cascades
+    , Casters casters
+    , uint32 layers
+    , bool settle
+    )
+    {
+		const bool by_layer = System::get<RenderSystem>(context())->layers_by_target() && buffer.target_layers() > 1;
+		if (by_layer)
+		{
+			//each layer asked bound as the target, its casters (the pass of the layer only)
+			for (unsigned int layer = 0; layer != buffer.target_layers(); ++layer)
+			{
+				if (MULTI_PASS_HAS_LAYER(layers, layer))
+				{
+					render().enable_render_target(buffer.target(layer));
+					if (clear)
+					{
+						render().clear(Render::CLEAR_DEPTH);
+					}
+					draw_casters(queues, technique_name, inputs, cascades, casters, layers & MULTI_PASS_LAYER_BIT(layer), settle);
+					render().disable_render_target(buffer.target(layer));
+				}
+			}
+		}
+		else
+		{
+			//all of it: the shaders route each draw to its layer
+			render().enable_render_target(buffer.target());
+			if (clear)
+			{
+				render().clear(Render::CLEAR_DEPTH);
+			}
+			draw_casters(queues, technique_name, inputs, cascades, casters, layers, settle);
+			render().disable_render_target(buffer.target());
+		}
     }
 
     void DrawerPassShadow::draw_casters

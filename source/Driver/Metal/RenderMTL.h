@@ -69,7 +69,8 @@ namespace Render
     class Target
     {
     public:
-        struct Attachment { Texture* texture; TargetType type; };
+        //its texture, its type, its layer (a face of a cube, a layer of an array; -1: all of them)
+        struct Attachment { Texture* texture; TargetType type; int layer{ -1 }; };
         std::vector<Attachment> m_attachments;
         // Invalid until a RT_COLOR attachment sets it: a depth-only target (e.g. CSM
         // shadow pass) must leave every entry Invalid so the PSO declares no color

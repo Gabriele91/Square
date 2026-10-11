@@ -4,7 +4,5 @@ cmake_minimum_required(VERSION 3.14...3.31)
 add_subdirectory(HelloWorld)
 # Add examples HelloWorldCsm
 add_subdirectory(HelloWorldCsm)
-# Add examples Model
-add_subdirectory(Model)
 # Add examples Rush
 add_subdirectory(Rush)

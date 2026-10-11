@@ -108,4 +108,7 @@ endif()
 # Add square
 add_subdirectory(source)
 # Add examples
+# Add the tools of the engine (Model: the importer of the models)
+add_subdirectory(tools)
+# Add examples
 add_subdirectory(example)

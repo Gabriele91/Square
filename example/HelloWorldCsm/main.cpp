@@ -158,7 +158,7 @@ public:
 		using namespace Square::Resource;
 		//rs file
 		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "/resources.rs"));
-		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "../Model/resources.rs"));
+		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "tools/Model/resources.rs"));
 		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "common/resources.rs"));
 		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "example/HelloWorldCsm/resources.rs"));
 		// window size

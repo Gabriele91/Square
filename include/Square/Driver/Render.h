@@ -448,6 +448,10 @@ namespace Render
 	{
 		Texture*   m_texture;
 		TargetType m_type;
+		//a layer of the texture (a face of a cube, a layer of an array) as the target, the draws
+		//into it (no layer routed by the shaders); -1: all of them (layered: a geometry shader or
+		//the vertex shader routes each draw)
+		int        m_layer{ -1 };
 	};
 	////////////////////////////////////////////////
 	// ATTRIBUTES
@@ -1226,9 +1230,16 @@ namespace Render
 		Allocator* allocator() const { return m_allocator; }
 		Logger* logger() const { return m_logger; }
 
+		//the folder of the cache of the shaders compiled by the driver (the final cache: their
+		//binaries by the hash of their source, compiled once, read after; a source changed: a new
+		//hash, compiled again). Empty: no cache. A driver without a binary of its own ignores it
+		void shader_cache(const std::string& directory) { m_shader_cache = directory; }
+		const std::string& shader_cache() const { return m_shader_cache; }
+
 	private:
 		Allocator* m_allocator;
 		Logger* m_logger;
+		std::string      m_shader_cache;
 		RenderInspector* m_inspector{ nullptr };
 		Profiler*        m_profiler{ nullptr };
 	};

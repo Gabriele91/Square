@@ -10,6 +10,8 @@
 //    with the passes of its pipeline, the renderables of its levels.
 //
 #pragma once
+#include "Square/Resource/ShaderCache.h"
+#include "Square/Resource/ShaderTarget.h"
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
 #include "Square/System/System.h"
@@ -74,6 +76,22 @@ namespace Square
 		//the render profiler (see Render/Profiler.h): nullptr without RENDER_PROFILER
 		Render::Profiler* profiler() const;
 
+		//the intermediate cache of the shaders (their translations: Resource/ShaderCache.h); the
+		//final one is of the driver (Render::Context::shader_cache)
+		const Resource::ShaderCache& shader_cache() const { return m_shader_cache; }
+		//(its folder, its pack set by a tool: tools/ShaderPack)
+		Resource::ShaderCache& shader_cache() { return m_shader_cache; }
+
+		//what the shaders are translated for: the driver (its language, its capabilities, the gamma
+		//correction of the window); set by a tool (tools/ShaderPack: each target of a platform,
+		//translated only)
+		const Resource::ShaderTarget& shader_target() const { return m_shader_target; }
+		void shader_target(const Resource::ShaderTarget& target) { m_shader_target = target; }
+		//the layers of a target (the faces of a cube, the cascades) drawn one by one, each bound as
+		//the target: the driver can not route a draw to a layer (no geometry shaders, no layer by
+		//the vertex shader; the last sub effect of CastShadow)
+		bool layers_by_target() const;
+
 		//the drawers of the worlds can be built: from post_initialize (their passes load the
 		//effects added by AppInterface::start) to pre_shutdown
 		bool ready() const;
@@ -95,6 +113,11 @@ namespace Square
 		Render::Context*         m_render{ nullptr };
 		Render::RenderInspector* m_inspector{ nullptr };
 		Render::Profiler*        m_profiler{ nullptr };
+		Resource::ShaderCache    m_shader_cache;
+		Resource::ShaderTarget   m_shader_target;
+		//the caches of the shaders: <app data>/square/shader_cache (pruned), the translations
+		//(translated/), the binaries of the driver (<its language>/), the pack (shaders.sqz)
+		void setup_shader_caches();
 		//between post_initialize and pre_shutdown
 		bool m_ready{ false };
 		//the seconds of the last frame (the time of the worlds)

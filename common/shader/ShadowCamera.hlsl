@@ -86,3 +86,15 @@ Vec4 mul_direction_light_view_projection(in Vec4 position, uint id)
 	position = mul(position, direction_shadow_camera.m_projection[id]);
 	return position;
 }
+
+//the clip position of a cascade written by a vertex shader (multi-pass, instanced) as the geometry
+//shader writes it: on GLSL the clip space of a vertex shader is fixed up (z from [0,1] to [-1,1]:
+//SPIRV-Cross, at its return), the one of a geometry shader not (EmitVertex), and the samples of
+//the cascades (DirectionShadowLight) read the depth of the geometry shader
+Vec4 direction_light_clip_as_layered(in Vec4 position)
+{
+#ifdef SQ_BACKEND_GLSL
+	position.z = (position.z + position.w) * 0.5;
+#endif
+	return position;
+}

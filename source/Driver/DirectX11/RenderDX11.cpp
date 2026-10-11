@@ -8,6 +8,10 @@
 #include "Square/Driver/Window.h"
 //--------------------------------------------------
 #include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <unordered_map>
 //RIGHT HEAND
 #define DIRECTX_MODE
@@ -3117,6 +3121,71 @@ namespace Render
 		}
 		reflector->Release();
 	}
+	namespace AuxShaderCache
+	{
+		//the version of the files of the cache (a new one: the old files never read)
+		static const char* s_version = "dxbc1";
+
+		//FNV-1a: the same on every run, every compiler
+		static uint64_t hash(const void* data, size_t size, uint64_t value = 14695981039346656037ull)
+		{
+			const unsigned char* bytes = static_cast<const unsigned char*>(data);
+			for (size_t i = 0; i != size; ++i)
+			{
+				value ^= uint64_t(bytes[i]);
+				value *= 1099511628211ull;
+			}
+			return value;
+		}
+
+		//the file of a compiled stage: by its source, its entry, its profile, its flags
+		static std::string file_of(const std::string& folder, const std::string& source, const std::string& entry, const char* profile, UINT flags)
+		{
+			uint64_t value = hash(source.data(), source.size());
+			value = hash(entry.data(), entry.size(), value);
+			value = hash(profile, std::strlen(profile), value);
+			value = hash(&flags, sizeof(flags), value);
+			value = hash(s_version, std::strlen(s_version), value);
+			char name[32];
+			std::snprintf(name, sizeof(name), "%016llx.dxbc", (unsigned long long)value);
+			return (std::filesystem::path(folder) / name).string();
+		}
+
+		//its bytecode from the cache (nullptr: not there)
+		static ID3DBlob* read(const std::string& file)
+		{
+			ID3DBlob* blob = nullptr;
+			std::ifstream in(file, std::ios::binary | std::ios::ate);
+			const std::streamsize size = in ? std::streamsize(in.tellg()) : 0;
+			if (size > 0 && D3DCreateBlob(SIZE_T(size), &blob) == S_OK)
+			{
+				in.seekg(0);
+				if (!in.read(static_cast<char*>(blob->GetBufferPointer()), size))
+				{
+					blob->Release();
+					blob = nullptr;
+				}
+			}
+			return blob;
+		}
+
+		//its bytecode into the cache (a file aside, then renamed: never read half written)
+		static void write(const std::string& file, ID3DBlob* blob)
+		{
+			const std::string temporary = file + ".tmp";
+			{
+				std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+				out.write(static_cast<const char*>(blob->GetBufferPointer()), std::streamsize(blob->GetBufferSize()));
+			}
+			std::error_code error;
+			std::filesystem::rename(temporary, file, error);
+			if (error)
+			{
+				std::filesystem::remove(temporary, error);
+			}
+		}
+	}
+
 	Shader* ContextDX11::create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
@@ -3147,10 +3216,22 @@ namespace Render
 					start_line +
 					info.m_shader_source
 				};
-				//compile
-				ID3DBlob* shader_blob = nullptr;
+				//compile: its bytecode from the cache (the same source, entry, profile, flags), else
+				//compiled and kept there
+				const UINT flags = D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
+				                 | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR
+#ifdef _DEBUG
+				                 | D3DCOMPILE_OPTIMIZATION_LEVEL0
+				                 | D3DCOMPILE_DEBUG
+#else // Release
+				                 | D3DCOMPILE_OPTIMIZATION_LEVEL3
+#endif
+				                 ;
+				const bool cached = !shader_cache().empty();
+				const std::string cache_file = cached ? AuxShaderCache::file_of(shader_cache(), source, info.m_entry_point, shader_version[info.m_type], flags) : std::string();
+				ID3DBlob* shader_blob = cached ? AuxShaderCache::read(cache_file) : nullptr;
 				ID3DBlob* error_blob = nullptr;
-				if (D3DCompile2(
+				const bool compiled = shader_blob || D3DCompile2(
 					  source.data()
 					, source.size()
 					, NULL
@@ -3158,27 +3239,25 @@ namespace Render
 					, nullptr
 					, info.m_entry_point.c_str()
 					, shader_version[info.m_type]
-					, D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
-				     | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR
-#ifdef _DEBUG
-					 | D3DCOMPILE_OPTIMIZATION_LEVEL0
-					 | D3DCOMPILE_DEBUG
-#else // Release
-					| D3DCOMPILE_OPTIMIZATION_LEVEL3
-#endif 
+					, flags
 					, 0
 					, 0
 					, NULL
 					, 0
 					, &shader_blob
 					, &error_blob
-				) != S_OK)
+				) == S_OK;
+				if (compiled && cached && !std::filesystem::exists(cache_file))
+				{
+					AuxShaderCache::write(cache_file, shader_blob);
+				}
+				if (!compiled)
 				{
 					//save error
-					std::string err(static_cast<char*>(error_blob->GetBufferPointer()), error_blob->GetBufferSize());
+					std::string err = error_blob ? std::string(static_cast<char*>(error_blob->GetBufferPointer()), error_blob->GetBufferSize()) : std::string("unknown error");
 					oshader->push_compiler_error({ info.m_type,  err.c_str() });
 					//release
-					error_blob->Release();
+					if (error_blob) error_blob->Release();
 					if (shader_blob) shader_blob->Release();
 					//to next shader
 					continue;
@@ -3399,8 +3478,16 @@ namespace Render
 			{
 				if (t_field.m_type == RT_COLOR)
 				{
+					//all of it, or one of its layers (a face of a cube, a layer of an array)
+					D3D11_RENDER_TARGET_VIEW_DESC desc_rtv;
+					ZeroMemory(&desc_rtv, sizeof(D3D11_RENDER_TARGET_VIEW_DESC));
+					desc_rtv.Format = DXGI_FORMAT_UNKNOWN;
+					desc_rtv.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+					desc_rtv.Texture2DArray.FirstArraySlice = t_field.m_layer < 0 ? 0u : UINT(t_field.m_layer);
+					desc_rtv.Texture2DArray.ArraySize = 1;
+					const D3D11_RENDER_TARGET_VIEW_DESC* layer_rtv = t_field.m_layer < 0 ? NULL : &desc_rtv;
 					ID3D11RenderTargetView* rtarget_view;
-					if (!dx_op_success(device()->CreateRenderTargetView(t_field.m_texture->id3d11_texture2D(), NULL, &rtarget_view)))
+					if (!dx_op_success(device()->CreateRenderTargetView(t_field.m_texture->id3d11_texture2D(), layer_rtv, &rtarget_view)))
 					{
 						delete_render_target(target);
 						return nullptr;
@@ -3414,7 +3501,15 @@ namespace Render
 					D3D11_DEPTH_STENCIL_VIEW_DESC desc_dsv;
 					ZeroMemory(&desc_dsv, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
 					///////////////////////////////////////////////////////////////
-					if(t_field.m_texture->m_is_cube)
+					if (t_field.m_layer >= 0)
+					{
+						//one of its layers (a face of a cube, a layer of an array)
+						desc_dsv.Format = t_field.m_texture->m_format_raw;
+						desc_dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+						desc_dsv.Texture2DArray.FirstArraySlice = UINT(t_field.m_layer);
+						desc_dsv.Texture2DArray.ArraySize = 1;
+					}
+					else if(t_field.m_texture->m_is_cube)
 					{
 						desc_dsv.Format = t_field.m_texture->m_format_raw;
 						desc_dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;

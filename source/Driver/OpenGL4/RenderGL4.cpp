@@ -8,6 +8,10 @@
 #include "Square/Driver/Window.h"
 //--------------------------------------------------
 #include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -3098,12 +3102,147 @@ namespace Render
 		return info_log;
 	}
 	
+	namespace AuxProgramCache
+	{
+		//the version of the files of the cache (a new one: the old files never read)
+		static const char* s_version = "glbin1";
+
+		//FNV-1a: the same on every run, every compiler
+		static uint64_t hash(const void* data, size_t size, uint64_t value)
+		{
+			const unsigned char* bytes = static_cast<const unsigned char*>(data);
+			for (size_t i = 0; i != size; ++i)
+			{
+				value ^= uint64_t(bytes[i]);
+				value *= 1099511628211ull;
+			}
+			return value;
+		}
+
+		static uint64_t hash(const char* text, uint64_t value)
+		{
+			return hash(text, text ? std::strlen(text) : 0, value);
+		}
+
+		//the file of a program: by the sources of its stages (as the driver gets them), the driver
+		//(its vendor, its renderer, its version: another one, another binary)
+		static std::string file_of(const std::string& folder, const std::vector< ShaderSourceInformation >& infos)
+		{
+			uint64_t value = 14695981039346656037ull;
+			for (const ShaderSourceInformation& info : infos)
+			{
+				const uint32_t type = uint32_t(info.m_type);
+				value = hash(&type, sizeof(type), value);
+				value = hash(info.m_shader_header.data(), info.m_shader_header.size(), value);
+				value = hash(Shader::glsl_header_by_type[info.m_type], value);
+				value = hash(Shader::glsl_default_header, value);
+				value = hash(&info.m_line, sizeof(info.m_line), value);
+				value = hash(info.m_shader_source.data(), info.m_shader_source.size(), value);
+			}
+			value = hash((const char*)glGetString(GL_VENDOR), value);
+			value = hash((const char*)glGetString(GL_RENDERER), value);
+			value = hash((const char*)glGetString(GL_VERSION), value);
+			value = hash(s_version, value);
+			char name[32];
+			std::snprintf(name, sizeof(name), "%016llx.glbin", (unsigned long long)value);
+			return (std::filesystem::u8path(folder) / name).string();
+		}
+
+		//the driver can save its programs (some formats of binaries)
+		static bool supported()
+		{
+			GLint formats = 0;
+			glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &formats);
+			return formats > 0;
+		}
+
+		//a program from its binary in the cache (false: not there, or the driver does not take it)
+		static bool read(const std::string& file, GLuint program)
+		{
+			bool linked = false;
+			std::ifstream in(file, std::ios::binary | std::ios::ate);
+			const std::streamsize size = in ? std::streamsize(in.tellg()) : 0;
+			if (size > std::streamsize(sizeof(GLenum)))
+			{
+				std::vector<char> bytes(size_t(size), 0);
+				in.seekg(0);
+				if (in.read(bytes.data(), size))
+				{
+					GLenum format = 0;
+					std::memcpy(&format, bytes.data(), sizeof(format));
+					glProgramBinary(program, format, bytes.data() + sizeof(format), GLsizei(size - std::streamsize(sizeof(format))));
+					GLint status = GL_FALSE;
+					glGetProgramiv(program, GL_LINK_STATUS, &status);
+					linked = status == GL_TRUE;
+				}
+			}
+			return linked;
+		}
+
+		//the binary of a program linked into the cache (its format first; a file aside, then
+		//renamed: never read half written)
+		static void write(const std::string& file, GLuint program)
+		{
+			GLint length = 0;
+			glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &length);
+			if (length > 0)
+			{
+				std::vector<char> bytes(sizeof(GLenum) + size_t(length), 0);
+				GLenum format = 0;
+				GLsizei written = 0;
+				glGetProgramBinary(program, length, &written, &format, bytes.data() + sizeof(format));
+				std::memcpy(bytes.data(), &format, sizeof(format));
+				if (written > 0)
+				{
+					const std::string temporary = file + ".tmp";
+					{
+						std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+						out.write(bytes.data(), std::streamsize(sizeof(format) + size_t(written)));
+					}
+					std::error_code error;
+					std::filesystem::rename(temporary, file, error);
+					if (error)
+					{
+						std::filesystem::remove(temporary, error);
+					}
+				}
+			}
+		}
+
+		//a file used: touched (kept by the pruning of the cache)
+		static void touch(const std::string& file)
+		{
+			std::error_code error;
+			std::filesystem::last_write_time(std::filesystem::u8path(file), std::filesystem::file_time_type::clock::now(), error);
+		}
+	}
+
 	Shader* ContextGL4::create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
 		Shader* out_shader = SQ_NEW(allocator(), Shader, AllocType::ALCT_DEFAULT) Shader(*this);
 		//shader program
 		out_shader->m_shader_id = glCreateProgram();
+		//the final cache: its binary (the same stages, the same driver), else compiled and kept
+		const bool cached = !shader_cache().empty() && AuxProgramCache::supported();
+		const std::string cache_file = cached ? AuxProgramCache::file_of(shader_cache(), infos) : std::string();
+		if (cached && std::filesystem::exists(std::filesystem::u8path(cache_file)))
+		{
+			if (AuxProgramCache::read(cache_file, out_shader->m_shader_id))
+			{
+				AuxProgramCache::touch(cache_file);
+				out_shader->build_global_UBO();
+				print_errors();
+				return out_shader;
+			}
+			//(not taken: another driver, compiled again)
+			glDeleteProgram(out_shader->m_shader_id);
+			out_shader->m_shader_id = glCreateProgram();
+		}
+		if (cached)
+		{
+			glProgramParameteri(out_shader->m_shader_id, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE);
+		}
 		//compile
 		for (const ShaderSourceInformation& info : infos)
 		{
@@ -3184,6 +3323,11 @@ namespace Render
 			{
 				//get error
 				out_shader->push_linker_error(linker_shader_error_log(out_shader->m_shader_id));
+			}
+			//its binary kept (linked: its warnings do not matter)
+			else if (cached)
+			{
+				AuxProgramCache::write(cache_file, out_shader->m_shader_id);
 			}
 		}
 		//try to find _Global;
@@ -3315,6 +3459,28 @@ namespace Render
 		}
 	}
 
+	namespace AuxTargetGL4
+	{
+		//a texture to an attachment of the framebuffer bound: all of it (layered), or one of its
+		//layers (a face of a cube, a layer of an array)
+		static void attach(GLenum attachment, const TargetField& field)
+		{
+			const Texture* texture = field.m_texture;
+			if (field.m_layer < 0)
+			{
+				glFramebufferTexture(GL_FRAMEBUFFER, attachment, texture->m_tbo, 0);
+			}
+			else if (texture->m_type_texture == GL_TEXTURE_CUBE_MAP)
+			{
+				glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, (GLenum)(GL_TEXTURE_CUBE_MAP_POSITIVE_X + field.m_layer), texture->m_tbo, 0);
+			}
+			else
+			{
+				glFramebufferTextureLayer(GL_FRAMEBUFFER, attachment, texture->m_tbo, 0, field.m_layer);
+			}
+		}
+	}
+
 	Target* ContextGL4::create_render_target(const std::vector< TargetField >& textures)
 	{
 		bool   depth_attach = false;
@@ -3329,31 +3495,16 @@ namespace Render
 		{
 			if (t_field.m_type == RT_COLOR)
 			{
-				glFramebufferTexture(
-					GL_FRAMEBUFFER,
-					(GLenum)(GL_COLOR_ATTACHMENT0 + (color_count++)),
-					t_field.m_texture->m_tbo,
-					0
-				);
+				AuxTargetGL4::attach((GLenum)(GL_COLOR_ATTACHMENT0 + (color_count++)), t_field);
 			}
 			else if ((!depth_attach) && t_field.m_type == RT_DEPTH)
 			{
-				glFramebufferTexture(
-					GL_FRAMEBUFFER,
-					GL_DEPTH_ATTACHMENT,
-					t_field.m_texture->m_tbo,
-					0
-				);
+				AuxTargetGL4::attach(GL_DEPTH_ATTACHMENT, t_field);
 				depth_attach = true;
 			}
 			else if ((!depth_attach) && t_field.m_type == RT_DEPTH_STENCIL)
 			{
-				glFramebufferTexture(
-					GL_FRAMEBUFFER,
-					GL_DEPTH_STENCIL_ATTACHMENT,
-					t_field.m_texture->m_tbo,
-					0
-				);
+				AuxTargetGL4::attach(GL_DEPTH_STENCIL_ATTACHMENT, t_field);
 				depth_attach = true;
 			}
 		}

@@ -54,4 +54,4 @@ On Windows `cmake ..` generates a Visual Studio solution; `cmake -G Ninja ..` fr
 ```bat
 build\bin\Model.exe -i model.glb -o assets\model -n model -f bgz -r 1024
 ```
-Textures are compressed to BC by default; `-m astc` targets Apple GPUs and mobiles, `-m png` keeps them uncompressed. See [example/Model/README.md](example/Model/README.md).
+Textures are compressed to BC by default; `-m astc` targets Apple GPUs and mobiles, `-m png` keeps them uncompressed. See [tools/Model/README.md](tools/Model/README.md).

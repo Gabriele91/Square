@@ -109,6 +109,21 @@ namespace Render
 		//settled)
 		void cascades_casters(const PoolQueues& queues, const UniformDirectionShadowLight& cascades, std::array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>& hashes) const;
 
+		//the casters of the queues into a buffer (clear: its depth first, the layers drawn): all of
+		//it (the shaders route each draw to its layer), or each layer asked bound as the target (a
+		//driver that can not route them: RenderSystem::layers_by_target)
+		void draw_into
+		(
+		  const ShadowBuffer& buffer
+		, bool clear
+		, const PoolQueues& queues
+		, const std::string& technique_name
+		, EffectPassInputs& inputs
+		, const UniformDirectionShadowLight* cascades
+		, Casters casters
+		, uint32 layers = MULTI_PASS_ALL_LAYERS
+		, bool settle = false
+		);
 		//the casters of the queues into the target enabled (its uniforms set); layers: the
 		//cascades they are drawn in at most; settle: their levels of detail settled (a cache)
 		void draw_casters

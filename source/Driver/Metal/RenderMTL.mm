@@ -468,11 +468,20 @@ MTLRenderPassDescriptor* ContextMTL::make_target_rp(Target* t)
     for (auto& att : t->m_attachments)
     {
         if (!att.texture) continue;
-        layers = std::max(layers, layer_count(att.texture->m_texture));
+        //one of its layers (its slice: the draws into it), or all of them (layered)
+        const bool one_layer = att.layer >= 0;
+        if (!one_layer)
+        {
+            layers = std::max(layers, layer_count(att.texture->m_texture));
+        }
         if (att.type == RT_COLOR)
         {
             MTLRenderPassColorAttachmentDescriptor* ca = rpd.colorAttachments[color_idx++];
             ca.texture     = att.texture->m_texture;
+            if (one_layer)
+            {
+                ca.slice = NSUInteger(att.layer);
+            }
             ca.loadAction  = color_load;
             ca.storeAction = MTLStoreActionStore;
             ca.clearColor  = MTLClearColorMake(cc.x, cc.y, cc.z, cc.w);
@@ -480,12 +489,20 @@ MTLRenderPassDescriptor* ContextMTL::make_target_rp(Target* t)
         else if (att.type == RT_DEPTH || att.type == RT_DEPTH_STENCIL)
         {
             rpd.depthAttachment.texture     = att.texture->m_texture;
+            if (one_layer)
+            {
+                rpd.depthAttachment.slice = NSUInteger(att.layer);
+            }
             rpd.depthAttachment.loadAction  = depth_load;
             rpd.depthAttachment.storeAction = MTLStoreActionStore;
             rpd.depthAttachment.clearDepth  = 1.0;
             if (att.type == RT_DEPTH_STENCIL)
             {
                 rpd.stencilAttachment.texture     = att.texture->m_texture;
+                if (one_layer)
+                {
+                    rpd.stencilAttachment.slice = NSUInteger(att.layer);
+                }
                 rpd.stencilAttachment.loadAction  = depth_load;
                 rpd.stencilAttachment.storeAction = MTLStoreActionStore;
             }
@@ -1887,6 +1904,7 @@ Target* ContextMTL::create_render_target(const std::vector<TargetField>& fields)
         Target::Attachment att;
         att.texture = static_cast<Texture*>(f.m_texture);
         att.type    = f.m_type;
+        att.layer   = f.m_layer;
         t->m_attachments.push_back(att);
 
         if (f.m_type == RT_COLOR && att.texture && color_idx < MTL_MAX_COLOR_ATTACHMENTS)

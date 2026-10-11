@@ -48,15 +48,16 @@ namespace Parser
 		struct RequirementField
 		{
 			std::string    m_driver_name{ "ALL" };
-			int            m_driver_major_version;
-			int            m_driver_minor_version;
+			int            m_driver_major_version{ 0 };
+			int            m_driver_minor_version{ 0 };
 			std::string    m_shader_name{ "ALL" };
-			int            m_shader_version;
+			int            m_shader_version{ 0 };
 			CapabilityTest m_geometry_shader{ CAP_ANY };
 			CapabilityTest m_vertex_viewport_index{ CAP_ANY };
 			CapabilityTest m_draw_instanced{ CAP_ANY };
 
-            bool test(Render::Context* render) const;
+            //the driver (the one of the target of the shaders: Resource::ShaderTarget) meets it
+            bool test(const Render::RenderDriverInfo& info) const;
 		};
 
 		struct ShaderField

@@ -158,3 +158,54 @@ sub_effect
         }
     }
 }
+
+// ── Backends that can NOT route a draw to a layer (GLES 3.1, Vulkan without both) ──
+// No geometry shaders, no layer written by the vertex shader: the host binds each cube face /
+// cascade as the target (RenderSystem::layers_by_target) and draws its casters there;
+// multi_pass.m_id selects the view-projection only. SpotShadow is single-pass either way.
+sub_effect
+{
+    requirement
+    {
+        geometry off
+        vertex_viewport_index off
+    }
+    technique "SpotShadow"
+    {
+        variants skinned clip(mask_shadow)
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface front
+            lights off
+            shader "CastSpotShadow.hlsl"
+        }
+    }
+    technique "PointShadow"
+    {
+        variants skinned clip(mask_shadow)
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface front
+            lights off
+            draw_count 6
+            shader "CastPointShadowLayerTarget.hlsl"
+        }
+    }
+    technique "DirectionShadow"
+    {
+        variants skinned clip(mask_shadow)
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface param(shadow_cull)
+            lights off
+            draw_count 8
+            shader "CastDirectionShadowLayerTarget.hlsl"
+        }
+    }
+}

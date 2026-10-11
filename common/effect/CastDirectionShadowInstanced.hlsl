@@ -31,7 +31,7 @@ VertexShaderOutput vertex(in MeshVertex input, uint instance_id : SV_InstanceID)
 {
 	VertexShaderOutput output;
 	Vec4 world_position = mesh_world_position(input);
-	output.m_position = mul_direction_light_view_projection(world_position, instance_id);
+	output.m_position = direction_light_clip_as_layered(mul_direction_light_view_projection(world_position, instance_id));
 	output.m_uv       = input.m_uv;
 	output.m_layer    = instance_id;
 	// a cascade not of the light or of the caster: a point (the triangle has no area)

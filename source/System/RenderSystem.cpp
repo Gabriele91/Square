@@ -10,6 +10,7 @@
 #include "Square/Core/StringUtilities.h"
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/System/RenderSystem.h"
+#include "Square/Core/Filesystem.h"
 #include "Square/Render/Pipeline/Drawer.h"
 #include "Square/Render/Pipeline/DrawerPassDebug.h"
 #include "Square/Render/Pipeline/DrawerPassForward.h"
@@ -27,6 +28,8 @@
 #include "HLSL2ALL/SourceToSpirv.h"
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
+#include <sstream>
 
 namespace Square
 {
@@ -110,12 +113,84 @@ namespace Square
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	//RenderSystem
+#if defined(SQUARE_DEBUG_TOOLS)
+	namespace AuxRenderSystem
+	{
+		//a test: some capabilities of the driver off (SQUARE_DRIVER_CAPS_OFF, by ',': geometry,
+		//vertex_layer, instanced), the paths of the drivers without them (their sub effects, the
+		//layers by target)
+		static void capabilities_off(Render::RenderDriverInfo& info, Context& context)
+		{
+			if (const char* off = std::getenv("SQUARE_DRIVER_CAPS_OFF"))
+			{
+				std::stringstream list(off);
+				for (std::string capability; std::getline(list, capability, ',');)
+				{
+					if (capability == "geometry")
+					{
+						info.m_geometry_shader = false;
+					}
+					else if (capability == "vertex_layer")
+					{
+						info.m_vertex_viewport_index = false;
+					}
+					else if (capability == "instanced")
+					{
+						info.m_draw_instanced = false;
+					}
+				}
+				context.logger()->warning(std::string("RenderSystem: capabilities of the driver off: ") + off);
+			}
+		}
+	}
+#endif
+
 	RenderSystem::RenderSystem(Context& context) : System(context)
 	{
 	}
 
+	bool RenderSystem::layers_by_target() const
+	{
+		const Render::RenderDriverInfo& info = m_shader_target.m_info;
+		return !info.m_geometry_shader && !info.m_vertex_viewport_index;
+	}
+
 	RenderSystem::~RenderSystem()
 	{
+	}
+
+	void RenderSystem::setup_shader_caches()
+	{
+		//<app data>/square/shader_cache: the files not used for a month gone
+		static constexpr int s_unused_days = 30;
+		const std::string square = Filesystem::join(Filesystem::app_data_dir(), "square");
+		const std::string root = Filesystem::join(square, "shader_cache");
+		const bool made = (Filesystem::exists(square) || Filesystem::makedir(square))
+		               && (Filesystem::exists(root) || Filesystem::makedir(root));
+		if (made)
+		{
+			if (const size_t removed = Resource::ShaderCache::prune(root, s_unused_days))
+			{
+				context().logger()->info("RenderSystem: " + std::to_string(removed) + " files of the shader cache not used for " + std::to_string(s_unused_days) + " days removed");
+			}
+			//the translations (by language), the binaries of the driver (its language)
+			m_shader_cache.folder(Filesystem::join(root, "translated"));
+			const std::string driver = Filesystem::join(root, m_render->get_render_driver_info().m_shader_language);
+			if (Filesystem::exists(driver) || Filesystem::makedir(driver))
+			{
+				m_render->shader_cache(driver);
+			}
+		}
+		else
+		{
+			context().logger()->warning("RenderSystem: no shader cache (unable to make " + root + ")");
+		}
+		//the pack (tools/ShaderPack: the shaders of a Retail build), if there is
+		const std::string pack = Filesystem::join(Filesystem::resource_dir(), "shaders.sqz");
+		if (Filesystem::exists(pack))
+		{
+			m_shader_cache.pack(pack);
+		}
 	}
 
 	bool RenderSystem::initialize()
@@ -149,6 +224,12 @@ namespace Square
 		m_profiler = SQ_NEW(context().allocator(), Render::Profiler, AllocType::ALCT_DEFAULT) Render::Profiler(*m_render);
 		m_render->set_profiler(m_profiler);
 		#endif
+		//the target of the shaders (the driver, the gamma correction of the window), their caches
+		m_shader_target = Resource::ShaderTarget::of(*m_render, window->device() && window->device()->get_context_info().m_srgb);
+		#if defined(SQUARE_DEBUG_TOOLS)
+		AuxRenderSystem::capabilities_off(m_shader_target.m_info, context());
+		#endif
+		setup_shader_caches();
 		//the shader converter, for all the shaders (its tables made once)
 		HLSL2ALL::initialize();
 		//flush errors, show info

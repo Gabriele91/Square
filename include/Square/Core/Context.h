@@ -74,6 +74,9 @@ namespace Square
 		Shared<ResourceObject> resource_instance(const std::string& name);
 		// Get resource path 
         const std::string& resource_path(const std::string& name);
+		//the names of the resources of a type registered ("Effect": "PBR", "sanctuary/fx_glow"...;
+		//loaded or not), sorted
+		std::vector<std::string> resource_names(const std::string& type) const;
 
 		//Get variable
         std::optional<const VariantRef> variable(const std::string& name) const;
@@ -161,6 +164,27 @@ namespace Square
         //get window
         const Video::Window* window() const;
 
+#if defined(SQUARE_DEBUG_TOOLS)
+		//the time of the loads of the resources (only with the debug tools), by the extension of
+		//their files (".mat", ".sqfx", ".dds"...): how many, their own time (milliseconds, the
+		//resources they load inside out), the slowest one; cleared when asked (e.g. before a
+		//level is loaded)
+		struct ResourceLoadStat
+		{
+			size_t      m_count{ 0 };
+			double      m_ms{ 0.0 };
+			std::string m_slowest;
+			double      m_slowest_ms{ 0.0 };
+		};
+		using ResourceLoadStats = std::unordered_map<std::string, ResourceLoadStat>;
+		const ResourceLoadStats& resource_load_stats() const { return m_load_stats; }
+		//details inside the loads (e.g. "shader: translate", "shader: driver"): their time, apart
+		//(already in the own time of the resource that has them)
+		void add_load_detail(const std::string& kind, const std::string& name, double ms);
+		const ResourceLoadStats& resource_load_details() const { return m_load_details; }
+		void clear_resource_load_stats() { m_load_stats.clear(); m_load_details.clear(); }
+#endif
+
 	protected:
 		//Can't alloc a BaseContext
 		BaseContext();
@@ -194,6 +218,14 @@ namespace Square
 		ResourceObjectMap m_resources;
 		//folders ("arena", "a/b") of the resources being loaded, innermost last
 		std::vector<std::string> m_resource_scopes;
+#if defined(SQUARE_DEBUG_TOOLS)
+		//the times of the loads; the time of the loads inside each one open (out of its own)
+		ResourceLoadStats   m_load_stats;
+		ResourceLoadStats   m_load_details;
+		std::vector<double> m_load_inner_ms;
+#endif
+		//a resource loaded from its file, in the scope of its folder (with the debug tools: timed)
+		bool load_in_scope(ResourceObject& resource, const std::string& name, const std::string& path);
 		//worlds alive
 		std::vector<Scene::World*> m_worlds;
 		void add_world(Scene::World* world);
@@ -401,6 +433,11 @@ namespace Square
 		template< class T >  inline const std::string& resource_path(const std::string& name)
 		{
 			return BaseContext::resource_path(T::static_object_name() + ":" + name);
+		}
+
+		template< class T >  inline std::vector<std::string> resource_names() const
+		{
+			return BaseContext::resource_names(T::static_object_name());
 		}
 	};
 	// Specialization

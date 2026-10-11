@@ -6,6 +6,7 @@
 //
 #include <algorithm>
 #include <cstdlib>
+#include <iomanip>
 #include <sstream>
 #include <RmlUi/Core/Element.h>
 #include <RmlUi/Core/Elements/ElementTabSet.h>
@@ -299,6 +300,7 @@ namespace UI
 		list.push_back({ s_draw, {} });
 		list.push_back({ s_textures, {} });
 		list.push_back({ s_ui, {} });
+		loading_sections(list[0].m_sections);
 		pipeline_sections(list[1].m_sections);
 		draw_sections(list[2].m_sections);
 		textures_sections(list[3].m_sections);
@@ -597,6 +599,67 @@ namespace UI
 				sections.push_back(section);
 			}
 		}
+	}
+
+#if defined(SQUARE_DEBUG_TOOLS)
+	namespace AuxDebugPanel
+	{
+		//the kinds of the loads, the slowest first
+		static std::vector< std::pair<std::string, Square::BaseContext::ResourceLoadStat> > load_kinds(const Square::Context& context)
+		{
+			const auto& stats = context.resource_load_stats();
+			std::vector< std::pair<std::string, Square::BaseContext::ResourceLoadStat> > kinds(stats.begin(), stats.end());
+			std::sort(kinds.begin(), kinds.end(), [](const auto& a, const auto& b) { return a.second.m_ms > b.second.m_ms; });
+			return kinds;
+		}
+
+		static std::string milliseconds(double ms)
+		{
+			std::ostringstream text;
+			text << std::fixed << std::setprecision(1) << ms << " ms";
+			return text.str();
+		}
+	}
+
+#endif
+
+	void DebugPanel::loading_sections(std::vector<DebugSection>& sections) const
+	{
+#if defined(SQUARE_DEBUG_TOOLS)
+		using namespace AuxDebugPanel;
+		Square::Context* context = &m_context;
+		DebugSection loading{ "Loading (resources, their own time)", {} };
+		loading.m_options.push_back(DebugOption::text("Total", [context]()
+		{
+			double ms = 0.0;
+			size_t count = 0;
+			for (const auto& kind : load_kinds(*context))
+			{
+				ms += kind.second.m_ms;
+				count += kind.second.m_count;
+			}
+			return milliseconds(ms) + ", " + std::to_string(count) + " resources";
+		}));
+		//the slowest kinds: their time, how many, the slowest one of each
+		static constexpr size_t s_kinds = 8;
+		for (size_t i = 0; i != s_kinds; ++i)
+		{
+			loading.m_options.push_back(DebugOption::text("#" + std::to_string(i + 1), [context, i]()
+			{
+				const auto kinds = load_kinds(*context);
+				std::string text = "-";
+				if (i < kinds.size())
+				{
+					const auto& [ext, stat] = kinds[i];
+					text = ext + "  " + milliseconds(stat.m_ms) + "  x" + std::to_string(stat.m_count)
+					     + "  slowest " + stat.m_slowest + " (" + milliseconds(stat.m_slowest_ms) + ")";
+				}
+				return text;
+			}));
+		}
+		loading.m_options.push_back(DebugOption::button("Clear", [context]() { context->clear_resource_load_stats(); }));
+		sections.push_back(loading);
+#endif
 	}
 
 	void DebugPanel::draw_sections(std::vector<DebugSection>& sections) const

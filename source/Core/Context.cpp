@@ -4,6 +4,7 @@
 //  Created by Gabriele on 18/10/17.
 //  Copyright © 2016 Gabriele. All rights reserved.
 //
+#include <chrono>
 #include "Square/Core/Context.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/Application.h"
@@ -108,9 +109,7 @@ namespace Square
 		//set resource name (the key string lives as long as the map entry)
 		resource->resource_name(m_resources.find(name)->first.c_str());
         //load, in the scope of its folder
-        m_resource_scopes.push_back(resource_folder(name));
-        const bool loaded = resource->load(resource_file.m_filepath);
-        m_resource_scopes.pop_back();
+        const bool loaded = load_in_scope(*resource, name, resource_file.m_filepath);
         if (loaded) return resource;
 		//fail
 		m_resources.erase(name);
@@ -118,6 +117,53 @@ namespace Square
 		logger()->warning("Resource: unable to load " + name);
 		//end
         return nullptr;
+    }
+
+#if defined(SQUARE_DEBUG_TOOLS)
+    void BaseContext::add_load_detail(const std::string& kind, const std::string& name, double ms)
+    {
+        ResourceLoadStat& stat = m_load_details[kind];
+        stat.m_count += 1;
+        stat.m_ms += ms;
+        if (ms > stat.m_slowest_ms)
+        {
+            stat.m_slowest_ms = ms;
+            stat.m_slowest = name;
+        }
+    }
+#endif
+
+    bool BaseContext::load_in_scope(ResourceObject& resource, const std::string& name, const std::string& path)
+    {
+#if defined(SQUARE_DEBUG_TOOLS)
+        using Clock = std::chrono::high_resolution_clock;
+        const auto start = Clock::now();
+        m_load_inner_ms.push_back(0.0);
+#endif
+        m_resource_scopes.push_back(resource_folder(name));
+        const bool loaded = resource.load(path);
+        m_resource_scopes.pop_back();
+#if defined(SQUARE_DEBUG_TOOLS)
+        const double inner = m_load_inner_ms.back();
+        m_load_inner_ms.pop_back();
+        const double total = std::chrono::duration<double, std::milli>(Clock::now() - start).count();
+        //its own time: out of the loads inside it; its whole time: inside the one around it
+        const double own = std::max(total - inner, 0.0);
+        if (!m_load_inner_ms.empty())
+        {
+            m_load_inner_ms.back() += total;
+        }
+        const size_t dot = path.find_last_of('.');
+        ResourceLoadStat& stat = m_load_stats[dot == std::string::npos ? std::string("(none)") : path.substr(dot)];
+        stat.m_count += 1;
+        stat.m_ms += own;
+        if (own > stat.m_slowest_ms)
+        {
+            stat.m_slowest_ms = own;
+            stat.m_slowest = name;
+        }
+#endif
+        return loaded;
     }
 
     Shared<ResourceObject> BaseContext::load_resource_file(const std::string& name)
@@ -133,12 +179,25 @@ namespace Square
         //resource name: the key of the file (it lives as long as the map entry)
         resource->resource_name(m_resources_file.find(name)->first.c_str());
         //load, in the scope of its folder
-        m_resource_scopes.push_back(resource_folder(name));
-        const bool loaded = resource->load(resource_file.m_filepath);
-        m_resource_scopes.pop_back();
+        const bool loaded = load_in_scope(*resource, name, resource_file.m_filepath);
         if (loaded) return resource;
         logger()->warning("Resource: unable to load " + name);
         return nullptr;
+    }
+
+    std::vector<std::string> BaseContext::resource_names(const std::string& type) const
+    {
+        const std::string prefix = type + ":";
+        std::vector<std::string> names;
+        for (const auto& [name, file] : m_resources_file)
+        {
+            if (name.rfind(prefix, 0) == 0)
+            {
+                names.push_back(name.substr(prefix.size()));
+            }
+        }
+        std::sort(names.begin(), names.end());
+        return names;
     }
 
     const std::string& BaseContext::resource_path(const std::string& name)

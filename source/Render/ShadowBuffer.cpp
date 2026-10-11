@@ -97,8 +97,16 @@ namespace Render
 			}
 			//fail to build texture
 			if (!m_texture) return false;
-            //target
+            //target: all of it; each of its layers, a driver that draws them one by one
 			m_target = render->create_render_target({ Render::TargetField{ m_texture, Render::RT_DEPTH } });
+			if (System::get<RenderSystem>(context())->layers_by_target() && m_type != SB_TEXTURE_2D)
+			{
+				m_layer_targets.reserve(target_layers());
+				for (unsigned int layer = 0; layer != target_layers(); ++layer)
+				{
+					m_layer_targets.push_back(render->create_render_target({ Render::TargetField{ m_texture, Render::RT_DEPTH, int(layer) } }));
+				}
+			}
         }
         return m_target != nullptr;
     }
@@ -107,17 +115,46 @@ namespace Render
         if(auto render = System::get<RenderSystem>(context())->render())
         {
             if (m_target)  render->delete_render_target(m_target);
+			for (Render::Target*& layer_target : m_layer_targets)
+			{
+				if (layer_target)
+				{
+					render->delete_render_target(layer_target);
+				}
+			}
 			if (m_texture) render->delete_texture(m_texture);
         }
         //to null
         m_target = nullptr;
         m_texture = nullptr;
+        m_layer_targets.clear();
         m_size = {0,0};
     }
     
     Render::Target* ShadowBuffer::target() const
     {
         return m_target;
+    }
+
+    Render::Target* ShadowBuffer::target(unsigned int layer) const
+    {
+        Render::Target* out = m_target;
+        if (layer < m_layer_targets.size())
+        {
+            out = m_layer_targets[layer];
+        }
+        return out;
+    }
+
+    unsigned int ShadowBuffer::target_layers() const
+    {
+        switch (m_type)
+        {
+        case SB_TEXTURE_CUBE: return 6;
+        case SB_TEXTURE_CSM:  return m_layers;
+        case SB_TEXTURE_2D:
+        default:              return 1;
+        }
     }
     
     Render::Texture* ShadowBuffer::texture() const

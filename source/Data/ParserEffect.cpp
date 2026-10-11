@@ -197,10 +197,8 @@ namespace Parser
     }
     // // // // // // // // // // // // // // // // // // // // // // // // // //
     //RequirementField
-    bool Effect::RequirementField::test(Render::Context* render) const
+    bool Effect::RequirementField::test(const Render::RenderDriverInfo& info) const
     {
-        //get info
-        Render::RenderDriverInfo info = render->get_render_driver_info();
 		//all cases?
 		bool all_drivers = m_driver_name == "ALL";
 		bool all_shader  = m_shader_name == "ALL";

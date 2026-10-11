@@ -389,10 +389,11 @@ namespace Resource
         }
         //ref to sub effect
         Parser::Effect::SubEffectField* ptr_sub_effect = nullptr;
-        //test sub effect
+        //test sub effect (by the target of the shaders: the driver, or the one of a tool)
+        const Render::RenderDriverInfo& driver_info = System::get<RenderSystem>(context())->shader_target().m_info;
         for(Parser::Effect::SubEffectField& sub_effect : e_context.m_sub_effect )
         {
-            if(sub_effect.m_requirement.test(System::get<RenderSystem>(context())->render()))
+            if(sub_effect.m_requirement.test(driver_info))
             {
                 ptr_sub_effect = &sub_effect;
                 break;
