@@ -7,6 +7,7 @@
 #include "Square/Render/Renderable.h"
 #include "Square/Render/Transform.h"
 #include "Square/Render/Effect.h"
+#include "Square/Render/Material.h"
 
 namespace Square
 {
@@ -24,6 +25,21 @@ namespace Render
 			variant |= EV_SKINNED;
 		}
 		return variant;
+	}
+
+	bool Renderable::casts_shadow() const
+	{
+		bool casts = false;
+		const size_t count = m_cast_shadow ? materials_count() : 0;
+		for (size_t i = 0; i < count && !casts; ++i)
+		{
+			if (auto material = this->material(i).lock())
+			{
+				const auto* mask_shadow = material->parameter_by_name("mask_shadow");
+				casts = !mask_shadow || mask_shadow->get_float() < 1.0f;
+			}
+		}
+		return casts;
 	}
 
 	bool Renderable::is_static() const

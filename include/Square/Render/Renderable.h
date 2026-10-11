@@ -89,6 +89,16 @@ namespace Render
 		//the variant of the techniques of its draws (Render::EffectVariant: instanced, skinned)
 		unsigned char variant() const;
 
+		//it can cast a shadow (its own flag, "cast_shadow" of its component; the converter: the
+		//"square_shadow_cast" of its node): false, never drawn in the shadow maps
+		inline void cast_shadow(bool cast) { m_cast_shadow = cast; }
+		inline bool cast_shadow() const { return m_cast_shadow; }
+
+		//it casts a shadow: its flag, and a material of it without "mask_shadow" or under 1 (every
+		//one 1 or more: all its pixels out of the shadow maps, the sky, far decor, grass); else not
+		//drawn there, not in the depth of the cascades of the sun
+		bool casts_shadow() const;
+
 		//motion blur of its own (a PostEffect that needs the velocity, Render::MotionBlur): its
 		//motion on the screen written (deferred, after the G-Buffer), only by the ones on
 		inline void motion_blur(bool enable) { m_motion_blur = enable; }
@@ -102,6 +112,7 @@ namespace Render
 		bool  m_visible{ true };
 		float m_lod_fade{ 1.0f };
 		bool  m_motion_blur{ false };
+		bool  m_cast_shadow{ true };
 	};
 }
 }

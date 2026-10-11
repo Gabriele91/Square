@@ -21,6 +21,12 @@ namespace Scene
 		using namespace Square::Resource;
 		// Add StaticMesh
 		ctx.add_object<StaticMesh>();
+		// Its shadow (false: never in the shadow maps)
+		ctx.add_attribute_function<StaticMesh, bool>
+			("cast_shadow"
+			, true
+			, [](const StaticMesh* renderable) -> bool { return renderable->Render::Renderable::cast_shadow(); }
+			, [](StaticMesh* renderable, const bool& cast) { renderable->Render::Renderable::cast_shadow(cast); });
 		// Material
 		ctx.add_attribute_function<StaticMesh, std::vector<std::string> >
 			("materials"

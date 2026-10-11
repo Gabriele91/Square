@@ -15,12 +15,147 @@
 #include "Square/Geometry/Intersection.h"
 #include "Square/Render/Pipeline/SoftwareOcclusion.h"
 
+//the vector instructions of the raster (CMake SQUARE_SIMD, or what the compiler targets): AVX (8
+//pixels at once), SSE 4.1 (4), NEON (4); none: the scalar raster
+#if defined(SQUARE_SIMD_AVX) || defined(__AVX__)
+	#define SQUARE_OCCLUSION_AVX
+	#include <immintrin.h>
+#elif defined(SQUARE_SIMD_SSE4) || defined(__SSE4_1__)
+	#define SQUARE_OCCLUSION_SSE4
+	#include <smmintrin.h>
+#elif defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(_M_ARM64)
+	#define SQUARE_OCCLUSION_NEON
+	#include <arm_neon.h>
+#endif
+
 namespace Square
 {
 namespace Render
 {
 	namespace AuxSoftwareOcclusion
 	{
+		//the lanes of a vector of floats: some pixels of a row at once (the same code for every
+		//instruction set: raster_row)
+#if defined(SQUARE_OCCLUSION_AVX)
+		struct Lanes
+		{
+			static constexpr int count = 8;
+			using Float = __m256;
+			static Float set(float value) { return _mm256_set1_ps(value); }
+			static Float ramp() { return _mm256_setr_ps(0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f); }
+			static Float add(Float a, Float b) { return _mm256_add_ps(a, b); }
+			static Float mul(Float a, Float b) { return _mm256_mul_ps(a, b); }
+			static Float max(Float a, Float b) { return _mm256_max_ps(a, b); }
+			//a mask: every bit of a lane where it is >= 0
+			static Float positive(Float a) { return _mm256_cmp_ps(a, _mm256_setzero_ps(), _CMP_GE_OQ); }
+			static Float both(Float a, Float b) { return _mm256_and_ps(a, b); }
+			//where mask: when, else otherwise
+			static Float select(Float mask, Float when, Float otherwise) { return _mm256_blendv_ps(otherwise, when, mask); }
+			static bool none(Float mask) { return _mm256_movemask_ps(mask) == 0; }
+			static Float load(const float* at) { return _mm256_loadu_ps(at); }
+			static void store(float* at, Float value) { _mm256_storeu_ps(at, value); }
+		};
+#elif defined(SQUARE_OCCLUSION_SSE4)
+		struct Lanes
+		{
+			static constexpr int count = 4;
+			using Float = __m128;
+			static Float set(float value) { return _mm_set1_ps(value); }
+			static Float ramp() { return _mm_setr_ps(0.0f, 1.0f, 2.0f, 3.0f); }
+			static Float add(Float a, Float b) { return _mm_add_ps(a, b); }
+			static Float mul(Float a, Float b) { return _mm_mul_ps(a, b); }
+			static Float max(Float a, Float b) { return _mm_max_ps(a, b); }
+			static Float positive(Float a) { return _mm_cmpge_ps(a, _mm_setzero_ps()); }
+			static Float both(Float a, Float b) { return _mm_and_ps(a, b); }
+			static Float select(Float mask, Float when, Float otherwise) { return _mm_blendv_ps(otherwise, when, mask); }
+			static bool none(Float mask) { return _mm_movemask_ps(mask) == 0; }
+			static Float load(const float* at) { return _mm_loadu_ps(at); }
+			static void store(float* at, Float value) { _mm_storeu_ps(at, value); }
+		};
+#elif defined(SQUARE_OCCLUSION_NEON)
+		struct Lanes
+		{
+			static constexpr int count = 4;
+			using Float = float32x4_t;
+			static Float set(float value) { return vdupq_n_f32(value); }
+			static Float ramp() { const float values[4]{ 0.0f, 1.0f, 2.0f, 3.0f }; return vld1q_f32(values); }
+			static Float add(Float a, Float b) { return vaddq_f32(a, b); }
+			static Float mul(Float a, Float b) { return vmulq_f32(a, b); }
+			static Float max(Float a, Float b) { return vmaxq_f32(a, b); }
+			static Float positive(Float a) { return vreinterpretq_f32_u32(vcgeq_f32(a, vdupq_n_f32(0.0f))); }
+			static Float both(Float a, Float b) { return vreinterpretq_f32_u32(vandq_u32(vreinterpretq_u32_f32(a), vreinterpretq_u32_f32(b))); }
+			static Float select(Float mask, Float when, Float otherwise) { return vbslq_f32(vreinterpretq_u32_f32(mask), when, otherwise); }
+			static bool none(Float mask)
+			{
+				const uint32x4_t bits = vreinterpretq_u32_f32(mask);
+				const uint32x2_t half = vorr_u32(vget_low_u32(bits), vget_high_u32(bits));
+				return (vget_lane_u32(half, 0) | vget_lane_u32(half, 1)) == 0;
+			}
+			static Float load(const float* at) { return vld1q_f32(at); }
+			static void store(float* at, Float value) { vst1q_f32(at, value); }
+		};
+#endif
+
+		//an edge of a triangle along a row: its value at the center of a pixel x is
+		//m_at_zero + m_step * (x + 0.5), its sign by the winding (inside: >= 0)
+		struct RowEdge
+		{
+			float m_at_zero{ 0.0f };
+			float m_step{ 0.0f };
+		};
+
+		//the edge from a to b on the row of centers py, by the winding (sign: 1 or -1)
+		static RowEdge row_edge(const Vec3& a, const Vec3& b, float py, float sign)
+		{
+			//edge(a, b, px, py) = (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x)
+			RowEdge out;
+			out.m_at_zero = ((b.x - a.x) * (py - a.y) + (b.y - a.y) * a.x) * sign;
+			out.m_step = -(b.y - a.y) * sign;
+			return out;
+		}
+
+		//the pixels of a row from low_x to high_x inside the three edges: the inverse of their depth
+		//(the depths of the vertices by the edges, by scale) kept where it is nearer. Some pixels
+		//at once (Lanes), the rest one by one
+		static void raster_row(float* row, int low_x, int high_x, const RowEdge (&edges)[3], const Vec3& depths, float scale)
+		{
+			int x = low_x;
+#if defined(SQUARE_OCCLUSION_AVX) || defined(SQUARE_OCCLUSION_SSE4) || defined(SQUARE_OCCLUSION_NEON)
+			const Lanes::Float ramp = Lanes::ramp();
+			const Lanes::Float at0 = Lanes::set(edges[0].m_at_zero), step0 = Lanes::set(edges[0].m_step);
+			const Lanes::Float at1 = Lanes::set(edges[1].m_at_zero), step1 = Lanes::set(edges[1].m_step);
+			const Lanes::Float at2 = Lanes::set(edges[2].m_at_zero), step2 = Lanes::set(edges[2].m_step);
+			const Lanes::Float z0 = Lanes::set(depths.x), z1 = Lanes::set(depths.y), z2 = Lanes::set(depths.z);
+			const Lanes::Float factor = Lanes::set(scale);
+			for (; x + Lanes::count - 1 <= high_x; x += Lanes::count)
+			{
+				const Lanes::Float px = Lanes::add(Lanes::set(float(x) + 0.5f), ramp);
+				const Lanes::Float w0 = Lanes::add(at0, Lanes::mul(step0, px));
+				const Lanes::Float w1 = Lanes::add(at1, Lanes::mul(step1, px));
+				const Lanes::Float w2 = Lanes::add(at2, Lanes::mul(step2, px));
+				const Lanes::Float inside = Lanes::both(Lanes::both(Lanes::positive(w0), Lanes::positive(w1)), Lanes::positive(w2));
+				if (!Lanes::none(inside))
+				{
+					const Lanes::Float sum = Lanes::add(Lanes::add(Lanes::mul(w0, z0), Lanes::mul(w1, z1)), Lanes::mul(w2, z2));
+					const Lanes::Float value = Lanes::mul(sum, factor);
+					const Lanes::Float old = Lanes::load(row + x);
+					Lanes::store(row + x, Lanes::select(inside, Lanes::max(old, value), old));
+				}
+			}
+#endif
+			for (; x <= high_x; ++x)
+			{
+				const float px = float(x) + 0.5f;
+				const float w0 = edges[0].m_at_zero + edges[0].m_step * px;
+				const float w1 = edges[1].m_at_zero + edges[1].m_step * px;
+				const float w2 = edges[2].m_at_zero + edges[2].m_step * px;
+				if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f)
+				{
+					const float value = (w0 * depths.x + w1 * depths.y + w2 * depths.z) * scale;
+					row[x] = std::max(row[x], value);
+				}
+			}
+		}
 		//a point of clip space on the depth buffer: x, y its pixels (y down), z the inverse of
 		//its depth along the view
 		static Vec3 to_screen(const Vec4& clip, const IVec2& size)
@@ -50,6 +185,19 @@ namespace Render
 			}
 			return level;
 		}
+	}
+
+	const char* SoftwareOcclusion::instructions()
+	{
+#if defined(SQUARE_OCCLUSION_AVX)
+		return "AVX";
+#elif defined(SQUARE_OCCLUSION_SSE4)
+		return "SSE4.1";
+#elif defined(SQUARE_OCCLUSION_NEON)
+		return "NEON";
+#else
+		return "scalar";
+#endif
 	}
 
 	void SoftwareOcclusion::draw(const Camera& camera, const std::vector< Weak<Occluder> >& occluders)
@@ -145,27 +293,22 @@ namespace Render
 		const int high_y = std::min(int(std::floor(std::max({ p0.y, p1.y, p2.y }))), m_size.y - 1);
 		if (std::abs(area) > 1e-8f && low_x <= high_x && low_y <= high_y)
 		{
+			//the edges by the winding (inside: >= 0 either way); the inverse of the depth linear on
+			//the screen: the depths of the vertices by the edges, by the sign over the area
 			const float sign = area > 0.0f ? 1.0f : -1.0f;
-			const float inverse_area = 1.0f / area;
+			const float scale = sign / area;
+			const Vec3 depths(p0.z, p1.z, p2.z);
 			std::vector<float>& depth = m_levels[0];
 			for (int y = low_y; y <= high_y; ++y)
 			{
 				const float py = float(y) + 0.5f;
-				for (int x = low_x; x <= high_x; ++x)
+				const RowEdge edges[3]
 				{
-					const float px = float(x) + 0.5f;
-					const float w0 = edge(p1, p2, px, py);
-					const float w1 = edge(p2, p0, px, py);
-					const float w2 = edge(p0, p1, px, py);
-					const bool inside = w0 * sign >= 0.0f && w1 * sign >= 0.0f && w2 * sign >= 0.0f;
-					if (inside)
-					{
-						//the inverse of the depth: linear on the screen
-						const float value = (w0 * p0.z + w1 * p1.z + w2 * p2.z) * inverse_area;
-						float& texel = depth[size_t(y) * size_t(m_size.x) + size_t(x)];
-						texel = std::max(texel, value);
-					}
-				}
+					  row_edge(p1, p2, py, sign)
+					, row_edge(p2, p0, py, sign)
+					, row_edge(p0, p1, py, sign)
+				};
+				raster_row(depth.data() + size_t(y) * size_t(m_size.x), low_x, high_x, edges, depths, scale);
 			}
 		}
 	}

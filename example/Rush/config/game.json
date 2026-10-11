@@ -34,6 +34,6 @@
 	},
 	"maps": {
 		"arenas": ["arena", "backwash", "containment", "sanctuary", "canyon"],
-		"circuits": ["valley", "wildwater"]
+		"circuits": ["valley", "wildwater", "canyonloop"]
 	}
 }

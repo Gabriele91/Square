@@ -10,8 +10,8 @@
 #define PCSS_BLOCKER_TEXELS 8.0 // PCSS: texels of the search of the casters
 #define PCSS_MAX_TEXELS 8.0    // PCSS: penumbra at most (texels)
 #define PCSS_SAMPLES 16         // PCSS: samples of the search and of the filter
-#define SHADOW_FADE_START 0.85  // the shadow fades from this fraction of the last cascade to its end
-#define SHADOW_FADE_BORDER 0.03 // ... and toward the border of the map of a cascade (uv)
+#define SHADOW_FADE_START 0.9   // the shadow fades over the last share of the last cascade (of its own length) to its end
+#define SHADOW_FADE_BORDER 0.015 // ... and toward the border of the map of the last cascade (uv)
 #define SHADOW_FADE_ON 1        // 1: the fades above on; 0: off (test: the shadow as it is)
 #include <ShadowCamera>
 Sampler2DArray(direction_shadow_map)
@@ -202,7 +202,11 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec
 	uint  cascades = uint(clamp(direction_shadow_camera.m_options.y, 1, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
 	float shadow_distance = abs(direction_shadow_camera.m_data[cascades - 1][DEPTH]);
 	if (view_depth >= shadow_distance) return 1.0;
-	float fade = saturate((view_depth - shadow_distance * SHADOW_FADE_START) / (shadow_distance * (1.0 - SHADOW_FADE_START)));
+	// (the fade by the length of the last cascade, not of the whole distance: many cascades, the
+	// last one far, its shadow kept as long)
+	float last_start = cascades > 1 ? abs(direction_shadow_camera.m_data[cascades - 2][DEPTH]) : 0.0;
+	float fade_start = lerp(last_start, shadow_distance, SHADOW_FADE_START);
+	float fade = saturate((view_depth - fade_start) / max(shadow_distance - fade_start, 1e-4));
 	// Normal offset: along the normal, by texels of the cascade (more at grazing light)
 	Vec3  n = normalize(normal);
 	float NoL = saturate(dot(n, normalize(light_dir)));

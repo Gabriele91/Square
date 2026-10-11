@@ -145,6 +145,8 @@ public:
         Sprites::Nodes sprite_nodes;
         // The nodes of emitters of particles ("square_particles") and their properties
         Particles::Nodes particle_nodes;
+        // The nodes with "square_shadow_cast" (their meshes, their children's: cast or not), in order
+        std::vector< std::pair< Shared<Actor>, bool > > shadow_cast_nodes;
         // The actor of each node (the animations, the skins: by the index of the node)
         Animations::NodeActors node_actors(gltf_model.nodes.size());
         GLTF::Import::visit_default_scene< Shared<Actor> >(gltf_model, main_node,
@@ -161,6 +163,11 @@ public:
                 }
                 //the properties for the game ("game_<name>": a Scene::Properties, the engine ignores them)
                 SquareExtras::game_properties(*actor, node.extras);
+                //its shadow: "square_shadow_cast" (false: its meshes and its children's out of the shadow maps)
+                if (auto cast = SquareExtras::flag(node.extras, "shadow_cast"))
+                {
+                    shadow_cast_nodes.emplace_back(actor, *cast);
+                }
                 //static: its "square_static", else --static (the engine: only if its parents are too)
                 actor->set_static(SquareExtras::flag(node.extras, "static").value_or(m_static));
                 //instances: its children by their mesh (InstanceGroups)
@@ -367,6 +374,22 @@ public:
         if (const size_t skinned = Skins::build(context(), gltf_model, node_actors, mesh_manager, m_mode))
         {
             context().logger()->info("Skinned meshes: " + std::to_string(skinned));
+        }
+        // The shadows of the nodes "square_shadow_cast": their meshes (before the instances: they group the
+        // ones that cast and the ones that do not apart), a parent first, its children over it
+        for (const auto& [node, cast] : shadow_cast_nodes)
+        {
+            node->visit([cast = cast](Shared<Actor> part) -> bool
+            {
+                for (const auto& component : part->components())
+                {
+                    if (auto renderable = dynamic_cast<Render::Renderable*>(component.second.get()))
+                    {
+                        renderable->cast_shadow(cast);
+                    }
+                }
+                return true;
+            });
         }
         // The sprites: the planes of a node "square_sprite"
         if (const size_t sprites = Sprites::build(context(), main_node, sprite_nodes))

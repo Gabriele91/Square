@@ -113,6 +113,46 @@ std::string RushBench::collisions(const Race& race) const
 	const double ray_ms = AuxRushBench::since(ray_start);
 	out << "  " << moves << " sphere moves: " << move_ms << " ms (" << move_ms * 1000.0 / moves << " us each), " << hits << " hits\n";
 	out << "  " << moves << " rays down: " << ray_ms << " ms (" << ray_ms * 1000.0 / moves << " us each), " << ground << " hits\n";
+	//the raster of the occlusion: the occluders of the map from the camera of the race
+	std::vector< Weak<Render::Occluder> > occluders;
+	arena.actor()->visit([&occluders](Shared<Scene::Actor> node) -> bool
+	{
+		if (node->contains<Scene::Occluder>())
+		{
+			occluders.push_back(StaticPointerCast<Render::Occluder>(node->component<Scene::Occluder>()));
+		}
+		return true;
+	});
+	auto camera_actor = arena.camera();
+	if (camera_actor && camera_actor->contains<Scene::Camera>() && !occluders.empty())
+	{
+		auto camera = camera_actor->component<Scene::Camera>();
+		out << "occlusion raster (" << occluders.size() << " occluders, " << Render::SoftwareOcclusion::instructions() << ")\n";
+		for (int width : { 256, 1024 })
+		{
+			Render::SoftwareOcclusion occlusion;
+			Render::SoftwareOcclusion::Settings settings;
+			settings.width = width;
+			occlusion.settings(settings);
+			const int draws = 200;
+			const auto draw_start = Clock::now();
+			for (int i = 0; i < draws; ++i)
+			{
+				occlusion.draw(*camera, occluders);
+			}
+			const double draw_ms = AuxRushBench::since(draw_start);
+			//its depth buffer (the same on every instruction set): the texels covered, their sum
+			double sum = 0.0;
+			size_t covered = 0;
+			for (float texel : occlusion.depth())
+			{
+				sum += texel;
+				covered += texel > 0.0f ? 1 : 0;
+			}
+			out << "  width " << width << ": " << draw_ms / draws << " ms a draw, " << occlusion.stats().m_triangles << " triangles, "
+			    << covered << " texels covered, sum " << std::setprecision(6) << sum << std::setprecision(3) << "\n";
+		}
+	}
 	return out.str();
 }
 

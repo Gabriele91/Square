@@ -58,9 +58,17 @@ namespace
             //square_<parameter>: set or override
             for (const auto& extra : m_material.extras)
             {
-                const std::string name = SquareExtras::name(extra.first);
+                std::string name = SquareExtras::name(extra.first);
                 if (name.empty() || name == "effect") continue;
-                const std::string value = SquareExtras::material_value(extra.second);
+                std::string value = SquareExtras::material_value(extra.second);
+                //square_shadow_cast false: none of its pixels in the shadow maps (its mask of the
+                //shadow over any alpha: the engine leaves it out of them); true: as it is
+                if (name == "shadow_cast")
+                {
+                    if (SquareExtras::number(extra.second) != 0.0) continue;
+                    name = "mask_shadow";
+                    value = "float(1.5)";
+                }
                 if (value.empty()) continue;
                 auto it = std::find_if(parameters.begin(), parameters.end(), [&](const Parameter& parameter) { return parameter.first == name; });
                 if (it != parameters.end()) it->second = value;

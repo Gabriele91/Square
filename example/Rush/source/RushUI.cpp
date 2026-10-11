@@ -149,10 +149,29 @@ void RushUI::setup_title()
 		m_map_infos.push_back(m_title.find("info_" + std::to_string(map)));
 	}
 	m_title.find("map_play").on(UI::EventType::CLICK, [this](UI::Event&) { map_play(m_map); });
+	//the circuits: the same wheel
+	m_circuit_cards.clear();
+	m_circuit_infos.clear();
+	const size_t circuits = Config::get().circuits().size();
+	m_circuit_cards.reserve(circuits);
+	m_circuit_infos.reserve(circuits);
+	for (size_t circuit = 0; circuit != circuits; ++circuit)
+	{
+		UI::Element element = m_title.find("circuit_" + std::to_string(circuit));
+		element.on(UI::EventType::CLICK, [this, circuit](UI::Event&)
+		{
+			if (m_circuit == circuit) circuit_play(circuit);
+			else                      circuit_select(circuit);
+		});
+		m_circuit_cards.push_back(element);
+		m_circuit_infos.push_back(m_title.find("circuit_info_" + std::to_string(circuit)));
+	}
+	m_title.find("circuit_play").on(UI::EventType::CLICK, [this](UI::Event&) { circuit_play(m_circuit); });
 	m_title.find("settings_back").on(UI::EventType::CLICK, [this](UI::Event&) { screen(Screen::MAIN); });
 	m_title.find("about_back").on(UI::EventType::CLICK, [this](UI::Event&) { screen(Screen::MAIN); });
 	main_select(MAIN_PLAY);
 	mode_select(MODE_ARENA);
+	circuit_select(m_circuit);
 	map_select(m_map);
 }
 
@@ -218,6 +237,7 @@ void RushUI::screen(Screen screen)
 	m_title.find("screen_main").set_class("hidden", screen != Screen::MAIN);
 	m_title.find("screen_modes").set_class("hidden", screen != Screen::MODES);
 	m_title.find("screen_arena").set_class("hidden", screen != Screen::ARENA);
+	m_title.find("screen_circuits").set_class("hidden", screen != Screen::CIRCUITS);
 	m_title.find("screen_settings").set_class("hidden", screen != Screen::SETTINGS);
 	m_title.find("screen_about").set_class("hidden", screen != Screen::ABOUT);
 }
@@ -248,6 +268,15 @@ void RushUI::title_key(Square::Video::KeyboardEvent key)
 		if (previous) map_select((m_map + arenas - 1) % arenas);
 		if (next)     map_select((m_map + 1) % arenas);
 		if (enter)    map_play(m_map);
+		if (back)     screen(Screen::MODES);
+	}
+	break;
+	case Screen::CIRCUITS:
+	{
+		const size_t circuits = std::max<size_t>(Config::get().circuits().size(), 1);
+		if (previous) circuit_select((m_circuit + circuits - 1) % circuits);
+		if (next)     circuit_select((m_circuit + 1) % circuits);
+		if (enter)    circuit_play(m_circuit);
 		if (back)     screen(Screen::MODES);
 	}
 	break;
@@ -292,12 +321,37 @@ void RushUI::mode_select(int mode)
 void RushUI::mode_activate(int mode)
 {
 	mode_select(mode);
-	//races: the circuit at once; the arena: its maps (battle: to come)
+	//races: its circuits; the arena: its maps (battle: to come)
 	switch (mode)
 	{
-	case MODE_RACES: circuit_play(0); break;
+	case MODE_RACES: screen(Screen::CIRCUITS); break;
 	case MODE_ARENA: screen(Screen::ARENA); break;
 	default: break;
+	}
+}
+
+namespace AuxRushUI
+{
+	//a wheel of cards: the one in front, the one before over it, the one after under it, the
+	//rest behind (hidden); the words of the one in front
+	static void wheel(std::vector<Square::UI::Element>& cards, std::vector<Square::UI::Element>& infos, size_t front_id)
+	{
+		const size_t count = cards.size();
+		for (size_t id = 0; id != count; ++id)
+		{
+			const size_t slot = (id + count - front_id) % count;
+			const bool front = slot == 0;
+			const bool after = slot == 1;
+			const bool before = slot == count - 1 && count > 2;
+			cards[id].set_class("slot_cur", front);
+			cards[id].set_class("slot_next", after);
+			cards[id].set_class("slot_prev", before);
+			cards[id].set_class("slot_far", !front && !after && !before);
+		}
+		for (size_t id = 0; id != infos.size(); ++id)
+		{
+			infos[id].set_class("shown", id == front_id);
+		}
 	}
 }
 
@@ -307,24 +361,16 @@ void RushUI::map_select(size_t map)
 	if (map >= arenas.size()) return;
 	m_map = map;
 	m_race_map = &arenas[map];
-	//the wheel: the one in front, the one before over it, the one after under it, the rest
-	//behind (hidden)
-	const size_t count = m_map_cards.size();
-	for (size_t id = 0; id != count; ++id)
-	{
-		const size_t slot = (id + count - map) % count;
-		const bool front = slot == 0;
-		const bool after = slot == 1;
-		const bool before = slot == count - 1 && count > 2;
-		m_map_cards[id].set_class("slot_cur", front);
-		m_map_cards[id].set_class("slot_next", after);
-		m_map_cards[id].set_class("slot_prev", before);
-		m_map_cards[id].set_class("slot_far", !front && !after && !before);
-	}
-	for (size_t id = 0; id != m_map_infos.size(); ++id)
-	{
-		m_map_infos[id].set_class("shown", id == map);
-	}
+	AuxRushUI::wheel(m_map_cards, m_map_infos, map);
+}
+
+void RushUI::circuit_select(size_t circuit)
+{
+	const auto& circuits = Config::get().circuits();
+	if (circuit >= circuits.size()) return;
+	m_circuit = circuit;
+	m_race_map = &circuits[circuit];
+	AuxRushUI::wheel(m_circuit_cards, m_circuit_infos, circuit);
 }
 
 void RushUI::map_play(size_t map)
@@ -337,7 +383,7 @@ void RushUI::circuit_play(size_t circuit)
 {
 	const auto& circuits = Config::get().circuits();
 	if (circuits.empty()) return;
-	m_race_map = &circuits[circuit % circuits.size()];
+	circuit_select(circuit % circuits.size());
 	if (m_on_play) m_on_play();
 }
 
@@ -365,10 +411,11 @@ bool RushUI::race_map(const std::string& name)
 		map_select(map);
 		return true;
 	}
-	for (const RaceMap& circuit : Config::get().circuits())
+	const auto& circuits = Config::get().circuits();
+	for (size_t circuit = 0; circuit != circuits.size(); ++circuit)
 	{
-		if (name != circuit.m_name) continue;
-		m_race_map = &circuit;
+		if (name != circuits[circuit].m_name) continue;
+		circuit_select(circuit);
 		return true;
 	}
 	return false;

@@ -188,8 +188,8 @@ namespace Render
         {
             if (randerable)
             {
-                //jump?
-                if (!randerable->can_draw()) continue;
+                //jump? (only what casts a shadow: the depth of the cascades of the sun)
+                if (!randerable->can_draw() || !randerable->casts_shadow()) continue;
                 //get box
                 scene_aabb = scene_aabb.merge(randerable->bounding_box().to_aabb());
             }

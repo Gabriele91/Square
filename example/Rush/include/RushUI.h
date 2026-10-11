@@ -83,6 +83,7 @@ private:
 		MAIN,
 		MODES,
 		ARENA,
+		CIRCUITS,
 		SETTINGS,
 		ABOUT
 	};
@@ -95,7 +96,7 @@ private:
 		MAIN_EXIT,
 		MAIN_COUNT
 	};
-	//the modes of Play, in order (Races: the circuit, Arena: its maps; Battle to come)
+	//the modes of Play, in order (Races: its circuits, Arena: its maps; Battle to come)
 	enum Mode : int
 	{
 		MODE_RACES,
@@ -111,7 +112,8 @@ private:
 	//the wheel of the maps: the map in front, the others around it; played
 	void map_select(size_t map);
 	void map_play(size_t map);
-	//the circuit of the mode Races, played
+	//the wheel of the circuits (the mode Races): the circuit in front; played
+	void circuit_select(size_t circuit);
 	void circuit_play(size_t circuit);
 
 	struct State
@@ -162,6 +164,9 @@ private:
 	std::vector<Square::UI::Element> m_map_cards; //map_<n>, the arenas of the config
 	std::vector<Square::UI::Element> m_map_infos; //info_<n>
 	size_t                           m_map{ 0 };  //the selected one
+	std::vector<Square::UI::Element> m_circuit_cards; //circuit_<n>, the circuits of the config
+	std::vector<Square::UI::Element> m_circuit_infos; //circuit_info_<n>
+	size_t                           m_circuit{ 0 };  //the selected one
 	const Rush::RaceMap*             m_race_map{ nullptr }; //the map played: an arena (m_map), a circuit
 	Callback                         m_on_play;
 	Callback                         m_on_quit;
