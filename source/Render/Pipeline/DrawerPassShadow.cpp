@@ -348,7 +348,11 @@ namespace Render
 		hashes.fill(14695981039346656037ull);
 		for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
 		{
-			const bool caster = randerable && randerable->is_static() && randerable->can_draw() && settled(*randerable);
+			const bool caster = randerable 
+			                 && randerable->is_static() 
+							 && randerable->can_draw() 
+							 && randerable->casts_shadow() 
+							 && settled(*randerable);
 			if (caster)
 			{
 				//which one, where: in the cascades it is in
@@ -456,7 +460,10 @@ namespace Render
 		uint64 value = 14695981039346656037ull;
 		for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
 		{
-			const bool caster = randerable && randerable->is_static() && randerable->can_draw();
+			const bool caster = randerable 
+							&& randerable->is_static() 
+							&& randerable->can_draw() 
+							&& randerable->casts_shadow();
 			if (caster)
 			{
 				//which one, where, at which level of detail
@@ -495,7 +502,7 @@ namespace Render
 		//for each elements of opaque and translucent queues
 		for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
 		{
-			const bool caster = randerable && randerable->can_draw() && takes(*randerable, casters);
+			const bool caster = randerable && randerable->can_draw() && randerable->casts_shadow() && takes(*randerable, casters);
 			const bool drawn = caster && (!settle || settled(*randerable));
 			if (drawn)
 			{

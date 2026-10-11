@@ -33,6 +33,12 @@ namespace Scene
 	{
 		using namespace Square::Resource;
 		ctx.add_object<InstancedMesh>();
+		// Its shadow (false: never in the shadow maps)
+		ctx.add_attribute_function<InstancedMesh, bool>
+			("cast_shadow"
+			, true
+			, [](const InstancedMesh* renderable) -> bool { return renderable->Render::Renderable::cast_shadow(); }
+			, [](InstancedMesh* renderable, const bool& cast) { renderable->Render::Renderable::cast_shadow(cast); });
 		// Mesh
 		ctx.add_attribute_function<InstancedMesh, std::string>
 			("mesh"

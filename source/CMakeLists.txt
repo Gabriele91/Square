@@ -105,6 +105,27 @@ add_library(Square SHARED ${SOURCES} ${OS_SOURCES})
 # Flags
 target_compile_definitions(Square PRIVATE ${OS_FLAGS})
 
+# The vector instructions of the CPU code (Render/Pipeline/SoftwareOcclusion: its raster):
+# SQUARE_SIMD AVX (x86/x64, the default: Rush needs it too), SSE4 (SSE 4.1), NONE (the scalar
+# code). ARM (NEON) is found by the compiler, whatever it says
+set(SQUARE_SIMD "AVX" CACHE STRING "Vector instructions of the CPU code: AVX, SSE4, NONE")
+set_property(CACHE SQUARE_SIMD PROPERTY STRINGS AVX SSE4 NONE)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)|(i.86)")
+    if(SQUARE_SIMD STREQUAL "AVX")
+        target_compile_definitions(Square PRIVATE SQUARE_SIMD_AVX)
+        if(MSVC)
+            target_compile_options(Square PRIVATE "/arch:AVX")
+        else()
+            target_compile_options(Square PRIVATE -mavx)
+        endif()
+    elseif(SQUARE_SIMD STREQUAL "SSE4")
+        target_compile_definitions(Square PRIVATE SQUARE_SIMD_SSE4)
+        if(NOT MSVC)
+            target_compile_options(Square PRIVATE -msse4.1)
+        endif()
+    endif()
+endif()
+
 if(NOT MSVC)
     target_compile_options(Square PRIVATE
         -Wno-unused-value

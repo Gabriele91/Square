@@ -66,6 +66,10 @@ namespace Render
 		uint64 version() const { return m_version; }
 		const Stats& stats() const { return m_stats; }
 
+		//the vector instructions of its raster: "AVX" (8 pixels at once), "SSE4.1" (4), "NEON" (4),
+		//"scalar" (one by one); chosen when Square is compiled (CMake SQUARE_SIMD, the target)
+		static const char* instructions();
+
 		//the depth buffer (the inverse of the depth along the view: 0 nothing), its size
 		const std::vector<float>& depth() const { return m_levels.empty() ? m_empty : m_levels[0]; }
 		const IVec2& size() const { return m_size; }

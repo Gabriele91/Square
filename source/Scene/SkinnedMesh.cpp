@@ -26,6 +26,12 @@ namespace Scene
 	{
 		using namespace Square::Resource;
 		ctx.add_object<SkinnedMesh>();
+		// Its shadow (false: never in the shadow maps)
+		ctx.add_attribute_function<SkinnedMesh, bool>
+			("cast_shadow"
+			, true
+			, [](const SkinnedMesh* renderable) -> bool { return renderable->Render::Renderable::cast_shadow(); }
+			, [](SkinnedMesh* renderable, const bool& cast) { renderable->Render::Renderable::cast_shadow(cast); });
 		// Mesh
 		ctx.add_attribute_function<SkinnedMesh, std::string>
 			("mesh"

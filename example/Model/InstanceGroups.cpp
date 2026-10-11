@@ -23,6 +23,7 @@ namespace InstanceGroups
             std::vector<Mat4>     m_models;
             ActorList             m_nodes;
             bool                  m_static{ false };
+            bool                  m_cast_shadow{ true };
         };
 
         //the node of a child with its mesh: the child, or a node of the exporter under it
@@ -42,10 +43,11 @@ namespace InstanceGroups
             return holder;
         }
 
-        //the children of a node by their mesh
-        std::map<const void*, Group> groups_of(const Shared<Actor>& node)
+        //the children of a node by their mesh and their shadow (cast or not: a group each)
+        using GroupKey = std::pair<const void*, bool>;
+        std::map<GroupKey, Group> groups_of(const Shared<Actor>& node)
         {
-            std::map<const void*, Group> groups;
+            std::map<GroupKey, Group> groups;
             const Mat4 to_node = inverse(node->global_model_matrix());
             //(a copy: the children change)
             const ActorList children = node->childs();
@@ -54,11 +56,13 @@ namespace InstanceGroups
                 if (auto holder = holder_of(child))
                 {
                     auto mesh = holder->component<StaticMesh>();
-                    Group& group = groups[mesh->m_mesh.get()];
+                    const bool cast_shadow = mesh->Render::Renderable::cast_shadow();
+                    Group& group = groups[GroupKey(mesh->m_mesh.get(), cast_shadow)];
                     if (!group.m_first)
                     {
                         group.m_first = mesh;
                         group.m_static = holder->is_static();
+                        group.m_cast_shadow = cast_shadow;
                     }
                     group.m_models.push_back(to_node * holder->global_model_matrix());
                     group.m_nodes.push_back(child);
@@ -76,6 +80,7 @@ namespace InstanceGroups
             instanced->mesh(group.m_first->m_mesh, group.m_first->m_materials);
             instanced->mesh_box(group.m_first->local_bounding_box());
             instanced->instances(group.m_models);
+            instanced->Render::Renderable::cast_shadow(group.m_cast_shadow);
             for (const auto& old : group.m_nodes)
             {
                 node->remove(old);
