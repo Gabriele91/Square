@@ -1,3 +1,8 @@
 example/Rush/assets/valley.sqz filter=lfs diff=lfs merge=lfs -text
 example/Rush/assets/canyon.sqz filter=lfs diff=lfs merge=lfs -text
 example/Rush/assets/canyonloop.sqz filter=lfs diff=lfs merge=lfs -text
+example/Rush/assets/arena.sqz filter=lfs diff=lfs merge=lfs -text
+example/Rush/assets/backwash.sqz filter=lfs diff=lfs merge=lfs -text
+example/Rush/assets/containment.sqz filter=lfs diff=lfs merge=lfs -text
+example/Rush/assets/sanctuary.sqz filter=lfs diff=lfs merge=lfs -text
+example/Rush/assets/lagoon.sqz filter=lfs diff=lfs merge=lfs -text
