@@ -6,3 +6,4 @@ example/Rush/assets/backwash.sqz filter=lfs diff=lfs merge=lfs -text
 example/Rush/assets/containment.sqz filter=lfs diff=lfs merge=lfs -text
 example/Rush/assets/sanctuary.sqz filter=lfs diff=lfs merge=lfs -text
 example/Rush/assets/lagoon.sqz filter=lfs diff=lfs merge=lfs -text
+example/Rush/assets/maya.sqz filter=lfs diff=lfs merge=lfs -text
