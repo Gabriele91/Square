@@ -1,6 +1,7 @@
 [submodule "dependencies/HLSL2ALL"]
 	path = dependencies/HLSL2ALL
 	url = https://github.com/Gabriele91/HLSL2ALL.git
+	branch = master
 [submodule "dependencies/glm"]
 	path = dependencies/glm
 	url = https://github.com/g-truc/glm.git
