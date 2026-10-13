@@ -5,6 +5,9 @@
 //
 #include "RenderVK.h"
 #include "Square/Driver/Window.h"
+#if defined(__linux__)
+	#include "SurfaceVK.h"
+#endif
 #include <algorithm>
 #include <cstring>
 #include <sstream>
@@ -195,6 +198,12 @@ namespace Render
 			logger()->error("Vulkan: unable to make the surface of the window");
 			return false;
 		}
+#elif defined(__linux__)
+		if (SurfaceVK::create(m_instance, m_resources, &m_surface) != VK_SUCCESS)
+		{
+			logger()->error("Vulkan: unable to make the surface of the window");
+			return false;
+		}
 #endif
 		if (!pick_device(context.m_gpu_type)) return false;
 		if (!create_device()) return false;
@@ -251,6 +260,8 @@ namespace Render
 		std::vector<const char*> extensions{ VK_KHR_SURFACE_EXTENSION_NAME };
 #if defined(_WIN32)
 		extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#elif defined(__linux__)
+		extensions.push_back(SurfaceVK::platform_extension());
 #endif
 		const bool messages = debug && AuxVK::has_extension(available, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		if (messages)

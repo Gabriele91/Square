@@ -87,6 +87,10 @@ elseif(UNIX AND NOT APPLE)
                       GL
                       xcb
                       dl)
+
+  # Add Vulkan Driver
+  add_subdirectory(Driver/Vulkan)
+  list(APPEND INSTALL_DY_LIBS SqVulkan)
 endif()
 
 # Add OGL Driver

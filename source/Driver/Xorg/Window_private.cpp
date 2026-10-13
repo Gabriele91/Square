@@ -89,6 +89,68 @@ namespace Xorg
 		const ContextInfo& m_info_context;
 		bool m_vsync{ true };
 	};
+
+	//the native window for the driver of Vulkan: get_device the display, get_device_context the
+	//window; the callback (callback_target_changed) is called at each swap: the driver presents its
+	//frame there (as Win32 and Metal on Cocoa)
+	struct SQUARE_API DeviceResourcesXVK : public DeviceResources
+	{
+	public:
+
+		DeviceResourcesXVK(const WindowXorg& window) : m_window(window) {}
+		virtual ~DeviceResourcesXVK() {}
+
+		virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
+		{
+			m_callback = callback;
+		}
+
+		virtual const ContextInfo& get_context_info() override
+		{
+			return m_window.m_info.m_context;
+		}
+
+		virtual bool get_vsync() override { return m_vsync; }
+		virtual void set_vsync(bool vsync) override { m_vsync = vsync; }
+
+		//the size of the window (the size of the swap chain), followed by its ConfigureNotify
+		virtual unsigned int width() override
+		{
+			return m_window.m_info.m_size[0];
+		}
+
+		virtual unsigned int height() override
+		{
+			return m_window.m_info.m_size[1];
+		}
+
+		virtual void* get_device()                     override { return (void*)s_os_context.m_xdisplay; }
+		virtual void* get_device_context(size_t i = 0) override { return (void*)m_window.m_xwindow; }
+		virtual void* get_swap_chain()                 override { return nullptr; }
+
+		virtual void* get_render_target()        override { return nullptr; }
+		virtual void* get_depth_stencil_target() override { return nullptr; }
+
+		virtual void* get_render_resource()        override { return nullptr; }
+		virtual void* get_depth_stencil_resource() override { return nullptr; }
+
+		virtual size_t number_of_device_context()  override { return 1; }
+
+		//the swap of the window: the frame of the driver presented
+		void present()
+		{
+			if (m_callback)
+			{
+				m_callback(this);
+			}
+		}
+
+	protected:
+
+		const WindowXorg& m_window;
+		bool              m_vsync{ false };
+		std::function<void(DeviceResources*)> m_callback{ nullptr };
+	};
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	static bool x11_create_visual(const WindowInfo& wnd_info, XVisualInfo*& visual, GLXFBConfig& fb_config)
 	{
@@ -194,6 +256,17 @@ namespace Xorg
 		return visual != nullptr;
 	}
     
+	//Vulkan: the visual of the screen (no framebuffer config: the driver makes its swap chain)
+	static bool x11_default_visual(const WindowInfo& wnd_info, XVisualInfo*& visual)
+	{
+		auto* screen = (ScreenXorg*)(wnd_info.m_screen->conteiner());
+		XVisualInfo visual_template{};
+		visual_template.visualid = XVisualIDFromVisual(DefaultVisual(s_os_context.m_xdisplay, screen->m_screen_id));
+		int n_return = 0;
+		visual = XGetVisualInfo(s_os_context.m_xdisplay, VisualIDMask, &visual_template, &n_return);
+		return visual != nullptr;
+	}
+
     //size hints: fixed size if not resizable, free in fullscreen (the WM refuses to fullscreen a fixed size window)
 	static void x11_set_size_hints(XWindow wnd, bool resize, bool fullscreen, const unsigned int size[2])
 	{
@@ -429,15 +502,18 @@ namespace Xorg
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	WindowXorg::WindowXorg(const WindowInfo& info)
 	{
+		//Vulkan: the native window only (the driver makes its surface)
+		const bool vulkan = info.m_context.m_type == ContextInfo::CTX_VULKAN;
 		//create a window in window mode
-		XVisualInfo* visual_info;
-		GLXFBConfig fb_config;
-		x11_create_visual(info, visual_info, fb_config);
+		XVisualInfo* visual_info = nullptr;
+		GLXFBConfig fb_config = nullptr;
+		if (vulkan) x11_default_visual(info, visual_info);
+		else        x11_create_visual(info, visual_info, fb_config);
 		//failed 
 		if (!visual_info) throw std::runtime_error("Error: can't create XVisualInfo context");
 		//OpenGL
 		GLXContext xgl_ctx = NULL;
-		if (!x11_create_OpenGL_context(info, fb_config, xgl_ctx)) throw std::runtime_error("Error: can't create the OpenGL context");
+		if (!vulkan && !x11_create_OpenGL_context(info, fb_config, xgl_ctx)) throw std::runtime_error("Error: can't create the OpenGL context");
 		//Root xwindow				
 		auto* screen = (ScreenXorg*)info.m_screen->conteiner();
 		XWindow root_xwindow = RootWindow(s_os_context.m_xdisplay, screen->m_screen_id);
@@ -450,14 +526,15 @@ namespace Xorg
 		XWindow wnd;
 		x11_create_screen_window(info, root_xwindow, visual_info, wnd);
 		//save
-		m_type = WindowXorg::GL_WINDOW;
+		m_type = vulkan ? WindowXorg::VK_WINDOW : WindowXorg::GL_WINDOW;
 		m_info = info;
 		m_windowed_size[0] = info.m_size[0];
 		m_windowed_size[1] = info.m_size[1];
 		m_xinfo = visual_info;
 		m_xwindow = wnd;
 		m_gl_xcontext = xgl_ctx;
-		m_gl_device  = new DeviceResourcesXGL(m_info.m_context);
+		if (vulkan) m_vk_device = new DeviceResourcesXVK(*this);
+		else        m_gl_device = new DeviceResourcesXGL(m_info.m_context);
 		//get context
 		acquire_context();
         //save
@@ -475,11 +552,14 @@ namespace Xorg
         //remove
         XDeleteContext(s_os_context.m_xdisplay, m_xwindow, s_os_context.m_xcontext);
         //delete glcontext
-        if (glXGetCurrentContext() == m_gl_xcontext)
+        if (m_gl_xcontext)
         {
-            glXMakeCurrent(s_os_context.m_xdisplay, X11None, NULL);
+            if (glXGetCurrentContext() == m_gl_xcontext)
+            {
+                glXMakeCurrent(s_os_context.m_xdisplay, X11None, NULL);
+            }
+            glXDestroyContext(s_os_context.m_xdisplay, m_gl_xcontext);
         }
-        glXDestroyContext(s_os_context.m_xdisplay, m_gl_xcontext);
         //Delete xwindow
         XDestroyWindow(s_os_context.m_xdisplay, m_xwindow);
         // Free the visual info
@@ -490,6 +570,11 @@ namespace Xorg
 			delete m_gl_device;
 			m_gl_device = nullptr;
 		}
+		if (m_vk_device)
+		{
+			delete m_vk_device;
+			m_vk_device = nullptr;
+		}
     }
 
 	DeviceResourcesXGL* WindowXorg::get_device_wrapper() const
@@ -497,13 +582,27 @@ namespace Xorg
 		return m_gl_device;
 	}
 
+	DeviceResources* WindowXorg::device() const
+	{
+		if (m_vk_device) return m_vk_device;
+		return m_gl_device;
+	}
+
     void WindowXorg::swap() const
     {
+        //Vulkan: the frame of the driver presented
+        if (m_vk_device)
+        {
+            m_vk_device->present();
+            return;
+        }
         glXSwapBuffers(s_os_context.m_xdisplay, m_xwindow);
     }
 
     void WindowXorg::acquire_context() const
     {
+        //Vulkan: no context
+        if (!m_gl_xcontext) return;
         glXMakeCurrent(s_os_context.m_xdisplay, m_xwindow, m_gl_xcontext);
     }
 

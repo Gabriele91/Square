@@ -19,13 +19,15 @@ namespace Video
 namespace Xorg
 {
 	struct DeviceResourcesXGL;
+	struct DeviceResourcesXVK;
 	struct WindowXorg
 	{
 		enum WindowType
 		{
 			UNKNOW_WINDOW,
 			GL_WINDOW,
-			DX_WINDOW
+			DX_WINDOW,
+			VK_WINDOW
 		};
 		//window type
 		WindowType          m_type       { UNKNOW_WINDOW };
@@ -40,12 +42,16 @@ namespace Xorg
 		InputXorg*	        m_input_ref  { nullptr };
 		Window*    	        m_window_ref { nullptr };
 		DeviceResourcesXGL* m_gl_device  { nullptr };
+		DeviceResourcesXVK* m_vk_device  { nullptr }; // Vulkan: the native window for the driver
 		
 		WindowXorg(const WindowInfo& info);
 
 		virtual ~WindowXorg();
 
 		DeviceResourcesXGL* get_device_wrapper() const;
+
+		//the device resources of the window (of OpenGL or of Vulkan)
+		DeviceResources* device() const;
 
 		void swap() const;
 

@@ -1397,8 +1397,8 @@ namespace Xorg
 	{
 		//cast
 		const auto* window = (const Xorg::WindowXorg*)m_native;
-        //get gl device
-		return (DeviceResources*)(window->m_gl_device);
+        //get the device (of OpenGL or of Vulkan)
+		return window->device();
 	}
 
 	bool Window::valid() const
