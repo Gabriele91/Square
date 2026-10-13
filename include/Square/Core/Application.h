@@ -95,6 +95,7 @@ namespace Square
 		int m_depth_ctx  { 24 };
 		int m_stencil_ctx{ 8  };
         GpuType m_gpu_type{ GpuType::GPU_DEFAULT };
+		bool m_srgb{ true };
 		bool m_debug{ false };
 	};
         
@@ -131,6 +132,12 @@ namespace Square
 		//ctx info
 		Context*	     context();
 		Render::Context* render();
+		//render driver asked to execute (used by the RenderSystem)
+		const WindowRenderDriver& render_driver() const;
+		//the splash screen of the engine (Render::SplashScreen): shown by execute while the
+		//application loads (before AppInterface::start); on by default
+		void splash_screen(bool enable);
+		bool splash_screen() const;
         //get attr (const)
         const AppInterface*   app_instance() const;
         Allocator*            allocator() const;
@@ -156,17 +163,16 @@ namespace Square
 		static Application*     instance();
 
     private:
-        //info screen
+        //info screen (input, world and render device are systems of the context)
         Video::Window*      m_window{ nullptr };
-		Video::Input*       m_input{ nullptr };
-		Scene::World*       m_world{ nullptr };
+        WindowRenderDriver  m_render_driver;
 		//info instance
         AppInterface*       m_instance{ nullptr };
+		bool                m_splash_screen{ true };
 		//context (delta of update)
         double              m_last_delta_time{ 0 };
 		//context (application context)
 		Context				m_context;
-		Render::Context*	m_render;
         //global
         static Application* s_instance;
     };

@@ -1,0 +1,90 @@
+parameters
+{
+    //the faces drawn: back, front or off (both)
+    cull cullface(back)
+    //the faces in the directional shadow map: back, front or off (both: the one sided meshes)
+    shadow_cull cullface(back)
+    albedo_map    texture("white")
+    normal_map    texture("normal_up")
+    specular_map  texture("black")
+    occlusion_map texture("white")
+    emmisive_map  texture("black")
+    //alpha = albedo_map.a * color.a
+    color         Vec4(1.0,1.0,1.0,0.5)
+    shininess     float(16.0)
+    emmisive      Vec3(1.0,1.0,1.0)
+
+    mask          float(-1.0)
+    mask_shadow   float(-1.0)
+    //1 = lit without the shadows of the lights (glows, light beams); only forward/translucent passes
+    ignore_shadows float(0.0)
+}
+
+//Translucent Legacy (Blinn-Phong): alpha blended, drawn after the opaque scene, back to front.
+//It is not written into the G-Buffer and it does not cast shadows (it receives them).
+sub_effect
+{
+    queue { type translucent }
+    //forward rendering pipeline: drawn on the screen target
+    technique "forward"
+    {
+        variants clip(mask)
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one_minus_src_alpha
+            cullface param(cull)
+            lights only_ambient
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #include "Legacy.hlsl"
+            }
+        }
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one
+            cullface param(cull)
+            lights spot_point_direction
+            shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #include "Legacy.hlsl"
+            }
+        }
+    }
+    //deferred rendering pipeline: drawn into the light buffer (linear, encoded by the present)
+    technique "translucent"
+    {
+        variants clip(mask)
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one_minus_src_alpha
+            cullface param(cull)
+            lights only_ambient
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define OUTPUT_LINEAR_COLOR
+                #include "Legacy.hlsl"
+            }
+        }
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one
+            cullface param(cull)
+            lights spot_point_direction
+            shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define OUTPUT_LINEAR_COLOR
+                #include "Legacy.hlsl"
+            }
+        }
+    }
+}

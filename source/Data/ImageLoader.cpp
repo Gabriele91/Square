@@ -85,11 +85,12 @@ namespace Data
 		// BMP magic number (first 2 bytes match)
 		else if ((magic & 0xFFFF0000) == 0x424D0000) return Image::ImageTypeFormat::ITF_BMP;
 
-		// TGA detection requires more sophisticated approach
-		// TGA header typically starts with a variable-length image ID
-		// Most TGA files have first byte as image ID length (0-255)
-		else if ((magic & 0x000000FF) <= 0xFF &&  // Image ID length valid
-			    ((magic & 0x0000FF00) >> 8) <= 1)  // Color map type (0 or 1)
+		// TGA detection requires more sophisticated approach: the header bytes (byte 0 the image
+		// ID length, any; byte 1 the color map type, 0 or 1; byte 2 the image type) and the
+		// TGA 2.0 footer
+		else if (in_data[1] <= 1 &&
+			    (in_data[2] == 1 || in_data[2] == 2  || in_data[2] == 3 ||    // raw: indexed, RGB, grey
+			     in_data[2] == 9 || in_data[2] == 10 || in_data[2] == 11))    // RLE: indexed, RGB, grey
 			 {
 				 // Check footer with null terminator included in length
 			     const char footer[] = "TRUEVISION-XFILE."; // NULL included

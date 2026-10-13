@@ -1,5 +1,6 @@
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/StringUtilities.h"
+#include "FilesystemArchive.h"
 #include <sstream>
 #include <cstdlib>
 #include <cstring>
@@ -30,6 +31,7 @@
     #include <dirent.h>
 	#include <unistd.h>
     #include <stdint.h>
+    #include <limits.h>
     #if defined(__linux)
     #include <sys/sendfile.h> // sendfile()
     #include <fcntl.h>
@@ -44,7 +46,7 @@
     #define bswap32 __builtin_bswap32
 	#define SEPARETOR '/'
 	#define SEPARETOR_STR "/"
-    #define OS_MAX_PATH _POSIX_PATH_MAX
+    #define OS_MAX_PATH PATH_MAX
 #endif
 
 namespace Square
@@ -128,10 +130,33 @@ namespace Filesystem
     std::string home_dir()
     {
         const char *home_dir = std::getenv("HOME");
-        if (home_dir) return home_dir;
-        else         return "";
+        if (home_dir && *home_dir) return home_dir;
+        #ifdef _WIN32
+        //Windows: HOME only in some shells (Git Bash), the profile of the user always
+        const char *profile = std::getenv("USERPROFILE");
+        if (profile && *profile) return profile;
+        #endif
+        return "";
     }
     
+    std::string app_data_dir()
+    {
+        #if defined(_WIN32)
+            const char *app_data = std::getenv("APPDATA");
+            if (app_data && *app_data) return app_data;
+            const std::string home = home_dir();
+            return home.size() ? join(join(home, "AppData"), "Roaming") : "";
+        #elif defined(__APPLE__)
+            const std::string home = home_dir();
+            return home.size() ? join(join(home, "Library"), "Application Support") : "";
+        #else
+            const char *data_home = std::getenv("XDG_DATA_HOME");
+            if (data_home && *data_home) return data_home;
+            const std::string home = home_dir();
+            return home.size() ? join(join(home, ".local"), "share") : "";
+        #endif
+    }
+
     std::string resource_dir()
     {
         #if defined(__APPLE__)
@@ -160,8 +185,8 @@ namespace Filesystem
             {
                 return bundle_path + SEPARETOR + resources_path + SEPARETOR;
             }
-            //or return executable path
-            return  program_dir();
+            // Not in a bundle: use working directory (set by cwd in debugger / launch script)
+            return working_dir();
         #else
             return working_dir();
         #endif
@@ -169,12 +194,13 @@ namespace Filesystem
 
     bool is_file(const std::string& filepath)
     {
-        return  access(filepath.c_str(), F_OK) != -1 && !is_directory(filepath);
+        //an archive is a directory
+        return (access(filepath.c_str(), F_OK) != -1 && !is_directory(filepath)) || Archive::is_file(filepath);
     }
 
     bool is_readable(const std::string& filepath)
     {
-        return  access(filepath.c_str(), R_OK) != -1;
+        return access(filepath.c_str(), R_OK) != -1 || Archive::is_file(filepath) || Archive::is_directory(filepath);
     }
 
     bool is_writable(const std::string& filepath)
@@ -185,11 +211,24 @@ namespace Filesystem
     bool exists(const std::string& filepath)
     {
         #if _WIN32
-            return PathFileExistsA(get_fullpath(filepath).m_path.c_str()) == TRUE;
+            if (PathFileExistsA(get_fullpath(filepath).m_path.c_str()) == TRUE) return true;
         #else
             struct stat buf;
-            return (stat(filepath.c_str(), &buf) == 0);
+            if (stat(filepath.c_str(), &buf) == 0) return true;
         #endif
+        //in an archive
+        return Archive::is_file(filepath) || Archive::is_directory(filepath);
+    }
+
+    bool is_archive(const std::string& filepath)
+    {
+        const std::string extension = get_extension(filepath);
+        return (extension == ".sqz" || extension == ".zip") && Archive::is_directory(filepath);
+    }
+
+    bool archive_write(const std::string& directorypath, const std::string& archivepath)
+    {
+        return Archive::write(directorypath, archivepath);
     }
 
 
@@ -259,8 +298,13 @@ namespace Filesystem
         std::vector<char> out;
         /////////////////////////////////////////////////////////////////////
         FILE* file = fopen(filepath.c_str(), "rb");
-        //bad case
-        if (!file) return out;
+        //not on the disk: in an archive
+        if (!file)
+        {
+            std::vector<unsigned char> bytes;
+            if (Archive::read(filepath, bytes)) out.assign(bytes.begin(), bytes.end());
+            return out;
+        }
         /////////////////////////////////////////////////////////////////////
         std::fseek(file, 0, SEEK_END);
         size_t size = std::ftell(file);
@@ -285,8 +329,13 @@ namespace Filesystem
         std::string out;
         /////////////////////////////////////////////////////////////////////
         FILE* file = fopen(filepath.c_str(), "r");
-        //bad case
-        if (!file) return "";
+        //not on the disk: in an archive
+        if (!file)
+        {
+            std::vector<unsigned char> bytes;
+            if (Archive::read(filepath, bytes)) out.assign(bytes.begin(), bytes.end());
+            return out;
+        }
         /////////////////////////////////////////////////////////////////////
         std::fseek(file, 0, SEEK_END);
         size_t size = std::ftell(file);
@@ -311,8 +360,12 @@ namespace Filesystem
         std::vector<unsigned char> out;
         /////////////////////////////////////////////////////////////////////
         FILE* file = fopen(filepath.c_str(), "rb");
-        //bad case
-        if (!file) return out;
+        //not on the disk: in an archive
+        if (!file)
+        {
+            Archive::read(filepath, out);
+            return out;
+        }
         /////////////////////////////////////////////////////////////////////
         std::fseek(file, 0, SEEK_END);
         size_t size = std::ftell(file);
@@ -356,9 +409,36 @@ namespace Filesystem
         return uncompressed_size;
     }
 
+    //a gzip file in memory (of an archive)
+    static std::vector<unsigned char> gzip_uncompress(const std::vector<unsigned char>& input)
+    {
+        std::vector<unsigned char> out;
+        if (input.size() < 18) return out;
+        //the size: the last 4 bytes, little-endian
+        out.resize(size_t(input[input.size() - 4]) | size_t(input[input.size() - 3]) << 8 | size_t(input[input.size() - 2]) << 16 | size_t(input[input.size() - 1]) << 24);
+        if (out.empty()) return out;
+        z_stream stream{};
+        if (inflateInit2(&stream, 16 + MAX_WBITS) != Z_OK) return {};
+        stream.next_in = const_cast<Bytef*>(input.data());
+        stream.avail_in = uInt(input.size());
+        stream.next_out = out.data();
+        stream.avail_out = uInt(out.size());
+        const int status = inflate(&stream, Z_FINISH);
+        inflateEnd(&stream);
+        if (status != Z_STREAM_END) return {};
+        return out;
+    }
+
     std::vector<unsigned char> binary_compress_file_read_all(const std::string& filepath)
     {
         std::vector<unsigned char> out;
+        //not on the disk: in an archive
+        if (access(filepath.c_str(), F_OK) == -1)
+        {
+            std::vector<unsigned char> bytes;
+            if (Archive::read(filepath, bytes)) out = gzip_uncompress(bytes);
+            return out;
+        }
         //get size
         long uncompressed_size = get_uncompressed_size(filepath);
         //no size:
@@ -439,9 +519,12 @@ namespace Filesystem
         if (GetFullPathNameA(relative.c_str(), MAX_PATH, fullpath, 0) == 0) return PathOperation{ false, "" };
         return PathOperation{ true, std::string(fullpath) };
 #else
-        char realname[_POSIX_PATH_MAX];
-        if (realpath(relative.c_str(), realname) == 0) return PathOperation{ false, "" };
-        return PathOperation{ true, std::string(realname) };
+        //allocated by realpath (a fixed buffer must be at least PATH_MAX)
+        char* realname = realpath(relative.c_str(), nullptr);
+        if (!realname) return PathOperation{ false, "" };
+        std::string output(realname);
+        free(realname);
+        return PathOperation{ true, output };
 #endif
     }
 
@@ -598,7 +681,7 @@ namespace Filesystem
         #if defined(_WIN32)
             return !!CopyFile(infilepath.c_str(), ofilepath.c_str(), false);
         #elif defined(__APPLE__)
-            return copyfile(infilepath.c_str(), ofilepath.c_str(), NULL, COPYFILE_ALL) != 0;
+            return ::copyfile(infilepath.c_str(), ofilepath.c_str(), NULL, COPYFILE_ALL) != 0;
             #elif defined(__linux__)
             int fd_src, fd_dest;  // Declare file descriptors at the beginning
             struct stat src_stat;
@@ -653,13 +736,19 @@ namespace Filesystem
     bool is_directory(const std::string& directory)
     {
         DWORD ftyp = GetFileAttributesA(directory.c_str());
-        if (ftyp == INVALID_FILE_ATTRIBUTES) return false;
-        if (ftyp & FILE_ATTRIBUTE_DIRECTORY) return true;
-        return false;
+        if (ftyp != INVALID_FILE_ATTRIBUTES && (ftyp & FILE_ATTRIBUTE_DIRECTORY)) return true;
+        //an archive, a directory in it
+        return Archive::is_directory(directory);
     }
 
     FilesList get_files(const std::string& directorypath)
     {
+        //an archive, a directory in it
+        {
+            FilesList output{ true, std::vector<std::string>{} };
+            std::vector<std::string> directories;
+            if (Archive::list(directorypath, output.m_fields, directories)) return output;
+        }
         //test directory
         if (!is_directory(directorypath)) return FilesList{ false, std::vector<std::string>{} };
         //alloc output
@@ -689,6 +778,12 @@ namespace Filesystem
 
     DirectoriesList get_sub_directories(const std::string& directorypath)
     {
+        //an archive, a directory in it
+        {
+            DirectoriesList output{ true, std::vector<std::string>{} };
+            std::vector<std::string> files;
+            if (Archive::list(directorypath, files, output.m_fields)) return output;
+        }
         //test directory
         if (!is_directory(directorypath)) return DirectoriesList{ false, std::vector<std::string>{} };
         //alloc output
@@ -720,12 +815,19 @@ namespace Filesystem
     bool is_directory(const std::string& directory)
     {
         struct stat st;
-        if (stat(directory.c_str(), &st) == 0) return ((st.st_mode & S_IFDIR) != 0);
-        return false;
+        if (stat(directory.c_str(), &st) == 0 && (st.st_mode & S_IFDIR) != 0) return true;
+        //an archive, a directory in it
+        return Archive::is_directory(directory);
     }
 
     FilesList get_files(const std::string& directorypath)
     {
+        //an archive, a directory in it
+        {
+            FilesList output{ true, std::vector<std::string>{} };
+            std::vector<std::string> directories;
+            if (Archive::list(directorypath, output.m_fields, directories)) return output;
+        }
         //test directory
         if (!is_directory(directorypath)) return FilesList{ false, std::vector<std::string>{} };
         //attributes
@@ -756,6 +858,12 @@ namespace Filesystem
 
     DirectoriesList get_sub_directories(const std::string& directorypath)
     {
+        //an archive, a directory in it
+        {
+            DirectoriesList output{ true, std::vector<std::string>{} };
+            std::vector<std::string> files;
+            if (Archive::list(directorypath, files, output.m_fields)) return output;
+        }
         //test directory
         if (!is_directory(directorypath)) return DirectoriesList{ false, std::vector<std::string>{} };
         //attributes

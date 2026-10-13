@@ -2,6 +2,12 @@
 #define PCF_SHADOW
 #include <ShadowCamera>
 SamplerCube(point_shadow_map)
+// Material option: 1 = lit by this light without its shadow (e.g. glows, light beams).
+// A material that does not set it gets 0: shadows on.
+#ifndef IGNORE_SHADOWS_UNIFORM
+#define IGNORE_SHADOWS_UNIFORM
+float ignore_shadows;
+#endif
 
 #ifdef PCF_SHADOW
 float point_light_shadow(in Vec3 fposition_to_light, const float bias)
@@ -58,13 +64,13 @@ float point_light_compute_shadow(in Vec4 fposition, const float bias)
 	return point_light_shadow(fposition_to_light, bias);
 }
 
-void point_light_apply_shadow(inout LightResult result, in Vec4 fposition)
+float point_light_apply_shadow(in Vec4 fposition)
 {
+	if (ignore_shadows > 0.5) return 1.0;
 	//const bias
 	const float bias = 0.001;
 	//factor
 	float shadow_factor = point_light_compute_shadow(fposition, bias);
-	//add shadow
-	result.m_diffuse *= shadow_factor;
-	result.m_specular *= shadow_factor;
+	//return
+	return shadow_factor;
 }

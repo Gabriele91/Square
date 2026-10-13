@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 10/03/18.
-//  Copyright © 2017 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2017 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -12,7 +12,6 @@
 #include "Square/Core/Object.h"
 #include "Square/Data/AttributeSerialize.h"
 #include "Square/Data/Json.h"
-#include "Square/Render/Collection.h"
 
 namespace Square
 {
@@ -21,6 +20,7 @@ namespace Scene
 	//..................
 	//declaretion
 	class Actor;
+	class Component;
 	class Level;
 	class World;
 	using ActorList = std::vector< Shared<Actor> >;
@@ -37,13 +37,14 @@ namespace Scene
 		//Registration in context
 		static void object_registration(Context& ctx);
 
-		//constructor
-		Level(Context& context);
-		Level(Context& context, const std::string& name);
+		//constructor: a level is always of a world (World::create_level creates it)
+		Level(Context& context, Weak<World> world, const std::string& name = std::string());
 		virtual ~Level();
 
 		//add an actor
 		void add(Shared<Actor> child);
+
+		// Load a new actor from a file; an instance is cread at every call,
 		Shared<Actor> load_actor(const std::string& resource_name);
 
 		//query
@@ -66,6 +67,17 @@ namespace Scene
 		const std::string& name() const;
 		void name(const std::string&);
 
+		//active (the default): its components updated and in the systems of the world (render,
+		//collisions...); not active: out of them, its actors as they are (a menu, a level not
+		//played now), back as they were when active again
+		void active(bool active);
+		bool active() const;
+
+		//paused: its components not updated, still in the systems of the world (drawn as they
+		//are: a pause menu over it)
+		void paused(bool paused) { m_paused = paused; }
+		bool paused() const { return m_paused; }
+
 		//message
 		void send_message(const VariantRef& value, bool brodcast = false);
 		void send_message(const Message& msg, bool brodcast = false);
@@ -77,13 +89,19 @@ namespace Scene
 		void deserialize(Data::Archive& archive);
 		void deserialize_json(Data::JsonValue& archive);
 
-		//get randerable collection
-		const Render::Collection& randerable_collection() const;
+		//its world (empty if it is gone, or the level was removed from it)
+		Weak<World> world() const;
+
+		//every frame (SceneSystem): the events of the components of its actors
+		void update(double delta_time);
+		void late_update(double delta_time);
 
 	protected:
 		
 		//name
 		std::string m_name;
+		bool        m_active{ true };
+		bool        m_paused{ false };
 
 		//actor list
 		ActorList m_actors;
@@ -92,12 +110,19 @@ namespace Scene
 		void on_add_a_actor(Shared<Actor> actor);
 		void on_remove_a_actor(Shared<Actor> actor);
 
-		//Call by component add into level / actor
+		//Call by component add into level / actor: sent to the systems of the world (their
+		//collections: render, collisions...)
 		void on_add_a_component(Shared<Actor> actor, Shared<Component> component);
 		void on_remove_a_component(Shared<Actor> actor, Shared<Component> component);
 
-		//Collection
-		Render::Collection m_rander_collection;
+		//every component of its actors leaves the systems of the world (the actors are cleared,
+		//the level leaves the world, or it is not active), or comes back to them (active again)
+		void remove_components();
+		void add_components();
+
+		//world, given by the world that creates it (reset only when it removes the level)
+		Weak<World> m_world;
+		friend class World;
 
 		//firend class
 		friend class Actor;

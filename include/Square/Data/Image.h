@@ -47,6 +47,7 @@ namespace  Data
 		void apply_kernel(ImageKernel kernel);
 		void flip_vertical();
 		void flip_horizontal();
+		void normal_inv_y();
     
 		unsigned long get_width() const  { return m_width; }
 		unsigned long get_height() const { return m_height; }
@@ -69,8 +70,8 @@ namespace  Data
 			Render::TextureType&   image_type
 		);
 
-		//load image from file raw
-		static bool load
+		//load image from file raw (the data of a file: PNG, JPEG, BMP, TGA; the format from the data)
+		static SQUARE_API bool load
 		(
 			const std::vector<unsigned char>& data_file,
 			std::vector<unsigned char>& out_image,
@@ -78,6 +79,87 @@ namespace  Data
 			unsigned long&  image_height,
 			Render::TextureFormat& image_format,
 			Render::TextureType&   image_type
+		);
+
+		//encode a PNG file (8 bit per channel): pixels row after row from the top, channels 1
+		//(grey), 2 (grey alpha), 3 (RGB) or 4 (RGBA); empty on a wrong input
+		static SQUARE_API std::vector<unsigned char> encode_png
+		(
+			const unsigned char* pixels,
+			unsigned long width,
+			unsigned long height,
+			unsigned int  channels
+		);
+
+		//encode a TGA file with RLE compression (type 10, TGA 2.0 footer): pixels in the order of
+		//TGA, bytes_per_pixel 2 (A1R5G5B5 little endian), 3 (BGR) or 4 (BGRA); rows from the top
+		//(top_down) or from the bottom; empty on a wrong input
+		static SQUARE_API std::vector<unsigned char> encode_tga_rle
+		(
+			const unsigned char* pixels,
+			unsigned long width,
+			unsigned long height,
+			unsigned int  bytes_per_pixel,
+			bool          top_down
+		);
+
+		//////////////////////////////////////////////////////////////////////
+		// Compressed textures (ImageCompressed.cpp): BC1/BC3/BC4/BC5 in DDS files, ASTC 4x4 (and
+		// BC) in KTX 1 files; the levels one after the other from the largest, rows of 4x4 blocks
+		// (Render::texture_level_bytes)
+
+		//a DDS or KTX file (from its first bytes)
+		static SQUARE_API bool is_compressed(const std::vector<unsigned char>& data_file);
+
+		//the levels of a DDS or KTX file of a compressed format the engine has
+		static SQUARE_API bool load_compressed
+		(
+			const std::vector<unsigned char>& data_file,
+			std::vector<unsigned char>& out_levels,
+			unsigned long&  image_width,
+			unsigned long&  image_height,
+			unsigned int&   image_levels,
+			Render::TextureFormat& image_format
+		);
+
+		//compress a level to BC1 (RGB), BC3 (RGBA), BC4 (R) or BC5 (RG): pixels RGBA (4 bytes),
+		//row after row from the top; the borders of the last blocks repeat the last pixels;
+		//empty on a wrong input
+		static SQUARE_API std::vector<unsigned char> compress_bc
+		(
+			const unsigned char* rgba,
+			unsigned long width,
+			unsigned long height,
+			Render::TextureFormat format
+		);
+
+		//compress a level to ASTC 4x4 (LDR, medium quality, the threads of the CPU): pixels RGBA
+		//(4 bytes), row after row from the top; empty on a wrong input
+		static SQUARE_API std::vector<unsigned char> compress_astc
+		(
+			const unsigned char* rgba,
+			unsigned long width,
+			unsigned long height
+		);
+
+		//encode the levels of a BC texture in a DDS file; empty on a wrong input
+		static SQUARE_API std::vector<unsigned char> encode_dds
+		(
+			const unsigned char* levels_data,
+			unsigned long width,
+			unsigned long height,
+			unsigned int  levels,
+			Render::TextureFormat format
+		);
+
+		//encode the levels of a compressed texture in a KTX 1 file; empty on a wrong input
+		static SQUARE_API std::vector<unsigned char> encode_ktx
+		(
+			const unsigned char* levels_data,
+			unsigned long width,
+			unsigned long height,
+			unsigned int  levels,
+			Render::TextureFormat format
 		);
 
 	protected:

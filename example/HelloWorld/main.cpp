@@ -52,12 +52,12 @@ public:
 		
 		case Square::Video::KEY_O:
 			if (action == Square::Video::ActionEvent::PRESS)
-			if (m_render_debug)
+			if (render_debug())
 			{
-				if(!m_render_debug->draw_flags())
-					m_render_debug->draw_flags(Render::DF_DRAW_OBB);
+				if(!render_debug()->draw_flags())
+					render_debug()->draw_flags(Render::DF_DRAW_OBB);
 				else
-					m_render_debug->draw_flags(0);
+					render_debug()->draw_flags(0);
 			}
 		break;
 		case Square::Video::KEY_C:
@@ -119,6 +119,10 @@ public:
 		}
 	}
 
+	void mouse_scroll_event(double scroll)
+	{
+	}
+
     void start()
     {
 		using namespace Square;		
@@ -133,9 +137,16 @@ public:
 		uint32_t window_width, window_height;
 		context().window()->get_size(window_width, window_height);
 		// level
-		m_level = world().level("main");
+		m_level = world().create_level("main");
+		// rendering pipeline of the world: SQUARE_RENDERING=forward|deferred (default: deferred)
+		if (auto render_world = world().instance<RenderInstance>())
+		{
+			const char* rendering_type = std::getenv("SQUARE_RENDERING");
+			const bool forward = rendering_type && Square::case_insensitive_equal(rendering_type, "forward");
+			render_world->pipeline((forward ? RP_FORWARD : RP_DEFERRED) | RP_DEBUG);
+		}
 		// load
-		if (m_level->load_actor("base_scene"))
+		if (m_level->load_actor("base/scene"))
 		{
 			for (auto node : { m_level->find_actor("base_scene.node"), m_level->find_actor("base_scene.box") })
 			{
@@ -157,15 +168,8 @@ public:
 		}
 		else
 		{
-			context().logger()->info("Error to load base_scene");
+			context().logger()->info("Error to load base/scene");
 		}
-		//
-		m_drawer = Square::MakeShared<Render::Drawer>(context());
-		m_drawer->create<Render::DrawerPassForward>();
-		m_drawer->create<Render::DrawerPassShadow>();
-		// Draw OBB
-		m_render_debug = m_drawer->create<Render::DrawerPassDebug>();
-		m_render_debug->draw_flags(0);
     }
     
     bool run(double dt)
@@ -183,12 +187,6 @@ public:
 		{
 			child->turn(rotate_euler<float>(Square::radians(10.0f) * dt, 0.0f, 0.0f));
 		}
-		// draw
-		m_drawer->draw(
-			  Vec4(0.25, 0.5, 1.0, 1.0)
-			, Vec4(0.1, 0.1, 0.1, 1.0)
-			, m_level->randerable_collection()
-		);
 		//loop event
         return m_loop;
     }
@@ -241,21 +239,28 @@ public:
 		}
 	}
 
+	//the debug pass of the world (OBB, lights, textures): the RenderSystem draws the world
+	//every frame, the drawer of the world exists after start()
+	Square::Shared<Square::Render::DrawerPassDebug> render_debug()
+	{
+		auto render_world = world().instance<Square::RenderInstance>();
+		return render_world ? render_world->debug_pass() : nullptr;
+	}
+
 private:
     
     bool m_loop = true;
 	double m_acc = 0;
 	Square::Time::FPSCounter				   m_counter;
 	Square::Shared<Square::Scene::Level>	   m_level;
-    Square::Shared<Square::Render::Drawer>     m_drawer;
-	Square::Shared<Square::Render::DrawerPassDebug> m_render_debug;
 };
 
 static Square::Shell::ParserCommands s_ShellCommands
 {
-	  Square::Shell::Command{ "backend","b", "select backend [ogl, d3d]"  , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("ogl")) }
+	  Square::Shell::Command{ "backend","b", "select backend [ogl, d3d, mtl]" , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("ogl")) }
     , Square::Shell::Command{ "gputype","g", "select gpu type [low, high]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("high")) }
 	, Square::Shell::Command{ "debug",  "d", "enable debug"               , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
+	, Square::Shell::Command{ "srgb",   "c", "enable gamme correction"    , Square::Shell::ValueType::value_bool  , false, Square::Shell::Value_t(true) }
 	, Square::Shell::Command{ "verbose","v", "enable verbose"             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 	, Square::Shell::Command{ "help",   "h", "show help"                  , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 };
@@ -284,10 +289,14 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
 	app.logger()->verbose(std::get<bool>(args.at("verbose")));
 	//GPU type
 	GpuType gputype = std::get<std::string>(args.at("gputype")) == "low" ? GpuType::GPU_LOW : GpuType::GPU_HIGH;
+	//Enable SRGB
+	const bool srgb = std::get<bool>(args.at("srgb"));
 	//driver?
 	WindowRenderDriver render_driver = std::get<std::string>(args.at("backend")) == "d3d"
-		? (WindowRenderDriver{ Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, gputype, debug })
-		: (WindowRenderDriver{ Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, gputype, debug });
+		? (WindowRenderDriver{ Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, gputype, srgb, debug })
+		: std::get<std::string>(args.at("backend")) == "mtl" 
+		? (WindowRenderDriver{ Render::RenderDriver::DR_METAL, 3, 0, 24, 8, gputype, srgb, debug })
+		: (WindowRenderDriver{ Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, gputype, srgb, debug });
 	
 	//test
     app.execute

@@ -15,6 +15,9 @@ namespace Filesystem
 	SQUARE_API std::string program_dir();
     SQUARE_API std::string working_dir();
     SQUARE_API std::string home_dir();
+    //the folder of the data of the applications of the user (settings, saves): Windows
+    //%APPDATA%, macOS ~/Library/Application Support, Linux $XDG_DATA_HOME or ~/.local/share
+    SQUARE_API std::string app_data_dir();
     SQUARE_API std::string resource_dir();
 
     SQUARE_API bool is_directory(const std::string& directorypath);
@@ -22,6 +25,9 @@ namespace Filesystem
     SQUARE_API bool is_readable(const std::string& filepath);
     SQUARE_API bool is_writable(const std::string& filepath);
     SQUARE_API bool exists(const std::string& filepath);
+    //archives (.sqz, .zip): a directory for all the functions here ("pack.sqz/dir/file"), read only
+    SQUARE_API bool is_archive(const std::string& filepath);
+    SQUARE_API bool archive_write(const std::string& directorypath, const std::string& archivepath);
     //utilities files
     SQUARE_API std::string get_directory(const std::string& filepath);
     SQUARE_API std::string get_filename(const std::string& filepath);

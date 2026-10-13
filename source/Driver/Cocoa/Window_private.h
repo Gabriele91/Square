@@ -17,16 +17,18 @@ namespace Video
 namespace Cocoa
 {
     struct SQUARE_API DeviceResourcesGL;
-    
+    struct SQUARE_API DeviceResourcesMetal;
+
     class SQUARE_API WindowCocoa
     {
     public:
         WindowInfo       m_info;
         NSSquareWindow*  m_window    { nullptr };   /* window */
         NSSquareView*    m_view      { nullptr };   /* view */
-        NSOpenGLContext* m_context   { nullptr };   /* OpenGL context */
+        NSOpenGLContext* m_context   { nullptr };   /* OpenGL context (nil for Metal) */
         Window*          m_window_ref{ nullptr };
         DeviceResources* m_device    { nullptr };
+        bool             m_is_metal  { false   };
         
         WindowCocoa();
         

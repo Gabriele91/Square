@@ -1,0 +1,23 @@
+{
+    "buildType": {
+        "default": "release",
+        "description": "The configuration of the build (CMakeLists.txt: Debug, Release, Retail)",
+        "choices": {
+            "debug": {
+                "short": "Debug",
+                "long": "Not optimized, with the debug tools (F1 panel, profiler, debug pass); libraries *d",
+                "buildType": "Debug"
+            },
+            "release": {
+                "short": "Release",
+                "long": "Optimized, with the debug tools (F1 panel, profiler, debug pass); libraries *r",
+                "buildType": "Release"
+            },
+            "retail": {
+                "short": "Retail",
+                "long": "Optimized, no debug tools, only warnings and errors in the log; libraries without a suffix",
+                "buildType": "Retail"
+            }
+        }
+    }
+}

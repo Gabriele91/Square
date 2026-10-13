@@ -14,6 +14,7 @@
 #include "Square/Scene/Level.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/World.h"
+#include "Square/System/System.h"
 #include <algorithm>
 
 namespace Square
@@ -34,10 +35,59 @@ namespace Scene
 
 	World::World(Context& context) : Object(context), SharedObject_t(context.allocator())
 	{
+		//alive: the systems started from now on give it their instances
+		context.add_world(this);
+		//the systems already running
+		for (const Shared<System>& system : context.systems()) add_instance(*system);
 	}
 	World::~World()
 	{
+		context().remove_world(this);
+		clear_instances();
 	}
+
+	//systems
+	void World::add_instance(System& system)
+	{
+		if (auto new_instance = system.create_instance(*this))
+		{
+			m_instances.push_back(new_instance);
+			//the components already in the levels (the active ones: the others add them when active)
+			for (const Shared<Level>& level : m_levels)
+			{
+				if (!level->active()) continue;
+				level->visit([&](Shared<Actor> actor) -> bool
+				{
+					for (auto& component : actor->components()) new_instance->on_add_component(actor, component.second);
+					return true;
+				});
+			}
+		}
+	}
+	void World::remove_instances(const System& system)
+	{
+		m_instances.erase(std::remove_if(m_instances.begin(), m_instances.end(), [&system](const Shared<SystemInstance>& world_instance)
+		{
+			return &world_instance->system() == &system;
+		}), m_instances.end());
+	}
+	void World::clear_instances()
+	{
+		m_instances.clear();
+	}
+	Shared<SystemInstance> World::instance(uint64 instance_id) const
+	{
+		for (const Shared<SystemInstance>& world_instance : m_instances)
+		{
+			if (world_instance->object_id() == instance_id) return world_instance;
+		}
+		return nullptr;
+	}
+	const SystemInstanceList& World::instances() const
+	{
+		return m_instances;
+	}
+	
 	//name
 	const std::string& World::name() const
 	{
@@ -49,32 +99,43 @@ namespace Scene
 	}
 
 	//add an level	
-	Shared<Level> World::level()
+	Shared<Level> World::create_level(const std::string& name)
 	{
-		m_levels.push_back(MakeShared<Level>(context()));
+		m_levels.push_back(MakeShared<Level>(context(), weak_from_this(), name));
 		return m_levels.back();
-	}
-	void  World::add(Shared<Level> level)
-	{
-		m_levels.push_back(level);
 	}
 
 	//query
 	Shared<Level> World::level(size_t index)
 	{
-		return m_levels[index];
+		return index < m_levels.size() ? m_levels[index] : nullptr;
 	}
 	Shared<Level> World::level(const std::string& name)
 	{
-		//search
-		for (const Shared<Level>& level : m_levels) if (level->name() == name) return level;
-		//create
-		auto level = MakeShared<Level>(context(), name);
-		//add
-		add(level);
-		//return
-		return level;
-	}		
+		for (const Shared<Level>& level : m_levels)
+		{
+			if (level->name() == name) return level;
+		}
+		return nullptr;
+	}
+
+	void World::active_levels(const std::vector<std::string>& names)
+	{
+		//off first: a level that goes on finds the systems free of the ones that went off
+		auto named = [&names](const Shared<Level>& level)
+		{
+			return std::find(names.begin(), names.end(), level->name()) != names.end();
+		};
+		for (const Shared<Level>& level : m_levels)
+		{
+			if (!named(level)) level->active(false);
+		}
+		for (const Shared<Level>& level : m_levels)
+		{
+			if (named(level)) level->active(true);
+		}
+	}
+
 	const LevelList& World::levels() const
 	{
 		return m_levels;
@@ -123,9 +184,34 @@ namespace Scene
 	{
 		//remove child from list
 		auto it = std::find(m_levels.begin(), m_levels.end(), level_);
-		if (it != m_levels.end()) { m_levels.erase(it); return true; }
+		if (it != m_levels.end())
+		{
+			//its components leave the systems of this world
+			(*it)->remove_components();
+			(*it)->m_world.reset();
+			m_levels.erase(it);
+			return true;
+		}
 		//return
 		return false;
+	}
+
+	//every frame
+	void World::update(double delta_time)
+	{
+		for (size_t i = 0; i < m_levels.size(); ++i)
+		{
+			Shared<Level> level = m_levels[i];
+			level->update(delta_time);
+		}
+	}
+	void World::late_update(double delta_time)
+	{
+		for (size_t i = 0; i < m_levels.size(); ++i)
+		{
+			Shared<Level> level = m_levels[i];
+			level->late_update(delta_time);
+		}
 	}
 
 	//message
@@ -175,8 +261,9 @@ namespace Scene
 	void  World::deserialize(Data::Archive& archive)
 	{
 		///clear
-		m_levels.clear(); //todo: call events
-						  //deserialize this
+		for (auto& old_level : m_levels) { old_level->remove_components(); old_level->m_world.reset(); }
+		m_levels.clear();
+		//deserialize this
 		Data::deserialize(archive, this);
 		//deserialize childs
 		{
@@ -184,15 +271,16 @@ namespace Scene
 			archive % size;
 			for (uint64 i = 0; i != size; ++i)
 			{
-				level()->deserialize(archive);
+				create_level()->deserialize(archive);
 			}
 		}
 	}
 	void  World::deserialize_json(Data::JsonValue& archive)
 	{
 		///clear
-		m_levels.clear(); //todo: call events
-						  //deserialize this
+		for (auto& old_level : m_levels) { old_level->remove_components(); old_level->m_world.reset(); }
+		m_levels.clear();
+		//deserialize this
 		if(archive.contains("data") && archive["data"].is_object())
 		{
 			Data::deserialize_json(archive["data"], this);
@@ -201,7 +289,7 @@ namespace Scene
 		{
 			for (auto& jlevel : archive["levels"].array())
 			{
-				level()->deserialize_json(jlevel);
+				create_level()->deserialize_json(jlevel);
 			}
 		}
 	}

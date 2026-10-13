@@ -57,12 +57,13 @@ Vec4 mul_point_light_view_projection(in Vec4 position, uint cube_id)
 }
 
 // Shadow of a Direction light
-#define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 4
+#define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 8 // cascades at most (Render/Light.h)
 struct DirectionShadowCameraStruct
 {
 	Mat4 m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 	Mat4 m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
-	Vec3 m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
+	Vec3 m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // x: the depth (view) where the cascade ends; y, z: free
+	IVec4 m_options; // x: the filter (0 none, 1 PCF, 2 PCSS), y: the cascades
 };
 
 cbuffer DirectionShadowCamera
@@ -83,5 +84,17 @@ Vec4 mul_direction_light_view_projection(in Vec4 position, uint id)
 {
 	position = mul(position, direction_shadow_camera.m_view[id]);
 	position = mul(position, direction_shadow_camera.m_projection[id]);
+	return position;
+}
+
+//the clip position of a cascade written by a vertex shader (multi-pass, instanced) as the geometry
+//shader writes it: on GLSL the clip space of a vertex shader is fixed up (z from [0,1] to [-1,1]:
+//SPIRV-Cross, at its return), the one of a geometry shader not (EmitVertex), and the samples of
+//the cascades (DirectionShadowLight) read the depth of the geometry shader
+Vec4 direction_light_clip_as_layered(in Vec4 position)
+{
+#ifdef SQ_BACKEND_GLSL
+	position.z = (position.z + position.w) * 0.5;
+#endif
 	return position;
 }

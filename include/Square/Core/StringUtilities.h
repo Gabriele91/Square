@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele on 10/03/2018.
-//  Copyright © 2016 Gabriele. All rights reserved.
+//  Copyright ï¿½ 2016 Gabriele. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -182,4 +182,30 @@ namespace Square
 		return std::make_tuple(to_boolean(arg, v), v);
 	}
 
+}
+
+namespace std
+{
+	inline std::string operator * (const std::string& value, size_t n)
+	{
+		std::string out;
+		out.reserve(value.size() * n);
+		for(size_t i = 0;i < n; ++i)
+		{
+			out += value;
+		}
+		return out;
+	}
+	
+    inline std::string& operator *= (std::string& inout_string, size_t n)
+	{
+	    
+		std::string tmp(inout_string);
+		inout_string.reserve(tmp.size() * n);
+		for(size_t i = 0;i < n; ++i)
+		{
+			inout_string += tmp;
+		}
+		return inout_string;
+	}
 }

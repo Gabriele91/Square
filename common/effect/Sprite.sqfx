@@ -1,0 +1,52 @@
+parameters
+{
+    //its texture by its color (the one of each sprite too)
+    albedo_map texture("white")
+    color      Vec4(1.0, 1.0, 1.0, 1.0)
+    //turned around an axis (xyz in the space of its actor, w 1) or toward the camera (w 0)
+    axis       Vec4(0.0, 1.0, 0.0, 0.0)
+    //the uv animated by the time (AnimatedUV.hlsl): scrolled (uv a second); a flipbook (columns,
+    //rows, frames a second, frames used: 0 all); a sprite with a frame of its own: by it
+    uv_scroll  Vec2(0.0, 0.0)
+    flipbook   Vec4(1.0, 1.0, 0.0, 0.0)
+}
+
+//Sprites alpha blended (smoke, mist, leaves): unlit quads turned toward the camera (Sprite.hlsl, Render::SpriteBatch),
+//drawn after the opaque scene, back to front; no shadow
+sub_effect
+{
+    queue { type translucent }
+    //forward rendering pipeline: drawn on the screen target
+    technique "forward"
+    {
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one_minus_src_alpha
+            cullface off
+            lights only_ambient
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #include <Sprite>
+            }
+        }
+    }
+    //deferred rendering pipeline: drawn into the light buffer (linear, encoded by the present)
+    technique "translucent"
+    {
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one_minus_src_alpha
+            cullface off
+            lights only_ambient
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define OUTPUT_LINEAR_COLOR
+                #include <Sprite>
+            }
+        }
+    }
+}

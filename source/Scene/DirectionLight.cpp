@@ -5,6 +5,7 @@
 //  Created by Gabriele Di Bari on 27/04/18.
 //  Copyright � 2018 Gabriele Di Bari. All rights reserved.
 //
+#include <algorithm>
 #include <array>
 #include "Square/Core/Object.h"
 #include "Square/Core/Context.h"
@@ -26,12 +27,6 @@ namespace Square
 
 namespace Square
 {
-namespace Constants
-{
-	const Vec3 DIRECTION_LIGHT_DIR(0.0, 0.0, 1.0);
-	const Vec3 UP_LIGHT_DIR(0.0, 1.0, 0.0);
-}
-
 namespace Scene
 {
     //Add element to objects
@@ -66,6 +61,31 @@ namespace Scene
 		, IVec2(0)
 		, [](const DirectionLight* plight) -> IVec2 { return plight->shadow_size(); }
 		, [](DirectionLight* plight, const IVec2& shadow_size)  { plight->shadow(shadow_size);  });
+
+		ctx.add_attribute_function<DirectionLight, int>
+		("cascades"
+		, int(DIRECTION_SHADOW_CSM_DEFAULT_FACES)
+		, [](const DirectionLight* plight) -> int      { return plight->cascades(); }
+		, [](DirectionLight* plight, const int& cascades){ plight->cascades(cascades); });
+
+		//(in the binary archives after cascades: the scenes converted before it must be converted again)
+		ctx.add_attribute_function<DirectionLight, float>
+		("shadow_distance"
+		, float(0.0f)
+		, [](const DirectionLight* plight) -> float         { return plight->shadow_distance(); }
+		, [](DirectionLight* plight, const float& distance){ plight->shadow_distance(distance); });
+
+		ctx.add_attribute_function<DirectionLight, int>
+		("cascade_fit"
+		, int(CascadeFit::FOLLOW)
+		, [](const DirectionLight* plight) -> int      { return int(plight->cascade_fit()); }
+		, [](DirectionLight* plight, const int& fit)   { plight->cascade_fit(CascadeFit(fit)); });
+
+		ctx.add_attribute_function<DirectionLight, float>
+		("cascade_margin"
+		, float(0.2f)
+		, [](const DirectionLight* plight) -> float       { return plight->cascade_margin(); }
+		, [](DirectionLight* plight, const float& margin) { plight->cascade_margin(margin); });
     }
 
 	//light
@@ -75,7 +95,7 @@ namespace Scene
 	, m_buffer(context)
 	{
 		m_rotation = Mat3(1);
-		m_direction = Constants::DIRECTION_LIGHT_DIR;
+		m_direction = Constants::axis_z;
 	}
 
 	//all events
@@ -84,20 +104,20 @@ namespace Scene
 		if (auto ptr_actor = actor().lock())
 		{
 			m_rotation = to_mat3(ptr_actor->rotation(true));
-			m_direction = m_rotation * Constants::DIRECTION_LIGHT_DIR;
+			m_direction = m_rotation * Constants::axis_z;
 		}
 	}
 	void DirectionLight::on_deattch()
 	{
 		m_rotation = Mat3(1);
-		m_direction = Constants::DIRECTION_LIGHT_DIR;
+		m_direction = Constants::axis_z;
 	}
 	void DirectionLight::on_transform()
 	{
 		if (auto ptr_actor = actor().lock())
 		{
 			m_rotation = to_mat3(ptr_actor->rotation(true));
-			m_direction = m_rotation * Constants::DIRECTION_LIGHT_DIR;
+			m_direction = m_rotation * Constants::axis_z;
 		}
 	}
 	void DirectionLight::on_message(const Message& msg){}
@@ -123,15 +143,71 @@ namespace Scene
 		if (m_buffer.size() != size)
 		{
 			if (size.x != 0 && size.y != 0)
-				m_buffer.build(size, Render::ShadowBuffer::SB_TEXTURE_CSM);
+				m_buffer.build(size, Render::ShadowBuffer::SB_TEXTURE_CSM, (unsigned int)m_cascades);
 			else
 				m_buffer.destoy();
 		}
 	}
 
+	void DirectionLight::cascades(int cascades)
+	{
+		const int count = std::clamp(cascades, 1, int(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
+		if (count == m_cascades) return;
+		m_cascades = count;
+		//a layer of the shadow map for each one (its size copied: build resets it)
+		if (!shadow()) return;
+		const IVec2 size = m_buffer.size();
+		m_buffer.build(size, Render::ShadowBuffer::SB_TEXTURE_CSM, (unsigned int)m_cascades);
+	}
+
+	int DirectionLight::cascades() const
+	{
+		return m_cascades;
+	}
+
+	void DirectionLight::shadow_distance(float distance)
+	{
+		m_shadow_distance = (std::max)(distance, 0.0f);
+	}
+
+	float DirectionLight::shadow_distance() const
+	{
+		return m_shadow_distance;
+	}
+
 	const IVec2& DirectionLight::shadow_size() const
 	{
 		return m_buffer.size();
+	}
+
+	void DirectionLight::cascade_fit(CascadeFit fit)
+	{
+		if (m_cascade_fit != fit)
+		{
+			//stable again: its cascades made again (not the ones of before)
+			m_cascade_fit = fit;
+			m_stable_key.clear();
+		}
+	}
+
+	CascadeFit DirectionLight::cascade_fit() const
+	{
+		return m_cascade_fit;
+	}
+
+	void DirectionLight::cascade_margin(float margin)
+	{
+		m_cascade_margin = std::clamp(margin, 0.0f, 2.0f);
+	}
+
+	float DirectionLight::cascade_margin() const
+	{
+		return m_cascade_margin;
+	}
+
+	bool DirectionLight::stable_cascades() const
+	{
+		return m_cascade_fit == CascadeFit::STABLE;
 	}
 
 	//object methods
@@ -156,12 +232,14 @@ namespace Scene
 	//methods
 	const Geometry::Sphere& DirectionLight::bounding_sphere() const
 	{
-		return {};
+		static const Geometry::Sphere emptry;
+		return emptry;
 	}
 	
 	const Geometry::Frustum& DirectionLight::frustum() const
 	{
-		return {};
+		static const Geometry::Frustum emptry{};
+		return emptry;
 	}
 
 	Weak<Render::Transform> DirectionLight::transform() const
@@ -177,11 +255,12 @@ namespace Scene
 
 	namespace CSMAux
 	{
-		CSMCascadeDepth compute_cascade_depth(const Render::Camera& camera)
+		CSMCascadeDepth compute_cascade_depth(const Render::Camera& camera, unsigned int cascades, float distance)
 		{
 			CSMCascadeDepth cascade_depth;
 			const float cam_near = camera.viewport().near();
-			const float cam_far = camera.viewport().far();
+			//the shadow up to its distance (if any, within the view)
+			const float cam_far = distance > cam_near ? (std::min)(camera.viewport().far(), distance) : camera.viewport().far();
 			const float clip_range = cam_far - cam_near;
 			const float min_z = cam_near;
 			const float max_z = cam_far;
@@ -189,9 +268,9 @@ namespace Scene
 			const float ratio = max_z / min_z;
 
 			cascade_depth[0] = cam_near;
-			for (uint32_t i = 1; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; i++)
+			for (uint32_t i = 1; i < cascades; i++)
 			{
-				float p = static_cast<float>(i) / static_cast<float>(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
+				float p = static_cast<float>(i) / static_cast<float>(cascades);
 				// Log depth
 				float log_depth = min_z * std::pow(ratio, p);
 				// Linear depth
@@ -200,7 +279,7 @@ namespace Scene
 				const float lambda = 0.5f;
 				cascade_depth[i] = lerp(log_depth, uniform, lambda);
 			}
-			cascade_depth[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES] = cam_far;
+			cascade_depth[cascades] = cam_far;
 			return cascade_depth;
 		}
 
@@ -246,10 +325,8 @@ namespace Scene
 			const Mat4& frustum_mat, 
 			const Mat4& light_space_transform,
 			float texture_size, 
-			const Mat4& sceneAABB, 
-			float& world_space_dim,
-			float& world_space_depth, 
-			bool square = true, 
+			const Mat4& sceneAABB,
+			bool square = true,
 			bool round_to_pixel_size = true,
 			bool use_constant_size = true
 		) 
@@ -324,9 +401,6 @@ namespace Scene
 				actual_size = std::max(r - l, t - b);
 			}
 
-			world_space_dim = actual_size;
-			world_space_depth = f - n;
-
 			// make it square
 			if (square) 
 			{
@@ -365,50 +439,164 @@ namespace Scene
 						const Render::ShadowBuffer& buffer,
 						const Mat3& rotation,
 						const Vec3& direction,
-						const IVec2& shadow_map_size)
+						const IVec2& shadow_map_size,
+						unsigned int cascades,
+						float distance)
 		{
 			// Depths
-			auto cascade_vdepths = compute_cascade_depth(camera);
+			auto cascade_vdepths = compute_cascade_depth(camera, cascades, distance);
 			// multiply by inverse projection*view matrix to find frustum vertices in world space
 			// transform to light space
 			// same pass, find minimum along each axis
-			Mat4 light_space_transform = look_at(Vec3(0.0f, 0.0f, 0.0f), Vec3(direction), Constants::UP_LIGHT_DIR);
+			Mat4 light_space_transform = look_at(Vec3(0.0f, 0.0f, 0.0f), Vec3(direction), Constants::axis_y);
 			// Scene AABB
 			Mat4 scene_matrix = scene_size.to_matrix();
+			scene_matrix *= Square::scale(Vec3{1.1f,1.1f,1.1f});
 			// Cam view
 			const Mat4& cam_view = camera.view();
-			// Const
-			const float base_bias = 0.0000020000f;
-			const float slope_bias = 0.0000060000f;
-			// Copy values
-			for (unsigned int i = 0; i < DIRECTION_SHADOW_CSM_NUMBER_OF_FACES; ++i)
+			// Copy values (the depth bias: the shader, in texels of each cascade)
+			for (unsigned int i = 0; i < cascades; ++i)
 			{
 				Mat4 cam_projection = Square::perspective(camera.viewport().fov(), camera.viewport().aspect(), cascade_vdepths[i], cascade_vdepths[i + 1]);
 				Mat4 cascade_cam = inverse(cam_projection * cam_view);
-				float fs_size = 0;
-				float fs_depth = 0;
 				const auto& [l_proj,l_view] = fit_light_proj_mat_to_camera_frustum(cascade_cam,
-                                                                                   light_space_transform, 
-                                                                                   shadow_map_size.x, 
-                                                                                   scene_matrix,
-                                                                                   fs_size, 
-                                                                                   fs_depth);
+                                                                                   light_space_transform,
+                                                                                   shadow_map_size.x,
+                                                                                   scene_matrix);
 				data.m_projection[i] = l_proj;
 				data.m_view[i] = l_view;
-				data.m_data[i] = Vec3(cascade_vdepths[i + 1],
-									  base_bias * fs_size,
-					                  slope_bias * fs_size);
+				data.m_data[i] = Vec3(cascade_vdepths[i + 1], 0.0f, 0.0f);
 			}
+		}
+	}
+
+	namespace CSMAux
+	{
+		//the corners of the slice of a cascade in world space (its frustum: the inverse of its
+		//projection by the view)
+		std::array<Vec3, 8> slice_corners(const Mat4& cascade_cam)
+		{
+			std::array<Vec3, 8> corners;
+			const std::array<Vec4, 8> ndc = get_ndc_box();
+			for (size_t i = 0; i != ndc.size(); ++i)
+			{
+				const Vec4 point = cascade_cam * ndc[i];
+				corners[i] = Vec3(point) / point.w;
+			}
+			return corners;
+		}
+
+		//the sphere around a slice: its center, its radius (rounded up: the same every frame, it
+		//depends only on the splits, the field of view, the aspect)
+		std::tuple<Vec3, float> slice_sphere(const std::array<Vec3, 8>& corners)
+		{
+			Vec3 center(0.0f);
+			for (const Vec3& corner : corners)
+			{
+				center += corner;
+			}
+			center /= float(corners.size());
+			float radius = 0.0f;
+			for (const Vec3& corner : corners)
+			{
+				radius = std::max(radius, length(corner - center));
+			}
+			radius = std::ceil(radius * 16.0f) / 16.0f;
+			return { center, radius };
+		}
+	}
+
+	Vec2 DirectionLight::stable_depth(const Mat4& light_view) const
+	{
+		//the depth of the scene (a little larger, as the fit by the box) in the space of the light
+		const Mat4 scene_matrix = m_scene_size.to_matrix() * Square::scale(Vec3{ 1.1f, 1.1f, 1.1f });
+		Vec2 depth(std::numeric_limits<float>::max(), std::numeric_limits<float>::lowest());
+		for (int corner = 0; corner != 8; ++corner)
+		{
+			const Vec4 unit(float(corner & 1), float((corner >> 1) & 1), float((corner >> 2) & 1), 1.0f);
+			const float z = Vec3(light_view * scene_matrix * unit).z;
+			depth.x = std::min(depth.x, z);
+			depth.y = std::max(depth.y, z);
+		}
+		//the one kept while the scene stays in it, not much smaller (a hovercraft at its border: the
+		//cascades do not move); else again, with a margin
+		const float kept = m_stable_depth.y - m_stable_depth.x;
+		const bool out = depth.x < m_stable_depth.x || depth.y > m_stable_depth.y;
+		const bool smaller = (depth.y - depth.x) < kept * 0.5f;
+		if (!m_stable_depth_valid || out || smaller)
+		{
+			const float pad = (depth.y - depth.x) * 0.1f;
+			m_stable_depth = Vec2(depth.x - pad, depth.y + pad);
+			m_stable_depth_valid = true;
+		}
+		return m_stable_depth;
+	}
+
+	void DirectionLight::stable_uniform(Render::UniformDirectionShadowLight& data, const Render::Camera& camera) const
+	{
+		const unsigned int cascades = (unsigned int)m_cascades;
+		const IVec2 size = m_buffer.size();
+		//what the cascades are made for: one changed, all of them again
+		const Render::Viewport& viewport = camera.viewport();
+		const Vec2 planes = viewport.near_and_far();
+		const std::vector<float> key
+		{
+			  m_direction.x, m_direction.y, m_direction.z
+			, float(cascades), float(size.x), m_shadow_distance, m_cascade_margin
+			, viewport.fov(), viewport.aspect(), planes.x, planes.y
+		};
+		if (key != m_stable_key)
+		{
+			m_stable_key = key;
+			m_stable_depth_valid = false;
+			for (StableCascade& cascade : m_stable)
+			{
+				cascade.m_valid = false;
+			}
+		}
+		const auto depths = CSMAux::compute_cascade_depth(camera, cascades, m_shadow_distance);
+		const Mat4 light_view = look_at(Vec3(0.0f, 0.0f, 0.0f), Vec3(m_direction), Constants::axis_y);
+		const Vec2 depth = stable_depth(light_view);
+		const Mat4& camera_view = camera.view();
+		for (unsigned int i = 0; i < cascades; ++i)
+		{
+			const Mat4 projection = Square::perspective(viewport.fov(), viewport.aspect(), depths[i], depths[i + 1]);
+			const auto [center, radius] = CSMAux::slice_sphere(CSMAux::slice_corners(inverse(projection * camera_view)));
+			const float half = radius * (1.0f + m_cascade_margin);
+			const Vec2 at = Vec2(light_view * Vec4(center, 1.0f));
+			//it stays while the slice is inside it; else around the slice, on the grid of its texels
+			StableCascade& cascade = m_stable[i];
+			const Vec2 offset = glm::abs(at - cascade.m_center);
+			const bool inside = cascade.m_valid && offset.x <= half - radius && offset.y <= half - radius;
+			if (!inside)
+			{
+				const float texel = (2.0f * half) / float(std::max(size.x, 1));
+				cascade.m_center = glm::round(at / texel) * texel;
+				cascade.m_half = half;
+				cascade.m_valid = true;
+			}
+			const Vec2 low = cascade.m_center - Vec2(cascade.m_half);
+			const Vec2 high = cascade.m_center + Vec2(cascade.m_half);
+			data.m_projection[i] = CSMAux::csm_ortho(low.x, high.x, high.y, low.y, depth.x, depth.y);
+			data.m_view[i] = light_view;
+			data.m_data[i] = Vec3(depths[i + 1], 0.0f, 0.0f);
 		}
 	}
 
 	void DirectionLight::set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera, bool draw_shadow_map) const
 	{
-		if (auto ptr_actor = actor().lock() && draw_shadow_map)
+		const bool drawn = actor().lock() && draw_shadow_map;
+		if (drawn && m_cascade_fit == CascadeFit::STABLE)
 		{
-			CSMAux::set_uniform(m_cache_udirectionshadowlight, *camera, m_scene_size, m_buffer, m_rotation, m_direction, m_buffer.size());
+			stable_uniform(m_cache_udirectionshadowlight, *camera);
+		}
+		else if (drawn)
+		{
+			CSMAux::set_uniform(m_cache_udirectionshadowlight, *camera, m_scene_size, m_buffer, m_rotation, m_direction, m_buffer.size(), (unsigned int)m_cascades, m_shadow_distance);
 		}
 		std::memcpy(data, &m_cache_udirectionshadowlight, sizeof(Render::UniformDirectionShadowLight));
+		//the filter and the cascades: every frame (the filter changes without a new shadow map)
+		data->m_options = IVec4(int(shadow_filter()), m_cascades, m_cascade_colors ? 1 : 0, 0);
 	}
 
 	void DirectionLight::set_scene_size(const Geometry::AABoundingBox& scene)

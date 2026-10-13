@@ -40,6 +40,8 @@ namespace Render
     class Uniform;
     class UniformConstBuffer;
     class MapConstBuffer;
+    class RenderInspector;
+    class Profiler;
 	// POINTERS
 	using TextureSPtr	   = Shared< Texture >;
 	using TargetSPtr	   = Shared< Target >;
@@ -265,9 +267,62 @@ namespace Render
 		TF_DEPTH_COMPONENT16,
 		TF_DEPTH_COMPONENT24,
 		TF_DEPTH_COMPONENT32,
+		////////////////////
+		//compressed (blocks of 4x4 pixels, the levels are given: no mipmaps built by the GPU)
+		TF_BC1,       //RGB (DXT1), 8 bytes a block
+		TF_BC3,       //RGBA (DXT5), 16 bytes a block
+		TF_BC4,       //R (RGTC1), 8 bytes a block
+		TF_BC5,       //RG (RGTC2), 16 bytes a block
+		TF_ASTC_4x4,  //RGBA (LDR), 16 bytes a block
 
 		TF_INVALID = 0xFFFF
 	};
+
+	//a compressed format (texture_level_bytes for the size of a level)
+	inline bool is_compressed_format(TextureFormat format)
+	{
+		switch (format)
+		{
+		case TF_BC1:
+		case TF_BC3:
+		case TF_BC4:
+		case TF_BC5:
+		case TF_ASTC_4x4: return true;
+		default:          return false;
+		}
+	}
+
+	//bytes of a 4x4 block of a compressed format (0: not compressed)
+	inline unsigned int texture_block_bytes(TextureFormat format)
+	{
+		switch (format)
+		{
+		case TF_BC1:
+		case TF_BC4:      return 8;
+		case TF_BC3:
+		case TF_BC5:
+		case TF_ASTC_4x4: return 16;
+		default:          return 0;
+		}
+	}
+
+	//bytes of a row of blocks and of a whole level of a compressed format, width x height pixels
+	inline unsigned int texture_block_row_bytes(TextureFormat format, unsigned int width)
+	{
+		return ((width + 3) / 4) * texture_block_bytes(format);
+	}
+
+	inline unsigned int texture_level_bytes(TextureFormat format, unsigned int width, unsigned int height)
+	{
+		return texture_block_row_bytes(format, width) * ((height + 3) / 4);
+	}
+
+	//size of the level of a texture (at least 1)
+	inline unsigned int texture_level_size(unsigned int size, unsigned int level)
+	{
+		const unsigned int level_size = size >> level;
+		return level_size ? level_size : 1;
+	}
 
 	enum TextureType : unsigned char
 	{
@@ -331,7 +386,11 @@ namespace Render
 		unsigned int		m_height;
 		const unsigned char*m_bytes;
 		TextureType 		m_type;
-		TextureTypeFormat m_type_format;
+		TextureTypeFormat   m_type_format;
+		bool                m_is_srgb;
+		//levels in m_bytes, one after the other from the largest (compressed formats: all the
+		//levels the texture has, the GPU cannot build them)
+		unsigned int        m_levels{ 1 };
 	};
 
 	struct TextureGpuDataInformation
@@ -389,6 +448,10 @@ namespace Render
 	{
 		Texture*   m_texture;
 		TargetType m_type;
+		//a layer of the texture (a face of a cube, a layer of an array) as the target, the draws
+		//into it (no layer routed by the shaders); -1: all of them (layered: a geometry shader or
+		//the vertex shader routes each draw)
+		int        m_layer{ -1 };
 	};
 	////////////////////////////////////////////////
 	// ATTRIBUTES
@@ -581,6 +644,26 @@ namespace Render
 
 	};
 
+	//the pixels drawn: a rectangle of the target (x, y, width, height in pixels, from its top
+	//left corner, as the viewport), when enabled; the clears are not clipped by it
+	struct ScissorState
+	{
+		bool  m_enable{ false };
+		IVec4 m_rect{ 0, 0, 0, 0 };
+		//costructors
+		ScissorState() {}
+		ScissorState(const IVec4& rect) : m_enable(true), m_rect(rect) {}
+		//operators
+		bool operator==(const ScissorState& ss) const
+		{
+			return m_enable == ss.m_enable && (!m_enable || m_rect == ss.m_rect);
+		}
+		bool operator!=(const ScissorState& ss) const
+		{
+			return !(*this == ss);
+		}
+	};
+
 	struct BlendState
 	{
 		bool      m_enable;
@@ -727,6 +810,7 @@ namespace Render
 		DR_OPENGL_ES,
 		DR_VULKAN,
 		DR_DIRECTX,
+		DR_METAL,
 
 		DR_INVALID = 0xFF
 	};
@@ -736,7 +820,8 @@ namespace Render
 		"OpenGL",
 		"OpenGLES",
 		"Vulkan",
-		"DirectX"
+		"DirectX",
+		"Metal"
 	};
 
     struct RenderDriverInfo
@@ -748,6 +833,23 @@ namespace Render
         std::string              m_shader_language;
         int                      m_shader_version;
 		std::vector<std::string> m_shader_exts;
+		// Capabilities: backends that can run geometry shaders (OpenGL, DirectX)
+		// use the single-pass layered shadow techniques; backends without them
+		// (Metal, GLES, Vulkan-without-GS) fall back to the multi-pass variants.
+		bool                     m_geometry_shader{ false };
+		// Capability: the backend can write the render-target-array-index / viewport
+		// index from the vertex shader (SV_RenderTargetArrayIndex -> gl_Layer without
+		// a geometry shader). On OpenGL this maps to GL_ARB_shader_viewport_layer_array
+		// (not available e.g. on macOS desktop GL 4.1); on Metal it is always available.
+		bool                     m_vertex_viewport_index{ false };
+		// Capability: the backend can issue instanced draw calls (draw_*_instanced).
+		// Core since OpenGL 3.1 / available on Metal and DirectX 11.
+		bool                     m_draw_instanced{ false };
+		// Capabilities: the compressed texture formats the backend can sample, BC1/BC3/BC4/BC5
+		// (desktop: DirectX, OpenGL with S3TC/RGTC, Metal on macOS) and ASTC 4x4 (Metal on
+		// Apple GPUs, OpenGL with KHR_texture_compression_astc_ldr)
+		bool                     m_texture_bc{ false };
+		bool                     m_texture_astc{ false };
     };
 	/////////////////////////////////
 	//Uniform global //legacy
@@ -926,6 +1028,7 @@ namespace Render
 
 		virtual bool init(Video::DeviceResources* resource) = 0;
 		virtual void close() = 0;
+		virtual bool is_srgb_framebuffer() const = 0;
 
 		virtual const ClearColorState& get_clear_color_state() = 0;
 		virtual void set_clear_color_state(const ClearColorState& cf) = 0;
@@ -939,6 +1042,9 @@ namespace Render
 
 		virtual const ViewportState& get_viewport_state() = 0;
 		virtual void set_viewport_state(const ViewportState& vs) = 0;
+
+		virtual const ScissorState& get_scissor_state() = 0;
+		virtual void set_scissor_state(const ScissorState& ss) = 0;
 
 		virtual const BlendState& get_blend_state() = 0;
 		virtual void set_blend_state(const BlendState& bs) = 0;
@@ -1002,6 +1108,10 @@ namespace Render
 		virtual void draw_arrays(DrawType type, unsigned int start, unsigned int size) = 0;
 		virtual void draw_elements(DrawType type, unsigned int n) = 0;
 		virtual void draw_elements(DrawType type, unsigned int start, unsigned int n) = 0;
+		//draw instanced (the same geometry is drawn "instances" times; the shader
+		//distinguishes the copies via SV_InstanceID / gl_InstanceID)
+		virtual void draw_arrays_instanced(DrawType type, unsigned int start, unsigned int size, unsigned int instances) = 0;
+		virtual void draw_elements_instanced(DrawType type, unsigned int start, unsigned int n, unsigned int instances) = 0;
 
 		//IL=Input Layaut
 		virtual InputLayout* create_IL(const AttributeList& atl) = 0;
@@ -1039,11 +1149,21 @@ namespace Render
 			const TextureGpuDataInformation& info
 		) = 0;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int level = 0) = 0;
+		//all of a texture (its faces, its layers; level 0) into another of its size and format, on
+		//the GPU (e.g. the cache of a shadow map into the shadow map); neither bound to a target
+		virtual void copy_texture(Texture* source, Texture* destination) = 0;
+		//a layer of a texture (a layer of an array, a face of a cube; level 0) into a layer of
+		//another of its size and format, on the GPU; neither bound to a target
+		virtual void copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer) = 0;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int face = 0, int level = 0) = 0;
 		virtual void bind_texture(Texture*, int texture_id, int sample_id) = 0;
 		virtual void unbind_texture(Texture*) = 0;
 		virtual void unbind_texture(int n) = 0;
 		virtual void delete_texture(Texture*&) = 0;
+		//the pixels of the level 0 of a 2D texture again (not compressed): data as the one of
+		//create_texture (its format, size, bytes: all of them); the other levels unchanged (a
+		//texture updated has none)
+		virtual void update_texture(Texture* texture, const TextureRawDataInformation& data) = 0;
 
 		//shader
 		virtual Shader* create_shader(const std::vector< ShaderSourceInformation >& infos) = 0;
@@ -1083,13 +1203,45 @@ namespace Render
 		virtual bool print_errors() const = 0;
 		//Output file name and line
         virtual bool print_errors(const char* source_file_name, int line) const = 0;
-	
+
+		//GPU timer (see Render/Profiler.h): timestamps written by the GPU during a frame, read
+		//back some frames later (no stall). Implemented by the backends only with RENDER_PROFILER,
+		//otherwise (or without device support) they do nothing
+		virtual bool gpu_timer_supported() const { return false; }
+		//a new frame of timestamps, its end
+		virtual void gpu_timer_begin_frame() {}
+		virtual void gpu_timer_end_frame() {}
+		//a timestamp after the commands given so far: its index in the frame (-1: none)
+		virtual int  gpu_timer_timestamp() { return -1; }
+		//the oldest frame done by the GPU: its id (the count of gpu_timer_begin_frame before it)
+		//and its timestamps, in ms from the first one (negative: not sampled); false when none is ready
+		virtual bool gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms) { return false; }
+
+		//profiler (see Render/Profiler.h): the passes open their scopes on it, nullptr when off
+		void set_profiler(Profiler* profiler) { m_profiler = profiler; }
+		Profiler* profiler() const { return m_profiler; }
+
+		//inspector (see Driver/RenderInspector.h): the backends notify it about
+		//texture/render target lifetime events, but only when TEXTURE_INTROSPECTION
+		//is enabled (debug builds by default) — a release driver never calls it
+		void set_inspector(RenderInspector* inspector) { m_inspector = inspector; }
+		RenderInspector* inspector() const { return m_inspector; }
+
 		Allocator* allocator() const { return m_allocator; }
 		Logger* logger() const { return m_logger; }
+
+		//the folder of the cache of the shaders compiled by the driver (the final cache: their
+		//binaries by the hash of their source, compiled once, read after; a source changed: a new
+		//hash, compiled again). Empty: no cache. A driver without a binary of its own ignores it
+		void shader_cache(const std::string& directory) { m_shader_cache = directory; }
+		const std::string& shader_cache() const { return m_shader_cache; }
 
 	private:
 		Allocator* m_allocator;
 		Logger* m_logger;
+		std::string      m_shader_cache;
+		RenderInspector* m_inspector{ nullptr };
+		Profiler*        m_profiler{ nullptr };
 	};
 	/////////////////////////////////
 	// Buffer smart pointer	

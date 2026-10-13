@@ -1,8 +1,11 @@
 #include "Square/Config.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/StaticMesh.h"
 #include "Square/Geometry/CreateBounding.h"
 #include "Square/Core/ClassObjectRegistration.h"
+#include "Square/Core/Filesystem.h"
+#include "Square/Data/ParserStaticMesh.h"
 
 namespace Square
 {
@@ -18,6 +21,12 @@ namespace Scene
 		using namespace Square::Resource;
 		// Add StaticMesh
 		ctx.add_object<StaticMesh>();
+		// Its shadow (false: never in the shadow maps)
+		ctx.add_attribute_function<StaticMesh, bool>
+			("cast_shadow"
+			, true
+			, [](const StaticMesh* renderable) -> bool { return renderable->Render::Renderable::cast_shadow(); }
+			, [](StaticMesh* renderable, const bool& cast) { renderable->Render::Renderable::cast_shadow(cast); });
 		// Material
 		ctx.add_attribute_function<StaticMesh, std::vector<std::string> >
 			("materials"
@@ -118,38 +127,58 @@ namespace Scene
 		, size_t material_id
 		, Square::Render::EffectPassInputs& input
 		, Square::Render::EffectPass& pass
+		, int draw_id
 	)
 	{
-
-		using namespace Square;
-		using namespace Square::Data;
-		using namespace Square::Scene;
-		using namespace Square::Resource;
-		using namespace Square::Render;
-		using namespace Square::Render::Layout;
-		
-		size_t num_sub_meshs_to_draw = (std::min<size_t>)(m_mesh->number_of_sub_meshs(), m_materials.size());
-		//bind
-		for (size_t i = 0; i < num_sub_meshs_to_draw; ++i)
+		//the sub mesh of the material (the passes call it for each material: each one its own,
+		//with the technique of its own material)
+		const size_t num_sub_meshs_to_draw = (std::min<size_t>)(m_mesh->number_of_sub_meshs(), m_materials.size());
+		if (material_id < num_sub_meshs_to_draw && m_materials[material_id])
 		{
-			if (m_materials[i])
-			{
-				pass.bind(render, input, m_materials[i]->parameters());
-				//draw
-				m_mesh->draw(render, i);
-				//unbind
-				pass.unbind();
-			}
-			else
-			{
-				context().logger()->debug("Mesh draw with invalid material: " + std::to_string(i));
-			}
+			pass.bind(render, input, m_materials[material_id]->parameters(), draw_id);
+			draw_bound(render, material_id, input, pass, draw_id);
+			pass.unbind();
 		}
+		else if (material_id < num_sub_meshs_to_draw)
+		{
+			context().logger()->debug("Mesh draw with invalid material: " + std::to_string(material_id));
+		}
+	}
+
+	bool StaticMesh::draw_bound
+	(
+		  Square::Render::Context& render
+		, size_t material_id
+		, Square::Render::EffectPassInputs& input
+		, Square::Render::EffectPass& pass
+		, int draw_id
+	)
+	{
+		//its sub mesh (instanced when the pass declares "instances N")
+		const size_t num_sub_meshs_to_draw = (std::min<size_t>)(m_mesh->number_of_sub_meshs(), m_materials.size());
+		if (material_id < num_sub_meshs_to_draw && m_materials[material_id])
+		{
+			m_mesh->draw(render, material_id, (unsigned int)pass.m_instances);
+		}
+		return true;
 	}
 
 	bool StaticMesh::support_culling() const
 	{
 		return true;
+	}
+
+	bool StaticMesh::draw_geometry(Square::Render::Context& render) const
+	{
+		if (m_mesh)
+		{
+			for (size_t i = 0; i != m_mesh->number_of_sub_meshs(); ++i)
+			{ 
+				m_mesh->draw(render, i);
+			}
+			return true;
+		}
+		return false;
 	}
 
 	bool StaticMesh::visible() const
@@ -223,9 +252,9 @@ namespace Scene
 	bool StaticMesh::build_local_obounding_box(bool from_triangles)
 	{
 		if(m_mesh)
-		if(auto render = context().render())
+		if(auto render = System::get<RenderSystem>(context())->render())
 		if(auto vbuffer = m_mesh->vertex_buffer())
-		if(auto gpuvertex = context().render()->copy_buffer_VBO(vbuffer.get()); gpuvertex.size())
+		if(auto gpuvertex = render->copy_buffer_VBO(vbuffer.get()); gpuvertex.size())
 		{
 			const unsigned int mesh_type = m_mesh->layout_type();
 			// Vertex size
@@ -268,5 +297,26 @@ namespace Scene
 		m_obb_local = obb;
 	}
 
+	bool StaticMesh::triangles(std::vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter)
+	{
+		bool read = false;
+		auto owner = actor().lock();
+		std::vector<Vec3> local;
+		if (m_mesh && owner)
+		{
+			read = m_mesh->local_triangles(local, filter);
+		}
+		if (read)
+		{
+			//in world space
+			const Mat4 model = owner->global_model_matrix();
+			out.reserve(out.size() + local.size());
+			for (const Vec3& point : local)
+			{
+				out.push_back(Vec3(model * Vec4(point, 1.0f)));
+			}
+		}
+		return read;
+	}
 }
 }

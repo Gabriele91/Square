@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele on 02/07/16.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -43,6 +43,7 @@ namespace Render
 		using Vertex3DUVList    = std::vector< Layout::Position3DUV >;
 		using Vertex3DNUVList   = std::vector< Layout::Position3DNormalUV >;
 		using Vertex3DNTBUVList = std::vector< Layout::Position3DNormalTangetBinomialUV >;
+		using Vertex3DNTBUVSkinList = std::vector< Layout::Position3DNormalTangetBinomialUVSkin >;
 		using IndexList   = std::vector<unsigned int>;
 		using SubMeshList = std::vector< SubMesh >;
 
@@ -60,6 +61,7 @@ namespace Render
 		bool build(const Vertex3DUVList& vertexs, bool cpu_access = false);
 		bool build(const Vertex3DNUVList& vertexs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVSkinList& vertexs, bool cpu_access = false);
 
 		bool build(const Vertex2DList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
@@ -67,6 +69,7 @@ namespace Render
 		bool build(const Vertex3DUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DNUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVSkinList& vertexs, const SubMeshList& submeshs, bool cpu_access = false);
 
 		bool build(const Vertex2DList& vertexs, const IndexList& indexs, bool cpu_access = false);
 		bool build(const Vertex3DList& vertexs, const IndexList& indexs, bool cpu_access = false);
@@ -74,6 +77,7 @@ namespace Render
 		bool build(const Vertex3DUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
 		bool build(const Vertex3DNUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVSkinList& vertexs, const IndexList& indexs, bool cpu_access = false);
 
 		bool build(const Vertex2DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
@@ -81,6 +85,7 @@ namespace Render
 		bool build(const Vertex3DUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DNUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 		bool build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
+		bool build(const Vertex3DNTBUVSkinList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access = false);
 
 		//info
 		unsigned int layout_type() const;
@@ -92,9 +97,9 @@ namespace Render
 		const SubMeshList& sub_meshs() const;
 		size_t number_of_sub_meshs() const { return sub_meshs().size(); }
 
-		//draw all sub meshs
-		void draw(Render::Context& render) const;
-		void draw(Render::Context& render, size_t sub_mash_id) const;
+		//draw all sub meshs (instances > 1 issues an instanced draw call)
+		void draw(Render::Context& render, unsigned int instances = 1) const;
+		void draw(Render::Context& render, size_t sub_mash_id, unsigned int instances = 1) const;
 
 	protected:
 		//build help

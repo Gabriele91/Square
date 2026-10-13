@@ -44,7 +44,8 @@ namespace Scene
 		//Registration in context
 		static void object_registration(Context& ctx);
 
-        // Load child node from resource
+        // Load child node from resource: 
+        // a new actor (an instance: every call a new one), added
         Shared<Actor> load_child(const std::string& resource_name);
 
         //constructor
@@ -90,8 +91,11 @@ namespace Scene
         //get child
         Shared<Actor> child();
         Shared<Actor> child(size_t index);
-        Shared<Actor> child(const std::string& name);        
+        Shared<Actor> child(const std::string& name);
 		const ActorList& childs() const;
+		//an actor by its path from this one, its names split by '/' ("arm/hand"; ".." the parent,
+		//"" this one), nothing made (nullptr: not there)
+		Shared<Actor> find(const std::string& path);
 
         //name        
         const std::string& name() const;
@@ -105,7 +109,11 @@ namespace Scene
         void translation(const Vec3& vector) override;
         void move(const Vec3& vector) override;
         void turn(const Quat& rot) override;
-        
+
+        //turn so that its axis (in its own space, e.g. Vec3(1,0,0) the x axis) points along
+        //vector (world space), the smallest turn; rate 1 all the way, less a share of it
+        void align_to_vector(const Vec3& vector, const Vec3& axis, float rate = 1.0f);
+
         void position(const Vec3& pos) override;
         void rotation(const Quat& rot) override;
         void scale(const Vec3& pos) override;
@@ -130,11 +138,18 @@ namespace Scene
 		//get level
 		Weak<Level> level() const;
         void   level(Weak<Level> level);
+		//get world (of its level)
+		Weak<World> world() const;
 		bool   is_root_of_level() const;
 		bool   remove_from_level();
         
         //set
         void set(Render::UniformBufferTransform* gpubuffer) const override;
+
+		//static: it does not move (attribute "static"; the converter: "square_static"); it is so
+		//only if its parents are too (one that moves moves it)
+		void set_static(bool is_static);
+		bool is_static() const override;
 
         //load actor
         bool load(const std::string& path) override;
@@ -149,7 +164,7 @@ namespace Scene
         //local
         struct Tranform
         {
-            bool m_dirty   { false                  };
+            bool m_dirty   { true                   }; //(a new actor: its matrices not made yet)
             Vec3 m_position{ 0.0f, 0.0f, 0.0f       };
             Quat m_rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
             Vec3 m_scale   { 1.0f, 1.0f, 1.0f       };
@@ -167,6 +182,8 @@ namespace Scene
         void    send_dirty();
         //node name
         std::string m_name;
+        //static (its own flag: is_static also asks its parents)
+        bool m_static{ false };
         //parent
         Weak<Actor> m_parent;
         //child list

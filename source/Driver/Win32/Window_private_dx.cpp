@@ -33,11 +33,19 @@ namespace Win32
 		HRESULT release_backbuffer();
 		HRESULT go_fullscreen(UINT width = 0, UINT height = 0);
 		HRESULT go_windowed(UINT width = 0, UINT height = 0);
+		//go_windowed in two steps: out of the fullscreen of DXGI (before the window is restored,
+		//else DXGI puts back its own window), then the back buffer (0: the client area)
+		HRESULT leave_fullscreen();
+		HRESULT resize_backbuffer(UINT width = 0, UINT height = 0);
 
 		//on change
 		virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
 		{
 			m_callback = callback;
+		}
+		virtual const ContextInfo& get_context_info() override
+		{
+			return m_info.m_context;
 		}
 
 		virtual bool get_vsync() { return m_vsync; }
@@ -163,11 +171,16 @@ namespace Win32
 
 		//color format
 		DXGI_FORMAT format = DXGI_FORMAT_B8G8R8A8_UNORM;
-
-		if (m_info.m_context.m_color >= 32)
+		
+		// Select format
+		if (m_info.m_context.m_color >= 32 && m_info.m_context.m_srgb)
+			format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+		else if (m_info.m_context.m_color >= 32)
 			format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		else if (m_info.m_context.m_color >= 24 && m_info.m_context.m_srgb)
+			format = DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
 		else if (m_info.m_context.m_color >= 24)
-			format = DXGI_FORMAT_B8G8R8X8_TYPELESS;
+			format = DXGI_FORMAT_B8G8R8X8_UNORM;
 		else if (m_info.m_context.m_color <= 16)
 			format = DXGI_FORMAT_B5G6R5_UNORM;
 
@@ -332,6 +345,21 @@ namespace Win32
 		return hr;
 	}
 
+	HRESULT DeviceResourcesDX::leave_fullscreen()
+	{
+		return m_DXGI_swap_chain->SetFullscreenState(FALSE, NULL);
+	}
+
+	HRESULT DeviceResourcesDX::resize_backbuffer(UINT width, UINT height)
+	{
+		HRESULT hr = S_OK;
+		release_backbuffer();
+		hr = m_DXGI_swap_chain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+		hr = configure_backbuffer();
+		callback_target_changed();
+		return hr;
+	}
+
 	HRESULT DeviceResourcesDX::go_windowed(UINT width, UINT height)
 	{
 		HRESULT hr = S_OK;
@@ -406,6 +434,13 @@ namespace Win32
 
 	void WindowDX::get_size(unsigned int size[2]) const
 	{
+		//stretched: the size of its frame (not of the monitor)
+		if (m_scaled)
+		{
+			size[0] = m_info.m_size[0];
+			size[1] = m_info.m_size[1];
+			return;
+		}
 		RECT window_box{ 0, 0, 0, 0 };
 		GetClientRect(m_hWnd, &window_box);
 		//get_rect_of_window_including_aero(m_hWnd, &window_box);
@@ -423,6 +458,14 @@ namespace Win32
 
 	void WindowDX::set_size(unsigned int size[2])
 	{
+		//stretched: the window stays over the monitor, only its frame of the new size
+		if (m_scaled)
+		{
+			m_info.m_size[0] = size[0];
+			m_info.m_size[1] = size[1];
+			if (m_device) m_device->resize_backbuffer(size[0], size[1]);
+			return;
+		}
 		//calc size window
 		unsigned int window_real_size[2] = { 0,0 };
 		compute_window_size(size, window_real_size);
@@ -440,6 +483,8 @@ namespace Win32
 			//save new size
 			m_info.m_size[0] = size[0];
 			m_info.m_size[1] = size[1];
+			//the back buffer: the new client area (else the frame stays of the old size)
+			if (m_device) m_device->resize_backbuffer(0, 0);
 		}
 	}
 
@@ -525,18 +570,49 @@ namespace Win32
 				ShowWindow(m_hWnd, SW_MAXIMIZE);
 				//update
 				m_info.m_fullscreen = enable;
-				//device fullscreen mode
-				if (m_device) m_device->go_fullscreen(m_info.m_size[0], m_info.m_size[1]);
+				//device fullscreen mode, the back buffer of the client area (the mode the screen
+				//took, not always the size asked)
+				if (m_device) m_device->go_fullscreen(0, 0);
+			}
+			else
+			{
+				//the screen has no mode of this size (a 4K monitor without 2560x1440...): borderless
+				//over the whole monitor, its frame of the size asked stretched to it
+				MONITORINFO monitor;
+				monitor.cbSize = sizeof(monitor);
+				GetMonitorInfo(MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST), &monitor);
+				const RECT& box = monitor.rcMonitor;
+				//(before its new size: its WM_SIZE keeps m_size, the size of the frame)
+				m_scaled = true;
+				m_info.m_fullscreen = true;
+				SetWindowLongPtr(m_hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW);
+				SetWindowLongPtr(m_hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+				SetWindowPos(m_hWnd, HWND_TOP, box.left, box.top, box.right - box.left, box.bottom - box.top, SWP_SHOWWINDOW | SWP_FRAMECHANGED);
+				if (m_device) m_device->resize_backbuffer(m_info.m_size[0], m_info.m_size[1]);
+				is_change_successful = true;
 			}
 		}
 		else
 		{
-			is_change_successful = ChangeDisplaySettings(NULL, CDS_RESET) == DISP_CHANGE_SUCCESSFUL;
+			if (m_scaled)
+			{
+				//borderless: no mode of the screen to restore
+				m_scaled = false;
+				is_change_successful = true;
+			}
+			else
+			{
+				//DXGI out of the fullscreen first: it restores a window of its own
+				if (m_device) m_device->leave_fullscreen();
+				is_change_successful = ChangeDisplaySettings(NULL, CDS_RESET) == DISP_CHANGE_SUCCESSFUL;
+			}
 			//change only if a success
 			if (is_change_successful)
 			{
 				SetWindowLongPtr(m_hWnd, GWL_EXSTYLE, m_last_window_exstyle);
 				SetWindowLongPtr(m_hWnd, GWL_STYLE, m_last_window_style);
+				//no more maximized (SW_MAXIMIZE of the fullscreen), else it keeps the work area
+				ShowWindow(m_hWnd, SW_SHOWNORMAL);
 				//calc size window
 				unsigned int last_window_real_size[2] = { 0,0 };
 				compute_window_size(m_last_window_size, last_window_real_size);
@@ -553,7 +629,8 @@ namespace Win32
 				//update
 				m_info.m_fullscreen = enable;
 				//device fullscreen mode
-				if (m_device) m_device->go_windowed(last_window_real_size[0], last_window_real_size[1]);
+				//the back buffer: the client area of the window restored
+				if (m_device) m_device->resize_backbuffer(0, 0);
 			}
 		}
 		//show window

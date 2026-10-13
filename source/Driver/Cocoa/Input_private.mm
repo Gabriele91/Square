@@ -158,13 +158,12 @@ static int cocoa_translate_key(unsigned int key)
 
 - (void)keyDown:(NSEvent *)event
 {
+    if ([event isARepeat]) return; // repeat handled in pull_events
     //get
     const int   key  = cocoa_translate_key([event keyCode]);
     const short mode = cocoa_translate_flags([event modifierFlags]);
     //send
     m_input->send_keyboard_event((Square::Video::KeyboardEvent)key, mode, Square::Video::ActionEvent::PRESS);
-    //resend (translate in char)
-    [self interpretKeyEvents:[NSArray arrayWithObject:event]];
 }
 
 - (void)keyUp:(NSEvent *)event
@@ -209,9 +208,12 @@ namespace Cocoa
     
     void InputCocoa::send_keyboard_event(KeyboardEvent kevent, short mode, ActionEvent action)
     {
-        if (action ==  m_action_keyboard_state[kevent] && action == ActionEvent::PRESS)
+        if (action == ActionEvent::PRESS)
         {
-            m_action_keyboard_state[kevent] = ActionEvent::REPEAT;
+            if (m_action_keyboard_state[kevent] != ActionEvent::RELEASE)
+                m_action_keyboard_state[kevent] = ActionEvent::REPEAT;
+            else
+                m_action_keyboard_state[kevent] = ActionEvent::PRESS;
         }
         else
         {

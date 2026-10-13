@@ -5,6 +5,8 @@
 //  Copyright � 2016 Gabriele. All rights reserved.
 //
 #include "Window_private.h"
+#import <Metal/Metal.h>
+#import <QuartzCore/CAMetalLayer.h>
 
 //VIEW ENABLE RIGHT CLICK
 @implementation NSSquareView
@@ -59,9 +61,10 @@ namespace Cocoa
     {
     public:
         
-        DeviceResourcesGL(NSSquareView* view = nullptr, NSOpenGLContext* glcontext = nullptr)
+        DeviceResourcesGL(NSSquareView* view, NSOpenGLContext* glcontext, const ContextInfo& info_context)
         : m_view(view)
         , m_glcontext(glcontext)
+        , m_info_context(info_context)
         {
         }
         virtual ~DeviceResourcesGL() {}
@@ -74,7 +77,11 @@ namespace Cocoa
         {
             return m_view.frame.size.height;
         }
-        
+        virtual const ContextInfo& get_context_info() override
+		{
+			return m_info_context;
+		}
+
         
         virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
         {
@@ -107,16 +114,66 @@ namespace Cocoa
         NSOpenGLContext* m_glcontext;
         NSSquareView*  m_view;
 		bool  m_vsync{ true };
+		const ContextInfo& m_info_context;
     };
     
+    // ── DeviceResourcesMetal ────────────────────────────────────────────────
+    struct SQUARE_API DeviceResourcesMetal : public DeviceResources
+    {
+    public:
+        DeviceResourcesMetal(NSView* view, id<MTLDevice> device, CAMetalLayer* layer, const ContextInfo& info)
+        : m_view(view), m_metal_device(device), m_layer(layer), m_info_context(info) {}
+
+        virtual ~DeviceResourcesMetal() {}
+
+        virtual unsigned int width()  override { return (unsigned int)m_layer.drawableSize.width;  }
+        virtual unsigned int height() override { return (unsigned int)m_layer.drawableSize.height; }
+        virtual const ContextInfo& get_context_info() override { return m_info_context; }
+
+        virtual bool get_vsync() override { return m_vsync; }
+        virtual void set_vsync(bool vsync) override
+        {
+            m_vsync = vsync;
+            m_layer.displaySyncEnabled = vsync ? YES : NO;
+        }
+
+        // get_device()         → id<MTLDevice>   (the Metal device)
+        // get_device_context() → CAMetalLayer*   (the Metal layer)
+        virtual void* get_device()                      override { return (__bridge void*)m_metal_device; }
+        virtual void* get_device_context(size_t i = 0) override { return (__bridge void*)m_layer; }
+        virtual void* get_swap_chain()                  override { return (__bridge void*)m_layer; }
+
+        virtual void* get_render_target()          override { return nullptr; }
+        virtual void* get_depth_stencil_target()   override { return nullptr; }
+        virtual void* get_render_resource()        override { return nullptr; }
+        virtual void* get_depth_stencil_resource() override { return nullptr; }
+        virtual size_t number_of_device_context()  override { return 1; }
+
+        // Reused as a swap-notification hook: ContextMTL registers its commit_frame lambda here.
+        virtual void callback_target_changed(std::function<void(DeviceResources*)> callback) override
+        {
+            m_swap_fn = [this, callback](){ callback(this); };
+        }
+
+        void present_frame() { if (m_swap_fn) m_swap_fn(); }
+
+        id<MTLDevice>   m_metal_device { nil };
+        CAMetalLayer*   m_layer        { nil };
+        NSView*         m_view         { nil };
+        bool            m_vsync        { false }; // matches metal_layer.displaySyncEnabled = NO
+        const ContextInfo& m_info_context;
+        std::function<void()> m_swap_fn;
+    };
+
+    // ── WindowCocoa implementation ──────────────────────────────────────────
     WindowCocoa::WindowCocoa()
     {
         m_window = nullptr;
         m_view   = nullptr;
         m_context= nullptr;
-        m_device = new DeviceResourcesGL();
+        m_device = new DeviceResourcesGL(m_view,m_context,m_info.m_context);
     }
-    
+
     WindowCocoa::WindowCocoa
                (  NSSquareWindow* window
                 , NSSquareView* view
@@ -128,28 +185,41 @@ namespace Cocoa
         m_window = window;
         m_view   = view;
         m_context= context;
-        m_device = new DeviceResourcesGL(view,context);
+        m_device = new DeviceResourcesGL(view,context,m_info.m_context);
     }
-    
+
     WindowCocoa::~WindowCocoa()
     {
-        //dealloc DeviceResourcesGL
-        if(m_device) delete (DeviceResourcesGL*)m_device;
-        //remove ref
+        if (m_is_metal)
+        {
+            if (m_device) delete (DeviceResourcesMetal*)m_device;
+        }
+        else
+        {
+            if (m_device) delete (DeviceResourcesGL*)m_device;
+        }
         m_window = nullptr;
         m_view   = nullptr;
         m_context= nullptr;
         m_device = nullptr;
     }
-    
+
     void WindowCocoa::swap() const
     {
-        [m_context flushBuffer];
+        if (m_is_metal)
+        {
+            ((DeviceResourcesMetal*)m_device)->present_frame();
+        }
+        else
+        {
+            [m_context flushBuffer];
+        }
     }
-    
+
     void WindowCocoa::acquire_context() const
     {
-        [m_context makeCurrentContext];
+        if (!m_is_metal)
+            [m_context makeCurrentContext];
     }
     
     bool WindowCocoa::is_fullscreen() const
@@ -264,12 +334,59 @@ namespace Cocoa
         return m_view;
     }
     
+    WindowCocoa* cocoa_create_metal_window(const WindowInfo& info, Window* window)
+    {
+        WindowCocoa* wnd = new WindowCocoa();
+        wnd->m_is_metal = true;
+
+        // Build the NSWindow + NSView (reuse the existing helper)
+        cocoa_create_window(*wnd, info);
+
+        // Now replace the GL device created by default constructor
+        delete (DeviceResourcesGL*)wnd->m_device;
+        wnd->m_device = nullptr;
+
+        // Create Metal device and CAMetalLayer
+        id<MTLDevice> mtl_device = MTLCreateSystemDefaultDevice();
+        CAMetalLayer* metal_layer = [CAMetalLayer layer];
+        metal_layer.device          = mtl_device;
+        metal_layer.pixelFormat     = info.m_context.m_srgb
+                                    ? MTLPixelFormatBGRA8Unorm_sRGB
+                                    : MTLPixelFormatBGRA8Unorm;
+        metal_layer.framebufferOnly = YES;
+        metal_layer.drawableSize    = CGSizeMake(info.m_size[0], info.m_size[1]);
+        // Present without waiting on the display refresh. With vsync enabled,
+        // macOS throttles the CAMetalLayer presentation to the (power-saving)
+        // idle refresh rate when there is no user interaction — the app drops to
+        // ~10 FPS while idle and jumps back up only when the mouse/camera moves.
+        // Decoupling presentation from vsync (as the OpenGL path does) keeps a
+        // steady high frame rate. Re-enable via set_vsync(true) if vsync is wanted.
+        metal_layer.displaySyncEnabled = NO;
+
+        // Attach layer to the NSView
+        [wnd->m_view setWantsLayer:YES];
+        [wnd->m_view setLayer:metal_layer];
+
+        wnd->m_device      = new DeviceResourcesMetal(wnd->m_view, mtl_device, metal_layer, wnd->m_info.m_context);
+        wnd->m_context     = nil;
+        wnd->m_window_ref  = window;
+
+        s_os_context.m_windows[wnd] = wnd;
+        return wnd;
+    }
+
     DeviceResources* WindowCocoa::device() const
     {
-        auto* m_gldevice = (DeviceResourcesGL*)m_device;
-        m_gldevice->m_view = m_view;
-        m_gldevice->m_glcontext = m_context;
-        return (DeviceResources*)m_gldevice;
+        if (m_is_metal)
+        {
+            auto* mtl = (DeviceResourcesMetal*)m_device;
+            mtl->m_view = m_view;
+            return mtl;
+        }
+        auto* gl = (DeviceResourcesGL*)m_device;
+        gl->m_view = m_view;
+        gl->m_glcontext = m_context;
+        return gl;
     }
 
 }

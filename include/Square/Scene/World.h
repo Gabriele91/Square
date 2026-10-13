@@ -2,7 +2,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 10/03/18.
-//  Copyright © 2017 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2017 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 #include "Square/Config.h"
@@ -16,6 +16,9 @@
 
 namespace Square
 {
+	class System;
+	class SystemInstance;
+	using SystemInstanceList = std::vector< Shared<SystemInstance> >;
 namespace Scene
 {
 	//..................
@@ -45,14 +48,16 @@ namespace Scene
 		const std::string& name() const;
 		void name(const std::string&);
 
-		//add an level	
-		Shared<Level> level();
-		void add(Shared<Level> level);
-
-		//query
+		//a new level of this world, named or not (the world is created with MakeShared: its levels
+		//keep it weak)
+		Shared<Level> create_level(const std::string& name = std::string());
+		//query (nullptr: no such level)
 		Shared<Level> level(size_t index);
 		Shared<Level> level(const std::string& name);
 		const LevelList& levels() const;
+		//the levels that run (updated, in the systems: render, collisions...): the ones named,
+		//the others not. The levels of a game are made once and switched (the menu, a race...)
+		void active_levels(const std::vector<std::string>& names);
 		Shared<Actor> find_actor(const std::string& name);
 
 		//contains an actor
@@ -63,9 +68,24 @@ namespace Scene
 		bool remove(Shared<Actor> child);
 		bool remove(Shared<Level> child);
 			
+		//every frame (SceneSystem): the levels, and the components of their actors
+		void update(double delta_time);
+		void late_update(double delta_time);
+
 		//message
 		void send_message(const VariantRef& value, bool brodcast = false);
 		void send_message(const Message& msg, bool brodcast = false);
+
+		//systems: the state of every system in this world (created by the systems)
+		void add_instance(System& system);
+		void remove_instances(const System& system);
+		void clear_instances();
+		Shared<SystemInstance> instance(uint64 instance_id) const;
+		const SystemInstanceList& instances() const;
+		template< class T > Shared<T> instance() const
+		{
+			return DynamicPointerCast<T>(instance(T::static_object_id()));
+		}
 
 		//serialize
 		void serialize(Data::Archive& archive);
@@ -80,6 +100,8 @@ namespace Scene
 		std::string m_name;
 		//actor list
 		LevelList m_levels;
+		//system instances
+		SystemInstanceList m_instances;
 	};
 }
 }

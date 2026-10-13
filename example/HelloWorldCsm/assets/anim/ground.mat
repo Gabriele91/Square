@@ -1,0 +1,16 @@
+effect "PBR"
+{
+	albedo_map texture("white")
+	metallic_map texture("black")
+	roughness_map texture("white")
+	emmisive_map texture("black")
+	occlusion_map texture("white")
+	normal_map texture("normal_up")
+	color Vec4(0.4,0.45,0.4,1)
+	metallic float(0)
+	roughness float(0.5)
+	emmisive Vec3(1,1,1)
+	mask float(-1)
+	cull cullface(off)
+	shadow_cull cullface(off)
+}

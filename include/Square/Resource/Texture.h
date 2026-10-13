@@ -104,6 +104,22 @@ namespace Resource
 			Render::TextureType   type
 		);
 
+		//a compressed texture (Data::Image::load_compressed): the levels one after the other;
+		//false when the GPU cannot sample its format (Render::RenderDriverInfo)
+		bool build_compressed
+		(
+			const Attributes& attr,
+			const unsigned char* levels_data,
+			unsigned long width,
+			unsigned long height,
+			unsigned int  levels,
+			Render::TextureFormat format
+		);
+
+		//its pixels again (a texture built from a buffer, without mipmaps: all its pixels, its
+		//size and format), e.g. a map drawn by the CPU every frame; false: not built
+		bool update(const unsigned char* buffer);
+
 		Render::Texture* get_context_texture() const;
 		unsigned long    get_width() const;
 		unsigned long    get_height() const;
@@ -121,6 +137,9 @@ namespace Resource
 		Render::TextureFormat m_format;
 		Render::TextureType   m_type;
 		Attributes		      m_attributes;
+
+		//the DDS/KTX of a file: false when it is not one or the GPU cannot sample its format
+		bool load_compressed(const Attributes& attr, const std::vector< unsigned char >& data_file);
 	};
 }
 }

@@ -6,6 +6,7 @@
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
+#include <vector>
 #include "Square/Config.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/SmartPointers.h"
@@ -45,6 +46,7 @@ namespace Render
         //list
         QueueElement* m_next{ nullptr };
         float         m_depth{ ~0 };
+        float         m_key{ 0.0f }; //its order in the queue: the depth, front to back; minus it, back to front
         //fake lock
         Shared<BaseObject> lock() const;
         template < typename T >
@@ -101,11 +103,12 @@ namespace Render
         Queue(const Queue&) = delete;
         Queue& operator=(const Queue&) = delete;
         
-        //add element
+        //add element (in O(1): the queue is sorted once, when it is read; the same depth: in the
+        //order they were added)
         void push_front_to_back(Weak<BaseObject> entity, float depth);
         void push_back_to_front(Weak<BaseObject> entity, float depth);
         
-        //info
+        //info (the first: the queue sorted)
         QueueElement* get_first() const;
         size_t size() const;
         
@@ -134,12 +137,17 @@ namespace Render
         //pool utilities
         void new_page();
         QueueElement* get_new_element();
+        //the elements added since the last read in their order (their list linked)
+        void sort() const;
         
         //fields
         size_t        m_size{ 0 };
         Pages         m_pages;
-        QueueElement* m_first{ nullptr };
         Allocator*    m_allocator{ nullptr };
+        //the list, sorted when it is read (its memory kept between the frames)
+        mutable QueueElement*              m_first{ nullptr };
+        mutable bool                       m_sorted{ true };
+        mutable std::vector<QueueElement*> m_order;
     };
     
     //all queue
@@ -153,6 +161,8 @@ namespace Render
         const Queue& operator[](QueueType type) const;
         //Init
         explicit PoolQueues(Allocator* allocator);
+        // Clear
+        void clear();
         // Allow move
         PoolQueues(PoolQueues&& other) noexcept = default;
         PoolQueues& operator=(PoolQueues && other) noexcept = default;

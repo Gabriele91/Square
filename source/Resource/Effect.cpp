@@ -6,10 +6,12 @@
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #include "Square/Config.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Data/ParserEffect.h"
 #include "Square/Resource/Effect.h"
+#include "Square/Render/MultiPass.h"
 #include "Square/Resource/Texture.h"
 #include "Square/Resource/Shader.h"
 #include "Square/Core/ClassObjectRegistration.h"
@@ -38,16 +40,11 @@ namespace Resource
     };
 	const std::string shader_lights_define_table[] =
 	{
-		"RENDERING_COLOR",
-		"RENDERING_AMBIENT_LIGHT",
-		"RENDERING_DIRECTION_LIGHT",
-		"RENDERING_POINT_LIGHT",
-		"RENDERING_SPOT_LIGHT"
-	};
-	const std::string shader_shadows_define_table[] =
-	{
-		"RENDERING_SHADOW_DISABLE",
-		"RENDERING_SHADOW_ENABLE",
+		"SQ_LIGHT_COLOR",
+		"SQ_LIGHT_AMBIENT",
+		"SQ_LIGHT_DIRECTION",
+		"SQ_LIGHT_POINT",
+		"SQ_LIGHT_SPOT"
 	};
 	const std::string shader_target_define_table[] =
 	{
@@ -59,85 +56,43 @@ namespace Resource
     Effect::Effect(Context& context): ResourceObject(context), BaseInheritableSharedObject(context.allocator()), Render::Effect(context.allocator()) {}
     Effect::Effect(Context& context, const std::string& path): ResourceObject(context), BaseInheritableSharedObject(context.allocator()), Render::Effect(context.allocator()) { load(path); }
     
-    //load effect
-    bool Effect::load(const std::string& path)
+    namespace AuxEffect
     {
-		//alias
-		using EffectPass          = Render::EffectPass;
-		using EffectTechnique     = Render::EffectTechnique;
-		using EffectParameter     = Render::EffectParameter;
-		using EffectParameterType = Render::EffectParameterType;
-        //parser
-        Parser::Effect          e_parser;
-        Parser::Effect::Context e_context;
-        //do parsing
-        if(!e_parser.parse(context().allocator(), e_context, Filesystem::text_file_read_all(path)))
+        //the name of a technique and its variants (the profiler): "deferred (instanced, clip)"
+        std::string technique_name(const std::string& name, unsigned char variant)
         {
-            context().logger()->warning("Effect: " +  path + "\n" + e_context.errors_to_string());
-            return false;
-        }
-        //alloc params
-        m_parameters.resize(e_context.m_parameters.size());
-        //add params
-        for (size_t i = 0; i != m_parameters.size(); ++i)
-        {
-            //copy
-            switch (e_context.m_parameters[i].m_type)
+            switch (variant)
             {
-                case EffectParameterType::PT_TEXTURE:
-					add_parameter((int)i, e_context.m_parameters[i].m_name, std::move(EffectParameter::create(context().allocator(), context().resource<Texture>(e_context.m_parameters[i].m_resources[0]))));
-                break;
-                case EffectParameterType::PT_STD_VECTOR_TEXTURE:
-                {
-                    //vector of texture
-                    std::vector< Shared<Texture> > v_textures;
-                    //get all texture
-                    for(const std::string& tex_name : e_context.m_parameters[i].m_resources)
-                        v_textures.push_back( context().resource<Texture>(tex_name) );
-					//add
-					add_parameter((int)i, e_context.m_parameters[i].m_name, std::move(EffectParameter::create(context().allocator(), v_textures)));
-                }
-                break;
-                default:
-					add_parameter((int)i, e_context.m_parameters[i].m_name, e_context.m_parameters[i].m_paramter->copy());
-                break;
+            case Render::EV_INSTANCED:                  return name + " (instanced)";
+            case Render::EV_CLIP:                       return name + " (clip)";
+            case Render::EV_INSTANCED | Render::EV_CLIP: return name + " (instanced, clip)";
+            case Render::EV_SKINNED:                    return name + " (skinned)";
+            case Render::EV_SKINNED | Render::EV_CLIP:   return name + " (skinned, clip)";
+            default:                                    return name;
             }
         }
-        //ref to sub effect
-        Parser::Effect::SubEffectField* ptr_sub_effect = nullptr;
-        //test sub effect
-        for(Parser::Effect::SubEffectField& sub_effect : e_context.m_sub_effect )
+
+        //the passes of a technique, a combination of its variants (their defines)
+        bool build_technique
+        (
+              Context& context
+            , const std::string& path
+            , const Parser::Effect::SubEffectField& sub_effect
+            , const Parser::Effect::TechniqueField& parser_technique
+            , unsigned char variant
+            , Render::EffectTechnique& technique
+        )
         {
-            if(sub_effect.m_requirement.test(context().render()))
-            {
-                ptr_sub_effect = &sub_effect;
-                break;
-            }
-        }
-        //fail
-        if(!ptr_sub_effect)
-        {
-            context().logger()->warning("Effect: " + path +", All sub effects unsupported.");
-            return false;
-        }
-        //set queue
-        queue(ptr_sub_effect->m_queue);
-        //n_pass
-        size_t n_techniques_parser = ptr_sub_effect->m_techniques.size();
-        //add tech
-        for (size_t t = 0; t != n_techniques_parser; ++t)
-        {
-            //add into map
-            EffectTechnique& this_technique = m_techniques_map[ptr_sub_effect->m_techniques[t].m_name];
+            using EffectPass = Render::EffectPass;
             //n pass
-            size_t n_pass_parser = ptr_sub_effect->m_techniques[t].m_pass.size();
+            size_t n_pass_parser = parser_technique.m_pass.size();
             //alloc pass
-            this_technique.reserve(n_pass_parser);
+            technique.reserve(n_pass_parser);
             //add pass
             for (size_t p = 0; p != n_pass_parser; ++p)
             {
                 //ref
-                Parser::Effect::PassField& parser_pass = ptr_sub_effect->m_techniques[t].m_pass[p];
+                const Parser::Effect::PassField& parser_pass = parser_technique.m_pass[p];
 				//lights/shadows sub pass
 				int sub_pass_masks[]
 				{
@@ -186,22 +141,24 @@ namespace Resource
 							break;
 						}
 						//add pass
-						this_technique.push_back(EffectPass());
+						technique.push_back(EffectPass());
 						//pass
-						EffectPass& this_pass = this_technique.back();
+						EffectPass& this_pass = technique.back();
 						//get all values
 						this_pass.m_blend = parser_pass.m_blend;
 						this_pass.m_cullface = parser_pass.m_cullface;
 						this_pass.m_depth = parser_pass.m_depth;
+						this_pass.m_draw_count = parser_pass.m_draw_count;
+						this_pass.m_instances = parser_pass.m_instances;
 						//shader
 						switch (parser_pass.m_shader.m_type)
 						{
 							//NONE
 							case Parser::Effect::ShaderField::S_NONE:
 							{
-								context().logger()->warning("Effect: " + path);
-								context().logger()->warning("Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
-								context().logger()->warning("Error pass: shader source is required");
+								context.logger()->warning("Effect: " + path);
+								context.logger()->warning("Error from technique: " + parser_technique.m_name + ", pass[" + std::to_string(p) + "] ");
+								context.logger()->warning("Error pass: shader source is required");
 								return false;
 							}
 							default:
@@ -211,13 +168,30 @@ namespace Resource
 							{
 								Shader::PreprocessMap shader_defines
 								{
-									std::make_tuple(std::string("version"), std::to_string(ptr_sub_effect->m_requirement.m_shader_version)),
+									std::make_tuple(std::string("version"), std::to_string(sub_effect.m_requirement.m_shader_version)),
 								  //std::make_tuple(std::string("pragma"), shader_target_define_table[shadow]),
-									std::make_tuple(std::string("define"), shader_lights_define_table[current_shader_def]),
-									std::make_tuple(std::string("define"), shader_shadows_define_table[shadow])
+									std::make_tuple(std::string("define"), shader_lights_define_table[current_shader_def])
 								};
+								//the pass of the shadow
+								if (shadow)
+								{
+									shader_defines.push_back(std::make_tuple(std::string("define"), std::string("SQ_SHADOW")));
+								}
+								//the defines of the variant
+								if (variant & Render::EV_INSTANCED)
+								{
+									shader_defines.push_back(std::make_tuple(std::string("define"), std::string("SQ_INSTANCED")));
+								}
+								if (variant & Render::EV_CLIP)
+								{
+									shader_defines.push_back(std::make_tuple(std::string("define"), std::string("SQ_CLIP")));
+								}
+								if (variant & Render::EV_SKINNED)
+								{
+									shader_defines.push_back(std::make_tuple(std::string("define"), std::string("SQ_SKINNED")));
+								}
 								//shader
-								this_pass.m_shader = MakeShared<Shader>(context());
+								this_pass.m_shader = MakeShared<Shader>(context);
 								//event
 								bool success = false;
 								//get shader
@@ -231,9 +205,22 @@ namespace Resource
 									success = this_pass.m_shader->load(Filesystem::join(Filesystem::get_directory(path), parser_pass.m_shader.m_data), shader_defines);
 								break;
 								case Parser::Effect::ShaderField::S_RESOUCE:
-									this_pass.m_shader = context().resource<Shader>(parser_pass.m_shader.m_data); 
-									success = !this_pass.m_shader;
+									this_pass.m_shader = context.resource<Shader>(parser_pass.m_shader.m_data); 
+									success = !!this_pass.m_shader;
 								break;
+								}
+								//its name in the profiler: effect/technique[pass] and the light, the shadow
+								if (success && parser_pass.m_shader.m_type != Parser::Effect::ShaderField::S_RESOUCE)
+								{
+									static const char* light_names[] { "", " ambient", " direction", " point", " spot" };
+									this_pass.m_shader->profile_name
+									(
+										Filesystem::get_basename(path)
+										+ "/" + technique_name(parser_technique.m_name, variant)
+										+ "[" + std::to_string(p) + "]"
+										+ light_names[current_shader_def]
+										+ (shadow ? " shadow" : "")
+									);
 								}
 								//load effect
 								if (!success)
@@ -245,9 +232,9 @@ namespace Resource
 										debug_preproc += "#" + std::get<0>(preproc) + " " + std::get<1>(preproc) + "\t";
 									}
 									//output
-									context().logger()->warning("Effect: " + path);
-									context().logger()->warning("Error from technique: " + ptr_sub_effect->m_techniques[t].m_name + ", pass[" + std::to_string(p) + "] ");
-									context().logger()->warning("Error technique preproces: " + debug_preproc);
+									context.logger()->warning("Effect: " + path);
+									context.logger()->warning("Error from technique: " + parser_technique.m_name + ", pass[" + std::to_string(p) + "] ");
+									context.logger()->warning("Error technique preproces: " + debug_preproc);
 									return false;
 								}
 							}
@@ -266,6 +253,12 @@ namespace Resource
 						if (!this_pass.m_uniform_direction_shadow) this_pass.m_uniform_direction_shadow = this_pass.m_shader->constant_buffer("direction_shadow_camera");
 						if (!this_pass.m_uniform_point_shadow) this_pass.m_uniform_point_shadow = this_pass.m_shader->constant_buffer("point_shadow_camera");
 						if (!this_pass.m_uniform_spot_shadow) this_pass.m_uniform_spot_shadow = this_pass.m_shader->constant_buffer("spot_shadow_camera");
+						//multi-pass index buffer
+						this_pass.m_uniform_multipass = this_pass.m_shader->constant_buffer("MultiPass");
+						if (!this_pass.m_uniform_multipass) this_pass.m_uniform_multipass = this_pass.m_shader->constant_buffer("multi_pass");
+						//create its backing buffer only when the shader declares it
+						if (this_pass.m_uniform_multipass)
+							this_pass.m_cb_multipass = Render::stream_constant_buffer<Render::UniformMultiPass>(System::get<RenderSystem>(context)->render());
 						//lights uniforms
 						switch (current_shader_def)
 						{
@@ -273,7 +266,7 @@ namespace Resource
 							this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("AmbientLight");
 							if (!this_pass.m_uniform_ambient_light) this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("Light");
 							if (!this_pass.m_uniform_ambient_light) this_pass.m_uniform_ambient_light = this_pass.m_shader->uniform("light");
-							if (!this_pass.m_uniform_ambient_light) context().logger()->warnings({ "Effect: " + path, "Wrong: not found AmbientLight" });
+							if (!this_pass.m_uniform_ambient_light) context.logger()->warnings({ "Effect: " + path, "Wrong: not found AmbientLight" });
 							this_pass.m_support_light = EffectPass::LT_AMBIENT;
 							break;
 						case DEF_RENDERING_DIRECTION_LIGHT:
@@ -281,7 +274,7 @@ namespace Resource
 							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("Light");
 							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("direction_light");
 							if (!this_pass.m_uniform_direction) this_pass.m_uniform_direction = this_pass.m_shader->constant_buffer("light");
-							if (!this_pass.m_uniform_direction) context().logger()->warnings({ "Effect: " + path, "Wrong: not found DirectionLight" });
+							if (!this_pass.m_uniform_direction) context.logger()->warnings({ "Effect: " + path, "Wrong: not found DirectionLight" });
 							this_pass.m_support_light = EffectPass::LT_DIRECTION;
 							break;
 						case DEF_RENDERING_POINT_LIGHT:
@@ -289,7 +282,7 @@ namespace Resource
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("Light");
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("point_light");
 							if (!this_pass.m_uniform_point) this_pass.m_uniform_point = this_pass.m_shader->constant_buffer("light");
-							if (!this_pass.m_uniform_point) context().logger()->warnings({ "Effect: " + path, "Wrong: not found PointLight" });
+							if (!this_pass.m_uniform_point) context.logger()->warnings({ "Effect: " + path, "Wrong: not found PointLight" });
 							this_pass.m_support_light = EffectPass::LT_POINT;
 							break;
 						case DEF_RENDERING_SPOT_LIGHT:
@@ -297,7 +290,7 @@ namespace Resource
 							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("Light");
 							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("spot_light");
 							if (!this_pass.m_uniform_spot) this_pass.m_uniform_spot = this_pass.m_shader->constant_buffer("light");
-							if (!this_pass.m_uniform_spot) context().logger()->warnings({ "Effect: " + path, "Wrong: not found SpotLight" });
+							if (!this_pass.m_uniform_spot) context.logger()->warnings({ "Effect: " + path, "Wrong: not found SpotLight" });
 							this_pass.m_support_light = EffectPass::LT_SPOT;
 							break;
 						default:
@@ -316,7 +309,7 @@ namespace Resource
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("direction_shadow_map");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("ShadowMap");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("shadow_map");
-								if (!this_pass.m_uniform_shadow_map) context().logger()->warnings({ "Effect: " + path, "Wrong: not found direction shadow map" });
+								if (!this_pass.m_uniform_shadow_map) context.logger()->warnings({ "Effect: " + path, "Wrong: not found direction shadow map" });
 								this_pass.m_support_shadow = EffectPass::LT_DIRECTION;
 								this_pass.m_support_light = EffectPass::LT_NONE;
 							break;
@@ -326,7 +319,7 @@ namespace Resource
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("point_shadow_map");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("ShadowMap");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("shadow_map");
-								if (!this_pass.m_uniform_shadow_map) context().logger()->warnings({ "Effect: " + path, "Wrong: not found point shadow map" });
+								if (!this_pass.m_uniform_shadow_map) context.logger()->warnings({ "Effect: " + path, "Wrong: not found point shadow map" });
 								this_pass.m_support_shadow = EffectPass::LT_POINT;
 								this_pass.m_support_light = EffectPass::LT_NONE;
 							break;
@@ -336,7 +329,7 @@ namespace Resource
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("spot_shadow_map");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("ShadowMap");
 								if (!this_pass.m_uniform_shadow_map) this_pass.m_uniform_shadow_map = this_pass.m_shader->uniform("shadow_map");
-								if (!this_pass.m_uniform_shadow_map) context().logger()->warnings({ "Effect: " + path, "Wrong: not found spot shadow map" });
+								if (!this_pass.m_uniform_shadow_map) context.logger()->warnings({ "Effect: " + path, "Wrong: not found spot shadow map" });
 								this_pass.m_support_shadow = EffectPass::LT_SPOT;
 								this_pass.m_support_light = EffectPass::LT_NONE;
 							break;
@@ -348,6 +341,87 @@ namespace Resource
 					}
 				}// end shadow for
 			}// end pass for each lights
+            return true;
+        }
+    }
+
+    //load effect
+    bool Effect::load(const std::string& path)
+    {
+		//alias
+		using EffectParameter     = Render::EffectParameter;
+		using EffectParameterType = Render::EffectParameterType;
+        //parser
+        Parser::Effect          e_parser;
+        Parser::Effect::Context e_context;
+        //do parsing
+        if(!e_parser.parse(context().allocator(), e_context, Filesystem::text_file_read_all(path)))
+        {
+            context().logger()->warning("Effect: " +  path + "\n" + e_context.errors_to_string());
+            return false;
+        }
+        //alloc params
+        m_parameters.resize(e_context.m_parameters.size());
+        //add params
+        for (size_t i = 0; i != m_parameters.size(); ++i)
+        {
+            //copy
+            switch (e_context.m_parameters[i].m_type)
+            {
+                case EffectParameterType::PT_TEXTURE:
+					add_parameter((int)i, e_context.m_parameters[i].m_name, std::move(EffectParameter::create(context().allocator(), context().resource<Texture>(e_context.m_parameters[i].m_resources[0]))));
+                break;
+                case EffectParameterType::PT_STD_VECTOR_TEXTURE:
+                {
+                    //vector of texture
+                    std::vector< Shared<Texture> > v_textures;
+                    //get all texture
+                    for(const std::string& tex_name : e_context.m_parameters[i].m_resources)
+                        v_textures.push_back( context().resource<Texture>(tex_name) );
+					//add
+					add_parameter((int)i, e_context.m_parameters[i].m_name, std::move(EffectParameter::create(context().allocator(), v_textures)));
+                }
+                break;
+                default:
+					add_parameter((int)i, e_context.m_parameters[i].m_name, e_context.m_parameters[i].m_paramter->copy());
+                break;
+            }
+        }
+        //ref to sub effect
+        Parser::Effect::SubEffectField* ptr_sub_effect = nullptr;
+        //test sub effect (by the target of the shaders: the driver, or the one of a tool)
+        const Render::RenderDriverInfo& driver_info = System::get<RenderSystem>(context())->shader_target().m_info;
+        for(Parser::Effect::SubEffectField& sub_effect : e_context.m_sub_effect )
+        {
+            if(sub_effect.m_requirement.test(driver_info))
+            {
+                ptr_sub_effect = &sub_effect;
+                break;
+            }
+        }
+        //fail
+        if(!ptr_sub_effect)
+        {
+            context().logger()->warning("Effect: " + path +", All sub effects unsupported.");
+            return false;
+        }
+        //set queue
+        queue(ptr_sub_effect->m_queue);
+        //add techniques: each combination of the variants a technique declares
+        for (const Parser::Effect::TechniqueField& parser_technique : ptr_sub_effect->m_techniques)
+        {
+            Render::EffectTechniqueVariants& variants = m_techniques_map[parser_technique.m_name];
+            variants.clip_parameters(parser_technique.m_clip_parameters);
+            for (unsigned char variant = 0; variant != Render::EV_COUNT; ++variant)
+            {
+                //only the variants declared
+                const bool declared = (variant & parser_technique.m_variants) == variant;
+                if (!declared || !Render::effect_variant_valid(variant)) continue;
+                if (!AuxEffect::build_technique(context(), path, *ptr_sub_effect, parser_technique, variant, variants.declare(variant)))
+                {
+                    return false;
+                }
+            }
         }
 		//imports
         //n_import

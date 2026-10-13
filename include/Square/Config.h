@@ -36,6 +36,31 @@
 #endif
 #define SqareArrayLangth(x) (sizeof(x)/sizeof(x[0]))
 /////////////////////////////////////////////////////////////////////////////
+// FEATURES
+// Driver texture/render target introspection (debug texture panel):
+// off by default, on in debug builds. When it is off the drivers never
+// notify the render inspector (see Driver/RenderInspector.h), for performance.
+#if !defined(TEXTURE_INTROSPECTION) && (defined(_DEBUG) || defined(DEBUG))
+	#define TEXTURE_INTROSPECTION
+#endif
+/////////////////////////////////////////////////////////////////////////////
+// BUILD
+// The kind of a build (CMake: Debug, Release, Retail): the library, its drivers and a game of the
+// same kind only (the runtime of the compiler and the debug tools change their classes), else
+// they are not loaded together (Render::create_render_driver, square_main: see Core/Build.h)
+#if defined(SQUARE_RETAIL)
+	#define SQUARE_BUILD_KIND "retail"
+#elif defined(_DEBUG) || defined(DEBUG)
+	#define SQUARE_BUILD_KIND "debug"
+#else
+	#define SQUARE_BUILD_KIND "release"
+#endif
+// The version of the interface between the library and its drivers (Render::Context): up when
+// it changes (a driver of another version is not loaded)
+#define SQUARE_DRIVER_ABI "1"
+// The build: its kind and the version of the interface ("release/abi1")
+#define SQUARE_BUILD_ID SQUARE_BUILD_KIND "/abi" SQUARE_DRIVER_ABI
+/////////////////////////////////////////////////////////////////////////////
 // EXPORT/IMPOT
 #ifdef _WIN32
 	#define DLL_EXPORT __declspec(dllexport)
@@ -86,11 +111,17 @@ template class SQUARE_API std::vector< std::string >;
 #define square_assert_debug(x) assert(x)
 #define square_assert_or_release(x) assert(x)
 #define square_assert(x) assert(x)
+#define SQUARE_DEBUG
 #else 
 #define square_assert_debug(x)
 #define square_assert_or_release(x) x
 #define square_assert(x) assert(x)
 #endif
+/////////////////////////////////////////////////////////////////////////////
+// VERSION of the engine (in the header of its binary archives)
+#define SQUARE_VERSION_MAJOR 0
+#define SQUARE_VERSION_MINOR 1
+#define SQUARE_VERSION_PATCH 0
 /////////////////////////////////////////////////////////////////////////////
 // TYPES
 namespace Square

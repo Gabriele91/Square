@@ -1,0 +1,100 @@
+parameters
+{
+    //the faces drawn: back, front or off (both)
+    cull cullface(back)
+    //the faces in the directional shadow map: back, front or off (both: the one sided meshes)
+    shadow_cull cullface(back)
+    albedo_map    texture("white")
+    metallic_map  texture("black")
+    emmisive_map  texture("black")
+    roughness_map texture("white")
+    occlusion_map texture("white")
+    normal_map    texture("normal_up")
+
+    //alpha = albedo_map.a * color.a
+    color Vec4(1.0,1.0,1.0,0.5)
+    metallic float(0.0)
+    roughness float(1.0)
+    emmisive Vec3(1.0,1.0,1.0)
+
+    mask         float(-1.0)
+    mask_shadow  float(-1.0)
+    //1 = lit without the shadows of the lights (glows, light beams); only forward/translucent passes
+    ignore_shadows float(0.0)
+    dither       float(0.0)
+    //light of the sun through it (thin: leaves, cards), 0 none, 1 all
+    translucency float(0.0)
+    //the uv animated by the time (AnimatedUV.hlsl): scrolled (uv a second); a flipbook (columns,
+    //rows, frames a second, frames used: 0 all)
+    uv_scroll    Vec2(0.0, 0.0)
+    flipbook     Vec4(1.0, 1.0, 0.0, 0.0)
+}
+
+//Translucent PBR: alpha blended, drawn after the opaque scene, back to front.
+//It is not written into the G-Buffer and it does not cast shadows (it receives them).
+sub_effect
+{
+    queue { type translucent }
+    //forward rendering pipeline: drawn on the screen target
+    technique "forward"
+    {
+        variants skinned clip(mask, dither)
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one_minus_src_alpha
+            cullface param(cull)
+            lights only_ambient
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #include "PBR.hlsl"
+            }
+        }
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one
+            cullface param(cull)
+            lights spot_point_direction
+            shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #include "PBR.hlsl"
+            }
+        }
+    }
+    //deferred rendering pipeline: drawn into the light buffer (linear, encoded by the present)
+    technique "translucent"
+    {
+        variants skinned clip(mask, dither)
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one_minus_src_alpha
+            cullface param(cull)
+            lights only_ambient
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define OUTPUT_LINEAR_COLOR
+                #include "PBR.hlsl"
+            }
+        }
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one
+            cullface param(cull)
+            lights spot_point_direction
+            shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define OUTPUT_LINEAR_COLOR
+                #include "PBR.hlsl"
+            }
+        }
+    }
+}

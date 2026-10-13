@@ -17,6 +17,10 @@ namespace Render
 
 	LightType Light::type() const { return m_type; }
 
+	ShadowFilter Light::shadow_filter() const { return m_shadow_filter; }
+
+	void Light::shadow_filter(ShadowFilter filter) { m_shadow_filter = filter; }
+
 	void Light::set(UniformDirectionLight* data) const {};
 
 	void Light::set(UniformPointLight* data) const {};

@@ -6,6 +6,11 @@
 #if defined(_WIN32)
     #include <Windows.h>   
     #include <debugapi.h>
+    #include <thread>
+    #include <mutex>
+    #include <queue>
+    #include <condition_variable>
+    #include <atomic>
 #endif
 
 #define TAG_ERROR "ERR"
@@ -94,7 +99,11 @@ namespace Square
         }
 
     protected:
+#if defined(SQUARE_RETAIL)
+        bool m_verbose{ false };
+#else
         bool m_verbose{ true };
+#endif
 
     private:
         void print(FILE* const stream, const char* tag, const std::string& value) const
@@ -106,7 +115,7 @@ namespace Square
             output << " [" << tag << "] ";
             output << value;
             output << std::endl;
-            fprintf(stream, output.str().c_str());
+            fprintf(stream, "%s", output.str().c_str());
         }
     };
 
@@ -115,6 +124,17 @@ namespace Square
     class WIN32Logger : public Logger
     {
     public:
+
+        WIN32Logger() 
+        {
+            run_thread();
+        }
+
+        ~WIN32Logger() 
+        {
+            stop_thread();
+        }
+
         void error(const std::string& value) const override
         {
             print(TAG_ERROR, value);
@@ -168,9 +188,64 @@ namespace Square
         }
 
     protected:
+#if defined(SQUARE_RETAIL)
+        bool m_verbose{ false };
+#else
         bool m_verbose{ true };
+#endif
 
     private:
+        // Multi thread
+        mutable std::queue<std::string> m_queue;
+        mutable std::mutex m_mutex;
+        mutable std::condition_variable m_condition;
+        std::atomic<bool> m_running{ false };
+        std::thread m_thread;
+
+        void run_thread()
+        {
+            m_running = true;
+            m_thread = std::thread(&WIN32Logger<enable_debug>::run, this);
+        }
+
+        void enqueue(const std::string& value) const
+        {
+            std::unique_lock<std::mutex> lock(m_mutex);
+            m_queue.push(value);
+            m_condition.notify_one();
+        }
+
+        void run()
+        {
+            while (true)
+            {
+                std::string msg;
+                {
+                    std::unique_lock<std::mutex> lock(m_mutex);
+                    m_condition.wait(lock, [this]() { return !m_queue.empty() || !m_running; });
+                    if (m_queue.empty() && !m_running)   { break; }
+                    msg = m_queue.front();
+                    m_queue.pop();
+                }
+                OutputDebugStringA(msg.c_str());
+            }
+        }
+
+        void stop_thread()
+        {
+            // Stop running
+            {
+                std::unique_lock<std::mutex> lock(m_mutex);
+                m_running = false;
+                m_condition.notify_one();
+            }
+            // Wait
+            if (m_thread.joinable())
+            {
+                m_thread.join();
+            }
+        }
+
         void print(const char* tag, const std::string& value) const
         {
             std::stringstream output;
@@ -180,7 +255,7 @@ namespace Square
             output << " [" << tag << "] ";
             output << value;
             output << std::endl;
-            OutputDebugStringA(output.str().c_str());
+            enqueue(output.str());
         }
     };
 #endif

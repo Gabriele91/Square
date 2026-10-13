@@ -55,6 +55,7 @@ namespace Video
 			CTX_OPENGL,
 			CTX_OPENGL_ES,
 			CTX_DIRECTX,
+			CTX_METAL,
 			CTX_UNKNOWN
 		};
 		enum gpu_type
@@ -68,6 +69,7 @@ namespace Video
 		unsigned int  m_depth     { 24   };
 		unsigned int  m_color     { 24   };
 		unsigned int  m_stencil   { 8    };
+		bool		  m_srgb      { true  };
 		anti_aliasing m_anti_aliasing{ NOAA };
 		gpu_type	  m_gpu_type{ GPU_TYPE_DEFAULT };
 		bool		  m_debug{ false };
@@ -96,6 +98,7 @@ namespace Video
 
 		virtual unsigned int width() = 0;
 		virtual unsigned int height() = 0;
+		virtual const ContextInfo& get_context_info() = 0;
 
 		virtual bool get_vsync() = 0;
 		virtual void set_vsync(bool) = 0;

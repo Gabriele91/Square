@@ -3,7 +3,7 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 07/01/2024.
-//  Copyright © 2018 Gabriele Di Bari. All rights reserved.
+//  Copyright ï¿½ 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
 
@@ -12,6 +12,8 @@
 #include "Square/Core/Resource.h"
 #include "Square/Render/Queue.h"
 #include "Square/Render/Mesh.h"
+#include <functional>
+#include <vector>
 
 namespace Square
 {
@@ -46,9 +48,14 @@ namespace Square
             const Render::Mesh::SubMeshList& sub_meshs() const;
             size_t number_of_sub_meshs() const { return sub_meshs().size(); }
 
-            //draw all sub meshs
-            void draw(Render::Context& render) const;
-            void draw(Render::Context& render, size_t sub_mesh_id) const;
+            //draw all sub meshs (instances > 1 issues an instanced draw call)
+            void draw(Render::Context& render, unsigned int instances = 1) const;
+            void draw(Render::Context& render, size_t sub_mesh_id, unsigned int instances = 1) const;
+
+            //its triangles in its own space (3 points each, added to out), read from its file (the
+            //GPU keeps no copy of them); filter: the sub meshes taken (by their index), none: all
+            //of them; false: its file cannot be read
+            bool local_triangles(std::vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter = nullptr) const;
 
             //load mesh
             bool load(const std::string& path) override;

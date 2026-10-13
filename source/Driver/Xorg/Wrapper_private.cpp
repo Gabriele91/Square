@@ -20,6 +20,7 @@ namespace Xorg
 {
     ////////////////////////////////////////////////////////////////////////////////////
 	WrapperContext s_os_context;
+
 	////////////////////////////////////////////////////////////////////////////////////
 	// this is the main message handler for the program	
 	static InputXorg* input_create(WindowXorg* wnd, Input* input);
@@ -196,7 +197,7 @@ namespace Xorg
     static WindowXorg* window_create(const WindowInfo& info, Window* window)
     {
         if (info.m_context.m_type == ContextInfo::CTX_DIRECTX)
-        return nullptr;
+            return nullptr;
         //window
         WindowXorg* window_xorg = new WindowXorg(info);
         window_xorg->m_window_ref = window; //ref to conteiner
@@ -230,7 +231,7 @@ namespace Xorg
     {
         if
         (  (scancode < FILTER_X11_KEY_SIZE && scancode > 0)
-         || (scancode & (~FILTER_X11_KEY_SIZE)) == (~FILTER_X11_KEY_SIZE))
+         || (scancode & (~FILTER_X11_KEY_SIZE)) == (0xFFFF & ~FILTER_X11_KEY_SIZE))
         {
             return s_os_context.m_key_map.m_keyboard[FILTER_X11_KEY(scancode)];
         }
@@ -1332,8 +1333,9 @@ namespace Xorg
 		XCloseDisplay(Xorg::s_os_context.m_xdisplay);
 		//to null
 		Xorg::s_os_context.m_xdisplay = nullptr;
-        //dealloc fields
+        //dealloc fields (and rebuild an empty one: s_os_context is a global, destroyed again at exit)
         Xorg::s_os_context.~WrapperContext();
+        new (&Xorg::s_os_context) Xorg::WrapperContext();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////
@@ -1393,7 +1395,10 @@ namespace Xorg
 
 	DeviceResources*  Window::device() const
 	{
-		return nullptr;
+		//cast
+		const auto* window = (const Xorg::WindowXorg*)m_native;
+        //get gl device
+		return (DeviceResources*)(window->m_gl_device);
 	}
 
 	bool Window::valid() const

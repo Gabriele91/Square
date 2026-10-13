@@ -9,6 +9,8 @@
 #include "Screen_private.h"
 #include "Window_private.h"
 #include "Input_private.h"
+#import <Metal/Metal.h>
+#import <QuartzCore/CAMetalLayer.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -364,7 +366,7 @@ namespace Cocoa
                                   backing:NSBackingStoreBuffered
                                   defer:NO];
         //test
-        if (window == nil) return nullptr;
+        if (window == nil) return false;
         //forground
         
         if (info.m_fullscreen)
@@ -390,6 +392,13 @@ namespace Cocoa
         //screen title
         [window setFrameAutosaveName: [NSString stringWithUTF8String:info.m_title.c_str()]];
         [window setTitle: [NSString stringWithUTF8String:info.m_title.c_str()]];
+        // Tell the compositor that this window lives in sRGB space so that
+        // GL_FRAMEBUFFER_SRGB can take effect. NSOpenGL has no PFA for sRGB,
+        // but setting the window colorspace achieves the same result.
+        if (info.m_context.m_srgb)
+        {
+            [window setColorSpace:[NSColorSpace sRGBColorSpace]];
+        }
         
         //Force show
         [window makeKeyAndOrderFront: s_os_context.m_application];
@@ -397,6 +406,7 @@ namespace Cocoa
         
         //View
         NSSquareView* view = [[NSSquareView alloc] initWithFrame:content_rect];
+        [view setWantsBestResolutionOpenGLSurface:NO];
         [window setContentView: view];
         [window makeFirstResponder: view];
         
@@ -416,6 +426,7 @@ namespace Cocoa
     WindowCocoa* window_create(const WindowInfo& info, Window* window)
     {
         if (info.m_context.m_type == ContextInfo::CTX_DIRECTX) return nullptr;
+        if (info.m_context.m_type == ContextInfo::CTX_METAL)   return cocoa_create_metal_window(info, window);
         //alloc
         WindowCocoa* window_cocoa = new WindowCocoa();
         //window
@@ -738,6 +749,21 @@ namespace Cocoa
                                                   dequeue:YES];
             if (event == nil)  break;
             [NSApp sendEvent:event];
+        }
+        // Re-fire REPEAT for all held keys every frame (mirrors Windows behavior)
+        for (auto& pair : Cocoa::s_os_context.m_input)
+        {
+            Cocoa::InputCocoa* input_cocoa = pair.second;
+            if (!input_cocoa->m_keyboard) continue;
+            for (int key = 0; key < KeyboardEvent::KEY_LAST; ++key)
+            {
+                ActionEvent& state = input_cocoa->m_action_keyboard_state[key];
+                if (state == ActionEvent::PRESS || state == ActionEvent::REPEAT)
+                {
+                    state = ActionEvent::REPEAT;
+                    input_cocoa->m_keyboard((KeyboardEvent)key, 0, ActionEvent::REPEAT);
+                }
+            }
         }
     }
     

@@ -7,6 +7,7 @@
 #include "Square/Config.h"
 #include "Square/Driver/Window.h"
 #include "Square/Driver/Input.h"
+#include "Square/Core/Application.h"
 #include "Wrapper_private.h"
 #include <optional>
 #include <unordered_map>
@@ -356,8 +357,28 @@ namespace Video
 		}
 	}
 
+	//the process aware of the DPI: the sizes of the windows and the modes of the screens in
+	//pixels (not scaled by Windows: under a scaling, 125%, 175%..., a window of 2560x1440 asked
+	//was not 2560x1440, the fullscreen took a mode of another size than its back buffer)
+	static void helper_dpi_aware()
+	{
+		using SetContext = BOOL(WINAPI*)(HANDLE);
+		//Windows 10 1703+: per monitor (v2), else the whole system
+		if (HMODULE user32 = GetModuleHandle(TEXT("user32.dll")))
+		{
+			if (auto set_context = (SetContext)GetProcAddress(user32, "SetProcessDpiAwarenessContext"))
+			{
+				//DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+				if (set_context((HANDLE)-4)) return;
+			}
+		}
+		SetProcessDPIAware();
+	}
+
 	void init()
 	{
+		//pixels, not scaled (before any window, any screen asked)
+		helper_dpi_aware();
 		//Add a window class
 		WNDCLASS wmd_class;
 		wmd_class.cbClsExtra = 0;
@@ -473,10 +494,10 @@ namespace Video
 			PFD_SUPPORT_OPENGL |						// Format Must Support OpenGL
 			PFD_DOUBLEBUFFER |							// Must Support Double Buffering
 			PFD_SWAP_EXCHANGE,
-			PFD_TYPE_RGBA,								// Request An RGBA Format
-			BYTE(info.m_context.m_color), 				// Select Our Color Depth
-			0, 0, 0, 0, 0, 0,							// Color Bits Ignored
-			0,											// No Alpha Resource
+			PFD_TYPE_RGBA,							  	                // Request An RGBA Format
+			BYTE((info.m_context.m_srgb? 24 : info.m_context.m_color)), // Select Our Color Depth
+			0, 0, 0, 0, 0, 0,							                // Color Bits Ignored
+			(BYTE)(info.m_context.m_srgb ? 8 : 0),      // Alpha Resource
 			0,											// Shift Bit Ignored
 			0,											// No Accumulation Resource
 			0, 0, 0, 0,									// Accumulation Bits Ignored
@@ -510,9 +531,78 @@ namespace Video
 		//Get wglCreateContextAttribsARB
 		typedef HGLRC(APIENTRY * PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC hDC, HGLRC hShareContext, const int *attribList);
 		static PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-		//new RC if wglCreateContextAttribsARB exits
-		if (wglCreateContextAttribsARB)
-		{
+		typedef BOOL(APIENTRY* PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC, const int*, const FLOAT*, UINT, int*, UINT*);
+		static PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+		// If both modern extensions are available, perform the sRGB swap
+        if (wglChoosePixelFormatARB && wglCreateContextAttribsARB)
+        {
+			#define WGL_DRAW_TO_WINDOW_ARB            0x2001
+			#define WGL_SUPPORT_OPENGL_ARB            0x2010
+			#define WGL_DOUBLE_BUFFER_ARB             0x2011
+			#define WGL_PIXEL_TYPE_ARB                0x2013
+			#define WGL_TYPE_RGBA_ARB                 0x202B
+			#define WGL_COLOR_BITS_ARB                0x2014
+			#define WGL_ALPHA_BITS_ARB                0x201B
+			#define WGL_DEPTH_BITS_ARB                0x2022
+			#define WGL_STENCIL_BITS_ARB              0x2023
+			#define WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB  0x20A9
+            // Set up the modern token array demanding sRGB capability
+            const int pixAttribs[] = 
+			{
+                WGL_DRAW_TO_WINDOW_ARB,            1,
+                WGL_SUPPORT_OPENGL_ARB,            1,
+                WGL_DOUBLE_BUFFER_ARB,             1,
+                WGL_PIXEL_TYPE_ARB,                WGL_TYPE_RGBA_ARB,
+                WGL_COLOR_BITS_ARB,                (int)(info.m_context.m_srgb? 24 : info.m_context.m_color),
+				WGL_ALPHA_BITS_ARB,                (int)(info.m_context.m_srgb ? 8 : 0),
+                WGL_DEPTH_BITS_ARB,                (int)info.m_context.m_depth,
+                WGL_STENCIL_BITS_ARB,              (int)info.m_context.m_stencil,
+                WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB,  (int)info.m_context.m_srgb, 
+                0
+            };
+
+            // Destroy temporary dummy context and window (Windows constraint)
+            wglMakeCurrent(hDC, NULL);
+            wglDeleteContext(hRCDefault);
+            ReleaseDC(hWnd, hDC);
+            DestroyWindow(hWnd);
+
+            // Recreate the permanent target window
+            hWnd = CreateWindow
+			(
+				WINDOW_CLASS_NAME,
+				info.m_title.c_str(),
+				info.m_resize
+				? SQUARE_WINDOW_STYLE
+				: SQUARE_WINDOW_NORESIZE_STYLE,
+				left,  //x
+				top,   //y
+				last_window_real_size[0], //width
+				last_window_real_size[1],//height
+				NULL,
+				NULL,
+				hInstance,
+				NULL
+			);
+            hDC = GetDC(hWnd);
+
+			// Get pixel format
+			int pixelFormat;
+            UINT numFormats;
+            // query sRGB matching format
+            wglChoosePixelFormatARB(hDC, pixAttribs, NULL, 1, &pixelFormat, &numFormats);
+			// Test
+			if (numFormats == 0 || pixelFormat == 0) 
+			if (auto app = Application::instance())
+			if (auto logger = app->logger())
+			{
+				logger->warning("[WOGL]GPU Driver rejected sRGB pixel format\n");
+            }
+            // Set
+            PIXELFORMATDESCRIPTOR realPfd;
+            DescribePixelFormat(hDC, pixelFormat, sizeof(realPfd), &realPfd);
+            SetPixelFormat(hDC, pixelFormat, &realPfd);
+			
 			//OpenGL Context 
 			#define WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
 			#define WGL_CONTEXT_MINOR_VERSION_ARB           0x2092
@@ -951,7 +1041,7 @@ namespace Video
 		else                                                           button = MouseButtonEvent::MOUSE_BUTTON_5;
 		//action
 		action = ( message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN 
-				|| message == WM_MBUTTONDOWN || message == WM_XBUTTONDOWN) ? ActionEvent::RELEASE : ActionEvent::PRESS;
+				|| message == WM_MBUTTONDOWN || message == WM_XBUTTONDOWN) ? ActionEvent::PRESS : ActionEvent::RELEASE;
 
 		return { button,action };
 	}
@@ -1041,7 +1131,22 @@ namespace Video
 		}
 
 		case WM_MOUSEMOVE:
-		{ wnd_input->send_mouse_move_event(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)); return 0; }
+		{
+			int x = GET_X_LPARAM(lParam);
+			int y = GET_Y_LPARAM(lParam);
+			//stretched: from the pixels of the window to the ones of its frame
+			if (wnd_window->m_scaled)
+			{
+				RECT box{ 0, 0, 0, 0 };
+				GetClientRect(wnd_window->narive(), &box);
+				const int width = std::max<int>(box.right - box.left, 1);
+				const int height = std::max<int>(box.bottom - box.top, 1);
+				x = int(long long(x) * wnd_window->m_info.m_size[0] / width);
+				y = int(long long(y) * wnd_window->m_info.m_size[1] / height);
+			}
+			wnd_input->send_mouse_move_event(x, y);
+			return 0;
+		}
 
 		case WM_MOUSEWHEEL:
 		{ wnd_input->send_mouse_scroll_event((SHORT)GET_WHEEL_DELTA_WPARAM(wParam) / (double)WHEEL_DELTA); return 0; }
@@ -1052,7 +1157,13 @@ namespace Video
 		case WM_SIZE:
 		{
 			if (wParam == SIZE_MINIMIZED) wnd_input->send_window_event(WindowEvent::MINIMIZED);
-			if (wParam == SIZE_MAXIMIZED) wnd_input->send_window_event(WindowEvent::MAXIMIZED);
+			if (wParam == SIZE_MAXIMIZED)
+			{
+				//a new size, but m_size stays the one of the window restored: the resolution of the
+				//fullscreen (a maximized size is not a mode of the screen)
+				wnd_input->send_window_event(WindowEvent::MAXIMIZED);
+				wnd_input->send_window_event(WindowEvent::RESIZE);
+			}
 			if (wParam == SIZE_RESTORED)
 			{
 				//wnd_window->m_info.m_size[0] = LOWORD(lParam);

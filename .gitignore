@@ -69,6 +69,7 @@ Temporary Items
 
 ## Build generated
 build/
+build-xcode/**
 DerivedData/
 
 ## Various settings
@@ -542,3 +543,6 @@ reports/**/*.synctex.gz
 
 #Install directory
 [Ii]nstall/**
+
+# Force to include debug shaders
+!common/shader/[Dd]ebug/

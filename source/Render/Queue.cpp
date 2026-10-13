@@ -5,6 +5,7 @@
 //  Created by Gabriele Di Bari on 10/04/18.
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
+#include <algorithm>
 #include "Square/Render/Queue.h"
 namespace Square
 {
@@ -57,7 +58,40 @@ namespace Render
     }
     
     //info
-    QueueElement* Queue::get_first() const { return m_first; }
+    QueueElement* Queue::get_first() const
+    {
+        sort();
+        return m_first;
+    }
+
+    void Queue::sort() const
+    {
+        if (!m_sorted)
+        {
+            //the elements in the order they were added (the pages), sorted by their key (the
+            //same key: as they were added), linked
+            m_order.clear();
+            m_order.reserve(m_size);
+            for (size_t id = 0; id != m_size; ++id)
+            {
+                m_order.push_back(&(m_pages[id / page_capacity]->operator[](id % page_capacity)));
+            }
+            std::stable_sort(m_order.begin(), m_order.end(), [](const QueueElement* left, const QueueElement* right)
+            {
+                return left->m_key < right->m_key;
+            });
+            for (size_t id = 0; id + 1 < m_order.size(); ++id)
+            {
+                m_order[id]->m_next = m_order[id + 1];
+            }
+            if (!m_order.empty())
+            {
+                m_order.back()->m_next = nullptr;
+            }
+            m_first = m_order.empty() ? nullptr : m_order.front();
+            m_sorted = true;
+        }
+    }
     size_t Queue::size() const { return m_size; }
     //iterator
     QueueIterator Queue::begin() { return QueueIterator(get_first()); }
@@ -69,70 +103,29 @@ namespace Render
     {
         m_first = nullptr;
         m_size = 0;
+        m_sorted = true;
     }
     //add
     void Queue::push_front_to_back(Weak<BaseObject> entity, float depth)
     {
-        //element get
+        //element get (front to back: by its depth)
         QueueElement *e = get_new_element();
-        //init
         e->m_ref = entity;
         e->m_depth = depth;
-        //next
+        e->m_key = depth;
         e->m_next = nullptr;
-        //loop vars
-        QueueElement* last = nullptr;
-        QueueElement* current = m_first;
-        //insert sort, front to back
-        for (; current;
-             last = current,
-             current = current->m_next)
-        {
-            if (current->m_depth > e->m_depth) break;
-        }
-        //last iteration
-        if (last)
-        {
-            e->m_next = current;
-            last->m_next = e;
-        }
-        else
-        {
-            e->m_next = m_first;
-            m_first = e;
-        }
+        m_sorted = false;
     }
     
     void Queue::push_back_to_front(Weak<BaseObject> entity, float depth)
     {
-        //element get
+        //element get (back to front: by minus its depth)
         QueueElement *e = get_new_element();
-        //init
         e->m_ref = entity;
         e->m_depth = depth;
-        //link
+        e->m_key = -depth;
         e->m_next = nullptr;
-        //loop vars
-        QueueElement* last = nullptr;
-        QueueElement* current = m_first;
-        //insert sort, back to front
-        for (; current;
-             last = current,
-             current = current->m_next)
-        {
-            if (current->m_depth < e->m_depth) break;
-        }
-        //last iteration
-        if (last)
-        {
-            e->m_next = current;
-            last->m_next = e;
-        }
-        else
-        {
-            e->m_next = m_first;
-            m_first = e;
-        }
+        m_sorted = false;
     }
     
     //PoolQueues
@@ -150,6 +143,14 @@ namespace Render
         for (Queue& queue : m_queues)
         {
             new (&queue) Queue(allocator);
+        }
+    }
+    
+    void PoolQueues::clear()
+    {
+        for (Queue& queue : m_queues)
+        {
+            queue.clear();
         }
     }
 }

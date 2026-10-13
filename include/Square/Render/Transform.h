@@ -21,6 +21,7 @@ namespace Render
 		Mat4 m_rotation;
 		CBAlignas Vec3 m_position;
 		CBAlignas Vec3 m_scale;
+		float          m_lod_fade{ 1.0f }; //(after the scale, in its register) Renderable::lod_fade
     };
     //Transform cpu class
 	class SQUARE_API Transform : public BaseObject
@@ -46,6 +47,10 @@ namespace Render
         
         //set gpu buffer
         virtual void set(UniformBufferTransform* gpubuffer) const = 0;
+
+		//it does not move (its place, its shape): what is drawn with it is kept in the caches of
+		//the shadow maps (Renderable::is_static); false by default
+		virtual bool is_static() const { return false; }
 	};
 }
 }

@@ -10,6 +10,13 @@ namespace Square
 {
 namespace Geometry
 {
+	// Contrusctor
+    Frustum::Frustum(const std::array<Vec4,N_PLANES>& planes)
+	: m_planes(planes)
+	{
+
+	}
+
 	//plane distance
 	static float plane_distance(const Vec4& plane, const Vec3& point)
 	{

@@ -14,7 +14,7 @@ class Game01 : public Square::AppInterface
 {
 public:
 
-	std::string m_scene{"csm_scene"};
+	std::string m_scene{"csm"};
 
 	Game01(const std::string& scene) : m_scene(scene) {}
 	
@@ -28,8 +28,8 @@ public:
 		const float velocity = 20.0f  * application().last_delta_time();
 		const auto  level_path = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.sq");
 		const auto  level_path_json = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.jsq");
-		context().logger()->info("value: " + std::to_string(key));
-		context().logger()->info("delta: " + std::to_string(application().last_delta_time()));
+		//context().logger()->info("value: " + std::to_string(key));
+		//context().logger()->info("delta: " + std::to_string(application().last_delta_time()));
 		//
 		switch (key)
 		{
@@ -53,12 +53,12 @@ public:
 		break;
 		case Square::Video::KEY_O:
 			if (action == Square::Video::ActionEvent::PRESS)
-			if (m_render_debug)
+			if (render_debug())
 			{
-				if(!m_render_debug->draw_flags())
-					m_render_debug->draw_flags(Render::DF_DRAW_OBB);
+				if(!render_debug()->draw_flags())
+					render_debug()->draw_flags(Render::DF_DRAW_OBB);
 				else
-					m_render_debug->draw_flags(0);
+					render_debug()->draw_flags(0);
 			}
 		break;
 		case Square::Video::KEY_C:
@@ -81,23 +81,59 @@ public:
 				}
 			}
 			break;
+		case Square::Video::KEY_UP:
+			if (m_light)
+			{
+				m_light->translation({0, 0, 5.0 * application().last_delta_time()});
+			}
+			break;
+		case Square::Video::KEY_DOWN:
+			if (m_light)
+			{
+				m_light->translation({0, 0, -5.0 * application().last_delta_time()});
+			}
+			break;
+		case Square::Video::KEY_ENTER:
+			if (m_light)
+			{
+				m_light->translation({0, 5.0 * application().last_delta_time(), 0 });
+			}
+			break;
+		case Square::Video::KEY_RIGHT_SHIFT:
+			if (m_light)
+			{
+				m_light->translation({0, -5.0 * application().last_delta_time(), 0 });
+			}
+			break;
+		case Square::Video::KEY_LEFT:
+			if (m_light)
+			{
+				m_light->translation({-5.0 * application().last_delta_time(), 0, 0 });
+			}
+			break;
+		case Square::Video::KEY_RIGHT:
+			if (m_light)
+			{
+				m_light->translation({5.0 * application().last_delta_time(), 0, 0 });
+			}
+			break;
 		case Square::Video::KEY_W:
-			if(m_camera) m_camera->move({ 0,0, 10 * application().last_delta_time() });
+			if(m_camera) m_camera->move({ 0,0, 5 * application().last_delta_time() });
 		break;
 		case Square::Video::KEY_S:
-			if(m_camera) m_camera->move({ 0,0, -10 * application().last_delta_time() });
+			if(m_camera) m_camera->move({ 0,0, -5 * application().last_delta_time() });
 		break;
 		case Square::Video::KEY_D:
-			if(m_camera) m_camera->move({ 10 * application().last_delta_time(),0,0 });
+			if(m_camera) m_camera->move({ 5 * application().last_delta_time(),0,0 });
 		break;
 		case Square::Video::KEY_A:
-			if(m_camera) m_camera->move({ -10 * application().last_delta_time(),0,0 });
+			if(m_camera) m_camera->move({ -5 * application().last_delta_time(),0,0 });
 		break;
 		case Square::Video::KEY_R:
-			if(m_camera) m_camera->move({ 0, 10 * application().last_delta_time(),0 });
+			if(m_camera) m_camera->move({ 0, 5 * application().last_delta_time(),0 });
 		break;
 		case Square::Video::KEY_F:
-			if(m_camera) m_camera->move({ 0,-10 * application().last_delta_time(),0 });
+			if(m_camera) m_camera->move({ 0,-5 * application().last_delta_time(),0 });
 		break;
 		case Square::Video::KEY_E:
 			if (m_camera) m_camera->turn(rotate_euler<float>(0,1. * application().last_delta_time(),0 ));
@@ -109,6 +145,10 @@ public:
 		default: break;
 		}
 	}
+	
+	void mouse_scroll_event(double scroll)
+	{
+	}
 
     void start()
     {
@@ -118,16 +158,24 @@ public:
 		using namespace Square::Resource;
 		//rs file
 		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "/resources.rs"));
-		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "../Model/resources.rs"));
+		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "tools/Model/resources.rs"));
 		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "common/resources.rs"));
 		context().add_resources(Filesystem::join(Filesystem::resource_dir(), "example/HelloWorldCsm/resources.rs"));
 		// window size
 		uint32_t window_width, window_height;
 		context().window()->get_size(window_width, window_height);
 		// level
-		m_level = world().level("main");
+		m_level = world().create_level("main");
+		// rendering pipeline of the world: SQUARE_RENDERING=forward|deferred (default: deferred)
+		if (auto render_world = world().instance<RenderInstance>())
+		{
+			const char* rendering_type = std::getenv("SQUARE_RENDERING");
+			const bool forward = rendering_type && Square::case_insensitive_equal(rendering_type, "forward");
+			render_world->pipeline((forward ? RP_FORWARD : RP_DEFERRED) | RP_DEBUG);
+		}
 		// load
-		if (auto scene_node = m_level->load_actor(m_scene); scene_node)
+		//every scene lives in its own folder: assets/<scene>/scene
+		if (auto scene_node = m_level->load_actor(m_scene + "/scene"); scene_node)
 		{
 			m_camera = scene_node->child("camera");
 			m_camera->component<Camera>()->viewport({ 0,0, window_width, window_height });
@@ -135,15 +183,8 @@ public:
 		}
 		else
 		{
-			context().logger()->info("Error to load base_scene");
+			context().logger()->info("Error to load " + m_scene + "/scene");
 		}
-		//
-        m_drawer = Square::MakeShared<Render::Drawer>(context());
-		m_drawer->create<Render::DrawerPassForward>();
-		m_drawer->create<Render::DrawerPassShadow>();
-		// Draw OBB
-		m_render_debug = m_drawer->create<Render::DrawerPassDebug>();
-		m_render_debug->draw_flags(0);
     }
     
     bool run(double dt)
@@ -152,12 +193,6 @@ public:
 		m_acc += dt;
 		//fps counter
 		m_counter.count_frame();
-		// draw
-		m_drawer->draw(
-			  Vec4(0.25, 0.5, 1.0, 1.0)
-			, Vec4(0.1, 0.1, 0.1, 1.0)
-			, m_level->randerable_collection()
-		);
 		//loop event
         return m_loop;
     }
@@ -210,6 +245,14 @@ public:
 		}
 	}
 
+	//the debug pass of the world (OBB, lights, textures): the RenderSystem draws the world
+	//every frame, the drawer of the world exists after start()
+	Square::Shared<Square::Render::DrawerPassDebug> render_debug()
+	{
+		auto render_world = world().instance<Square::RenderInstance>();
+		return render_world ? render_world->debug_pass() : nullptr;
+	}
+
 private:
     
     bool m_loop = true;
@@ -218,17 +261,16 @@ private:
 	Square::Shared<Square::Scene::Actor>       m_camera;
 	Square::Shared<Square::Scene::Actor>       m_light;
 	Square::Shared<Square::Scene::Level>	   m_level;
-    Square::Shared<Square::Render::Drawer>     m_drawer;
-	Square::Shared<Square::Render::DrawerPassDebug> m_render_debug;
 };
 
 static Square::Shell::ParserCommands s_ShellCommands
 {
-	  Square::Shell::Command{ "backend","b", "select backend [ogl, d3d]"  , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("ogl")) }
+	  Square::Shell::Command{ "backend","b", "select backend [ogl, d3d, mtl]"  , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("ogl")) }
     , Square::Shell::Command{ "gputype","g", "select gpu type [low, high]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("high")) }
 	, Square::Shell::Command{ "debug",  "d", "enable debug"               , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 	, Square::Shell::Command{ "verbose","v", "enable verbose"             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
-	, Square::Shell::Command{ "scene",  "s", "scene resource to load"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("csm_scene"))}
+	, Square::Shell::Command{ "scene",  "s", "scene resource to load"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("csm"))}
+	, Square::Shell::Command{ "srgb",   "c", "enable gamme correction"    , Square::Shell::ValueType::value_bool  , false, Square::Shell::Value_t(true) }
 	, Square::Shell::Command{ "help",   "h", "show help"                  , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 };
 
@@ -256,10 +298,14 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
 	app.logger()->verbose(std::get<bool>(args.at("verbose")));
 	//GPU type
 	GpuType gputype = std::get<std::string>(args.at("gputype")) == "low" ? GpuType::GPU_LOW : GpuType::GPU_HIGH;
+	//Enable SRGB
+	const bool srgb = std::get<bool>(args.at("srgb"));
 	//driver?
 	WindowRenderDriver render_driver = std::get<std::string>(args.at("backend")) == "d3d"
-		? (WindowRenderDriver{ Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, gputype, debug })
-		: (WindowRenderDriver{ Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, gputype, debug });
+		? (WindowRenderDriver{ Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, gputype, srgb, debug })
+		: std::get<std::string>(args.at("backend")) == "mtl" 
+		? (WindowRenderDriver{ Render::RenderDriver::DR_METAL, 3, 0, 24, 8, gputype, srgb, debug })
+		: (WindowRenderDriver{ Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, gputype, srgb, debug });
 	
 	//test
     app.execute

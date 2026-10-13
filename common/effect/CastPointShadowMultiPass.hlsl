@@ -1,0 +1,71 @@
+////////////////
+#pragma once
+#include <Vertex>
+#include <Transform>
+#include <MeshVertex>
+#include <Matrix>
+#include <ShadowCamera>
+#include <MultiPassInfo>
+////////////////
+// Multi-pass point-light shadow (cube map) for backends WITHOUT geometry shaders
+// (Metal / GLES / Vulkan-without-GS). The host draws the casters once per cube
+// face; multi_pass.m_id selects both the view-projection AND the destination cube
+// face (written to SV_RenderTargetArrayIndex), so the render target is bound once.
+// SQ_LAYER_BY_TARGET (CastPointShadowLayerTarget.hlsl): the host binds each face as the target,
+// no layer written (a driver that can not route a draw to a layer).
+////////////////
+//global uniform
+float mask_shadow;
+//texture
+Sampler2D(albedo_map);
+////////////////
+struct VertexShaderOutput
+{
+	Vec4 m_position       : SV_POSITION;             // clip-space position for the face
+	Vec4 m_world_position : POSITION1;               // world-space position
+	Vec2 m_uv             : TEXCOORD0;               // interpolated uv map
+#ifndef SQ_LAYER_BY_TARGET
+	uint m_layer          : SV_RenderTargetArrayIndex; // destination cube face
+#endif
+};
+
+//draw
+VertexShaderOutput vertex(in MeshVertex input)
+{
+	VertexShaderOutput output;
+	Vec4 world_position = mesh_world_position(input);
+	output.m_world_position = world_position;
+	output.m_position       = mul_point_light_view_projection(world_position, multi_pass.m_id);
+	output.m_uv             = input.m_uv;
+#ifndef SQ_LAYER_BY_TARGET
+	output.m_layer          = multi_pass.m_id;
+#endif
+	return output;
+}
+
+struct FragmentShaderInput
+{
+	Vec4 m_position       : SV_POSITION;
+	Vec4 m_world_position : POSITION1;
+	Vec2 m_uv             : TEXCOORD0;
+#if defined(SQ_BACKEND_HLSL) && !defined(SQ_LAYER_BY_TARGET)
+	uint m_layer          : SV_RenderTargetArrayIndex;
+#endif
+};
+
+float fragment(in FragmentShaderInput input) : SV_Depth
+{
+	//albedo
+	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
+#ifdef SQ_CLIP
+	//(the clip variant: its mask of the shadow, its level of detail fading)
+	if (albedo_color.a <= mask_shadow) discard;
+	lod_fade_clip(input.m_position.xy);
+#endif
+	//compute distance between world and light source
+	float light_distance = length(point_shadow_camera.m_position - input.m_world_position.xyz);
+	//[0,1] range
+	light_distance = light_distance / point_shadow_camera.m_radius;
+	//write as depth
+	return light_distance;
+}

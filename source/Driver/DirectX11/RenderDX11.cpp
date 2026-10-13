@@ -8,6 +8,10 @@
 #include "Square/Driver/Window.h"
 //--------------------------------------------------
 #include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <unordered_map>
 //RIGHT HEAND
 #define DIRECTX_MODE
@@ -52,7 +56,7 @@ namespace Render
 	void UniformDX11::set(Texture* in_texture)
 	{
 		//bind texture
-		m_context->bind_texture(in_texture, (int)m_offset, (int)m_offset);
+		m_context->bind_texture(in_texture, (int)m_offset, (int)m_sampler_offset);
 	}
 
 	void UniformDX11::set(int i)
@@ -146,7 +150,7 @@ namespace Render
 		for (size_t i = 0; i!= n; ++i)
         {
             //bind texture
-            m_context->bind_texture(tvector++, (int)m_offset+i, (int)m_offset+i);
+            m_context->bind_texture(tvector++, (int)(m_offset+i), (int)(m_sampler_offset+i));
         }
     }
 
@@ -317,6 +321,16 @@ namespace Render
 	, m_shader(shader)
 	, m_buffer(buffer)
 	, m_offset(offset)
+	, m_sampler_offset(offset)
+	{
+	}
+
+	UniformDX11::UniformDX11(ContextDX11* context, Shader* shader, size_t texture_slot, size_t sampler_slot)
+	: m_context(context)
+	, m_shader(shader)
+	, m_buffer(nullptr)
+	, m_offset(texture_slot)
+	, m_sampler_offset(sampler_slot)
 	{
 	}
 
@@ -341,10 +355,10 @@ namespace Render
 			if (!shader->binary((ShaderType)s_type)) continue;
 			//reflector
 			ID3D11ShaderReflection *reflector = nullptr;
-			D3DReflect(shader->binary((ShaderType)s_type)->GetBufferPointer()
+			if (FAILED(D3DReflect(shader->binary((ShaderType)s_type)->GetBufferPointer()
 					 , shader->binary((ShaderType)s_type)->GetBufferSize()
 				     , IID_ID3D11ShaderReflection
-				     , (void **)&reflector);
+				     , (void **)&reflector))) continue;
 			D3D11_SHADER_DESC desc_shader;
 			reflector->GetDesc(&desc_shader);
 			//search
@@ -364,6 +378,8 @@ namespace Render
 					m_found_the_cbuffer = true;
 				}
 			}
+			//the reflection is only needed here
+			reflector->Release();
 		}
     }
 	UniformConstBufferDX11::UniformConstBufferDX11()
@@ -465,6 +481,26 @@ namespace Render
 		//DX11 version
 		context->s_render_driver_info.m_major_version = 11;
 		context->s_render_driver_info.m_minor_version = 0;
+		//DirectX 11 supports geometry shaders
+		context->s_render_driver_info.m_geometry_shader = true;
+		//DirectX 11 supports instanced draw calls (DrawInstanced / DrawIndexedInstanced)
+		context->s_render_driver_info.m_draw_instanced = true;
+		//BC1-BC5 are core since DirectX 10, ASTC is not in DirectX
+		context->s_render_driver_info.m_texture_bc = true;
+		context->s_render_driver_info.m_texture_astc = false;
+		//Writing SV_RenderTargetArrayIndex from the vertex shader (without a GS) requires
+		//VPAndRTArrayIndexFromAnyShaderFeedingRasterizer (D3D11.3 / feature level 11.1+);
+		//otherwise the geometry-shader techniques are used to route the layered shadows.
+		context->s_render_driver_info.m_vertex_viewport_index = false;
+		if (auto* device = context->device())
+		{
+			D3D11_FEATURE_DATA_D3D11_OPTIONS3 options3 = {};
+			if (SUCCEEDED(device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS3, &options3, sizeof(options3))))
+			{
+				context->s_render_driver_info.m_vertex_viewport_index =
+					options3.VPAndRTArrayIndexFromAnyShaderFeedingRasterizer != FALSE;
+			}
+		}
 	}
 	
 	bool ContextDX11::get_devices(Video::DeviceResources* resource)
@@ -641,6 +677,9 @@ namespace Render
 
 	void ContextDX11::close()
 	{
+#if defined(RENDER_PROFILER)
+		release_gpu_timer();
+#endif
 		for (auto blend_pair : m_blend_states) blend_pair.second->Release();
 		for (auto depth_pair : m_depth_states) depth_pair.second->Release();
 
@@ -648,6 +687,11 @@ namespace Render
 		if (m_render_state_cullface_front) m_render_state_cullface_front->Release();
 		if (m_render_state_cullface_back_and_front) m_render_state_cullface_back_and_front->Release();
 		if (m_render_state_cullface_disable) m_render_state_cullface_disable->Release();
+		for (auto*& state : m_render_state_scissor)
+		{
+			if (state) state->Release();
+			state = nullptr;
+		}
 		
 		if (m_view_target) SQ_DELETE(allocator(), Target, m_view_target);
 		if (m_query_buffer[0]) SQ_DELETE(allocator(), Texture2D, m_query_buffer[0]);
@@ -681,6 +725,13 @@ namespace Render
 			m_device_resouces->callback_target_changed(nullptr);
 			m_device_resouces = nullptr;
 		}
+	}
+
+	bool ContextDX11::is_srgb_framebuffer() const
+	{
+		// On DX, when m_srgb is true we always create a UNORM_SRGB swapchain,
+		// so the framebuffer IS sRGB-capable whenever the user requested it.
+		return m_device_resouces != nullptr && m_device_resouces->get_context_info().m_srgb;
 	}
 
 	RenderDriver ContextDX11::get_render_driver()
@@ -821,11 +872,28 @@ namespace Render
 		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_cullface_disable))) return false;
 		rds.FillMode = D3D11_FILL_WIREFRAME;
 		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_cullface_back_and_front))) return false;
+		//with the scissor test
+		rds.ScissorEnable = true;
+		rds.FillMode = D3D11_FILL_SOLID;
+		rds.CullMode = D3D11_CULL_NONE;
+		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_scissor[CF_DISABLE]))) return false;
+		rds.CullMode = D3D11_CULL_FRONT;
+		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_scissor[CF_FRONT]))) return false;
+		rds.CullMode = D3D11_CULL_BACK;
+		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_scissor[CF_BACK]))) return false;
+		rds.CullMode = D3D11_CULL_NONE;
+		rds.FillMode = D3D11_FILL_WIREFRAME;
+		if (!SUCCEEDED(device()->CreateRasterizerState(&rds, &m_render_state_scissor[CF_FRONT_AND_BACK]))) return false;
 		return true;
 	}
 
 	ID3D11RasterizerState* ContextDX11::cullface_state(CullfaceState cullface)
 	{
+		//the scissor test on: the states with it
+		if (m_scissor_state.m_enable && cullface.m_cullface <= CF_FRONT_AND_BACK)
+		{
+			return m_render_state_scissor[cullface.m_cullface];
+		}
 		switch (cullface.m_cullface)
 		{
 		case CF_BACK:           return m_render_state_cullface_back;            break;
@@ -872,6 +940,29 @@ namespace Render
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////
+	const ScissorState& ContextDX11::get_scissor_state()
+	{
+		return m_scissor_state;
+	}
+
+	void ContextDX11::set_scissor_state(const ScissorState& ss)
+	{
+		if (m_scissor_state == ss) return;
+		const bool toggled = m_scissor_state.m_enable != ss.m_enable;
+		m_scissor_state = ss;
+		if (ss.m_enable)
+		{
+			D3D11_RECT rect;
+			rect.left = ss.m_rect.x;
+			rect.top = ss.m_rect.y;
+			rect.right = ss.m_rect.x + ss.m_rect.z;
+			rect.bottom = ss.m_rect.y + ss.m_rect.w;
+			device_context()->RSSetScissorRects(1, &rect);
+		}
+		//the rasterizer state with/without the scissor test
+		if (toggled) device_context()->RSSetState(cullface_state(s_render_state.m_cullface));
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	static D3D11_BLEND get_blend_type(BlendType type, bool isAlpha) 
 	{
 		switch (type)
@@ -880,15 +971,16 @@ namespace Render
 		case BLEND_ZERO: return D3D11_BLEND_ZERO;
 		case BLEND_ONE:  return D3D11_BLEND_ONE;
 
-		case BLEND_ONE_MINUS_DST_COLOR: return D3D11_BLEND_INV_DEST_COLOR;
+		//the alpha channel does not accept the *_COLOR factors: use the *_ALPHA ones
+		case BLEND_ONE_MINUS_DST_COLOR: return isAlpha ? D3D11_BLEND_INV_DEST_ALPHA : D3D11_BLEND_INV_DEST_COLOR;
 		case BLEND_ONE_MINUS_DST_ALPHA: return D3D11_BLEND_INV_DEST_ALPHA;
-		case BLEND_ONE_MINUS_SRC_COLOR: return D3D11_BLEND_INV_SRC_COLOR;
+		case BLEND_ONE_MINUS_SRC_COLOR: return isAlpha ? D3D11_BLEND_INV_SRC_ALPHA : D3D11_BLEND_INV_SRC_COLOR;
 		case BLEND_ONE_MINUS_SRC_ALPHA: return D3D11_BLEND_INV_SRC_ALPHA;
 
-		case BLEND_DST_COLOR: return D3D11_BLEND_DEST_COLOR;
+		case BLEND_DST_COLOR: return isAlpha ? D3D11_BLEND_DEST_ALPHA : D3D11_BLEND_DEST_COLOR;
 		case BLEND_DST_ALPHA: return D3D11_BLEND_DEST_ALPHA;
 
-		case BLEND_SRC_COLOR: return D3D11_BLEND_SRC_COLOR;
+		case BLEND_SRC_COLOR: return isAlpha ? D3D11_BLEND_SRC_ALPHA : D3D11_BLEND_SRC_COLOR;
 		case BLEND_SRC_ALPHA: return D3D11_BLEND_SRC_ALPHA;
 		case BLEND_SRC_ALPHA_SATURATE: return D3D11_BLEND_SRC_ALPHA_SAT;
 		}
@@ -902,8 +994,8 @@ namespace Render
 		//ENABLE/DISABLE
 		D3D11_BLEND_DESC bsd;
 		ZeroMemory(&bsd, sizeof(D3D11_BLEND_DESC));
-		//ALPHA
-		bsd.AlphaToCoverageEnable = TRUE;
+		//no alpha to coverage: without MSAA it is an alpha test (~0.5), it cuts the alpha blended surfaces
+		bsd.AlphaToCoverageEnable = FALSE;
 		//FOR ALL
 		bsd.IndependentBlendEnable = FALSE; //USE only RenderTarget[0] 
 		//for (D3D11_RENDER_TARGET_BLEND_DESC& btarget : bsd.RenderTarget)
@@ -914,7 +1006,7 @@ namespace Render
 			btarget.DestBlend = get_blend_type(dbs.m_dst, 0);
 			btarget.BlendOp = D3D11_BLEND_OP_ADD;
 			btarget.SrcBlendAlpha = get_blend_type(dbs.m_src, 1);
-			btarget.DestBlendAlpha = get_blend_type(dbs.m_src, 1);
+			btarget.DestBlendAlpha = get_blend_type(dbs.m_dst, 1);
 			btarget.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 			btarget.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 		}
@@ -1556,6 +1648,22 @@ namespace Render
 		device_context()->IASetPrimitiveTopology(get_draw_type(type));
 		device_context()->DrawIndexed(n, start, 0);
 	}
+
+	void ContextDX11::draw_arrays_instanced(DrawType type, unsigned int start, unsigned int size, unsigned int instances)
+	{
+		if (s_bind_context.m_shader)
+			s_bind_context.m_shader->bind_global_buffer(this);
+		device_context()->IASetPrimitiveTopology(get_draw_type(type));
+		device_context()->DrawInstanced(size, instances, start, 0);
+	}
+
+	void ContextDX11::draw_elements_instanced(DrawType type, unsigned int start, unsigned int n, unsigned int instances)
+	{
+		if (s_bind_context.m_shader)
+			s_bind_context.m_shader->bind_global_buffer(this);
+		device_context()->IASetPrimitiveTopology(get_draw_type(type));
+		device_context()->DrawIndexedInstanced(n, instances, start, 0, 0);
+	}
 	/*
 		InputLayout
 	*/
@@ -1678,6 +1786,7 @@ namespace Render
 			//save element desc
 			semantic_type_map[std::string(paramDesc.SemanticName)] = format;
 		}
+		shader_ref->Release();
 		return std::move(semantic_type_map);
 	}
 
@@ -1905,13 +2014,13 @@ namespace Render
 	/*
 		Textures
 	*/
-	inline const DXGI_FORMAT get_texture_format(TextureFormat type)
+	inline const DXGI_FORMAT get_texture_format(TextureFormat type, bool sRGB)
 	{
 		//select
 		switch (type)
 		{
 		//RGBA
-		case TF_RGBA8: return DXGI_FORMAT_R8G8B8A8_UNORM; break;
+		case TF_RGBA8: return sRGB ? DXGI_FORMAT_R8G8B8A8_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM; break;
 		//uint
 		case TF_RGBA16UI: return DXGI_FORMAT_R16G16B16A16_UINT; break;
 		case TF_RGBA32UI: return DXGI_FORMAT_R32G32B32A32_UINT; break;
@@ -1923,7 +2032,7 @@ namespace Render
 		case TF_RGBA32F: return DXGI_FORMAT_R32G32B32A32_FLOAT; break;
 		////////////////////
 		//RGB
-		case TF_RGB8: return DXGI_FORMAT_R8G8B8A8_UNORM; /*add_alpha = true;*/ break;
+		case TF_RGB8: return  sRGB ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM; /*add_alpha = true;*/ break;
 		//uint
 		case TF_RGB16UI: return DXGI_FORMAT_R16G16B16A16_UINT; /*add_alpha = true;*/ break;
 		case TF_RGB32UI: return DXGI_FORMAT_R32G32B32A32_UINT; /*add_alpha = true;*/ break;
@@ -1970,6 +2079,12 @@ namespace Render
 		case TF_DEPTH_COMPONENT16: return DXGI_FORMAT_D16_UNORM; break;
 		//case TF_DEPTH_COMPONENT24: return GL_DEPTH_COMPONENT24; break;
 		case TF_DEPTH_COMPONENT32: return DXGI_FORMAT_D32_FLOAT; break;
+		///////////////////
+		//COMPRESSED (no ASTC in DirectX)
+		case TF_BC1: return sRGB ? DXGI_FORMAT_BC1_UNORM_SRGB : DXGI_FORMAT_BC1_UNORM; break;
+		case TF_BC3: return sRGB ? DXGI_FORMAT_BC3_UNORM_SRGB : DXGI_FORMAT_BC3_UNORM; break;
+		case TF_BC4: return DXGI_FORMAT_BC4_UNORM; break;
+		case TF_BC5: return DXGI_FORMAT_BC5_UNORM; break;
 
 		default: return DXGI_FORMAT_FORCE_UINT; break;
 		}
@@ -2240,6 +2355,17 @@ namespace Render
 		return new_format;
 	}
 
+	//mip levels of a texture: 0 (the whole chain, generated) when it builds the mipmaps, else
+	//mipmap_max clamped to the levels its size has (a 320x180 has 9: more is E_INVALIDARG)
+	static UINT texture_mip_levels(const TextureGpuDataInformation& info, UINT width, UINT height)
+	{
+		if (info.m_build_mipmap) return 0;
+		UINT levels = 1;
+		for (UINT size = (width > height ? width : height); size > 1; size >>= 1) ++levels;
+		if (info.m_mipmap_max < 1) return 1;
+		return (UINT)info.m_mipmap_max < levels ? (UINT)info.m_mipmap_max : levels;
+	}
+
 	Texture* ContextDX11::create_texture
 	(
 		const TextureRawDataInformation& data,
@@ -2250,19 +2376,28 @@ namespace Render
 		UINT pixel_size = get_textut_pixel_size(data.m_format);
 		D3D11_USAGE usage = info.m_read_from_cpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
 		UINT cpu_access_flags = info.m_read_from_cpu ? D3D11_CPU_ACCESS_READ : 0;
-		UINT mip_levels = info.m_build_mipmap ? 0 : info.m_mipmap_max;
-		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
+		//compressed: the levels are given (no mipmaps built, not a render target)
+		const bool compressed = is_compressed_format(data.m_format);
+		UINT mip_levels = compressed ? (data.m_levels ? data.m_levels : 1) : texture_mip_levels(info, data.m_width, data.m_height);
+		const bool build_mipmap = info.m_build_mipmap && !compressed;
+		UINT misc_flags = build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
 		//format
-		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format);
+		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format, data.m_is_srgb);
+		if (texture_format_raw == DXGI_FORMAT_FORCE_UINT)
+		{
+			m_errors.push_back({ "create_texture: format not supported" });
+			print_errors();
+			return nullptr;
+		}
 		bool	    depth_target        = is_depth_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_data = texture_depth_to_typeless_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_resource = texture_depth_to_resource_format(texture_format_raw);
 		//render target
-		if (depth_target) bind_flags |= D3D11_BIND_DEPTH_STENCIL;
-		else              bind_flags |= D3D11_BIND_RENDER_TARGET;
+		if (depth_target)     bind_flags |= D3D11_BIND_DEPTH_STENCIL;
+		else if (!compressed) bind_flags |= D3D11_BIND_RENDER_TARGET;
 		//new image if need
-		auto new_image = Unique<const unsigned char[]> (add_alpha_if_need(allocator(), data.m_bytes, data.m_width, data.m_height, data.m_format), DefaultDelete(allocator()));
+		auto new_image = Unique<const unsigned char[]> (compressed ? nullptr : add_alpha_if_need(allocator(), data.m_bytes, data.m_width, data.m_height, data.m_format), DefaultDelete(allocator()));
 		//if new image alloc, point to new image
 		if (new_image.get())
 		{
@@ -2288,7 +2423,18 @@ namespace Render
 		if (dx_op_success(device()->CreateTexture2D(&texture_desc, nullptr, &d11_texture)))
 		{
 			//upload
-			if (texture_bytes)
+			if (texture_bytes && compressed)
+			{
+				//every level, rows of blocks
+				for (UINT level = 0; level < mip_levels; ++level)
+				{
+					const UINT level_width  = texture_level_size(data.m_width, level);
+					const UINT level_height = texture_level_size(data.m_height, level);
+					device_context()->UpdateSubresource(d11_texture, level, nullptr, texture_bytes, texture_block_row_bytes(data.m_format, level_width), 0);
+					texture_bytes += texture_level_bytes(data.m_format, level_width, level_height);
+				}
+			}
+			else if (texture_bytes)
 			{
 				device_context()->UpdateSubresource(d11_texture, 0, nullptr, texture_bytes, (data.m_width * pixel_size), 0);
 			}
@@ -2302,12 +2448,19 @@ namespace Render
 			texture2D->m_format_data = texture_format_data;
 			texture2D->m_format_shader_resource = texture_format_resource;
 			texture2D->m_size = 1;
+			//register
+#if defined(TEXTURE_INTROSPECTION)
+			if (auto render_inspector = inspector())
+			{
+				render_inspector->on_create_texture(texture2D, { TS_TEXTURE_2D, data.m_format, data.m_width, data.m_height, 1 });
+			}
+#endif
 			//view
 			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
 			s_resource_view.Format = texture_format_resource;
 			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			s_resource_view.Texture2D.MostDetailedMip = 0;
-			s_resource_view.Texture2D.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
+			s_resource_view.Texture2D.MipLevels = build_mipmap ? -1 : mip_levels;
 			//try
 			if (!dx_op_success(device()->CreateShaderResourceView(d11_texture, &s_resource_view, &texture2D->m_resource_view)))
 			{
@@ -2316,7 +2469,7 @@ namespace Render
 				return texture2D;
 			}
 			//build
-			if (info.m_build_mipmap)
+			if (build_mipmap)
 			{
 				device_context()->GenerateMips(texture2D->m_resource_view);
 			}
@@ -2359,11 +2512,11 @@ namespace Render
 		UINT pixel_size = get_textut_pixel_size(data.m_format);
 		D3D11_USAGE usage = info.m_read_from_cpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
 		UINT cpu_access_flags = info.m_read_from_cpu ? D3D11_CPU_ACCESS_READ : 0;
-		UINT mip_levels = info.m_build_mipmap ? 0 : info.m_mipmap_max;
+		UINT mip_levels = texture_mip_levels(info, data.m_width, data.m_height);
 		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
 		//format
-		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format);
+		DXGI_FORMAT texture_format_raw  = get_texture_format(data.m_format, data.m_is_srgb);
 		bool	    depth_target        = is_depth_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_data = texture_depth_to_typeless_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_resource = texture_depth_to_resource_format(texture_format_raw);
@@ -2411,13 +2564,20 @@ namespace Render
 			texture2D->m_format_data = texture_format_data;
 			texture2D->m_format_shader_resource = texture_format_resource;
 			texture2D->m_size = size;
+			//register
+#if defined(TEXTURE_INTROSPECTION)
+			if (auto render_inspector = inspector())
+			{
+				render_inspector->on_create_texture(texture2D, { TS_TEXTURE_ARRAY, data.m_format, data.m_width, data.m_height, size });
+			}
+#endif
 			//view
 			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
 			s_resource_view.Format = texture_format_resource;
 			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
 			s_resource_view.Texture2DArray.ArraySize = size;
 			s_resource_view.Texture2DArray.MostDetailedMip = 0;
-			s_resource_view.Texture2DArray.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
+			s_resource_view.Texture2DArray.MipLevels = info.m_build_mipmap ? -1 : mip_levels;
 			//try
 			if (!dx_op_success(device()->CreateShaderResourceView(d11_texture, &s_resource_view, &texture2D->m_resource_view)))
 			{
@@ -2472,13 +2632,13 @@ namespace Render
 		UINT pixel_size = get_textut_pixel_size(data[0].m_format);
 		D3D11_USAGE usage = info.m_read_from_cpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
 		UINT cpu_access_flags = info.m_read_from_cpu ? D3D11_CPU_ACCESS_READ : 0;
-		UINT mip_levels = info.m_build_mipmap ? 0 : info.m_mipmap_max;
+		UINT mip_levels = texture_mip_levels(info, data[0].m_width, data[0].m_height);
 		UINT misc_flags = info.m_build_mipmap ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 		UINT bind_flags = D3D11_BIND_SHADER_RESOURCE;
 		//is a cubemap
 		misc_flags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
 		//format
-		DXGI_FORMAT texture_format_raw = get_texture_format(data[0].m_format);
+		DXGI_FORMAT texture_format_raw = get_texture_format(data[0].m_format, data[0].m_is_srgb);
 		bool	    depth_target = is_depth_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_data = texture_depth_to_typeless_texture(texture_format_raw);
 		DXGI_FORMAT texture_format_resource = texture_depth_to_resource_format(texture_format_raw);
@@ -2538,12 +2698,19 @@ namespace Render
 			texture2D->m_format_data = texture_format_data;
 			texture2D->m_format_shader_resource = texture_format_resource;
 			texture2D->m_size = 6;
+			//register
+#if defined(TEXTURE_INTROSPECTION)
+			if (auto render_inspector = inspector())
+			{
+				render_inspector->on_create_texture(texture2D, { TS_TEXTURE_CUBE, data[0].m_format, data[0].m_width, data[0].m_height, 6 });
+			}
+#endif
 			//view
 			D3D11_SHADER_RESOURCE_VIEW_DESC s_resource_view = {};
 			s_resource_view.Format = texture_format_resource;
 			s_resource_view.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
 			s_resource_view.TextureCube.MostDetailedMip = 0;
-			s_resource_view.TextureCube.MipLevels = info.m_build_mipmap ? -1 : info.m_mipmap_max;
+			s_resource_view.TextureCube.MipLevels = info.m_build_mipmap ? -1 : mip_levels;
 			//try
 			if (!SUCCEEDED(device()->CreateShaderResourceView(d11_texture, &s_resource_view, &texture2D->m_resource_view)))
 			{
@@ -2607,6 +2774,51 @@ namespace Render
 		device_context()->Unmap(texture_resource, level);
 		//return
 		return output;
+	}
+
+	namespace AuxCopyTexture
+	{
+		//the resource of a texture of DirectX (nullptr: none)
+		static ID3D11Resource* resource(Texture* texture)
+		{
+			switch (texture->m_type)
+			{
+			case DX_TEXTURE_1D: return ((Texture1D*)texture)->m_texture1D;
+			case DX_TEXTURE_2D: return ((Texture2D*)texture)->m_texture2D;
+			case DX_TEXTURE_3D: return ((Texture3D*)texture)->m_texture3D;
+			default:            return nullptr;
+			}
+		}
+	}
+
+	void ContextDX11::copy_texture(Texture* source, Texture* destination)
+	{
+		if (source && destination)
+		{
+			ID3D11Resource* from = AuxCopyTexture::resource(source);
+			ID3D11Resource* to = AuxCopyTexture::resource(destination);
+			if (from && to)
+			{
+				//(all of it: its faces, its layers, its levels; the same size and format)
+				device_context()->CopyResource(to, from);
+			}
+		}
+	}
+
+	void ContextDX11::copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer)
+	{
+		ID3D11Texture2D* from = source ? source->id3d11_texture2D() : nullptr;
+		ID3D11Texture2D* to = destination ? destination->id3d11_texture2D() : nullptr;
+		if (from && to)
+		{
+			//(a layer, a face: a sub resource of level 0)
+			D3D11_TEXTURE2D_DESC from_desc, to_desc;
+			from->GetDesc(&from_desc);
+			to->GetDesc(&to_desc);
+			const UINT from_sub = D3D11CalcSubresource(0, source_layer, from_desc.MipLevels);
+			const UINT to_sub = D3D11CalcSubresource(0, destination_layer, to_desc.MipLevels);
+			device_context()->CopySubresourceRegion(to, to_sub, 0, 0, 0, from, from_sub, nullptr);
+		}
 	}
 
 	std::vector< unsigned char > ContextDX11::get_texture(Texture* tex, int cube, int level)
@@ -2684,6 +2896,14 @@ namespace Render
         unbind_texture(s_bind_context.m_textures[n]);
     }
         
+	void ContextDX11::update_texture(Texture* texture, const TextureRawDataInformation& data)
+	{
+		//a 2D texture, not compressed (an RGB 8 bit one has its alpha added: not here)
+		if (!texture || !data.m_bytes || texture->m_type != DX_TEXTURE_2D || is_compressed_format(data.m_format)) return;
+		auto* texture2D = static_cast<Texture2D*>(texture);
+		device_context()->UpdateSubresource(texture2D->m_texture2D, 0, nullptr, data.m_bytes, data.m_width * get_textut_pixel_size(data.m_format), 0);
+	}
+
 	void ContextDX11::delete_texture(Texture*& ctx_texture)
     {
         //bind?
@@ -2691,6 +2911,13 @@ namespace Render
         {
             unbind_texture(ctx_texture);
         }
+        //unregister
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_delete_texture(ctx_texture);
+		}
+#endif
         //safe delete
 		SQ_DELETE(allocator(), Texture, ctx_texture);
 		ctx_texture = nullptr;
@@ -2771,7 +2998,7 @@ namespace Render
 	)
 	{
 		ID3D11ShaderReflection *reflector = nullptr;
-		D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+		if (FAILED(D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector))) return false;
 		D3D11_SHADER_DESC desc_shader;
 		reflector->GetDesc(&desc_shader);
 		for (UINT i = 0; i < desc_shader.ConstantBuffers; ++i)
@@ -2811,6 +3038,7 @@ namespace Render
 				}
 			}
 		}
+		reflector->Release();
 		return true;
 	}
 	
@@ -2821,7 +3049,7 @@ namespace Render
 	)
 	{
 		ID3D11ShaderReflection *reflector = nullptr;
-		D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+		if (FAILED(D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector))) return false;
 		D3D11_SHADER_DESC desc_shader;
 		reflector->GetDesc(&desc_shader);
 		for (UINT i = 0; i < desc_shader.ConstantBuffers; ++i)
@@ -2841,6 +3069,7 @@ namespace Render
 				info.m_slot[type] = bind_desc.BindPoint;
 			}
 		}
+		reflector->Release();
 		return true;
 	}
 
@@ -2865,24 +3094,98 @@ namespace Render
 	)
 	{
 		ID3D11ShaderReflection *reflector = nullptr;
-		D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+		if (FAILED(D3DReflect(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector))) return;
 		D3D11_SHADER_DESC desc_shader;
 		reflector->GetDesc(&desc_shader);
+		//samplers: the compiler assigns s# independently from t# (unused samplers are stripped,
+		//textures read without a sampler take no s#), so match them by name: "sempler_<texture>"
+		std::unordered_map<std::string, UINT> samplers;
 		for (UINT i = 0; i < desc_shader.BoundResources; ++i)
 		{
 			D3D11_SHADER_INPUT_BIND_DESC bind_desc;
-			if (SUCCEEDED(reflector->GetResourceBindingDesc(i, &bind_desc)))
+			if (SUCCEEDED(reflector->GetResourceBindingDesc(i, &bind_desc)) && bind_desc.Type == D3D_SIT_SAMPLER)
 			{
-				//if is a texture // WIP, (D3D_SIT_TEXTURE) same location of texture                           
-				if (bind_desc.Type == D3D_SIT_TEXTURE /* D3D_SIT_SAMPLER */)
+				samplers[std::string(bind_desc.Name)] = bind_desc.BindPoint;
+			}
+		}
+		for (UINT i = 0; i < desc_shader.BoundResources; ++i)
+		{
+			D3D11_SHADER_INPUT_BIND_DESC bind_desc;
+			if (SUCCEEDED(reflector->GetResourceBindingDesc(i, &bind_desc)) && bind_desc.Type == D3D_SIT_TEXTURE)
+			{
+				std::string name(bind_desc.Name);
+				auto it_sampler = samplers.find("sempler_" + name);
+				UINT sampler_slot = it_sampler != samplers.end() ? it_sampler->second : bind_desc.BindPoint;
+				info.m_fields_uniforms[name] = UniformDX11(context, shader, (size_t)bind_desc.BindPoint, (size_t)sampler_slot);
+			}
+		}
+		reflector->Release();
+	}
+	namespace AuxShaderCache
+	{
+		//the version of the files of the cache (a new one: the old files never read)
+		static const char* s_version = "dxbc1";
+
+		//FNV-1a: the same on every run, every compiler
+		static uint64_t hash(const void* data, size_t size, uint64_t value = 14695981039346656037ull)
+		{
+			const unsigned char* bytes = static_cast<const unsigned char*>(data);
+			for (size_t i = 0; i != size; ++i)
+			{
+				value ^= uint64_t(bytes[i]);
+				value *= 1099511628211ull;
+			}
+			return value;
+		}
+
+		//the file of a compiled stage: by its source, its entry, its profile, its flags
+		static std::string file_of(const std::string& folder, const std::string& source, const std::string& entry, const char* profile, UINT flags)
+		{
+			uint64_t value = hash(source.data(), source.size());
+			value = hash(entry.data(), entry.size(), value);
+			value = hash(profile, std::strlen(profile), value);
+			value = hash(&flags, sizeof(flags), value);
+			value = hash(s_version, std::strlen(s_version), value);
+			char name[32];
+			std::snprintf(name, sizeof(name), "%016llx.dxbc", (unsigned long long)value);
+			return (std::filesystem::path(folder) / name).string();
+		}
+
+		//its bytecode from the cache (nullptr: not there)
+		static ID3DBlob* read(const std::string& file)
+		{
+			ID3DBlob* blob = nullptr;
+			std::ifstream in(file, std::ios::binary | std::ios::ate);
+			const std::streamsize size = in ? std::streamsize(in.tellg()) : 0;
+			if (size > 0 && D3DCreateBlob(SIZE_T(size), &blob) == S_OK)
+			{
+				in.seekg(0);
+				if (!in.read(static_cast<char*>(blob->GetBufferPointer()), size))
 				{
-					info.m_fields_uniforms[std::string(bind_desc.Name)] = UniformDX11(context, shader, nullptr, bind_desc.BindPoint);
+					blob->Release();
+					blob = nullptr;
 				}
 			}
-
+			return blob;
 		}
-		
+
+		//its bytecode into the cache (a file aside, then renamed: never read half written)
+		static void write(const std::string& file, ID3DBlob* blob)
+		{
+			const std::string temporary = file + ".tmp";
+			{
+				std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+				out.write(static_cast<const char*>(blob->GetBufferPointer()), std::streamsize(blob->GetBufferSize()));
+			}
+			std::error_code error;
+			std::filesystem::rename(temporary, file, error);
+			if (error)
+			{
+				std::filesystem::remove(temporary, error);
+			}
+		}
 	}
+
 	Shader* ContextDX11::create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
@@ -2913,10 +3216,22 @@ namespace Render
 					start_line +
 					info.m_shader_source
 				};
-				//compile
-				ID3DBlob* shader_blob = nullptr;
+				//compile: its bytecode from the cache (the same source, entry, profile, flags), else
+				//compiled and kept there
+				const UINT flags = D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
+				                 | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR
+#ifdef _DEBUG
+				                 | D3DCOMPILE_OPTIMIZATION_LEVEL0
+				                 | D3DCOMPILE_DEBUG
+#else // Release
+				                 | D3DCOMPILE_OPTIMIZATION_LEVEL3
+#endif
+				                 ;
+				const bool cached = !shader_cache().empty();
+				const std::string cache_file = cached ? AuxShaderCache::file_of(shader_cache(), source, info.m_entry_point, shader_version[info.m_type], flags) : std::string();
+				ID3DBlob* shader_blob = cached ? AuxShaderCache::read(cache_file) : nullptr;
 				ID3DBlob* error_blob = nullptr;
-				if (D3DCompile2(
+				const bool compiled = shader_blob || D3DCompile2(
 					  source.data()
 					, source.size()
 					, NULL
@@ -2924,27 +3239,25 @@ namespace Render
 					, nullptr
 					, info.m_entry_point.c_str()
 					, shader_version[info.m_type]
-					, D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
-				     | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR
-#ifdef _DEBUG
-					 | D3DCOMPILE_OPTIMIZATION_LEVEL0
-					 | D3DCOMPILE_DEBUG
-#else // Release
-					| D3DCOMPILE_OPTIMIZATION_LEVEL3
-#endif 
+					, flags
 					, 0
 					, 0
 					, NULL
 					, 0
 					, &shader_blob
 					, &error_blob
-				) != S_OK)
+				) == S_OK;
+				if (compiled && cached && !std::filesystem::exists(cache_file))
+				{
+					AuxShaderCache::write(cache_file, shader_blob);
+				}
+				if (!compiled)
 				{
 					//save error
-					std::string err(static_cast<char*>(error_blob->GetBufferPointer()), error_blob->GetBufferSize());
+					std::string err = error_blob ? std::string(static_cast<char*>(error_blob->GetBufferPointer()), error_blob->GetBufferSize()) : std::string("unknown error");
 					oshader->push_compiler_error({ info.m_type,  err.c_str() });
 					//release
-					error_blob->Release();
+					if (error_blob) error_blob->Release();
 					if (shader_blob) shader_blob->Release();
 					//to next shader
 					continue;
@@ -3142,18 +3455,13 @@ namespace Render
     UniformConstBuffer* ContextDX11::get_uniform_const_buffer(Square::Render::Shader* shader, const std::string& uname) const
     {
         auto uit = shader->m_uniform_const_buffer_map.find(uname);
-        //if find
-        if (uit != shader->m_uniform_const_buffer_map.end()) return uit->second.get();
-		//valid?
+        //if find (a cbuffer the shader does not have is saved too: not valid)
+        if (uit != shader->m_uniform_const_buffer_map.end()) return uit->second->is_valid() ? uit->second.get() : nullptr;
+		//reflection of the shader, once for each name
 		auto ucbuffer = MakeUnique<UniformConstBufferDX11>(allocator(),(ContextDX11*)this, shader, uname);
-		//is valid?
-		if (!ucbuffer->is_valid()) return nullptr;
-        //add and return
-		shader->m_uniform_const_buffer_map.insert({ 
-			uname,
-			std::move(ucbuffer)
-		});
-		return shader->m_uniform_const_buffer_map[uname].get();
+		auto* ucbuffer_ptr = ucbuffer.get();
+		shader->m_uniform_const_buffer_map.insert({ uname, std::move(ucbuffer) });
+		return ucbuffer_ptr->is_valid() ? ucbuffer_ptr : nullptr;
     }
 
 	/*
@@ -3170,8 +3478,16 @@ namespace Render
 			{
 				if (t_field.m_type == RT_COLOR)
 				{
+					//all of it, or one of its layers (a face of a cube, a layer of an array)
+					D3D11_RENDER_TARGET_VIEW_DESC desc_rtv;
+					ZeroMemory(&desc_rtv, sizeof(D3D11_RENDER_TARGET_VIEW_DESC));
+					desc_rtv.Format = DXGI_FORMAT_UNKNOWN;
+					desc_rtv.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+					desc_rtv.Texture2DArray.FirstArraySlice = t_field.m_layer < 0 ? 0u : UINT(t_field.m_layer);
+					desc_rtv.Texture2DArray.ArraySize = 1;
+					const D3D11_RENDER_TARGET_VIEW_DESC* layer_rtv = t_field.m_layer < 0 ? NULL : &desc_rtv;
 					ID3D11RenderTargetView* rtarget_view;
-					if (!dx_op_success(device()->CreateRenderTargetView(t_field.m_texture->id3d11_texture2D(), NULL, &rtarget_view)))
+					if (!dx_op_success(device()->CreateRenderTargetView(t_field.m_texture->id3d11_texture2D(), layer_rtv, &rtarget_view)))
 					{
 						delete_render_target(target);
 						return nullptr;
@@ -3185,7 +3501,15 @@ namespace Render
 					D3D11_DEPTH_STENCIL_VIEW_DESC desc_dsv;
 					ZeroMemory(&desc_dsv, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
 					///////////////////////////////////////////////////////////////
-					if(t_field.m_texture->m_is_cube)
+					if (t_field.m_layer >= 0)
+					{
+						//one of its layers (a face of a cube, a layer of an array)
+						desc_dsv.Format = t_field.m_texture->m_format_raw;
+						desc_dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+						desc_dsv.Texture2DArray.FirstArraySlice = UINT(t_field.m_layer);
+						desc_dsv.Texture2DArray.ArraySize = 1;
+					}
+					else if(t_field.m_texture->m_is_cube)
 					{
 						desc_dsv.Format = t_field.m_texture->m_format_raw;
 						desc_dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
@@ -3218,6 +3542,13 @@ namespace Render
 				}
 			}
 		}
+		//register
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_create_target(target, textures);
+		}
+#endif
 		//return
 		return target;
 	}
@@ -3250,6 +3581,13 @@ namespace Render
         {
             disable_render_target(r_target);
         }
+        //unregister
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_delete_target(r_target);
+		}
+#endif
         //safe delete
 		SQ_DELETE(allocator(), Target, r_target);
 		r_target = nullptr;
@@ -3263,6 +3601,10 @@ namespace Render
 		TargetType	mask
 	)
 	{
+		//nullptr means "default target" (the swap chain back buffer), same convention as enable_render_target
+		from = from ? from : m_view_target;
+		to   = to   ? to   : m_view_target;
+		if (!from || !to) return;
 
 		D3D11_BOX from_box;
 		from_box.left = from_area.x;
@@ -3271,29 +3613,144 @@ namespace Render
 		from_box.bottom = from_area.w;
 		from_box.front = 0;
 		from_box.back = 1;
-		//copy
-		if (mask != RT_DEPTH_STENCIL)
+		//copy (CopySubresourceRegion takes the destination first, the source last)
+		if (mask == RT_DEPTH || mask == RT_STENCIL || mask == RT_DEPTH_STENCIL)
+		{
+			if (!from->m_depth_texture || !to->m_depth_texture) return;
+			//depth-stencil resources can only be copied whole (no box, destination at 0,0,0),
+			//between textures of the same size and of castable formats
+			D3D11_TEXTURE2D_DESC from_desc, to_desc;
+			from->m_depth_texture->GetDesc(&from_desc);
+			to->m_depth_texture->GetDesc(&to_desc);
+			if (from_desc.Width != to_desc.Width
+			||  from_desc.Height != to_desc.Height
+			||  texture_depth_to_typeless_texture(from_desc.Format) != texture_depth_to_typeless_texture(to_desc.Format))
+			{
+				static bool s_warned = false;
+				if (!s_warned)
+				{
+					logger()->warning("copy_target_to_target: depth buffers of different size or format, depth not copied");
+					s_warned = true;
+				}
+				return;
+			}
+			device_context()->CopySubresourceRegion(
+				  to->m_depth_texture, 0
+				, 0, 0, 0
+				, from->m_depth_texture, 0
+				, nullptr
+			);
+		}
+		else
 		{
 			for (size_t i = 0; i < from->m_view_textures.size() && i < to->m_view_textures.size(); ++i)
 			{
 				device_context()->CopySubresourceRegion(
-					  from->m_view_textures[i], 0
+					  to->m_view_textures[i], 0
 					, to_area.x, to_area.y, 0
-					, to->m_view_textures[i], 0
+					, from->m_view_textures[i], 0
 					, &from_box
 				);
 			}
-		}
-		else
-		{
-			device_context()->CopySubresourceRegion(
-				  from->m_depth_texture, 0
-				, to_area.x, to_area.y, 0
-				, to->m_depth_texture, 0
-				, &from_box
-			);
         }
 	}
+
+#if defined(RENDER_PROFILER)
+	bool ContextDX11::gpu_timer_supported() const
+	{
+		//timestamp queries: every D3D11 device
+		return device() && device_context();
+	}
+
+	void ContextDX11::gpu_timer_begin_frame()
+	{
+		if (!gpu_timer_supported()) return;
+		//the slot of the frame: one still not read is lost (the GPU is too far behind)
+		GpuTimerFrame& frame = m_gpu_timer_frames[m_gpu_timer_frame_id % GPU_TIMER_FRAMES];
+		if (!frame.m_disjoint)
+		{
+			D3D11_QUERY_DESC desc{ D3D11_QUERY_TIMESTAMP_DISJOINT, 0 };
+			if (!dx_op_success(device()->CreateQuery(&desc, &frame.m_disjoint))) return;
+		}
+		frame.m_id = m_gpu_timer_frame_id++;
+		frame.m_count = 0;
+		frame.m_pending = false;
+		device_context()->Begin(frame.m_disjoint);
+		m_gpu_timer_in_frame = true;
+	}
+
+	void ContextDX11::gpu_timer_end_frame()
+	{
+		if (!m_gpu_timer_in_frame) return;
+		GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+		device_context()->End(frame.m_disjoint);
+		frame.m_pending = frame.m_count > 0;
+		m_gpu_timer_in_frame = false;
+	}
+
+	int ContextDX11::gpu_timer_timestamp()
+	{
+		if (!m_gpu_timer_in_frame) return -1;
+		GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+		if (frame.m_count >= GPU_TIMER_MAX_TIMESTAMPS) return -1;
+		if (frame.m_count == frame.m_queries.size())
+		{
+			ID3D11Query* query = nullptr;
+			D3D11_QUERY_DESC desc{ D3D11_QUERY_TIMESTAMP, 0 };
+			if (!dx_op_success(device()->CreateQuery(&desc, &query))) return -1;
+			frame.m_queries.push_back(query);
+		}
+		device_context()->End(frame.m_queries[frame.m_count]);
+		return int(frame.m_count++);
+	}
+
+	bool ContextDX11::gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms)
+	{
+		while (true)
+		{
+			//the oldest frame pending
+			GpuTimerFrame* oldest = nullptr;
+			for (GpuTimerFrame& frame : m_gpu_timer_frames)
+			{
+				if (frame.m_pending && (!oldest || frame.m_id < oldest->m_id)) oldest = &frame;
+			}
+			if (!oldest) return false;
+			//done when its disjoint query is (without a flush)
+			D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint{};
+			if (device_context()->GetData(oldest->m_disjoint, &disjoint, sizeof(disjoint), D3D11_ASYNC_GETDATA_DONOTFLUSH) != S_OK) return false;
+			//the clock has changed in the frame: its times are wrong
+			if (disjoint.Disjoint || !disjoint.Frequency)
+			{
+				oldest->m_pending = false;
+				continue;
+			}
+			//ticks -> ms from the first
+			timestamps_ms.resize(oldest->m_count);
+			UINT64 first = 0;
+			for (size_t i = 0; i != oldest->m_count; ++i)
+			{
+				UINT64 time = 0;
+				if (device_context()->GetData(oldest->m_queries[i], &time, sizeof(time), D3D11_ASYNC_GETDATA_DONOTFLUSH) != S_OK) return false;
+				if (i == 0) first = time;
+				timestamps_ms[i] = time >= first ? double(time - first) * 1000.0 / double(disjoint.Frequency) : 0.0;
+			}
+			frame_id = oldest->m_id;
+			oldest->m_pending = false;
+			return true;
+		}
+	}
+
+	void ContextDX11::release_gpu_timer()
+	{
+		for (GpuTimerFrame& frame : m_gpu_timer_frames)
+		{
+			if (frame.m_disjoint) frame.m_disjoint->Release();
+			for (ID3D11Query* query : frame.m_queries) if (query) query->Release();
+			frame = GpuTimerFrame();
+		}
+		m_gpu_timer_in_frame = false;
+	}
+#endif
 
 	bool ContextDX11::print_errors() const
 	{

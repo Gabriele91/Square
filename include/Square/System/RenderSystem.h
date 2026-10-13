@@ -1,0 +1,220 @@
+//
+//  RenderSystem.h
+//  Square
+//
+//  The render device, and the drawing of every world at the end of the frame
+//  (late_update, the last one), then the present (window swap):
+//  - RenderSystem, global: the render device (System::get<RenderSystem>(context)->render()),
+//    it draws the instances and shows the frame;
+//  - RenderInstance, per world: its settings (pipeline, shadows, colors), its drawer
+//    with the passes of its pipeline, the renderables of its levels.
+//
+#pragma once
+#include "Square/Resource/ShaderCache.h"
+#include "Square/Resource/ShaderTarget.h"
+#include "Square/Config.h"
+#include "Square/Math/Linear.h"
+#include "Square/System/System.h"
+#include "Square/Render/Collection.h"
+#include "Square/Render/Pipeline/SoftwareOcclusion.h"
+
+namespace Square
+{
+	//..................
+	//declaretion
+	namespace Render
+	{
+		class Context;
+		class Drawer;
+		class DrawerPassDebug;
+		class PostEffect;
+		class RenderInspector;
+		class Profiler;
+	}
+	class RenderInstance;
+	//..................
+	//render pipeline of a world: a mask
+	enum RenderPipeline : unsigned int
+	{
+		RP_FORWARD  = 0b001,
+		RP_DEFERRED = 0b010,
+		RP_DEBUG    = 0b100
+	};
+
+	//what is drawn on the frame after the worlds, before it is shown (the UI): RenderSystem::add_overlay
+	class SQUARE_API RenderOverlay
+	{
+	public:
+		virtual ~RenderOverlay() {}
+		virtual void draw_overlay(Render::Context& render) = 0;
+	};
+
+	class SQUARE_API RenderSystem : public System
+	{
+	public:
+		//A square system, and its ring
+		SQUARE_SYSTEM(RenderSystem, SystemRing::SERVICE)
+
+		//Registration in context
+		static void object_registration(Context& ctx);
+
+		//Init
+		RenderSystem(Context& context);
+		virtual ~RenderSystem();
+
+		//System
+		virtual bool initialize() override;
+		virtual void shutdown() override;
+		virtual void post_initialize() override;
+		virtual void pre_shutdown() override;
+		virtual void late_update(double delta_time) override;
+		virtual Shared<SystemInstance> create_instance(Scene::World& world) override;
+
+		//the render device
+		Render::Context* render() const;
+
+		//the render profiler (see Render/Profiler.h): nullptr without RENDER_PROFILER
+		Render::Profiler* profiler() const;
+
+		//the intermediate cache of the shaders (their translations: Resource/ShaderCache.h); the
+		//final one is of the driver (Render::Context::shader_cache)
+		const Resource::ShaderCache& shader_cache() const { return m_shader_cache; }
+		//(its folder, its pack set by a tool: tools/ShaderPack)
+		Resource::ShaderCache& shader_cache() { return m_shader_cache; }
+
+		//what the shaders are translated for: the driver (its language, its capabilities, the gamma
+		//correction of the window); set by a tool (tools/ShaderPack: each target of a platform,
+		//translated only)
+		const Resource::ShaderTarget& shader_target() const { return m_shader_target; }
+		void shader_target(const Resource::ShaderTarget& target) { m_shader_target = target; }
+		//the layers of a target (the faces of a cube, the cascades) drawn one by one, each bound as
+		//the target: the driver can not route a draw to a layer (no geometry shaders, no layer by
+		//the vertex shader; the last sub effect of CastShadow)
+		bool layers_by_target() const;
+
+		//the drawers of the worlds can be built: from post_initialize (their passes load the
+		//effects added by AppInterface::start) to pre_shutdown
+		bool ready() const;
+
+		//draw all the worlds (their time on by the seconds of the last frame), and show the frame
+		//(the loop calls them)
+		void draw();
+		void present();
+
+		//the overlays, in their order (not owned: removed before they go)
+		void add_overlay(RenderOverlay* overlay);
+		void remove_overlay(RenderOverlay* overlay);
+
+		//the instances alive (the worlds drawn)
+		std::vector< Shared<RenderInstance> > instances();
+
+	protected:
+		//device
+		Render::Context*         m_render{ nullptr };
+		Render::RenderInspector* m_inspector{ nullptr };
+		Render::Profiler*        m_profiler{ nullptr };
+		Resource::ShaderCache    m_shader_cache;
+		Resource::ShaderTarget   m_shader_target;
+		//the caches of the shaders: <app data>/square/shader_cache (pruned), the translations
+		//(translated/), the binaries of the driver (<its language>/), the pack (shaders.sqz)
+		void setup_shader_caches();
+		//between post_initialize and pre_shutdown
+		bool m_ready{ false };
+		//the seconds of the last frame (the time of the worlds)
+		double m_delta_time{ 0.0 };
+		//worlds
+		std::vector< Weak<RenderInstance> > m_instances;
+		std::vector< RenderOverlay* >       m_overlays;
+	};
+
+	class SQUARE_API RenderInstance : public SystemInstance
+	{
+	public:
+		//A square object
+		SQUARE_OBJECT(RenderInstance)
+
+		//Registration in context (attributes)
+		static void object_registration(Context& ctx);
+
+		//Init
+		RenderInstance(Context& context, System& system, Scene::World& world);
+		virtual ~RenderInstance();
+
+		//pipeline: a mask of RenderPipeline (default RP_DEFERRED | RP_DEBUG); RP_FORWARD or
+		//RP_DEFERRED (deferred if both), RP_DEBUG adds the debug pass (OBB, light volumes,
+		//textures; its draw flags are all off at start). Serialized as a string of the names,
+		//"|" between them ("deferred|debug"), case insensitive
+		unsigned int pipeline() const;
+		void pipeline(unsigned int pipeline);
+
+		//shadow pass
+		bool shadows() const;
+		void shadows(bool enable);
+
+		//colors
+		const Vec4& clear_color() const;
+		void clear_color(const Vec4& color);
+		const Vec4& ambient_color() const;
+		void ambient_color(const Vec4& color);
+
+		//world drawn or not
+		bool visible() const;
+		void visible(bool visible);
+
+		//how the levels of detail of the world are chosen (their cross-fade, a level forced)
+		const Render::LevelOfDetailSettings& levels_of_detail() const;
+		void levels_of_detail(const Render::LevelOfDetailSettings& settings);
+		//the occlusion culling of its cameras on the CPU (Render::SoftwareOcclusion)
+		const Render::SoftwareOcclusion::Settings& occlusion() const;
+		void occlusion(const Render::SoftwareOcclusion::Settings& settings);
+		//what the occlusion of the last camera drawn did (none: all 0)
+		Render::SoftwareOcclusion::Stats occlusion_stats() const;
+
+		//post effects of the world, in the order they are drawn (see Render/PostEffect.h):
+		//the effects of the pipeline stage (G-Buffer effects only in deferred)
+		void add_post_effect(Shared<Render::PostEffect> effect);
+		void remove_post_effect(Shared<Render::PostEffect> effect);
+		void post_effects(const std::vector< Shared<Render::PostEffect> >& effects);
+		const std::vector< Shared<Render::PostEffect> >& post_effects() const;
+
+		//the drawer of the world and its debug pass: while the RenderSystem is ready,
+		//nullptr out of it (and the debug pass without RP_DEBUG)
+		Shared<Render::Drawer> drawer() const;
+		Shared<Render::DrawerPassDebug> debug_pass() const;
+		//its cameras, lights, renderables and occluders (as the levels give them)
+		const Render::Collection& collection() const { return m_collection; }
+
+		//draw the levels of the world; its time on by the seconds of a frame
+		void draw(double delta_time);
+		//the time of the world: seconds drawn (its materials animated by it)
+		double time() const { return m_time; }
+
+		//the cameras, lights and renderables that join / leave the levels of the world
+		virtual void on_add_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component) override;
+		virtual void on_remove_component(const Shared<Scene::Actor>& actor, const Shared<Scene::Component>& component) override;
+
+	protected:
+		//settings
+		unsigned int m_pipeline{ RP_DEFERRED | RP_DEBUG };
+		bool        m_shadows{ true };
+		Vec4        m_clear_color{ 0.25f, 0.5f, 1.0f, 1.0f };
+		Vec4        m_ambient_color{ 0.1f, 0.1f, 0.1f, 1.0f };
+		bool        m_visible{ true };
+		double      m_time{ 0.0 };
+		Render::LevelOfDetailSettings m_levels_of_detail;
+		Render::SoftwareOcclusion::Settings m_occlusion;
+		std::vector< Shared<Render::PostEffect> > m_post_effects;
+		//drawer
+		Shared<Render::Drawer>          m_drawer;
+		Shared<Render::DrawerPassDebug> m_debug_pass;
+		//the cameras, lights and renderables of all the levels (kept by the add/remove events)
+		Render::Collection m_collection;
+		//(re)build the passes of the settings / release them (by the RenderSystem, and by
+		//the settings when they change)
+		void build_drawer();
+		void release_drawer();
+		//a setting changed: new passes, if they are there
+		void rebuild_drawer();
+		friend class RenderSystem;
+	};
+}

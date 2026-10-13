@@ -18,6 +18,7 @@ namespace Video
 {
 namespace Xorg
 {
+	struct DeviceResourcesXGL;
 	struct WindowXorg
 	{
 		enum WindowType
@@ -31,33 +32,20 @@ namespace Xorg
 		WindowInfo          m_info;
 		XVisualInfo*        m_xinfo      { nullptr };
 		XWindow       	    m_xwindow    { 0 };
-		XF86VidModeModeInfo m_desktop_info;
+		unsigned int        m_windowed_size[2]{ 0, 0 }; // size before the fullscreen
+		RRCrtc              m_rr_crtc        { 0 };     // display switched by the fullscreen
+		RRMode              m_rr_desktop_mode{ 0 };     // its mode before the fullscreen
+		bool                m_rr_switched    { false };
 		GLXContext          m_gl_xcontext{ nullptr };
 		InputXorg*	        m_input_ref  { nullptr };
 		Window*    	        m_window_ref { nullptr };
+		DeviceResourcesXGL* m_gl_device  { nullptr };
 		
 		WindowXorg(const WindowInfo& info);
 
-		WindowXorg
-		(
-			WindowType  type,
-			WindowInfo  info,
-			XVisualInfo* xinfo,
-			XWindow      xwindow,
-			GLXContext   gl_xcontext
-		);
-
-		WindowXorg
-		(
-			WindowType  type,
-			WindowInfo  info,
-			XVisualInfo* xinfo,
-			XWindow             xwindow,
-			XF86VidModeModeInfo desktop_info,
-			GLXContext          gl_xcontext
-		);
-
 		virtual ~WindowXorg();
+
+		DeviceResourcesXGL* get_device_wrapper() const;
 
 		void swap() const;
 

@@ -63,3 +63,17 @@ struct Position3DNormalTangetBinomialUV
 #define Pos3DNorTanBinUV Position3DNormalTangetBinomialUV
 #define P3DNTBUV Position3DNormalTangetBinomialUV
 
+//position (3D) + normal + tangent + bitangent + uv + 4 joints (their indices, as floats) and
+//their weights (a skinned mesh: Skin.hlsl)
+struct Position3DNormalTangetBinomialUVSkin
+{
+    Vec3 m_position : POSITION;
+    Vec3 m_normal   : NORMAL0;
+    Vec3 m_tangent  : TANGENT0;
+    Vec3 m_binomial : BINORMAL0;
+    Vec2 m_uv       : TEXCOORD0;
+    Vec4 m_joints   : TEXCOORD1;
+    Vec4 m_weights  : TEXCOORD2;
+};
+#define P3DNTBUVSkin Position3DNormalTangetBinomialUVSkin
+

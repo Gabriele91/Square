@@ -1,6 +1,8 @@
 #include "Square/Render/Mesh.h"
+#include "Square/System/RenderSystem.h"
 #include "Square/Driver/Render.h"
 #include "Square/Core/Context.h"
+#include "Square/Render/Profiler.h"
 
 namespace Square
 {
@@ -88,6 +90,23 @@ namespace Render
 		return true;
 	}
 
+	bool Mesh::build(const Mesh::Vertex3DNTBUVSkinList& vertexs, bool cpu_access)
+	{
+		if (!build_vertex_layout
+		(
+			  Layout::LF_POSITION_3D
+			| Layout::LF_NORMAL
+			| Layout::LF_TANGENT
+			| Layout::LF_BINOMIAL
+			| Layout::LF_UVMAP
+			| Layout::LF_EXTRA0
+			| Layout::LF_EXTRA1
+		)) return false;
+		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
+		m_sub_meshs.emplace_back(vertexs.size());
+		return true;
+	}
+
 	bool Mesh::build(const Mesh::Vertex2DList& vertexs, const Mesh::SubMeshList& submeshs, bool cpu_access)
 	{
 		if (!build(vertexs, cpu_access)) return false;
@@ -119,6 +138,13 @@ namespace Render
 		return true;
 	}
 	bool Mesh::build(const Mesh::Vertex3DNTBUVList& vertexs, const Mesh::SubMeshList& submeshs, bool cpu_access)
+	{
+		if (!build(vertexs, cpu_access)) return false;
+		m_sub_meshs = submeshs;
+		return true;
+	}
+
+	bool Mesh::build(const Mesh::Vertex3DNTBUVSkinList& vertexs, const Mesh::SubMeshList& submeshs, bool cpu_access)
 	{
 		if (!build(vertexs, cpu_access)) return false;
 		m_sub_meshs = submeshs;
@@ -200,6 +226,24 @@ namespace Render
 		return true;
 	}
 
+	bool Mesh::build(const Vertex3DNTBUVSkinList& vertexs, const IndexList& indexs, bool cpu_access)
+	{
+		if (!build_vertex_layout
+		(
+			  Layout::LF_POSITION_3D
+			| Layout::LF_NORMAL
+			| Layout::LF_TANGENT
+			| Layout::LF_BINOMIAL
+			| Layout::LF_UVMAP
+			| Layout::LF_EXTRA0
+			| Layout::LF_EXTRA1
+		)) return false;
+		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
+		if (!build_index_buffer(indexs, cpu_access)) return false;
+		m_sub_meshs.emplace_back(indexs.size());
+		return true;
+	}
+
 	bool Mesh::build(const Vertex2DList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access)
 	{
 		if (!build(vertexs, indexs, cpu_access)) return false;
@@ -237,6 +281,13 @@ namespace Render
 		return true;
 	}
 
+	bool Mesh::build(const Vertex3DNTBUVSkinList& vertexs, const IndexList& indexs, const SubMeshList& submeshs, bool cpu_access)
+	{
+		if (!build(vertexs, indexs, cpu_access)) return false;
+		m_sub_meshs = submeshs;
+		return true;
+	}
+
 	//data info
 	unsigned int Mesh::layout_type() const
 	{
@@ -263,7 +314,7 @@ namespace Render
 
 
 	//draw sub mesh
-	void Mesh::draw(Render::Context& render) const
+	void Mesh::draw(Render::Context& render, unsigned int instances) const
 	{
 		//test
 		if (!layout().get() || !vertex_buffer().get())
@@ -271,6 +322,8 @@ namespace Render
 			context().logger()->debug("Unable to draw mesh: " + std::to_string(size_t(this)));
 			return;
 		}
+		//one draw for the profiler (its submeshes)
+		SQUARE_RENDER_DRAW(render);
 		//bind vertex buffer
 		render.bind_VBO(vertex_buffer().get());
 		//draw elements or array
@@ -282,7 +335,10 @@ namespace Render
 			render.bind_IL(layout().get());
 			// Draw elements
 			for (auto& sub_mesh : m_sub_meshs)
-				render.draw_elements(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
+				if (instances > 1)
+					render.draw_elements_instanced(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count, instances);
+				else
+					render.draw_elements(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
 		}
 		else
 		{
@@ -290,12 +346,15 @@ namespace Render
 			render.bind_IL(layout().get());
 			// Draw array
 			for (auto& sub_mesh : m_sub_meshs)
-				render.draw_arrays(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
+				if (instances > 1)
+					render.draw_arrays_instanced(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count, instances);
+				else
+					render.draw_arrays(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
 		}
 	}
 
 	//draw sub mesh
-	void Mesh::draw(Render::Context& render, size_t sub_mesh_id) const
+	void Mesh::draw(Render::Context& render, size_t sub_mesh_id, unsigned int instances) const
 	{
 		//test
 		if (!layout().get() || !vertex_buffer().get() || m_sub_meshs.size() <= sub_mesh_id)
@@ -303,6 +362,10 @@ namespace Render
 			context().logger()->debug("Unable to draw mesh: " + std::to_string(size_t(this)) + ", submesh_id: " + std::to_string(sub_mesh_id));
 			return;
 		}
+		//ref sub mesh
+		const SubMesh& sub_mesh = m_sub_meshs[sub_mesh_id];
+		//one draw for the profiler (its submeshes)
+		SQUARE_RENDER_DRAW(render);
 		//bind vertex buffer
 		render.bind_VBO(vertex_buffer().get());
 		//draw elements or array
@@ -313,24 +376,27 @@ namespace Render
 			//bind input layout
 			render.bind_IL(layout().get());
 			// Draw element
-			render.draw_elements(m_sub_meshs[sub_mesh_id].m_draw_type, m_sub_meshs[sub_mesh_id].m_index_offset, m_sub_meshs[sub_mesh_id].m_index_count);
+			if (instances > 1)
+				render.draw_elements_instanced(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count, instances);
+			else
+				render.draw_elements(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
 		}
 		else
 		{
 			//bind input layout
 			render.bind_IL(layout().get());
 			// Draw array
-			for (auto& sub_mesh : m_sub_meshs)
+			if (instances > 1)
+				render.draw_arrays_instanced(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count, instances);
+			else
 				render.draw_arrays(sub_mesh.m_draw_type, sub_mesh.m_index_offset, sub_mesh.m_index_count);
-			// Draw element
-			render.draw_elements(m_sub_meshs[sub_mesh_id].m_draw_type, m_sub_meshs[sub_mesh_id].m_index_offset, m_sub_meshs[sub_mesh_id].m_index_count);
 		}
 	}
 
 	//build help
 	bool Mesh::build_vertex_layout(Layout::InputLayoutId type)
 	{
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 		{
 			m_layout = Layout::Collection::index_by_type(render, type);
 			if(m_layout) m_layout_type = type;
@@ -341,7 +407,7 @@ namespace Render
 	//build help
 	bool Mesh::build_vertex_buffer(unsigned char* data, size_t stride, size_t size, bool cpu_access)
 	{
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 		{
 			if (cpu_access)
 			{
@@ -359,7 +425,7 @@ namespace Render
 	//build help
 	bool Mesh::build_index_buffer(unsigned int* data, size_t size, bool cpu_access)
 	{
-		if (auto render = context().render())
+		if (auto render = System::get<RenderSystem>(context())->render())
 		{
 			if (cpu_access)
 			{

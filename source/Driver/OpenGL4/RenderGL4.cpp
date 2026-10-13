@@ -7,8 +7,16 @@
 #include "RenderGL4.h"
 #include "Square/Driver/Window.h"
 //--------------------------------------------------
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <cstring>
 #include <iostream>
+#include <string>
 #include <unordered_map>
+#include <algorithm>
 //RIGHT HEAND
 #define DIRECTX_MODE
 //--------------------------------------------------
@@ -29,6 +37,25 @@
 // undef GL_R
 #ifndef GL_R
 #define GL_R GL_RED
+#endif
+// compressed textures: S3TC (BC1/BC3) and ASTC are extensions (RGTC, BC4/BC5, is core 3.0)
+#ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT         0x83F0
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT        0x83F3
+#endif
+#ifndef GL_COMPRESSED_SRGB_S3TC_DXT1_EXT
+#define GL_COMPRESSED_SRGB_S3TC_DXT1_EXT        0x8C4C
+#endif
+#ifndef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT  0x8C4F
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_4x4_KHR
+#define GL_COMPRESSED_RGBA_ASTC_4x4_KHR         0x93B0
+#endif
+#ifndef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR 0x93D0
 #endif
 // offeset "VertexAttribPointer"
 #define GL_OFFSET_OF(x) ((char *)NULL + (x))
@@ -117,7 +144,7 @@ namespace Render
 	//uniform
 	void UniformGL4::set(Texture* in_texture)
 	{
-		long n_texture = ++m_shader->m_uniform_ntexture;
+		long n_texture = m_shader->texture_unit(this);
 		//bind texture
 		m_context->bind_texture(in_texture, (int)n_texture, (int)n_texture);
 		//bind id
@@ -198,11 +225,13 @@ namespace Render
         /* 3D texture? */
         //id array
         auto id = m_id;
+        //first unit
+        long n_texture = m_shader->texture_unit(this, n) - 1;
         //for all
         while(n--)
         {
             //bind
-            long n_texture = ++m_shader->m_uniform_ntexture;
+            ++n_texture;
             //bind texture
             m_context->bind_texture(tvector++, (int)n_texture, (int)n_texture);
             //bind ids
@@ -377,7 +406,7 @@ namespace Render
 	//uniform
 	void UniformGLGUBO::set(Texture* in_texture)
 	{
-		long n_texture = ++m_shader->m_uniform_ntexture;
+		long n_texture = m_shader->texture_unit(this);
 		//bind texture
 		m_context->bind_texture(in_texture, (int)n_texture, 0);
 		//bind id
@@ -471,11 +500,13 @@ namespace Render
 	void UniformGLGUBO::set(Texture* tvector, size_t n)
 	{
 		/* 3D texture? */
+		//first unit
+		long n_texture = m_shader->texture_unit(this, n) - 1;
 		//for all
 		while (n--)
 		{
 			//bind
-			long n_texture = ++m_shader->m_uniform_ntexture;
+			++n_texture;
 			//bind texture
 			m_context->bind_texture(tvector++, (int)n_texture, (int)n_texture);
 		}
@@ -705,10 +736,11 @@ namespace Render
 	static std::string compiler_shader_error_log(unsigned int shader);
 	static bool make_test_to_get_shader_ext_feacture(const std::string& ext)
 	{
-		// Test shader
+		// Test shader: require, not enable (an unknown extension with enable is accepted silently
+		// by some drivers, e.g. Mesa: no error, an empty log)
 		std::string test_shader
 		{
-			"#extension " + ext + " : enable\n"
+			"#extension " + ext + " : require\n"
 			"void main(){}"
 		};
 		const char* const test_shader_cstr = test_shader.c_str();
@@ -755,6 +787,19 @@ namespace Render
 		// Test
 		return is_compatible;
 	}
+	//an extension of the context (glGetStringi, core 3.0)
+	static bool has_gl_extension(const char* name)
+	{
+		GLint count = 0;
+		glGetIntegerv(GL_NUM_EXTENSIONS, &count);
+		for (GLint i = 0; i < count; ++i)
+		{
+			const char* extension = (const char*)glGetStringi(GL_EXTENSIONS, (GLuint)i);
+			if (extension && std::strcmp(extension, name) == 0) return true;
+		}
+		return false;
+	}
+
 	static std::vector<std::string> make_test_all_exts(Logger* logger)
 	{
 		static std::string extensions[] = 
@@ -797,9 +842,15 @@ namespace Render
 			"GL_EXT_spec_constant_composites",
 			"GL_EXT_texture_offset_non_const",
 			"GL_EXT_nontemporal_keyword",
-			"GL_ARB_shading_language_420pack"
+			"GL_ARB_shading_language_420pack",
+			// Allows writing gl_Layer / gl_ViewportIndex from the vertex shader
+			// (SV_RenderTargetArrayIndex without a geometry shader).
+			"GL_ARB_shader_viewport_layer_array"
 		};
+		const size_t extensions_len = sizeof(extensions)/sizeof(std::string);
+		// Test
 		std::vector<std::string> r_exts;
+		r_exts.reserve(extensions_len);
 		for (const auto& ext : extensions)
 		{
 			if (make_test_to_get_shader_ext_feacture(ext))
@@ -898,6 +949,27 @@ namespace Render
 		context->s_render_driver_info.m_shader_version  = make_test_to_get_shader_version(context->logger());
 		//shader add ests
 		context->s_render_driver_info.m_shader_exts = make_test_all_exts(context->logger());
+		//desktop OpenGL 4 supports geometry shaders
+		context->s_render_driver_info.m_geometry_shader = true;
+		//writing gl_Layer from the vertex shader requires GL_ARB_shader_viewport_layer_array
+		//(absent e.g. on macOS desktop GL 4.1)
+		{
+			const auto& exts = context->s_render_driver_info.m_shader_exts;
+			context->s_render_driver_info.m_vertex_viewport_index =
+				std::find(exts.begin(), exts.end(), "GL_ARB_shader_viewport_layer_array") != exts.end();
+		}
+		//instanced draw (glDraw*Instanced) is core since OpenGL 3.1 (available on macOS GL 4.1)
+		context->s_render_driver_info.m_draw_instanced =
+			(context->s_render_driver_info.m_major_version > 3) ||
+			(context->s_render_driver_info.m_major_version == 3 && context->s_render_driver_info.m_minor_version >= 1);
+		//compressed textures: BC4/BC5 (RGTC) are core, BC1/BC3 need S3TC (every desktop GPU, also
+		//macOS), ASTC its extension (Apple GPUs, some Intel)
+		context->s_render_driver_info.m_texture_bc = has_gl_extension("GL_EXT_texture_compression_s3tc");
+		context->s_render_driver_info.m_texture_astc = has_gl_extension("GL_KHR_texture_compression_astc_ldr");
+		//the copies of the textures: glCopyImageSubData if the driver has it (loaded by glad)
+#if defined( _WIN32 ) ||  defined( __linux )
+		context->m_copy_image = GLAD_GL_ARB_copy_image && glCopyImageSubData != nullptr;
+#endif
     }
     
 #if defined( WIN32 )
@@ -942,15 +1014,6 @@ namespace Render
 
 	bool ContextGL4::init(Video::DeviceResources* resource)
 	{
-		//disable vsync
-		if(resource != nullptr)
-		{
-			resource->set_vsync(false);
-		}
-		else
-		{
-			logger()->warning("VSync cannot be disable");
-		}
 		//init glad
 #if defined( _WIN32 ) ||  defined( __linux )
 		int gl_loaded_version = gladLoadGL((GLADloadfunc)square_gl_GetProcAddress);
@@ -964,6 +1027,44 @@ namespace Render
 		// log info
 		logger()->info("GLAD OGL loaded: " + std::to_string(GLAD_VERSION_MAJOR(gl_loaded_version)) + "." + std::to_string(GLAD_VERSION_MINOR(gl_loaded_version)));
 #endif
+		//disable vsync
+		if(resource != nullptr)
+		{
+			// VSync
+			resource->set_vsync(false);
+			// SRGB?
+			if(resource->get_context_info().m_srgb)
+			{
+				#ifdef __APPLE__
+					// Even if glGetFramebufferAttachmentParameteriv lies and returns GL_LINEAR,
+					// you must force the sRGB conversion manually.
+					m_srgb_fb = true;
+					glEnable(GL_FRAMEBUFFER_SRGB);
+				#else
+					// Detect whether the default framebuffer is actually sRGB-capable.
+					// GL_FRAMEBUFFER_SRGB is a no-op on non-sRGB buffers, so we check
+					// the real encoding to decide if the shader needs to do gamma itself.
+					GLint encoding = GL_LINEAR;
+					glBindFramebuffer(GL_FRAMEBUFFER, 0);
+					// Enable SRGB
+					glEnable(GL_FRAMEBUFFER_SRGB);
+					// Test it
+					glGetFramebufferAttachmentParameteriv( GL_FRAMEBUFFER, GL_BACK_LEFT, GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, &encoding);
+					m_srgb_fb = (encoding == GL_SRGB);
+					// Disable it if does not supported
+					if (!m_srgb_fb)
+					{
+						glDisable(GL_FRAMEBUFFER_SRGB);
+						logger()->warning("SRGB cannot be enable");
+					}
+				#endif
+			}
+		}
+		else
+		{
+			logger()->warning("VSync cannot be disable");
+			logger()->warning("SRGB cannot be enable");
+		}
 
 #if defined(DIRECTX_MODE)
 		//DirectX like topology
@@ -972,23 +1073,25 @@ namespace Render
 		glDepthRange(0.0f, 1.0f);
 		//Front face
 		glFrontFace(GL_CW);
-		//Coords like direcX
-		#if defined( _WIN32 ) || defined( __linux )
-		if(GLAD_VERSION_MAJOR(gl_loaded_version) >= 4 
-		&& GLAD_VERSION_MINOR(gl_loaded_version) >= 5
-		&& glClipControl)
-		{
-			glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE);
-			glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
-		}
-		#endif
+		//No glClipControl: the GLSL of the shaders is already in the OpenGL clip space (SPIRV-Cross
+		//fixup_clipspace: z from [0, w] to [-w, w]) and its origin is the lower left one (the uv
+		//of the post effects); a ZERO_TO_ONE / UPPER_LEFT clip control (a 4.5+ context, e.g. Mesa)
+		//remaps them again: the near half of the depth is clipped, nothing is drawn
 #endif
 		//clean
 		print_errors();
         //get info
         compute_render_driver_info(this);
+		logger()->info(m_copy_image ? "OGL texture copies: glCopyImageSubData" : "OGL texture copies: blit");
         //clean
         print_errors();
+#if defined(RENDER_PROFILER)
+		//GPU timer: GL_TIMESTAMP (core 3.3) with a counter
+		GLint timestamp_bits = 0;
+		glGetQueryiv(GL_TIMESTAMP, GL_QUERY_COUNTER_BITS, &timestamp_bits);
+		m_gpu_timer_supported = timestamp_bits > 0;
+		while (glGetError() != GL_NO_ERROR);
+#endif
 		//attributes vao
 		glGenVertexArrays(1, &s_vao_attributes);
 		glBindVertexArray(s_vao_attributes);
@@ -1031,6 +1134,18 @@ namespace Render
 	void ContextGL4::close()
 	{
 		if (s_vao_attributes) glDeleteVertexArrays(1, &s_vao_attributes);
+#if defined(RENDER_PROFILER)
+		for (GpuTimerFrame& frame : m_gpu_timer_frames)
+		{
+			if (!frame.m_queries.empty()) glDeleteQueries(GLsizei(frame.m_queries.size()), frame.m_queries.data());
+			frame = GpuTimerFrame();
+		}
+#endif
+	}
+
+	bool ContextGL4::is_srgb_framebuffer() const
+	{
+		return m_srgb_fb;
 	}
 
 	RenderDriver ContextGL4::get_render_driver()
@@ -1159,6 +1274,32 @@ namespace Render
 				(GLsizei)vs.m_viewport.w
 			);
 		}
+	}
+
+	const ScissorState& ContextGL4::get_scissor_state()
+	{
+		return m_scissor_state;
+	}
+
+	void ContextGL4::set_scissor_state(const ScissorState& ss)
+	{
+		if (m_scissor_state == ss) return;
+		m_scissor_state = ss;
+		if (!ss.m_enable)
+		{
+			glDisable(GL_SCISSOR_TEST);
+			return;
+		}
+		glEnable(GL_SCISSOR_TEST);
+		//from the top left of the viewport to the bottom left of GL
+		const Vec4& viewport = s_render_state.m_viewport.m_viewport;
+		glScissor
+		(
+			(GLint)viewport.x + ss.m_rect.x,
+			(GLint)(viewport.y + viewport.w) - (ss.m_rect.y + ss.m_rect.w),
+			(GLsizei)ss.m_rect.z,
+			(GLsizei)ss.m_rect.w
+		);
 	}
 
 	const BlendState& ContextGL4::get_blend_state()
@@ -1716,23 +1857,44 @@ namespace Render
 		}
 	}
 
+	//the global uniforms set after the bind of the shader, before the draw (as D3D11)
+	static inline void upload_bound_shader_globals(Shader* shader)
+	{
+		if (shader) shader->upload_global_buffer();
+	}
+
 	void ContextGL4::draw_arrays(DrawType type, unsigned int n)
 	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
 		glDrawArrays(get_draw_type(type), 0, n);
 	}
 
 	void ContextGL4::draw_arrays(DrawType type, unsigned int start, unsigned int size)
 	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
 		glDrawArrays(get_draw_type(type), start, size);
 	}
 
 	void ContextGL4::draw_elements(DrawType type, unsigned int n)
 	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
 		glDrawElements(get_draw_type(type), n, GL_UNSIGNED_INT, (void*)NULL);
 	}
 	void ContextGL4::draw_elements(DrawType type, unsigned int start, unsigned int n)
 	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
 		glDrawElements(get_draw_type(type), n, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * start));
+	}
+
+	void ContextGL4::draw_arrays_instanced(DrawType type, unsigned int start, unsigned int size, unsigned int instances)
+	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
+		glDrawArraysInstanced(get_draw_type(type), start, size, instances);
+	}
+	void ContextGL4::draw_elements_instanced(DrawType type, unsigned int start, unsigned int n, unsigned int instances)
+	{
+		upload_bound_shader_globals(s_bind_context.m_shader);
+		glDrawElementsInstanced(get_draw_type(type), n, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * start), instances);
 	}
 
 	/*
@@ -1978,10 +2140,13 @@ namespace Render
 			square_assert(s_bind_context.m_shader);
 			//get 
 			InputLayout::GLLayout* gllayout = layout->get(s_bind_context.m_shader);
-            //unbind
-            for (const Attribute& data : gllayout->m_attributes)
+            //unbind (the arrays by their locations in the shader, as bind_IL enabled them)
+            if (gllayout)
             {
-                glDisableVertexAttribArray(data.m_attribute);
+                for (GLint location : gllayout->m_locations)
+                {
+                    glDisableVertexAttribArray(location);
+                }
             }
             //safe
             s_bind_context.m_input_layout = nullptr;
@@ -2027,12 +2192,12 @@ namespace Render
 	}
 	
 	//Textures
-	inline const GLenum get_texture_format(TextureFormat type)
+	inline const GLenum get_texture_format(TextureFormat type, bool sRGB)
 	{
 		switch (type)
 		{
 			//RGBA
-		case TF_RGBA8: return GL_RGBA8; break;
+		case TF_RGBA8: return sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8 ; break;
 			//uint
 		case TF_RGBA16UI: return GL_RGBA16UI; break;
 		case TF_RGBA32UI: return GL_RGBA32UI; break;
@@ -2044,7 +2209,7 @@ namespace Render
 		case TF_RGBA32F: return GL_RGBA32F; break;
 			////////////////////
 			//RGB
-		case TF_RGB8: return GL_RGBA8; break;
+		case TF_RGB8: return sRGB ? GL_SRGB8 : GL_RGBA8; break;
 			//uint
 		case TF_RGB16UI: return GL_RGB16UI; break;
 		case TF_RGB32UI: return GL_RGB32UI; break;
@@ -2091,19 +2256,26 @@ namespace Render
 		case TF_DEPTH_COMPONENT16: return GL_DEPTH_COMPONENT16; break;
 		case TF_DEPTH_COMPONENT24: return GL_DEPTH_COMPONENT24; break;
 		case TF_DEPTH_COMPONENT32: return GL_DEPTH_COMPONENT32; break;
+			///////////////////
+			//COMPRESSED
+		case TF_BC1: return sRGB ? GL_COMPRESSED_SRGB_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_S3TC_DXT1_EXT; break;
+		case TF_BC3: return sRGB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+		case TF_BC4: return GL_COMPRESSED_RED_RGTC1; break;
+		case TF_BC5: return GL_COMPRESSED_RG_RGTC2; break;
+		case TF_ASTC_4x4: return sRGB ? GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR : GL_COMPRESSED_RGBA_ASTC_4x4_KHR; break;
 
 		default: return GL_ZERO; break;
 		}
 	}
 
-	inline const GLenum get_texture_type(TextureType type)
+	inline const GLenum get_texture_type(TextureType type, bool sRGB)
 	{
 		switch (type)
 		{
 		case TT_R:             return GL_RED;
 		case TT_RG:            return GL_RG;
-		case TT_RGB:           return GL_RGB;
-		case TT_RGBA:          return GL_RGBA;
+		case TT_RGB:           return sRGB ? GL_SRGB : GL_RGB;
+		case TT_RGBA:          return sRGB ? GL_SRGB_ALPHA : GL_RGBA;
 		case TT_DEPTH:         return GL_DEPTH_COMPONENT;
 		case TT_DEPTH_STENCIL: return GL_DEPTH_STENCIL;
 		default: return GL_ZERO; break;
@@ -2174,24 +2346,54 @@ namespace Render
 		//create a texture id
 		ctx_texture->create_TBO();
 		//format
-		GLenum gl_format = get_texture_format(data.m_format);
-		GLenum gl_type = get_texture_type(data.m_type);
+		GLenum gl_format = get_texture_format(data.m_format, data.m_is_srgb);
+		GLenum gl_type = get_texture_type(data.m_type, data.m_is_srgb);
 		GLenum gl_type_format = get_texture_type_format(data.m_type_format);
+		//compressed: the levels are given (no mipmaps built)
+		const bool compressed = is_compressed_format(data.m_format);
+		const GLint levels = compressed ? GLint(data.m_levels ? data.m_levels : 1) : 1;
 		//enable texture
 		glBindTexture(ctx_texture->m_type_texture, ctx_texture->m_tbo);
 		//create texture buffer
-		glTexImage2D
-		(
-			ctx_texture->m_type_texture,
-			0,
-			gl_format,
-			data.m_width,
-			data.m_height,
-			0,
-			gl_type,
-			gl_type_format,
-			data.m_bytes
-		);
+		if (compressed)
+		{
+			const unsigned char* level_bytes = data.m_bytes;
+			for (GLint level = 0; level < levels; ++level)
+			{
+				const unsigned int level_width  = texture_level_size(data.m_width, level);
+				const unsigned int level_height = texture_level_size(data.m_height, level);
+				const unsigned int level_size   = texture_level_bytes(data.m_format, level_width, level_height);
+				glCompressedTexImage2D
+				(
+					ctx_texture->m_type_texture,
+					level,
+					gl_format,
+					level_width,
+					level_height,
+					0,
+					level_size,
+					level_bytes
+				);
+				if (level_bytes) level_bytes += level_size;
+			}
+			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_BASE_LEVEL, 0);
+			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_LEVEL, levels - 1);
+		}
+		else
+		{
+			glTexImage2D
+			(
+				ctx_texture->m_type_texture,
+				0,
+				gl_format,
+				data.m_width,
+				data.m_height,
+				0,
+				gl_type,
+				gl_type_format,
+				data.m_bytes
+			);
+		}
 		//set filters
 		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MIN_FILTER, get_texture_min_filter(info.m_min_type));
 		glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAG_FILTER, get_texture_mag_filter(info.m_mag_type));
@@ -2201,7 +2403,7 @@ namespace Render
 		if (info.m_anisotropy)
 			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_ANISOTROPY_EXT, info.m_anisotropy);
 		// Generate mipmaps, by the way
-		if (info.m_build_mipmap)
+		if (info.m_build_mipmap && !compressed)
 		{
 			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_BASE_LEVEL, info.m_mipmap_min);
 			glTexParameteri(ctx_texture->m_type_texture, GL_TEXTURE_MAX_LEVEL, info.m_mipmap_max);
@@ -2211,10 +2413,17 @@ namespace Render
 		glBindTexture(ctx_texture->m_type_texture, 0);
 		//test
 		print_errors();
+		//register
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_create_texture(ctx_texture, { TS_TEXTURE_2D, data.m_format, data.m_width, data.m_height, 1 });
+		}
+#endif
 		//return texture
 		return ctx_texture;
 	}
-	
+
 	Texture* ContextGL4::create_texture_array
 	(
 		const TextureRawDataInformation& data,
@@ -2228,8 +2437,8 @@ namespace Render
 		//create a texture id
 		ctx_texture->create_TBO();
 		//format
-		GLenum gl_format = get_texture_format(data.m_format);
-		GLenum gl_type = get_texture_type(data.m_type);
+		GLenum gl_format = get_texture_format(data.m_format, data.m_is_srgb);
+		GLenum gl_type = get_texture_type(data.m_type, data.m_is_srgb);
 		GLenum gl_type_format = get_texture_type_format(data.m_type_format);
 		//set type
 		ctx_texture->m_type_texture = GL_TEXTURE_2D_ARRAY;
@@ -2269,6 +2478,13 @@ namespace Render
 		glBindTexture(ctx_texture->m_type_texture, 0);
 		//test
 		print_errors();
+		//register
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_create_texture(ctx_texture, { TS_TEXTURE_ARRAY, data.m_format, data.m_width, data.m_height, size });
+		}
+#endif
 		//return texture
 		return ctx_texture;
 	}
@@ -2290,8 +2506,8 @@ namespace Render
 		for (int i = 0; i != 6; ++i)
 		{
 			//format
-			GLenum gl_format = get_texture_format(data[i].m_format);
-			GLenum gl_type = get_texture_type(data[i].m_type);
+			GLenum gl_format = get_texture_format(data[i].m_format, data[i].m_is_srgb);
+			GLenum gl_type = get_texture_type(data[i].m_type, data[i].m_is_srgb);
 			GLenum gl_type_format = get_texture_type_format(data[i].m_type_format);
 			//enable texture
 			glBindTexture(ctx_texture->m_type_texture, ctx_texture->m_tbo);
@@ -2321,6 +2537,13 @@ namespace Render
 		glBindTexture(ctx_texture->m_type_texture, 0);
 		//test
 		print_errors();
+		//register
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_create_texture(ctx_texture, { TS_TEXTURE_CUBE, data[0].m_format, data[0].m_width, data[0].m_height, 6 });
+		}
+#endif
 		//return texture
 		return ctx_texture;
 	}
@@ -2349,7 +2572,9 @@ namespace Render
 		case GL_R8:   output.resize(width*height * 1); image_ret_format = GL_R;     break;
 		case GL_RG8:  output.resize(width*height * 2); image_ret_format = GL_RG;    break;
 		case GL_RGB8: output.resize(width*height * 3); image_ret_format = GL_RGB;   break;
+		case GL_SRGB8: output.resize(width*height * 3); image_ret_format = GL_SRGB;   break;
 		case GL_RGBA8:output.resize(width*height * 4); image_ret_format = GL_RGBA;  break;
+		case GL_SRGB8_ALPHA8:output.resize(width*height * 4); image_ret_format = GL_SRGB_ALPHA;  break;
 		default: return output; break;
 		}
 		// get
@@ -2360,6 +2585,160 @@ namespace Render
 		bind_texture(last_texture, 0, 0);
 		//return
 		return output;
+	}
+
+	namespace AuxCopyTexture
+	{
+		//the binding query of a type of texture
+		static GLenum binding_of(GLenum type)
+		{
+			switch (type)
+			{
+			case GL_TEXTURE_CUBE_MAP: return GL_TEXTURE_BINDING_CUBE_MAP;
+			case GL_TEXTURE_2D_ARRAY: return GL_TEXTURE_BINDING_2D_ARRAY;
+			case GL_TEXTURE_2D:
+			default:                  return GL_TEXTURE_BINDING_2D;
+			}
+		}
+
+		//its size at level 0 (z: its layers; a cube: its 6 faces), the binding of the unit kept
+		static IVec3 size_of(const Texture* texture)
+		{
+			const GLenum type = texture->m_type_texture;
+			GLint previous = 0;
+			glGetIntegerv(binding_of(type), &previous);
+			glBindTexture(type, texture->m_tbo);
+			GLint width = 0, height = 0, depth = 1;
+			switch (type)
+			{
+			case GL_TEXTURE_CUBE_MAP:
+				glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_TEXTURE_WIDTH, &width);
+				glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_TEXTURE_HEIGHT, &height);
+				depth = 6;
+			break;
+			case GL_TEXTURE_2D_ARRAY:
+				glGetTexLevelParameteriv(type, 0, GL_TEXTURE_WIDTH, &width);
+				glGetTexLevelParameteriv(type, 0, GL_TEXTURE_HEIGHT, &height);
+				glGetTexLevelParameteriv(type, 0, GL_TEXTURE_DEPTH, &depth);
+			break;
+			default:
+				glGetTexLevelParameteriv(type, 0, GL_TEXTURE_WIDTH, &width);
+				glGetTexLevelParameteriv(type, 0, GL_TEXTURE_HEIGHT, &height);
+			break;
+			}
+			glBindTexture(type, GLuint(previous));
+			return IVec3(width, height, depth);
+		}
+
+		//a face or a layer of a texture as the depth of the framebuffer bound to a slot
+		static void attach(GLenum slot, const Texture* texture, int layer)
+		{
+			switch (texture->m_type_texture)
+			{
+			case GL_TEXTURE_CUBE_MAP:
+				glFramebufferTexture2D(slot, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + layer, texture->m_tbo, 0);
+			break;
+			case GL_TEXTURE_2D_ARRAY:
+				glFramebufferTextureLayer(slot, GL_DEPTH_ATTACHMENT, texture->m_tbo, 0, layer);
+			break;
+			case GL_TEXTURE_2D:
+			default:
+				glFramebufferTexture2D(slot, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texture->m_tbo, 0);
+			break;
+			}
+		}
+	}
+
+	namespace AuxCopyTexture
+	{
+		//the layers of a texture, pairs (from, to), blitted (its depth): its framebuffers made and
+		//its bindings kept (no glCopyImageSubData: GL 4.1, macOS)
+		static void blit_layers(const Texture* source, const Texture* destination, const std::vector<IVec2>& layers)
+		{
+			const IVec3 size = size_of(source);
+			GLint read_previous = 0, draw_previous = 0;
+			glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &read_previous);
+			glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &draw_previous);
+			const GLboolean scissor = glIsEnabled(GL_SCISSOR_TEST);
+			glDisable(GL_SCISSOR_TEST);
+			GLuint framebuffers[2]{ 0, 0 };
+			glGenFramebuffers(2, framebuffers);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffers[0]);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffers[1]);
+			glReadBuffer(GL_NONE);
+			glDrawBuffer(GL_NONE);
+			for (const IVec2& layer : layers)
+			{
+				attach(GL_READ_FRAMEBUFFER, source, layer.x);
+				attach(GL_DRAW_FRAMEBUFFER, destination, layer.y);
+				glBlitFramebuffer(0, 0, size.x, size.y, 0, 0, size.x, size.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+			}
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, GLuint(read_previous));
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GLuint(draw_previous));
+			glDeleteFramebuffers(2, framebuffers);
+			if (scissor)
+			{
+				glEnable(GL_SCISSOR_TEST);
+			}
+		}
+	}
+
+	namespace AuxCopyTexture
+	{
+		//layers of a texture, from one of them on, copied as they are into another one (its faces:
+		//its layers; glCopyImageSubData, GL 4.3)
+		static void copy_layers(const Texture* source, int source_layer, const Texture* destination, int destination_layer, int count)
+		{
+#if defined( _WIN32 ) ||  defined( __linux )
+			const IVec3 size = size_of(source);
+			glCopyImageSubData
+			(
+			  source->m_tbo, source->m_type_texture, 0, 0, 0, source_layer
+			, destination->m_tbo, destination->m_type_texture, 0, 0, 0, destination_layer
+			, size.x, size.y, count
+			);
+#endif
+		}
+	}
+
+	void ContextGL4::copy_texture(Texture* source, Texture* destination)
+	{
+		const bool both = source && destination;
+		if (both && source->m_type_texture == destination->m_type_texture)
+		{
+			//all of its layers (its faces)
+			const int count = AuxCopyTexture::size_of(source).z;
+			if (m_copy_image)
+			{
+				AuxCopyTexture::copy_layers(source, 0, destination, 0, count);
+			}
+			else
+			{
+				std::vector<IVec2> layers;
+				layers.reserve(size_t(count));
+				for (int layer = 0; layer != count; ++layer)
+				{
+					layers.push_back(IVec2(layer, layer));
+				}
+				AuxCopyTexture::blit_layers(source, destination, layers);
+			}
+		}
+	}
+
+	void ContextGL4::copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer)
+	{
+		const bool both = source && destination;
+		if (both && source->m_type_texture == destination->m_type_texture)
+		{
+			if (m_copy_image)
+			{
+				AuxCopyTexture::copy_layers(source, int(source_layer), destination, int(destination_layer), 1);
+			}
+			else
+			{
+				AuxCopyTexture::blit_layers(source, destination, { IVec2(int(source_layer), int(destination_layer)) });
+			}
+		}
 	}
 
 	std::vector< unsigned char > ContextGL4::get_texture(Texture* tex, int cube, int level)
@@ -2386,7 +2765,9 @@ namespace Render
 		case GL_R8:   output.resize(width*height * 1); image_ret_format = GL_R;     break;
 		case GL_RG8:  output.resize(width*height * 2); image_ret_format = GL_RG;    break;
 		case GL_RGB8: output.resize(width*height * 3); image_ret_format = GL_RGB;   break;
-		case GL_RGBA8:output.resize(width*height * 4); image_ret_format = GL_RGBA;  break;
+		case GL_SRGB8: output.resize(width*height * 3); image_ret_format = GL_SRGB;   break;
+		case GL_RGBA8: output.resize(width*height * 4); image_ret_format = GL_RGBA;  break;
+		case GL_SRGB8_ALPHA8: output.resize(width*height * 4); image_ret_format = GL_SRGB_ALPHA;  break;
 		default: return output; break;
 		}
 		// get
@@ -2401,6 +2782,13 @@ namespace Render
 
 	void ContextGL4::bind_texture(Texture* ctx_texture, int n, int sempler_id)
 	{
+		//out of the bind context (and of the texture units)
+		constexpr int n_slots = int(sizeof(s_bind_context.m_textures) / sizeof(s_bind_context.m_textures[0]));
+		if (n < 0 || n >= n_slots)
+		{
+			square_assert(0);
+			return;
+		}
         if (ctx_texture && ctx_texture != s_bind_context.m_textures[n])
         {
             //enable
@@ -2427,9 +2815,34 @@ namespace Render
         
     void ContextGL4::unbind_texture(int n)
     {
+        constexpr int n_slots = int(sizeof(s_bind_context.m_textures) / sizeof(s_bind_context.m_textures[0]));
+        if (n < 0 || n >= n_slots) return;
         unbind_texture(s_bind_context.m_textures[n]);
     }
         
+	void ContextGL4::update_texture(Texture* texture, const TextureRawDataInformation& data)
+	{
+		if (!texture || !data.m_bytes || texture->m_type_texture != GL_TEXTURE_2D || is_compressed_format(data.m_format)) return;
+		//bound on the active unit for the upload, then the texture bound there before back (the
+		//bindings of the units stay as the context knows them)
+		GLint previous = 0;
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &previous);
+		glBindTexture(GL_TEXTURE_2D, texture->m_tbo);
+		glTexSubImage2D
+		(
+			GL_TEXTURE_2D,
+			0,
+			0, 0,
+			data.m_width,
+			data.m_height,
+			get_texture_type(data.m_type, data.m_is_srgb),
+			get_texture_type_format(data.m_type_format),
+			data.m_bytes
+		);
+		glBindTexture(GL_TEXTURE_2D, GLuint(previous));
+		print_errors();
+	}
+
 	void ContextGL4::delete_texture(Texture*& ctx_texture)
     {
 		square_assert(ctx_texture != nullptr);
@@ -2438,6 +2851,13 @@ namespace Render
         {
             unbind_texture(ctx_texture);
         }
+        //unregister
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_delete_texture(ctx_texture);
+		}
+#endif
         //safe delete
 		SQ_DELETE(allocator(), Texture, ctx_texture);
 		ctx_texture = nullptr;
@@ -2497,9 +2917,8 @@ namespace Render
 		if (m_global_buffer_gpu) m_context.delete_CB(m_global_buffer_gpu);
 	}
 
-	void Shader::bind()
+	void Shader::upload_global_buffer()
 	{
-		//update global buffer
 		if (m_global_buffer_ref && m_global_buffer_update)
 		{
 			m_context.update_steam_CB(
@@ -2509,13 +2928,30 @@ namespace Render
 			);
 			m_global_buffer_update = false;
 		}
+	}
+
+	void Shader::bind()
+	{
+		//update global buffer
+		upload_global_buffer();
 		//start texture uniform
 		m_uniform_ntexture = -1;
+		m_uniform_texture_unit.clear();
 		//uniform parogram shaders
 		glUseProgram(m_shader_id);
 		//bind constant global buffer
 		if (m_global_buffer_ref) m_global_buffer_ref->bind(m_global_buffer_gpu);
 	}
+	long Shader::texture_unit(const void* uniform, size_t count) const
+	{
+		auto it = m_uniform_texture_unit.find(uniform);
+		if (it != m_uniform_texture_unit.end()) return it->second;
+		long first = m_uniform_ntexture + 1;
+		m_uniform_ntexture += (long)count;
+		m_uniform_texture_unit[uniform] = first;
+		return first;
+	}
+
 	void Shader::unbind()
 	{
 		//disable textures
@@ -2537,6 +2973,9 @@ namespace Render
 	//get uniform
 	Uniform* Shader::uniform(const std::string& uname)
 	{
+		//already asked (the effects that share this shader keep its pointer: never made again)
+		auto cached = m_uniform_map.find(uname);
+		if (cached != m_uniform_map.end()) return cached->second.get();
 		if (m_global_buffer_ref)
 		{
 			std::string real_name = "_Global." + uname;
@@ -2663,12 +3102,147 @@ namespace Render
 		return info_log;
 	}
 	
+	namespace AuxProgramCache
+	{
+		//the version of the files of the cache (a new one: the old files never read)
+		static const char* s_version = "glbin1";
+
+		//FNV-1a: the same on every run, every compiler
+		static uint64_t hash(const void* data, size_t size, uint64_t value)
+		{
+			const unsigned char* bytes = static_cast<const unsigned char*>(data);
+			for (size_t i = 0; i != size; ++i)
+			{
+				value ^= uint64_t(bytes[i]);
+				value *= 1099511628211ull;
+			}
+			return value;
+		}
+
+		static uint64_t hash(const char* text, uint64_t value)
+		{
+			return hash(text, text ? std::strlen(text) : 0, value);
+		}
+
+		//the file of a program: by the sources of its stages (as the driver gets them), the driver
+		//(its vendor, its renderer, its version: another one, another binary)
+		static std::string file_of(const std::string& folder, const std::vector< ShaderSourceInformation >& infos)
+		{
+			uint64_t value = 14695981039346656037ull;
+			for (const ShaderSourceInformation& info : infos)
+			{
+				const uint32_t type = uint32_t(info.m_type);
+				value = hash(&type, sizeof(type), value);
+				value = hash(info.m_shader_header.data(), info.m_shader_header.size(), value);
+				value = hash(Shader::glsl_header_by_type[info.m_type], value);
+				value = hash(Shader::glsl_default_header, value);
+				value = hash(&info.m_line, sizeof(info.m_line), value);
+				value = hash(info.m_shader_source.data(), info.m_shader_source.size(), value);
+			}
+			value = hash((const char*)glGetString(GL_VENDOR), value);
+			value = hash((const char*)glGetString(GL_RENDERER), value);
+			value = hash((const char*)glGetString(GL_VERSION), value);
+			value = hash(s_version, value);
+			char name[32];
+			std::snprintf(name, sizeof(name), "%016llx.glbin", (unsigned long long)value);
+			return (std::filesystem::u8path(folder) / name).string();
+		}
+
+		//the driver can save its programs (some formats of binaries)
+		static bool supported()
+		{
+			GLint formats = 0;
+			glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &formats);
+			return formats > 0;
+		}
+
+		//a program from its binary in the cache (false: not there, or the driver does not take it)
+		static bool read(const std::string& file, GLuint program)
+		{
+			bool linked = false;
+			std::ifstream in(file, std::ios::binary | std::ios::ate);
+			const std::streamsize size = in ? std::streamsize(in.tellg()) : 0;
+			if (size > std::streamsize(sizeof(GLenum)))
+			{
+				std::vector<char> bytes(size_t(size), 0);
+				in.seekg(0);
+				if (in.read(bytes.data(), size))
+				{
+					GLenum format = 0;
+					std::memcpy(&format, bytes.data(), sizeof(format));
+					glProgramBinary(program, format, bytes.data() + sizeof(format), GLsizei(size - std::streamsize(sizeof(format))));
+					GLint status = GL_FALSE;
+					glGetProgramiv(program, GL_LINK_STATUS, &status);
+					linked = status == GL_TRUE;
+				}
+			}
+			return linked;
+		}
+
+		//the binary of a program linked into the cache (its format first; a file aside, then
+		//renamed: never read half written)
+		static void write(const std::string& file, GLuint program)
+		{
+			GLint length = 0;
+			glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &length);
+			if (length > 0)
+			{
+				std::vector<char> bytes(sizeof(GLenum) + size_t(length), 0);
+				GLenum format = 0;
+				GLsizei written = 0;
+				glGetProgramBinary(program, length, &written, &format, bytes.data() + sizeof(format));
+				std::memcpy(bytes.data(), &format, sizeof(format));
+				if (written > 0)
+				{
+					const std::string temporary = file + ".tmp";
+					{
+						std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+						out.write(bytes.data(), std::streamsize(sizeof(format) + size_t(written)));
+					}
+					std::error_code error;
+					std::filesystem::rename(temporary, file, error);
+					if (error)
+					{
+						std::filesystem::remove(temporary, error);
+					}
+				}
+			}
+		}
+
+		//a file used: touched (kept by the pruning of the cache)
+		static void touch(const std::string& file)
+		{
+			std::error_code error;
+			std::filesystem::last_write_time(std::filesystem::u8path(file), std::filesystem::file_time_type::clock::now(), error);
+		}
+	}
+
 	Shader* ContextGL4::create_shader(const std::vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
 		Shader* out_shader = SQ_NEW(allocator(), Shader, AllocType::ALCT_DEFAULT) Shader(*this);
 		//shader program
 		out_shader->m_shader_id = glCreateProgram();
+		//the final cache: its binary (the same stages, the same driver), else compiled and kept
+		const bool cached = !shader_cache().empty() && AuxProgramCache::supported();
+		const std::string cache_file = cached ? AuxProgramCache::file_of(shader_cache(), infos) : std::string();
+		if (cached && std::filesystem::exists(std::filesystem::u8path(cache_file)))
+		{
+			if (AuxProgramCache::read(cache_file, out_shader->m_shader_id))
+			{
+				AuxProgramCache::touch(cache_file);
+				out_shader->build_global_UBO();
+				print_errors();
+				return out_shader;
+			}
+			//(not taken: another driver, compiled again)
+			glDeleteProgram(out_shader->m_shader_id);
+			out_shader->m_shader_id = glCreateProgram();
+		}
+		if (cached)
+		{
+			glProgramParameteri(out_shader->m_shader_id, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE);
+		}
 		//compile
 		for (const ShaderSourceInformation& info : infos)
 		{
@@ -2735,7 +3309,7 @@ namespace Render
 			//if 0 return an error
 			if (!count_linked_shaders)
 			{
-				out_shader->push_linker_error("No shader linked to the program: " + out_shader->m_shader_id);
+				out_shader->push_linker_error("No shader linked to the program: " + std::to_string(out_shader->m_shader_id));
 			}
 		}
 		//error?
@@ -2749,6 +3323,11 @@ namespace Render
 			{
 				//get error
 				out_shader->push_linker_error(linker_shader_error_log(out_shader->m_shader_id));
+			}
+			//its binary kept (linked: its warnings do not matter)
+			else if (cached)
+			{
+				AuxProgramCache::write(cache_file, out_shader->m_shader_id);
 			}
 		}
 		//try to find _Global;
@@ -2880,6 +3459,28 @@ namespace Render
 		}
 	}
 
+	namespace AuxTargetGL4
+	{
+		//a texture to an attachment of the framebuffer bound: all of it (layered), or one of its
+		//layers (a face of a cube, a layer of an array)
+		static void attach(GLenum attachment, const TargetField& field)
+		{
+			const Texture* texture = field.m_texture;
+			if (field.m_layer < 0)
+			{
+				glFramebufferTexture(GL_FRAMEBUFFER, attachment, texture->m_tbo, 0);
+			}
+			else if (texture->m_type_texture == GL_TEXTURE_CUBE_MAP)
+			{
+				glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, (GLenum)(GL_TEXTURE_CUBE_MAP_POSITIVE_X + field.m_layer), texture->m_tbo, 0);
+			}
+			else
+			{
+				glFramebufferTextureLayer(GL_FRAMEBUFFER, attachment, texture->m_tbo, 0, field.m_layer);
+			}
+		}
+	}
+
 	Target* ContextGL4::create_render_target(const std::vector< TargetField >& textures)
 	{
 		bool   depth_attach = false;
@@ -2894,31 +3495,16 @@ namespace Render
 		{
 			if (t_field.m_type == RT_COLOR)
 			{
-				glFramebufferTexture(
-					GL_FRAMEBUFFER,
-					(GLenum)(GL_COLOR_ATTACHMENT0 + (color_count++)),
-					t_field.m_texture->m_tbo,
-					0
-				);
+				AuxTargetGL4::attach((GLenum)(GL_COLOR_ATTACHMENT0 + (color_count++)), t_field);
 			}
 			else if ((!depth_attach) && t_field.m_type == RT_DEPTH)
 			{
-				glFramebufferTexture(
-					GL_FRAMEBUFFER,
-					GL_DEPTH_ATTACHMENT,
-					t_field.m_texture->m_tbo,
-					0
-				);
+				AuxTargetGL4::attach(GL_DEPTH_ATTACHMENT, t_field);
 				depth_attach = true;
 			}
 			else if ((!depth_attach) && t_field.m_type == RT_DEPTH_STENCIL)
 			{
-				glFramebufferTexture(
-					GL_FRAMEBUFFER,
-					GL_DEPTH_STENCIL_ATTACHMENT,
-					t_field.m_texture->m_tbo,
-					0
-				);
+				AuxTargetGL4::attach(GL_DEPTH_STENCIL_ATTACHMENT, t_field);
 				depth_attach = true;
 			}
 		}
@@ -2935,6 +3521,13 @@ namespace Render
 		}
 		//disable
 		fbo->disable_FBO();
+		//register
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_create_target(fbo, textures);
+		}
+#endif
 		//return
 		return fbo;
 	}
@@ -2965,6 +3558,13 @@ namespace Render
         {
             disable_render_target(r_target);
         }
+        //unregister
+#if defined(TEXTURE_INTROSPECTION)
+		if (auto render_inspector = inspector())
+		{
+			render_inspector->on_delete_target(r_target);
+		}
+#endif
         //safe delete
 		SQ_DELETE(allocator(), Target, r_target);
 		r_target = nullptr;
@@ -3037,6 +3637,75 @@ namespace Render
 			//default FBO
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
+
+#if defined(RENDER_PROFILER)
+	bool ContextGL4::gpu_timer_supported() const
+	{
+		return m_gpu_timer_supported;
+	}
+
+	void ContextGL4::gpu_timer_begin_frame()
+	{
+		if (!m_gpu_timer_supported) return;
+		//the slot of the frame: one still not read is lost (the GPU is too far behind)
+		GpuTimerFrame& frame = m_gpu_timer_frames[m_gpu_timer_frame_id % GPU_TIMER_FRAMES];
+		frame.m_id = m_gpu_timer_frame_id++;
+		frame.m_count = 0;
+		frame.m_pending = false;
+		m_gpu_timer_in_frame = true;
+	}
+
+	void ContextGL4::gpu_timer_end_frame()
+	{
+		if (!m_gpu_timer_in_frame) return;
+		GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+		frame.m_pending = frame.m_count > 0;
+		m_gpu_timer_in_frame = false;
+	}
+
+	int ContextGL4::gpu_timer_timestamp()
+	{
+		if (!m_gpu_timer_in_frame) return -1;
+		GpuTimerFrame& frame = m_gpu_timer_frames[(m_gpu_timer_frame_id - 1) % GPU_TIMER_FRAMES];
+		if (frame.m_count >= GPU_TIMER_MAX_TIMESTAMPS) return -1;
+		if (frame.m_count == frame.m_queries.size())
+		{
+			const size_t first = frame.m_queries.size();
+			frame.m_queries.resize(first + 64, 0);
+			glGenQueries(64, frame.m_queries.data() + first);
+		}
+		glQueryCounter(frame.m_queries[frame.m_count], GL_TIMESTAMP);
+		return int(frame.m_count++);
+	}
+
+	bool ContextGL4::gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms)
+	{
+		//the oldest frame pending
+		GpuTimerFrame* oldest = nullptr;
+		for (GpuTimerFrame& frame : m_gpu_timer_frames)
+		{
+			if (frame.m_pending && (!oldest || frame.m_id < oldest->m_id)) oldest = &frame;
+		}
+		if (!oldest) return false;
+		//done when its last timestamp is (they are written in order)
+		GLint available = GL_FALSE;
+		glGetQueryObjectiv(oldest->m_queries[oldest->m_count - 1], GL_QUERY_RESULT_AVAILABLE, &available);
+		if (!available) return false;
+		//ns -> ms from the first
+		timestamps_ms.resize(oldest->m_count);
+		GLuint64 first = 0;
+		for (size_t i = 0; i != oldest->m_count; ++i)
+		{
+			GLuint64 time = 0;
+			glGetQueryObjectui64v(oldest->m_queries[i], GL_QUERY_RESULT, &time);
+			if (i == 0) first = time;
+			timestamps_ms[i] = time >= first ? double(time - first) * 1.0e-6 : 0.0;
+		}
+		frame_id = oldest->m_id;
+		oldest->m_pending = false;
+		return true;
+	}
+#endif
 
 	bool ContextGL4::print_errors() const
 	{

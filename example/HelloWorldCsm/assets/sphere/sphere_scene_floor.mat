@@ -1,0 +1,11 @@
+effect "PBR"
+{
+    albedo_map    texture("floor_albedo")
+    metallic_map  texture("floor_metallic")
+    roughness_map texture("floor_roughness")
+    occlusion_map texture("floor_ao")    
+    normal_map    texture("floor_normal")
+
+    mask         float(-1.0)
+    mask_shadow  float(-1.0)
+}

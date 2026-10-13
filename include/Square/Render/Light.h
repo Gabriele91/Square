@@ -11,7 +11,8 @@
 #include "Square/Math/Linear.h"
 #include "Square/Render/ConstantBuffer.h"
 
-#define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 4
+#define DIRECTION_SHADOW_CSM_NUMBER_OF_FACES 8 // cascades of a directional light at most
+#define DIRECTION_SHADOW_CSM_DEFAULT_FACES 4   // its cascades by default
 
 namespace Square
 {
@@ -47,6 +48,15 @@ namespace Render
 		SPOT,
 		POINT,
 		DIRECTION
+	};
+
+	//the filter of the shadow of a light (directional: forward and deferred): NONE one sample
+	//(hard, aliased), PCF a fixed kernel, PCSS soft (wider far from the caster, the default)
+	enum class ShadowFilter : int
+	{
+		NONE,
+		PCF,
+		PCSS
 	};
 
 	//uniform buffers
@@ -85,7 +95,8 @@ namespace Render
     {
 		CBArrMat4        m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 		CBArrMat4        m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
-		CBArrVec3        m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // > hlsl packet rule: float4 for a float in array
+		CBArrVec3        m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // x: the depth (view) where the cascade ends; y, z: free (> hlsl packet rule: float4 for a float in array)
+		IVec4            m_options{ 0, DIRECTION_SHADOW_CSM_DEFAULT_FACES, 0, 0 }; //x: the ShadowFilter, y: the cascades, z: the cascades in colors (debug) (a vector: its own register after the array)
 	};
 
 	CBStruct UniformPointShadowLight
@@ -138,6 +149,9 @@ namespace Render
 
 		// For CSM
 		virtual void set_scene_size(const Geometry::AABoundingBox& scene);
+		//its cascades stay where they are while the camera moves a little (a directional light
+		//with stable cascades: the shadow pass keeps their static casters in a cache)
+		virtual bool stable_cascades() const { return false; }
 
 		//get viewport shadow camera
 
@@ -147,6 +161,10 @@ namespace Render
 
 		LightType type() const;
 
+		ShadowFilter shadow_filter() const;
+
+		void shadow_filter(ShadowFilter filter);
+
     protected:
         
 		void type(LightType type);
@@ -155,6 +173,7 @@ namespace Render
         
         LightType m_type{ LightType::NONE };
 		bool m_visible{ true };
+		ShadowFilter m_shadow_filter{ ShadowFilter::PCSS };
 	};
 	
     class SQUARE_API DirectionLight : public Light

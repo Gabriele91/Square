@@ -27,6 +27,10 @@ namespace Geometry
             FARP,
             N_PLANES
         };
+
+        // Default
+        Frustum() = default;
+        Frustum(const std::array<Vec4,N_PLANES>& planes);
         
         //results
         enum TestingResult { OUTSIDE, INTERSECT, INSIDE };
@@ -46,7 +50,7 @@ namespace Geometry
         
     private:
         
-        Vec4 m_planes[N_PLANES];
+        std::array<Vec4, N_PLANES> m_planes;
         
     };
 }

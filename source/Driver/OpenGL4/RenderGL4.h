@@ -10,6 +10,7 @@
 #include "OpenGL4.h"
 #include "Square/Config.h"
 #include "Square/Driver/Render.h"
+#include "Square/Driver/RenderInspector.h"
 
 
 namespace Square
@@ -405,6 +406,9 @@ namespace Render
 
 		//update global buffer
 		void global_buffer_bind();
+		//upload the global uniforms changed since the last upload (before a draw: the uniforms
+		//set after the bind of the shader count for that draw)
+		void upload_global_buffer();
 
 		//get uniform
 		Uniform* uniform(const std::string& name);
@@ -442,6 +446,9 @@ namespace Render
 		mutable UniformMap m_uniform_map;
         mutable UniformConstBufferMap m_uniform_const_buffer_map;
 		mutable long m_uniform_ntexture{ -1 }; //n texture bind
+		mutable std::unordered_map< const void*, long > m_uniform_texture_unit; //first texture unit of each uniform, since the bind
+		//texture unit of a uniform: the same one until the next bind (set again on each draw it would run out of units)
+		long texture_unit(const void* uniform, size_t count = 1) const;
         
         //help
 		Uniform& add_uniform(const std::string& name, Unique<Uniform>&& u) const;
@@ -486,6 +493,7 @@ namespace Render
 
 		virtual bool init(Video::DeviceResources* resource) override;
 		virtual void close() override;
+		virtual bool is_srgb_framebuffer() const override;
 
 		virtual const ClearColorState& get_clear_color_state() override;
 		virtual void set_clear_color_state(const ClearColorState& cf) override;
@@ -499,6 +507,9 @@ namespace Render
 
 		virtual const ViewportState& get_viewport_state() override;
 		virtual void set_viewport_state(const ViewportState& vs) override;
+
+		virtual const ScissorState& get_scissor_state() override;
+		virtual void set_scissor_state(const ScissorState& ss) override;
 
 		virtual const BlendState& get_blend_state() override;
 		virtual void set_blend_state(const BlendState& bs) override;
@@ -562,6 +573,8 @@ namespace Render
 		virtual void draw_arrays(DrawType type, unsigned int start, unsigned int size) override;
 		virtual void draw_elements(DrawType type, unsigned int n) override;
 		virtual void draw_elements(DrawType type, unsigned int start, unsigned int n) override;
+		virtual void draw_arrays_instanced(DrawType type, unsigned int start, unsigned int size, unsigned int instances) override;
+		virtual void draw_elements_instanced(DrawType type, unsigned int start, unsigned int n, unsigned int instances) override;
 
 		//IL=Input Layaut
 		virtual InputLayout* create_IL(const AttributeList& atl) override;
@@ -598,11 +611,14 @@ namespace Render
 			const TextureGpuDataInformation& info
 		) override;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int level = 0) override;
+		virtual void copy_texture(Texture* source, Texture* destination) override;
+		virtual void copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer) override;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int face = 0, int level = 0) override;
 		virtual void bind_texture(Texture*, int texture_id, int sempler_id) override;
 		virtual void unbind_texture(Texture*) override;
 		virtual void unbind_texture(int n) override;
 		virtual void delete_texture(Texture*&) override;
+		virtual void update_texture(Texture* texture, const TextureRawDataInformation& data) override;
 
 		//shader
 		virtual Shader* create_shader(const std::vector< ShaderSourceInformation >& infos) override;
@@ -643,11 +659,42 @@ namespace Render
 		//Output file name and line
 		virtual bool print_errors(const char* source_file_name, int line) const override;
 
+#if defined(RENDER_PROFILER)
+		//GPU timer: GL_TIMESTAMP queries, a ring of frames
+		virtual bool gpu_timer_supported() const override;
+		virtual void gpu_timer_begin_frame() override;
+		virtual void gpu_timer_end_frame() override;
+		virtual int  gpu_timer_timestamp() override;
+		virtual bool gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms) override;
+#endif
+
 		//context
 		BindContext        s_bind_context;
 		State			   s_render_state;
+		ScissorState	   m_scissor_state;
 		GLuint             s_vao_attributes;
 		RenderDriverInfo   s_render_driver_info;
+		bool               m_srgb_fb{ false };
+		//glCopyImageSubData (GL 4.3, GL_ARB_copy_image; not on macOS GL 4.1): the copies of the
+		//textures by it, else blitted
+		bool               m_copy_image{ false };
+
+#if defined(RENDER_PROFILER)
+		//GPU timer
+		struct GpuTimerFrame
+		{
+			uint64              m_id{ 0 };
+			std::vector<GLuint> m_queries; //grown on demand
+			size_t              m_count{ 0 };
+			bool                m_pending{ false };
+		};
+		static constexpr size_t GPU_TIMER_FRAMES = 4;
+		static constexpr size_t GPU_TIMER_MAX_TIMESTAMPS = 8192;
+		GpuTimerFrame m_gpu_timer_frames[GPU_TIMER_FRAMES];
+		uint64        m_gpu_timer_frame_id{ 0 };
+		bool          m_gpu_timer_in_frame{ false };
+		bool          m_gpu_timer_supported{ false };
+#endif
 	};
 }
 }

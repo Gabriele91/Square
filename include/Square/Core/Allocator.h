@@ -7,6 +7,7 @@
 #pragma once
 #include "Square/Config.h"
 #include "Square/Core/Logger.h"
+#include <mutex>
 #include <unordered_map>
 
 namespace Square
@@ -43,6 +44,7 @@ namespace Square
 		Logger* m_logger;
 		Allocator* m_allocator;
 		std::unordered_map<void*, std::string> m_debug_map;
+		std::mutex m_mutex;
 	public:
 		DebugAllocator(Allocator* , Logger*);
 		virtual ~DebugAllocator();
@@ -53,6 +55,6 @@ namespace Square
 	};
 
 	#define SQ_NEW(allocator, T, ...) new ((allocator)->alloc(sizeof(T), typeid(T).name(), __VA_ARGS__))
-#define SQ_DELETE(allocator, T, ptr) { (ptr)->~T(); (allocator)->free(ptr, sizeof(T)); }
-#define SQ_DELETE_NAMESPACE(allocator, NAMESPACE, T, ptr) { (ptr)->~T(); (allocator)->free(ptr, sizeof(NAMESPACE::T)); }
+	#define SQ_DELETE(allocator, T, ptr) { (ptr)->~T(); (allocator)->free(ptr, sizeof(T)); }
+	#define SQ_DELETE_NAMESPACE(allocator, NAMESPACE, T, ptr) { (ptr)->~T(); (allocator)->free(ptr, sizeof(NAMESPACE::T)); }
 }

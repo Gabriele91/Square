@@ -26,10 +26,277 @@
             ]
         },
         {
+            "name": "Win32 Rush Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Rush.exe",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "true",
+                "-b", "ogl",
+                "-g", "high"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/"
+                },
+                {
+                    "name": "SQUARE_RENDERING",
+                   // "value": "forward"
+                    "value": "deferred"
+                }
+            ],
+            "console": "internalConsole",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        },
+        {
             "name": "Win32 HelloWorld Debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build/bin/Debug/HelloWorld.exe",
+            "program": "${workspaceRoot}/build/bin/HelloWorld.exe",
+            "args": [
+                "-v",
+                "-d",
+                "-b", "ogl",
+                "-g", "high"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/"
+                },
+                {
+                    "name": "SQUARE_RENDERING",
+                    //"value": "forward"
+                    "value": "deferred"
+                }
+            ],
+            "console": "internalConsole",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        },
+        {
+            "name": "Win32 HelloWorldCSM Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorldCSM.exe",
+            "args": [
+                "-v",
+                "-d",
+                "-b", "d3d",
+                "-g", "high",
+                "-s", "csm"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/"
+                }
+            ],
+            "console": "internalConsole",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        },
+        {
+            "name": "Win32 HelloWorldCSM sphere_scene Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorldCSM.exe",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "true",
+                "-b", "d3d",
+                "-g", "high",
+                "-s", "sphere"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;${workspaceRoot}/build/bin;${workspaceRoot}/build/source;${workspaceRoot}/build/dependencies/HLSL2ALL"
+                }
+            ],
+            "console": "internalConsole",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/;${workspaceRoot}/build/dependencies/HLSL2ALL/",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        },
+        {
+            "name": "Win32 HelloWorldCSM bottle_scene Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorldCSM.exe",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "true",
+                "-b", "ogl",
+                "-g", "high",
+                "-s", "bottle"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;${workspaceRoot}/build/bin;${workspaceRoot}/build/source;${workspaceRoot}/build/dependencies/HLSL2ALL"
+                }
+            ],
+            "console": "internalConsole",
+            "symbolSearchPath": "${workspaceRoot}/build/bin;${workspaceRoot}/build/source;${workspaceRoot}/build/dependencies/HLSL2ALL",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        },
+        {
+            "name": "Win32 Model Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Model.exe",
+            "args": [
+             //   "-i", "C:/Users/gabri/Documents/Models/sphere_scene.glb",
+             //   "-i", "C:/Users/gabri/Documents/Models/adamHead/adamHead.gltf",
+                "-i", "C:/Users/gabri/Documents/Models/bottle_scene.glb",
+                "-f", "json",
+             //   "-o", "sphere_scene",
+                "-o", "bottle_scene",
+                "-r", "2048",
+                "-d"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/Debug/;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/"
+                }
+            ],
+            "console": "internalConsole",
+            "symbolSearchPath": "${workspaceRoot}/build/bin/;${workspaceRoot}/build/source/Debug;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        },
+        {
+            "name": "macOS HelloWorld Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorld",
+            "args": [
+                "-v",
+                "-d",
+                "-b", "mtl",
+                "-g", "high"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "DYLD_LIBRARY_PATH": "${workspaceRoot}/build/lib:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+            }
+        },
+        {
+            "name": "macOS HelloWorldCSM Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorldCSM",
+            "args": [
+                "-v",
+                "-d",
+                "-b", "mtl",
+                "-g", "high",
+                "-s", "csm"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "DYLD_LIBRARY_PATH": "${workspaceRoot}/build/lib:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+            }
+        },
+        {
+            "name": "macOS HelloWorldCSM sphere_scene Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorldCSM",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "false",
+                "-b", "mtl",
+                "-g", "high",
+                "-s", "sphere"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "DYLD_LIBRARY_PATH": "${workspaceRoot}/build/lib:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+            }
+        },
+        {
+            "name": "macOS HelloWorldCSM bottle_scene Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorldCSM",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "true",
+                "-b", "mtl",
+                "-g", "high",
+                "-s", "bottle"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "DYLD_LIBRARY_PATH": "${workspaceRoot}/build/lib:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+            }
+        },
+        {
+            "name": "macOS Model Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Model",
+            "args": [
+                "-i", "/Users/iclake2/Documents/Models/bottle_scene.glb",
+                "-f", "json",
+                "-o", "bottle_scene",
+                "-r", "2048",
+                "-d"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "DYLD_LIBRARY_PATH": "${workspaceRoot}/build/lib:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+            }
+        },
+        {
+            "name": "Linux HelloWorld Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorld",
             "args": [
                 "-v",
                 "-d",
@@ -41,42 +308,27 @@
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "%PATH%;${workspaceRoot}/build/bin/Debug/;${workspaceRoot}/build/source/Debug/;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/"
-                }
-            ],
-            "console": "internalConsole",
-            "symbolSearchPath": "${workspaceRoot}/build/bin/Debug;${workspaceRoot}/build/source/Debug;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/",
-            "logging": {
-                "moduleLoad": false,
-                "trace": true
-            }
-        },
-        {
-            "name": "Win32 HelloWorldCSM Debug",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceRoot}/build/bin/Debug/HelloWorldCSM.exe",
-            "args": [
-                "-v",
-                "-d",
-                "-b", "ogl",
-                "-g", "high",
-                "-s", "csm_scene"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceRoot}",
-            "environment": [
+                    "value": "${env:PATH}:${workspaceRoot}/build/lib:${workspaceRoot}/build/bin:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+                },
                 {
-                    "name": "PATH",
-                    "value": "%PATH%;${workspaceRoot}/build/bin/Debug/;${workspaceRoot}/build/source/Debug/;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/"
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "${env:LD_LIBRARY_PATH}:${workspaceRoot}/build/lib:${workspaceRoot}/build/bin:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
                 }
             ],
-            "console": "internalConsole",
-            "symbolSearchPath": "${workspaceRoot}/build/bin/Debug;${workspaceRoot}/build/source/Debug;${workspaceRoot}/build/dependencies/HLSL2ALL/Debug/",
-            "logging": {
-                "moduleLoad": false,
-                "trace": true
-            }
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
         },
         {
             "name": "Linux HelloWorldCSM Debug",
@@ -88,7 +340,165 @@
                 "-d",
                 "-b", "ogl",
                 "-g", "high",
-                "-s", "csm_scene"
+                "-s", "csm"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${env:PATH}:${workspaceRoot}/build/lib:${workspaceRoot}/build/bin:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+                },
+                {
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "${env:LD_LIBRARY_PATH}:${workspaceRoot}/build/lib:${workspaceRoot}/build/bin:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Linux HelloWorldCSM sphere_scene Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorldCSM",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "true",
+                "-b", "ogl",
+                "-g", "high",
+                "-s", "sphere"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${env:PATH}:${workspaceRoot}/build/lib:${workspaceRoot}/build/bin:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+                },
+                {
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "${env:LD_LIBRARY_PATH}:${workspaceRoot}/build/lib:${workspaceRoot}/build/bin:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Linux HelloWorldCSM bottle_scene Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/HelloWorldCSM",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "true",
+                "-b", "ogl",
+                "-g", "high",
+                "-s", "bottle"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${env:PATH}:${workspaceRoot}/build/lib:${workspaceRoot}/build/bin:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+                },
+                {
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "${env:LD_LIBRARY_PATH}:${workspaceRoot}/build/lib:${workspaceRoot}/build/bin:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Linux Rush Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Rush",
+            "args": [
+                "-v",
+                "-d",
+                "-c", "true",
+                "-b", "ogl",
+                "-g", "high"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${env:PATH}:${workspaceRoot}/build/lib:${workspaceRoot}/build/bin:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+                },
+                {
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "${env:LD_LIBRARY_PATH}:${workspaceRoot}/build/lib:${workspaceRoot}/build/bin:${workspaceRoot}/build/source:${workspaceRoot}/build/dependencies/HLSL2ALL"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Linux Model Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Model",
+            "args": [
+                "-i", "${env:HOME}/Documents/Models/bottle_scene.glb",
+                "-f", "json",
+                "-o", "bottle_scene",
+                "-r", "2048",
+                "-d"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

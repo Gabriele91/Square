@@ -4,6 +4,8 @@
 #include "Square/Config.h"
 #include "Square/Core/Resource.h"
 #include "Square/Driver/Render.h"
+#include "Square/Resource/ShaderCache.h"
+#include "Square/Resource/ShaderTarget.h"
 #include "Square/Render/VertexLayout.h"
 
 namespace Square
@@ -70,30 +72,33 @@ namespace Resource
 		//destoy shader
 		void destoy();
 
+		//the name of the shader in the render profiler: the resource name (without its type), or the
+		//one given (the shaders of the effects are not resources)
+		const std::string& profile_name() const;
+		void profile_name(const std::string& name);
+
 	protected:
+
+		//the name in the profiler (made by profile_name() when empty)
+		mutable std::string m_profile_name;
 
 		//Values
 		Render::Shader* m_shader{ nullptr };
+		//the shader of the driver from its stages (with the debug tools: its time, the one of the
+		//driver, in the details of the loads)
+		Render::Shader* create_shader(Render::Context& render, const std::vector< Render::ShaderSourceInformation >& stages);
+#if defined(SQUARE_DEBUG_TOOLS)
+		double m_driver_ms{ 0.0 };
+#endif
 		FilepathMap	    m_filepath_map;
 		UnifomMap	    m_uniform_map;
 		CBufferMap	    m_cbuffer_map;
 
-		// GLSL Compatible
-		struct GLSLCompatibleSettings
-		{
-			bool m_is_glsl_backend;
-			int  m_shader_version;
-			bool m_add_GL_ARB_shading_language_420pack;
-			bool m_add_GL_EXT_control_flow_attributes;
-			GLSLCompatibleSettings(Context& context);
-		};
-		GLSLCompatibleSettings m_glsl_compatible_settings;
-
 		// help to compile
 		struct PostprocessOutput
 		{
+			ShaderTarget::Language m_language;
 			size_t	    m_version;
-			bool	    m_hlsl_target;
 			bool	    m_texture_target;
 			std::string m_header;
 			std::string m_source;
@@ -104,15 +109,26 @@ namespace Resource
 		(
 			const std::string& sourcecode,
 			const PreprocessMap& defines,
+			const ShaderTarget& target,
 			PostprocessOutput& source
 		);
+
+		//what makes the stages of a source (the key of the intermediate cache: its target, its
+		//version, the source preprocessed)
+		std::string cache_key(const PostprocessOutput& source, const ShaderTarget& target) const;
+		//its stages in the language of the target (HLSL -> SPIR-V -> GLSL / GLSL ES / MSL / SPIR-V,
+		//or HLSL)
+		bool translate(const PostprocessOutput& source, ShaderStages& stages);
+		//the shader of the driver from its stages (its errors in the log)
+		bool create_from(const ShaderStages& stages);
 
 		#ifdef SQUARE_SHADER_COMPILER_FUNCTION_IMPL
 		bool hlsl_compile
 		(
-			const PostprocessOutput& source
+			const PostprocessOutput& source,
+			ShaderStages& stages
 		);
-		
+
 		bool source_to_spirv
 		(
 			const PostprocessOutput& source,
@@ -122,7 +138,22 @@ namespace Resource
 		bool spirv_to_glsl_compile
 		(
 			const PostprocessOutput& source,
-			const HLSL2ALL::TypeSpirvShaderList& input
+			const HLSL2ALL::TypeSpirvShaderList& input,
+			ShaderStages& stages
+		);
+
+		bool spirv_to_msl_compile
+		(
+			const PostprocessOutput& source,
+			const HLSL2ALL::TypeSpirvShaderList& input,
+			ShaderStages& stages
+		);
+
+		//SPIR-V (Vulkan): its words, the bytes of the source of each stage
+		bool spirv_stages
+		(
+			const HLSL2ALL::TypeSpirvShaderList& input,
+			ShaderStages& stages
 		);
 		#endif
 	};

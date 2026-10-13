@@ -73,6 +73,7 @@ namespace Data
 		JsonValue(JsonValue&& v) noexcept;
 		JsonValue(JsonArray&& v) noexcept;
 		JsonValue(JsonObject&& v) noexcept;
+		JsonValue(std::string&& value) noexcept;
 		JsonValue(const JsonValue& v);
         JsonValue(const char* value);
 		JsonValue(const std::string& value);
@@ -98,6 +99,8 @@ namespace Data
 		bool contains(const std::string& key) const;
 		bool contains(size_t index) const;
 	private:
+		//Free the held string/array/object (if any) and become null
+		void destroy();
 
 		//Value
 		union

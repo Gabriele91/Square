@@ -1,23 +1,25 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.14...3.31)
 project(Square VERSION 1.0.0 DESCRIPTION "Square render engine")
 
 # C++17
 set (CMAKE_CXX_STANDARD 17)
-# Add debug prefix
-if(NOT CMAKE_DEBUG_POSTFIX)
-  set(CMAKE_DEBUG_POSTFIX d)
-endif()
+# The libraries of each configuration a name of their own (Square and its drivers: never
+# overwritten by another configuration): Debug "d" (Squared.dll), Release "r" (Squarer.dll),
+# Retail none (Square.dll). The drivers are found by their exports, whatever their names
+set(CMAKE_DEBUG_POSTFIX d)
+set(CMAKE_RELEASE_POSTFIX r)
+set(CMAKE_RETAIL_POSTFIX "")
 # Flags
 if(MSVC)
-  set(CMAKE_CXX_FLAGS_RELEASE "/Ox /MD")
+  set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Ob2 /DNDEBUG /MD")
   set(CMAKE_CXX_FLAGS_DEBUG " /Zi /Od /MDd")
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "MSVC Runtime Library")
 elseif(APPLE)
-  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDISABLE_SHARER_PREPROCESS_LINE_SET")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -DDISABLE_SHARER_PREPROCESS_LINE_SET")
 else()
   set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fPIC -pthread -DDISABLE_SHARER_PREPROCESS_LINE_SET")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fPIC -pthread -DDISABLE_SHARER_PREPROCESS_LINE_SET")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -fPIC -pthread -DDISABLE_SHARER_PREPROCESS_LINE_SET")
 endif()
 
 # Square project
@@ -27,9 +29,14 @@ file(GLOB SOURCES Core/*.cpp
                   Geometry/*.cpp
                   Driver/*.cpp
                   Math/*.cpp
+                  Navigation/*.cpp
                   Render/*.cpp
+                  Render/PostEffect/*.cpp
+                  Render/Pipeline/*.cpp
                   Resource/*.cpp
-                  Scene/*.cpp)
+                  Scene/*.cpp
+                  System/*.cpp
+                  UI/*.cpp)
 
 set(OS_FLAGS "")
 set(OS_SOURCES "")
@@ -37,7 +44,7 @@ set(OS_LIBS "")
 set(INSTALL_DY_LIBS "")
 if(WIN32)
     file(GLOB WIN_SRC Driver/Win32/*.cpp)
-    list(APPEND OS_SOURCES ${WIN_SRC})
+    list(APPEND OS_SOURCES ${WIN_SRC} Square.rc)
     list(APPEND OS_FLAGS SQUARE_LIBRARY_EXPORT
                          HLSL2ALL_LIBRARY_IMPORT
                          _CRT_SECURE_NO_WARNINGS
@@ -53,12 +60,25 @@ if(WIN32)
 elseif(APPLE)
     file(GLOB APPLE_SRC Driver/Cocoa/*.mm)
     list(APPEND OS_SOURCES ${APPLE_SRC})
+    list(APPEND OS_FLAGS GL_SILENCE_DEPRECATION)
+    set_source_files_properties(${APPLE_SRC} PROPERTIES
+        COMPILE_OPTIONS "-Wno-deprecated-declarations;-Wno-incompatible-pointer-types"
+    )
+    list(APPEND OS_LIBS
+        "-framework Cocoa"
+        "-framework OpenGL"
+        "-framework Metal"
+        "-framework CoreVideo"
+        "-framework QuartzCore"
+        "-framework CoreGraphics"
+        "-framework CoreFoundation"
+    )
 
 elseif(UNIX AND NOT APPLE)
   file(GLOB LINUX_SRC Driver/Xorg/*.cpp)
   list(APPEND OS_SOURCES ${LINUX_SRC})
   list(APPEND OS_LIBS X11
-                      Xxf86vm
+                      Xrandr
                       GLU
                       GL
                       xcb
@@ -69,11 +89,50 @@ endif()
 add_subdirectory(Driver/OpenGL4)
 list(APPEND INSTALL_DY_LIBS SqOpenGL)
 
+# Add Metal Driver (Apple only)
+if(APPLE)
+    # Enable OBJCXX here in the parent scope so the Metal subproject
+    # can inherit it. Without this the subproject's enable_language(OBJCXX)
+    # fails because CMAKE_OBJCXX_COMPILE_OBJECT is not yet in the cache.
+    enable_language(OBJCXX)
+    add_subdirectory(Driver/Metal)
+    list(APPEND INSTALL_DY_LIBS SqMetal)
+endif()
+
 # Executable
 add_library(Square SHARED ${SOURCES} ${OS_SOURCES})
 
 # Flags
 target_compile_definitions(Square PRIVATE ${OS_FLAGS})
+
+# The vector instructions of the CPU code (Render/Pipeline/SoftwareOcclusion: its raster):
+# SQUARE_SIMD AVX (x86/x64, the default: Rush needs it too), SSE4 (SSE 4.1), NONE (the scalar
+# code). ARM (NEON) is found by the compiler, whatever it says
+set(SQUARE_SIMD "AVX" CACHE STRING "Vector instructions of the CPU code: AVX, SSE4, NONE")
+set_property(CACHE SQUARE_SIMD PROPERTY STRINGS AVX SSE4 NONE)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)|(i.86)")
+    if(SQUARE_SIMD STREQUAL "AVX")
+        target_compile_definitions(Square PRIVATE SQUARE_SIMD_AVX)
+        if(MSVC)
+            target_compile_options(Square PRIVATE "/arch:AVX")
+        else()
+            target_compile_options(Square PRIVATE -mavx)
+        endif()
+    elseif(SQUARE_SIMD STREQUAL "SSE4")
+        target_compile_definitions(Square PRIVATE SQUARE_SIMD_SSE4)
+        if(NOT MSVC)
+            target_compile_options(Square PRIVATE -msse4.1)
+        endif()
+    endif()
+endif()
+
+if(NOT MSVC)
+    target_compile_options(Square PRIVATE
+        -Wno-unused-value
+        -Wno-unused-but-set-variable
+        -Wno-braced-scalar-init
+    )
+endif()
 
 # Include directories
 target_include_directories(Square PRIVATE
@@ -81,12 +140,29 @@ target_include_directories(Square PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/zlib
     ${CMAKE_SOURCE_DIR}/dependencies/glm
     ${CMAKE_SOURCE_DIR}/dependencies/HLSL2ALL/include
+    ${CMAKE_SOURCE_DIR}/dependencies/astc-encoder/Source
 )
+
+# Splash screen (Render/SplashScreen.cpp): the icon inside the library, a resource of Square.dll
+# on Windows (Square.rc), the .incbin of its path elsewhere
+set(SQUARE_SPLASH_IMAGE ${CMAKE_SOURCE_DIR}/common/texture/square_icon.png)
+if(WIN32)
+    target_include_directories(Square PRIVATE $<$<COMPILE_LANGUAGE:RC>:${CMAKE_SOURCE_DIR}/common/texture>)
+    set_source_files_properties(Square.rc PROPERTIES OBJECT_DEPENDS ${SQUARE_SPLASH_IMAGE})
+else()
+    set_source_files_properties(Render/SplashScreen.cpp PROPERTIES
+        COMPILE_DEFINITIONS "SQUARE_SPLASH_IMAGE_PATH=\"${SQUARE_SPLASH_IMAGE}\""
+        OBJECT_DEPENDS ${SQUARE_SPLASH_IMAGE}
+    )
+endif()
 
 # Link libraries
 target_link_libraries(Square PRIVATE 
     HLSL2ALL 
     zlibstatic
+    square_minizip
+    ${SQUARE_ASTCENC_LIBRARY}
+    ${SQUARE_RMLUI_LIBRARIES}
     ${OS_LIBS}
 )
 

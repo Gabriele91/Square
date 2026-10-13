@@ -2,13 +2,14 @@
 #pragma once
 #include <Vertex>
 #include <Transform>
+#include <MeshVertex>
 #include <Matrix>
 #include <ShadowCamera>
 ////////////////
 //global uniform
-float shadow_mask;
+float mask_shadow;
 //texture
-Sampler2D(diffuse_map);
+Sampler2D(albedo_map);
 ////////////////
 // REFERENCES:
 // DirectX http://developers-club.com/posts/259679/
@@ -21,14 +22,25 @@ struct VertexShaderOutput
 };
 
 //draw
-VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input)
+#ifdef SQ_INSTANCED
+// instanced (the instanced variant of PointShadow: Scene::InstancedMesh): the matrix of the instance first
+#include <Instances>
+VertexShaderOutput vertex(in MeshVertex input, uint instance_id : SV_InstanceID)
 {
 	VertexShaderOutput output;
-	Vec4 position = Vec4(input.m_position, 1.0);
-	output.m_position = mul(position, transform.m_model);
+	output.m_position = mul_instance_model(input.m_position, instance_id);
 	output.m_uv = input.m_uv;
 	return output;
 }
+#else
+VertexShaderOutput vertex(in MeshVertex input)
+{
+	VertexShaderOutput output;
+	output.m_position = mesh_world_position(input);
+	output.m_uv = input.m_uv;
+	return output;
+}
+#endif
 
 struct GeometryShaderOutput
 {
@@ -92,7 +104,7 @@ struct FragmentShaderinput
 	Vec4 m_position       : SV_POSITION;  // vertex position (system value)
 	Vec4 m_world_position : POSITION1;    // vertex position in world space
 	Vec2 m_uv             : TEXCOORD0;    // interpolated uv map
-#ifdef HLSL_BACKEND
+#ifdef SQ_BACKEND_HLSL
 	uint m_RTIndex        : SV_RenderTargetArrayIndex;
 #endif
 };
@@ -100,9 +112,13 @@ struct FragmentShaderinput
 #if 1
 float fragment(in FragmentShaderinput input) : SV_Depth
 {
-	//diffuse/albedo
-	Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);
-    if (diffuse_color.a <= shadow_mask) discard;
+	//albedo
+	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
+#ifdef SQ_CLIP
+    //(the clip variant: its mask of the shadow, its level of detail fading)
+    if (albedo_color.a <= mask_shadow) discard;
+    lod_fade_clip(input.m_position.xy);
+#endif
 	//compute distance between wolrd and light source
 	float light_distance = length(point_shadow_camera.m_position - input.m_world_position.xyz);
 	//[0,1] range

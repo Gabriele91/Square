@@ -1,0 +1,15 @@
+effect "PBR"
+{
+    albedo_map    texture("rust_albedo")
+    metallic_map  texture("rust_metallic")
+    roughness_map texture("rust_roughness")
+    occlusion_map texture("rust_ao")    
+    normal_map    texture("rust_normal")
+
+	color Vec4(1.000000,1.000000,1.000000,1.000000)
+	metallic float(1.000000)
+	roughness float(1.000000)
+	emmisive Vec3(1.000000,1.000000,1.000000)
+	
+    mask float(0.500000)
+}

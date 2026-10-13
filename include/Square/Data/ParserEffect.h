@@ -36,15 +36,28 @@ namespace Parser
         
         static Render::CullfaceType cullface_from_string(const std::string& cullface, Render::CullfaceType cullface_default);
         
+		// Capability gate: ANY ignores the capability, REQUIRE matches only drivers
+		// that have it, EXCLUDE matches only drivers that lack it.
+		enum CapabilityTest
+		{
+			CAP_ANY = 0,
+			CAP_REQUIRE,
+			CAP_EXCLUDE
+		};
+
 		struct RequirementField
 		{
-			std::string m_driver_name{ "ALL" };
-			int         m_driver_major_version;
-			int         m_driver_minor_version;
-			std::string m_shader_name{ "ALL" };
-			int         m_shader_version;
+			std::string    m_driver_name{ "ALL" };
+			int            m_driver_major_version{ 0 };
+			int            m_driver_minor_version{ 0 };
+			std::string    m_shader_name{ "ALL" };
+			int            m_shader_version{ 0 };
+			CapabilityTest m_geometry_shader{ CAP_ANY };
+			CapabilityTest m_vertex_viewport_index{ CAP_ANY };
+			CapabilityTest m_draw_instanced{ CAP_ANY };
 
-            bool test(Render::Context* render) const;
+            //the driver (the one of the target of the shaders: Resource::ShaderTarget) meets it
+            bool test(const Render::RenderDriverInfo& info) const;
 		};
 
 		struct ShaderField
@@ -80,18 +93,26 @@ namespace Parser
 
 		struct PassField
 		{
-            Render::CullfaceState    m_cullface;
-			Render::DepthBufferState m_depth;
-			Render::BlendState       m_blend;
+            //fixed, or param(name): from a parameter of the effect
+            Render::PassState< Render::CullfaceState >    m_cullface;
+			Render::PassState< Render::DepthBufferState > m_depth;
+			Render::PassState< Render::BlendState >       m_blend;
 			ShaderField              m_shader;
 			LightsField	             m_lights{ LT_COLOR }; //enable lights
 			LightsField				 m_shadows{ LT_NONE  }; //enable shadows
+			int                      m_draw_count{ 1 };    //multi-pass: times to draw
+			int                      m_instances{ 1 };     //instanced draw: instance count per draw
 		};
 
 		struct TechniqueField
 		{
 			std::string m_name;
 			std::vector< PassField > m_pass;
+			//"variants instanced clip": the Render::EffectVariant declared (each combination is compiled)
+			unsigned char m_variants{ Render::EV_NONE };
+			//"clip(mask, dither)": the parameters that turn the clip variant on (none: only the fade
+			//of a level of detail)
+			std::vector< std::string > m_clip_parameters;
 		};
 
 		struct ImportField
@@ -149,6 +170,8 @@ namespace Parser
         bool parse_requirement_block(const char*& ptr, RequirementField& r_field);
 		//////////////////////////////////////////////////////
         bool parse_techniques_block(const char*& ptr, SubEffectField& subeffect);
+        bool parse_variants(const char*& ptr, TechniqueField& technique);
+        bool parse_clip_parameters(const char*& ptr, TechniqueField& technique);
 		//////////////////////////////////////////////////////
 		bool parse_import(const char*& ptr, SubEffectField& subeffect);
 		bool parse_from(const char*& ptr, SubEffectField& subeffect);
@@ -159,8 +182,12 @@ namespace Parser
         bool parse_blend(const char*& ptr, PassField& pass);
         bool parse_depth(const char*& ptr, PassField& pass);
         bool parse_cullface(const char*& ptr, PassField& pass);
+        //param(name): a parametric state, its parameter
+        bool parse_state_param(const char*& ptr, std::string& name);
         bool parse_lights(const char*& ptr, PassField& pass);
 		bool parse_shadows(const char*& ptr, PassField& pass);
+        bool parse_draw_count(const char*& ptr, PassField& pass);
+        bool parse_instances(const char*& ptr, PassField& pass);
         bool parse_shader(const char*& ptr, PassField& pass);
 		//////////////////////////////////////////////////////
         bool parse_queue_type(const char*& inout, Render::QueueType& type);

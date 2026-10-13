@@ -3,12 +3,14 @@
 #include "Square/Config.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/SharedLibrary.h"
+#include "Square/Core/Logger.h"
 #include "Square/Driver/Render.h"
 
 namespace Square
 {
 namespace Render
 {
+	using square_render_build = const char* (*)();
 	using square_render_get_type = Square::Render::RenderDriver(*)();
 	using square_render_create_context = Square::Render::Context* (*)(Square::Allocator*, Square::Logger*);
 	using square_render_delete_context = void(*)(Square::Render::Context*&);
@@ -51,6 +53,13 @@ namespace Render
 		return std::shared_ptr<IndexBuffer>(buffer, [=](IndexBuffer* ptr) { ctx->delete_IBO(ptr); });
 	}
 
+	//a driver of the build of the library (its kind, the version of its interface)
+	static bool same_build(void* lib, std::string& build)
+	{
+		auto get_build = (square_render_build)SharedLibrary::get(lib, "square_render_build");
+		build = get_build ? get_build() : "unknown";
+		return build == SQUARE_BUILD_ID;
+	}
 	//list
 	std::vector<RenderDriver> list_of_render_driver()
 	{
@@ -77,8 +86,10 @@ namespace Render
 			if (extension == ".dll"  || extension == ".so"  || extension == ".dylib")
 			if (auto lib = open(Filesystem::join(location, file)))
 			{
-				//get function
+				//get function (a driver of its build)
+				std::string build;
 				if (auto get_type = (square_render_get_type)SharedLibrary::get(lib, "square_render_get_type"))
+				if (same_build(lib, build))
 				{
 					out.push_back(get_type());
 				}
@@ -114,6 +125,8 @@ namespace Render
         locations.push_back(home_dir());
 		//context
 		Context* context = nullptr;
+		//drivers of the type of another build (not loaded)
+		size_t mismatches = 0;
 		//try
 		for (auto location : locations)
 		if  (location.size())
@@ -123,17 +136,31 @@ namespace Render
 			if (extension == ".dll"  || extension == ".so"  || extension == ".dylib")
 			if (auto lib = open(Filesystem::join(location, file)))
 			{
-				//get function
+				//get function (a driver of the type, of the build of the library: else not loaded)
+				std::string build;
 				if (auto get_type = (square_render_get_type)SharedLibrary::get(lib, "square_render_get_type"))
 				if (get_type() == type)
-				if (auto create_context = (square_render_create_context)SharedLibrary::get(lib, "square_render_create_context"))
 				{
-					Context* context = create_context(allocator, logger);
-					get_lib_map()[context] = lib;
-					return context;
+					if (!same_build(lib, build))
+					{
+						if (logger) logger->warning("Render driver " + Filesystem::join(location, file) + ": its build " + build
+						                            + ", the library " + SQUARE_BUILD_ID + " (not loaded)");
+						mismatches += 1;
+					}
+					else if (auto create_context = (square_render_create_context)SharedLibrary::get(lib, "square_render_create_context"))
+					{
+						Context* context = create_context(allocator, logger);
+						get_lib_map()[context] = lib;
+						return context;
+					}
 				}
 				close(lib);
 			}
+		}
+		if (logger && mismatches)
+		{
+			logger->error(std::string("Render driver: none of the build ") + SQUARE_BUILD_ID + " (" + std::to_string(mismatches)
+			              + " of others: build the drivers with the library, the same configuration)");
 		}
 		return context;
 	}

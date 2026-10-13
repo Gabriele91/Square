@@ -1,4 +1,5 @@
 #include "Square/Render/Effect.h"
+#include "Square/Render/MultiPass.h"
 #include "Square/Resource/Shader.h"
 #include "Square/Resource/Texture.h"
 
@@ -69,7 +70,7 @@ namespace Render
 	EffectParameter::~EffectParameter() {}
 
 	bool EffectParameter::is_valid() { return m_id >= 0; }
-	EffectParameterType EffectParameter::get_type() { return m_type; }
+	EffectParameterType EffectParameter::get_type() const { return m_type; }
 
 	template< class T >
 	inline static const T& none_const_t_return()
@@ -330,7 +331,8 @@ namespace Render
 	//enable pass effect
 	void EffectPass::bind(  Render::Context&  render
 						  , const EffectPassInputs& inputs
-                          , EffectParameters* params) const
+                          , EffectParameters* params
+                          , int draw_id) const
 	{
 		//bind
 		bind(render, params);
@@ -377,14 +379,84 @@ namespace Render
 		{
 			m_uniform_spot_shadow->bind(inputs.m_spot_shadow_light);
 		}
+		//multi-pass index (cube face / cascade), the layers of the draw
+		bind_multi_pass(render, inputs, draw_id);
+	}
+
+	bool EffectPass::multi_pass() const
+	{
+		return m_cb_multipass && m_uniform_multipass && m_uniform_multipass->is_valid();
+	}
+
+	void EffectPass::bind_multi_pass(Render::Context& render, const EffectPassInputs& inputs, int draw_id) const
+	{
+		//write the draw_id into our own buffer and bind it: the shader routes the draw to the
+		//matching layer (SV_RenderTargetArrayIndex), or culls the layers of the mask
+		if (multi_pass())
+		{
+			Render::UniformMultiPass umultipass;
+			umultipass.m_id = (uint32)draw_id;
+			umultipass.m_mask = inputs.m_layer_mask;
+			render.update_steam_CB(m_cb_multipass.get(), (const unsigned char*)&umultipass, sizeof(umultipass));
+			m_uniform_multipass->bind(m_cb_multipass.get());
+		}
+	}
+
+	namespace AuxPassState
+	{
+		//a state from the value of a parameter (false: not of its type)
+		//cullface: int, the Render::CullfaceType
+		bool decode(EffectParameter& param, Render::CullfaceState& state)
+		{
+			if (param.get_type() != EffectParameterType::PT_INT) return false;
+			state = Render::CullfaceState(Render::CullfaceType(param.get_int()));
+			return true;
+		}
+
+		//zbuffer: IVec2, the Render::DepthMode and the Render::DepthFuncType
+		bool decode(EffectParameter& param, Render::DepthBufferState& state)
+		{
+			if (param.get_type() != EffectParameterType::PT_IVEC2) return false;
+			const IVec2& value = param.get_ivec2();
+			state = Render::DepthBufferState(Render::DepthFuncType(value.y), Render::DepthMode(value.x));
+			return true;
+		}
+
+		//blend: IVec3, enabled and the two Render::BlendType
+		bool decode(EffectParameter& param, Render::BlendState& state)
+		{
+			if (param.get_type() != EffectParameterType::PT_IVEC3) return false;
+			const IVec3& value = param.get_ivec3();
+			state = value.x ? Render::BlendState(Render::BlendType(value.y), Render::BlendType(value.z)) : Render::BlendState();
+			return true;
+		}
+
+		//the value of a state: fixed, or of its parameter
+		template < typename T >
+		T value(const PassState<T>& state, EffectParameters* params)
+		{
+			if (!params || state.m_param_id < 0 || size_t(state.m_param_id) >= params->size()) return state.m_value;
+			const auto& param = (*params)[state.m_param_id];
+			T output = state.m_value;
+			if (!param || !decode(*param, output)) return state.m_value;
+			return output;
+		}
+
+		//the id of the parameter of a state in an effect
+		template < typename T >
+		void resolve(PassState<T>& state, const EffectParametersMap& parameters)
+		{
+			auto it = parameters.find(state.m_param);
+			state.m_param_id = state.parametric() && it != parameters.end() ? it->second : -1;
+		}
 	}
 
 	void EffectPass::bind(Render::Context& render, EffectParameters* params) const
 	{
 		//bind
-		render.set_blend_state(m_blend);
-		render.set_cullface_state(m_cullface);
-		render.set_depth_buffer_state(m_depth);
+		render.set_blend_state(AuxPassState::value(m_blend, params));
+		render.set_cullface_state(AuxPassState::value(m_cullface, params));
+		render.set_depth_buffer_state(AuxPassState::value(m_depth, params));
 		//bind shader
 		m_shader->bind();
 		//test
@@ -529,8 +601,119 @@ namespace Render
 	{
 		return m_passes.back();
 	}
+
+	EffectTechnique::IteratorByDraw::IteratorByDraw(EffectTechnique::PassListIt pass_it, size_t draw_id)
+	: m_pass_it(pass_it)
+	, m_pass_draw_id(draw_id)
+	{
+
+	}
+
+	EffectTechnique::IteratorByDraw& EffectTechnique::IteratorByDraw::operator++() 
+	{
+		if ((m_pass_draw_id+1) < m_pass_it->m_draw_count)
+		{
+			++m_pass_draw_id;
+		}
+		else 
+		{
+			++m_pass_it;
+			m_pass_draw_id = 0;
+		}
+		return *this;
+	}
+
+	std::tuple<EffectPass&,size_t> EffectTechnique::IteratorByDraw::operator * () const
+	{
+		return std::tuple<EffectPass&, size_t>(*m_pass_it, m_pass_draw_id);
+	}
+
+	bool EffectTechnique::IteratorByDraw::operator!=(const EffectTechnique::IteratorByDraw& other) const 
+	{
+		return m_pass_it != other.m_pass_it || m_pass_draw_id != other.m_pass_draw_id;
+	}
+
+	EffectTechnique::ContainerByDraw::ContainerByDraw(EffectTechnique& effect_technique)
+	: m_effect_technique(effect_technique)
+	{}
+
+	EffectTechnique::IteratorByDraw EffectTechnique::ContainerByDraw::begin()
+	{
+		return IteratorByDraw(m_effect_technique.begin());
+	}
+
+	EffectTechnique::IteratorByDraw EffectTechnique::ContainerByDraw::end()
+	{
+		return IteratorByDraw(m_effect_technique.end());
+	}
+
+	EffectTechnique::ContainerByDraw EffectTechnique::iterate_draws() 
+	{
+		return ContainerByDraw(*this);
+	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
-	// EffectTechnique
+	// EffectTechniqueVariants
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	EffectTechnique* EffectTechniqueVariants::variant(unsigned char variant)
+	{
+		if (variant >= EV_COUNT || !m_declared[variant]) return nullptr;
+		return &m_techniques[variant];
+	}
+
+	const EffectTechnique* EffectTechniqueVariants::variant(unsigned char variant) const
+	{
+		if (variant >= EV_COUNT || !m_declared[variant]) return nullptr;
+		return &m_techniques[variant];
+	}
+
+	EffectTechnique& EffectTechniqueVariants::declare(unsigned char variant)
+	{
+		m_declared[variant] = true;
+		return m_techniques[variant];
+	}
+
+	void EffectTechniqueVariants::clip_parameters(const std::vector< std::string >& names)
+	{
+		m_clip_parameters = names;
+		m_clip_parameter_ids.clear();
+	}
+
+	void EffectTechniqueVariants::resolve_clip_parameters(const EffectParametersMap& parameters)
+	{
+		m_clip_parameter_ids.clear();
+		m_clip_parameter_ids.reserve(m_clip_parameters.size());
+		for (const std::string& name : m_clip_parameters)
+		{
+			auto it_param = parameters.find(name);
+			if (it_param != parameters.end()) m_clip_parameter_ids.push_back(it_param->second);
+		}
+	}
+
+	namespace AuxClip
+	{
+		//a parameter on: its value over 0 (a float or an int)
+		bool on(const EffectParameter& parameter)
+		{
+			switch (parameter.get_type())
+			{
+			case EffectParameterType::PT_FLOAT: return parameter.get_float() > 0.0f;
+			case EffectParameterType::PT_INT:   return parameter.get_int() > 0;
+			default:                            return false;
+			}
+		}
+	}
+
+	bool EffectTechniqueVariants::clips(const EffectParameters& parameters) const
+	{
+		for (int id : m_clip_parameter_ids)
+		{
+			const bool known = id >= 0 && size_t(id) < parameters.size() && parameters[id];
+			if (known && AuxClip::on(*parameters[id])) return true;
+		}
+		return false;
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Effect
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	//contructor
 	Effect::Effect(Allocator* allocator)
@@ -542,14 +725,28 @@ namespace Render
 	EffectTechnique* Effect::technique(const std::string& technique_name)
 	{
 		auto it_tech = m_techniques_map.find(technique_name);
-		if (it_tech != m_techniques_map.end()) return &it_tech->second;
-		return nullptr;
+		if (it_tech == m_techniques_map.end()) return nullptr;
+		return it_tech->second.variant(EV_NONE);
 	}
 	const EffectTechnique* Effect::technique(const std::string& technique_name) const
 	{
 		auto it_tech = m_techniques_map.find(technique_name);
-		if (it_tech != m_techniques_map.end()) return &it_tech->second;
-		return nullptr;
+		if (it_tech == m_techniques_map.end()) return nullptr;
+		return it_tech->second.variant(EV_NONE);
+	}
+	EffectTechnique* Effect::technique(const std::string& technique_name, unsigned char variant, const EffectParameters& parameters, bool fading)
+	{
+		auto it_tech = m_techniques_map.find(technique_name);
+		if (it_tech == m_techniques_map.end()) return nullptr;
+		EffectTechniqueVariants& variants = it_tech->second;
+		const unsigned char base = variant & (EV_INSTANCED | EV_SKINNED);
+		//the clip variant: it drops pixels; without it no discard
+		const bool clip = fading || variants.clips(parameters);
+		if (clip)
+		{
+			if (EffectTechnique* clipped = variants.variant(base | EV_CLIP)) return clipped;
+		}
+		return variants.variant(base);
 	}
 
 	//get parameters
@@ -587,8 +784,9 @@ namespace Render
 	
 	const std::string&  Effect::parameter_name(int parameter_id) const
 	{
-		for (auto element : m_parameters_map) if (element.second == parameter_id) return element.first;
-		return std::string();
+		for (const auto& element : m_parameters_map) if (element.second == parameter_id) return element.first;
+		static const std::string emptry;
+		return emptry;
 	}
 	//get id
 	int Effect::parameter_id(const std::string& parameter_name)
@@ -602,20 +800,21 @@ namespace Render
 	bool Effect::import_technique(const Effect& effect,const std::string& name)
 	{
 		//get
-		const EffectTechnique* in_technique = effect.technique(name);
+		auto it_tech = effect.techniques().find(name);
 		//test
-		if (!in_technique) return false;
-		//copy
-		auto& new_technique = (m_techniques_map[name] = *in_technique);
+		if (it_tech == effect.techniques().end()) return false;
+		//copy, with its variants
+		EffectTechniqueVariants& variants = (m_techniques_map[name] = it_tech->second);
 		//rebuild ids
-		for_each_pass_build_params_id(new_technique);
+		variants.for_each_declared([this](EffectTechnique& technique) { for_each_pass_build_params_id(technique); });
+		variants.resolve_clip_parameters(m_parameters_map);
 		return true;
 	}
 
-	//copy pass (import) 
+	//copy pass (import)
 	bool Effect::import_techniques(const Effect& effect)
 	{
-		for (auto technique : effect.techniques())
+		for (const auto& technique : effect.techniques())
 		{
 			if (!import_technique(effect, technique.first))
 				return false;
@@ -636,7 +835,10 @@ namespace Render
 	void Effect::for_each_pass_build_params_id()
 	{
 		for (auto& technique : m_techniques_map)
-			for_each_pass_build_params_id(technique.second);
+		{
+			technique.second.for_each_declared([this](EffectTechnique& variant) { for_each_pass_build_params_id(variant); });
+			technique.second.resolve_clip_parameters(m_parameters_map);
+		}
 	}
 	void Effect::for_each_pass_build_params_id(EffectTechnique& technique)
 	{
@@ -645,6 +847,10 @@ namespace Render
 			//clear
 			pass.m_param_id.clear();
 			pass.m_uniform.clear();
+			//the parameters of the parametric states, in this effect (an imported technique: the importer)
+			AuxPassState::resolve(pass.m_cullface, m_parameters_map);
+			AuxPassState::resolve(pass.m_depth, m_parameters_map);
+			AuxPassState::resolve(pass.m_blend, m_parameters_map);
 			//build
 			for (auto parameter : m_parameters_map)
 			{

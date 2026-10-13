@@ -15,7 +15,9 @@
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Level.h"
 #include <algorithm>
+#include <cmath>
 #include <fstream>
+#include <sstream>
 
 
 namespace Square
@@ -51,6 +53,13 @@ namespace Scene
 		, Quat()
 		, [](const Actor* actor) -> Quat  { return actor->rotation(); }
 		, [](Actor* actor,const Quat& rot){ actor->rotation(rot);     });
+
+		//(its own flag; is_static also asks its parents)
+		ctx.add_attribute_function<Actor, bool>
+		("static"
+		, false
+		, [](const Actor* actor) -> bool          { return actor->m_static; }
+		, [](Actor* actor, const bool& is_static) { actor->set_static(is_static); });
 	}
 
 	Actor::Actor(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) {}
@@ -62,11 +71,14 @@ namespace Scene
     // Load child node from resource
     Shared<Actor> Actor::load_child(const std::string& resource_name)
     {
-        Shared<Actor> new_actor = context().resource<Actor>(resource_name);
-        if (new_actor)
+        //a child is an instance: a new one from the file of the resource every time (the cache of
+        //the resources would give back the same actor, moved here again)
+        Shared<Actor> new_actor = context().resource_instance<Actor>(resource_name);
+        if (!new_actor)
         {
-            add(new_actor);
+            return nullptr;
         }
+        add(new_actor);
         return new_actor;
     }
 
@@ -83,8 +95,12 @@ namespace Scene
             {
                 //serialize name
                 archive % component.second->object_name();
-                //serialize component
-                component.second->serialize(archive);
+                //serialize component, in a block (unknown to the reader: skipped)
+                std::ostringstream bytes(std::ios::out | std::ios::binary);
+                Data::ArchiveBinWrite block(context(), bytes, false);
+                component.second->serialize(block);
+                std::string data = bytes.str();
+                archive.block(data);
             }
         }
         //serialize childs
@@ -148,10 +164,26 @@ namespace Scene
                 std::string name;
                 //serialize name
                 archive % name;
-                //new component
+                //the format 0: in the stream, it must be known
+                if (archive.version() == 0)
+                {
+                    Shared<Component> component = this->component(name);
+                    if (!component) throw std::runtime_error("Actor, unknown component: " + name);
+                    component->deserialize(archive);
+                    continue;
+                }
+                //its block: unknown, skipped
+                std::string data;
+                archive.block(data);
                 Shared<Component> component = this->component(name);
-                //deserialize component
-                component->deserialize(archive);
+                if (!component)
+                {
+                    context().logger()->warning("Actor " + m_name + ", unknown component skipped: " + name);
+                    continue;
+                }
+                std::istringstream bytes(data, std::ios::in | std::ios::binary);
+                Data::ArchiveBinRead block(context(), bytes, archive.version());
+                component->deserialize(block);
             }
         }
         //deserialize childs
@@ -185,9 +217,15 @@ namespace Scene
             for(auto& jcomponent : jcomponents.array())
             if (jcomponent.contains("name") && jcomponent["name"].is_string())
             {
+                const std::string& component_name = jcomponent["name"].string();
                 //new component
-                Shared<Component> component = this->component(jcomponent["name"].string());
-                if (jcomponent.contains("data") && jcomponent["data"].is_object())
+                Shared<Component> component = this->component(component_name);
+                //test component
+                if (!component)
+                {
+                    context().logger()->warning("Invalid component:" + component_name);
+                }
+                else if (jcomponent.contains("data") && jcomponent["data"].is_object())
                 {
                     //deserialize component
                     component->deserialize_json(jcomponent["data"]);
@@ -278,7 +316,7 @@ namespace Scene
 			component->submit_remove();
 			//send event to level
 			if (auto shared_level = level().lock())
-				shared_level->on_add_a_component(shared_from_this(), component);
+				shared_level->on_remove_a_component(shared_from_this(), component);
 			//remove
 			m_components.erase(component_it);
 		}
@@ -366,6 +404,40 @@ namespace Scene
     {
         return m_childs.size() ? m_childs[index] : nullptr;
     }
+    Shared<Actor> Actor::find(const std::string& path)
+    {
+        Shared<Actor> at = shared_from_this();
+        size_t start = 0;
+        while (at && start < path.size())
+        {
+            size_t end = path.find('/', start);
+            if (end == std::string::npos)
+            {
+                end = path.size();
+            }
+            const std::string name = path.substr(start, end - start);
+            if (name == "..")
+            {
+                at = at->parent().lock();
+            }
+            else if (name.size())
+            {
+                Shared<Actor> found;
+                for (auto& child : at->m_childs)
+                {
+                    if (child->name() == name)
+                    {
+                        found = child;
+                        break;
+                    }
+                }
+                at = found;
+            }
+            start = end + 1;
+        }
+        return at;
+    }
+
     Shared<Actor> Actor::child(const std::string& name)
     {
         //search
@@ -411,6 +483,11 @@ namespace Scene
 	{
 		if (m_level.lock()) return m_level;
 		else return Weak<Level>();
+	}
+	Weak<World> Actor::world() const
+	{
+		if (auto shared_level = m_level.lock()) return shared_level->world();
+		return Weak<World>();
 	}	
 
 	bool Actor::is_root_of_level() const
@@ -472,6 +549,51 @@ namespace Scene
         set_dirty();
     }
     
+    void Actor::align_to_vector(const Vec3& vector, const Vec3& axis, float rate)
+    {
+        // Epsilon
+        const float epsilon = Constants::epsilon<float>();
+        const float cosine_threshold = 1.0f - epsilon;
+        constexpr float reference_threshold = 0.99f;
+        constexpr const Vec3 x_dir(1.0f, 0.0f, 0.0f);
+        constexpr const Vec3 y_dir(0.0f, 1.0f, 0.0f);
+        // Check length 
+        if (length(vector) < epsilon || length(axis) < epsilon)
+        { 
+            return;
+        }
+        // On world space: from where the axis points now to the vector
+        const Quat global = rotation(true);
+        const Vec3 from = normalize(global * axis);
+        const Vec3 to = normalize(vector);
+        // Rotation 
+        const float cosine = Square::clamp(dot(from, to), -1.0f, 1.0f);
+        if (cosine > cosine_threshold)
+        { 
+            return;
+        }
+        // Trn 
+        Vec3 turn_axis = cross(from, to);
+        // Opposite: any axis orthogonal to it
+        if (length(turn_axis) < epsilon)
+        {
+            const Vec3 reference = std::abs(from.x) < reference_threshold ? x_dir : y_dir;
+            turn_axis = cross(from, reference);
+        }
+        // compute angle
+        const float angle = std::acos(cosine) * std::clamp(rate, 0.0f, 1.0f);
+        const Quat aligned = normalize(angle_axis(angle, normalize(turn_axis)) * global);
+        //back in the space of the parent
+        if (auto parent_actor = parent().lock())
+        { 
+            rotation(normalize(inverse(parent_actor->rotation(true)) * aligned));
+        }
+        else
+        {
+            rotation(aligned);
+        }
+    }
+
     void Actor::position(const Vec3& pos)
     {
         m_tranform.m_position = pos;
@@ -562,6 +684,25 @@ namespace Scene
             send_dirty();
         }
     }
+
+    void Actor::set_static(bool is_static)
+    {
+        m_static = is_static;
+    }
+
+    bool Actor::is_static() const
+    {
+        //its flag, and its parents' (a parent that moves moves it)
+        bool is_static = m_static;
+        if (is_static)
+        {
+            if (auto parent = m_parent.lock())
+            {
+                is_static = parent->is_static();
+            }
+        }
+        return is_static;
+    }
     
     void Actor::send_dirty()
     {
@@ -648,8 +789,10 @@ namespace Scene
         default:
         case ActorFormat::SQ_BIN:
         {
-            std::ifstream in_file_stream(path);
-            if (in_file_stream.good())
+            //by Filesystem: on the disk or in an archive
+            const std::vector<unsigned char> bytes = Filesystem::binary_file_read_all(path);
+            std::istringstream in_file_stream(std::string(bytes.begin(), bytes.end()), std::ios::in | std::ios::binary);
+            if (!bytes.empty())
             {
                 ArchiveBinRead in_archive(Object::context(), in_file_stream);
                 deserialize(in_archive);
@@ -663,8 +806,10 @@ namespace Scene
         break;
         case ActorFormat::SQ_BIN_GZ:
         {
-            GZIStream in_file_stream(path);
-            if (in_file_stream.good())
+            //by Filesystem: on the disk or in an archive
+            const std::vector<unsigned char> bytes = Filesystem::binary_compress_file_read_all(path);
+            std::istringstream in_file_stream(std::string(bytes.begin(), bytes.end()), std::ios::in | std::ios::binary);
+            if (!bytes.empty())
             {
                 ArchiveBinRead in_archive(Object::context(), in_file_stream);
                 deserialize(in_archive);

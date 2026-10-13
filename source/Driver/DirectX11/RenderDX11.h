@@ -11,6 +11,7 @@
 #include "DirectX11.h"
 #include "Square/Config.h"
 #include "Square/Driver/Render.h"
+#include "Square/Driver/RenderInspector.h"
 
 
 namespace Square
@@ -278,6 +279,8 @@ namespace Render
         virtual Shader* get_shader() override;
         
         UniformDX11(ContextDX11* context, Shader* shader, unsigned char* buffer, size_t offset);
+        //texture uniform: texture (t#) and sampler (s#) registers are assigned independently by the compiler
+        UniformDX11(ContextDX11* context, Shader* shader, size_t texture_slot, size_t sampler_slot);
         
         UniformDX11();
         
@@ -287,6 +290,7 @@ namespace Render
         ContextDX11*   m_context{ nullptr };
         Shader*        m_shader { nullptr };
 		size_t         m_offset { 0 };
+		size_t         m_sampler_offset { 0 };
 		unsigned char* m_buffer { nullptr };
 		//write
 		template < typename T > void primitive_write(const T& value)
@@ -454,6 +458,7 @@ namespace Render
 
 		virtual bool init(Video::DeviceResources* resource) override;
 		virtual void close() override;
+		virtual bool is_srgb_framebuffer() const override;
 
 		virtual const ClearColorState& get_clear_color_state() override;
 		virtual void set_clear_color_state(const ClearColorState& cf) override;
@@ -467,6 +472,9 @@ namespace Render
 
 		virtual const ViewportState& get_viewport_state() override;
 		virtual void set_viewport_state(const ViewportState& vs) override;
+
+		virtual const ScissorState& get_scissor_state() override;
+		virtual void set_scissor_state(const ScissorState& ss) override;
 
 		virtual const BlendState& get_blend_state() override;
 		virtual void set_blend_state(const BlendState& bs) override;
@@ -531,6 +539,8 @@ namespace Render
 		virtual void draw_arrays(DrawType type, unsigned int start, unsigned int size) override;
 		virtual void draw_elements(DrawType type, unsigned int n) override;
 		virtual void draw_elements(DrawType type, unsigned int start, unsigned int n) override;
+		virtual void draw_arrays_instanced(DrawType type, unsigned int start, unsigned int size, unsigned int instances) override;
+		virtual void draw_elements_instanced(DrawType type, unsigned int start, unsigned int n, unsigned int instances) override;
 
 		//IL=Input Layaut
 		virtual InputLayout* create_IL(const AttributeList& atl) override;
@@ -567,11 +577,14 @@ namespace Render
 			const TextureGpuDataInformation& info
 		) override;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int level = 0) override;
+		virtual void copy_texture(Texture* source, Texture* destination) override;
+		virtual void copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer) override;
 		virtual  std::vector< unsigned char > get_texture(Texture*, int cube = 0, int level = 0) override;
 		virtual void bind_texture(Texture*, int texture_id, int sample_id) override;
 		virtual void unbind_texture(Texture*) override;
 		virtual void unbind_texture(int n) override;
 		virtual void delete_texture(Texture*&) override;
+		virtual void update_texture(Texture* texture, const TextureRawDataInformation& data) override;
 
 		//shader
 		virtual Shader* create_shader(const std::vector< ShaderSourceInformation >& infos) override;
@@ -612,6 +625,15 @@ namespace Render
 		//Output file name and line
 		virtual bool print_errors(const char* source_file_name, int line) const override;
 
+#if defined(RENDER_PROFILER)
+		//GPU timer: D3D11 timestamp queries in a disjoint query per frame, a ring of frames
+		virtual bool gpu_timer_supported() const override;
+		virtual void gpu_timer_begin_frame() override;
+		virtual void gpu_timer_end_frame() override;
+		virtual int  gpu_timer_timestamp() override;
+		virtual bool gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms) override;
+#endif
+
 		//context
 		BindContext        s_bind_context;
 		State			   s_render_state;
@@ -646,6 +668,9 @@ namespace Render
 		ID3D11RasterizerState*	m_render_state_cullface_front{ nullptr };
 		ID3D11RasterizerState*	m_render_state_cullface_back_and_front{ nullptr };
 		ID3D11RasterizerState*	m_render_state_cullface_disable{ nullptr };
+		//the same with the scissor test, by CullfaceType (disable, front, back, front and back)
+		ID3D11RasterizerState*	m_render_state_scissor[4]{ nullptr, nullptr, nullptr, nullptr };
+		ScissorState            m_scissor_state;
 		bool build_cullface_states();
 		ID3D11RasterizerState* cullface_state(CullfaceState);
 		///////////////////////////////////////////////////////////////////////////////////
@@ -657,6 +682,24 @@ namespace Render
 		///////////////////////////////////////////////////////////////////////////////////
 		bool dx_op_success(HRESULT h) const;
 		mutable std::list<std::string> m_errors;
+		///////////////////////////////////////////////////////////////////////////////////
+#if defined(RENDER_PROFILER)
+		//GPU timer
+		struct GpuTimerFrame
+		{
+			uint64                    m_id{ 0 };
+			ID3D11Query*              m_disjoint{ nullptr };
+			std::vector<ID3D11Query*> m_queries; //grown on demand
+			size_t                    m_count{ 0 };
+			bool                      m_pending{ false };
+		};
+		static constexpr size_t GPU_TIMER_FRAMES = 4;
+		static constexpr size_t GPU_TIMER_MAX_TIMESTAMPS = 8192;
+		GpuTimerFrame m_gpu_timer_frames[GPU_TIMER_FRAMES];
+		uint64        m_gpu_timer_frame_id{ 0 };
+		bool          m_gpu_timer_in_frame{ false };
+		void release_gpu_timer();
+#endif
 		///////////////////////////////////////////////////////////////////////////////////
 	};
 }

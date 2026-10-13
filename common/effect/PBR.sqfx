@@ -1,0 +1,84 @@
+parameters
+{
+    //the faces drawn: back, front or off (both)
+    cull cullface(back)
+    //the faces in the directional shadow map: back, front or off (both: the one sided meshes)
+    shadow_cull cullface(back)
+    albedo_map    texture("white")
+    metallic_map  texture("black")
+    emmisive_map  texture("black")
+    roughness_map texture("white")
+    occlusion_map texture("white")    
+    normal_map    texture("normal_up")
+
+    color Vec4(1.0,1.0,1.0,1.0)
+    metallic float(1.0)
+    roughness float(1.0)
+    emmisive Vec3(1.0,1.0,1.0)
+
+    mask         float(-1.0)
+    mask_shadow  float(-1.0)
+    //1 = lit without the shadows of the lights (glows, light beams); only forward/translucent passes
+    ignore_shadows float(0.0)
+    //dithered opacity: 1 = alpha (albedo_map.a * color.a) drops pixels with a pattern
+    dither       float(0.0)
+    //light of the sun through it (thin: leaves, cards), 0 none, 1 all
+    translucency float(0.0)
+    //the uv animated by the time (AnimatedUV.hlsl): scrolled (uv a second); a flipbook (columns,
+    //rows, frames a second, frames used: 0 all)
+    uv_scroll    Vec2(0.0, 0.0)
+    flipbook     Vec4(1.0, 1.0, 0.0, 0.0)
+}
+
+sub_effect
+{	
+	//import shadow forward
+    technique "forward"
+    {
+        variants instanced skinned clip(mask, dither)
+        pass 
+        {
+            zbuffer less
+            blend off
+            cullface param(cull)
+            lights only_ambient
+            shader source 
+            {
+				#define FORWARD_RENDERING
+				#include "PBR.hlsl"
+            }
+        }
+        pass 
+        {
+            zbuffer equal
+            blend one one  
+            cullface param(cull)
+            lights spot_point_direction
+			shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+				#include "PBR.hlsl"
+            }
+		}
+    }
+	//deferred: single geometry pass, fills the G-Buffer (lighting done later)
+	technique "deferred"
+	{
+		variants instanced skinned clip(mask, dither)
+		pass
+		{
+			zbuffer less
+			blend off
+			cullface param(cull)
+			lights off
+			shader source
+			{
+				#define DEFERRED_RENDERING
+				#include "PBR.hlsl"
+			}
+		}
+	}
+	//import shadow caster
+	import <CastShadow>
+}

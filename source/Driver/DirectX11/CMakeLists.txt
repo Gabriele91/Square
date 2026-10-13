@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14...3.31)
 project(SqDX11 VERSION 1.0.0 LANGUAGES CXX DESCRIPTION "Square backend DirectX")
 
 # Set C++ standard
@@ -46,7 +46,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 # Platform-specific dependencies for Windows
 if(WIN32)
-    set(CMAKE_CXX_FLAGS_RELEASE " /Ox /MD")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Ob2 /DNDEBUG /MD")
     set(CMAKE_CXX_FLAGS_DEBUG " /Zi /Od /MDd")
 
     target_link_libraries(${PROJECT_NAME} PRIVATE 

@@ -2,6 +2,7 @@
 #pragma once
 #include <Vertex>
 #include <Transform>
+#include <MeshVertex>
 #include <Matrix>
 #include <ShadowCamera>
 ////////////////
@@ -12,23 +13,39 @@ struct VertexShaderOutput
 };
 
 //global uniform
-float shadow_mask;
+float mask_shadow;
 
 //texture
-Sampler2D(diffuse_map);
+Sampler2D(albedo_map);
 
 //draw
-VertexShaderOutput vertex(in Position3DNormalTangetBinomialUV input)
+#ifdef SQ_INSTANCED
+// instanced (the instanced variant of SpotShadow: Scene::InstancedMesh): the matrix of the instance first
+#include <Instances>
+VertexShaderOutput vertex(in MeshVertex input, uint instance_id : SV_InstanceID)
 {
 	VertexShaderOutput output;
-	output.m_position = mul_model_spot_light_view_projection(input.m_position);
+	output.m_position = mul_spot_light_view_projection(mul_instance_model(input.m_position, instance_id));
 	output.m_uv = input.m_uv;
 	return output;
 }
+#else
+VertexShaderOutput vertex(in MeshVertex input)
+{
+	VertexShaderOutput output;
+	output.m_position = mul_spot_light_view_projection(mesh_world_position(input));
+	output.m_uv = input.m_uv;
+	return output;
+}
+#endif
 
 void fragment(in VertexShaderOutput input)
 {
-	//diffuse/albedo
-	Vec4 diffuse_color = texture2D(diffuse_map, input.m_uv);
-	if (diffuse_color.a <= shadow_mask) discard;
+	//albedo/albedo
+	Vec4 albedo_color = texture2D(albedo_map, input.m_uv);
+#ifdef SQ_CLIP
+	//(the clip variant: its mask of the shadow, its level of detail fading)
+	if (albedo_color.a <= mask_shadow) discard;
+	lod_fade_clip(input.m_position.xy);
+#endif
 }

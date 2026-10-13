@@ -28,11 +28,24 @@ namespace Shell
         {
             ParserState::arg
         };
-
         // Values
         ParserValue values;
         // Last command
         ParserCommands::const_iterator last_command;
+        // Check input
+        if(!argv)
+        {
+            return std::make_tuple
+            (
+                Error
+                {
+                      std::move(std::string("Invalid argument vector"))
+                    , 0
+                    , ErrorType::invalid_argument
+                }
+                , std::move(values)
+            );
+        }
         // App name
         if (1 < argc)
         {
@@ -262,7 +275,8 @@ namespace Shell
         {
             return std::get<std::string>(it->second);
         }
-        return "";
+        static const std::string empty;
+        return empty;
     }
     const std::string& filename(const Square::Shell::ParserValue& args)
     {
@@ -270,7 +284,8 @@ namespace Shell
         {
             return std::get<std::string>(it->second);
         }
-        return "";
+        static const std::string empty;
+        return empty;
     }
     const std::string& basename(const Square::Shell::ParserValue& args)
     {
@@ -278,7 +293,8 @@ namespace Shell
         {
             return std::get<std::string>(it->second);
         }
-        return "";
+        static const std::string empty;
+        return empty;
     }
 }
 }

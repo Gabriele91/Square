@@ -19,7 +19,6 @@ namespace Square
 
 namespace Constants
 {
-	const Vec3 SPOT_LIGHT_DIR(0.0, 0.0, 1.0);
 	const float SPOT_LIGHT_CUT_OFF_FACTOR = 1.99f;
 }
 
@@ -100,7 +99,7 @@ namespace Scene
 		m_sphere.radius(this->Render::SpotLight::radius());
 		m_sphere.position({ 0,0,0 });
 		m_position = Vec3(0, 0, 0.0);
-		m_direction = Constants::SPOT_LIGHT_DIR;
+		m_direction = Constants::axis_z;
 	}
 
 	//change radius aka change geometry
@@ -128,7 +127,7 @@ namespace Scene
 	{
 		if (auto ptr_actor = actor().lock())
 		{
-			m_direction = to_mat3(ptr_actor->rotation(true)) * Constants::SPOT_LIGHT_DIR;
+			m_direction = to_mat3(ptr_actor->rotation(true)) * Constants::axis_z;
 			m_position = ptr_actor->position(true);
 			m_sphere.position(m_position);
 			m_view_is_dirty = true;
@@ -137,7 +136,7 @@ namespace Scene
 	}
 	void SpotLight::on_deattch()
 	{
-		m_direction = Constants::SPOT_LIGHT_DIR;
+		m_direction = Constants::axis_z;
 		m_position = Vec3(0, 0, 0.0);
 		m_sphere.position({ 0,0,0 });
 		m_view_is_dirty = true;
@@ -147,7 +146,7 @@ namespace Scene
 	{
 		if (auto ptr_actor = actor().lock())
 		{
-			m_direction = to_mat3(ptr_actor->rotation(true)) * Constants::SPOT_LIGHT_DIR;
+			m_direction = to_mat3(ptr_actor->rotation(true)) * Constants::axis_z;
 			m_position = ptr_actor->position(true);
 			m_sphere.position(m_position);
 			m_view_is_dirty = true;

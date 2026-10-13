@@ -11,6 +11,7 @@
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/Resource.h"
 #include "Square/Driver/Render.h"
+#include "Square/Render/MultiPass.h"
 #include "Square/Render/Queue.h"
 #include "Square/Render/VertexLayout.h"
 
@@ -25,9 +26,18 @@ namespace Resource
 
 namespace Square
 {
+namespace Geometry
+{
+	class Frustum;
+}
+}
+
+namespace Square
+{
 namespace Render
 {
 	//declaretion
+	class SoftwareOcclusion;
 	class Effect;
 	class EffectPass;
 	class EffectTechnique;
@@ -217,7 +227,7 @@ namespace Render
 		virtual bool is_valid();
 
 		//type
-		EffectParameterType get_type();
+		EffectParameterType get_type() const;
 
 
 		virtual Shared<Resource::Texture> get_texture()  const;
@@ -292,6 +302,14 @@ namespace Render
 		Render::ConstBuffer*   m_direction_shadow_light{ nullptr };
 		Render::ConstBuffer*   m_point_shadow_light{ nullptr };
 		Render::ConstBuffer*   m_spot_shadow_light{ nullptr };
+		//the layers of a multi-pass draw (CSM: the cascades a caster is in), bit i: layer i
+		uint32                 m_layer_mask{ MULTI_PASS_ALL_LAYERS };
+		//what the pass sees (world space; the camera of a view pass): a renderable of many parts
+		//draws only the ones in it (InstancedMesh: its instances); nullptr: all of them
+		const Geometry::Frustum* m_frustum{ nullptr };
+		//what the occluders of the camera hide (with m_frustum): its parts hidden not drawn;
+		//nullptr: none hidden
+		const SoftwareOcclusion* m_occlusion{ nullptr };
 
 		EffectPassInputs() = default;
 
@@ -327,19 +345,46 @@ namespace Render
 		}
 	};
 
+	//a render state of a pass: fixed (its value) or parametric (param(name) in the .sqfx: the value
+	//of a parameter of the effect, so of its material; m_value without it)
+	template < typename T >
+	struct PassState
+	{
+		T           m_value;          //fixed, or the one without the parameter
+		std::string m_param;          //parametric: the name of its parameter (empty: fixed)
+		int         m_param_id{ -1 }; //its id in the effect (an imported technique: in the importer)
+
+		PassState() = default;
+		PassState(const T& value) : m_value(value) {}
+
+		bool parametric() const { return !m_param.empty(); }
+	};
+
 	//pass type //todo: rename in pipeline
 	class SQUARE_API EffectPass
 	{
 	public:
-		Render::CullfaceState              m_cullface;
-		Render::DepthBufferState           m_depth;
-		Render::BlendState                 m_blend;
+		PassState< Render::CullfaceState >    m_cullface;
+		PassState< Render::DepthBufferState > m_depth;
+		PassState< Render::BlendState >       m_blend;
 		Shared<Resource::Shader>           m_shader;
 		std::vector< int >                 m_param_id;
 		std::vector< Render::Uniform* >    m_uniform;
+		//Number of times this pass is drawn (multi-pass techniques). 1 = normal.
+		//Declared in the .sqfx with "draw_count N"; the drawer iterates the pass
+		//that many times, advancing the MultiPass index each step.
+		int                                m_draw_count{ 1 };
+		//Instance count for instanced techniques (declared in the .sqfx with
+		//"instances N"). 1 = normal draw; >1 issues an instanced draw and the
+		//shader distinguishes the copies via SV_InstanceID / gl_InstanceID.
+		int                                m_instances{ 1 };
 		//default uniform
 		Render::UniformConstBuffer*        m_uniform_camera{ nullptr };
 		Render::UniformConstBuffer*        m_uniform_transform{ nullptr };
+		//multi-pass index buffer ("MultiPass") — owned by the pass, written with the
+		//current draw_id on each bind.
+		Render::UniformConstBuffer*        m_uniform_multipass{ nullptr };
+		Shared<Render::ConstBuffer>        m_cb_multipass;
 		//all light uniform
 		enum LightsType : unsigned int
 		{
@@ -371,11 +416,18 @@ namespace Render
 		void bind(  Render::Context&        render
                   , const EffectPassInputs&	inputs = EffectPassInputs()
                   , EffectParameters*       params = nullptr
+                  , int                     draw_id = 0   //multi-pass index
                   ) const;
 
 		void bind(  Render::Context& render
                   , EffectParameters* params = nullptr
                   ) const;
+
+		//the multi-pass index and the layers of a draw (the "MultiPass" buffer of its shader, if it
+		//has one), the pass bound: a draw of a batch (Render::DrawList) with its own ones
+		void bind_multi_pass(Render::Context& render, const EffectPassInputs& inputs, int draw_id) const;
+		//its shader reads them (a multi-pass technique, the cascades of a caster)
+		bool multi_pass() const;
 
 		void unbind() const;
 	};
@@ -412,15 +464,102 @@ namespace Render
 		EffectPass& back();
 		const EffectPass& back() const;
 
+		// by draw
+		class IteratorByDraw 
+		{
+		public:
+			IteratorByDraw(PassListIt pass_it, size_t draw_id = 0);
+			IteratorByDraw(const IteratorByDraw& pass_it_by_draw) = default;
+
+			IteratorByDraw& operator++();
+			std::tuple<EffectPass&,size_t> operator * () const;
+			bool operator!=(const IteratorByDraw& other) const;
+
+			private:
+				PassListIt m_pass_it;
+				size_t m_pass_draw_id = 0;
+		};
+
+		class ContainerByDraw
+		{
+		public:
+			ContainerByDraw(EffectTechnique& effect_technique);
+			ContainerByDraw(const ContainerByDraw&) = default;
+
+			IteratorByDraw begin();
+			IteratorByDraw end();
+
+		private:
+			EffectTechnique& m_effect_technique;
+		};
+
+		ContainerByDraw iterate_draws();
+
 	protected:
 
 		PastList m_passes;
 
 	};
 
-	//alias map of parameters and techniques
+	//alias map of parameters
 	using EffectParametersMap = std::unordered_map< std::string, int >;
-	using EffectTechniquesMap = std::unordered_map< std::string, EffectTechnique >;
+
+	//the variants of a technique: its passes compiled again with a define. A technique declares
+	//them in the .sqfx ("variants instanced clip"), each combination of them is compiled
+	enum EffectVariant : unsigned char
+	{
+		EV_NONE      = 0b000,
+		EV_INSTANCED = 0b001, //SQ_INSTANCED: a Scene::InstancedMesh, the matrix of each instance (Instances.hlsl)
+		EV_CLIP      = 0b010, //SQ_CLIP: the shaders can drop pixels (its mask, its dither, the fade
+		                      //of a level of detail); without it no discard (early-z)
+		EV_SKINNED   = 0b100, //SQ_SKINNED: a Scene::SkinnedMesh, its vertices moved by its joints
+		                      //(Skin.hlsl); never with EV_INSTANCED
+		EV_COUNT     = 8      //the combinations
+	};
+
+	//a combination of the variants made (instanced and skinned: never)
+	inline bool effect_variant_valid(unsigned char variant)
+	{
+		return (variant & (EV_INSTANCED | EV_SKINNED)) != (EV_INSTANCED | EV_SKINNED);
+	}
+
+	//a technique and its variants, by combination (EV_NONE: the technique itself)
+	class SQUARE_API EffectTechniqueVariants
+	{
+	public:
+		//a combination of the variants (nullptr: not declared)
+		EffectTechnique* variant(unsigned char variant);
+		const EffectTechnique* variant(unsigned char variant) const;
+		//declare a combination: its technique, to fill
+		EffectTechnique& declare(unsigned char variant);
+
+		//the parameters that turn the clip variant on ("clip(mask, dither)" in the .sqfx): one of
+		//them over 0 in the parameters of a draw (its material)
+		void clip_parameters(const std::vector< std::string >& names);
+		const std::vector< std::string >& clip_parameters() const { return m_clip_parameters; }
+		//their ids in an effect (an imported technique: the importer)
+		void resolve_clip_parameters(const EffectParametersMap& parameters);
+		//one of them is on in the parameters
+		bool clips(const EffectParameters& parameters) const;
+		//each combination declared
+		template < typename F >
+		void for_each_declared(F function)
+		{
+			for (unsigned char variant = 0; variant != EV_COUNT; ++variant)
+			{
+				if (m_declared[variant]) function(m_techniques[variant]);
+			}
+		}
+
+	private:
+		EffectTechnique            m_techniques[EV_COUNT];
+		bool                       m_declared[EV_COUNT]{ false, false, false, false, false, false, false, false };
+		std::vector< std::string > m_clip_parameters;
+		std::vector< int >         m_clip_parameter_ids;
+	};
+
+	//alias map of techniques
+	using EffectTechniquesMap = std::unordered_map< std::string, EffectTechniqueVariants >;
 
 	//Effect
 	class SQUARE_API Effect : public BaseObject
@@ -446,11 +585,15 @@ namespace Render
 		void  queue(const EffectQueueType& queue) { m_queue = queue; }
 		const EffectQueueType& queue() const { return m_queue; }
 
-		//get technique
+		//get technique (without variants)
 		EffectTechnique* technique(const std::string& technique);
 		const EffectTechnique* technique(const std::string& technique) const;
+		//the technique of a draw: the variant of its renderable (Renderable::variant: EV_INSTANCED,
+		//EV_SKINNED; nullptr: not declared); its EV_CLIP variant, if declared, when one of its clip
+		//parameters is on in the parameters (its material) or when fading (a level of detail)
+		EffectTechnique* technique(const std::string& technique, unsigned char variant, const EffectParameters& parameters, bool fading);
 
-		//all techniques
+		//all techniques, with their variants
 		const EffectTechniquesMap& techniques() const { return m_techniques_map; }
 
 		//get parameter

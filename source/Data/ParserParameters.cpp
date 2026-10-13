@@ -7,6 +7,7 @@
 //
 #include "Square/Data/ParserUtils.h"
 #include "Square/Data/ParserParameters.h"
+#include "Square/Data/ParserEffect.h"
 
 namespace Square
 {
@@ -70,6 +71,7 @@ namespace Parser
 		if (value.m_paramter)
 		{
 			m_paramter = value.m_paramter->copy();
+			m_allocator = value.m_allocator;
 		}
 	}
 	Parameters::ParameterField::~ParameterField()
@@ -123,7 +125,7 @@ namespace Parser
             //skip spaces
             skip_space_and_comments(m_context->m_line, ptr);
             //read all values
-            while (!is_end_table(*ptr) && *ptr != EOF && *ptr != '\0')
+            while (!is_end_table(*ptr) && *ptr != '\0')
             {
                 //alloc uniform field
                 ParameterField field;
@@ -158,8 +160,115 @@ namespace Parser
         return true;
     }
     
+    //(name, name, ...): the names of a value of a state
+    bool Parameters::parse_state_names(const char*& ptr, std::vector<std::string>& names)
+    {
+        skip_space_and_comments(m_context->m_line, ptr);
+        if (!is_start_arg(*ptr)) return false;
+        ++ptr;
+        while (true)
+        {
+            skip_space_and_comments(m_context->m_line, ptr);
+            std::string name;
+            if (!parse_name(ptr, name)) return false;
+            names.push_back(name);
+            skip_space_and_comments(m_context->m_line, ptr);
+            if (is_end_arg(*ptr)) break;
+            if (!is_comm_arg(*ptr)) return false;
+            ++ptr;
+        }
+        ++ptr;
+        return true;
+    }
+
+    //cullface(back|front|off): an int, the Render::CullfaceType
+    bool Parameters::parse_cullface_value(const char*& ptr, ParameterField& field)
+    {
+        std::vector<std::string> names;
+        if (!parse_state_names(ptr, names) || names.size() != 1) return false;
+        const Render::CullfaceType cullface = is_false_keyword(names[0])
+                                            ? Render::CF_DISABLE
+                                            : Effect::cullface_from_string(names[0], Render::CF_INVALID);
+        if (cullface == Render::CF_INVALID)
+        {
+            push_error("Not valid cullface: " + names[0] + " (back, front, off)");
+            return false;
+        }
+        if (!field.alloc(m_allocator, ParameterType::PT_INT)) return false;
+        *field.m_paramter->value_ptr<int>() = int(cullface);
+        return true;
+    }
+
+    //zbuffer(less|...|off [, read_only]): an IVec2, the Render::DepthMode and the Render::DepthFuncType
+    bool Parameters::parse_zbuffer_value(const char*& ptr, ParameterField& field)
+    {
+        std::vector<std::string> names;
+        if (!parse_state_names(ptr, names) || names.empty() || names.size() > 2) return false;
+        IVec2 value(Render::DM_DISABLE, Render::DT_LESS);
+        if (!is_false_keyword(names[0]))
+        {
+            value.y = Effect::depth_from_string(names[0], Render::DT_INVALID);
+            value.x = names.size() == 2 ? Render::DM_ENABLE_ONLY_READ : Render::DM_ENABLE_AND_WRITE;
+        }
+        if (value.y == Render::DT_INVALID || (names.size() == 2 && names[1] != "read_only"))
+        {
+            push_error("Not valid zbuffer: (less, less_equal, ..., off [, read_only])");
+            return false;
+        }
+        if (!field.alloc(m_allocator, ParameterType::PT_IVEC2)) return false;
+        *field.m_paramter->value_ptr<IVec2>() = value;
+        return true;
+    }
+
+    //blend(src, dst | off): an IVec3, enabled and the two Render::BlendType
+    bool Parameters::parse_blend_value(const char*& ptr, ParameterField& field)
+    {
+        std::vector<std::string> names;
+        if (!parse_state_names(ptr, names) || names.empty() || names.size() > 2) return false;
+        IVec3 value(0, Render::BLEND_ONE, Render::BLEND_ZERO);
+        if (names.size() == 2)
+        {
+            value = IVec3(1, Effect::blend_from_string(names[0], Render::BLEND_ONE), Effect::blend_from_string(names[1], Render::BLEND_ZERO));
+        }
+        else if (!is_false_keyword(names[0]))
+        {
+            push_error("Not valid blend: (src, dst) or (off)");
+            return false;
+        }
+        if (!field.alloc(m_allocator, ParameterType::PT_IVEC3)) return false;
+        *field.m_paramter->value_ptr<IVec3>() = value;
+        return true;
+    }
+
+    //a value of a state (false: not a state)
+    bool Parameters::parse_state_value(const char*& ptr, ParameterField& field)
+    {
+        using Parse = bool (Parameters::*)(const char*&, ParameterField&);
+        struct State { const char* m_key; Parse m_parse; };
+        static const State states[]
+        {
+            { "cullface", &Parameters::parse_cullface_value },
+            { "zbuffer",  &Parameters::parse_zbuffer_value },
+            { "blend",    &Parameters::parse_blend_value },
+        };
+        for (const auto& state : states)
+        {
+            if (cstr_cmp_skip(ptr, state.m_key))
+            {
+                if ((this->*state.m_parse)(ptr, field)) return true;
+                push_error(std::string("Not valid ") + state.m_key + " value");
+                return false;
+            }
+        }
+        return false;
+    }
+
     bool Parameters::parse_value(const char*& ptr, ParameterField& field)
     {
+        //the value of a render state (cullface(...), zbuffer(...), blend(...))
+        const char* state_ptr = ptr;
+        if (parse_state_value(ptr, field)) return true;
+        if (ptr != state_ptr) return false;
         if (!parse_type(ptr, field.m_type)) return false;
         //skip spaces
         skip_space_and_comments(m_context->m_line, ptr);
@@ -170,7 +279,11 @@ namespace Parser
         //space
         skip_space_and_comments(m_context->m_line, ptr);
         //alloc
-        field.alloc(m_allocator, field.m_type);
+        if (!field.alloc(m_allocator, field.m_type))
+        {
+            push_error("Cannot alloc parameter");
+            return false;
+        }
         //parse by type
         switch (field.m_type)
         {
@@ -194,13 +307,7 @@ namespace Parser
             case ParameterType::PT_DMAT3:    if(!parse_dmat3(ptr, *field.m_paramter->value_ptr<DMat3>())) return false; break;
             case ParameterType::PT_DMAT4:    if(!parse_dmat4(ptr, *field.m_paramter->value_ptr<DMat4>())) return false;  break;
 
-			case ParameterType::PT_TEXTURE: 
-			{
-				std::string value_name;
-				if (!parse_string(m_context->m_line, ptr, value_name))  return false;
-				field.add(value_name);
-			}
-			break;
+			case ParameterType::PT_TEXTURE: if (!parse_texture(ptr, field)) return false; break;
             default: return false; break;
         }
         //jump space
@@ -280,7 +387,7 @@ namespace Parser
             return false;
         }
         //save texture name
-        field.m_resources.push_back(texture_name);
+        field.add(texture_name);
         //ok
         return true;
     }
@@ -450,7 +557,7 @@ namespace Parser
         
         { "double2", ParameterType::PT_DVEC2 },
         { "double3", ParameterType::PT_DVEC3 },
-        { "double4x4", ParameterType::PT_DVEC4 },
+        { "double4", ParameterType::PT_DVEC4 },
         { "double3x3", ParameterType::PT_DMAT3 },
         { "double4x4", ParameterType::PT_DMAT4 },
 		};

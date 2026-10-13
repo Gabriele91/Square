@@ -7,129 +7,213 @@
 //
 #include "Square/Data/ParserUtils.h"
 #include "Square/Data/ParserEffect.h"
+#include <cctype>
 
 namespace Square
 {
 namespace Parser
 {
     // // // // // // // // // // // // // // // // // // // // // // // // // //
+    // Keyword constants for the .effect grammar. Centralised so the spelling
+    // lives in one place (no scattered string literals). NOTE: the light/shadow
+    // selectors must still be tested longest-first at the call sites, because
+    // cstr_cmp_skip matches a prefix (e.g. "point" also matches "point_xxx").
+    namespace keyword
+    {
+        // top-level commands
+        constexpr std::string_view parameters = "parameters";
+        constexpr std::string_view sub_effect = "sub_effect";
+        // sub_effect block
+        constexpr std::string_view requirement = "requirement";
+        constexpr std::string_view queue       = "queue";
+        constexpr std::string_view technique   = "technique";
+        constexpr std::string_view import      = "import";
+        constexpr std::string_view include     = "include";
+        constexpr std::string_view from        = "from";
+        // requirement block
+        constexpr std::string_view driver                = "driver";
+        constexpr std::string_view shader                = "shader";
+        constexpr std::string_view geometry              = "geometry";
+        constexpr std::string_view vertex_viewport_index = "vertex_viewport_index";
+        constexpr std::string_view instanced_draw        = "instanced_draw";
+        // light / shadow selectors
+        constexpr std::string_view ambient              = "ambient";
+        constexpr std::string_view only_ambient         = "only_ambient";
+        constexpr std::string_view spot_point_direction = "spot_point_direction";
+        constexpr std::string_view point_direction_spot = "point_direction_spot";
+        constexpr std::string_view direction_spot_point = "direction_spot_point";
+        constexpr std::string_view spot_point           = "spot_point";
+        constexpr std::string_view point_spot           = "point_spot";
+        constexpr std::string_view spot_direction       = "spot_direction";
+        constexpr std::string_view direction_spot       = "direction_spot";
+        constexpr std::string_view point_direction      = "point_direction";
+        constexpr std::string_view direction_point      = "direction_point";
+        constexpr std::string_view direction            = "direction";
+        constexpr std::string_view point                = "point";
+        constexpr std::string_view spot                 = "spot";
+        constexpr std::string_view area                 = "area";
+        // shader block
+        constexpr std::string_view source = "source";
+    }
+    // // // // // // // // // // // // // // // // // // // // // // // // // //
+    // Keyword <-> enum tables. Single source of truth: each value's spelling lives
+    // in exactly one place, shared by the to_string / from_string / parse_* helpers.
+    namespace
+    {
+        // -- lights / shadows ------------------------------------------------------
+        struct LightSelector { std::string_view name; Effect::LightsField value; };
+        // Ordered LONGEST-FIRST: cstr_cmp_skip matches a prefix, so a longer keyword
+        // must be tested before any keyword that is a prefix of it (e.g. "spot_point"
+        // before "spot"). Reordering this table can silently break parsing.
+        constexpr LightSelector s_light_selectors[]
+        {
+            { keyword::spot_point_direction, Effect::LT_SPOT_POINT_DIRECTION },
+            { keyword::point_direction_spot, Effect::LT_SPOT_POINT_DIRECTION },
+            { keyword::direction_spot_point, Effect::LT_SPOT_POINT_DIRECTION },
+            { keyword::spot_point,           Effect::LT_SPOT_POINT },
+            { keyword::point_spot,           Effect::LT_SPOT_POINT },
+            { keyword::spot_direction,       Effect::LT_SPOT_DIRECTION },
+            { keyword::direction_spot,       Effect::LT_SPOT_DIRECTION },
+            { keyword::point_direction,      Effect::LT_POINT_DIRECTION },
+            { keyword::direction_point,      Effect::LT_POINT_DIRECTION },
+            { keyword::direction,            Effect::LT_DIRECTION },
+            { keyword::point,                Effect::LT_POINT },
+            { keyword::spot,                 Effect::LT_SPOT },
+            { keyword::area,                 Effect::LT_AREA },
+        };
+        // Consume a light/shadow selector keyword; false if none matched.
+        inline bool match_light_selector(const char*& ptr, Effect::LightsField& out)
+        {
+            for (const auto& e : s_light_selectors)
+                if (cstr_cmp_skip(ptr, e.name)) { out = e.value; return true; }
+            return false;
+        }
+
+        // -- requirement capability gates ------------------------------------------
+        // Map a requirement keyword to the CapabilityTest field it drives.
+        struct CapabilityGate { std::string_view name; Effect::CapabilityTest Effect::RequirementField::* field; };
+        constexpr CapabilityGate s_capability_gates[]
+        {
+            { keyword::geometry,              &Effect::RequirementField::m_geometry_shader },
+            { keyword::vertex_viewport_index, &Effect::RequirementField::m_vertex_viewport_index },
+            { keyword::instanced_draw,        &Effect::RequirementField::m_draw_instanced },
+        };
+
+        // Consume a capability-gate keyword from the stream; nullptr if none matched.
+        inline const CapabilityGate* capability_gate(const char*& ptr)
+        {
+            for (const auto& gate : s_capability_gates)
+                if (cstr_cmp_skip(ptr, gate.name)) return &gate;
+            return nullptr;
+        }
+        // on/true/yes -> CAP_REQUIRE, off/false/no -> CAP_EXCLUDE; false if neither.
+        inline bool parse_capability_value(const std::string& value, Effect::CapabilityTest& out)
+        {
+            if (is_true_keyword(value))  { out = Effect::CAP_REQUIRE; return true; }
+            if (is_false_keyword(value)) { out = Effect::CAP_EXCLUDE; return true; }
+            return false;
+        }
+
+        // -- blend / depth / cullface (exact match, order irrelevant) --------------
+        struct BlendName    { std::string_view name; Render::BlendType     value; };
+        struct DepthName    { std::string_view name; Render::DepthFuncType value; };
+        struct CullfaceName { std::string_view name; Render::CullfaceType  value; };
+
+        constexpr BlendName s_blend_table[]
+        {
+            { "one",                 Render::BLEND_ONE },
+            { "zero",                Render::BLEND_ZERO },
+            { "one_minus_dst_color", Render::BLEND_ONE_MINUS_DST_COLOR },
+            { "one_minus_dst_alpha", Render::BLEND_ONE_MINUS_DST_ALPHA },
+            { "one_minus_src_color", Render::BLEND_ONE_MINUS_SRC_COLOR },
+            { "one_minus_src_alpha", Render::BLEND_ONE_MINUS_SRC_ALPHA },
+            { "dst_color",           Render::BLEND_DST_COLOR },
+            { "dst_alpha",           Render::BLEND_DST_ALPHA },
+            { "src_color",           Render::BLEND_SRC_COLOR },
+            { "src_alpha",           Render::BLEND_SRC_ALPHA },
+            { "src_alpha_saturate",  Render::BLEND_SRC_ALPHA_SATURATE },
+        };
+        constexpr DepthName s_depth_table[]
+        {
+            { "never",         Render::DT_NEVER },
+            { "less",          Render::DT_LESS },
+            { "greater",       Render::DT_GREATER },
+            { "equal",         Render::DT_EQUAL },
+            { "less_equal",    Render::DT_LESS_EQUAL },
+            { "greater_equal", Render::DT_GREATER_EQUAL },
+            { "not_equal",     Render::DT_NOT_EQUAL },
+            { "always",        Render::DT_ALWAYS },
+        };
+        constexpr CullfaceName s_cullface_table[]
+        {
+            { "back",           Render::CF_BACK },
+            { "front",          Render::CF_FRONT },
+            { "front_and_back", Render::CF_FRONT_AND_BACK },
+        };
+    }
+    // // // // // // // // // // // // // // // // // // // // // // // // // //
     std::string Effect::blend_to_string(Render::BlendType blend)
     {
-        using namespace Render;
-        switch (blend)
-        {
-            case BLEND_ONE: return "one";
-            case BLEND_ZERO: return "zero";
-                
-            case BLEND_ONE_MINUS_DST_COLOR: return "one_minus_dst_color";
-            case BLEND_ONE_MINUS_DST_ALPHA: return "one_minus_dst_alpha";
-            case BLEND_ONE_MINUS_SRC_COLOR: return "one_minus_src_color";
-            case BLEND_ONE_MINUS_SRC_ALPHA: return "one_minus_src_alpha";
-                
-                
-            case BLEND_DST_COLOR: return "dst_color";
-            case BLEND_DST_ALPHA: return "dst_alpha";
-                
-            case BLEND_SRC_COLOR: return "src_color";
-            case BLEND_SRC_ALPHA: return "src_alpha";
-            case BLEND_SRC_ALPHA_SATURATE: return "src_apha_sature";
-            default: return "";
-        }
+        for (const auto& e : s_blend_table)
+            if (e.value == blend) return std::string(e.name);
+        return "";
     }
-    
+
     Render::BlendType Effect::blend_from_string(const std::string& blend, Render::BlendType blend_default)
     {
-        using namespace Render;
-        //
-        if (blend == "one") return BLEND_ONE;
-        if (blend == "zero") return BLEND_ZERO;
-        //
-        if (blend == "one_minus_dst_color") return BLEND_ONE_MINUS_DST_COLOR;
-        if (blend == "one_minus_dst_alpha") return BLEND_ONE_MINUS_DST_ALPHA;
-        if (blend == "one_minus_src_color") return BLEND_ONE_MINUS_SRC_COLOR;
-        if (blend == "one_minus_src_alpha") return BLEND_ONE_MINUS_SRC_ALPHA;
-        //
-        if (blend == "dst_color") return BLEND_DST_COLOR;
-        if (blend == "dst_alpha") return BLEND_DST_ALPHA;
-        //
-        if (blend == "src_color") return BLEND_SRC_COLOR;
-        if (blend == "src_alpha") return BLEND_SRC_ALPHA;
-        if (blend == "src_apha_sature") return BLEND_SRC_ALPHA_SATURATE;
-        
+        for (const auto& e : s_blend_table)
+            if (e.name == std::string_view(blend)) return e.value;
         return blend_default;
     }
     
     std::string Effect::depth_to_string(Render::DepthFuncType depth)
     {
-        using namespace Render;
-        switch (depth)
-        {
-            case DT_NEVER: return "never";
-            case DT_LESS: return "less";
-            case DT_GREATER:  return "greater";
-            case DT_EQUAL:  return "equal";
-            case DT_LESS_EQUAL:  return "less_equal";
-            case DT_GREATER_EQUAL:  return "greater_equal";
-            case DT_NOT_EQUAL:  return "not_equal";
-            case DT_ALWAYS: return "always";
-            default: square_assert_debug(0); return "less";
-        }
+        for (const auto& e : s_depth_table)
+            if (e.value == depth) return std::string(e.name);
+        square_assert_debug(0);
+        return "less";
     }
 
     Render::DepthFuncType Effect::depth_from_string(const std::string& depth, Render::DepthFuncType depth_default)
     {
-        using namespace Render;
-        //
-        if (depth == "never") return DT_NEVER;
-        if (depth == "less") return DT_LESS;
-        if (depth == "greater") return DT_GREATER;
-        //
-        if (depth == "equal") return DT_EQUAL;
-        if (depth == "less_equal") return DT_LESS_EQUAL;
-        if (depth == "greater_equal") return DT_GREATER_EQUAL;
-        if (depth == "not_equal") return DT_NOT_EQUAL;
-        //
-        if (depth == "always") return DT_ALWAYS;
-        //
+        for (const auto& e : s_depth_table)
+            if (e.name == std::string_view(depth)) return e.value;
         return depth_default;
     }
     
     std::string Effect::cullface_to_string(Render::CullfaceType cullface)
     {
-        //
-        using namespace Render;
-        //
-        switch (cullface)
-        {
-            case CF_BACK: return "back";
-            case CF_FRONT: return "front";
-            case CF_FRONT_AND_BACK: return "front_and_back";
-            default: square_assert_debug(0); return "front_and_back";
-        }
+        for (const auto& e : s_cullface_table)
+            if (e.value == cullface) return std::string(e.name);
+        square_assert_debug(0);
+        return "front_and_back";
     }
-    
+
     Render::CullfaceType Effect::cullface_from_string(const std::string& cullface, Render::CullfaceType cullface_default)
     {
-        //
-        using namespace Render;
-        //
-        if (cullface == "back")           return CF_BACK;
-        if (cullface == "front")          return CF_FRONT;
-        if (cullface == "front_and_back") return CF_FRONT_AND_BACK;
+        for (const auto& e : s_cullface_table)
+            if (e.name == std::string_view(cullface)) return e.value;
         return cullface_default;
     }
     // // // // // // // // // // // // // // // // // // // // // // // // // //
     //RequirementField
-    bool Effect::RequirementField::test(Render::Context* render) const
+    bool Effect::RequirementField::test(const Render::RenderDriverInfo& info) const
     {
-        //get info
-        Render::RenderDriverInfo info = render->get_render_driver_info();
 		//all cases?
 		bool all_drivers = m_driver_name == "ALL";
 		bool all_shader  = m_shader_name == "ALL";
 		//test name
         if (!all_drivers && m_driver_name != Render::render_driver_str[info.m_render_driver]) return false;
         if (!all_shader  && m_shader_name != info.m_shader_language)                          return false;
+        //test capability: geometry shader
+        if (m_geometry_shader == CAP_REQUIRE && !info.m_geometry_shader) return false;
+        if (m_geometry_shader == CAP_EXCLUDE &&  info.m_geometry_shader) return false;
+        //test capability: write render-target-array-index / viewport index from the vertex shader
+        if (m_vertex_viewport_index == CAP_REQUIRE && !info.m_vertex_viewport_index) return false;
+        if (m_vertex_viewport_index == CAP_EXCLUDE &&  info.m_vertex_viewport_index) return false;
+        //test capability: instanced draw calls
+        if (m_draw_instanced == CAP_REQUIRE && !info.m_draw_instanced) return false;
+        if (m_draw_instanced == CAP_EXCLUDE &&  info.m_draw_instanced) return false;
         //test version
         if (all_drivers || (m_driver_major_version <= info.m_major_version && m_driver_minor_version <= info.m_minor_version))
 		if (all_shader || (m_shader_version <= info.m_shader_version))
@@ -170,8 +254,8 @@ namespace Parser
             //skip line and comments
             skip_space_and_comments(m_context->m_line, ptr);
             //parsing a block
-            if (cstr_cmp_skip(ptr, "parameters")) { if (!parse_parameters_block(ptr)) return false; }
-            else  if (cstr_cmp_skip(ptr, "sub_effect")) { if (!parse_sub_effect_block(ptr)) return false; }
+            if (cstr_cmp_skip(ptr, keyword::parameters)) { if (!parse_parameters_block(ptr)) return false; }
+            else  if (cstr_cmp_skip(ptr, keyword::sub_effect)) { if (!parse_sub_effect_block(ptr)) return false; }
             else { push_error("Not found a valid command"); return false; }
             //skip line and comments
             skip_space_and_comments(m_context->m_line, ptr);
@@ -284,7 +368,7 @@ namespace Parser
             while (!is_end_table(*ptr) && *ptr != EOF && *ptr != '\0')
             {
                 //search source attribute
-                if (cstr_cmp_skip(ptr, "requirement"))
+                if (cstr_cmp_skip(ptr, keyword::requirement))
                 {
                     //test
                     if (state == READ_REQUIREMENT)
@@ -301,10 +385,8 @@ namespace Parser
                     //change state
                     state = READ_REQUIREMENT;
                 }
-                if (cstr_cmp_skip(ptr, "queue"))
+                else if (cstr_cmp_skip(ptr, keyword::queue))
                 {
-                    //..
-                    EffectQueueType p_queue;
                     //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //parse textures
@@ -312,7 +394,7 @@ namespace Parser
                     //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
-                else if (cstr_cmp_skip(ptr, "technique"))
+                else if (cstr_cmp_skip(ptr, keyword::technique))
                 {
                     //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
@@ -321,7 +403,7 @@ namespace Parser
                     //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
-				else if (cstr_cmp_skip(ptr, "import") || cstr_cmp_skip(ptr, "include"))
+				else if (cstr_cmp_skip(ptr, keyword::import) || cstr_cmp_skip(ptr, keyword::include))
 				{
 					//skip spaces
 					skip_space_and_comments(m_context->m_line, ptr);
@@ -330,7 +412,7 @@ namespace Parser
 					//skip spaces
 					skip_space_and_comments(m_context->m_line, ptr);
 				}
-				else if (cstr_cmp_skip(ptr, "from"))
+				else if (cstr_cmp_skip(ptr, keyword::from))
 				{
 					//skip spaces
 					skip_space_and_comments(m_context->m_line, ptr);
@@ -374,7 +456,7 @@ namespace Parser
             while (!is_end_table(*ptr) && *ptr != EOF && *ptr != '\0')
             {
                 //all casses
-                if (cstr_cmp_skip(ptr, "driver"))
+                if (cstr_cmp_skip(ptr, keyword::driver))
                 {
                     //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
@@ -387,7 +469,7 @@ namespace Parser
                     //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                 }
-                else if (cstr_cmp_skip(ptr, "shader"))
+                else if (cstr_cmp_skip(ptr, keyword::shader))
                 {
                     //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
@@ -402,8 +484,30 @@ namespace Parser
                 }
                 else
                 {
-                    push_error("Keyword not valid");
-                    return false;
+                    //capability gate keyword (geometry / vertex_viewport_index / instanced_draw)
+                    const CapabilityGate* gate = capability_gate(ptr);
+                    // test gate
+                    if (!gate)
+                    {
+                        push_error("Keyword not valid");
+                        return false;
+                    }
+                    //skip spaces
+                    skip_space_and_comments(m_context->m_line, ptr);
+                    //parse the on/off value
+                    std::string value;
+                    if (!parse_name(ptr, value))
+                    {
+                        push_error("Requirement: " + std::string(gate->name) + " value not valid");
+                        return false;
+                    }
+                    if (!parse_capability_value(value, r_field.*(gate->field)))
+                    {
+                        push_error("Requirement: " + std::string(gate->name) + " expects on/off");
+                        return false;
+                    }
+                    //skip spaces
+                    skip_space_and_comments(m_context->m_line, ptr);
                 }
                 //skip spaces
                 skip_space_and_comments(m_context->m_line, ptr);
@@ -461,6 +565,10 @@ namespace Parser
                     //append
                     t_field.m_pass.push_back(pass);
                 }
+                else if (cstr_cmp_skip(ptr, "variants"))
+                {
+                    if (!parse_variants(ptr, t_field)) return false;
+                }
                 else
                 {
                     push_error("Keyword not valid");
@@ -482,6 +590,63 @@ namespace Parser
         //end
         return true;
     }
+	//////////////////////////////////////////////////////
+	namespace AuxVariants
+	{
+		//a variant by its name, skipped (EV_NONE: not a variant)
+		Render::EffectVariant skip_variant(const char*& ptr)
+		{
+			if (cstr_cmp_skip(ptr, "instanced")) return Render::EV_INSTANCED;
+			if (cstr_cmp_skip(ptr, "skinned"))   return Render::EV_SKINNED;
+			if (cstr_cmp_skip(ptr, "clip"))      return Render::EV_CLIP;
+			return Render::EV_NONE;
+		}
+	}
+
+	bool Effect::parse_variants(const char*& ptr, TechniqueField& technique)
+	{
+		//the names on its line: instanced, skinned, clip (its parameters)
+		skip_line_space(m_context->m_line, ptr);
+		Render::EffectVariant variant = AuxVariants::skip_variant(ptr);
+		if (variant == Render::EV_NONE)
+		{
+			push_error("variants: instanced, skinned or clip expected");
+			return false;
+		}
+		while (variant != Render::EV_NONE)
+		{
+			technique.m_variants |= variant;
+			if (variant == Render::EV_CLIP && !parse_clip_parameters(ptr, technique)) return false;
+			skip_line_space(m_context->m_line, ptr);
+			variant = AuxVariants::skip_variant(ptr);
+		}
+		return true;
+	}
+
+	bool Effect::parse_clip_parameters(const char*& ptr, TechniqueField& technique)
+	{
+		//"(name, name...)" (none: only the fade of a level of detail turns the clip on)
+		skip_line_space(m_context->m_line, ptr);
+		if (*ptr != '(') return true;
+		++ptr;
+		skip_line_space(m_context->m_line, ptr);
+		while (*ptr != ')')
+		{
+			std::string name;
+			if (!parse_name(ptr, name))
+			{
+				push_error("clip: a parameter name or ) expected");
+				return false;
+			}
+			technique.m_clip_parameters.push_back(name);
+			skip_line_space(m_context->m_line, ptr);
+			if (*ptr == ',') ++ptr;
+			skip_line_space(m_context->m_line, ptr);
+		}
+		//skip )
+		++ptr;
+		return true;
+	}
 	//////////////////////////////////////////////////////
 	bool Effect::parse_import(const char*& ptr, SubEffectField& subeffect)
 	{
@@ -603,12 +768,14 @@ namespace Parser
 		//table
 		struct { PKeys m_keys; PFunction m_funtion; } keys_function_table[]
 		{
-			{ { "blend" },            &Effect::parse_blend },
-			{ { "depth", "zbuffer" }, &Effect::parse_depth },
-			{ { "cullface" },         &Effect::parse_cullface },
-			{ { "lights" },           &Effect::parse_lights },
-			{ { "shadows" },          &Effect::parse_shadows },
-			{ { "shader" },           &Effect::parse_shader },
+			{ { "blend" },                  &Effect::parse_blend },
+			{ { "depth", "zbuffer" },       &Effect::parse_depth },
+			{ { "cullface" },               &Effect::parse_cullface },
+			{ { "lights" },                 &Effect::parse_lights },
+			{ { "shadows" },                &Effect::parse_shadows },
+			{ { "draw_count", "ndrawcall" },&Effect::parse_draw_count },
+			{ { "instances", "instance_count" }, &Effect::parse_instances },
+			{ { "shader" },                 &Effect::parse_shader },
 		};
 
         //parse table
@@ -719,6 +886,8 @@ namespace Parser
     {
         //skip "line" space
         skip_line_space(m_context->m_line, ptr);
+        //parametric (without the parameter: off)
+        if (cstr_cmp_skip(ptr, "param")) return parse_state_param(ptr, pass.m_blend.m_param);
         //string
         std::string param1, param2;
         //parse name
@@ -728,9 +897,9 @@ namespace Parser
             return false;
         }
         //param test
-        if (param1 == "off")
+        if (is_false_keyword(param1))
         {
-            pass.m_blend = Render::BlendState();
+            pass.m_blend.m_value = Render::BlendState();
             return true;
         }
         //skip "line" space
@@ -742,15 +911,17 @@ namespace Parser
             return false;
         }
         //parse
-        pass.m_blend.m_enable = true;
-        pass.m_blend.m_src = blend_from_string(param1, Render::BLEND_ONE);
-        pass.m_blend.m_dst = blend_from_string(param2, Render::BLEND_ZERO);
+        pass.m_blend.m_value.m_enable = true;
+        pass.m_blend.m_value.m_src = blend_from_string(param1, Render::BLEND_ONE);
+        pass.m_blend.m_value.m_dst = blend_from_string(param2, Render::BLEND_ZERO);
         return true;
     }
     bool Effect::parse_depth(const char*& ptr, PassField& pass)
     {
         //skip "line" space
         skip_line_space(m_context->m_line, ptr);
+        //parametric (without the parameter: less, written)
+        if (cstr_cmp_skip(ptr, "param")) return parse_state_param(ptr, pass.m_depth.m_param);
         //string
         std::string param1;
         //parse name
@@ -760,20 +931,38 @@ namespace Parser
             return false;
         }
         //param test
-        if (param1 == "off")
+        if (is_false_keyword(param1))
         {
-            pass.m_depth = Render::DepthBufferState({ Render::DM_DISABLE });
+            pass.m_depth.m_value = Render::DepthBufferState({ Render::DM_DISABLE });
             return true;
         }
         //parse
-        pass.m_depth.m_mode = Render::DM_ENABLE_AND_WRITE;
-        pass.m_depth.m_type = depth_from_string(param1,  Render::DT_LESS);
+        pass.m_depth.m_value.m_mode = Render::DM_ENABLE_AND_WRITE;
+        pass.m_depth.m_value.m_type = depth_from_string(param1,  Render::DT_LESS);
+        //optional: "read_only", test the depth without writing it (translucent surfaces)
+        skip_line_space(m_context->m_line, ptr);
+        if (std::isalpha((unsigned char)*ptr))
+        {
+            std::string param2;
+            if (!parse_name(ptr, param2) || (param2 != "read_only" && param2 != "only_read"))
+            {
+                push_error("Depth write parameter not valid (read_only)");
+                return false;
+            }
+            pass.m_depth.m_value.m_mode = Render::DM_ENABLE_ONLY_READ;
+        }
         return true;
     }
     bool Effect::parse_cullface(const char*& ptr, PassField& pass)
     {
         //skip "line" space
         skip_line_space(m_context->m_line, ptr);
+        //parametric (without the parameter: the back faces)
+        if (cstr_cmp_skip(ptr, "param"))
+        {
+            pass.m_cullface.m_value = Render::CullfaceState(Render::CF_BACK);
+            return parse_state_param(ptr, pass.m_cullface.m_param);
+        }
         //string
         std::string param1;
         //parse name
@@ -783,151 +972,106 @@ namespace Parser
             return false;
         }
         //param test
-        if (param1 == "off")
+        if (is_false_keyword(param1))
         {
-            pass.m_cullface = Render::CullfaceState(Render::CF_DISABLE);
+            pass.m_cullface.m_value = Render::CullfaceState(Render::CF_DISABLE);
             return true;
         }
         //parse
-        pass.m_cullface.m_cullface = cullface_from_string(param1, Render::CF_BACK);
+        pass.m_cullface.m_value.m_cullface = cullface_from_string(param1, Render::CF_BACK);
+        return true;
+    }
+    bool Effect::parse_state_param(const char*& ptr, std::string& name)
+    {
+        //(name)
+        skip_line_space(m_context->m_line, ptr);
+        if (!is_start_arg(*ptr))
+        {
+            push_error("param: ( expected");
+            return false;
+        }
+        ++ptr;
+        skip_line_space(m_context->m_line, ptr);
+        if (!parse_name(ptr, name))
+        {
+            push_error("param: the name of a parameter expected");
+            return false;
+        }
+        skip_line_space(m_context->m_line, ptr);
+        if (!is_end_arg(*ptr))
+        {
+            push_error("param: ) expected");
+            return false;
+        }
+        ++ptr;
         return true;
     }
     bool Effect::parse_lights(const char*& ptr, PassField& pass)
     {
         //skip "line" space
         skip_line_space(m_context->m_line, ptr);
-        //is off?
-        if ((cstr_cmp_skip(ptr, "off")))
+        //is off? (lights default to flat colour) — accepts off/false/no
+        if (cstr_cmp_skip_false(ptr))
         {
-            //default pass.m_lights
-			pass.m_lights = LightsField::LT_COLOR;
+            pass.m_lights = LightsField::LT_COLOR;
             return true;
         }
         //is ambient?
-        if (cstr_cmp_skip(ptr, "ambient") || cstr_cmp_skip(ptr, "only_ambient"))
+        if (cstr_cmp_skip(ptr, keyword::only_ambient) || cstr_cmp_skip(ptr, keyword::ambient))
         {
             pass.m_lights = LightsField::LT_AMBIENT;
             return true;
         }
-        //spot point and direction
-        if (   cstr_cmp_skip(ptr, "spot_point_direction") 
-			|| cstr_cmp_skip(ptr, "point_direction_spot") 
-			|| cstr_cmp_skip(ptr, "direction_spot_point"))
-        {
-            pass.m_lights = LightsField::LT_SPOT_POINT_DIRECTION;
-            return true;
-        }
-        //spot and point
-        if (cstr_cmp_skip(ptr, "spot_point") || cstr_cmp_skip(ptr, "point_spot"))
-        {
-            pass.m_lights = LightsField::LT_SPOT_POINT;
-            return true;
-        }
-        //spot and direction
-        if (cstr_cmp_skip(ptr, "spot_direction") || cstr_cmp_skip(ptr, "direction_spot"))
-        {
-            pass.m_lights = LightsField::LT_SPOT_DIRECTION;
-            return true;
-        }
-        //point and direction
-        if (cstr_cmp_skip(ptr, "point_direction") || cstr_cmp_skip(ptr, "direction_spot"))
-        {
-            pass.m_lights = LightsField::LT_POINT_DIRECTION;
-            return true;
-        }
-		//direction
-		if ((cstr_cmp_skip(ptr, "direction")))
-		{
-			pass.m_lights = LightsField::LT_DIRECTION;
-			return true;
-		}
-		//point
-		if ((cstr_cmp_skip(ptr, "point")))
-		{
-			pass.m_lights = LightsField::LT_POINT;
-			return true;
-		}
-        //spot
-        if ((cstr_cmp_skip(ptr, "spot")))
-        {
-            pass.m_lights = LightsField::LT_SPOT;
-            return true;
-        }
-		//area
-		if ((cstr_cmp_skip(ptr, "area")))
-		{
-			pass.m_lights = LightsField::LT_AREA;
-			return true;
-		}
+        //light selector keyword (spot/point/direction and combinations)
+        if (match_light_selector(ptr, pass.m_lights)) return true;
         //error
         push_error("Lights parameter not valid");
         //end
         return false;
     }
+	bool Effect::parse_draw_count(const char*& ptr, PassField& pass)
+	{
+		//skip "line" space
+		skip_line_space(m_context->m_line, ptr);
+		//parse the integer count (number of times the pass is drawn)
+		if (!parse_int(ptr, pass.m_draw_count))
+		{
+			push_error("draw_count: integer value expected");
+			return false;
+		}
+		if (pass.m_draw_count < 1) pass.m_draw_count = 1;
+		return true;
+	}
+
+	bool Effect::parse_instances(const char*& ptr, PassField& pass)
+	{
+		//skip "line" space
+		skip_line_space(m_context->m_line, ptr);
+		//parse the integer count (number of instances drawn per draw call)
+		if (!parse_int(ptr, pass.m_instances))
+		{
+			push_error("instances: integer value expected");
+			return false;
+		}
+		if (pass.m_instances < 1) pass.m_instances = 1;
+		return true;
+	}
+
 	bool Effect::parse_shadows(const char*& ptr, PassField& pass)
 	{
 		//skip "line" space
 		skip_line_space(m_context->m_line, ptr);
-		//is off?
-		if ((cstr_cmp_skip(ptr, "off")))
+		//is off? — accepts off/false/no
+		if (cstr_cmp_skip_false(ptr))
 		{
-			//default pass.m_shadow
 			pass.m_shadows = LightsField::LT_NONE;
 			return true;
 		}
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		//!! is ambient? shadow not supported !!
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//spot point and direction
-		if (cstr_cmp_skip(ptr, "spot_point_direction")
-		||  cstr_cmp_skip(ptr, "point_direction_spot")
-		||  cstr_cmp_skip(ptr, "direction_spot_point"))
-		{
-			pass.m_shadows = LightsField::LT_SPOT_POINT_DIRECTION;
-			return true;
-		}
-		//spot and point
-		if (cstr_cmp_skip(ptr, "spot_point") || cstr_cmp_skip(ptr, "point_spot"))
-		{
-			pass.m_shadows = LightsField::LT_SPOT_POINT;
-			return true;
-		}
-		//spot and direction
-		if (cstr_cmp_skip(ptr, "spot_direction") || cstr_cmp_skip(ptr, "direction_spot"))
-		{
-			pass.m_shadows = LightsField::LT_SPOT_DIRECTION;
-			return true;
-		}
-		//point and direction
-		if (cstr_cmp_skip(ptr, "point_direction") || cstr_cmp_skip(ptr, "direction_spot"))
-		{
-			pass.m_shadows = LightsField::LT_POINT_DIRECTION;
-			return true;
-		}
-		//direction
-		if ((cstr_cmp_skip(ptr, "direction")))
-		{
-			pass.m_shadows = LightsField::LT_DIRECTION;
-			return true;
-		}
-		//point
-		if ((cstr_cmp_skip(ptr, "point")))
-		{
-			pass.m_shadows = LightsField::LT_POINT;
-			return true;
-		}
-		//spot
-		if ((cstr_cmp_skip(ptr, "spot")))
-		{
-			pass.m_shadows = LightsField::LT_SPOT;
-			return true;
-		}
-		//area
-		if ((cstr_cmp_skip(ptr, "area")))
-		{
-			pass.m_shadows = LightsField::LT_AREA;
-			return true;
-		}
+		//light selector keyword (same grammar as lights, minus ambient)
+		if (match_light_selector(ptr, pass.m_shadows)) return true;
 		//error
 		push_error("Shadows parameter not valid");
 		//end
@@ -964,14 +1108,14 @@ namespace Parser
 					push_error("Not valid shader name");
 					return false;
 				}
-				pass.m_shader.m_type = ShaderField::S_INCLUDE;
+				pass.m_shader.m_type = ShaderField::S_RESOUCE;
 				pass.m_shader.m_data = shader_name;
 				return true;
 			}
 			default: /* is a source */ break;
 		}
         //else is a shader source
-        if (!cstr_cmp_skip(ptr, "source"))
+        if (!cstr_cmp_skip(ptr, keyword::source))
         {
             push_error("Shader source not found");
             return false;
