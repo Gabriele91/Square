@@ -283,6 +283,8 @@ namespace Square
 		switch (type)
 		{
 		case Square::Render::DR_VULKAN:
+			return Video::ContextInfo::CTX_VULKAN;
+		break;
 		case Square::Render::DR_OPENGL:
 			return Video::ContextInfo::CTX_OPENGL;
 		break;

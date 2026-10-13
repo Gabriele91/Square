@@ -30,8 +30,9 @@ namespace Win32
 		{
 			UNKNOW_WINDOW,
 			GL_WINDOW,
-			DX_WINDOW
-		};		
+			DX_WINDOW,
+			VK_WINDOW
+		};
 		//conteiner
 		Window*	m_window_ref{ nullptr };
 		//window type
@@ -136,6 +137,52 @@ namespace Win32
 		virtual DeviceResources* device() const;
 
 		virtual ~WindowDX();
+
+	protected:
+
+		//info bf fullscreen
+		int          m_last_window_position[2]{ 0, 0 };
+		unsigned int m_last_window_size[2]{ 0,0 };
+		LONG         m_last_window_style;
+		LONG         m_last_window_exstyle;
+		void		 update_last_window_attributes();
+	};
+
+	//a window of the driver of Vulkan: no context of its own (the driver makes its surface, its
+	//swap chain from the native window of its device resources; its size followed by the driver)
+	struct SQUARE_API WindowVK : WindowWin32
+	{
+		HDC					m_hDC;				/* device context */
+		DeviceResourcesVK*	m_device;		    /* the native window for the driver */
+		HWND				m_hWnd;			    /* window */
+
+		WindowVK(HDC hDC, HWND  hWnd, const WindowInfo& info);
+
+		virtual void swap() const;
+
+		virtual void acquire_context() const;
+
+		virtual bool is_fullscreen() const;
+
+		virtual bool is_resizable() const;
+
+		virtual void get_size(unsigned int size[2]) const;
+
+		virtual void get_position(int position[2]) const;
+
+		virtual void set_size(unsigned int size[2]);
+
+		virtual void set_position(int position[2]);
+
+		virtual bool enable_resize(bool enable);
+
+		virtual bool enable_fullscreen(bool enable);
+
+		virtual HWND narive() const;
+
+		virtual DeviceResources* device() const;
+
+		virtual ~WindowVK();
 
 	protected:
 

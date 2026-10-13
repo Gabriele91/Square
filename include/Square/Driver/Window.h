@@ -56,6 +56,9 @@ namespace Video
 			CTX_OPENGL_ES,
 			CTX_DIRECTX,
 			CTX_METAL,
+			//a window without a context of its own: the driver of Vulkan makes its surface (the
+			//native window of the device resources)
+			CTX_VULKAN,
 			CTX_UNKNOWN
 		};
 		enum gpu_type

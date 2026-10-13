@@ -72,6 +72,24 @@ namespace Resource
 			}
 			return out;
 		}
+
+		//the location of each input of a vertex stage of Vulkan by its semantic: the attribute of the
+		//input layouts (Render::AttributeType), as DirectX matches them by semantic
+		static std::vector< std::pair<std::string, unsigned int> > vertex_input_locations()
+		{
+			return
+			{
+				{ "POSITION0", Render::ATT_POSITION0 }, { "NORMAL0", Render::ATT_NORMAL0 },
+				{ "TEXCOORD0", Render::ATT_TEXCOORD0 }, { "TANGENT0", Render::ATT_TANGENT0 },
+				{ "BINORMAL0", Render::ATT_BINORMAL0 }, { "COLOR0", Render::ATT_COLOR0 },
+				{ "POSITION1", Render::ATT_POSITION1 }, { "NORMAL1", Render::ATT_NORMAL1 },
+				{ "TEXCOORD1", Render::ATT_TEXCOORD1 }, { "TANGENT1", Render::ATT_TANGENT1 },
+				{ "BINORMAL1", Render::ATT_BINORMAL1 }, { "COLOR1", Render::ATT_COLOR1 },
+				{ "NORMAL2", Render::ATT_NORMAL2 }, { "TEXCOORD2", Render::ATT_TEXCOORD2 },
+				{ "TANGENT2", Render::ATT_TANGENT2 }, { "BINORMAL2", Render::ATT_BINORMAL2 },
+				{ "COLOR2", Render::ATT_COLOR2 }
+			};
+		}
 	}
 
     //////////////////////////////////////////////////////////////
@@ -384,6 +402,13 @@ namespace Resource
 		spirv_info.m_upgrade_texture_to_samples = true;
 		//SPIRV-Cross currently does not support flattening structs recursively.
 		spirv_info.m_samplerarray_to_flat = false;
+		//the SPIR-V of the driver of Vulkan: one binding for each resource of the program, the
+		//inputs of the vertex stage at the location of their attribute (Render::AttributeType)
+		if (source.m_language == ShaderTarget::L_SPIRV)
+		{
+			spirv_info.m_vulkan_layout = true;
+			spirv_info.m_vertex_input_locations = AuxShader::vertex_input_locations();
+		}
 		//build
 		if (!HLSL2ALL::hlsl_to_spirv
 		(

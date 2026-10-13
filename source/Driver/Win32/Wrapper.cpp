@@ -636,8 +636,9 @@ namespace Video
 		return  wnd_gl;
 	}	
 	
-	static Win32::WindowWin32* dx_window_create(const WindowInfo& info)
-	{		
+	//a window of the size asked (its client area), centred on its screen, without a context
+	static HWND native_window_create(const WindowInfo& info)
+	{
 		//////////////////////////////////////////////////////////////////////
 		unsigned int last_window_real_size[2] = { 0,0 };
 		Win32::compute_window_size(info.m_size, last_window_real_size);
@@ -678,8 +679,20 @@ namespace Video
 			hInstance,
 			NULL
 		);
-		//return new instance
+		return hWnd;
+	}
+
+	static Win32::WindowWin32* dx_window_create(const WindowInfo& info)
+	{
+		HWND hWnd = native_window_create(info);
 		return (Win32::WindowWin32*)new Win32::WindowDX(GetDC(hWnd), hWnd, info);
+	}
+
+	//Vulkan: the native window only (the driver makes its surface)
+	static Win32::WindowWin32* vk_window_create(const WindowInfo& info)
+	{
+		HWND hWnd = native_window_create(info);
+		return (Win32::WindowWin32*)new Win32::WindowVK(GetDC(hWnd), hWnd, info);
 	}
 	
 	static Win32::WindowWin32* window_create(const WindowInfo& info, Window* window)
@@ -710,6 +723,9 @@ namespace Video
 			break;
 			case ContextInfo::CTX_DIRECTX: 
 				out_wnd = dx_window_create(info);
+			break;
+			case ContextInfo::CTX_VULKAN:
+				out_wnd = vk_window_create(info);
 			break;
 			default: 
 				out_wnd = nullptr;

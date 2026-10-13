@@ -265,7 +265,7 @@ private:
 
 static Square::Shell::ParserCommands s_ShellCommands
 {
-	  Square::Shell::Command{ "backend","b", "select backend [ogl, d3d, mtl]"  , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("ogl")) }
+	  Square::Shell::Command{ "backend","b", "select backend [ogl, d3d, mtl, vk]"  , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("ogl")) }
     , Square::Shell::Command{ "gputype","g", "select gpu type [low, high]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("high")) }
 	, Square::Shell::Command{ "debug",  "d", "enable debug"               , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 	, Square::Shell::Command{ "verbose","v", "enable verbose"             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
@@ -305,6 +305,8 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
 		? (WindowRenderDriver{ Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, gputype, srgb, debug })
 		: std::get<std::string>(args.at("backend")) == "mtl" 
 		? (WindowRenderDriver{ Render::RenderDriver::DR_METAL, 3, 0, 24, 8, gputype, srgb, debug })
+		: std::get<std::string>(args.at("backend")) == "vk"
+		? (WindowRenderDriver{ Render::RenderDriver::DR_VULKAN, 1, 1, 24, 8, gputype, srgb, debug })
 		: (WindowRenderDriver{ Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, gputype, srgb, debug });
 	
 	//test

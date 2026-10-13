@@ -8,7 +8,7 @@
 
 ## Overview
 
-Square renders with DirectX 11, OpenGL 4 and Metal from a single set of HLSL shaders, cross compiled by HLSL2ALL. Each driver is a separate library, chosen at run time.
+Square renders with DirectX 11, OpenGL 4, Metal and Vulkan (Windows) from a single set of HLSL shaders, cross compiled by HLSL2ALL. Each driver is a separate library, chosen at run time.
 
 | Area | What it has |
 |---|---|
@@ -16,7 +16,7 @@ Square renders with DirectX 11, OpenGL 4 and Metal from a single set of HLSL sha
 | Post effects | SSAO, Bloom, screen space reflections (deferred) |
 | Textures | BC1/BC3/BC4/BC5 (DDS) and ASTC 4x4 (KTX) with mipmaps, PNG fallback |
 | Scene | Actors and components, worlds and levels, automatic serialization (binary and JSON) |
-| Tools | `Model`: glTF/GLB to engine assets (actors, meshes, materials, compressed textures) |
+| Tools | `Model`: glTF/GLB to engine assets (actors, meshes, materials, compressed textures); `ShaderPack`: the shaders of a game translated offline |
 
 The examples are `HelloWorld` and `HelloWorldCSM`.
 
@@ -42,7 +42,7 @@ sudo apt install build-essential gdb cmake python3 python3-dev python3-pip \
 
 ## Build
 
-Clone with the submodules (glm, zlib, glad, HLSL2ALL, astc-encoder):
+Clone with the submodules (glm, zlib, glad, HLSL2ALL, astc-encoder, Vulkan-Headers, volk, VulkanMemoryAllocator):
 ```bash
 git clone --recursive https://github.com/Gabriele91/square.git
 cd square
@@ -58,9 +58,54 @@ cmake --build .
 ```
 On Windows `cmake ..` generates a Visual Studio solution; `cmake -G Ninja ..` from a VS developer prompt works too.
 
+The Vulkan driver needs no SDK to build or run (the loader of the system, by volk). The
+[Vulkan SDK](https://vulkan.lunarg.com/) adds the validation layers, enabled by the debug flag of
+the context (`-d` in the examples).
+
 ## Assets
 
 ```bat
 build\bin\Model.exe -i model.glb -o assets\model -n model -f bgz -r 1024
 ```
 Textures are compressed to BC by default; `-m astc` targets Apple GPUs and mobiles, `-m png` keeps them uncompressed. See [tools/Model/README.md](tools/Model/README.md).
+
+## Shaders
+
+The shaders are HLSL; at run time each one is translated for the driver started (HLSL -> SPIR-V ->
+GLSL, GLSL ES, MSL, HLSL or the SPIR-V of Vulkan) and kept in a cache
+(`<app data>/square/shader_cache`): the first run of a shader translates it, the next ones read it.
+A game can ship them already translated: `ShaderPack` translates every effect and shader of its
+resource files for every target of a platform (all its languages, all the capabilities of their
+drivers, all the gamma corrections) and packs them in **one archive per platform**,
+`shaders.sqz`. The engine reads it from the resource folder of the game (`Filesystem::resource_dir`)
+before its cache, whatever driver it starts:
+
+| Platform | Languages in the pack |
+|---|---|
+| `windows` | GLSL, HLSL, SPIR-V (Vulkan) |
+| `linux` | GLSL, GLSL ES, SPIR-V |
+| `android` | GLSL ES, SPIR-V |
+| `macos` | GLSL, MSL |
+| `ios` | GLSL ES, MSL (iOS) |
+
+From the resource folder of the game (where its `resources.rs` is):
+```bat
+<build>in\ShaderPack.exe -r resources.rs -o build\shaderpack -p shaders.sqz
+```
+
+| Option | Meaning |
+|---|---|
+| `-r` | the resource files (`.rs`) of the effects and shaders, separated by `,` (the engine's `common/common.rs` always) |
+| `-o` | the folder of the translations, by language (`<language>/<hash>.sqsh`); the folders of the languages of the platform are made again |
+| `-p` | the archive of that folder made at the end (`shaders.sqz`) |
+| `-t` | the platform (default: this one); e.g. `-t android -p shaders_android.sqz`, renamed `shaders.sqz` in the package of that platform |
+| `-g` | the gamma corrections of the game: `all` (default), `on`, `off` |
+| `-b` | the backend the tool starts (`ogl` by default, `d3d`, `mtl`): it only translates, it compiles nothing for it |
+
+The report, `<output>/<platform>.txt`, lists each target, the effects and shaders loaded, the
+failures and the translations of each language.
+
+A translation is found by the hash of what made it (the source with its includes and defines, the
+target, the version of the cache, `Resource::ShaderCache::version`): the pack is made again when
+the shaders change or the engine changes its translations (a new version). A shader not in the
+pack is translated at run time, as without it.

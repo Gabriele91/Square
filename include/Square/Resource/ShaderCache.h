@@ -40,7 +40,9 @@ namespace Resource
 	public:
 
 		//the version of the files (a new one: the old files never read again)
-		static constexpr uint32 version = 1;
+		//(3: the SPIR-V of Vulkan in its layout, HLSL2ALL m_vulkan_layout)
+		//(4: the SPIR-V of Vulkan legalized by SPIRV-Tools)
+		static constexpr uint32 version = 4;
 
 		//the key of a shader: what made it (its target, its options, its source), its hashes
 		struct Key

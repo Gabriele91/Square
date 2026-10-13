@@ -57,6 +57,10 @@ if(WIN32)
     add_subdirectory(Driver/DirectX11)
     list(APPEND INSTALL_DY_LIBS SqDX11)
 
+    # Add Vulkan Driver
+    add_subdirectory(Driver/Vulkan)
+    list(APPEND INSTALL_DY_LIBS SqVulkan)
+
 elseif(APPLE)
     file(GLOB APPLE_SRC Driver/Cocoa/*.mm)
     list(APPEND OS_SOURCES ${APPLE_SRC})
