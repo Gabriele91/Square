@@ -106,7 +106,8 @@ public:
         using namespace Square::Scene;
         // Add common resources
         context().add_resources(Filesystem::join(Filesystem::resource_dir(), "/resources.rs"));
-        context().add_resources(Filesystem::join(Filesystem::resource_dir(), "/common/common.rs"));
+        context().engine_dir(SQUARE_ENGINE_DIR);
+        context().add_resources(context().engine_path("common/common.rs"));
         // Load
         auto loaded_model = GLTF::load(m_input_model_path);
         // Test

@@ -33,8 +33,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE /arch:AVX)
 # Set include directories
 target_include_directories(
     ${PROJECT_NAME} PRIVATE 
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/dependencies/glm/
+    ${SQUARE_ROOT_DIR}/include
+    ${SQUARE_ROOT_DIR}/dependencies/glm/
 )
 
 # Set output directories for all build types

@@ -17,11 +17,14 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 # Create executable
 add_executable(ShaderPack main.cpp)
+# The engine it is built from (its common/: the effects, the shaders, the textures), whatever
+# folder it runs from (the root of the engine, a game with the engine in a folder of its own)
+target_compile_definitions(ShaderPack PRIVATE SQUARE_ENGINE_DIR="${SQUARE_ROOT_DIR}")
 
 # Include directories
 target_include_directories(ShaderPack PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/dependencies/glm/
+    ${SQUARE_ROOT_DIR}/include
+    ${SQUARE_ROOT_DIR}/dependencies/glm/
 )
 
 # Link dependencies

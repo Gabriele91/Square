@@ -19,7 +19,7 @@ set(HEADER_FILES
 )
 
 # Path to glad directory
-set(GLAD_SOURCES_DIR "${CMAKE_SOURCE_DIR}/dependencies/glad/")
+set(GLAD_SOURCES_DIR "${SQUARE_ROOT_DIR}/dependencies/glad/")
 # install jinja2
 find_package(Python REQUIRED COMPONENTS Interpreter)
 
@@ -78,9 +78,9 @@ endif()
 # Set include directories
 target_include_directories(
     ${PROJECT_NAME} PRIVATE 
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/dependencies/glm/
-    ${CMAKE_SOURCE_DIR}/dependencies/glad/include
+    ${SQUARE_ROOT_DIR}/include
+    ${SQUARE_ROOT_DIR}/dependencies/glm/
+    ${SQUARE_ROOT_DIR}/dependencies/glad/include
 )
 # Set output directories for all build types
 set_target_properties(${PROJECT_NAME} PROPERTIES

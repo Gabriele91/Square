@@ -105,8 +105,19 @@ add_library(Square SHARED ${SOURCES} ${OS_SOURCES})
 # Flags
 target_compile_definitions(Square PRIVATE ${OS_FLAGS})
 
+# The definitions of the configuration (the root of the engine: its directory) also for whoever
+# links Square out of its tree (a game with the engine as its subdirectory): the same headers
+target_compile_definitions(Square INTERFACE
+    $<$<NOT:$<CONFIG:Retail>>:TEXTURE_INTROSPECTION>
+    $<$<NOT:$<CONFIG:Retail>>:SQUARE_DEBUG_TOOLS>
+    $<$<CONFIG:Retail>:SQUARE_RETAIL>
+)
+if(SQUARE_RENDER_PROFILER)
+    target_compile_definitions(Square INTERFACE $<$<NOT:$<CONFIG:Retail>>:RENDER_PROFILER>)
+endif()
+
 # The vector instructions of the CPU code (Render/Pipeline/SoftwareOcclusion: its raster):
-# SQUARE_SIMD AVX (x86/x64, the default: Rush needs it too), SSE4 (SSE 4.1), NONE (the scalar
+# SQUARE_SIMD AVX (x86/x64, the default: the games need it too), SSE4 (SSE 4.1), NONE (the scalar
 # code). ARM (NEON) is found by the compiler, whatever it says
 set(SQUARE_SIMD "AVX" CACHE STRING "Vector instructions of the CPU code: AVX, SSE4, NONE")
 set_property(CACHE SQUARE_SIMD PROPERTY STRINGS AVX SSE4 NONE)
@@ -136,18 +147,18 @@ endif()
 
 # Include directories
 target_include_directories(Square PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/dependencies/zlib
-    ${CMAKE_SOURCE_DIR}/dependencies/glm
-    ${CMAKE_SOURCE_DIR}/dependencies/HLSL2ALL/include
-    ${CMAKE_SOURCE_DIR}/dependencies/astc-encoder/Source
+    ${SQUARE_ROOT_DIR}/include
+    ${SQUARE_ROOT_DIR}/dependencies/zlib
+    ${SQUARE_ROOT_DIR}/dependencies/glm
+    ${SQUARE_ROOT_DIR}/dependencies/HLSL2ALL/include
+    ${SQUARE_ROOT_DIR}/dependencies/astc-encoder/Source
 )
 
 # Splash screen (Render/SplashScreen.cpp): the icon inside the library, a resource of Square.dll
 # on Windows (Square.rc), the .incbin of its path elsewhere
-set(SQUARE_SPLASH_IMAGE ${CMAKE_SOURCE_DIR}/common/texture/square_icon.png)
+set(SQUARE_SPLASH_IMAGE ${SQUARE_ROOT_DIR}/common/texture/square_icon.png)
 if(WIN32)
-    target_include_directories(Square PRIVATE $<$<COMPILE_LANGUAGE:RC>:${CMAKE_SOURCE_DIR}/common/texture>)
+    target_include_directories(Square PRIVATE $<$<COMPILE_LANGUAGE:RC>:${SQUARE_ROOT_DIR}/common/texture>)
     set_source_files_properties(Square.rc PROPERTIES OBJECT_DEPENDS ${SQUARE_SPLASH_IMAGE})
 else()
     set_source_files_properties(Render/SplashScreen.cpp PROPERTIES
@@ -170,9 +181,9 @@ target_link_libraries(Square PRIVATE
 add_custom_target(SquareAssets ALL COMMENT "Target for assets installation")
 
 # Install headers
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/dependencies/glm/glm DESTINATION include)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/dependencies/HLSL2ALL/include/ DESTINATION include)
+install(DIRECTORY ${SQUARE_ROOT_DIR}/include/ DESTINATION include)
+install(DIRECTORY ${SQUARE_ROOT_DIR}/dependencies/glm/glm DESTINATION include)
+install(DIRECTORY ${SQUARE_ROOT_DIR}/dependencies/HLSL2ALL/include/ DESTINATION include)
 
 # Install targets
 install(TARGETS Square HLSL2ALL ${INSTALL_DY_LIBS}

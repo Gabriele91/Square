@@ -226,7 +226,7 @@ namespace UI
 		bool made = m_document.valid();
 		if (!made && m_ui.valid())
 		{
-			m_document = m_ui.load(AuxDebugPanel::s_debug_rml);
+			m_document = m_ui.load(m_context.engine_path(AuxDebugPanel::s_debug_rml));
 			m_content = m_document.valid() ? m_document.find("content") : Element();
 			made = m_content.valid();
 			if (!made)

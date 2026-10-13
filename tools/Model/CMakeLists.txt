@@ -35,12 +35,15 @@ set(SOURCE_FILES
 
 # Create executable
 add_executable(Model ${SOURCE_FILES})
+# The engine it is built from (its common/: the effects, the shaders, the textures), whatever
+# folder it runs from (the root of the engine, a game with the engine in a folder of its own)
+target_compile_definitions(Model PRIVATE SQUARE_ENGINE_DIR="${SQUARE_ROOT_DIR}")
 
 # Include directories
 target_include_directories(Model PRIVATE 
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/dependencies/glm/
-    ${CMAKE_SOURCE_DIR}/dependencies/glad/include
+    ${SQUARE_ROOT_DIR}/include
+    ${SQUARE_ROOT_DIR}/dependencies/glm/
+    ${SQUARE_ROOT_DIR}/dependencies/glad/include
 )
 
 # Link dependencies

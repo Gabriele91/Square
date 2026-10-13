@@ -85,6 +85,14 @@ namespace Square
         void add_object(Shared<ObjectFactory> object_fectory);
         void add_resource(Shared<ObjectFactory> object_fectory,const std::vector< std::string >& exts);
         
+		//The folder of the engine (its common/: its effects, its shaders, the UI of the debug panel),
+		//relative to the resource folder or absolute; empty: the resource folder itself (the engine
+		//is the project). A game with the engine in a folder of its own sets it ("engine")
+		void engine_dir(const std::string& dir) { m_engine_dir = dir; }
+		const std::string& engine_dir() const { return m_engine_dir; }
+		//a path of the engine ("common/ui/debug.rml"): in its folder
+		std::string engine_path(const std::string& path) const;
+
 		//Resource
 		bool add_resources(const std::string& file_of_resources);
 		//name_prefix is put before the file names: a recursive path gives every sub folder
@@ -218,6 +226,8 @@ namespace Square
 		ResourceObjectMap m_resources;
 		//folders ("arena", "a/b") of the resources being loaded, innermost last
 		std::vector<std::string> m_resource_scopes;
+		//the folder of the engine (empty: the resource folder)
+		std::string m_engine_dir;
 #if defined(SQUARE_DEBUG_TOOLS)
 		//the times of the loads; the time of the loads inside each one open (out of its own)
 		ResourceLoadStats   m_load_stats;

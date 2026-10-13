@@ -18,8 +18,8 @@
 //  the languages of the platform made again), then the folder into an archive (shaders.sqz), read
 //  by the engine before its own cache (next to the resources: Filesystem::resource_dir).
 //
-//      ShaderPack -r example/Rush/resources.rs -o build/shaderpack -p shaders.sqz
-//      ShaderPack -t linux -r example/Rush/resources.rs -o build/shaderpack -p shaders_linux.sqz
+//      ShaderPack -r <game>/resources.rs -o build/shaderpack -p shaders.sqz
+//      ShaderPack -t linux -r <game>/resources.rs -o build/shaderpack -p shaders_linux.sqz
 //
 //  A report (<folder>/<platform>.txt): each target, its effects, its shaders (the programs: an
 //  entry, vertex, fragment or compute, and not a library: "#pragma once"), the failures, the
@@ -139,7 +139,8 @@ public:
         render_system->shader_cache().folder(m_output);
         render_system->shader_cache().pack(std::string());
         //the resources: common, then the ones given
-        context().add_resources(Filesystem::join(Filesystem::resource_dir(), "common/common.rs"));
+        context().engine_dir(SQUARE_ENGINE_DIR);
+        context().add_resources(context().engine_path("common/common.rs"));
         for (const std::string& file : m_resources)
         {
             context().add_resources(Filesystem::join(Filesystem::resource_dir(), file));

@@ -2,7 +2,7 @@
 
 `Model.exe` converts a glTF model (`.gltf` / `.glb`) into Square assets: an actor tree (the
 scene), static meshes, materials and textures, ready to be loaded with
-`level->load_actor("<name>/scene")` (see `example/Rush`).
+`level->load_actor("<name>/scene")`.
 
 Blender custom properties named `square_<name>` (glTF *extras*) let you choose, directly in
 Blender, what the glTF format cannot express: the effect of a material, the values of its
@@ -10,20 +10,18 @@ parameters, the attributes of a light.
 
 ## Usage
 
-Run it **from the repository root**: it reads `common/common.rs` from there (the PBR/Legacy
-effects and the default textures). From any other folder the materials fail to load.
+It reads `common/common.rs` (the PBR/Legacy effects and the default textures) from the engine it
+was built from, whatever folder it runs from; its paths (`-i`, `-o`) are relative to the folder
+it runs from.
 
 ```bat
 build\bin\Model.exe -i <input.glb> -o <output folder> [options]
 ```
 
 ```bat
-:: example: the arena of Rush
-build\bin\Model.exe -i example\Rush\origial_assets\arena\arena.glb -o example\Rush\assets\arena -n arena -f bgz -r 1024
+:: example: an arena of a game, packed (assets\arena.sqz)
+build\bin\Model.exe -i origial_assets\arena\arena.glb -o assets\arena -n scene -f bgz -r 1024 --pack
 ```
-
-`example/Rush/origial_assets/convert.bat` wraps it: it empties the output folder, converts, and
-renames the root actor to `scene`.
 
 ### Command line
 

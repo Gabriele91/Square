@@ -232,6 +232,16 @@ namespace Square
     }
     
     //Resource
+	std::string BaseContext::engine_path(const std::string& path) const
+	{
+		std::string out = path;
+		if (!m_engine_dir.empty())
+		{
+			out = Filesystem::join(m_engine_dir, path);
+		}
+		return out;
+	}
+
 	bool BaseContext::add_resources(const std::string& file_of_resources)
 	{
 		//parser

@@ -18,7 +18,16 @@ Square renders with DirectX 11, OpenGL 4 and Metal from a single set of HLSL sha
 | Scene | Actors and components, worlds and levels, automatic serialization (binary and JSON) |
 | Tools | `Model`: glTF/GLB to engine assets (actors, meshes, materials, compressed textures) |
 
-The examples are `HelloWorld`, `HelloWorldCSM` and `Rush`, a small hovercraft racing game.
+The examples are `HelloWorld` and `HelloWorldCSM`.
+
+### The engine in a game
+
+A game can keep the engine in a folder of its own (a git submodule, `engine/`) and add it to its
+CMake project: `add_subdirectory(engine)`, then `target_link_libraries(<game> PRIVATE Square)`
+(the definitions of the configuration come with it). The examples are not built then
+(`SQUARE_BUILD_EXAMPLES`), the tools are. At run time the game says where the engine is, relative
+to its resource folder (the working folder): `context().engine_dir("engine")`; its paths of the
+engine are `context().engine_path("common/...")`.
 
 ## Requirements
 

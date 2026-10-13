@@ -26,9 +26,9 @@ add_executable(HelloWorld ${SOURCE_FILES})
 
 # Include directories
 target_include_directories(HelloWorld PRIVATE 
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/dependencies/glm/
-    ${CMAKE_SOURCE_DIR}/dependencies/glad/include
+    ${SQUARE_ROOT_DIR}/include
+    ${SQUARE_ROOT_DIR}/dependencies/glm/
+    ${SQUARE_ROOT_DIR}/dependencies/glad/include
 )
 
 # Link dependencies
