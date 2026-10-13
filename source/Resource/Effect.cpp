@@ -239,6 +239,8 @@ namespace Resource
 								}
 							}
 						}
+						//only translated (ShaderPack: no shader of the driver, no uniforms): nothing to bind
+						if (System::get<RenderSystem>(context)->shader_target().m_translate_only) continue;
 						//default uniform
 						this_pass.m_uniform_camera = this_pass.m_shader->constant_buffer("Camera");
 						this_pass.m_uniform_transform = this_pass.m_shader->constant_buffer("Transform");

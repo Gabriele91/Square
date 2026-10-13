@@ -37,3 +37,7 @@ if(WIN32)
         target_compile_options(ShaderPack PRIVATE "/arch:AVX")
     endif()
 endif()
+
+# The pack of a Retail build made by the build (square_shader_pack: the engine only by default, a
+# game adds its shaders)
+include(${CMAKE_CURRENT_SOURCE_DIR}/ShaderPack.cmake)

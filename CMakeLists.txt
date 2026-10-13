@@ -25,8 +25,9 @@ endforeach()
 foreach(kind EXE SHARED MODULE STATIC)
     set(CMAKE_${kind}_LINKER_FLAGS_RETAIL "${CMAKE_${kind}_LINKER_FLAGS_RELEASE}" CACHE STRING "Linker flags of ${kind} in Retail (as Release)" FORCE)
 endforeach()
-# imported libraries without a Retail configuration: their Release
-set(CMAKE_MAP_IMPORTED_CONFIG_RETAIL Release)
+# imported libraries without a Retail configuration: their Release, else the one without a
+# configuration (the empty one: Python3::Interpreter of SPIRV-Tools)
+set(CMAKE_MAP_IMPORTED_CONFIG_RETAIL Release "")
 
 # Force flags and paths
 
@@ -34,6 +35,12 @@ set(CMAKE_MAP_IMPORTED_CONFIG_RETAIL Release)
 set(GLM_IS_MASTER_PROJECT OFF CACHE BOOL "Do not install GLM" FORCE)
 set(GLM_BUILD_INSTALL OFF CACHE BOOL "Do not install GLM" FORCE)
 add_subdirectory(${SQUARE_ROOT_DIR}/dependencies/glm)
+
+# The static libraries in the shared ones (HLSL2ALL, Square): position independent code (also in
+# Retail, its flags without the -fPIC of the Release ones of HLSL2ALL)
+if(UNIX AND NOT APPLE)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
 
 # HLSL2ALL
 set(SKIP_GLSLANG_INSTALL ON CACHE BOOL "Do not install GLLANG" FORCE)
@@ -46,9 +53,6 @@ add_subdirectory(${SQUARE_ROOT_DIR}/dependencies/HLSL2ALL)
 # Zlib
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static zlib" FORCE)
 set(SKIP_INSTALL_ALL TRUE CACHE BOOL "Skip install step for zlib" FORCE)
-if(UNIX AND NOT APPLE)
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
 add_subdirectory(${SQUARE_ROOT_DIR}/dependencies/zlib EXCLUDE_FROM_ALL)
 
 # minizip of zlib (the archives of Square::Filesystem, .sqz/.zip): its reader and its writer

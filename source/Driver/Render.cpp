@@ -71,6 +71,10 @@ namespace Render
 		const std::string locations[] =
 		{
 			program_dir(),
+		#if !defined(WIN32)
+			//an installation: the libraries in lib/, next to bin/
+			Filesystem::join(program_dir(), "../lib"),
+		#endif
 			working_dir(),
             resource_dir(),
 			home_dir(),
@@ -120,6 +124,10 @@ namespace Render
             std::vector<std::string> locations = get_shared_lib_env_paths();
         #endif
         locations.push_back(program_dir());
+        #if !defined(WIN32)
+            //an installation: the libraries in lib/, next to bin/
+            locations.push_back(Filesystem::join(program_dir(), "../lib"));
+        #endif
         locations.push_back(working_dir());
         locations.push_back(resource_dir());
         locations.push_back(home_dir());

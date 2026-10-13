@@ -21,6 +21,8 @@ else()
   set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fPIC -pthread -DDISABLE_SHARER_PREPROCESS_LINE_SET")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -fPIC -pthread -DDISABLE_SHARER_PREPROCESS_LINE_SET")
 endif()
+# Retail: the flags of Release (the same shaders preprocessed)
+set(CMAKE_CXX_FLAGS_RETAIL "${CMAKE_CXX_FLAGS_RELEASE}")
 
 # Square project
 file(GLOB SOURCES Core/*.cpp
@@ -188,10 +190,13 @@ target_link_libraries(Square PRIVATE
 # Assets target
 add_custom_target(SquareAssets ALL COMMENT "Target for assets installation")
 
-# Install headers
-install(DIRECTORY ${SQUARE_ROOT_DIR}/include/ DESTINATION include)
-install(DIRECTORY ${SQUARE_ROOT_DIR}/dependencies/glm/glm DESTINATION include)
-install(DIRECTORY ${SQUARE_ROOT_DIR}/dependencies/HLSL2ALL/include/ DESTINATION include)
+# Install headers: the engine as the project only (its SDK); a game with the engine as its
+# subdirectory installs the game, not the headers of the engine
+if(SQUARE_TOP_LEVEL)
+    install(DIRECTORY ${SQUARE_ROOT_DIR}/include/ DESTINATION include)
+    install(DIRECTORY ${SQUARE_ROOT_DIR}/dependencies/glm/glm DESTINATION include)
+    install(DIRECTORY ${SQUARE_ROOT_DIR}/dependencies/HLSL2ALL/include/ DESTINATION include)
+endif()
 
 # Install targets
 install(TARGETS Square HLSL2ALL ${INSTALL_DY_LIBS}
@@ -202,6 +207,11 @@ install(TARGETS Square HLSL2ALL ${INSTALL_DY_LIBS}
     INCLUDES DESTINATION include
 )
 
+# the resources of the engine (common/): in the root of the installation, or where the game finds
+# them (its engine_dir: SQUARE_INSTALL_COMMON_DIR, e.g. engine/common)
+if(NOT SQUARE_INSTALL_COMMON_DIR)
+    set(SQUARE_INSTALL_COMMON_DIR common)
+endif()
 install(DIRECTORY ../common/
-        DESTINATION common/
+        DESTINATION ${SQUARE_INSTALL_COMMON_DIR}/
         COMPONENT SquareAssets)
