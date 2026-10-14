@@ -67,7 +67,7 @@ namespace SplashScreen
 	//share of the shorter side of the window taken by the icon
 	static constexpr float s_icon_scale = 0.4f;
 
-	std::vector<unsigned char> image()
+	Vector<unsigned char> image()
 	{
 	#if defined(_WIN32)
 		//the module of this code (Square.dll), its resource SQUARE_SPLASH_IMAGE
@@ -83,9 +83,9 @@ namespace SplashScreen
 		const DWORD size = SizeofResource(module, resource);
 		const unsigned char* bytes = data ? static_cast<const unsigned char*>(LockResource(data)) : nullptr;
 		if (!bytes || !size) return {};
-		return std::vector<unsigned char>(bytes, bytes + size);
+		return Vector<unsigned char>(bytes, bytes + size);
 	#else
-		return std::vector<unsigned char>(square_splash_image_begin, square_splash_image_end);
+		return Vector<unsigned char>(square_splash_image_begin, square_splash_image_end);
 	#endif
 	}
 
@@ -96,7 +96,7 @@ namespace SplashScreen
 		auto* window = context.window();
 		if (!render || !window) return false;
 		//the icon
-		std::vector<unsigned char> image_file = image();
+		Vector<unsigned char> image_file = image();
 		if (image_file.empty()) return false;
 		auto texture = MakeShared<Resource::Texture>(context);
 		if (!texture->load({ TMIN_LINEAR_MIPMAP_LINEAR, TMAG_LINEAR, TEDGE_CLAMP, TEDGE_CLAMP, TEDGE_CLAMP, true, 1 }, image_file))

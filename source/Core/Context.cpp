@@ -22,7 +22,7 @@ namespace Square
 		//none
 	}
     //Create
-    Shared<Object> BaseContext::create(const std::string& name)
+    Shared<Object> BaseContext::create(const String& name)
     {
         return create(ObjectInfo::compute_id(name));
     }
@@ -33,46 +33,46 @@ namespace Square
         return nullptr;
     }
     //Get attrbutes
-    const std::vector < Attribute >* BaseContext::attributes(const std::string& name) const
+    const Vector < Attribute >* BaseContext::attributes(const String& name) const
     {
         auto attributes = m_attributes.find(ObjectInfo::compute_id(name));
         if (attributes != m_attributes.end()) return &attributes->second;
         return nullptr;
     }
-    const std::vector < Attribute >* BaseContext::attributes(uint64 object_id) const
+    const Vector < Attribute >* BaseContext::attributes(uint64 object_id) const
     {
         auto attributes = m_attributes.find(object_id);
         if (attributes != m_attributes.end()) return &attributes->second;
         return nullptr;
     }
-    const std::vector < Attribute >* BaseContext::attributes(const Object& object) const
+    const Vector < Attribute >* BaseContext::attributes(const Object& object) const
     {
         return attributes(object.object_id());
     }
-    const std::vector < Attribute >* BaseContext::attributes(const ObjectInfo& info) const
+    const Vector < Attribute >* BaseContext::attributes(const ObjectInfo& info) const
     {
         return attributes(info.id());
     }
     
     // Folder of "Class:folder/name" ("" if none): while it loads,
 	// the resources it references are looked up there first
-    static std::string resource_folder(const std::string& name)
+    static String resource_folder(const String& name)
     {
         const size_t colon = name.find(':');
-        const size_t name_start = colon == std::string::npos ? 0 : colon + 1;
+        const size_t name_start = colon == String::npos ? 0 : colon + 1;
         const size_t slash = name.rfind('/');
-        return slash != std::string::npos && slash > name_start ? name.substr(name_start, slash - name_start) : std::string();
+        return slash != String::npos && slash > name_start ? name.substr(name_start, slash - name_start) : String();
     }
 
-    std::string BaseContext::scoped_resource_name(const std::string& name) const
+    String BaseContext::scoped_resource_name(const String& name) const
     {
         //referenced while a resource of a folder loads: look in that folder first
         if (!m_resource_scopes.empty() && !m_resource_scopes.back().empty())
         {
             const size_t colon = name.find(':');
-            if (colon != std::string::npos)
+            if (colon != String::npos)
             {
-                const std::string scoped = name.substr(0, colon + 1) + m_resource_scopes.back() + "/" + name.substr(colon + 1);
+                const String scoped = name.substr(0, colon + 1) + m_resource_scopes.back() + "/" + name.substr(colon + 1);
                 if (m_resources.count(scoped) || m_resources_file.count(scoped)) return scoped;
             }
         }
@@ -80,18 +80,18 @@ namespace Square
     }
 
     //Get resource
-    Shared<ResourceObject> BaseContext::resource(const std::string& name)
+    Shared<ResourceObject> BaseContext::resource(const String& name)
     {
         return load_resource(scoped_resource_name(name));
     }
 
     //A new object of a resource (not kept)
-    Shared<ResourceObject> BaseContext::resource_instance(const std::string& name)
+    Shared<ResourceObject> BaseContext::resource_instance(const String& name)
     {
         return load_resource_file(scoped_resource_name(name));
     }
 
-    Shared<ResourceObject> BaseContext::load_resource(const std::string& name)
+    Shared<ResourceObject> BaseContext::load_resource(const String& name)
     {
         //olready loaded
         auto resource_it = m_resources.find(name);
@@ -120,7 +120,7 @@ namespace Square
     }
 
 #if defined(SQUARE_DEBUG_TOOLS)
-    void BaseContext::add_load_detail(const std::string& kind, const std::string& name, double ms)
+    void BaseContext::add_load_detail(const String& kind, const String& name, double ms)
     {
         ResourceLoadStat& stat = m_load_details[kind];
         stat.m_count += 1;
@@ -133,7 +133,7 @@ namespace Square
     }
 #endif
 
-    bool BaseContext::load_in_scope(ResourceObject& resource, const std::string& name, const std::string& path)
+    bool BaseContext::load_in_scope(ResourceObject& resource, const String& name, const String& path)
     {
 #if defined(SQUARE_DEBUG_TOOLS)
         using Clock = std::chrono::high_resolution_clock;
@@ -154,7 +154,7 @@ namespace Square
             m_load_inner_ms.back() += total;
         }
         const size_t dot = path.find_last_of('.');
-        ResourceLoadStat& stat = m_load_stats[dot == std::string::npos ? std::string("(none)") : path.substr(dot)];
+        ResourceLoadStat& stat = m_load_stats[dot == String::npos ? String("(none)") : path.substr(dot)];
         stat.m_count += 1;
         stat.m_ms += own;
         if (own > stat.m_slowest_ms)
@@ -166,7 +166,7 @@ namespace Square
         return loaded;
     }
 
-    Shared<ResourceObject> BaseContext::load_resource_file(const std::string& name)
+    Shared<ResourceObject> BaseContext::load_resource_file(const String& name)
     {
         //the file of the resource
         auto resource_file_it = m_resources_file.find(name);
@@ -185,10 +185,10 @@ namespace Square
         return nullptr;
     }
 
-    std::vector<std::string> BaseContext::resource_names(const std::string& type) const
+    Vector<String> BaseContext::resource_names(const String& type) const
     {
-        const std::string prefix = type + ":";
-        std::vector<std::string> names;
+        const String prefix = type + ":";
+        Vector<String> names;
         for (const auto& [name, file] : m_resources_file)
         {
             if (name.rfind(prefix, 0) == 0)
@@ -200,18 +200,18 @@ namespace Square
         return names;
     }
 
-    const std::string& BaseContext::resource_path(const std::string& name)
+    const String& BaseContext::resource_path(const String& name)
     {
         //find resource from file
         auto resource_file_it = m_resources_file.find(name);
 		if (resource_file_it != m_resources_file.end()) return resource_file_it->second.m_filepath;
         //fail
-		static const std::string s_void_name;
+		static const String s_void_name;
 		return s_void_name;
         
     }
     //Get variable
-    std::optional<const VariantRef> BaseContext::variable(const std::string& name) const
+    std::optional<const VariantRef> BaseContext::variable(const String& name) const
     {
         //get var
         auto variable = m_variables.find(name);
@@ -225,16 +225,16 @@ namespace Square
     {
         m_object_factories[object_fectory->info().id()] = object_fectory;
     }
-    void BaseContext::add_resource(Shared<ObjectFactory> object_fectory,const std::vector< std::string >& exts)
+    void BaseContext::add_resource(Shared<ObjectFactory> object_fectory,const Vector< String >& exts)
     {
         add_object(object_fectory);
         m_resources_info[object_fectory->info().id()] = exts;
     }
     
     //Resource
-	std::string BaseContext::engine_path(const std::string& path) const
+	String BaseContext::engine_path(const String& path) const
 	{
-		std::string out = path;
+		String out = path;
 		if (!m_engine_dir.empty())
 		{
 			out = Filesystem::join(m_engine_dir, path);
@@ -242,7 +242,7 @@ namespace Square
 		return out;
 	}
 
-	bool BaseContext::add_resources(const std::string& file_of_resources)
+	bool BaseContext::add_resources(const String& file_of_resources)
 	{
 		//parser
 		Parser::Resources			r_parser;
@@ -255,7 +255,7 @@ namespace Square
 			return false;
 		}
 		//Base path
-		std::string directory = Filesystem::get_directory(file_of_resources);
+		String directory = Filesystem::get_directory(file_of_resources);
 		//add all paths
 		for (const Parser::Resources::PathField& path : r_context.m_paths)
 		{
@@ -273,20 +273,20 @@ namespace Square
 	}
     //the name of a directory in the names of its resources: an archive is named without its
     //extension ("hovercraft.sqz" as "hovercraft", the same of a folder "hovercraft")
-    static std::string resource_directory_name(const std::string& path, const std::string& directoryname)
+    static String resource_directory_name(const String& path, const String& directoryname)
     {
         if (!Filesystem::is_archive(Filesystem::join(path, directoryname))) return directoryname;
         return directoryname.substr(0, directoryname.size() - Filesystem::get_extension(directoryname).size());
     }
 
-    void BaseContext::add_resource_path(const std::string& path, bool recursive, const std::string& name_prefix)
+    void BaseContext::add_resource_path(const String& path, bool recursive, const String& name_prefix)
     {
         //for all sub path: their files are named "sub/name"
 		if (recursive)
 		{
-			for (const std::string& directoryname : Filesystem::get_sub_directories(path))
+			for (const String& directoryname : Filesystem::get_sub_directories(path))
 			{
-				std::string subdirfullpath = Filesystem::join(path, directoryname);
+				String subdirfullpath = Filesystem::join(path, directoryname);
 				if (auto canonical_path = Filesystem::get_canonical(subdirfullpath); canonical_path.m_success)
 				{
 					subdirfullpath = canonical_path.m_path;
@@ -295,13 +295,13 @@ namespace Square
 			}
 		}
         //for all files
-        for(const std::string& filename : Filesystem::get_files(path))
+        for(const String& filename : Filesystem::get_files(path))
         {
 			add_resource_file(name_prefix + Filesystem::get_basename(filename), Filesystem::join(path, filename));
         }
         //end
     }
-	void BaseContext::add_resource_path(const std::string& path, const std::string& filter, bool recursive, const std::string& name_prefix)
+	void BaseContext::add_resource_path(const String& path, const String& filter, bool recursive, const String& name_prefix)
     {
 		//get all files
 		Filesystem::FilesList files = Filesystem::get_files(path);
@@ -320,14 +320,14 @@ namespace Square
 		}
         //end
     }
-	void BaseContext::add_resource_path(const std::string& path, const std::regex& filter, bool recursive, const std::string& name_prefix)
+	void BaseContext::add_resource_path(const String& path, const std::regex& filter, bool recursive, const String& name_prefix)
     {
 		//get all files
 		Filesystem::FilesList files = Filesystem::get_files(path);
 		//success?
 		if (!files.m_success) return;
 		//put into table
-		for (const std::string& filename : files.m_fields)
+		for (const String& filename : files.m_fields)
 		{
 			if (std::regex_match(filename, filter))
 			{
@@ -343,7 +343,7 @@ namespace Square
 			//success?
 			if (!directories.m_success) return;
 			//push dir into table
-			for (const std::string& directoryname : directories.m_fields)
+			for (const String& directoryname : directories.m_fields)
 			{
 				add_resource_path(Filesystem::join(path, directoryname), filter, true, name_prefix + resource_directory_name(path, directoryname) + "/");
 			}
@@ -351,11 +351,11 @@ namespace Square
         //end
     }
 
-	bool BaseContext::add_resource_file(const std::string& filepath)
+	bool BaseContext::add_resource_file(const String& filepath)
 	{
 		return add_resource_file(Filesystem::get_basename(filepath), filepath);
 	}
-	bool BaseContext::add_resource_file(const std::string& resource_name, const std::string& filepath)
+	bool BaseContext::add_resource_file(const String& resource_name, const String& filepath)
 	{
 		//get extension
 		auto    f_ext = Filesystem::get_extension(filepath);
@@ -384,7 +384,7 @@ namespace Square
 		}
 		return false;
 	}	
-	bool BaseContext::add_resource_map(uint64 object_factory_id,const std::unordered_map<std::string, std::string>& name_files)
+	bool BaseContext::add_resource_map(uint64 object_factory_id,const UnorderedMap<String, String>& name_files)
 	{
 		for (const auto& name_file : name_files)
 		{
@@ -396,7 +396,7 @@ namespace Square
 	}
     
     //Add an attrbute
-    void BaseContext::add_attribute(const std::string& name, Attribute&& attribute)
+    void BaseContext::add_attribute(const String& name, Attribute&& attribute)
     {
         m_attributes[ObjectInfo::compute_id(name)].push_back(std::forward<Attribute>(attribute));
     }
@@ -414,7 +414,7 @@ namespace Square
     }
     
     //Add variable
-    void BaseContext::add_variable(const std::string& name, const Variant& value)
+    void BaseContext::add_variable(const String& name, const Variant& value)
     {
         m_variables[name] = value;
     }
@@ -428,7 +428,7 @@ namespace Square
 	, m_resouce_id(in.m_resouce_id)
 	{
 	}
-	BaseContext::ResourceFile::ResourceFile(uint64 id, const std::string filepath)
+	BaseContext::ResourceFile::ResourceFile(uint64 id, const String filepath)
 	: m_filepath(filepath)
 	, m_resouce_id(id)
 	{
@@ -491,7 +491,7 @@ namespace Square
 		add_object(object_fectory);
 		m_systems_info[object_fectory->info().id()] = SystemInfo{ startup, ring };
 	}
-	const SystemInfo* BaseContext::system_info(const std::string& name) const
+	const SystemInfo* BaseContext::system_info(const String& name) const
 	{
 		return system_info(ObjectInfo::compute_id(name));
 	}
@@ -502,7 +502,7 @@ namespace Square
 	}
 
 	//Systems
-	System* BaseContext::start_system(const std::string& name)
+	System* BaseContext::start_system(const String& name)
 	{
 		return start_system(ObjectInfo::compute_id(name));
 	}
@@ -511,20 +511,20 @@ namespace Square
 		// Once
 		if (auto* existing = system(id))
 		{
-			logger()->warning("Context: system(" + std::to_string(id) + ") is already started");
+			logger()->warning("Context: system(" + to_string(id) + ") is already started");
 			return existing;
 		}
 		// Create system
 		const SystemInfo* info = system_info(id);
 		if (!info)
 		{
-			logger()->warning("Context: " + std::to_string(id) + " is not a registered system");
+			logger()->warning("Context: " + to_string(id) + " is not a registered system");
 			return nullptr;
 		}
 		auto new_system = DynamicPointerCast<System>(create(id));
 		if (!new_system)
 		{
-			logger()->warning("Context: unable to create the system " + std::to_string(id));
+			logger()->warning("Context: unable to create the system " + to_string(id));
 			return nullptr;
 		}
 		// Running, by ring; already in the list while it initializes (what it creates can
@@ -555,7 +555,7 @@ namespace Square
 	void BaseContext::start_systems()
 	{
 		//the AUTOMATIC ones, from the lower ring up (then by name, to always start them the same way)
-		std::vector< std::pair<unsigned int, std::string> > automatic;
+		Vector< std::pair<unsigned int, String> > automatic;
 		for (const auto& info : m_systems_info)
 		{
 			if (info.second.m_startup != SystemStartup::AUTOMATIC) continue;
@@ -566,7 +566,7 @@ namespace Square
 		std::sort(automatic.begin(), automatic.end());
 		for (const auto& system : automatic) start_system(system.second);
 	}
-	System* BaseContext::system(const std::string& name) const
+	System* BaseContext::system(const String& name) const
 	{
 		return system(ObjectInfo::compute_id(name));
 	}
@@ -590,7 +590,7 @@ namespace Square
 		for (Scene::World* alive : m_worlds) alive->remove_instances(*system);
 		system->shutdown();
 	}
-	bool BaseContext::stop_system(const std::string& name)
+	bool BaseContext::stop_system(const String& name)
 	{
 		return stop_system(ObjectInfo::compute_id(name));
 	}
@@ -639,7 +639,7 @@ namespace Square
 		}
 	}
 	//worlds
-	const std::vector<Scene::World*>& BaseContext::worlds() const
+	const Vector<Scene::World*>& BaseContext::worlds() const
 	{
 		return m_worlds;
 	}

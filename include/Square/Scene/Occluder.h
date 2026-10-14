@@ -30,15 +30,15 @@ namespace Scene
 		virtual ~Occluder();
 
 		//its triangles in the space of its actor (3 points each)
-		void triangles(const std::vector<Square::Vec3>& triangles);
-		const std::vector<Square::Vec3>& triangles() const { return m_triangles; }
+		void triangles(const Vector<Square::Vec3>& triangles);
+		const Vector<Square::Vec3>& triangles() const { return m_triangles; }
 
 		//it hides (false: not drawn into the occlusion)
 		void enabled(bool enabled) { m_enabled = enabled; }
 		bool enabled() const { return m_enabled; }
 
 		//Render::Occluder
-		virtual const std::vector<Square::Vec3>& occluder_triangles() override;
+		virtual const Vector<Square::Vec3>& occluder_triangles() override;
 		virtual const Square::Geometry::AABoundingBox& occluder_box() override;
 		virtual bool can_occlude() const override;
 
@@ -61,8 +61,8 @@ namespace Scene
 		//its triangles and their box in world space (again when its actor moved)
 		void build_world();
 
-		std::vector< Square::Vec3 >               m_triangles;
-		std::vector< Square::Vec3 >               m_world;
+		Vector< Square::Vec3 >               m_triangles;
+		Vector< Square::Vec3 >               m_world;
 		Square::Geometry::AABoundingBox           m_world_box;
 		Square::Weak< Square::Render::Transform > m_transform;
 		bool                                      m_enabled{ true };

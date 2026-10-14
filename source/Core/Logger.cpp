@@ -26,15 +26,15 @@ namespace Square
     public:
         NONELogger() = default;
 
-        void error(const std::string& value) const override { }
-        void warning(const std::string& value) const override { }
-        void debug(const std::string& value) const override { }
-        void info(const std::string& value) const override { }
+        void error(const String& value) const override { }
+        void warning(const String& value) const override { }
+        void debug(const String& value) const override { }
+        void info(const String& value) const override { }
 
-        void errors(const std::vector< std::string >& values) const override { }
-        void warnings(const std::vector< std::string >& values) const override { }
-        void debugs(const std::vector< std::string >& values) const override { }
-        void infos(const std::vector< std::string >& values) const override { }
+        void errors(const Vector< String >& values) const override { }
+        void warnings(const Vector< String >& values) const override { }
+        void debugs(const Vector< String >& values) const override { }
+        void infos(const Vector< String >& values) const override { }
 
         virtual void verbose(bool verbose) override { }
         virtual bool verbose() const override { return false; }
@@ -46,17 +46,17 @@ namespace Square
     class STDLogger : public Logger
     {
     public:
-        void error(const std::string& value) const override
+        void error(const String& value) const override
         {
             print(stderr, TAG_ERROR, value);
         }
 
-        void warning(const std::string& value) const override
+        void warning(const String& value) const override
         {
             print(stderr, TAG_WARNING, value);
         }
 
-        void debug(const std::string& value) const override
+        void debug(const String& value) const override
         {
             if (enable_debug && m_verbose)
             {
@@ -64,7 +64,7 @@ namespace Square
             }
         }
 
-        void info(const std::string& value) const override
+        void info(const String& value) const override
         {
             if (m_verbose)
             {
@@ -72,7 +72,7 @@ namespace Square
             }
         }
 
-        virtual void debugs(const std::vector< std::string >& values) const override
+        virtual void debugs(const Vector< String >& values) const override
         {
             if (enable_debug && m_verbose)
             {
@@ -80,7 +80,7 @@ namespace Square
             }
         }
 
-        virtual void infos(const std::vector< std::string >& values) const override
+        virtual void infos(const Vector< String >& values) const override
         {
             if (m_verbose)
             {
@@ -106,9 +106,9 @@ namespace Square
 #endif
 
     private:
-        void print(FILE* const stream, const char* tag, const std::string& value) const
+        void print(FILE* const stream, const char* tag, const String& value) const
         {
-            std::stringstream output;
+            StringStream output;
             std::time_t  current_type = std::time(nullptr);
             std::tm      local_time = *std::localtime(&current_type);
             output << std::put_time(&local_time, TIMESTAMP_FORMAT);
@@ -135,17 +135,17 @@ namespace Square
             stop_thread();
         }
 
-        void error(const std::string& value) const override
+        void error(const String& value) const override
         {
             print(TAG_ERROR, value);
         }
 
-        void warning(const std::string& value) const override
+        void warning(const String& value) const override
         {
             print(TAG_WARNING, value);
         }
 
-        void debug(const std::string& value) const override
+        void debug(const String& value) const override
         {
             if (enable_debug && m_verbose)
             {
@@ -153,7 +153,7 @@ namespace Square
             }
         }
 
-        void info(const std::string& value) const override
+        void info(const String& value) const override
         {
             if (m_verbose)
             {
@@ -161,7 +161,7 @@ namespace Square
             }
         }
 
-        virtual void debugs(const std::vector< std::string >& values) const override
+        virtual void debugs(const Vector< String >& values) const override
         {
             if (enable_debug && m_verbose)
             {
@@ -169,7 +169,7 @@ namespace Square
             }
         }
 
-        virtual void infos(const std::vector< std::string >& values) const override
+        virtual void infos(const Vector< String >& values) const override
         {
             if (m_verbose)
             {
@@ -196,7 +196,7 @@ namespace Square
 
     private:
         // Multi thread
-        mutable std::queue<std::string> m_queue;
+        mutable Square::Queue<String> m_queue;
         mutable std::mutex m_mutex;
         mutable std::condition_variable m_condition;
         std::atomic<bool> m_running{ false };
@@ -208,7 +208,7 @@ namespace Square
             m_thread = std::thread(&WIN32Logger<enable_debug>::run, this);
         }
 
-        void enqueue(const std::string& value) const
+        void enqueue(const String& value) const
         {
             std::unique_lock<std::mutex> lock(m_mutex);
             m_queue.push(value);
@@ -219,7 +219,7 @@ namespace Square
         {
             while (true)
             {
-                std::string msg;
+                String msg;
                 {
                     std::unique_lock<std::mutex> lock(m_mutex);
                     m_condition.wait(lock, [this]() { return !m_queue.empty() || !m_running; });
@@ -246,9 +246,9 @@ namespace Square
             }
         }
 
-        void print(const char* tag, const std::string& value) const
+        void print(const char* tag, const String& value) const
         {
-            std::stringstream output;
+            StringStream output;
             std::time_t  current_type = std::time(nullptr);
             std::tm      local_time = *std::localtime(&current_type);
             output << std::put_time(&local_time, TIMESTAMP_FORMAT);

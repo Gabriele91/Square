@@ -124,7 +124,7 @@ namespace Render
 		virtual Texture* debug_texture() const { return nullptr; }
 		//what the debug panel shows of it (Pipeline, under its name, after its toggle): its
 		//settings worth changing while it runs; none by default
-		virtual void debug_options(std::vector<DebugOption>& options) {}
+		virtual void debug_options(Vector<DebugOption>& options) {}
 
 	protected:
 		//release the shaders and textures of the effect (they are made again in draw)
@@ -135,7 +135,7 @@ namespace Render
 		Render::Context& render();
 
 		//a shader of the resources (nullptr and a warning if it is missing)
-		Shared<Resource::Shader> load_shader(const std::string& name);
+		Shared<Resource::Shader> load_shader(const String& name);
 		//draw a shader on the whole target (full-screen quad, no depth, the blend given); binds the
 		//"Camera" cbuffer; set the uniforms in the callback (the shader is bound)
 		void draw_fullscreen
@@ -165,15 +165,15 @@ namespace Render
 		~PostEffectChain();
 
 		//G-Buffer effects (deferred): after the geometry pass
-		void draw_gbuffer(const std::vector< Shared<PostEffect> >& effects, PostEffectFrame frame);
+		void draw_gbuffer(const Vector< Shared<PostEffect> >& effects, PostEffectFrame frame);
 		//color effects: from source; returns the texture with the result (source if no effect)
-		Texture* draw_color(const std::vector< Shared<PostEffect> >& effects, PostEffectFrame frame, Texture* source);
+		Texture* draw_color(const Vector< Shared<PostEffect> >& effects, PostEffectFrame frame, Texture* source);
 		//an effect of the stage is on
-		static bool any(const std::vector< Shared<PostEffect> >& effects, PostEffectStage stage);
+		static bool any(const Vector< Shared<PostEffect> >& effects, PostEffectStage stage);
 		//an effect on needs the velocity of the frame
-		static bool any_velocity(const std::vector< Shared<PostEffect> >& effects);
+		static bool any_velocity(const Vector< Shared<PostEffect> >& effects);
 		//the debug texture of the first effect on that has one (nullptr: none)
-		static Texture* debug_texture(const std::vector< Shared<PostEffect> >& effects);
+		static Texture* debug_texture(const Vector< Shared<PostEffect> >& effects);
 
 	private:
 		bool build(const IVec2& size);

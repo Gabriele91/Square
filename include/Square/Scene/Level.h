@@ -23,8 +23,8 @@ namespace Scene
 	class Component;
 	class Level;
 	class World;
-	using ActorList = std::vector< Shared<Actor> >;
-	using LevelList = std::vector< Shared<Level> >;
+	using ActorList = Vector< Shared<Actor> >;
+	using LevelList = Vector< Shared<Level> >;
 	//..................
     class SQUARE_API Level : public Object
                            , public SharedObject<Level>
@@ -38,21 +38,21 @@ namespace Scene
 		static void object_registration(Context& ctx);
 
 		//constructor: a level is always of a world (World::create_level creates it)
-		Level(Context& context, Weak<World> world, const std::string& name = std::string());
+		Level(Context& context, Weak<World> world, const String& name = String());
 		virtual ~Level();
 
 		//add an actor
 		void add(Shared<Actor> child);
 
 		// Load a new actor from a file; an instance is cread at every call,
-		Shared<Actor> load_actor(const std::string& resource_name);
+		Shared<Actor> load_actor(const String& resource_name);
 
 		//query
 		Shared<Actor> actor();
 		Shared<Actor> actor(size_t index);
-		Shared<Actor> actor(const std::string& name);
+		Shared<Actor> actor(const String& name);
 		const ActorList& actors() const;
-		Shared<Actor> find_actor(const std::string& name);
+		Shared<Actor> find_actor(const String& name);
 
 		//contains an actor
 		bool contains(Shared<Actor> child) const;
@@ -64,8 +64,8 @@ namespace Scene
 		void visit(const std::function<bool(Shared<Actor>)>& callback);
 
 		//name        
-		const std::string& name() const;
-		void name(const std::string&);
+		const String& name() const;
+		void name(const String&);
 
 		//active (the default): its components updated and in the systems of the world (render,
 		//collisions...); not active: out of them, its actors as they are (a menu, a level not
@@ -99,7 +99,7 @@ namespace Scene
 	protected:
 		
 		//name
-		std::string m_name;
+		String m_name;
 		bool        m_active{ true };
 		bool        m_paused{ false };
 

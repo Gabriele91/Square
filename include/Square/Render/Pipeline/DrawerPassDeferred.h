@@ -115,8 +115,8 @@ namespace Render
 		Vec3             m_sun_color{ 0.0f };
 		Render::Texture* m_sun_shadow_map{ nullptr };
 		//the last frame: the model of each renderable drawn in the velocity, the camera
-		std::unordered_map<const Renderable*, Mat4> m_previous_models;
-		std::unordered_map<const Renderable*, Mat4> m_current_models;
+		UnorderedMap<const Renderable*, Mat4> m_previous_models;
+		UnorderedMap<const Renderable*, Mat4> m_current_models;
 		Mat4             m_previous_view{ 1.0f };
 		Mat4             m_previous_projection{ 1.0f };
 		Vec3             m_previous_eye{ 0.0f };

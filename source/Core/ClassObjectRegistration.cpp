@@ -32,14 +32,14 @@ namespace Square
     void ClassObjectRegistration::append(const RegistrationItem& item)
     {
 		//failed
-		if (exists(item.m_info)) throw std::runtime_error("ObjectFactory: "+ item.m_info.name() +", already registered");
+		if (exists(item.m_info)) throw std::runtime_error(("ObjectFactory: "+ item.m_info.name() +", already registered").c_str());
         //add
 		global_item_list().emplace_back(item);
     }
 	void ClassObjectRegistration::append(const ObjectInfo& info, RegistrationFunction registration)
 	{
 		//failed
-		if (exists(info)) throw std::runtime_error("ObjectFactory: " + info.name() + ", already registered");
+		if (exists(info)) throw std::runtime_error(("ObjectFactory: " + info.name() + ", already registered").c_str());
 		//add
 		global_item_list().emplace_back(info, registration);
 	}
@@ -49,7 +49,7 @@ namespace Square
         return global_item_list();
     }
     //info
-	bool ClassObjectRegistration::exists(const std::string& name)
+	bool ClassObjectRegistration::exists(const String& name)
 	{
 		return  exists(ObjectInfo::compute_id(name));
 	}

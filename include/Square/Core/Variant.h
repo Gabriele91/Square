@@ -100,12 +100,12 @@ namespace Square
 	};
 	// Get type
 	template < class T, typename Enable = void > 
-	inline typename std::enable_if< !std::is_convertible< T, std::shared_ptr<ResourceObject> >::value, VariantType >::type variant_traits()
+	inline typename std::enable_if< !std::is_convertible< T, Shared<ResourceObject> >::value, VariantType >::type variant_traits()
 	{
 		return VariantType::VR_NONE;
 	};
 	template < class T >
-	inline typename std::enable_if< std::is_convertible< T, std::shared_ptr<ResourceObject> >::value, VariantType >::type variant_traits()
+	inline typename std::enable_if< std::is_convertible< T, Shared<ResourceObject> >::value, VariantType >::type variant_traits()
 	{
 		return VariantType::VR_RESOURCE;
 	};
@@ -145,39 +145,39 @@ namespace Square
 	template <> inline VariantType variant_traits<Mat4>() { return VariantType::VR_FLOAT_MATRIX; };
 	template <> inline VariantType variant_traits<DMat4>() { return VariantType::VR_DOUBLE_MATRIX; };
 
-	template <> inline VariantType variant_traits< std::vector< char > >() { return VariantType::VR_STD_VECTOR_CHAR; };
-	template <> inline VariantType variant_traits< std::vector< short > >() { return VariantType::VR_STD_VECTOR_SHORT; };
-	template <> inline VariantType variant_traits< std::vector< int > >() { return VariantType::VR_STD_VECTOR_INT; };
-	template <> inline VariantType variant_traits< std::vector< long > >() { return VariantType::VR_STD_VECTOR_LONG; };
-	template <> inline VariantType variant_traits< std::vector< long long > >() { return VariantType::VR_STD_VECTOR_LONGLONG; };
+	template <> inline VariantType variant_traits< Vector< char > >() { return VariantType::VR_STD_VECTOR_CHAR; };
+	template <> inline VariantType variant_traits< Vector< short > >() { return VariantType::VR_STD_VECTOR_SHORT; };
+	template <> inline VariantType variant_traits< Vector< int > >() { return VariantType::VR_STD_VECTOR_INT; };
+	template <> inline VariantType variant_traits< Vector< long > >() { return VariantType::VR_STD_VECTOR_LONG; };
+	template <> inline VariantType variant_traits< Vector< long long > >() { return VariantType::VR_STD_VECTOR_LONGLONG; };
 
-	template <> inline VariantType variant_traits< std::vector< unsigned char > >() { return VariantType::VR_STD_VECTOR_UCHAR; };
-	template <> inline VariantType variant_traits< std::vector< unsigned short > >() { return VariantType::VR_STD_VECTOR_USHORT; };
-	template <> inline VariantType variant_traits< std::vector< unsigned int > >() { return VariantType::VR_STD_VECTOR_UINT; };
-	template <> inline VariantType variant_traits< std::vector< unsigned long > >() { return VariantType::VR_STD_VECTOR_ULONG; };
-	template <> inline VariantType variant_traits< std::vector< unsigned long long > >() { return VariantType::VR_STD_VECTOR_ULONGLONG; };
+	template <> inline VariantType variant_traits< Vector< unsigned char > >() { return VariantType::VR_STD_VECTOR_UCHAR; };
+	template <> inline VariantType variant_traits< Vector< unsigned short > >() { return VariantType::VR_STD_VECTOR_USHORT; };
+	template <> inline VariantType variant_traits< Vector< unsigned int > >() { return VariantType::VR_STD_VECTOR_UINT; };
+	template <> inline VariantType variant_traits< Vector< unsigned long > >() { return VariantType::VR_STD_VECTOR_ULONG; };
+	template <> inline VariantType variant_traits< Vector< unsigned long long > >() { return VariantType::VR_STD_VECTOR_ULONGLONG; };
 
-	template <> inline VariantType variant_traits< std::vector< float > >() { return VariantType::VR_STD_VECTOR_FLOAT; };
-	template <> inline VariantType variant_traits< std::vector< double > >() { return VariantType::VR_STD_VECTOR_DOUBLE; };
-	template <> inline VariantType variant_traits< std::vector< long double > >() { return VariantType::VR_STD_VECTOR_LONG_DOUBLE; };
-	template <> inline VariantType variant_traits< std::vector< Mat4 > >() { return VariantType::VR_STD_VECTOR_FLOAT_MATRIX; };
-	template <> inline VariantType variant_traits< std::vector< DMat4 > >() { return VariantType::VR_STD_VECTOR_DOUBLE_MATRIX; };
+	template <> inline VariantType variant_traits< Vector< float > >() { return VariantType::VR_STD_VECTOR_FLOAT; };
+	template <> inline VariantType variant_traits< Vector< double > >() { return VariantType::VR_STD_VECTOR_DOUBLE; };
+	template <> inline VariantType variant_traits< Vector< long double > >() { return VariantType::VR_STD_VECTOR_LONG_DOUBLE; };
+	template <> inline VariantType variant_traits< Vector< Mat4 > >() { return VariantType::VR_STD_VECTOR_FLOAT_MATRIX; };
+	template <> inline VariantType variant_traits< Vector< DMat4 > >() { return VariantType::VR_STD_VECTOR_DOUBLE_MATRIX; };
 
-	template <> inline VariantType variant_traits< std::vector< Vec2 > >() { return VariantType::VR_STD_VECTOR_VEC2; };
-	template <> inline VariantType variant_traits< std::vector< Vec3 > >() { return VariantType::VR_STD_VECTOR_VEC3; };
-	template <> inline VariantType variant_traits< std::vector< Vec4 > >() { return VariantType::VR_STD_VECTOR_VEC4; };
+	template <> inline VariantType variant_traits< Vector< Vec2 > >() { return VariantType::VR_STD_VECTOR_VEC2; };
+	template <> inline VariantType variant_traits< Vector< Vec3 > >() { return VariantType::VR_STD_VECTOR_VEC3; };
+	template <> inline VariantType variant_traits< Vector< Vec4 > >() { return VariantType::VR_STD_VECTOR_VEC4; };
 
-	template <> inline VariantType variant_traits< std::vector< IVec2 > >() { return VariantType::VR_STD_VECTOR_IVEC2; };
-	template <> inline VariantType variant_traits< std::vector< IVec3 > >() { return VariantType::VR_STD_VECTOR_IVEC3; };
-	template <> inline VariantType variant_traits< std::vector< IVec4 > >() { return VariantType::VR_STD_VECTOR_IVEC4; };
+	template <> inline VariantType variant_traits< Vector< IVec2 > >() { return VariantType::VR_STD_VECTOR_IVEC2; };
+	template <> inline VariantType variant_traits< Vector< IVec3 > >() { return VariantType::VR_STD_VECTOR_IVEC3; };
+	template <> inline VariantType variant_traits< Vector< IVec4 > >() { return VariantType::VR_STD_VECTOR_IVEC4; };
 
-	template <> inline VariantType variant_traits< std::vector< DVec2 > >() { return VariantType::VR_STD_VECTOR_DVEC2; };
-	template <> inline VariantType variant_traits< std::vector< DVec3 > >() { return VariantType::VR_STD_VECTOR_DVEC3; };
-	template <> inline VariantType variant_traits< std::vector< DVec4 > >() { return VariantType::VR_STD_VECTOR_DVEC4; };
+	template <> inline VariantType variant_traits< Vector< DVec2 > >() { return VariantType::VR_STD_VECTOR_DVEC2; };
+	template <> inline VariantType variant_traits< Vector< DVec3 > >() { return VariantType::VR_STD_VECTOR_DVEC3; };
+	template <> inline VariantType variant_traits< Vector< DVec4 > >() { return VariantType::VR_STD_VECTOR_DVEC4; };
 
 	template <> inline VariantType variant_traits<const char*>() { return VariantType::VR_C_STRING; };
-	template <> inline VariantType variant_traits<std::string>() { return VariantType::VR_STD_STRING; };
-	template <> inline VariantType variant_traits< std::vector< std::string > >() { return VariantType::VR_STD_VECTOR_STRING; };
+	template <> inline VariantType variant_traits<String>() { return VariantType::VR_STD_STRING; };
+	template <> inline VariantType variant_traits< Vector< String > >() { return VariantType::VR_STD_VECTOR_STRING; };
 
 	template <> inline VariantType variant_traits<void*>() { return VariantType::VR_PTR; };
 	//
@@ -249,59 +249,59 @@ namespace Square
 
 		Variant(const DMat4& dm);
 		
-		Variant(const std::vector< char >& v_c);
+		Variant(const Vector< char >& v_c);
 
-		Variant(const std::vector< short >& v_s);
+		Variant(const Vector< short >& v_s);
 
-		Variant(const std::vector< int >& v_i);
+		Variant(const Vector< int >& v_i);
 
-		Variant(const std::vector< long >& v_l);
+		Variant(const Vector< long >& v_l);
 
-		Variant(const std::vector< long long >& v_ll);
+		Variant(const Vector< long long >& v_ll);
 		
-		Variant(const std::vector< unsigned char >& v_uc);
+		Variant(const Vector< unsigned char >& v_uc);
 
-		Variant(const std::vector< unsigned short >& v_us);
+		Variant(const Vector< unsigned short >& v_us);
 
-		Variant(const std::vector< unsigned int >& v_ui);
+		Variant(const Vector< unsigned int >& v_ui);
 
-		Variant(const std::vector< unsigned long >& v_ul);
+		Variant(const Vector< unsigned long >& v_ul);
 
-		Variant(const std::vector< unsigned long long >& v_ull);
+		Variant(const Vector< unsigned long long >& v_ull);
 
-		Variant(const std::vector< float >& v_f);
+		Variant(const Vector< float >& v_f);
 
-		Variant(const std::vector< double >& v_d);
+		Variant(const Vector< double >& v_d);
 
-		Variant(const std::vector< long double >& v_ld);
+		Variant(const Vector< long double >& v_ld);
 
-		Variant(const std::vector< Mat4 >& v_m4);
+		Variant(const Vector< Mat4 >& v_m4);
 
-		Variant(const std::vector< DMat4 >& v_dm4);
+		Variant(const Vector< DMat4 >& v_dm4);
 
-		Variant(const std::vector< Vec2 >& v_v2);
+		Variant(const Vector< Vec2 >& v_v2);
 
-		Variant(const std::vector< Vec3 >& v_v3);
+		Variant(const Vector< Vec3 >& v_v3);
 
-		Variant(const std::vector< Vec4 >& v_v4);
+		Variant(const Vector< Vec4 >& v_v4);
 
-		Variant(const std::vector< IVec2 >& v_iv2);
+		Variant(const Vector< IVec2 >& v_iv2);
 
-		Variant(const std::vector< IVec3 >& v_iv3);
+		Variant(const Vector< IVec3 >& v_iv3);
 
-		Variant(const std::vector< IVec4 >& v_iv4);
+		Variant(const Vector< IVec4 >& v_iv4);
 
-		Variant(const std::vector< DVec2 >& v_dv2);
+		Variant(const Vector< DVec2 >& v_dv2);
 
-		Variant(const std::vector< DVec3 >& v_dv3);
+		Variant(const Vector< DVec3 >& v_dv3);
 
-		Variant(const std::vector< DVec4 >& v_dv4);
+		Variant(const Vector< DVec4 >& v_dv4);
 
 		Variant(const char* c_str);
 
-		Variant(const std::string& str);
+		Variant(const String& str);
 
-		Variant(const std::vector< std::string >& v_str);
+		Variant(const Vector< String >& v_str);
 
 		Variant(const Shared< ResourceObject >& resouce);
 
@@ -485,59 +485,59 @@ namespace Square
 
 		VariantRef(const DMat4& dm);
 
-		VariantRef(const std::vector< char >& v_c);
+		VariantRef(const Vector< char >& v_c);
 
-		VariantRef(const std::vector< short >& v_s);
+		VariantRef(const Vector< short >& v_s);
 
-		VariantRef(const std::vector< int >& v_i);
+		VariantRef(const Vector< int >& v_i);
 
-		VariantRef(const std::vector< long >& v_l);
+		VariantRef(const Vector< long >& v_l);
 
-		VariantRef(const std::vector< long long >& v_ll);
+		VariantRef(const Vector< long long >& v_ll);
 
-		VariantRef(const std::vector< unsigned char >& v_uc);
+		VariantRef(const Vector< unsigned char >& v_uc);
 
-		VariantRef(const std::vector< unsigned short >& v_us);
+		VariantRef(const Vector< unsigned short >& v_us);
 
-		VariantRef(const std::vector< unsigned int >& v_ui);
+		VariantRef(const Vector< unsigned int >& v_ui);
 
-		VariantRef(const std::vector< unsigned long >& v_ul);
+		VariantRef(const Vector< unsigned long >& v_ul);
 
-		VariantRef(const std::vector< unsigned long long >& v_ull);
+		VariantRef(const Vector< unsigned long long >& v_ull);
 
-		VariantRef(const std::vector< float >& v_f);
+		VariantRef(const Vector< float >& v_f);
 
-		VariantRef(const std::vector< double >& v_d);
+		VariantRef(const Vector< double >& v_d);
 
-		VariantRef(const std::vector< long double >& v_ld);
+		VariantRef(const Vector< long double >& v_ld);
 
-		VariantRef(const std::vector< Mat4 >& v_fm);
+		VariantRef(const Vector< Mat4 >& v_fm);
 
-		VariantRef(const std::vector< DMat4 >& v_dm);
+		VariantRef(const Vector< DMat4 >& v_dm);
 
-		VariantRef(const std::vector< Vec2 >& v_v2);
+		VariantRef(const Vector< Vec2 >& v_v2);
 
-		VariantRef(const std::vector< Vec3 >& v_v3);
+		VariantRef(const Vector< Vec3 >& v_v3);
 
-		VariantRef(const std::vector< Vec4 >& v_v4);
+		VariantRef(const Vector< Vec4 >& v_v4);
 
-		VariantRef(const std::vector< IVec2 >& v_iv2);
+		VariantRef(const Vector< IVec2 >& v_iv2);
 
-		VariantRef(const std::vector< IVec3 >& v_iv3);
+		VariantRef(const Vector< IVec3 >& v_iv3);
 
-		VariantRef(const std::vector< IVec4 >& v_iv4);
+		VariantRef(const Vector< IVec4 >& v_iv4);
 
-		VariantRef(const std::vector< DVec2 >& v_dv2);
+		VariantRef(const Vector< DVec2 >& v_dv2);
 
-		VariantRef(const std::vector< DVec3 >& v_dv3);
+		VariantRef(const Vector< DVec3 >& v_dv3);
 
-		VariantRef(const std::vector< DVec4 >& v_dv4);
+		VariantRef(const Vector< DVec4 >& v_dv4);
 
 		VariantRef(const char* c_str);
 
-		VariantRef(const std::string& str);
+		VariantRef(const String& str);
 
-		VariantRef(const std::vector< std::string >& v_str);
+		VariantRef(const Vector< String >& v_str);
 		
 		template < typename T >
 		VariantRef(Shared< T >& resouce)

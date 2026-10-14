@@ -31,10 +31,10 @@ namespace Scene
 	void Properties::object_registration(Square::Context& ctx)
 	{
 		ctx.add_object<Properties>();
-		packed_attribute< std::vector<std::string>, &Packed::m_names >(ctx, "names");
-		packed_attribute< std::vector<int>, &Packed::m_types >(ctx, "types");
-		packed_attribute< std::vector<Vec4>, &Packed::m_numbers >(ctx, "numbers");
-		packed_attribute< std::vector<std::string>, &Packed::m_strings >(ctx, "strings");
+		packed_attribute< Vector<String>, &Packed::m_names >(ctx, "names");
+		packed_attribute< Vector<int>, &Packed::m_types >(ctx, "types");
+		packed_attribute< Vector<Vec4>, &Packed::m_numbers >(ctx, "numbers");
+		packed_attribute< Vector<String>, &Packed::m_strings >(ctx, "strings");
 	}
 
 	Properties::Properties(Square::Context& context)
@@ -46,7 +46,7 @@ namespace Scene
 	{
 	}
 
-	void Properties::set(const std::string& name, bool value)
+	void Properties::set(const String& name, bool value)
 	{
 		Value& out = m_values[name];
 		out = Value();
@@ -54,7 +54,7 @@ namespace Scene
 		out.m_numbers.x = value ? 1.0f : 0.0f;
 	}
 
-	void Properties::set(const std::string& name, float value)
+	void Properties::set(const String& name, float value)
 	{
 		Value& out = m_values[name];
 		out = Value();
@@ -62,7 +62,7 @@ namespace Scene
 		out.m_numbers.x = value;
 	}
 
-	void Properties::set(const std::string& name, const Vec4& value, int components)
+	void Properties::set(const String& name, const Vec4& value, int components)
 	{
 		Value& out = m_values[name];
 		out = Value();
@@ -71,7 +71,7 @@ namespace Scene
 		out.m_components = std::clamp(components, 1, 4);
 	}
 
-	void Properties::set(const std::string& name, const std::string& value)
+	void Properties::set(const String& name, const String& value)
 	{
 		Value& out = m_values[name];
 		out = Value();
@@ -79,17 +79,17 @@ namespace Scene
 		out.m_string = value;
 	}
 
-	void Properties::remove(const std::string& name)
+	void Properties::remove(const String& name)
 	{
 		m_values.erase(name);
 	}
 
-	bool Properties::has(const std::string& name) const
+	bool Properties::has(const String& name) const
 	{
 		return m_values.find(name) != m_values.end();
 	}
 
-	bool Properties::boolean(const std::string& name, bool fallback) const
+	bool Properties::boolean(const String& name, bool fallback) const
 	{
 		bool out = fallback;
 		auto found = m_values.find(name);
@@ -110,7 +110,7 @@ namespace Scene
 		return out;
 	}
 
-	float Properties::number(const std::string& name, float fallback) const
+	float Properties::number(const String& name, float fallback) const
 	{
 		float out = fallback;
 		auto found = m_values.find(name);
@@ -121,7 +121,7 @@ namespace Scene
 		return out;
 	}
 
-	Vec4 Properties::vector(const std::string& name, const Vec4& fallback) const
+	Vec4 Properties::vector(const String& name, const Vec4& fallback) const
 	{
 		Vec4 out = fallback;
 		auto found = m_values.find(name);
@@ -132,14 +132,14 @@ namespace Scene
 		return out;
 	}
 
-	std::string Properties::string(const std::string& name, const std::string& fallback) const
+	String Properties::string(const String& name, const String& fallback) const
 	{
-		std::string out = fallback;
+		String out = fallback;
 		auto found = m_values.find(name);
 		if (found != m_values.end())
 		{
 			const Value& value = found->second;
-			std::ostringstream text;
+			OStringStream text;
 			switch (value.m_type)
 			{
 			case P_STRING:  out = value.m_string; break;

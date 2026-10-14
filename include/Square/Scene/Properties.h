@@ -40,29 +40,29 @@ namespace Scene
 			Type         m_type{ P_BOOLEAN };
 			Square::Vec4 m_numbers{ 0.0f };
 			int          m_components{ 1 };
-			std::string  m_string;
+			String  m_string;
 		};
 
 		Properties(Square::Context& context);
 		virtual ~Properties();
 
 		//set one (again: replaced)
-		void set(const std::string& name, bool value);
-		void set(const std::string& name, float value);
-		void set(const std::string& name, const Square::Vec4& value, int components);
-		void set(const std::string& name, const std::string& value);
-		void remove(const std::string& name);
+		void set(const String& name, bool value);
+		void set(const String& name, float value);
+		void set(const String& name, const Square::Vec4& value, int components);
+		void set(const String& name, const String& value);
+		void remove(const String& name);
 
 		//there is one by that name
-		bool has(const std::string& name) const;
+		bool has(const String& name) const;
 		//its value as asked (another type: converted where it makes sense, a boolean from a number
 		//not 0 or the strings "true"/"false"; none: the fallback)
-		bool         boolean(const std::string& name, bool fallback) const;
-		float        number(const std::string& name, float fallback) const;
-		Square::Vec4 vector(const std::string& name, const Square::Vec4& fallback) const;
-		std::string  string(const std::string& name, const std::string& fallback) const;
+		bool         boolean(const String& name, bool fallback) const;
+		float        number(const String& name, float fallback) const;
+		Square::Vec4 vector(const String& name, const Square::Vec4& fallback) const;
+		String  string(const String& name, const String& fallback) const;
 		//all of them
-		const std::map<std::string, Value>& values() const { return m_values; }
+		const Map<String, Value>& values() const { return m_values; }
 
 		//regs
 		static void object_registration(Square::Context& ctx);
@@ -78,17 +78,17 @@ namespace Scene
 		//the values flat (the attributes of the scene file): by their order
 		struct Packed
 		{
-			std::vector< std::string >  m_names;
-			std::vector< int >          m_types;      //type * 8 + components
-			std::vector< Square::Vec4 > m_numbers;
-			std::vector< std::string >  m_strings;
+			Vector< String >  m_names;
+			Vector< int >          m_types;      //type * 8 + components
+			Vector< Square::Vec4 > m_numbers;
+			Vector< String >  m_strings;
 		};
 		Packed pack() const;
 		void unpack(const Packed& packed);
 		template < typename T, T Packed::* Field >
 		static void packed_attribute(Square::Context& ctx, const char* name);
 
-		std::map<std::string, Value> m_values;
+		Map<String, Value> m_values;
 		Packed                       m_packed; //(while deserialized)
 	};
 }

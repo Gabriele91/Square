@@ -12,7 +12,7 @@ namespace Square
 namespace Resource
 {
 	// Remove Shader comments
-	void shader_remove_comments(std::string& source)
+	void shader_remove_comments(String& source)
 	{
 		//ptr
 		char* csource = &source[0];
@@ -39,14 +39,14 @@ namespace Resource
 	}
 
 	// Extract version
-	bool shader_extract_glsl_version_line(std::string& source, std::string& version)
+	bool shader_extract_glsl_version_line(String& source, String& version)
 	{
 		//lines
 		size_t line = 0;
 		//line buffer
-		std::string source_line;
+		String source_line;
 		//init stram buffer
-		std::stringstream source_stream(source);
+		StringStream source_stream(source);
 		//init 
 		source.clear();
 		version.clear();
@@ -69,7 +69,7 @@ namespace Resource
 	}
 
 	// Remove void lines
-	bool shader_remove_void_lines(std::string& source) 
+	bool shader_remove_void_lines(String& source) 
 	{
 		// Dec vars
 		const char* source_ptr = source.c_str();
@@ -80,7 +80,7 @@ namespace Resource
 		size_t		line_number = 1;
 		bool        is_space_line{ true };
 		// Line to remove info
-		std::vector< std::tuple< size_t, size_t, size_t > > lines_to_remove;
+		Vector< std::tuple< size_t, size_t, size_t > > lines_to_remove;
 		// For each row
 		for (; ptr && *ptr; ++ptr)
 		{
@@ -143,10 +143,10 @@ namespace Resource
 		ShaderImportLoader
 		(
 			Context& context,
-			const std::string& source,
-			const std::string& source_path,
+			const String& source,
+			const String& source_path,
 			Shader::FilepathMap& filepath_map,
-			std::string& out,
+			String& out,
 			bool files_as_name = true,
             const size_t line = 0
 		)
@@ -155,7 +155,7 @@ namespace Resource
 			m_files_as_name = files_as_name;
             m_once_map.clear();
             //source to stream source
-            std::stringstream stream_source(source);
+            StringStream stream_source(source);
             //execute
 			m_state = load(context, stream_source, source_path, filepath_map, line, 0, out);
 		}
@@ -176,17 +176,17 @@ namespace Resource
         bool        m_files_as_name{ true };
         ParserState m_state{ PS_OK };
         //mapof once
-        std::map<std::string,bool> m_once_map;
+        Map<String,bool> m_once_map;
 		//loader
 		ParserState load
 		(
 			Context& context,
-			std::stringstream& source,
-			const std::string& source_path,
+			StringStream& source,
+			const String& source_path,
 			Shader::FilepathMap& filepath_map,
 			size_t line,
 			size_t level,
-            std::string& out
+            String& out
 		)
 		{
 			//cicle test
@@ -199,12 +199,12 @@ namespace Resource
 				);
 			}
 			//get base dir
-			std::string source_dir = Filesystem::get_directory(source_path);
+			String source_dir = Filesystem::get_directory(source_path);
 			//line buffer
-			std::string source_line;
+			String source_line;
 			//count files
 			size_t  this_file = m_n_files++;
-			std::string source_filename = (m_files_as_name ? "\"" + source_path + "\"" : std::to_string(this_file));
+			String source_filename = (m_files_as_name ? "\"" + source_path + "\"" : to_string(this_file));
 			// Process path
 			auto relative_path = Filesystem::get_relative_to(Filesystem::working_dir(), source_filename);
 			// is ok?
@@ -222,7 +222,7 @@ namespace Resource
 			filepath_map[this_file] = source_dir;
 			//put line of "all" buffer
 			#if !defined( DISABLE_SHARER_PREPROCESS_LINE_SET )
-            out = "\n#line " + std::to_string(line + 1) + " " + source_filename + " \n";
+            out = "\n#line " + to_string(line + 1) + " " + source_filename + " \n";
 			#endif
 			//start to parse
 			while (std::getline(source, source_line))
@@ -244,7 +244,7 @@ namespace Resource
                     //jmp space
                     Parser::skip_line_space(line, c_effect_line);
                     //get name
-                    std::string name;
+                    String name;
                     if(Parser::parse_name(c_effect_line, name))
                     {
                         m_once_map[source_filename] = name == "once";
@@ -255,8 +255,8 @@ namespace Resource
                 if (Parser::cstr_cmp_skip(c_effect_line, "#include"))
                 {
                     //name/path/info
-                    std::string sourcefile_name;
-                    std::string sourcefile_path;
+                    String sourcefile_name;
+                    String sourcefile_path;
                     //jmp space
                     Parser::skip_line_space(line, c_effect_line);
 					//get path
@@ -297,9 +297,9 @@ namespace Resource
                         break;
                     };
                     //source
-                    std::stringstream source_stream(Filesystem::text_file_read_all(sourcefile_path));
+                    StringStream source_stream(Filesystem::text_file_read_all(sourcefile_path));
 					//ok
-                    std::string inc_output;
+                    String inc_output;
                     ParserState result = load
                     (
                        context
@@ -317,7 +317,7 @@ namespace Resource
                         out += inc_output;
                         //lines
 						#if !defined( DISABLE_SHARER_PREPROCESS_LINE_SET )
-                        std::string current_line = "\n#line " + std::to_string(line + 1) + " " + source_filename  + " \n";
+                        String current_line = "\n#line " + to_string(line + 1) + " " + source_filename  + " \n";
                         out += current_line;
 						#endif
                         //success

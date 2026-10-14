@@ -8,9 +8,9 @@ namespace Parser
 {
 	//////////////////////////////////////////////////////
 	// Context
-	std::string Resources::Context::errors_to_string() const
+	String Resources::Context::errors_to_string() const
 	{
-		std::stringstream sbuffer;
+		StringStream sbuffer;
 
 		for (auto& error : m_errors)
 		{
@@ -20,7 +20,7 @@ namespace Parser
 		return sbuffer.str();
 	}
 	//////////////////////////////////////////////////////
-	bool Resources::parse(Context& default_context, const std::string& source)
+	bool Resources::parse(Context& default_context, const String& source)
 	{
 		const char* c_ptr = source.c_str();
 		return parse(default_context, c_ptr);
@@ -168,7 +168,7 @@ namespace Parser
 		return true;
 	}
 	//////////////////////////////////////////////////////
-	void Resources::push_error(const std::string& error)
+	void Resources::push_error(const String& error)
 	{
 		m_context->m_errors.push_front(ErrorField{ m_context->m_line,error });
 	}

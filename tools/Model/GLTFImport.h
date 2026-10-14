@@ -75,7 +75,7 @@ namespace Import
     }
     
     // Debugging
-    inline std::string structure_type_to_string(StructureType type)
+    inline Square::String structure_type_to_string(StructureType type)
     {
         switch (type)
         {
@@ -150,7 +150,7 @@ namespace Import
     }
 
     template<typename T, typename R>
-    void get_vertexes(std::vector<T>& output_vertices
+    void get_vertexes(Square::Vector<T>& output_vertices
                         , const unsigned char* data_ptr
                         , size_t count
                         , LayoutType layout_type
@@ -213,11 +213,11 @@ namespace Import
     }
 
     template <typename T, typename R, typename F>
-    void process_attribute( std::vector<T>& vertexes
+    void process_attribute( Square::Vector<T>& vertexes
                             , const GLTF& gltf
                             , size_t accessor_index
                             , F field_pointer
-                            , void(*get_vertexes_func)(std::vector<T>&
+                            , void(*get_vertexes_func)(Square::Vector<T>&
                                                     , const unsigned char*
                                                     , size_t
                                                     , LayoutType
@@ -238,12 +238,12 @@ namespace Import
     inline Render::Mesh::Vertex2DList get_Position2D(const GLTF& gltf, const Primitive& primitive)
     {
         using Vertex = Render::Layout::Position2D;
-        using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
-        using Vec2Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
-        std::vector<Vertex> vertexes;
+        using Vec3Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
+        using Vec2Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
+        Square::Vector<Vertex> vertexes;
 
         // Map attribute names to corresponding vertex fields and types
-        std::unordered_map<std::string, std::pair<Vec2Callback, Vec2 Vertex::*>> attribute_map_vec2
+        Square::UnorderedMap<Square::String, std::pair<Vec2Callback, Vec2 Vertex::*>> attribute_map_vec2
         {
             {"POSITION", {get_vertexes<Vertex, Square::Vec2>, &Vertex::m_position}},
         };
@@ -270,12 +270,12 @@ namespace Import
     inline Render::Mesh::Vertex2DUVList get_Position2DUV(const GLTF& gltf, const Primitive& primitive)
     {
         using Vertex = Render::Layout::Position2DUV;
-        using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
-        using Vec2Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
-        std::vector<Vertex> vertexes;
+        using Vec3Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
+        using Vec2Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
+        Square::Vector<Vertex> vertexes;
 
         // Map attribute names to corresponding vertex fields and types
-        std::unordered_map<std::string, std::pair<Vec2Callback, Vec2 Vertex::*>> attribute_map_vec2
+        Square::UnorderedMap<Square::String, std::pair<Vec2Callback, Vec2 Vertex::*>> attribute_map_vec2
         {
             {"POSITION", {get_vertexes<Vertex, Square::Vec2>, &Vertex::m_position}},
             {"TEXCOORD_0", {get_vertexes<Vertex, Square::Vec2>, &Vertex::m_uvmap}}
@@ -303,12 +303,12 @@ namespace Import
     inline Render::Mesh::Vertex3DList get_Position3D(const GLTF& gltf, const Primitive& primitive)
     {
         using Vertex = Render::Layout::Position3D;
-        using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
-        using Vec2Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
-        std::vector<Vertex> vertexes;
+        using Vec3Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
+        using Vec2Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
+        Square::Vector<Vertex> vertexes;
 
         // Map attribute names to corresponding vertex fields and types
-        std::unordered_map<std::string, std::pair<Vec3Callback, Vec3 Vertex::*>> attribute_map_vec3
+        Square::UnorderedMap<Square::String, std::pair<Vec3Callback, Vec3 Vertex::*>> attribute_map_vec3
         {
             {"POSITION", {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_position}},
         };
@@ -335,17 +335,17 @@ namespace Import
     inline Render::Mesh::Vertex3DUVList get_Position3DUV(const GLTF& gltf, const Primitive& primitive)
     {
         using Vertex = Render::Layout::Position3DUV;
-        using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
-        using Vec2Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
-        std::vector<Vertex> vertexes;
+        using Vec3Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
+        using Vec2Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
+        Square::Vector<Vertex> vertexes;
 
         // Map attribute names to corresponding vertex fields and types
-        std::unordered_map<std::string, std::pair<Vec3Callback, Vec3 Vertex::*>> attribute_map_vec3
+        Square::UnorderedMap<Square::String, std::pair<Vec3Callback, Vec3 Vertex::*>> attribute_map_vec3
         {
             {"POSITION", {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_position}},
         };
 
-        std::unordered_map<std::string, std::pair<Vec2Callback, Vec2 Vertex::*>> attribute_map_vec2
+        Square::UnorderedMap<Square::String, std::pair<Vec2Callback, Vec2 Vertex::*>> attribute_map_vec2
         {
             {"TEXCOORD_0", {get_vertexes<Vertex, Square::Vec2>, &Vertex::m_uvmap}}
         };
@@ -388,18 +388,18 @@ namespace Import
     inline Render::Mesh::Vertex3DNUVList get_Position3DNormalUV(const GLTF& gltf, const Primitive& primitive)
     {
         using Vertex = Render::Layout::Position3DNormalUV;
-        using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
-        using Vec2Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
-        std::vector<Vertex> vertexes;
+        using Vec3Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
+        using Vec2Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
+        Square::Vector<Vertex> vertexes;
 
         // Map attribute names to corresponding vertex fields and types
-        std::unordered_map<std::string, std::pair<Vec3Callback, Vec3 Vertex::*>> attribute_map_vec3
+        Square::UnorderedMap<Square::String, std::pair<Vec3Callback, Vec3 Vertex::*>> attribute_map_vec3
         {
             {"POSITION", {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_position}},
             {"NORMAL",   {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_normal}},
         };
 
-        std::unordered_map<std::string, std::pair<Vec2Callback, Vec2 Vertex::*>> attribute_map_vec2
+        Square::UnorderedMap<Square::String, std::pair<Vec2Callback, Vec2 Vertex::*>> attribute_map_vec2
         {
             {"TEXCOORD_0", {get_vertexes<Vertex, Square::Vec2>, &Vertex::m_uvmap}}
         };
@@ -485,12 +485,12 @@ namespace Import
     inline Render::Mesh::Vertex3DNTBUVList get_Position3DNormalTangetBinomialUV(const GLTF& gltf, const Primitive& primitive, const Render::Mesh::IndexList& indices = {})
     {
         using Vertex = Render::Layout::Position3DNormalTangetBinomialUV;
-        using Vec3Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
-        using Vec2Callback = void(*)(std::vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
-        std::vector<Vertex> vertexes;
+        using Vec3Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec3 Vertex::*);
+        using Vec2Callback = void(*)(Square::Vector<Vertex>&, const unsigned char*, size_t, LayoutType, ComponentType, Vec2 Vertex::*);
+        Square::Vector<Vertex> vertexes;
 
         // Map attribute names to corresponding vertex fields and types
-        std::unordered_map<std::string, std::tuple<Vec3Callback, Vec3 Vertex::*, Render::Layout::LayoutFields>> attribute_map_vec3
+        Square::UnorderedMap<Square::String, std::tuple<Vec3Callback, Vec3 Vertex::*, Render::Layout::LayoutFields>> attribute_map_vec3
         {
               {"POSITION", {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_position, Render::Layout::LayoutFields::LF_POSITION_3D} }
             , {"NORMAL",   {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_normal, Render::Layout::LayoutFields::LF_NORMAL}}
@@ -498,7 +498,7 @@ namespace Import
             , {"BINOMIAL", {get_vertexes<Vertex, Square::Vec3>, &Vertex::m_binomial, Render::Layout::LayoutFields::LF_BINOMIAL}}
         };
 
-        std::unordered_map<std::string, std::pair<Vec2Callback, Vec2 Vertex::*>> attribute_map_vec2
+        Square::UnorderedMap<Square::String, std::pair<Vec2Callback, Vec2 Vertex::*>> attribute_map_vec2
         {
             {"TEXCOORD_0", {get_vertexes<Vertex, Square::Vec2>, &Vertex::m_uvmap}}
         };
@@ -554,7 +554,7 @@ namespace Import
         {
             // B = (N x T) * w: the w of the glTF TANGENT (VEC4) is the side of B (mirrored uv: -1)
             struct TangentW { Vec4 m_tangent; };
-            std::vector<TangentW> tangents;
+            Square::Vector<TangentW> tangents;
             process_attribute(tangents, gltf, primitive.attributes.at("TANGENT"), &TangentW::m_tangent, get_vertexes<TangentW, Square::Vec4>);
             for (size_t i = 0; i < vertexes.size(); ++i)
             {
@@ -568,9 +568,9 @@ namespace Import
     // The values of an accessor as floats, num_components a element (its view's stride
     // followed); the integers as they are, or in [0, 1] / [-1, 1] when normalized (the weights
     // of the joints in bytes or shorts, the keys of a rotation in bytes or shorts)
-    inline std::vector<float> read_floats(const GLTF& gltf, size_t accessor_id, bool normalized)
+    inline Square::Vector<float> read_floats(const GLTF& gltf, size_t accessor_id, bool normalized)
     {
-        std::vector<float> values;
+        Square::Vector<float> values;
         if (accessor_id < gltf.accessors.size())
         {
             const Accessor& accessor = gltf.accessors[accessor_id];

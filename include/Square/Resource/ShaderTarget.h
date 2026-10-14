@@ -59,9 +59,9 @@ namespace Resource
 		//x each capability of its drivers that changes the shaders (geometry shaders, layers written
 		//by the vertex shader) x each gamma correction (none, by the framebuffer, by the shaders);
 		//none: an unknown platform
-		static std::vector<ShaderTarget> of_platform(const std::string& platform);
+		static Vector<ShaderTarget> of_platform(const String& platform);
 		//the platform this is compiled for
-		static std::string host_platform();
+		static String host_platform();
 	};
 }
 }

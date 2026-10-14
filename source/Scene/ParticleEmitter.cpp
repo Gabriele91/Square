@@ -61,14 +61,14 @@ namespace Scene
 		using namespace AuxParticleEmitter;
 		ctx.add_object<ParticleEmitter>();
 		// Material
-		ctx.add_attribute_function<ParticleEmitter, std::string>
+		ctx.add_attribute_function<ParticleEmitter, String>
 			("material"
-			, std::string()
-			, [](const ParticleEmitter* emitter) -> std::string
+			, String()
+			, [](const ParticleEmitter* emitter) -> String
 			{
-				return emitter->m_material ? emitter->m_material->resource_untyped_name() : std::string();
+				return emitter->m_material ? emitter->m_material->resource_untyped_name() : String();
 			}
-			, [](ParticleEmitter* emitter, const std::string& name)
+			, [](ParticleEmitter* emitter, const String& name)
 			{
 				if (name.size())
 				{

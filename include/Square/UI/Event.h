@@ -11,6 +11,7 @@
 #include <functional>
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
+#include "Square/Core/SmartPointers.h"
 
 namespace Rml
 {
@@ -87,7 +88,7 @@ namespace UI
 		Event(Rml::Event& event);
 
 		//its name ("click") and the element it is for, and the one of the callback
-		const std::string& type() const;
+		const String& type() const;
 		Element target() const;
 		Element current() const;
 		EventPhase phase() const;
@@ -104,18 +105,18 @@ namespace UI
 		//bits), the text of a textinput
 		int  key() const;
 		int  modifiers() const;
-		std::string text() const;
+		String text() const;
 		//form: the value of a change, the values of a submit ("name=value&...")
-		std::string value() const;
-		std::string form_values() const;
+		String value() const;
+		String form_values() const;
 		//drag: the element dragged
 		Element drag_element() const;
 		//animations: the property animated
-		std::string property() const;
+		String property() const;
 		//tab set: the tab
 		int tab_index() const;
 		//any parameter of the event, as text ("" when it has not it)
-		std::string parameter(const std::string& name) const;
+		String parameter(const String& name) const;
 
 		//the event of RmlUi
 		Rml::Event& native() const;
@@ -134,7 +135,7 @@ namespace UI
 		struct Link;
 
 		Listener() = default;
-		Listener(const std::shared_ptr<Link>& link);
+		Listener(const Shared<Link>& link);
 
 		//it is still attached
 		bool valid() const;
@@ -142,7 +143,7 @@ namespace UI
 		void remove();
 
 	private:
-		std::weak_ptr<Link> m_link;
+		Weak<Link> m_link;
 	};
 }
 }

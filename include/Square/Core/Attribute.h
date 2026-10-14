@@ -77,7 +77,7 @@ namespace Square
 		//attribute of a field
 		Attribute
 		(
-			const std::string& name,
+			const String& name,
 			VariantType     value_type,
             Variant&&       default_value,
 			size_t          offset,
@@ -96,7 +96,7 @@ namespace Square
 		//attribute by wrapper
 		Attribute
 		(
-			const std::string&      name,
+			const String&      name,
 			VariantType             value_type,
             Variant&&               default_value,
 			Shared<AttributeAccess> access,
@@ -116,7 +116,7 @@ namespace Square
 		//attribute is a enum
 		Attribute
 		(
-			const std::string& name,
+			const String& name,
 			VariantType     value_type,
             Variant&&       default_value,
 			const char**    enum_names,
@@ -134,7 +134,7 @@ namespace Square
         
         virtual ~Attribute()  { /* none */ }
 
-        const std::string&      name()          const { return m_name; }
+        const String&      name()          const { return m_name; }
         Type                    type()          const { return m_type; }
         VariantType             value_type()    const { return m_value_type; }
         const Variant&          default_value() const { return m_default; }
@@ -185,7 +185,7 @@ namespace Square
 	protected:
 
 		// Name of attribute
-		std::string m_name;
+		String m_name;
 		// Type of attribute
 		Type m_type;
 		// Type of value
@@ -344,7 +344,7 @@ namespace Square
 	template<typename T, typename U, typename Trait = AttributeTrain<U> >
 	static Attribute attribute_method(
 		  Allocator* allocator
-		, const std::string& attribute_name
+		, const String& attribute_name
 		, const U& default_value
 		, typename AttributeAccessMethod< T, U, Trait >::GetFunction get_method
 		, typename AttributeAccessMethod< T, U, Trait >::SetFunction set_method
@@ -369,7 +369,7 @@ namespace Square
 	static Attribute attribute_function
 	(
 		  Allocator* allocator
-		, const std::string& attribute_name
+		, const String& attribute_name
 		, const U& default_value
 		, typename AttributeAccessFunction< T, U, Trait >::GetFunction get_function
 		, typename AttributeAccessFunction< T, U, Trait >::SetFunction set_function
@@ -394,7 +394,7 @@ namespace Square
 	static Attribute attribute_field
 	(
 		  Allocator* allocator
-		, const std::string& field_name
+		, const String& field_name
 		, const U& default_value
 		, U T::*member
 		, Attribute::Type type = Attribute::DEFAULT
@@ -414,7 +414,7 @@ namespace Square
 	static Attribute attribute_field
 	(
 		  Allocator* allocator
-		, const std::string& field_name
+		, const String& field_name
 		, const U& default_value
 		, size_t member_offset
 		, Attribute::Type type = Attribute::DEFAULT

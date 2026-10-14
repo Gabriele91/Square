@@ -154,7 +154,7 @@ namespace Square
             const WindowSize& size,
             WindowMode mode,
 			WindowRenderDriver driver,
-            const std::string& app_name,
+            const String& app_name,
             AppInterface* app,
             size_t n_workers = 4
         );

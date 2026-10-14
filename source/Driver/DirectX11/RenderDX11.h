@@ -94,11 +94,11 @@ namespace Render
 	public:
 		//for shader
 		AttributeList							m_attributes;
-		std::vector< D3D11_INPUT_ELEMENT_DESC > m_description;
+		Vector< D3D11_INPUT_ELEMENT_DESC > m_description;
 		//map
-		std::unordered_map<Shader*, ID3D11InputLayout*> m_map_layouts;
+		UnorderedMap<Shader*, ID3D11InputLayout*> m_map_layouts;
 		//build
-		InputLayout(const AttributeList& attributes, const std::vector< D3D11_INPUT_ELEMENT_DESC >& description);
+		InputLayout(const AttributeList& attributes, const Vector< D3D11_INPUT_ELEMENT_DESC >& description);
 		//get
 		ID3D11InputLayout* get_dx11_input_layout(ContextDX11* context11, Shader* shader);
 		//delete all
@@ -191,10 +191,10 @@ namespace Render
 		//dealloc flag
 		bool m_dealloc{ true };
 		//views
-		std::vector<ID3D11RenderTargetView*> m_views;
+		Vector<ID3D11RenderTargetView*> m_views;
 		ID3D11DepthStencilView* m_depth{ nullptr };
 		//copy buffer, wake ref
-		std::vector<ID3D11Texture2D*> m_view_textures;
+		Vector<ID3D11Texture2D*> m_view_textures;
 		ID3D11Texture2D*			  m_depth_texture{ nullptr };
 		//decallo
 		virtual ~Target()
@@ -253,26 +253,26 @@ namespace Render
         virtual void set(const DMat3* m3, size_t n) override;
         virtual void set(const DMat4* m4, size_t n) override;
         
-        virtual void set(const std::vector < Texture* >& t) override;
-        virtual void set(const std::vector < int >& i)      override;
-        virtual void set(const std::vector < float >& f)    override;
-        virtual void set(const std::vector < double >& d)   override;
+        virtual void set(const Vector < Texture* >& t) override;
+        virtual void set(const Vector < int >& i)      override;
+        virtual void set(const Vector < float >& f)    override;
+        virtual void set(const Vector < double >& d)   override;
         
-        virtual void set(const std::vector < IVec2 >& v2) override;
-        virtual void set(const std::vector < IVec3 >& v3) override;
-        virtual void set(const std::vector < IVec4 >& v4) override;
+        virtual void set(const Vector < IVec2 >& v2) override;
+        virtual void set(const Vector < IVec3 >& v3) override;
+        virtual void set(const Vector < IVec4 >& v4) override;
         
-        virtual void set(const std::vector < Vec2 >& v2) override;
-        virtual void set(const std::vector < Vec3 >& v3) override;
-        virtual void set(const std::vector < Vec4 >& v4) override;
-        virtual void set(const std::vector < Mat3 >& m3) override;
-        virtual void set(const std::vector < Mat4 >& m4) override;
+        virtual void set(const Vector < Vec2 >& v2) override;
+        virtual void set(const Vector < Vec3 >& v3) override;
+        virtual void set(const Vector < Vec4 >& v4) override;
+        virtual void set(const Vector < Mat3 >& m3) override;
+        virtual void set(const Vector < Mat4 >& m4) override;
         
-        virtual void set(const std::vector < DVec2 >& v2) override;
-        virtual void set(const std::vector < DVec3 >& v3) override;
-        virtual void set(const std::vector < DVec4 >& v4) override;
-        virtual void set(const std::vector < DMat3 >& m3) override;
-        virtual void set(const std::vector < DMat4 >& m4) override;
+        virtual void set(const Vector < DVec2 >& v2) override;
+        virtual void set(const Vector < DVec3 >& v3) override;
+        virtual void set(const Vector < DVec4 >& v4) override;
+        virtual void set(const Vector < DMat3 >& m3) override;
+        virtual void set(const Vector < DMat4 >& m4) override;
         
         virtual bool is_valid() override;
         
@@ -308,7 +308,7 @@ namespace Render
     {
     public:
         //create buffer ref
-        UniformConstBufferDX11(ContextDX11* context, Shader* shader, const std::string& cname);
+        UniformConstBufferDX11(ContextDX11* context, Shader* shader, const String& cname);
         UniformConstBufferDX11();
         //bind
         virtual void bind(const ConstBuffer*);
@@ -330,24 +330,24 @@ namespace Render
 	{
 	public:
 		/////////////////////////////////////////////////////////////////////////       
-		using UniformConstBufferSlots = std::unordered_map< std::string, UINT >;
-        using UniformMap              = std::unordered_map< std::string, UniformDX11 >;
-        using UniformPair             = std::pair< std::string, UniformDX11 >;
-        using UniformConstBufferMap   = std::unordered_map< std::string, Unique< UniformConstBufferDX11 > >;
+		using UniformConstBufferSlots = UnorderedMap< String, UINT >;
+        using UniformMap              = UnorderedMap< String, UniformDX11 >;
+        using UniformPair             = std::pair< String, UniformDX11 >;
+        using UniformConstBufferMap   = UnorderedMap< String, Unique< UniformConstBufferDX11 > >;
         //shader compile errors
         struct ShaderCompileError
         {
             ShaderType m_type;
-            std::string m_log;
+            String m_log;
         };
 		struct GlobalBufferInfo
 		{
-			std::string m_name;
+			String m_name;
 			bool		m_found{ false };
 			INT         m_slot[ST_N_SHADER];
 			size_t      m_size{ 0 };
-			std::map<std::string, size_t> m_fields;
-			std::map<std::string, UniformDX11> m_fields_uniforms;
+			Map<String, size_t> m_fields;
+			Map<String, UniformDX11> m_fields_uniforms;
 
 			GlobalBufferInfo()
 			{
@@ -370,7 +370,7 @@ namespace Render
             m_errors.push_back(std::move(error_log));
         }
         
-        void push_linker_error(const std::string& error_log)
+        void push_linker_error(const String& error_log)
         {
             m_linker_log += error_log;
             m_linker_log += "\n";
@@ -407,10 +407,10 @@ namespace Render
 		bool						 m_global_buffer_should_be_bind{ true };
 		GlobalBufferInfo			 m_global_buffer_info;
 		ConstBuffer*				 m_global_buffer_gpu{ nullptr };
-		std::vector< unsigned char > m_global_buffer_cpu;
+		Vector< unsigned char > m_global_buffer_cpu;
         
         //help
-        UniformDX11& add_uniform(const std::string& name, const UniformDX11& u) const
+        UniformDX11& add_uniform(const String& name, const UniformDX11& u) const
         {
             auto& uref = (m_uniform_map[name] = u);
             return uref;
@@ -426,10 +426,10 @@ namespace Render
 		Allocator*			  m_allocator;
 		
 		//shaders compiler errors
-		std::vector < ShaderCompileError > m_errors;
+		Vector < ShaderCompileError > m_errors;
 
 		//linking error
-		std::string m_linker_log;
+		String m_linker_log;
         
 	};
     
@@ -511,9 +511,9 @@ namespace Render
 		virtual void unbind_VBO(VertexBuffer*) override;
 		virtual void unbind_IBO(IndexBuffer*) override;
 
-		virtual std::vector<unsigned char> copy_buffer_CB(const ConstBuffer*) override;
-		virtual std::vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) override;
-		virtual std::vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) override;
+		virtual Vector<unsigned char> copy_buffer_CB(const ConstBuffer*) override;
+		virtual Vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) override;
+		virtual Vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) override;
 
 
 		virtual unsigned char* map_CB(ConstBuffer*, size_t start, size_t n, MappingType type) override;
@@ -576,10 +576,10 @@ namespace Render
 			const TextureRawDataInformation  data[6],
 			const TextureGpuDataInformation& info
 		) override;
-		virtual  std::vector< unsigned char > get_texture(Texture*, int level = 0) override;
+		virtual  Vector< unsigned char > get_texture(Texture*, int level = 0) override;
 		virtual void copy_texture(Texture* source, Texture* destination) override;
 		virtual void copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer) override;
-		virtual  std::vector< unsigned char > get_texture(Texture*, int cube = 0, int level = 0) override;
+		virtual  Vector< unsigned char > get_texture(Texture*, int cube = 0, int level = 0) override;
 		virtual void bind_texture(Texture*, int texture_id, int sample_id) override;
 		virtual void unbind_texture(Texture*) override;
 		virtual void unbind_texture(int n) override;
@@ -587,27 +587,27 @@ namespace Render
 		virtual void update_texture(Texture* texture, const TextureRawDataInformation& data) override;
 
 		//shader
-		virtual Shader* create_shader(const std::vector< ShaderSourceInformation >& infos) override;
+		virtual Shader* create_shader(const Vector< ShaderSourceInformation >& infos) override;
 
 		virtual bool shader_compiled_with_errors(Shader* shader) override;
 		virtual bool shader_linked_with_error(Shader* shader) override;
-		virtual std::vector< std::string > get_shader_compiler_errors(Shader* shader) override;
-		virtual std::string get_shader_linker_error(Shader* shader) override;
+		virtual Vector< String > get_shader_compiler_errors(Shader* shader) override;
+		virtual String get_shader_linker_error(Shader* shader) override;
 
 		virtual void bind_shader(Shader* shader) override;
 		virtual void unbind_shader(Shader* shader) override;
 
-		virtual void bind_uniform_CB(const ConstBuffer*, Shader*, const std::string& uname) override;
-		virtual void unbind_uniform_CB(Shader*, const std::string& uname) override;
+		virtual void bind_uniform_CB(const ConstBuffer*, Shader*, const String& uname) override;
+		virtual void unbind_uniform_CB(Shader*, const String& uname) override;
 
 		virtual void delete_shader(Shader*&) override;
 
 		virtual Shader*  get_bind_shader() const override;
-		virtual Uniform* get_uniform(Shader*, const std::string& uname) const override;
-		virtual UniformConstBuffer* get_uniform_const_buffer(Shader*, const std::string& uname) const override;
+		virtual Uniform* get_uniform(Shader*, const String& uname) const override;
+		virtual UniformConstBuffer* get_uniform_const_buffer(Shader*, const String& uname) const override;
 
 		//target
-		virtual Target* create_render_target(const std::vector< TargetField >& textures) override;
+		virtual Target* create_render_target(const Vector< TargetField >& textures) override;
 		virtual void enable_render_target(Target*) override;
 		virtual void disable_render_target(Target*) override;
 		virtual void delete_render_target(Target*&) override;
@@ -631,7 +631,7 @@ namespace Render
 		virtual void gpu_timer_begin_frame() override;
 		virtual void gpu_timer_end_frame() override;
 		virtual int  gpu_timer_timestamp() override;
-		virtual bool gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms) override;
+		virtual bool gpu_timer_read_frame(uint64& frame_id, Vector<double>& timestamps_ms) override;
 #endif
 
 		//context
@@ -674,14 +674,14 @@ namespace Render
 		bool build_cullface_states();
 		ID3D11RasterizerState* cullface_state(CullfaceState);
 		///////////////////////////////////////////////////////////////////////////////////
-		std::map<DepthBufferState, ID3D11DepthStencilState*> m_depth_states;
+		Map<DepthBufferState, ID3D11DepthStencilState*> m_depth_states;
 		ID3D11DepthStencilState* depth_state(DepthBufferState);
 		///////////////////////////////////////////////////////////////////////////////////
-		std::map<BlendState, ID3D11BlendState*>	m_blend_states;
+		Map<BlendState, ID3D11BlendState*>	m_blend_states;
 		ID3D11BlendState* blend_state(BlendState);
 		///////////////////////////////////////////////////////////////////////////////////
 		bool dx_op_success(HRESULT h) const;
-		mutable std::list<std::string> m_errors;
+		mutable List<String> m_errors;
 		///////////////////////////////////////////////////////////////////////////////////
 #if defined(RENDER_PROFILER)
 		//GPU timer
@@ -689,7 +689,7 @@ namespace Render
 		{
 			uint64                    m_id{ 0 };
 			ID3D11Query*              m_disjoint{ nullptr };
-			std::vector<ID3D11Query*> m_queries; //grown on demand
+			Vector<ID3D11Query*> m_queries; //grown on demand
 			size_t                    m_count{ 0 };
 			bool                      m_pending{ false };
 		};

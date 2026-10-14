@@ -27,6 +27,7 @@ set(CMAKE_CXX_FLAGS_RETAIL "${CMAKE_CXX_FLAGS_RELEASE}")
 # Square project
 file(GLOB SOURCES Core/*.cpp
                   Core/Allocator/*.cpp
+                  Core/Container/*.cpp
                   Data/*.cpp
                   Data/ImageUtils/*.cpp
                   Geometry/*.cpp
@@ -117,6 +118,9 @@ add_library(Square SHARED ${SOURCES} ${OS_SOURCES})
 # memory with it: a std::string made in one, freed in the other; see Square/Core/Allocator/MemoryOperators.h)
 target_sources(Square INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Core/Allocator/MemoryOperators.cpp>)
 target_include_directories(Square INTERFACE $<BUILD_INTERFACE:${SQUARE_ROOT_DIR}/include>)
+# the configuration of RmlUi (its containers: the ones of Square) also in the modules that include
+# the headers of Square::UI
+target_compile_definitions(Square INTERFACE "RMLUI_CUSTOM_CONFIGURATION_FILE=\"${RMLUI_CUSTOM_CONFIGURATION_FILE}\"")
 
 # Flags
 target_compile_definitions(Square PRIVATE ${OS_FLAGS})

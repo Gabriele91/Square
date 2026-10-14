@@ -15,11 +15,11 @@
 // "box.mat"). The names are local to the model folder: the engine resolves them from there first.
 class UniqueNames
 {
-    std::unordered_set<std::string> m_used;
+    Square::UnorderedSet<Square::String> m_used;
 
-    static std::string sanitize(const std::string& name)
+    static Square::String sanitize(const Square::String& name)
     {
-        std::string out;
+        Square::String out;
         out.reserve(name.size());
         for (const char c : name)
         {
@@ -30,14 +30,14 @@ class UniqueNames
     }
 
 public:
-    std::string make(const std::string& wanted, const std::string& fallback)
+    Square::String make(const Square::String& wanted, const Square::String& fallback)
     {
-        std::string base = sanitize(wanted);
+        Square::String base = sanitize(wanted);
         if (base.empty()) base = sanitize(fallback);
-        std::string name = base;
+        Square::String name = base;
         for (int n = 2; !m_used.insert(name).second; ++n)
         {
-            name = base + "_" + std::to_string(n);
+            name = base + "_" + Square::to_string(n);
         }
         return name;
     }

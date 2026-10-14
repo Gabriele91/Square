@@ -21,7 +21,7 @@ namespace  Data
         }
 
         //an attribute of the files by its name, nullptr if the object has not it
-        const Attribute* find(const std::vector < Attribute >& attributes, const std::string& name)
+        const Attribute* find(const Vector < Attribute >& attributes, const String& name)
         {
             for (const Attribute& attribute : attributes)
             {
@@ -31,7 +31,7 @@ namespace  Data
         }
 
         //the format 0: the values one after another, in the order of the attributes
-        bool deserialize_in_order(Archive& archive, Object* object, const std::vector < Attribute >& attributes)
+        bool deserialize_in_order(Archive& archive, Object* object, const Vector < Attribute >& attributes)
         {
             for (const Attribute& attribute : attributes)
             {
@@ -44,7 +44,7 @@ namespace  Data
         }
     }
 
-    SQUARE_API bool attribute_serialize(Archive& archive, const Object* object, const std::vector < Attribute >* attributes)
+    SQUARE_API bool attribute_serialize(Archive& archive, const Object* object, const Vector < Attribute >* attributes)
     {
 		if (!attributes) return false;
         //their count, each one by name, its value in a block (unknown to the reader: skipped)
@@ -60,18 +60,18 @@ namespace  Data
             //its value
             VariantRef value;
             attribute.get(object, value);
-            std::ostringstream bytes(std::ios::out | std::ios::binary);
+            OStringStream bytes(std::ios::out | std::ios::binary);
             ArchiveBinWrite block(archive.context(), bytes, false);
             block % value;
             //its name, its block
-            std::string data = bytes.str();
+            String data = bytes.str();
             archive % attribute.name();
             archive.block(data);
         }
         return true;
     }
 
-    SQUARE_API bool attribute_deserialize(Archive& archive, Object* object, const std::vector < Attribute >* attributes)
+    SQUARE_API bool attribute_deserialize(Archive& archive, Object* object, const Vector < Attribute >* attributes)
     {
 		if (!attributes) return false;
         if (archive.version() == 0) return AuxAttributeSerialize::deserialize_in_order(archive, object, *attributes);
@@ -81,8 +81,8 @@ namespace  Data
         archive % count;
         for (uint32 i = 0; i != count; ++i)
         {
-            std::string name;
-            std::string data;
+            String name;
+            String data;
             archive % name;
             archive.block(data);
             const Attribute* attribute = AuxAttributeSerialize::find(*attributes, name);
@@ -90,7 +90,7 @@ namespace  Data
             //its value: one not read (another type, a resource not found) as it is
             try
             {
-                std::istringstream bytes(data, std::ios::in | std::ios::binary);
+                IStringStream bytes(data, std::ios::in | std::ios::binary);
                 ArchiveBinRead block(archive.context(), bytes, archive.version());
                 Variant value(attribute->value_type());
                 block % value.as_variant_ref();
@@ -162,7 +162,7 @@ namespace  Data
         }
 
         template<typename T, typename C>
-        Json serialize_vector_w_cast(const std::vector<T>& vec)
+        Json serialize_vector_w_cast(const Vector<T>& vec)
         {
             JsonArray json_array;
             json_array.resize(vec.size());
@@ -174,7 +174,7 @@ namespace  Data
         }
 
         template<typename T>
-        Json serialize_vector(const std::vector<T>& vec)
+        Json serialize_vector(const Vector<T>& vec)
         {
             JsonArray json_array;
             json_array.resize(vec.size());
@@ -186,7 +186,7 @@ namespace  Data
         }
 
         template<typename V>
-        Json serialize_vector(const std::vector< TVec2<V> >& vec)
+        Json serialize_vector(const Vector< TVec2<V> >& vec)
         {
             JsonArray json_array;
             json_array.resize(vec.size());
@@ -198,7 +198,7 @@ namespace  Data
         }
 
         template<typename V>
-        Json serialize_vector(const std::vector< TVec3<V> >& vec)
+        Json serialize_vector(const Vector< TVec3<V> >& vec)
         {
             JsonArray json_array;
             json_array.resize(vec.size());
@@ -210,7 +210,7 @@ namespace  Data
         }
 
         template<typename V>
-        Json serialize_vector(const std::vector< TVec4<V> >& vec)
+        Json serialize_vector(const Vector< TVec4<V> >& vec)
         {
             JsonArray json_array;
             json_array.resize(vec.size());
@@ -222,7 +222,7 @@ namespace  Data
         }
 
         template<typename V>
-        Json serialize_vector(const std::vector< TQuat<V> >& vec)
+        Json serialize_vector(const Vector< TQuat<V> >& vec)
         {
             JsonArray json_array;
             json_array.resize(vec.size());
@@ -234,7 +234,7 @@ namespace  Data
         }
 
         template<typename V>
-        Json serialize_vector(const std::vector< TMat4<V> >& vec)
+        Json serialize_vector(const Vector< TMat4<V> >& vec)
         {
             JsonArray json_array;
             json_array.resize(vec.size());
@@ -390,122 +390,122 @@ namespace  Data
 
             case Square::VR_STD_VECTOR_SHORT:
                 json_value["dtype"] = "STD_VECTOR_SHORT";
-                json_value["value"] = serialize_vector(value.get<std::vector<short>>());
+                json_value["value"] = serialize_vector(value.get<Vector<short>>());
                 break;
 
             case Square::VR_STD_VECTOR_INT:
                 json_value["dtype"] = "STD_VECTOR_INT";
-                json_value["value"] = serialize_vector(value.get<std::vector<int>>());
+                json_value["value"] = serialize_vector(value.get<Vector<int>>());
                 break;
 
             case Square::VR_STD_VECTOR_LONG:
                 json_value["dtype"] = "STD_VECTOR_LONG";
-                json_value["value"] = serialize_vector(value.get<std::vector<long>>());
+                json_value["value"] = serialize_vector(value.get<Vector<long>>());
                 break;
 
             case Square::VR_STD_VECTOR_LONGLONG:
                 json_value["dtype"] = "STD_VECTOR_LONGLONG";
-                json_value["value"] = serialize_vector_w_cast<long long, long>(value.get<std::vector<long long>>());
+                json_value["value"] = serialize_vector_w_cast<long long, long>(value.get<Vector<long long>>());
                 break;
 
             case Square::VR_STD_VECTOR_USHORT:
                 json_value["dtype"] = "STD_VECTOR_USHORT";
-                json_value["value"] = serialize_vector(value.get<std::vector<unsigned short>>());
+                json_value["value"] = serialize_vector(value.get<Vector<unsigned short>>());
                 break;
 
             case Square::VR_STD_VECTOR_UINT:
                 json_value["dtype"] = "STD_VECTOR_UINT";
-                json_value["value"] = serialize_vector(value.get<std::vector<unsigned int>>());
+                json_value["value"] = serialize_vector(value.get<Vector<unsigned int>>());
                 break;
 
             case Square::VR_STD_VECTOR_ULONG:
                 json_value["dtype"] = "STD_VECTOR_ULONG";
-                json_value["value"] = serialize_vector_w_cast<unsigned long, unsigned int>(value.get<std::vector<unsigned long>>());
+                json_value["value"] = serialize_vector_w_cast<unsigned long, unsigned int>(value.get<Vector<unsigned long>>());
                 break;
 
             case Square::VR_STD_VECTOR_ULONGLONG:
                 json_value["dtype"] = "STD_VECTOR_ULONGLONG";
-                json_value["value"] = serialize_vector_w_cast<unsigned long long, unsigned int>(value.get<std::vector<unsigned long long>>());
+                json_value["value"] = serialize_vector_w_cast<unsigned long long, unsigned int>(value.get<Vector<unsigned long long>>());
                 break;
 
             case Square::VR_STD_VECTOR_FLOAT:
                 json_value["dtype"] = "STD_VECTOR_FLOAT";
-                json_value["value"] = serialize_vector(value.get<std::vector<float>>());
+                json_value["value"] = serialize_vector(value.get<Vector<float>>());
                 break;
 
             case Square::VR_STD_VECTOR_DOUBLE:
                 json_value["dtype"] = "STD_VECTOR_DOUBLE";
-                json_value["value"] = serialize_vector(value.get<std::vector<double>>());
+                json_value["value"] = serialize_vector(value.get<Vector<double>>());
                 break;
 
             case Square::VR_STD_VECTOR_LONG_DOUBLE:
                 json_value["dtype"] = "STD_VECTOR_LONG_DOUBLE";
-                json_value["value"] = serialize_vector_w_cast<long double, double>(value.get<std::vector<long double>>());
+                json_value["value"] = serialize_vector_w_cast<long double, double>(value.get<Vector<long double>>());
                 break;
 
             case Square::VR_STD_VECTOR_VEC2:
                 json_value["dtype"] = "STD_VECTOR_VEC2";
-                json_value["value"] = serialize_vector(value.get<std::vector<Vec2>>());
+                json_value["value"] = serialize_vector(value.get<Vector<Vec2>>());
                 break;
 
             case Square::VR_STD_VECTOR_VEC3:
                 json_value["dtype"] = "STD_VECTOR_VEC3";
-                json_value["value"] = serialize_vector(value.get<std::vector<Vec3>>());
+                json_value["value"] = serialize_vector(value.get<Vector<Vec3>>());
                 break;
 
             case Square::VR_STD_VECTOR_VEC4:
                 json_value["dtype"] = "STD_VECTOR_VEC4";
-                json_value["value"] = serialize_vector(value.get<std::vector<Vec4>>());
+                json_value["value"] = serialize_vector(value.get<Vector<Vec4>>());
                 break;
 
             case Square::VR_STD_VECTOR_IVEC2:
                 json_value["dtype"] = "STD_VECTOR_IVEC2";
-                json_value["value"] = serialize_vector(value.get<std::vector<IVec2>>());
+                json_value["value"] = serialize_vector(value.get<Vector<IVec2>>());
                 break;
 
             case Square::VR_STD_VECTOR_IVEC3:
                 json_value["dtype"] = "STD_VECTOR_IVEC3";
-                json_value["value"] = serialize_vector(value.get<std::vector<IVec3>>());
+                json_value["value"] = serialize_vector(value.get<Vector<IVec3>>());
                 break;
 
             case Square::VR_STD_VECTOR_IVEC4:
                 json_value["dtype"] = "STD_VECTOR_IVEC4";
-                json_value["value"] = serialize_vector(value.get<std::vector<IVec4>>());
+                json_value["value"] = serialize_vector(value.get<Vector<IVec4>>());
                 break;
 
             case Square::VR_STD_VECTOR_DVEC2:
                 json_value["dtype"] = "STD_VECTOR_DVEC2";
-                json_value["value"] = serialize_vector(value.get<std::vector<DVec2>>());
+                json_value["value"] = serialize_vector(value.get<Vector<DVec2>>());
                 break;
 
             case Square::VR_STD_VECTOR_DVEC3:
                 json_value["dtype"] = "STD_VECTOR_DVEC3";
-                json_value["value"] = serialize_vector(value.get<std::vector<DVec3>>());
+                json_value["value"] = serialize_vector(value.get<Vector<DVec3>>());
                 break;
 
             case Square::VR_STD_VECTOR_DVEC4:
                 json_value["dtype"] = "STD_VECTOR_DVEC4";
-                json_value["value"] = serialize_vector(value.get<std::vector<DVec4>>());
+                json_value["value"] = serialize_vector(value.get<Vector<DVec4>>());
                 break;
 
             case Square::VR_STD_VECTOR_FLOAT_MATRIX:
                 json_value["dtype"] = "STD_VECTOR_FLOAT_MATRIX";
-                json_value["value"] = serialize_vector(value.get<std::vector<Mat4>>());
+                json_value["value"] = serialize_vector(value.get<Vector<Mat4>>());
                 break;
 
             case Square::VR_STD_VECTOR_DOUBLE_MATRIX:
                 json_value["dtype"] = "STD_VECTOR_DOUBLE_MATRIX";
-                json_value["value"] = serialize_vector(value.get<std::vector<DMat4>>());
+                json_value["value"] = serialize_vector(value.get<Vector<DMat4>>());
                 break;
 
             case Square::VR_STD_STRING:
                 json_value["dtype"] = "STD_STRING";
-                json_value["value"] = value.get<std::string>();
+                json_value["value"] = value.get<String>();
                 break;
 
             case Square::VR_STD_VECTOR_STRING:
                 json_value["dtype"] = "STD_VECTOR_STRING";
-                json_value["value"] = serialize_vector(value.get<std::vector<std::string>>());
+                json_value["value"] = serialize_vector(value.get<Vector<String>>());
                 break;
 
             case Square::VR_RESOURCE:
@@ -606,13 +606,13 @@ namespace  Data
 
 
         template<typename T>
-        std::vector<T> deserialize_vector_number(const JsonValue& json_vec)
+        Vector<T> deserialize_vector_number(const JsonValue& json_vec)
         {
             if (!json_vec.is_array())
             {
                 throw std::runtime_error("deserialize_json: Invalid field type");
             }
-            std::vector<T> vec;
+            Vector<T> vec;
             vec.resize(json_vec.array().size());
             for (size_t i = 0; i < json_vec.array().size(); ++i)
             {
@@ -622,13 +622,13 @@ namespace  Data
         }
 
         template<typename V>
-        std::vector< TVec2<V> > deserialize_vector_vec2(const JsonValue& json_vec)
+        Vector< TVec2<V> > deserialize_vector_vec2(const JsonValue& json_vec)
         {
             if (!json_vec.is_array())
             {
                 throw std::runtime_error("deserialize_json: Invalid field type");
             }
-            std::vector<  TVec2<V> > vec;
+            Vector<  TVec2<V> > vec;
             vec.resize(json_vec.array().size());
             for (size_t i = 0; i < json_vec.array().size(); ++i)
             {
@@ -638,13 +638,13 @@ namespace  Data
         }
 
         template<typename V>
-        std::vector< TVec3<V> > deserialize_vector_vec3(const JsonValue& json_vec)
+        Vector< TVec3<V> > deserialize_vector_vec3(const JsonValue& json_vec)
         {
             if (!json_vec.is_array())
             {
                 throw std::runtime_error("deserialize_json: Invalid field type");
             }
-            std::vector<  TVec3<V> > vec;
+            Vector<  TVec3<V> > vec;
             vec.resize(json_vec.array().size());
             for (size_t i = 0; i < json_vec.array().size(); ++i)
             {
@@ -654,13 +654,13 @@ namespace  Data
         }
 
         template<typename V>
-        std::vector< TVec4<V> > deserialize_vector_vec4(const JsonValue& json_vec)
+        Vector< TVec4<V> > deserialize_vector_vec4(const JsonValue& json_vec)
         {
             if (!json_vec.is_array())
             {
                 throw std::runtime_error("deserialize_json: Invalid field type");
             }
-            std::vector<  TVec4<V> > vec;
+            Vector<  TVec4<V> > vec;
             vec.resize(json_vec.array().size());
             for (size_t i = 0; i < json_vec.array().size(); ++i)
             {
@@ -670,13 +670,13 @@ namespace  Data
         }
 
         template<typename V>
-        std::vector< TMat4<V> > deserialize_vector_mat4(const JsonValue& json_vec)
+        Vector< TMat4<V> > deserialize_vector_mat4(const JsonValue& json_vec)
         {
             if (!json_vec.is_array())
             {
                 throw std::runtime_error("deserialize_json: Invalid field type");
             }
-            std::vector< TMat4<V> > vec;
+            Vector< TMat4<V> > vec;
             vec.resize(json_vec.array().size());
             for (size_t i = 0; i < json_vec.array().size(); ++i)
             {
@@ -685,13 +685,13 @@ namespace  Data
             return vec;
         }
 
-        std::vector< std::string > deserialize_vector_string(const JsonValue& json_vec)
+        Vector< String > deserialize_vector_string(const JsonValue& json_vec)
         {
             if (!json_vec.is_array())
             {
                 throw std::runtime_error("deserialize_json: Invalid field type");
             }
-            std::vector< std::string > vec;
+            Vector< String > vec;
             vec.resize(json_vec.array().size());
             for (size_t i = 0; i < json_vec.array().size(); ++i)
             {
@@ -716,7 +716,7 @@ namespace  Data
                 throw std::runtime_error("deserialize_json: Missing 'dtype' field");
             }
 
-            std::string dtype = json["dtype"].string();
+            String dtype = json["dtype"].string();
             const Data::JsonValue& json_value = json["value"];
             Variant value;
 
@@ -998,12 +998,12 @@ namespace  Data
                     {
                         throw std::runtime_error("deserialize_json: Invalid resource name");
                     }
-                    std::string resource_name = json_value["resource_name"].string();
+                    String resource_name = json_value["resource_name"].string();
                     // Recupera la risorsa
                     Shared<ResourceObject> resource = context.resource(resource_name);
                     if (!resource) 
                     {
-                        throw std::runtime_error("deserialize_json: Resource not found: " + resource_name);
+                        throw std::runtime_error(("deserialize_json: Resource not found: " + resource_name).c_str());
                     }
                     value = resource;
                 }
@@ -1013,14 +1013,14 @@ namespace  Data
                 }
             }
             else {
-                throw std::runtime_error("deserialize_json: Unknown type: " + dtype);
+                throw std::runtime_error(("deserialize_json: Unknown type: " + dtype).c_str());
             }
 
             return value;
         }
     }
 
-    SQUARE_API bool attribute_serialize_json(JsonValue& archive, const Object* object, const std::vector < Attribute >* attributes)
+    SQUARE_API bool attribute_serialize_json(JsonValue& archive, const Object* object, const Vector < Attribute >* attributes)
     {
 		if (!attributes) return false;
         //serialize
@@ -1036,7 +1036,7 @@ namespace  Data
         return true;
     }
     
-    SQUARE_API bool attribute_deserialize_json(JsonValue& archive, Object* object, const std::vector < Attribute >* attributes)
+    SQUARE_API bool attribute_deserialize_json(JsonValue& archive, Object* object, const Vector < Attribute >* attributes)
     {
 		if (!attributes) return false;
         //deserialize

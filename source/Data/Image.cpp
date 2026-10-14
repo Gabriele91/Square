@@ -193,10 +193,10 @@ namespace  Data
 		});
 	}
 	
-	std::vector< unsigned char > Image::to_rgb()
+	Vector< unsigned char > Image::to_rgb()
 	{
 		//buffer
-		std::vector< unsigned char > output;
+		Vector< unsigned char > output;
 		//init
 		output.resize(m_width*m_height*3);
 		//copy
@@ -211,10 +211,10 @@ namespace  Data
 		return output;
 	}
 
-	std::vector< unsigned char > Image::to_rgb16()
+	Vector< unsigned char > Image::to_rgb16()
 	{
 		//buffer
-		std::vector< unsigned char > output;
+		Vector< unsigned char > output;
 		//init
 		output.resize(m_width*m_height*2);
     
@@ -234,11 +234,11 @@ namespace  Data
 		return output;
 	}
 
-	std::vector< unsigned char > Image::to_rgba()
+	Vector< unsigned char > Image::to_rgba()
 	{
     
 		//buffer
-		std::vector< unsigned char > output;
+		Vector< unsigned char > output;
 		//init
 		output.resize(m_width*m_height*4);
 		//copy

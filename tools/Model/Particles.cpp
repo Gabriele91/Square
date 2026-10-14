@@ -32,7 +32,7 @@ namespace Particles
         }
 
         //a vector of the custom properties ("square_<key>"), if there is
-        bool vector_of(const Data::JsonObject& extras, const std::string& key, Vec3& vector)
+        bool vector_of(const Data::JsonObject& extras, const Square::String& key, Vec3& vector)
         {
             auto it = extras.find(SquareExtras::PREFIX + key);
             const bool found = it != extras.end();
@@ -48,7 +48,7 @@ namespace Particles
     {
         using namespace AuxParticles;
         //the flagged nodes with a mesh (the node of the mesh: it or one under it), their properties
-        std::vector< std::pair< Shared<Actor>, const Data::JsonObject* > > found;
+        Square::Vector< std::pair< Shared<Actor>, const Data::JsonObject* > > found;
         root->visit([&](Shared<Actor> node) -> bool
         {
             auto flagged = nodes.find(node.get());

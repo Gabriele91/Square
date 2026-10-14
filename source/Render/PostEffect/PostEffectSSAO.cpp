@@ -191,7 +191,7 @@ namespace Render
 	}
 
 
-	void SSAO::debug_options(std::vector<DebugOption>& options)
+	void SSAO::debug_options(Vector<DebugOption>& options)
 	{
 		options.push_back(DebugOption::choice("Resolution", { "Full", "Half", "Quarter" },
 			[this]() { return int(m_settings.resolution); },

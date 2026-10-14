@@ -197,12 +197,12 @@ namespace Square
 
 		// output data -----------------------------------------------------------------------------------
 
-		std::vector<CTriBaseIndex>						m_TriBaseAssigment;							//!< [0..dwTriangleCount]
-		std::vector<CBase33>									m_BaseVectors;									//!< [0..] generated output data
+		Vector<CTriBaseIndex>						m_TriBaseAssigment;							//!< [0..dwTriangleCount]
+		Vector<CBase33>									m_BaseVectors;									//!< [0..] generated output data
 
 		//! /param indwPosNo
 		//! /param indwNormNo
-		CBase33 &GetBase( std::multimap<CBaseIndex,unsigned int,CBaseIndexOrder> &inMap, const unsigned int indwPosNo, const unsigned int indwNormNo );
+		CBase33 &GetBase( MultiMap<CBaseIndex,unsigned int,CBaseIndexOrder> &inMap, const unsigned int indwPosNo, const unsigned int indwNormNo );
 
 	private: // ----------------------------------------------------------------------------------------
 
@@ -213,13 +213,13 @@ namespace Square
 		//! /param inU weighted
 		//! /param inV weighted
 		//! /param inN normalized
-		unsigned int AddUV2Base( std::multimap<CBaseIndex,unsigned int,CBaseIndexOrder> &inMap, const unsigned int indwPosNo, const unsigned int indwNormNo, const CVec3 &inU, const CVec3 &inV, const CVec3 &inNormN );
+		unsigned int AddUV2Base( MultiMap<CBaseIndex,unsigned int,CBaseIndexOrder> &inMap, const unsigned int indwPosNo, const unsigned int indwNormNo, const CVec3 &inU, const CVec3 &inV, const CVec3 &inNormN );
 
 		//! /param inMap
 		//! /param indwPosNo
 		//! /param indwNormNo
 		//! /param inNormal weighted normal
-		void AddNormal2Base( std::multimap<CBaseIndex,unsigned int,CBaseIndexOrder> &inMap, const unsigned int indwPosNo, const unsigned int indwNormNo, const CVec3 &inNormal );
+		void AddNormal2Base( MultiMap<CBaseIndex,unsigned int,CBaseIndexOrder> &inMap, const unsigned int indwPosNo, const unsigned int indwNormNo, const CVec3 &inNormal );
 
 		void DebugMesh( const InputProxy &inInput ) const;
 	};
@@ -269,8 +269,8 @@ namespace Square
 		square_assert(m_BaseVectors.empty());
 		square_assert(m_TriBaseAssigment.empty());
 
-		std::multimap<CBaseIndex,unsigned int,CBaseIndexOrder> mBaseMap;	// second=index into m_BaseVectors, generated output data
-		std::vector<CBase33> vTriangleBase;									// base vectors per triangle
+		MultiMap<CBaseIndex,unsigned int,CBaseIndexOrder> mBaseMap;	// second=index into m_BaseVectors, generated output data
+		Vector<CBase33> vTriangleBase;									// base vectors per triangle
 
 	//	DebugMesh(inInput);		// only for debugging - slow
 
@@ -400,7 +400,7 @@ namespace Square
 
 		// adjust the base vectors per vertex -------------------------------------------
 		{
-			typename std::vector<CBase33>::iterator it;
+			typename Vector<CBase33>::iterator it;
 		
 			for(it=m_BaseVectors.begin();it!=m_BaseVectors.end();++it)
 			{
@@ -434,7 +434,7 @@ namespace Square
 	}
 	
 	template <class InputProxy>
-	unsigned int CTangentSpaceCalculation<InputProxy>::AddUV2Base( std::multimap<CBaseIndex,unsigned int,CBaseIndexOrder> &inMap,
+	unsigned int CTangentSpaceCalculation<InputProxy>::AddUV2Base( MultiMap<CBaseIndex,unsigned int,CBaseIndexOrder> &inMap,
 		const unsigned int indwPosNo, const unsigned int indwNormNo, const CVec3 &inU, const CVec3 &inV, const CVec3 &inNormN )
 	{
 		// no mesh is perfect
@@ -445,7 +445,7 @@ namespace Square
 		Indx.m_dwPosNo=indwPosNo;
 		Indx.m_dwNormNo=indwNormNo;
 
-		typename std::multimap<CBaseIndex,unsigned int,CBaseIndexOrder>::iterator iFind,iFindEnd;
+		typename MultiMap<CBaseIndex,unsigned int,CBaseIndexOrder>::iterator iFind,iFindEnd;
 		
 		iFind = inMap.lower_bound(Indx);
 
@@ -514,7 +514,7 @@ namespace Square
 	}
 	
 	template <class InputProxy>
-	void CTangentSpaceCalculation<InputProxy>::AddNormal2Base( std::multimap<CBaseIndex,unsigned int,CBaseIndexOrder> &inMap,
+	void CTangentSpaceCalculation<InputProxy>::AddNormal2Base( MultiMap<CBaseIndex,unsigned int,CBaseIndexOrder> &inMap,
 															   const unsigned int indwPosNo, 
 															   const unsigned int indwNormNo,
 															   const CVec3 &inNormal  )
@@ -524,7 +524,7 @@ namespace Square
 		Indx.m_dwPosNo=indwPosNo;
 		Indx.m_dwNormNo=indwNormNo;
 
-		typename std::multimap<CBaseIndex,unsigned int,CBaseIndexOrder>::iterator iFind = inMap.find(Indx);
+		typename MultiMap<CBaseIndex,unsigned int,CBaseIndexOrder>::iterator iFind = inMap.find(Indx);
 
 		unsigned int dwBaseNIndex;
 

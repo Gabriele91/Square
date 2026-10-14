@@ -130,7 +130,7 @@ namespace Render
 		//GBufferPosition.hlsl, precise far from the camera); the normal (octahedral), the
 		//roughness/shininess, the shading model and the HDR emissive fit 16 bit floats; albedo and
 		//metallic are in [0, 1]
-		std::vector<GBuffer::BufferFormat> formats
+		Vector<GBuffer::BufferFormat> formats
 		{
 			GBuffer::BufferFormat(TF_R32F,    TT_R,    TTF_FLOAT, RT_COLOR),          // GB_POSITION (depth)
 			GBuffer::BufferFormat(TF_RGBA16F, TT_RGBA, TTF_FLOAT, RT_COLOR),          // GB_NORMAL
@@ -210,7 +210,7 @@ namespace Render
 		render().update_steam_CB(m_cb_camera.get(), (const unsigned char*)&ucamera, sizeof(ucamera));
 		//the opaque queue in batches (by pass and material; front to back in a batch), each
 		//renderable its transform (and the cross-fade of its level of detail)
-		static const std::string s_technique{ "deferred" };
+		static const String s_technique{ "deferred" };
 		m_gbuffer_draws.clear();
 		for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE }))
 		{

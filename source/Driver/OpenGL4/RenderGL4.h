@@ -77,7 +77,7 @@ namespace Render
 	{
 	public:
 		//locations
-		using LocationList = std::vector< GLint >;
+		using LocationList = Vector< GLint >;
 		//location
 		struct GLLayout
 		{
@@ -89,7 +89,7 @@ namespace Render
 			}
 		};
 		//map
-		using GLLayoutMap = std::unordered_map< Shader*, GLLayout >;
+		using GLLayoutMap = UnorderedMap< Shader*, GLLayout >;
 		//OpenGL info
 		GLLayoutMap m_map_layout;
 		//info given from appliction
@@ -216,26 +216,26 @@ namespace Render
         virtual void set(const DMat3* m3, size_t n) override;
         virtual void set(const DMat4* m4, size_t n) override;
         
-        virtual void set(const std::vector < Texture* >& t) override;
-        virtual void set(const std::vector < int >& i)      override;
-        virtual void set(const std::vector < float >& f)    override;
-        virtual void set(const std::vector < double >& d)   override;
+        virtual void set(const Vector < Texture* >& t) override;
+        virtual void set(const Vector < int >& i)      override;
+        virtual void set(const Vector < float >& f)    override;
+        virtual void set(const Vector < double >& d)   override;
         
-        virtual void set(const std::vector < IVec2 >& v2) override;
-        virtual void set(const std::vector < IVec3 >& v3) override;
-        virtual void set(const std::vector < IVec4 >& v4) override;
+        virtual void set(const Vector < IVec2 >& v2) override;
+        virtual void set(const Vector < IVec3 >& v3) override;
+        virtual void set(const Vector < IVec4 >& v4) override;
         
-        virtual void set(const std::vector < Vec2 >& v2) override;
-        virtual void set(const std::vector < Vec3 >& v3) override;
-        virtual void set(const std::vector < Vec4 >& v4) override;
-        virtual void set(const std::vector < Mat3 >& m3) override;
-        virtual void set(const std::vector < Mat4 >& m4) override;
+        virtual void set(const Vector < Vec2 >& v2) override;
+        virtual void set(const Vector < Vec3 >& v3) override;
+        virtual void set(const Vector < Vec4 >& v4) override;
+        virtual void set(const Vector < Mat3 >& m3) override;
+        virtual void set(const Vector < Mat4 >& m4) override;
         
-        virtual void set(const std::vector < DVec2 >& v2) override;
-        virtual void set(const std::vector < DVec3 >& v3) override;
-        virtual void set(const std::vector < DVec4 >& v4) override;
-        virtual void set(const std::vector < DMat3 >& m3) override;
-        virtual void set(const std::vector < DMat4 >& m4) override;
+        virtual void set(const Vector < DVec2 >& v2) override;
+        virtual void set(const Vector < DVec3 >& v3) override;
+        virtual void set(const Vector < DVec4 >& v4) override;
+        virtual void set(const Vector < DMat3 >& m3) override;
+        virtual void set(const Vector < DMat4 >& m4) override;
         
         virtual bool is_valid() override;
         
@@ -300,26 +300,26 @@ namespace Render
 		virtual void set(const DMat3* m3, size_t n) override;
 		virtual void set(const DMat4* m4, size_t n) override;
 
-		virtual void set(const std::vector < Texture* >& t) override;
-		virtual void set(const std::vector < int >& i)      override;
-		virtual void set(const std::vector < float >& f)    override;
-		virtual void set(const std::vector < double >& d)   override;
+		virtual void set(const Vector < Texture* >& t) override;
+		virtual void set(const Vector < int >& i)      override;
+		virtual void set(const Vector < float >& f)    override;
+		virtual void set(const Vector < double >& d)   override;
 
-		virtual void set(const std::vector < IVec2 >& v2) override;
-		virtual void set(const std::vector < IVec3 >& v3) override;
-		virtual void set(const std::vector < IVec4 >& v4) override;
+		virtual void set(const Vector < IVec2 >& v2) override;
+		virtual void set(const Vector < IVec3 >& v3) override;
+		virtual void set(const Vector < IVec4 >& v4) override;
 
-		virtual void set(const std::vector < Vec2 >& v2) override;
-		virtual void set(const std::vector < Vec3 >& v3) override;
-		virtual void set(const std::vector < Vec4 >& v4) override;
-		virtual void set(const std::vector < Mat3 >& m3) override;
-		virtual void set(const std::vector < Mat4 >& m4) override;
+		virtual void set(const Vector < Vec2 >& v2) override;
+		virtual void set(const Vector < Vec3 >& v3) override;
+		virtual void set(const Vector < Vec4 >& v4) override;
+		virtual void set(const Vector < Mat3 >& m3) override;
+		virtual void set(const Vector < Mat4 >& m4) override;
 
-		virtual void set(const std::vector < DVec2 >& v2) override;
-		virtual void set(const std::vector < DVec3 >& v3) override;
-		virtual void set(const std::vector < DVec4 >& v4) override;
-		virtual void set(const std::vector < DMat3 >& m3) override;
-		virtual void set(const std::vector < DMat4 >& m4) override;
+		virtual void set(const Vector < DVec2 >& v2) override;
+		virtual void set(const Vector < DVec3 >& v3) override;
+		virtual void set(const Vector < DVec4 >& v4) override;
+		virtual void set(const Vector < DMat3 >& m3) override;
+		virtual void set(const Vector < DMat4 >& m4) override;
 
 		virtual bool is_valid() override;
 
@@ -376,15 +376,15 @@ namespace Render
 	{
 	public:
 		/////////////////////////////////////////////////////////////////////////
-        using UniformMap             = std::unordered_map< std::string, Unique<Uniform> >;
-        using UniformPair            = std::pair< std::string, Unique<Uniform> >;
-        using UniformConstBufferMap  = std::unordered_map< std::string, UniformConstBufferGL4 >;
-        using UniformConstBufferPair = std::pair< std::string, UniformConstBufferGL4 >;
+        using UniformMap             = UnorderedMap< String, Unique<Uniform> >;
+        using UniformPair            = std::pair< String, Unique<Uniform> >;
+        using UniformConstBufferMap  = UnorderedMap< String, UniformConstBufferGL4 >;
+        using UniformConstBufferPair = std::pair< String, UniformConstBufferGL4 >;
         //shader compile errors
         struct ShaderCompileError
         {
             ShaderType m_type;
-            std::string m_log;
+            String m_log;
         };
 		/////////////////////////////////////////////////////////////////////////
 		static const char* glsl_default_header;
@@ -411,15 +411,15 @@ namespace Render
 		void upload_global_buffer();
 
 		//get uniform
-		Uniform* uniform(const std::string& name);
+		Uniform* uniform(const String& name);
 
 		//get uniform const buffer
-		UniformConstBuffer* uniform_const_buffer(const std::string& name);
+		UniformConstBuffer* uniform_const_buffer(const String& name);
 
         //add error log
 		void push_compiler_error(const ShaderCompileError& error_log);
         
-		void push_linker_error(const std::string& error_log);
+		void push_linker_error(const String& error_log);
 
 		//shader id
 		unsigned int shader_id() const { return m_shader_id; }
@@ -438,7 +438,7 @@ namespace Render
 		bool						 m_global_buffer_update{ true };
 		UniformConstBufferGL4*		 m_global_buffer_ref{ nullptr };
 		ConstBuffer*				 m_global_buffer_gpu{ nullptr };
-		std::vector< unsigned char > m_global_buffer_cpu;
+		Vector< unsigned char > m_global_buffer_cpu;
 		void build_global_UBO();
 		void destroy_global_ubo();
 
@@ -446,13 +446,13 @@ namespace Render
 		mutable UniformMap m_uniform_map;
         mutable UniformConstBufferMap m_uniform_const_buffer_map;
 		mutable long m_uniform_ntexture{ -1 }; //n texture bind
-		mutable std::unordered_map< const void*, long > m_uniform_texture_unit; //first texture unit of each uniform, since the bind
+		mutable UnorderedMap< const void*, long > m_uniform_texture_unit; //first texture unit of each uniform, since the bind
 		//texture unit of a uniform: the same one until the next bind (set again on each draw it would run out of units)
 		long texture_unit(const void* uniform, size_t count = 1) const;
         
         //help
-		Uniform& add_uniform(const std::string& name, Unique<Uniform>&& u) const;
-		UniformConstBufferGL4& add_uniform_const_buffer(const std::string& name, const UniformConstBufferGL4& ucb) const;
+		Uniform& add_uniform(const String& name, Unique<Uniform>&& u) const;
+		UniformConstBufferGL4& add_uniform_const_buffer(const String& name, const UniformConstBufferGL4& ucb) const;
         
 		//context
 		unsigned int m_bind_cb_index{ 0 };
@@ -460,10 +460,10 @@ namespace Render
 		unsigned int m_shaders[ST_N_SHADER]{ 0 };// shaders
 
 		//shaders compiler errors
-		std::vector < ShaderCompileError > m_errors;
+		Vector < ShaderCompileError > m_errors;
 
 		//linking error
-		std::string m_linker_log;
+		String m_linker_log;
         
 	};
     
@@ -546,9 +546,9 @@ namespace Render
 		virtual void unbind_VBO(VertexBuffer*) override;
 		virtual void unbind_IBO(IndexBuffer*) override;
 
-		virtual std::vector<unsigned char> copy_buffer_CB(const ConstBuffer*) override;
-		virtual std::vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) override;
-		virtual std::vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) override;
+		virtual Vector<unsigned char> copy_buffer_CB(const ConstBuffer*) override;
+		virtual Vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) override;
+		virtual Vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) override;
 
 		virtual unsigned char* map_CB(ConstBuffer*, size_t start, size_t n, MappingType type) override;
 		virtual unsigned char* map_CB(ConstBuffer*, MappingType type) override;
@@ -610,10 +610,10 @@ namespace Render
 			const TextureRawDataInformation  data[6],
 			const TextureGpuDataInformation& info
 		) override;
-		virtual  std::vector< unsigned char > get_texture(Texture*, int level = 0) override;
+		virtual  Vector< unsigned char > get_texture(Texture*, int level = 0) override;
 		virtual void copy_texture(Texture* source, Texture* destination) override;
 		virtual void copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer) override;
-		virtual  std::vector< unsigned char > get_texture(Texture*, int face = 0, int level = 0) override;
+		virtual  Vector< unsigned char > get_texture(Texture*, int face = 0, int level = 0) override;
 		virtual void bind_texture(Texture*, int texture_id, int sempler_id) override;
 		virtual void unbind_texture(Texture*) override;
 		virtual void unbind_texture(int n) override;
@@ -621,27 +621,27 @@ namespace Render
 		virtual void update_texture(Texture* texture, const TextureRawDataInformation& data) override;
 
 		//shader
-		virtual Shader* create_shader(const std::vector< ShaderSourceInformation >& infos) override;
+		virtual Shader* create_shader(const Vector< ShaderSourceInformation >& infos) override;
 
 		virtual bool shader_compiled_with_errors(Shader* shader) override;
 		virtual bool shader_linked_with_error(Shader* shader) override;
-		virtual std::vector< std::string > get_shader_compiler_errors(Shader* shader) override;
-		virtual std::string get_shader_linker_error(Shader* shader) override;
+		virtual Vector< String > get_shader_compiler_errors(Shader* shader) override;
+		virtual String get_shader_linker_error(Shader* shader) override;
 
 		virtual void bind_shader(Shader* shader) override;
 		virtual void unbind_shader(Shader* shader) override;
         
-        virtual void bind_uniform_CB(const ConstBuffer*, Shader*, const std::string& uname) override;
-        virtual void unbind_uniform_CB(Shader*, const std::string& uname) override;
+        virtual void bind_uniform_CB(const ConstBuffer*, Shader*, const String& uname) override;
+        virtual void unbind_uniform_CB(Shader*, const String& uname) override;
 
 		virtual void delete_shader(Shader*&) override;
 
 		virtual Shader*  get_bind_shader() const override;
-        virtual Uniform* get_uniform(Shader*, const std::string& uname) const override;
-        virtual UniformConstBuffer* get_uniform_const_buffer(Shader*, const std::string& uname) const override;
+        virtual Uniform* get_uniform(Shader*, const String& uname) const override;
+        virtual UniformConstBuffer* get_uniform_const_buffer(Shader*, const String& uname) const override;
 
 		//target
-		virtual Target* create_render_target(const std::vector< TargetField >& textures) override;
+		virtual Target* create_render_target(const Vector< TargetField >& textures) override;
 		virtual void enable_render_target(Target*) override;
 		virtual void disable_render_target(Target*) override;
 		virtual void delete_render_target(Target*&) override;
@@ -665,7 +665,7 @@ namespace Render
 		virtual void gpu_timer_begin_frame() override;
 		virtual void gpu_timer_end_frame() override;
 		virtual int  gpu_timer_timestamp() override;
-		virtual bool gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms) override;
+		virtual bool gpu_timer_read_frame(uint64& frame_id, Vector<double>& timestamps_ms) override;
 #endif
 
 		//context
@@ -684,7 +684,7 @@ namespace Render
 		struct GpuTimerFrame
 		{
 			uint64              m_id{ 0 };
-			std::vector<GLuint> m_queries; //grown on demand
+			Vector<GLuint> m_queries; //grown on demand
 			size_t              m_count{ 0 };
 			bool                m_pending{ false };
 		};

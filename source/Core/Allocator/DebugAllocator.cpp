@@ -18,7 +18,7 @@ namespace Square
 	{
 		for (auto& it : m_debug_map)
 		{
-			m_logger->debug("Memory leak: " + it.second + " ptr: " + std::to_string(size_t(it.first)));
+			m_logger->debug("Memory leak: " + it.second + " ptr: " + to_string(size_t(it.first)));
 		}
 	}
 
@@ -31,12 +31,12 @@ namespace Square
 		{
 			m_debug_map[alloc_memory_ptr] = name;
 #if DEBUG_ALLOCATOR_SUPER_VERBOSE
-			m_logger->debug("Alloc: " + std::string(name) + " ptr: " + std::to_string(size_t(alloc_memory_ptr)));
+			m_logger->debug("Alloc: " + String(name) + " ptr: " + to_string(size_t(alloc_memory_ptr)));
 #endif
 		}
 		else
 		{
-			m_logger->debug("Faild allocation: " + std::string(name));
+			m_logger->debug("Faild allocation: " + String(name));
 		}
 		return alloc_memory_ptr;
 	}
@@ -50,12 +50,12 @@ namespace Square
 		{
 			m_debug_map[alloc_memory_ptr] = name;
 #if DEBUG_ALLOCATOR_SUPER_VERBOSE
-			m_logger->debug("Alloc: " + std::string(name) + " ptr: " + std::to_string(size_t(alloc_memory_ptr)));
+			m_logger->debug("Alloc: " + String(name) + " ptr: " + to_string(size_t(alloc_memory_ptr)));
 #endif
 		}
 		else
 		{
-			m_logger->debug("Faild allocation: " + std::string(name));
+			m_logger->debug("Faild allocation: " + String(name));
 		}
 		return alloc_memory_ptr;
 	}
@@ -67,12 +67,12 @@ namespace Square
 		if (ptr_name_it != m_debug_map.end())
 		{
 #if DEBUG_ALLOCATOR_SUPER_VERBOSE
-			m_logger->debug("Free: " + ptr_name_it->second + " ptr: " + std::to_string(size_t(ptr)));
+			m_logger->debug("Free: " + ptr_name_it->second + " ptr: " + to_string(size_t(ptr)));
 #endif
 			m_debug_map.erase(ptr_name_it);
 		}
 		else
-			m_logger->debug("Free: UNKNOWN ptr: " + std::to_string(size_t(ptr)));
+			m_logger->debug("Free: UNKNOWN ptr: " + to_string(size_t(ptr)));
 		m_allocator->free(ptr,size);
 	}
 
@@ -83,12 +83,12 @@ namespace Square
 		if (ptr_name_it != m_debug_map.end())
 		{
 #if DEBUG_ALLOCATOR_SUPER_VERBOSE
-			m_logger->debug("Free: " + ptr_name_it->second + " ptr: " + std::to_string(size_t(ptr)));
+			m_logger->debug("Free: " + ptr_name_it->second + " ptr: " + to_string(size_t(ptr)));
 #endif
 			m_debug_map.erase(ptr_name_it);
 		}
 		else
-			m_logger->debug("Free: UNKNOWN ptr: " + std::to_string(size_t(ptr)));
+			m_logger->debug("Free: UNKNOWN ptr: " + to_string(size_t(ptr)));
 		m_allocator->free(ptr);
 	}
 }

@@ -70,7 +70,7 @@ namespace Render
 		//it draws only with the deferred pipeline (its G-Buffer)
 		virtual bool active(const PostEffectFrame& frame) const override { return frame.m_gbuffer && frame.m_camera; }
 		virtual void draw(PostEffectFrame& frame) override;
-		virtual void debug_options(std::vector<DebugOption>& options) override;
+		virtual void debug_options(Vector<DebugOption>& options) override;
 
 	protected:
 		virtual void on_release() override;
@@ -99,7 +99,7 @@ namespace Render
 		Texture* m_denoise_texture{ nullptr };
 		Target*  m_denoise_target{ nullptr };
 		//the blur chain (from the trace)
-		std::vector<Level> m_levels;
+		Vector<Level> m_levels;
 		int                m_levels_count{ 0 }; //levels asked when it was built
 
 		//the levels of the chain of a quality (0: no chain)

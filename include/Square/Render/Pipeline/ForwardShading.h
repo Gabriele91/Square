@@ -42,7 +42,7 @@ namespace Render
 	 , const Camera&                 camera
 	 , const Vec4&                   ambient_light
 	 , const PoolQueues&             queues
-	 , const std::vector<QueueType>& queue_types
+	 , const Vector<QueueType>& queue_types
 	 , const ForwardShadingBuffers&  buffers
 	);
 }

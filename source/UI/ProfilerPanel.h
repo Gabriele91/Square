@@ -31,7 +31,7 @@ namespace UI
 		~ProfilerPanel();
 
 		//the markup of its tab (the elements it finds by their ids)
-		static std::string rml();
+		static String rml();
 
 		//its elements in a document (made again with it), none
 		void attach(Document& document);
@@ -60,7 +60,7 @@ namespace UI
 		Element            m_shaders;
 		Element            m_rows;
 		Element            m_note;
-		std::vector<Row>   m_pool;
+		Vector<Row>   m_pool;
 		bool               m_attached{ false };
 		bool               m_requested{ false }; //the profiler asked on (it turns on at the next frame)
 		bool               m_showing{ false };   //the check boxes changed by it (their events ignored)
@@ -68,7 +68,7 @@ namespace UI
 
 		Render::Profiler* profiler() const;
 		Row& row(size_t index);
-		void set_row(size_t index, const std::string& name, int depth, const std::string& gpu, const std::string& cpu, const std::string& draws, double fraction, bool head);
+		void set_row(size_t index, const String& name, int depth, const String& gpu, const String& cpu, const String& draws, double fraction, bool head);
 		//the check boxes as the profiler is
 		void show_state();
 	};

@@ -68,7 +68,7 @@ namespace Square
 		SystemStartup m_startup{ SystemStartup::ON_DEMAND };
 		unsigned int  m_ring{ SystemRing::GAME };
 	};
-	using SystemInfoMap = std::unordered_map< uint64, SystemInfo >;
+	using SystemInfoMap = UnorderedMap< uint64, SystemInfo >;
 
 	//declare a system class: object info and ring
 	#define SQUARE_SYSTEM(Class, Ring)\

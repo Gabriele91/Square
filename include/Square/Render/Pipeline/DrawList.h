@@ -50,7 +50,7 @@ namespace Render
 		void add
 		(
 			  const Shared<Renderable>& renderable
-			, const std::string& technique_name
+			, const String& technique_name
 			, uint32 layers = MULTI_PASS_ALL_LAYERS
 			, bool settle = false
 		);
@@ -103,7 +103,7 @@ namespace Render
 			float                m_fade{ 1.0f };
 			size_t               m_order{ 0 };
 		};
-		std::vector<Draw> m_draws;
+		Vector<Draw> m_draws;
 		size_t            m_drawn{ 0 };
 		size_t            m_batches{ 0 };
 #if defined(SQUARE_DEBUG_TOOLS)

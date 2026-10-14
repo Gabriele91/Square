@@ -26,8 +26,8 @@ public:
 		const float velocity = 20.0f  * application().last_delta_time();
 		const auto  level_path = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.sq");
 		const auto  level_path_json = Square::Filesystem::join(Square::Filesystem::resource_dir(), "level.jsq");
-		context().logger()->info("value: " + std::to_string(key));
-		context().logger()->info("delta: " + std::to_string(application().last_delta_time()));
+		context().logger()->info("value: " + Square::to_string(key));
+		context().logger()->info("delta: " + Square::to_string(application().last_delta_time()));
 		//
 		switch (key)
 		{
@@ -63,7 +63,7 @@ public:
 		case Square::Video::KEY_C:
 			if (action == Square::Video::ActionEvent::RELEASE)
 			{
-				context().logger()->info("FPS avg: " + std::to_string(m_counter.get()));
+				context().logger()->info("FPS avg: " + Square::to_string(m_counter.get()));
 			}
 			break;
 		case Square::Video::KEY_Y:
@@ -197,7 +197,7 @@ public:
     }
 
 	//level serialize
-	void serialize(const std::string& path)
+	void serialize(const Square::String& path)
 	{
 		using namespace Square;
 		using namespace Square::Data;
@@ -206,7 +206,7 @@ public:
 		ArchiveBinWrite out(context(), ofile);
 		world().serialize(out);
 	}
-	void serialize_json(const std::string& path)
+	void serialize_json(const Square::String& path)
 	{
 		using namespace Square;
 		using namespace Square::Data;
@@ -215,7 +215,7 @@ public:
 		std::ofstream(path) << jout;
 	}
 	//level deserialize
-	void deserialize(const std::string& path)
+	void deserialize(const Square::String& path)
 	{
 		using namespace Square;
 		using namespace Square::Data;
@@ -226,7 +226,7 @@ public:
 		world().deserialize(in);
 		m_level = world().level("main");
 	}
-	void deserialize_json(const std::string& path)
+	void deserialize_json(const Square::String& path)
 	{
 		using namespace Square;
 		using namespace Square::Data;
@@ -257,8 +257,8 @@ private:
 
 static Square::Shell::ParserCommands s_ShellCommands
 {
-	  Square::Shell::Command{ "backend","b", "select backend [ogl, d3d, mtl, vk]" , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("ogl")) }
-    , Square::Shell::Command{ "gputype","g", "select gpu type [low, high]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("high")) }
+	  Square::Shell::Command{ "backend","b", "select backend [ogl, d3d, mtl, vk]" , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("ogl")) }
+    , Square::Shell::Command{ "gputype","g", "select gpu type [low, high]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("high")) }
 	, Square::Shell::Command{ "debug",  "d", "enable debug"               , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
 	, Square::Shell::Command{ "srgb",   "c", "enable gamme correction"    , Square::Shell::ValueType::value_bool  , false, Square::Shell::Value_t(true) }
 	, Square::Shell::Command{ "verbose","v", "enable verbose"             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false) }
@@ -280,7 +280,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
 	// Test error
 	if (errors.type != Shell::ErrorType::none)
 	{
-		app.context()->logger()->error("Error to parse input [" + std::to_string(errors.id_argument) + "]: " + errors.what);
+		app.context()->logger()->error("Error to parse input [" + Square::to_string(errors.id_argument) + "]: " + errors.what);
 		return -1;
 	}
 	//debug?
@@ -288,15 +288,15 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
 	//verbose?
 	app.logger()->verbose(std::get<bool>(args.at("verbose")));
 	//GPU type
-	GpuType gputype = std::get<std::string>(args.at("gputype")) == "low" ? GpuType::GPU_LOW : GpuType::GPU_HIGH;
+	GpuType gputype = std::get<Square::String>(args.at("gputype")) == "low" ? GpuType::GPU_LOW : GpuType::GPU_HIGH;
 	//Enable SRGB
 	const bool srgb = std::get<bool>(args.at("srgb"));
 	//driver?
-	WindowRenderDriver render_driver = std::get<std::string>(args.at("backend")) == "d3d"
+	WindowRenderDriver render_driver = std::get<Square::String>(args.at("backend")) == "d3d"
 		? (WindowRenderDriver{ Render::RenderDriver::DR_DIRECTX, 11, 0, 24, 8, gputype, srgb, debug })
-		: std::get<std::string>(args.at("backend")) == "mtl" 
+		: std::get<Square::String>(args.at("backend")) == "mtl" 
 		? (WindowRenderDriver{ Render::RenderDriver::DR_METAL, 3, 0, 24, 8, gputype, srgb, debug })
-		: std::get<std::string>(args.at("backend")) == "vk"
+		: std::get<Square::String>(args.at("backend")) == "vk"
 		? (WindowRenderDriver{ Render::RenderDriver::DR_VULKAN, 1, 1, 24, 8, gputype, srgb, debug })
 		: (WindowRenderDriver{ Render::RenderDriver::DR_OPENGL, 4, 1, 24, 8, gputype, srgb, debug });
 	

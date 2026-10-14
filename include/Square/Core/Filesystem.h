@@ -11,76 +11,76 @@ namespace Square
 {
 namespace Filesystem
 {
-    SQUARE_API std::vector<std::string> get_shared_lib_env_paths();
-	SQUARE_API std::string program_dir();
-    SQUARE_API std::string working_dir();
-    SQUARE_API std::string home_dir();
+    SQUARE_API Vector<String> get_shared_lib_env_paths();
+	SQUARE_API String program_dir();
+    SQUARE_API String working_dir();
+    SQUARE_API String home_dir();
     //the folder of the data of the applications of the user (settings, saves): Windows
     //%APPDATA%, macOS ~/Library/Application Support, Linux $XDG_DATA_HOME or ~/.local/share
-    SQUARE_API std::string app_data_dir();
-    SQUARE_API std::string resource_dir();
+    SQUARE_API String app_data_dir();
+    SQUARE_API String resource_dir();
 
-    SQUARE_API bool is_directory(const std::string& directorypath);
-    SQUARE_API bool is_file(const std::string& filepath);
-    SQUARE_API bool is_readable(const std::string& filepath);
-    SQUARE_API bool is_writable(const std::string& filepath);
-    SQUARE_API bool exists(const std::string& filepath);
+    SQUARE_API bool is_directory(const String& directorypath);
+    SQUARE_API bool is_file(const String& filepath);
+    SQUARE_API bool is_readable(const String& filepath);
+    SQUARE_API bool is_writable(const String& filepath);
+    SQUARE_API bool exists(const String& filepath);
     //archives (.sqz, .zip): a directory for all the functions here ("pack.sqz/dir/file"), read only
-    SQUARE_API bool is_archive(const std::string& filepath);
-    SQUARE_API bool archive_write(const std::string& directorypath, const std::string& archivepath);
+    SQUARE_API bool is_archive(const String& filepath);
+    SQUARE_API bool archive_write(const String& directorypath, const String& archivepath);
     //utilities files
-    SQUARE_API std::string get_directory(const std::string& filepath);
-    SQUARE_API std::string get_filename(const std::string& filepath);
-    SQUARE_API std::string get_basename(const std::string& filepath);
-    SQUARE_API std::string get_extension(const std::string& filepath, bool to_lower = true);
-    SQUARE_API std::string join(const std::string& path1, const std::string& path2);
+    SQUARE_API String get_directory(const String& filepath);
+    SQUARE_API String get_filename(const String& filepath);
+    SQUARE_API String get_basename(const String& filepath);
+    SQUARE_API String get_extension(const String& filepath, bool to_lower = true);
+    SQUARE_API String join(const String& path1, const String& path2);
     //read
-    SQUARE_API std::vector<char> file_read_all(const std::string& filepath);    
-    SQUARE_API std::string text_file_read_all(const std::string& filepath);
-    SQUARE_API std::vector<unsigned char> binary_file_read_all(const std::string& filepath);
-    SQUARE_API std::vector<unsigned char> binary_compress_file_read_all(const std::string& filepath);
+    SQUARE_API Vector<char> file_read_all(const String& filepath);    
+    SQUARE_API String text_file_read_all(const String& filepath);
+    SQUARE_API Vector<unsigned char> binary_file_read_all(const String& filepath);
+    SQUARE_API Vector<unsigned char> binary_compress_file_read_all(const String& filepath);
     //write
-    SQUARE_API bool file_write_all(const std::string& filepath, const std::vector<char>& buffer);
-    SQUARE_API bool text_file_write_all(const std::string& filepath, const std::string& buffer);
-    SQUARE_API bool binary_file_write_all(const std::string& filepath, const std::vector<unsigned char>& buffer);
-    SQUARE_API bool binary_compress_file_write_all(const std::string& filepath, const std::vector<unsigned char>& buffer);
+    SQUARE_API bool file_write_all(const String& filepath, const Vector<char>& buffer);
+    SQUARE_API bool text_file_write_all(const String& filepath, const String& buffer);
+    SQUARE_API bool binary_file_write_all(const String& filepath, const Vector<unsigned char>& buffer);
+    SQUARE_API bool binary_compress_file_write_all(const String& filepath, const Vector<unsigned char>& buffer);
 
     //shell helps
-    SQUARE_API bool makedir(const std::string& path);
-    SQUARE_API bool copyfile(const std::string& infilepath, const std::string& ofilepath);
+    SQUARE_API bool makedir(const String& path);
+    SQUARE_API bool copyfile(const String& infilepath, const String& ofilepath);
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // template help
     template < class ...Args >
-    static inline std::string join(const std::string& path1, const std::string& path2, Args... args) { return join(path1, join(path2, args...)); }
+    static inline String join(const String& path1, const String& path2, Args... args) { return join(path1, join(path2, args...)); }
     /////////////////////////////////////////////////////////////////////////////////////////////////
 
     //utilities path
     struct PathOperation
     {
         bool m_success;
-        std::string m_path;
+        String m_path;
     };
-    SQUARE_API PathOperation get_fullpath(const std::string& relative);
-    SQUARE_API PathOperation get_canonical(const std::string& fullpath);
-    SQUARE_API PathOperation get_relative_to(const std::string& base, const std::string& path);
+    SQUARE_API PathOperation get_fullpath(const String& relative);
+    SQUARE_API PathOperation get_canonical(const String& fullpath);
+    SQUARE_API PathOperation get_relative_to(const String& base, const String& path);
     //utilities directories
     struct FolderList
     {
         bool m_success;
-        std::vector < std::string > m_fields;
+        Vector < String > m_fields;
         //iterator
-        std::vector < std::string >::iterator begin(){ return m_fields.begin(); }
-        std::vector < std::string >::iterator end()  { return m_fields.end(); }
-        std::vector < std::string >::const_iterator begin() const { return m_fields.begin(); }
-        std::vector < std::string >::const_iterator end()   const { return m_fields.end(); }
+        Vector < String >::iterator begin(){ return m_fields.begin(); }
+        Vector < String >::iterator end()  { return m_fields.end(); }
+        Vector < String >::const_iterator begin() const { return m_fields.begin(); }
+        Vector < String >::const_iterator end()   const { return m_fields.end(); }
     };
     using FilesList       = FolderList;
     using DirectoriesList = FolderList;
 
-    SQUARE_API FilesList       get_files(const std::string& directorypath);
-    SQUARE_API DirectoriesList get_sub_directories(const std::string& directorypath);
+    SQUARE_API FilesList       get_files(const String& directorypath);
+    SQUARE_API DirectoriesList get_sub_directories(const String& directorypath);
     
     namespace Stream
     {
@@ -92,7 +92,7 @@ namespace Filesystem
             GZStreambuf();
             ~GZStreambuf() override;
 
-            bool open(const std::string& filename, const char* mode);
+            bool open(const String& filename, const char* mode);
             void close();
 
         protected:
@@ -109,8 +109,8 @@ namespace Filesystem
         {
         public:
             GZOStream();
-            explicit GZOStream(const std::string& filename);
-            void open(const std::string& filename);
+            explicit GZOStream(const String& filename);
+            void open(const String& filename);
             void close();
 
         private:
@@ -121,8 +121,8 @@ namespace Filesystem
         {
         public:
             GZIStream();
-            explicit GZIStream(const std::string& filename);
-            void open(const std::string& filename);
+            explicit GZIStream(const String& filename);
+            void open(const String& filename);
             void close();
 
         private:

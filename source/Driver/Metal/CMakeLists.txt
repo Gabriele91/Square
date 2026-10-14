@@ -13,6 +13,7 @@ endif()
 
 set(SOURCE_FILES
     ${SQUARE_ROOT_DIR}/source/Core/Allocator/MemoryOperators.cpp
+    ${SQUARE_ROOT_DIR}/source/Core/Container/String.cpp
     InterfaceMTL.mm
     RenderMTL.mm
 )

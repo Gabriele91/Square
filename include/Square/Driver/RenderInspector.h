@@ -61,7 +61,7 @@ namespace Render
 	//attachments of a render target alive on the driver
 	struct TargetInfo
 	{
-		std::vector<TargetField> m_fields;
+		Vector<TargetField> m_fields;
 	};
 
 	////////////////////////////////////////////////
@@ -69,14 +69,14 @@ namespace Render
 	class SQUARE_API RenderInspector
 	{
 	public:
-		using TextureRegistry = std::vector< std::pair<Texture*, TextureInfo> >;
-		using TargetRegistry  = std::vector< std::pair<Target*, TargetInfo> >;
+		using TextureRegistry = Vector< std::pair<Texture*, TextureInfo> >;
+		using TargetRegistry  = Vector< std::pair<Target*, TargetInfo> >;
 
 		virtual ~RenderInspector() = default;
 
 		virtual void on_create_texture(Texture* texture, const TextureInfo& info) = 0;
 		virtual void on_delete_texture(const Texture* texture) = 0;
-		virtual void on_create_target(Target* target, const std::vector<TargetField>& fields) = 0;
+		virtual void on_create_target(Target* target, const Vector<TargetField>& fields) = 0;
 		virtual void on_delete_target(const Target* target) = 0;
 
 		//registry access

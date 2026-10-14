@@ -24,17 +24,17 @@ namespace Parser
 
 	public:
 
-        static std::string blend_to_string(Render::BlendType blend);
+        static String blend_to_string(Render::BlendType blend);
         
-        static Render::BlendType blend_from_string(const std::string& blend, Render::BlendType blend_default);
+        static Render::BlendType blend_from_string(const String& blend, Render::BlendType blend_default);
 
-        static std::string depth_to_string(Render::DepthFuncType depth);
+        static String depth_to_string(Render::DepthFuncType depth);
         
-        static Render::DepthFuncType depth_from_string(const std::string& depth, Render::DepthFuncType depth_default);
+        static Render::DepthFuncType depth_from_string(const String& depth, Render::DepthFuncType depth_default);
 
-        static std::string cullface_to_string(Render::CullfaceType cullface);
+        static String cullface_to_string(Render::CullfaceType cullface);
         
-        static Render::CullfaceType cullface_from_string(const std::string& cullface, Render::CullfaceType cullface_default);
+        static Render::CullfaceType cullface_from_string(const String& cullface, Render::CullfaceType cullface_default);
         
 		// Capability gate: ANY ignores the capability, REQUIRE matches only drivers
 		// that have it, EXCLUDE matches only drivers that lack it.
@@ -47,10 +47,10 @@ namespace Parser
 
 		struct RequirementField
 		{
-			std::string    m_driver_name{ "ALL" };
+			String    m_driver_name{ "ALL" };
 			int            m_driver_major_version{ 0 };
 			int            m_driver_minor_version{ 0 };
-			std::string    m_shader_name{ "ALL" };
+			String    m_shader_name{ "ALL" };
 			int            m_shader_version{ 0 };
 			CapabilityTest m_geometry_shader{ CAP_ANY };
 			CapabilityTest m_vertex_viewport_index{ CAP_ANY };
@@ -72,7 +72,7 @@ namespace Parser
 			//shader type
 			Type m_type{ S_NONE };
 			//include
-			std::string m_data;
+			String m_data;
 			size_t      m_line{ 0 };
 		};
 
@@ -106,13 +106,13 @@ namespace Parser
 
 		struct TechniqueField
 		{
-			std::string m_name;
-			std::vector< PassField > m_pass;
+			String m_name;
+			Vector< PassField > m_pass;
 			//"variants instanced clip": the Render::EffectVariant declared (each combination is compiled)
 			unsigned char m_variants{ Render::EV_NONE };
 			//"clip(mask, dither)": the parameters that turn the clip variant on (none: only the fade
 			//of a level of detail)
-			std::vector< std::string > m_clip_parameters;
+			Vector< String > m_clip_parameters;
 		};
 
 		struct ImportField
@@ -127,30 +127,30 @@ namespace Parser
 			};
 			Type m_type{ I_RESOUCE };
 			//effect path/name
-			std::string m_data;
+			String m_data;
 			//effect technique name
-			std::string m_technique_name;
+			String m_technique_name;
 		};
 
 		struct SubEffectField
 		{
 			RequirementField m_requirement;
 			EffectQueueType   m_queue;
-			std::vector< TechniqueField > m_techniques;
-			std::vector< ImportField > m_imports;
+			Vector< TechniqueField > m_techniques;
+			Vector< ImportField > m_imports;
 		};
 
 		struct Context
 		{
-			std::vector< SubEffectField >   m_sub_effect;
-			std::vector< ParameterField >   m_parameters;
-			std::list< ErrorField >	        m_errors;
+			Vector< SubEffectField >   m_sub_effect;
+			Vector< ParameterField >   m_parameters;
+			List< ErrorField >	        m_errors;
 			size_t						    m_line{ 1 };
 
-            std::string errors_to_string() const;
+            String errors_to_string() const;
 		};
 
-        bool parse(Allocator* allocator, Context& default_context, const std::string& source);
+        bool parse(Allocator* allocator, Context& default_context, const String& source);
 
         bool parse(Allocator* allocator, Context& default_context, const char*& ptr);
 
@@ -183,7 +183,7 @@ namespace Parser
         bool parse_depth(const char*& ptr, PassField& pass);
         bool parse_cullface(const char*& ptr, PassField& pass);
         //param(name): a parametric state, its parameter
-        bool parse_state_param(const char*& ptr, std::string& name);
+        bool parse_state_param(const char*& ptr, String& name);
         bool parse_lights(const char*& ptr, PassField& pass);
 		bool parse_shadows(const char*& ptr, PassField& pass);
         bool parse_draw_count(const char*& ptr, PassField& pass);
@@ -192,7 +192,7 @@ namespace Parser
 		//////////////////////////////////////////////////////
         bool parse_queue_type(const char*& inout, Render::QueueType& type);
 		//////////////////////////////////////////////////////
-        void push_error(const std::string& error);
+        void push_error(const String& error);
 
 	};
 }

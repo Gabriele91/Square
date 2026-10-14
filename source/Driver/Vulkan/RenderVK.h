@@ -62,7 +62,7 @@ namespace Render
 	class ConstBuffer
 	{
 	public:
-		std::vector<unsigned char> m_bytes;
+		Vector<unsigned char> m_bytes;
 		bool                       m_dirty{ true };
 		SliceVK                    m_slice;
 	};
@@ -76,7 +76,7 @@ namespace Render
 		size_t   m_size{ 0 };
 		bool     m_stream{ false };
 		uint64   m_last_frame{ 0 }; //the last frame that read it (+1: 0 never)
-		std::vector<unsigned char> m_read; //mapped to be read (a static buffer: its bytes read back)
+		Vector<unsigned char> m_read; //mapped to be read (a static buffer: its bytes read back)
 	};
 
 	class VertexBuffer : public GeometryBufferVK
@@ -113,7 +113,7 @@ namespace Render
 		VkSampler          m_sampler{ VK_NULL_HANDLE }; //of the cache of the context
 		//its views: to sample it (by the shape a shader reads), to draw into it (all its layers,
 		//one of them), made when asked
-		std::unordered_map<uint64, VkImageView> m_views;
+		UnorderedMap<uint64, VkImageView> m_views;
 		uint64             m_last_frame{ 0 }; //the last frame that used it (+1)
 	};
 
@@ -136,13 +136,13 @@ namespace Render
 			TargetType m_type{ RT_COLOR };
 			int        m_layer{ -1 };
 		};
-		std::vector<Attachment> m_colors;
+		Vector<Attachment> m_colors;
 		Attachment              m_depth;
 		uint32_t                m_width{ 0 };
 		uint32_t                m_height{ 0 };
 		uint32_t                m_layers{ 1 };
 		//its framebuffers, by their render pass
-		std::unordered_map<VkRenderPass, VkFramebuffer> m_framebuffers;
+		UnorderedMap<VkRenderPass, VkFramebuffer> m_framebuffers;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -195,23 +195,23 @@ namespace Render
 		virtual void set(const DVec4* p, size_t n) override { write_values(p, n); }
 		virtual void set(const DMat3* p, size_t n) override { write_values(p, n); }
 		virtual void set(const DMat4* p, size_t n) override { write_values(p, n); }
-		virtual void set(const std::vector<Texture*>& v) override { if (v.size()) set(v[0]); }
-		virtual void set(const std::vector<int>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<float>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<double>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<IVec2>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<IVec3>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<IVec4>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<Vec2>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<Vec3>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<Vec4>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<Mat3>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<Mat4>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<DVec2>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<DVec3>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<DVec4>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<DMat3>& v) override { write_values(v.data(), v.size()); }
-		virtual void set(const std::vector<DMat4>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<Texture*>& v) override { if (v.size()) set(v[0]); }
+		virtual void set(const Vector<int>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<float>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<double>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<IVec2>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<IVec3>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<IVec4>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<Vec2>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<Vec3>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<Vec4>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<Mat3>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<Mat4>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<DVec2>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<DVec3>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<DVec4>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<DMat3>& v) override { write_values(v.data(), v.size()); }
+		virtual void set(const Vector<DMat4>& v) override { write_values(v.data(), v.size()); }
 		virtual bool is_valid() override { return m_shader != nullptr; }
 		virtual Shader* get_shader() override { return m_shader; }
 
@@ -245,7 +245,7 @@ namespace Render
 		VkDescriptorType               m_type{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC };
 		VkShaderStageFlags             m_stages{ 0 };
 		uint32_t                       m_count{ 1 };
-		std::string                    m_name;
+		String                    m_name;
 		uint32_t                       m_size{ 0 };       //a buffer: its block
 		bool                           m_global{ false }; //the block of the loose uniforms
 		SpirvReflection::ImageDim      m_dim{ SpirvReflection::ImageDim::DIM_2D };
@@ -258,30 +258,30 @@ namespace Render
 	{
 	public:
 		VkShaderModule              m_modules[ST_N_SHADER]{};
-		std::string                 m_entries[ST_N_SHADER];
-		std::vector<BindingVK>      m_bindings;
-		std::vector<SpirvReflection::Input> m_inputs;
+		String                 m_entries[ST_N_SHADER];
+		Vector<BindingVK>      m_bindings;
+		Vector<SpirvReflection::Input> m_inputs;
 		bool                        m_writes_layer{ false };
 		VkDescriptorSetLayout       m_set_layout{ VK_NULL_HANDLE };
 		VkPipelineLayout            m_pipeline_layout{ VK_NULL_HANDLE };
 		uint32_t                    m_dynamic_buffers{ 0 }; //the dynamic offsets of its set
 		//bound to its bindings (by their binding)
-		std::vector<const ConstBuffer*> m_buffers;
-		std::vector<Texture*>           m_textures;
+		Vector<const ConstBuffer*> m_buffers;
+		Vector<Texture*>           m_textures;
 		//the loose uniforms: their block, its binding, their offsets
 		int                         m_global_binding{ -1 };
 		ConstBuffer                 m_global;
-		std::unordered_map<std::string, SpirvReflection::Member> m_members;
+		UnorderedMap<String, SpirvReflection::Member> m_members;
 		//the uniforms given (owned by it)
-		std::unordered_map<std::string, std::unique_ptr<UniformVK>>            m_uniforms;
-		std::unordered_map<std::string, std::unique_ptr<UniformConstBufferVK>> m_uniform_buffers;
+		UnorderedMap<String, UniquePtr<UniformVK>>            m_uniforms;
+		UnorderedMap<String, UniquePtr<UniformConstBufferVK>> m_uniform_buffers;
 		//the last set of its draws (the same resources: the same set, other offsets)
 		VkDescriptorSet             m_set{ VK_NULL_HANDLE };
 		uint64                      m_set_frame{ ~uint64(0) };
-		std::vector<uint64>         m_set_key;
+		Vector<uint64>         m_set_key;
 		//errors
-		std::vector<std::string>    m_errors;
-		std::string                 m_link_error;
+		Vector<String>    m_errors;
+		String                 m_link_error;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -329,7 +329,7 @@ namespace Render
 	//what makes a render pass: the formats of its attachments, the clears of its load
 	struct RenderPassKeyVK
 	{
-		std::array<VkFormat, VK_MAX_COLORS> m_colors{};
+		Array<VkFormat, VK_MAX_COLORS> m_colors{};
 		uint32_t m_count{ 0 };
 		VkFormat m_depth{ VK_FORMAT_UNDEFINED };
 		bool     m_clear_color{ false };
@@ -365,11 +365,11 @@ namespace Render
 		VkFence                      m_fence{ VK_NULL_HANDLE };
 		VkSemaphore                  m_acquired{ VK_NULL_HANDLE };
 		//the ring of the constant buffers: its buffers, the one in use, its offset
-		std::vector<BufferVK>        m_ring;
+		Vector<BufferVK>        m_ring;
 		size_t                       m_ring_buffer{ 0 };
 		VkDeviceSize                 m_ring_offset{ 0 };
 		//its descriptor pools
-		std::vector<VkDescriptorPool> m_descriptor_pools;
+		Vector<VkDescriptorPool> m_descriptor_pools;
 		size_t                       m_descriptor_pool{ 0 };
 		//the bytes of the staging buffers of its uploads
 		VkDeviceSize                 m_staging_bytes{ 0 };
@@ -385,8 +385,8 @@ namespace Render
 		VkFormat                 m_format{ VK_FORMAT_UNDEFINED };
 		VkExtent2D               m_extent{ 0, 0 };
 		bool                     m_vsync{ false };
-		std::vector<std::unique_ptr<Texture>> m_images;
-		std::vector<VkSemaphore> m_presented; //by image: the draws done, it can be presented
+		Vector<UniquePtr<Texture>> m_images;
+		Vector<VkSemaphore> m_presented; //by image: the draws done, it can be presented
 		uint32_t                 m_image{ 0 };
 		bool                     m_acquired{ false };      //an image of this frame
 		bool                     m_acquired_waited{ false }; //its semaphore waited by a submit
@@ -458,9 +458,9 @@ namespace Render
 		virtual void unbind_VBO(VertexBuffer*) override;
 		virtual void unbind_IBO(IndexBuffer*) override;
 
-		virtual std::vector<unsigned char> copy_buffer_CB(const ConstBuffer*) override;
-		virtual std::vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) override;
-		virtual std::vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) override;
+		virtual Vector<unsigned char> copy_buffer_CB(const ConstBuffer*) override;
+		virtual Vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) override;
+		virtual Vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) override;
 
 		virtual unsigned char* map_CB(ConstBuffer*, size_t start, size_t n, MappingType type) override;
 		virtual unsigned char* map_CB(ConstBuffer*, MappingType type) override;
@@ -502,31 +502,31 @@ namespace Render
 		virtual Texture* create_texture(const TextureRawDataInformation& data, const TextureGpuDataInformation& info) override;
 		virtual Texture* create_texture_array(const TextureRawDataInformation& data, const TextureGpuDataInformation& info, int size) override;
 		virtual Texture* create_cube_texture(const TextureRawDataInformation data[6], const TextureGpuDataInformation& info) override;
-		virtual std::vector<unsigned char> get_texture(Texture*, int level = 0) override;
+		virtual Vector<unsigned char> get_texture(Texture*, int level = 0) override;
 		virtual void copy_texture(Texture* source, Texture* destination) override;
 		virtual void copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer) override;
-		virtual std::vector<unsigned char> get_texture(Texture*, int face, int level) override;
+		virtual Vector<unsigned char> get_texture(Texture*, int face, int level) override;
 		virtual void bind_texture(Texture*, int texture_id, int sample_id) override;
 		virtual void unbind_texture(Texture*) override;
 		virtual void unbind_texture(int n) override;
 		virtual void delete_texture(Texture*&) override;
 		virtual void update_texture(Texture* texture, const TextureRawDataInformation& data) override;
 
-		virtual Shader* create_shader(const std::vector<ShaderSourceInformation>& infos) override;
+		virtual Shader* create_shader(const Vector<ShaderSourceInformation>& infos) override;
 		virtual bool shader_compiled_with_errors(Shader* shader) override;
 		virtual bool shader_linked_with_error(Shader* shader) override;
-		virtual std::vector<std::string> get_shader_compiler_errors(Shader* shader) override;
-		virtual std::string get_shader_linker_error(Shader* shader) override;
+		virtual Vector<String> get_shader_compiler_errors(Shader* shader) override;
+		virtual String get_shader_linker_error(Shader* shader) override;
 		virtual void bind_shader(Shader* shader) override;
 		virtual void unbind_shader(Shader* shader) override;
-		virtual void bind_uniform_CB(const ConstBuffer*, Shader*, const std::string& uname) override;
-		virtual void unbind_uniform_CB(Shader*, const std::string& uname) override;
+		virtual void bind_uniform_CB(const ConstBuffer*, Shader*, const String& uname) override;
+		virtual void unbind_uniform_CB(Shader*, const String& uname) override;
 		virtual void delete_shader(Shader*&) override;
 		virtual Shader* get_bind_shader() const override;
-		virtual Uniform* get_uniform(Shader*, const std::string& uname) const override;
-		virtual UniformConstBuffer* get_uniform_const_buffer(Shader*, const std::string& uname) const override;
+		virtual Uniform* get_uniform(Shader*, const String& uname) const override;
+		virtual UniformConstBuffer* get_uniform_const_buffer(Shader*, const String& uname) const override;
 
-		virtual Target* create_render_target(const std::vector<TargetField>& textures) override;
+		virtual Target* create_render_target(const Vector<TargetField>& textures) override;
 		virtual void enable_render_target(Target*) override;
 		virtual void disable_render_target(Target*) override;
 		virtual void delete_render_target(Target*&) override;
@@ -540,7 +540,7 @@ namespace Render
 		virtual void gpu_timer_begin_frame() override;
 		virtual void gpu_timer_end_frame() override;
 		virtual int  gpu_timer_timestamp() override;
-		virtual bool gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms) override;
+		virtual bool gpu_timer_read_frame(uint64& frame_id, Vector<double>& timestamps_ms) override;
 #endif
 
 	private:
@@ -572,7 +572,7 @@ namespace Render
 		void destroy_buffer_later(BufferVK& buffer);
 		bool upload_buffer(BufferVK& buffer, const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
 		void stream_write(GeometryBufferVK& buffer, VkBufferUsageFlags usage, const void* data, size_t size);
-		std::vector<unsigned char> read_buffer(const BufferVK& buffer, size_t size);
+		Vector<unsigned char> read_buffer(const BufferVK& buffer, size_t size);
 		//textures
 		Texture* make_texture(const TextureRawDataInformation* data, int layers, bool cube, const TextureGpuDataInformation& info);
 		VkImageView view_of(Texture* texture, VkImageViewType type, uint32_t layer, uint32_t layers, VkImageAspectFlags aspect, bool all_levels);
@@ -619,16 +619,16 @@ namespace Render
 		RenderDriverInfo         m_info;
 		bool                     m_srgb{ false };
 		//the frames
-		std::array<FrameVK, VK_FRAMES> m_frames;
+		Array<FrameVK, VK_FRAMES> m_frames;
 		uint64                   m_frame_index{ 0 };   //the frame recorded (its slot: % VK_FRAMES)
 		uint64                   m_completed_frame{ 0 }; //the frames done by the GPU (+1)
 		bool                     m_frame_open{ false };
 		VkFence                  m_wait_fence{ VK_NULL_HANDLE }; //a submit waited (flush_and_wait)
 		//what is deleted: the last frame that may use it, its destruction (when that frame is done)
-		std::vector<std::pair<uint64, std::function<void()>>> m_garbage;
+		Vector<std::pair<uint64, std::function<void()>>> m_garbage;
 		//the swap chain, the default target (its image, the depth of the driver)
 		SwapChainVK              m_swapchain;
-		std::unique_ptr<Texture> m_default_depth;
+		UniquePtr<Texture> m_default_depth;
 		Target                   m_default_target;
 		//the states
 		State                    m_state;
@@ -648,16 +648,16 @@ namespace Render
 		VkPipeline               m_bound_pipeline{ VK_NULL_HANDLE };
 		bool                     m_dynamic_dirty{ true };
 		//the caches
-		std::unordered_map<RenderPassKeyVK, VkRenderPass, RenderPassKeyHashVK> m_render_passes;
-		std::unordered_map<PipelineKeyVK, VkPipeline, PipelineKeyHashVK>     m_pipelines;
-		std::unordered_map<uint64, VkSampler>                               m_samplers;
-		std::vector<Shader*>     m_shaders; //alive (what they bind forgotten when it is deleted)
+		UnorderedMap<RenderPassKeyVK, VkRenderPass, RenderPassKeyHashVK> m_render_passes;
+		UnorderedMap<PipelineKeyVK, VkPipeline, PipelineKeyHashVK>     m_pipelines;
+		UnorderedMap<uint64, VkSampler>                               m_samplers;
+		Vector<Shader*>     m_shaders; //alive (what they bind forgotten when it is deleted)
 		//the resources of the missing bindings (zeros), the attributes missing (zeros)
-		std::unordered_map<uint32_t, std::unique_ptr<Texture>> m_dummy_textures;
+		UnorderedMap<uint32_t, UniquePtr<Texture>> m_dummy_textures;
 		BufferVK                 m_zero_buffer;
 		VkDeviceSize             m_ring_alignment{ 256 };
 		//errors
-		mutable std::vector<std::string> m_errors;
+		mutable Vector<String> m_errors;
 #if defined(RENDER_PROFILER)
 		struct GpuTimerFrame
 		{
@@ -667,7 +667,7 @@ namespace Render
 			bool     m_pending{ false };
 		};
 		static constexpr uint32_t GPU_TIMER_MAX_TIMESTAMPS = 8192;
-		std::array<GpuTimerFrame, VK_FRAMES> m_gpu_timer_frames;
+		Array<GpuTimerFrame, VK_FRAMES> m_gpu_timer_frames;
 		uint64                   m_gpu_timer_frame_id{ 0 };
 		bool                     m_gpu_timer_in_frame{ false };
 		bool                     m_gpu_timer_supported{ false };

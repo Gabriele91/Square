@@ -52,18 +52,18 @@ namespace  Data
 		unsigned long get_width() const  { return m_width; }
 		unsigned long get_height() const { return m_height; }
     
-		std::vector< unsigned char > to_rgb();
-		std::vector< unsigned char > to_rgb16();
-		std::vector< unsigned char > to_rgba();
+		Vector< unsigned char > to_rgb();
+		Vector< unsigned char > to_rgb16();
+		Vector< unsigned char > to_rgba();
 
 		//load image from file
-		static Shared<Image> load(Allocator* allocator, const std::string& path);
+		static Shared<Image> load(Allocator* allocator, const String& path);
 		
 		//load image from file raw
 		static bool load
 		(
-			const std::string& path,
-			std::vector<unsigned char>& out_image,
+			const String& path,
+			Vector<unsigned char>& out_image,
 			unsigned long&  image_width,
 			unsigned long&  image_height,
 			Render::TextureFormat& image_format,
@@ -73,8 +73,8 @@ namespace  Data
 		//load image from file raw (the data of a file: PNG, JPEG, BMP, TGA; the format from the data)
 		static SQUARE_API bool load
 		(
-			const std::vector<unsigned char>& data_file,
-			std::vector<unsigned char>& out_image,
+			const Vector<unsigned char>& data_file,
+			Vector<unsigned char>& out_image,
 			unsigned long&  image_width,
 			unsigned long&  image_height,
 			Render::TextureFormat& image_format,
@@ -83,7 +83,7 @@ namespace  Data
 
 		//encode a PNG file (8 bit per channel): pixels row after row from the top, channels 1
 		//(grey), 2 (grey alpha), 3 (RGB) or 4 (RGBA); empty on a wrong input
-		static SQUARE_API std::vector<unsigned char> encode_png
+		static SQUARE_API Vector<unsigned char> encode_png
 		(
 			const unsigned char* pixels,
 			unsigned long width,
@@ -94,7 +94,7 @@ namespace  Data
 		//encode a TGA file with RLE compression (type 10, TGA 2.0 footer): pixels in the order of
 		//TGA, bytes_per_pixel 2 (A1R5G5B5 little endian), 3 (BGR) or 4 (BGRA); rows from the top
 		//(top_down) or from the bottom; empty on a wrong input
-		static SQUARE_API std::vector<unsigned char> encode_tga_rle
+		static SQUARE_API Vector<unsigned char> encode_tga_rle
 		(
 			const unsigned char* pixels,
 			unsigned long width,
@@ -109,13 +109,13 @@ namespace  Data
 		// (Render::texture_level_bytes)
 
 		//a DDS or KTX file (from its first bytes)
-		static SQUARE_API bool is_compressed(const std::vector<unsigned char>& data_file);
+		static SQUARE_API bool is_compressed(const Vector<unsigned char>& data_file);
 
 		//the levels of a DDS or KTX file of a compressed format the engine has
 		static SQUARE_API bool load_compressed
 		(
-			const std::vector<unsigned char>& data_file,
-			std::vector<unsigned char>& out_levels,
+			const Vector<unsigned char>& data_file,
+			Vector<unsigned char>& out_levels,
 			unsigned long&  image_width,
 			unsigned long&  image_height,
 			unsigned int&   image_levels,
@@ -125,7 +125,7 @@ namespace  Data
 		//compress a level to BC1 (RGB), BC3 (RGBA), BC4 (R) or BC5 (RG): pixels RGBA (4 bytes),
 		//row after row from the top; the borders of the last blocks repeat the last pixels;
 		//empty on a wrong input
-		static SQUARE_API std::vector<unsigned char> compress_bc
+		static SQUARE_API Vector<unsigned char> compress_bc
 		(
 			const unsigned char* rgba,
 			unsigned long width,
@@ -135,7 +135,7 @@ namespace  Data
 
 		//compress a level to ASTC 4x4 (LDR, medium quality, the threads of the CPU): pixels RGBA
 		//(4 bytes), row after row from the top; empty on a wrong input
-		static SQUARE_API std::vector<unsigned char> compress_astc
+		static SQUARE_API Vector<unsigned char> compress_astc
 		(
 			const unsigned char* rgba,
 			unsigned long width,
@@ -143,7 +143,7 @@ namespace  Data
 		);
 
 		//encode the levels of a BC texture in a DDS file; empty on a wrong input
-		static SQUARE_API std::vector<unsigned char> encode_dds
+		static SQUARE_API Vector<unsigned char> encode_dds
 		(
 			const unsigned char* levels_data,
 			unsigned long width,
@@ -153,7 +153,7 @@ namespace  Data
 		);
 
 		//encode the levels of a compressed texture in a KTX 1 file; empty on a wrong input
-		static SQUARE_API std::vector<unsigned char> encode_ktx
+		static SQUARE_API Vector<unsigned char> encode_ktx
 		(
 			const unsigned char* levels_data,
 			unsigned long width,
@@ -173,15 +173,15 @@ namespace  Data
 			ITF_UNKNOWN
 		};
 
-		static ImageTypeFormat get_image_type_format_from_ext(const std::string& path);
-		static ImageTypeFormat get_image_type_format_from_data(const std::vector<unsigned char>& in_data);
+		static ImageTypeFormat get_image_type_format_from_ext(const String& path);
+		static ImageTypeFormat get_image_type_format_from_data(const Vector<unsigned char>& in_data);
 
 		//load image from raw data
 		static bool load
 		(
 			ImageTypeFormat image_type_format,
-			const std::vector<unsigned char>& data_file,
-			std::vector<unsigned char>& out_image,
+			const Vector<unsigned char>& data_file,
+			Vector<unsigned char>& out_image,
 			unsigned long& image_width,
 			unsigned long& image_height,
 			Render::TextureFormat& image_format,
@@ -189,7 +189,7 @@ namespace  Data
 		);
 		unsigned long m_width { 0 };
 		unsigned long m_height{ 0 };
-		std::vector < ImagePixel > m_buffer;
+		Vector < ImagePixel > m_buffer;
     
 	};
 

@@ -80,8 +80,8 @@ namespace Render
 		//they were drawn (its place, its views), the hash of those casters then
 		struct StaticCache
 		{
-			std::unique_ptr<ShadowBuffer> m_buffer;
-			std::vector<unsigned char>    m_key;
+			UniquePtr<ShadowBuffer> m_buffer;
+			Vector<unsigned char>    m_key;
 			uint64                        m_casters{ 0 };
 			size_t                        m_used{ 0 }; //the draw of the pass it was last used at
 		};
@@ -91,10 +91,10 @@ namespace Render
 		//drawn, the hash of the static casters of each then
 		struct CascadeCache
 		{
-			std::unique_ptr<ShadowBuffer> m_buffer;
-			std::unique_ptr<ShadowBuffer> m_blank;
-			std::array< std::vector<unsigned char>, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES > m_keys;
-			std::array< uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES > m_casters{};
+			UniquePtr<ShadowBuffer> m_buffer;
+			UniquePtr<ShadowBuffer> m_blank;
+			Array< Vector<unsigned char>, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES > m_keys;
+			Array< uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES > m_casters{};
 			size_t m_used{ 0 }; //the draw of the pass it was last used at
 		};
 
@@ -108,7 +108,7 @@ namespace Render
 
 		//the hash of the static casters of each cascade (which ones, where, their levels of detail
 		//settled)
-		void cascades_casters(const PoolQueues& queues, const UniformDirectionShadowLight& cascades, std::array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>& hashes) const;
+		void cascades_casters(const PoolQueues& queues, const UniformDirectionShadowLight& cascades, Array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>& hashes) const;
 
 		//the casters of the queues into a buffer (clear: its depth first, the layers drawn): all of
 		//it (the shaders route each draw to its layer), or each layer asked bound as the target (a
@@ -118,7 +118,7 @@ namespace Render
 		  const ShadowBuffer& buffer
 		, bool clear
 		, const PoolQueues& queues
-		, const std::string& technique_name
+		, const String& technique_name
 		, EffectPassInputs& inputs
 		, const UniformDirectionShadowLight* cascades
 		, Casters casters
@@ -130,7 +130,7 @@ namespace Render
 		void draw_casters
 		(
 		  const PoolQueues& queues
-		, const std::string& technique_name
+		, const String& technique_name
 		, EffectPassInputs& inputs
 		, const UniformDirectionShadowLight* cascades
 		, Casters casters
@@ -144,7 +144,7 @@ namespace Render
 		  const Light& light
 		, const UniformDirectionShadowLight& cascades
 		, const PoolQueues& queues
-		, const std::string& technique_name
+		, const String& technique_name
 		, EffectPassInputs& inputs
 		);
 		//the shadow map of a light that does not move: its cache (drawn again if out of date)
@@ -152,9 +152,9 @@ namespace Render
 		void draw_cached
 		(
 		  const Light& light
-		, const std::vector<unsigned char>& key
+		, const Vector<unsigned char>& key
 		, const PoolQueues& queues
-		, const std::string& technique_name
+		, const String& technique_name
 		, EffectPassInputs& inputs
 		);
 		//the caches of the lights not drawn for a while: gone
@@ -179,11 +179,11 @@ namespace Render
 		DrawList                                     m_caster_draws;
 		//the caches of the static casters, by light
 		bool                                         m_static_cache{ true };
-		std::unordered_map<const Light*, StaticCache> m_caches;
+		UnorderedMap<const Light*, StaticCache> m_caches;
 		//the caches of the cascades, by light
 		bool                                          m_cascades_cache{ true };
 		int                                           m_dynamic_cascades{ 3 };
-		std::unordered_map<const Light*, CascadeCache> m_cascade_caches;
+		UnorderedMap<const Light*, CascadeCache> m_cascade_caches;
 		size_t                                       m_draws{ 0 };
 	};
 }

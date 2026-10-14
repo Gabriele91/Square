@@ -35,7 +35,7 @@ namespace Data
 			| ((unsigned int)bytes[3] << 24);
 	}
 
-	static void write_u32(std::vector<unsigned char>& out, unsigned int value)
+	static void write_u32(Vector<unsigned char>& out, unsigned int value)
 	{
 		out.push_back((unsigned char)(value & 0xFF));
 		out.push_back((unsigned char)((value >> 8) & 0xFF));
@@ -125,8 +125,8 @@ namespace Data
 
 	static bool load_dds
 	(
-		const std::vector<unsigned char>& data_file,
-		std::vector<unsigned char>& out_levels,
+		const Vector<unsigned char>& data_file,
+		Vector<unsigned char>& out_levels,
 		unsigned long& image_width,
 		unsigned long& image_height,
 		unsigned int& image_levels,
@@ -208,8 +208,8 @@ namespace Data
 
 	static bool load_ktx
 	(
-		const std::vector<unsigned char>& data_file,
-		std::vector<unsigned char>& out_levels,
+		const Vector<unsigned char>& data_file,
+		Vector<unsigned char>& out_levels,
 		unsigned long& image_width,
 		unsigned long& image_height,
 		unsigned int& image_levels,
@@ -253,7 +253,7 @@ namespace Data
 
 	//////////////////////////////////////////////////////////////////////
 	// Image
-	bool Image::is_compressed(const std::vector<unsigned char>& data_file)
+	bool Image::is_compressed(const Vector<unsigned char>& data_file)
 	{
 		if (data_file.size() >= 4 && read_u32(data_file.data()) == DDS_MAGIC) return true;
 		if (data_file.size() >= sizeof(KTX_IDENTIFIER) && std::memcmp(data_file.data(), KTX_IDENTIFIER, sizeof(KTX_IDENTIFIER)) == 0) return true;
@@ -262,8 +262,8 @@ namespace Data
 
 	bool Image::load_compressed
 	(
-		const std::vector<unsigned char>& data_file,
-		std::vector<unsigned char>& out_levels,
+		const Vector<unsigned char>& data_file,
+		Vector<unsigned char>& out_levels,
 		unsigned long& image_width,
 		unsigned long& image_height,
 		unsigned int& image_levels,
@@ -281,7 +281,7 @@ namespace Data
 		return false;
 	}
 
-	std::vector<unsigned char> Image::compress_bc
+	Vector<unsigned char> Image::compress_bc
 	(
 		const unsigned char* rgba,
 		unsigned long width,
@@ -289,7 +289,7 @@ namespace Data
 		Render::TextureFormat format
 	)
 	{
-		std::vector<unsigned char> out;
+		Vector<unsigned char> out;
 		const unsigned int block_bytes = Render::texture_block_bytes(format);
 		if (!rgba || !width || !height || !block_bytes || format == Render::TF_ASTC_4x4) return out;
 		out.resize(Render::texture_level_bytes(format, (unsigned int)width, (unsigned int)height));
@@ -331,14 +331,14 @@ namespace Data
 		return out;
 	}
 
-	std::vector<unsigned char> Image::compress_astc
+	Vector<unsigned char> Image::compress_astc
 	(
 		const unsigned char* rgba,
 		unsigned long width,
 		unsigned long height
 	)
 	{
-		std::vector<unsigned char> out;
+		Vector<unsigned char> out;
 		if (!rgba || !width || !height) return out;
 		//the encoder, for the threads of the CPU (each one compresses blocks of the image)
 		const unsigned int threads = std::thread::hardware_concurrency() ? std::thread::hardware_concurrency() : 1;
@@ -359,8 +359,8 @@ namespace Data
 		image.data = slices;
 		const astcenc_swizzle swizzle{ ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 		out.resize(Render::texture_level_bytes(Render::TF_ASTC_4x4, image.dim_x, image.dim_y));
-		std::vector<astcenc_error> errors(threads, ASTCENC_SUCCESS);
-		std::vector<std::thread> workers;
+		Vector<astcenc_error> errors(threads, ASTCENC_SUCCESS);
+		Vector<std::thread> workers;
 		for (unsigned int thread_index = 0; thread_index != threads; ++thread_index)
 		{
 			workers.emplace_back([&, thread_index]()
@@ -372,12 +372,12 @@ namespace Data
 		astcenc_context_free(context);
 		for (astcenc_error error : errors)
 		{
-			if (error != ASTCENC_SUCCESS) return std::vector<unsigned char>();
+			if (error != ASTCENC_SUCCESS) return Vector<unsigned char>();
 		}
 		return out;
 	}
 
-	std::vector<unsigned char> Image::encode_dds
+	Vector<unsigned char> Image::encode_dds
 	(
 		const unsigned char* levels_data,
 		unsigned long width,
@@ -386,7 +386,7 @@ namespace Data
 		Render::TextureFormat format
 	)
 	{
-		std::vector<unsigned char> out;
+		Vector<unsigned char> out;
 		const unsigned int code = dds_four_cc_from_format(format);
 		if (!levels_data || !width || !height || !levels || !code) return out;
 		const size_t size = levels_bytes(format, width, height, levels);
@@ -414,7 +414,7 @@ namespace Data
 		return out;
 	}
 
-	std::vector<unsigned char> Image::encode_ktx
+	Vector<unsigned char> Image::encode_ktx
 	(
 		const unsigned char* levels_data,
 		unsigned long width,
@@ -423,7 +423,7 @@ namespace Data
 		Render::TextureFormat format
 	)
 	{
-		std::vector<unsigned char> out;
+		Vector<unsigned char> out;
 		unsigned int gl_internal_format = 0, gl_base_format = 0;
 		ktx_gl_from_format(format, gl_internal_format, gl_base_format);
 		if (!levels_data || !width || !height || !levels || !gl_internal_format) return out;

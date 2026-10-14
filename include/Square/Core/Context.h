@@ -40,103 +40,103 @@ namespace Square
 	}
 	//Systems
 	class System;
-	using SystemList = std::vector< Shared<System> >;
+	using SystemList = Vector< Shared<System> >;
 	//Context without template (dll)
 	class SQUARE_API BaseContext
 	{
 	protected:
 
 		//type
-		using VariantMap = std::unordered_map< std::string, Variant >;
-		using StringMap = std::unordered_map< std::string, std::string >;
-		using StringList = std::vector< std::string >;
+		using VariantMap = UnorderedMap< String, Variant >;
+		using StringMap = UnorderedMap< String, String >;
+		using StringList = Vector< String >;
 		//Attributes
-		using AttributeMap = std::unordered_map< uint64, std::vector < Attribute > >;
+		using AttributeMap = UnorderedMap< uint64, Vector < Attribute > >;
 		//Factory
-		using ObjectFactoryMap = std::unordered_map< uint64, Shared<ObjectFactory> >;
+		using ObjectFactoryMap = UnorderedMap< uint64, Shared<ObjectFactory> >;
 		
 	public:
 
 		//Create
-        Shared<Object> create(const std::string& name);
+        Shared<Object> create(const String& name);
         Shared<Object> create(uint64 id);
         
 		//Get attrbutes
-        const std::vector < Attribute >* attributes(const std::string& name) const;
-        const std::vector < Attribute >* attributes(uint64 object_id) const;
-        const std::vector < Attribute >* attributes(const Object& object) const;
-        const std::vector < Attribute >* attributes(const ObjectInfo& info) const;
+        const Vector < Attribute >* attributes(const String& name) const;
+        const Vector < Attribute >* attributes(uint64 object_id) const;
+        const Vector < Attribute >* attributes(const Object& object) const;
+        const Vector < Attribute >* attributes(const ObjectInfo& info) const;
 
 		//Get resource, name = "Class:path". While a resource "Class:folder/x" loads, the names it
 		//references are looked up first inside "folder/" and then as they are (global).
-        Shared<ResourceObject> resource(const std::string& name);
+        Shared<ResourceObject> resource(const String& name);
 		//a new object of a resource every call (not kept: e.g. an actor placed in a scene), loaded
 		//as resource() loads it (same lookup of the names it references)
-		Shared<ResourceObject> resource_instance(const std::string& name);
+		Shared<ResourceObject> resource_instance(const String& name);
 		// Get resource path 
-        const std::string& resource_path(const std::string& name);
+        const String& resource_path(const String& name);
 		//the names of the resources of a type registered ("Effect": "PBR", "sanctuary/fx_glow"...;
 		//loaded or not), sorted
-		std::vector<std::string> resource_names(const std::string& type) const;
+		Vector<String> resource_names(const String& type) const;
 
 		//Get variable
-        std::optional<const VariantRef> variable(const std::string& name) const;
+        std::optional<const VariantRef> variable(const String& name) const;
         
 		//Object fectory
         void add_object(Shared<ObjectFactory> object_fectory);
-        void add_resource(Shared<ObjectFactory> object_fectory,const std::vector< std::string >& exts);
+        void add_resource(Shared<ObjectFactory> object_fectory,const Vector< String >& exts);
         
 		//The folder of the engine (its common/: its effects, its shaders, the UI of the debug panel),
 		//relative to the resource folder or absolute; empty: the resource folder itself (the engine
 		//is the project). A game with the engine in a folder of its own sets it ("engine")
-		void engine_dir(const std::string& dir) { m_engine_dir = dir; }
-		const std::string& engine_dir() const { return m_engine_dir; }
+		void engine_dir(const String& dir) { m_engine_dir = dir; }
+		const String& engine_dir() const { return m_engine_dir; }
 		//a path of the engine ("common/ui/debug.rml"): in its folder
-		std::string engine_path(const std::string& path) const;
+		String engine_path(const String& path) const;
 
 		//Resource
-		bool add_resources(const std::string& file_of_resources);
+		bool add_resources(const String& file_of_resources);
 		//name_prefix is put before the file names: a recursive path gives every sub folder
 		//its own prefix ("sub/"), so files are named by their path relative to the root
-		void add_resource_path(const std::string& path, bool recursive = false, const std::string& name_prefix = "");
-		void add_resource_path(const std::string& path, const std::string& filter, bool recursive = true, const std::string& name_prefix = "");
-		void add_resource_path(const std::string& path, const std::regex& filter, bool recursive = true, const std::string& name_prefix = "");
-		bool add_resource_file(const std::string& filepath);
-		bool add_resource_file(const std::string& name, const std::string& path);
+		void add_resource_path(const String& path, bool recursive = false, const String& name_prefix = "");
+		void add_resource_path(const String& path, const String& filter, bool recursive = true, const String& name_prefix = "");
+		void add_resource_path(const String& path, const std::regex& filter, bool recursive = true, const String& name_prefix = "");
+		bool add_resource_file(const String& filepath);
+		bool add_resource_file(const String& name, const String& path);
 		template< typename T >
-		bool add_resource_map(const std::unordered_map<std::string, std::string>& name_files)
+		bool add_resource_map(const UnorderedMap<String, String>& name_files)
 		{
 			return add_resource_map(T::static_object_id(), name_files);
 		}
 
 		//Add an attrbute
-        void add_attribute(const std::string& name, Attribute&& attribute);
+        void add_attribute(const String& name, Attribute&& attribute);
         void add_attribute(uint64 object_id, Attribute&& attribute);
         void add_attribute(const Object& object, Attribute&& attribute);
         void add_attribute(const ObjectInfo& info, Attribute&& attribute);
 
 		//Add variable
-        void add_variable(const std::string& name, const Variant& value);
+        void add_variable(const String& name, const Variant& value);
 
 		//System class: in the object factory (like add_resource), with when it starts (start-up
 		//or on demand) and its ring; called by the object_registration of a system
 		void add_system(Shared<ObjectFactory> object_fectory, SystemStartup startup, unsigned int ring);
-		const SystemInfo* system_info(const std::string& name) const;
+		const SystemInfo* system_info(const String& name) const;
 		const SystemInfo* system_info(uint64 id) const;
 
 		//Systems running: created by the object factory, initialized and given to the worlds;
 		//a system is started once
-		System* start_system(const std::string& name);
+		System* start_system(const String& name);
 		System* start_system(uint64 id);
 		//start the AUTOMATIC systems, from the lower ring up (the Application calls it at start-up)
 		void start_systems();
 		//a running system, nullptr if it is not running
-		System* system(const std::string& name) const;
+		System* system(const String& name) const;
 		System* system(uint64 id) const;
 		//running, from the lower ring up
 		const SystemList& systems() const;
 		//shut down a system (its world instances first)
-		bool stop_system(const std::string& name);
+		bool stop_system(const String& name);
 		bool stop_system(uint64 id);
 		//shut down all the systems, from the upper ring down
 		void stop_systems();
@@ -154,7 +154,7 @@ namespace Square
 		void clear_resources();
 
 		//the worlds alive (a world adds/removes itself), they get the instances of the systems
-		const std::vector<Scene::World*>& worlds() const;
+		const Vector<Scene::World*>& worlds() const;
 
 		//get application
 		Application* application();
@@ -186,14 +186,14 @@ namespace Square
 		{
 			size_t      m_count{ 0 };
 			double      m_ms{ 0.0 };
-			std::string m_slowest;
+			String m_slowest;
 			double      m_slowest_ms{ 0.0 };
 		};
-		using ResourceLoadStats = std::unordered_map<std::string, ResourceLoadStat>;
+		using ResourceLoadStats = UnorderedMap<String, ResourceLoadStat>;
 		const ResourceLoadStats& resource_load_stats() const { return m_load_stats; }
 		//details inside the loads (e.g. "shader: translate", "shader: driver"): their time, apart
 		//(already in the own time of the resource that has them)
-		void add_load_detail(const std::string& kind, const std::string& name, double ms);
+		void add_load_detail(const String& kind, const String& name, double ms);
 		const ResourceLoadStats& resource_load_details() const { return m_load_details; }
 		void clear_resource_load_stats() { m_load_stats.clear(); m_load_details.clear(); }
 #endif
@@ -205,15 +205,15 @@ namespace Square
         struct SQUARE_API ResourceFile
         {
             uint64      m_resouce_id;
-            std::string m_filepath;
+            String m_filepath;
             //...
 			ResourceFile();
 			ResourceFile(const ResourceFile& in);
-			ResourceFile(uint64 id, const std::string filepath);
+			ResourceFile(uint64 id, const String filepath);
         };
-        using ResourceFileMap   = std::unordered_map< std::string, ResourceFile >;
-        using ResourceInfoMap   = std::unordered_map< uint64, std::vector<std::string> >;
-        using ResourceObjectMap = std::unordered_map< std::string, Shared<ResourceObject> >;
+        using ResourceFileMap   = UnorderedMap< String, ResourceFile >;
+        using ResourceInfoMap   = UnorderedMap< uint64, Vector<String> >;
+        using ResourceObjectMap = UnorderedMap< String, Shared<ResourceObject> >;
 		//context
 		VariantMap       m_variables;
 		AttributeMap     m_attributes;
@@ -231,19 +231,19 @@ namespace Square
         ResourceInfoMap   m_resources_info;
 		ResourceObjectMap m_resources;
 		//folders ("arena", "a/b") of the resources being loaded, innermost last
-		std::vector<std::string> m_resource_scopes;
+		Vector<String> m_resource_scopes;
 		//the folder of the engine (empty: the resource folder)
-		std::string m_engine_dir;
+		String m_engine_dir;
 #if defined(SQUARE_DEBUG_TOOLS)
 		//the times of the loads; the time of the loads inside each one open (out of its own)
 		ResourceLoadStats   m_load_stats;
 		ResourceLoadStats   m_load_details;
-		std::vector<double> m_load_inner_ms;
+		Vector<double> m_load_inner_ms;
 #endif
 		//a resource loaded from its file, in the scope of its folder (with the debug tools: timed)
-		bool load_in_scope(ResourceObject& resource, const std::string& name, const std::string& path);
+		bool load_in_scope(ResourceObject& resource, const String& name, const String& path);
 		//worlds alive
-		std::vector<Scene::World*> m_worlds;
+		Vector<Scene::World*> m_worlds;
 		void add_world(Scene::World* world);
 		void remove_world(Scene::World* world);
 		friend class Scene::World;
@@ -255,17 +255,17 @@ namespace Square
 		//between post_initialize_systems and pre_shutdown_systems
 		bool m_systems_post_initialized{ false };
 		//find/load a resource by its full name, no scope lookup
-		Shared<ResourceObject> load_resource(const std::string& name);
+		Shared<ResourceObject> load_resource(const String& name);
 		//the full name of a resource, looked up first in the folder of the resource loading
-		std::string scoped_resource_name(const std::string& name) const;
+		String scoped_resource_name(const String& name) const;
 		//create and load the object of a resource file (its folder is the scope while it loads)
-		Shared<ResourceObject> load_resource_file(const std::string& name);
+		Shared<ResourceObject> load_resource_file(const String& name);
 		//friend class
 		friend class Application;
 		//delete all
 		void clear();
 		//help function
-		bool add_resource_map(uint64 object_factory_id, const std::unordered_map<std::string, std::string>& name_files);
+		bool add_resource_map(uint64 object_factory_id, const UnorderedMap<String, String>& name_files);
 	};
 
 	// Specialization
@@ -330,7 +330,7 @@ namespace Square
 			return DynamicPointerCast<T>(BaseContext::create(T::static_object_id()));
 		}
 
-		template< class T > inline const std::vector < Attribute >* attributes()
+		template< class T > inline const Vector < Attribute >* attributes()
 		{
 			return attributes(T::static_object_id());
 		}
@@ -365,7 +365,7 @@ namespace Square
 			return static_cast<T*>(BaseContext::system(T::static_object_id()));
 		}
 
-		template< class T > inline void add_resource(const std::vector< std::string >& exts)
+		template< class T > inline void add_resource(const Vector< String >& exts)
 		{
 			BaseContext::add_resource(MakeShared< ObjectFactoryItem<T> >(*this), exts);
 		}
@@ -431,27 +431,27 @@ namespace Square
 		}
 #endif
 		///
-		template< class T >  inline Shared<T> resource(const std::string& name)
+		template< class T >  inline Shared<T> resource(const String& name)
 		{
 			return DynamicPointerCast<T>(BaseContext::resource(T::static_object_name() + ":" + name));
 		}
 
-		template< class T >  inline Shared<T> resource_instance(const std::string& name)
+		template< class T >  inline Shared<T> resource_instance(const String& name)
 		{
 			return DynamicPointerCast<T>(BaseContext::resource_instance(T::static_object_name() + ":" + name));
 		}
 
-		template< class T >  inline Shared<T> reinterpret_resource(const std::string& name)
+		template< class T >  inline Shared<T> reinterpret_resource(const String& name)
 		{
 			return DynamicPointerCast<T>(BaseContext::resource(name));
 		}
 
-		template< class T >  inline const std::string& resource_path(const std::string& name)
+		template< class T >  inline const String& resource_path(const String& name)
 		{
 			return BaseContext::resource_path(T::static_object_name() + ":" + name);
 		}
 
-		template< class T >  inline std::vector<std::string> resource_names() const
+		template< class T >  inline Vector<String> resource_names() const
 		{
 			return BaseContext::resource_names(T::static_object_name());
 		}

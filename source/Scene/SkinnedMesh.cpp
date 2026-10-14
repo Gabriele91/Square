@@ -33,14 +33,14 @@ namespace Scene
 			, [](const SkinnedMesh* renderable) -> bool { return renderable->Render::Renderable::cast_shadow(); }
 			, [](SkinnedMesh* renderable, const bool& cast) { renderable->Render::Renderable::cast_shadow(cast); });
 		// Mesh
-		ctx.add_attribute_function<SkinnedMesh, std::string>
+		ctx.add_attribute_function<SkinnedMesh, String>
 			("mesh"
-			, std::string()
-			, [](const SkinnedMesh* skinned) -> std::string
+			, String()
+			, [](const SkinnedMesh* skinned) -> String
 			{
-				return skinned->m_mesh ? skinned->m_mesh->resource_untyped_name() : std::string();
+				return skinned->m_mesh ? skinned->m_mesh->resource_untyped_name() : String();
 			}
-			, [](SkinnedMesh* skinned, const std::string& name)
+			, [](SkinnedMesh* skinned, const String& name)
 			{
 				if (name.size())
 				{
@@ -52,19 +52,19 @@ namespace Scene
 				}
 			});
 		// Materials
-		ctx.add_attribute_function<SkinnedMesh, std::vector<std::string> >
+		ctx.add_attribute_function<SkinnedMesh, Vector<String> >
 			("materials"
-			, std::vector<std::string>()
-			, [](const SkinnedMesh* skinned) -> std::vector<std::string>
+			, Vector<String>()
+			, [](const SkinnedMesh* skinned) -> Vector<String>
 			{
-				std::vector<std::string> names;
+				Vector<String> names;
 				for (const auto& material : skinned->m_materials)
 				{
-					names.push_back(material ? material->resource_untyped_name() : std::string());
+					names.push_back(material ? material->resource_untyped_name() : String());
 				}
 				return names;
 			}
-			, [](SkinnedMesh* skinned, const std::vector<std::string>& names)
+			, [](SkinnedMesh* skinned, const Vector<String>& names)
 			{
 				skinned->m_materials.clear();
 				for (const auto& name : names)
@@ -73,20 +73,20 @@ namespace Scene
 				}
 			});
 		// Joints
-		ctx.add_attribute_function<SkinnedMesh, std::vector<std::string> >
+		ctx.add_attribute_function<SkinnedMesh, Vector<String> >
 			("joints"
-			, std::vector<std::string>()
-			, [](const SkinnedMesh* skinned) -> std::vector<std::string> { return skinned->m_joint_paths; }
-			, [](SkinnedMesh* skinned, const std::vector<std::string>& paths)
+			, Vector<String>()
+			, [](const SkinnedMesh* skinned) -> Vector<String> { return skinned->m_joint_paths; }
+			, [](SkinnedMesh* skinned, const Vector<String>& paths)
 			{
 				skinned->m_joint_paths = paths;
 				skinned->m_joints_found = false;
 			});
-		ctx.add_attribute_function<SkinnedMesh, std::vector<Mat4> >
+		ctx.add_attribute_function<SkinnedMesh, Vector<Mat4> >
 			("inverse_binds"
-			, std::vector<Mat4>()
-			, [](const SkinnedMesh* skinned) -> std::vector<Mat4> { return skinned->m_inverse_binds; }
-			, [](SkinnedMesh* skinned, const std::vector<Mat4>& inverse_binds)
+			, Vector<Mat4>()
+			, [](const SkinnedMesh* skinned) -> Vector<Mat4> { return skinned->m_inverse_binds; }
+			, [](SkinnedMesh* skinned, const Vector<Mat4>& inverse_binds)
 			{
 				skinned->m_inverse_binds = inverse_binds;
 				skinned->m_joints_found = false;
@@ -108,7 +108,7 @@ namespace Scene
 	{
 	}
 
-	void SkinnedMesh::joints(const std::vector<std::string>& paths, const std::vector<Mat4>& inverse_binds)
+	void SkinnedMesh::joints(const Vector<String>& paths, const Vector<Mat4>& inverse_binds)
 	{
 		m_joint_paths = paths;
 		m_inverse_binds = inverse_binds;
@@ -122,7 +122,7 @@ namespace Scene
 		const size_t count = std::min(m_joint_paths.size(), joints_max);
 		if (owner && m_joint_paths.size() > joints_max)
 		{
-			context().logger()->warning("SkinnedMesh: " + owner->name() + ", more than " + std::to_string(joints_max) + " joints");
+			context().logger()->warning("SkinnedMesh: " + owner->name() + ", more than " + to_string(joints_max) + " joints");
 		}
 		for (size_t i = 0; owner && i < count; ++i)
 		{

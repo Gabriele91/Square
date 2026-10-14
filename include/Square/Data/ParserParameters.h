@@ -19,16 +19,16 @@ namespace Parser
 		struct ParameterField
 		{
             //info
-			std::string       m_name;
+			String       m_name;
             ParameterType     m_type{ ::Square::Render::EffectParameterType::PT_NONE };
             Unique<Parameter> m_paramter{ nullptr };
             Allocator*        m_allocator{ nullptr };
 
             //resource
-            std::vector< std::string > m_resources;
+            Vector< String > m_resources;
             //by type
             bool alloc(Allocator* allocator, ParameterType type);
-            bool alloc(Allocator* allocator, const std::string& name, ParameterType type);
+            bool alloc(Allocator* allocator, const String& name, ParameterType type);
             //alloc
             template < class T >
             bool alloc(Allocator* allocator)
@@ -36,13 +36,13 @@ namespace Parser
                 return alloc(allocator, ::Square::Render::parameter_type_traits<T>());
             }
             template < class T >
-            bool alloc(Allocator* allocator, const std::string& name)
+            bool alloc(Allocator* allocator, const String& name)
             {
                 return alloc(allocator, name,::Square::Render::parameter_type_traits<T>());
             }
             //alloc
             template < class T >
-            bool set(const std::string& name, const T& value)
+            bool set(const String& name, const T& value)
             {
                 //if
                 if(!m_paramter && !alloc<T>(name)) return false;
@@ -52,7 +52,7 @@ namespace Parser
                 return true;
             }
 			//add resource
-			void add(const std::string& name)
+			void add(const String& name)
 			{
 				m_resources.push_back(name);
 			}
@@ -67,14 +67,14 @@ namespace Parser
 		
 		struct Context
 		{
-			std::vector< ParameterField >   m_parameters;
-			std::list< ErrorField >	        m_errors;
+			Vector< ParameterField >   m_parameters;
+			List< ErrorField >	        m_errors;
 			size_t						    m_line{ 0 };
 
-            std::string errors_to_string() const;
+            String errors_to_string() const;
 		};
 
-        bool parse(Allocator* allocator, Context& default_context, const std::string& source);
+        bool parse(Allocator* allocator, Context& default_context, const String& source);
 
         bool parse(Allocator* allocator, Context& default_context, const char*& ptr);
 
@@ -90,7 +90,7 @@ namespace Parser
         bool parse_cullface_value(const char*& ptr, ParameterField& field);
         bool parse_zbuffer_value(const char*& ptr, ParameterField& field);
         bool parse_blend_value(const char*& ptr, ParameterField& field);
-        bool parse_state_names(const char*& ptr, std::vector<std::string>& names);
+        bool parse_state_names(const char*& ptr, Vector<String>& names);
         bool parse_int_values(const char*& ptr, int* values, size_t n);
         bool parse_float_values(const char*& ptr, float* values, size_t n);
         bool parse_double_values(const char*& ptr, double* values, size_t n);
@@ -102,7 +102,7 @@ namespace Parser
 		//////////////////////////////////////////////////////       
 		bool parse_type(const char*& inout, ParameterType& type);
 		//////////////////////////////////////////////////////       
-        void push_error(const std::string& error);
+        void push_error(const String& error);
 	};
 
 }

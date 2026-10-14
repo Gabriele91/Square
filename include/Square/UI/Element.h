@@ -39,36 +39,36 @@ namespace UI
 		bool operator!=(const Element& other) const { return m_element != other.m_element; }
 
 		//its tag ("div"), its id
-		std::string tag() const;
-		std::string id() const;
-		void set_id(const std::string& id);
+		String tag() const;
+		String id() const;
+		void set_id(const String& id);
 
 		//the tree: an element by id, the first/all by a selector (".item > span"), the parent,
 		//the children, its document
-		Element find(const std::string& id) const;
-		Element query(const std::string& selector) const;
-		std::vector<Element> query_all(const std::string& selector) const;
+		Element find(const String& id) const;
+		Element query(const String& selector) const;
+		Vector<Element> query_all(const String& selector) const;
 		Element parent() const;
-		std::vector<Element> children() const;
+		Vector<Element> children() const;
 		Document document() const;
 
 		//the content: as text (escaped), as RML
-		void set_text(const std::string& text);
-		std::string text() const;
-		void set_html(const std::string& rml);
-		std::string html() const;
+		void set_text(const String& text);
+		String text() const;
+		void set_html(const String& rml);
+		String html() const;
 
 		//classes, pseudo classes (":hover"), attributes, style properties ("color", "red")
-		void set_class(const std::string& name, bool enable = true);
-		bool has_class(const std::string& name) const;
-		void set_pseudo_class(const std::string& name, bool enable = true);
-		bool has_pseudo_class(const std::string& name) const;
-		void set_attribute(const std::string& name, const std::string& value);
-		std::string attribute(const std::string& name) const;
-		bool has_attribute(const std::string& name) const;
-		void remove_attribute(const std::string& name);
-		bool set_property(const std::string& name, const std::string& value);
-		void remove_property(const std::string& name);
+		void set_class(const String& name, bool enable = true);
+		bool has_class(const String& name) const;
+		void set_pseudo_class(const String& name, bool enable = true);
+		bool has_pseudo_class(const String& name) const;
+		void set_attribute(const String& name, const String& value);
+		String attribute(const String& name) const;
+		bool has_attribute(const String& name) const;
+		void remove_attribute(const String& name);
+		bool set_property(const String& name, const String& value);
+		void remove_property(const String& name);
 
 		//state and actions
 		bool visible() const;
@@ -84,14 +84,14 @@ namespace UI
 		Vec2 position() const;
 
 		//children: a new one of a tag at the end, removed from its parent
-		Element create_child(const std::string& tag);
+		Element create_child(const String& tag);
 		void remove();
 
 		//events: a callback (in the capture phase: before the children get it); a custom
 		//event by name; dispatch one
 		Listener on(EventType type, const EventCallback& callback, bool capture = false);
-		Listener on(const std::string& type, const EventCallback& callback, bool capture = false);
-		bool dispatch(const std::string& type);
+		Listener on(const String& type, const EventCallback& callback, bool capture = false);
+		bool dispatch(const String& type);
 
 		//the element of RmlUi (needs the headers of RmlUi)
 		Rml::Element* native() const;
@@ -109,8 +109,8 @@ namespace UI
 
 		//it is a control of a form
 		bool valid() const;
-		std::string value() const;
-		void set_value(const std::string& value);
+		String value() const;
+		void set_value(const String& value);
 		bool disabled() const;
 		void set_disabled(bool disable);
 
@@ -132,8 +132,8 @@ namespace UI
 		void hide();
 		void close();
 		//its title
-		std::string title() const;
-		void set_title(const std::string& title);
+		String title() const;
+		void set_title(const String& title);
 
 		//the document of RmlUi
 		Rml::ElementDocument* native_document() const;

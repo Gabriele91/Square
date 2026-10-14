@@ -61,9 +61,9 @@ namespace Cocoa
     struct SQUARE_API WrapperContext
     {
         NSSquareApplication* _Nullable                 m_application;
-        std::vector < ScreenCocoa >                    m_screens;
-        std::unordered_map<WindowCocoa*, WindowCocoa*> m_windows;
-        std::unordered_map<InputCocoa*, InputCocoa*>   m_input;
+        Vector < ScreenCocoa >                    m_screens;
+        UnorderedMap<WindowCocoa*, WindowCocoa*> m_windows;
+        UnorderedMap<InputCocoa*, InputCocoa*>   m_input;
         //key map
         CoaoaInputKeyMap m_key_map;
     };

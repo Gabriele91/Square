@@ -25,7 +25,7 @@ using namespace Square::Render;
         do {                                                                     \
             if (m_frame_index < SQ_MTL_DEBUG_FRAMES && logger())                 \
             {                                                                    \
-                std::ostringstream _sqmtl_ss;                                    \
+                OStringStream _sqmtl_ss;                                    \
                 _sqmtl_ss << "[MTL f" << m_frame_index << "] " << MSG;           \
                 logger()->info(_sqmtl_ss.str());                                 \
             }                                                                    \
@@ -207,29 +207,29 @@ static MTLVertexFormat to_mtl_vertex_format(AttributeStripType ast)
 //   // SQUARE_MTL_REFL entry:NAME textures:N=S[,...] samplers:N=S[,...] buffers:N=S[,...] members:N=BS:OFF:SZ[,...]
 // ──────────────────────────────────────────────────────────────────────────────
 
-static void parse_refl_line(const std::string& line, MTLReflection& r)
+static void parse_refl_line(const String& line, MTLReflection& r)
 {
-    auto extract = [&](const char* key, std::string& out) -> bool {
+    auto extract = [&](const char* key, String& out) -> bool {
         auto p = line.find(key);
-        if (p == std::string::npos) return false;
+        if (p == String::npos) return false;
         size_t start = p + strlen(key);
         auto e = line.find(' ', start);
-        out = line.substr(start, e == std::string::npos ? e : e - start);
+        out = line.substr(start, e == String::npos ? e : e - start);
         return true;
     };
 
-    std::string val;
+    String val;
     if (extract("entry:", val)) r.entry_point = val;
 
-    auto parse_pairs = [&](const char* key, std::unordered_map<std::string,int>& map) {
+    auto parse_pairs = [&](const char* key, UnorderedMap<String,int>& map) {
         if (!extract(key, val) || val == "-") return;
-        std::istringstream ss(val);
-        std::string tok;
+        IStringStream ss(val);
+        String tok;
         while (std::getline(ss, tok, ','))
         {
             auto eq = tok.find('=');
-            if (eq != std::string::npos)
-                map[tok.substr(0, eq)] = std::stoi(tok.substr(eq + 1));
+            if (eq != String::npos)
+                map[tok.substr(0, eq)] = stoi(tok.substr(eq + 1));
         }
     };
 
@@ -239,33 +239,33 @@ static void parse_refl_line(const std::string& line, MTLReflection& r)
 
     if (extract("members:", val) && val != "-")
     {
-        std::istringstream ss(val);
-        std::string tok;
+        IStringStream ss(val);
+        String tok;
         while (std::getline(ss, tok, ','))
         {
             auto eq = tok.find('=');
             auto c1 = tok.find(':', eq + 1);
             auto c2 = tok.find(':', c1 + 1);
-            if (eq != std::string::npos && c1 != std::string::npos && c2 != std::string::npos)
+            if (eq != String::npos && c1 != String::npos && c2 != String::npos)
             {
                 MTLReflection::Member m;
-                m.buffer_slot = std::stoi(tok.substr(eq + 1, c1 - eq - 1));
-                m.offset      = (uint32_t)std::stoul(tok.substr(c1 + 1, c2 - c1 - 1));
-                m.size        = (uint32_t)std::stoul(tok.substr(c2 + 1));
+                m.buffer_slot = stoi(tok.substr(eq + 1, c1 - eq - 1));
+                m.offset      = (uint32_t)stoul(tok.substr(c1 + 1, c2 - c1 - 1));
+                m.size        = (uint32_t)stoul(tok.substr(c2 + 1));
                 r.members[tok.substr(0, eq)] = m;
             }
         }
     }
 }
 
-static MTLReflection parse_reflection(const std::string& msl_source)
+static MTLReflection parse_reflection(const String& msl_source)
 {
     MTLReflection r;
-    std::istringstream ss(msl_source);
-    std::string line;
+    IStringStream ss(msl_source);
+    String line;
     while (std::getline(ss, line))
     {
-        if (line.find("SQUARE_MTL_REFL") != std::string::npos)
+        if (line.find("SQUARE_MTL_REFL") != String::npos)
         {
             parse_refl_line(line, r);
             break;
@@ -606,7 +606,7 @@ MTLVertexDescriptor* ContextMTL::build_vertex_desc(InputLayout* il)
     // Order attributes by HLSL declaration rank (the SPIR-V/MSL location order),
     // then assign sequential [[attribute(N)]] indices. This is robust to meshes
     // whose memory layout differs from the declaration order.
-    std::vector<const Attribute*> sorted;
+    Vector<const Attribute*> sorted;
     sorted.reserve(il->m_list.count_attribute());
     for (const auto& attr : il->m_list) sorted.push_back(&attr);
     std::sort(sorted.begin(), sorted.end(),
@@ -711,7 +711,7 @@ id<MTLRenderPipelineState> ContextMTL::get_or_create_pso()
     NSError* err = nil;
     id<MTLRenderPipelineState> pso = [m_device newRenderPipelineStateWithDescriptor:pd error:&err];
     if (!pso && logger())
-        logger()->warning(std::string("Metal PSO creation failed: ") + err.localizedDescription.UTF8String);
+        logger()->warning(String("Metal PSO creation failed: ") + err.localizedDescription.UTF8String);
     else
         SQMTL_LOG("get_or_create_pso: PSO built OK");
 
@@ -869,7 +869,7 @@ bool ContextMTL::is_srgb_framebuffer() const { return m_srgb_fb; }
 
 void ContextMTL::print_info()
 {
-    if (logger()) logger()->info(std::string("Metal device: ") + m_device.name.UTF8String);
+    if (logger()) logger()->info(String("Metal device: ") + m_device.name.UTF8String);
 }
 
 const ClearColorState& ContextMTL::get_clear_color_state() { return m_render_state.m_clear_color; }
@@ -978,21 +978,21 @@ void ContextMTL::unbind_CB(ConstBuffer*) {}
 void ContextMTL::unbind_VBO(VertexBuffer*) { m_bind.vertex_buffer = nullptr; }
 void ContextMTL::unbind_IBO(IndexBuffer*)  { m_bind.index_buffer  = nullptr; }
 
-std::vector<unsigned char> ContextMTL::copy_buffer_CB(const ConstBuffer* cb)
+Vector<unsigned char> ContextMTL::copy_buffer_CB(const ConstBuffer* cb)
 {
     if (!cb || !cb->m_buffer) return {};
     auto* p = (const unsigned char*)cb->m_buffer.contents;
     return {p, p + cb->m_size};
 }
 
-std::vector<unsigned char> ContextMTL::copy_buffer_VBO(const VertexBuffer* vb)
+Vector<unsigned char> ContextMTL::copy_buffer_VBO(const VertexBuffer* vb)
 {
     if (!vb || !vb->m_buffer) return {};
     auto* p = (const unsigned char*)vb->m_buffer.contents;
     return {p, p + vb->m_size};
 }
 
-std::vector<unsigned char> ContextMTL::copy_buffer_IBO(const IndexBuffer* ib)
+Vector<unsigned char> ContextMTL::copy_buffer_IBO(const IndexBuffer* ib)
 {
     if (!ib || !ib->m_buffer) return {};
     auto* p = (const unsigned char*)ib->m_buffer.contents;
@@ -1182,7 +1182,7 @@ static id<MTLTexture> upload_texture(id<MTLDevice> dev,
 
     // If the raw data has fewer channels than Metal expects (e.g. RGB → RGBA8),
     // expand the data before upload. Alpha is filled with 0xFF.
-    std::vector<unsigned char> expanded_buf;
+    Vector<unsigned char> expanded_buf;
     const unsigned char* upload_ptr = raw.m_bytes;
     if (src_ch != dst_ch)
     {
@@ -1373,25 +1373,25 @@ static size_t mtl_pixel_format_size(MTLPixelFormat format)
     }
 }
 
-std::vector<unsigned char> ContextMTL::get_texture(Texture* t, int level)
+Vector<unsigned char> ContextMTL::get_texture(Texture* t, int level)
 {
     if (!t || !t->m_texture) return {};
     NSUInteger w = std::max<NSUInteger>(1, t->m_texture.width  >> level);
     NSUInteger h = std::max<NSUInteger>(1, t->m_texture.height >> level);
     size_t bpr = w * mtl_pixel_format_size(t->m_texture.pixelFormat);
-    std::vector<unsigned char> buf(bpr * h);
+    Vector<unsigned char> buf(bpr * h);
     [t->m_texture getBytes:buf.data() bytesPerRow:bpr
                 fromRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:level];
     return buf;
 }
 
-std::vector<unsigned char> ContextMTL::get_texture(Texture* t, int face, int level)
+Vector<unsigned char> ContextMTL::get_texture(Texture* t, int face, int level)
 {
     if (!t || !t->m_texture) return {};
     NSUInteger w = std::max<NSUInteger>(1, t->m_texture.width  >> level);
     NSUInteger h = std::max<NSUInteger>(1, t->m_texture.height >> level);
     size_t bpr = w * mtl_pixel_format_size(t->m_texture.pixelFormat);
-    std::vector<unsigned char> buf(bpr * h);
+    Vector<unsigned char> buf(bpr * h);
     [t->m_texture getBytes:buf.data() bytesPerRow:bpr bytesPerImage:bpr * h
                 fromRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:level slice:face];
     return buf;
@@ -1464,7 +1464,7 @@ static size_t compute_buffer_size_with_padding(const MTLReflection& reflection)
     return auto_sz;
 }
 
-Shader* ContextMTL::create_shader(const std::vector<ShaderSourceInformation>& infos)
+Shader* ContextMTL::create_shader(const Vector<ShaderSourceInformation>& infos)
 {
     auto* sh = new Shader(*this);
 
@@ -1477,7 +1477,7 @@ Shader* ContextMTL::create_shader(const std::vector<ShaderSourceInformation>& in
          || info.m_type == ST_TASSELLATION_EVALUATION_SHADER
          || info.m_type == ST_COMPUTE_SHADER) continue;
 
-        const std::string src = info.m_shader_header.empty()
+        const String src = info.m_shader_header.empty()
                               ? info.m_shader_source
                               : info.m_shader_header + "\n" + info.m_shader_source;
 
@@ -1485,7 +1485,7 @@ Shader* ContextMTL::create_shader(const std::vector<ShaderSourceInformation>& in
 
         // Layered rendering: the VS emits [[render_target_array_index]] → the PSO
         // must declare a primitive topology class (set in get_or_create_pso).
-        if (stage == ST_VERTEX_SHADER && src.find("render_target_array_index") != std::string::npos)
+        if (stage == ST_VERTEX_SHADER && src.find("render_target_array_index") != String::npos)
             sh->m_writes_layer = true;
 
         // Compute buffer size for the uniforms
@@ -1520,11 +1520,11 @@ Shader* ContextMTL::create_shader(const std::vector<ShaderSourceInformation>& in
             continue;
         }
 
-        const std::string& entry = sh->m_refl[stage].entry_point.empty()
+        const String& entry = sh->m_refl[stage].entry_point.empty()
                                  ? info.m_entry_point : sh->m_refl[stage].entry_point;
         sh->m_functions[stage] = [lib newFunctionWithName:[NSString stringWithUTF8String:entry.c_str()]];
         if (!sh->m_functions[stage] && logger())
-            logger()->warning(std::string("Metal: function '") + entry + "' not found in shader library.");
+            logger()->warning(String("Metal: function '") + entry + "' not found in shader library.");
     }
 
     return sh;
@@ -1540,27 +1540,27 @@ bool ContextMTL::shader_linked_with_error(Shader* s)
     return s && !s->m_linker_error.empty();
 }
 
-std::vector<std::string> ContextMTL::get_shader_compiler_errors(Shader* s)
+Vector<String> ContextMTL::get_shader_compiler_errors(Shader* s)
 {
-    return s ? s->m_compiler_errors : std::vector<std::string>{};
+    return s ? s->m_compiler_errors : Vector<String>{};
 }
 
-std::string ContextMTL::get_shader_linker_error(Shader* s)
+String ContextMTL::get_shader_linker_error(Shader* s)
 {
-    return s ? s->m_linker_error : std::string{};
+    return s ? s->m_linker_error : String{};
 }
 
 void ContextMTL::bind_shader(Shader* s)   { m_bind.shader = s; }
 void ContextMTL::unbind_shader(Shader*)   { m_bind.shader = nullptr; }
 
-void ContextMTL::bind_uniform_CB(const ConstBuffer* cb, Shader* s, const std::string& uname)
+void ContextMTL::bind_uniform_CB(const ConstBuffer* cb, Shader* s, const String& uname)
 {
     // get_uniform_const_buffer returns a shader-owned handle — do NOT delete it.
     auto* ucb = static_cast<UniformConstBufferMTL*>(get_uniform_const_buffer(s, uname));
     if (ucb) ucb->bind(cb);
 }
 
-void ContextMTL::unbind_uniform_CB(Shader* s, const std::string& uname)
+void ContextMTL::unbind_uniform_CB(Shader* s, const String& uname)
 {
     auto* ucb = static_cast<UniformConstBufferMTL*>(get_uniform_const_buffer(s, uname));
     if (ucb) ucb->unbind();
@@ -1569,7 +1569,7 @@ void ContextMTL::unbind_uniform_CB(Shader* s, const std::string& uname)
 void ContextMTL::delete_shader(Shader*& s) { delete s; s = nullptr; }
 Shader* ContextMTL::get_bind_shader() const { return m_bind.shader; }
 
-Uniform* ContextMTL::get_uniform(Shader* s, const std::string& name) const
+Uniform* ContextMTL::get_uniform(Shader* s, const String& name) const
 {
     if (!s) return nullptr;
 
@@ -1577,7 +1577,7 @@ Uniform* ContextMTL::get_uniform(Shader* s, const std::string& name) const
     auto cached = s->m_uniform_cache.find(name);
     if (cached != s->m_uniform_cache.end()) return cached->second.get();
 
-    std::unique_ptr<Uniform> u;
+    UniquePtr<Uniform> u;
 
     for (int stage = 0; stage < ST_N_SHADER && !u; ++stage)
     {
@@ -1604,7 +1604,7 @@ Uniform* ContextMTL::get_uniform(Shader* s, const std::string& name) const
     return raw;
 }
 
-UniformConstBuffer* ContextMTL::get_uniform_const_buffer(Shader* s, const std::string& name) const
+UniformConstBuffer* ContextMTL::get_uniform_const_buffer(Shader* s, const String& name) const
 {
     if (!s) return nullptr;
 
@@ -1615,7 +1615,7 @@ UniformConstBuffer* ContextMTL::get_uniform_const_buffer(Shader* s, const std::s
     // Collect {stage, slot} for every stage that declares this buffer.
     // SPIRV-Cross assigns slots independently per stage, so Camera may be
     // at [[buffer(0)]] in the VS but [[buffer(1)]] in the FS.
-    std::vector<UniformConstBufferMTL::StageSlot> bindings;
+    Vector<UniformConstBufferMTL::StageSlot> bindings;
     for (int stage = 0; stage < ST_N_SHADER; ++stage)
     {
         if (!s->m_functions[stage]) continue;
@@ -1625,7 +1625,7 @@ UniformConstBuffer* ContextMTL::get_uniform_const_buffer(Shader* s, const std::s
     }
 
     if (bindings.empty()) return nullptr;
-    auto ucb = std::unique_ptr<UniformConstBuffer>(
+    auto ucb = UniquePtr<UniformConstBuffer>(
         new UniformConstBufferMTL(const_cast<ContextMTL*>(this), s, std::move(bindings)));
     UniformConstBuffer* raw = ucb.get();
     s->m_ucb_cache.emplace(name, std::move(ucb));
@@ -1758,7 +1758,7 @@ void ContextMTL::log_draw_state(const char* fn, unsigned int n)
                 int cbslot = b.second;
                 const ConstBuffer* cb = (cbslot >= 0 && cbslot < Shader::MAX_BUFFERS)
                                       ? sh->m_bound_cb_per_stage[stage][cbslot] : nullptr;
-                std::ostringstream vals;
+                OStringStream vals;
                 if (cb && cb->m_buffer && cb->m_size >= sizeof(float))
                 {
                     const float* f = (const float*)cb->m_buffer.contents;
@@ -1776,7 +1776,7 @@ void ContextMTL::log_draw_state(const char* fn, unsigned int n)
                     SQMTL_LOG("    member stage=" << stage << " name=" << m.first
                               << " off=" << m.second.offset << " size=" << m.second.size);
                 const auto& cpu = sh->m_auto_cpu[stage];
-                std::ostringstream vals;
+                OStringStream vals;
                 const float* f = (const float*)cpu.data();
                 size_t nf = std::min<size_t>(cpu.size() / sizeof(float), 16);
                 for (size_t i = 0; i < nf; ++i) vals << (i ? "," : "") << f[i];
@@ -1895,7 +1895,7 @@ void ContextMTL::draw_elements_instanced(DrawType dt, unsigned int start, unsign
 // Render target
 // ──────────────────────────────────────────────────────────────────────────────
 
-Target* ContextMTL::create_render_target(const std::vector<TargetField>& fields)
+Target* ContextMTL::create_render_target(const Vector<TargetField>& fields)
 {
     auto* t = new Target();
     int color_idx = 0;
@@ -2128,7 +2128,7 @@ void ContextMTL::gpu_timer_end_frame()
     m_gpu_timer_in_frame = false;
 }
 
-bool ContextMTL::gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms)
+bool ContextMTL::gpu_timer_read_frame(uint64& frame_id, Vector<double>& timestamps_ms)
 {
     if (@available(macOS 11.0, iOS 14.0, *))
     {

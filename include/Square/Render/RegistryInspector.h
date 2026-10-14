@@ -32,7 +32,7 @@ namespace Render
 		//inspector interface
 		virtual void on_create_texture(Texture* texture, const TextureInfo& info) override;
 		virtual void on_delete_texture(const Texture* texture) override;
-		virtual void on_create_target(Target* target, const std::vector<TargetField>& fields) override;
+		virtual void on_create_target(Target* target, const Vector<TargetField>& fields) override;
 		virtual void on_delete_target(const Target* target) override;
 		//registry access
 		virtual const TextureRegistry& textures() const override;

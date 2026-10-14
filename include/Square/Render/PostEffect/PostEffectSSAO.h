@@ -57,7 +57,7 @@ namespace Render
 		const Settings& settings() const { return m_settings; }
 
 		virtual void draw(PostEffectFrame& frame) override;
-		virtual void debug_options(std::vector<DebugOption>& options) override;
+		virtual void debug_options(Vector<DebugOption>& options) override;
 		virtual Texture* debug_texture() const override;
 
 	protected:

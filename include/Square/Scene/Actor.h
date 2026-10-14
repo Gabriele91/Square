@@ -26,8 +26,8 @@ namespace Scene
 	class Actor;
 	class Level;
 	class World;
-	using ActorList = std::vector< Shared<Actor> >;
-	using LevelList = std::vector< Shared<Level> >;
+	using ActorList = Vector< Shared<Actor> >;
+	using LevelList = Vector< Shared<Level> >;
 	//..................
     class SQUARE_API Actor : public ResourceObject
                            , public InheritableSharedObject<Actor>
@@ -46,11 +46,11 @@ namespace Scene
 
         // Load child node from resource: 
         // a new actor (an instance: every call a new one), added
-        Shared<Actor> load_child(const std::string& resource_name);
+        Shared<Actor> load_child(const String& resource_name);
 
         //constructor
 		Actor(Context& context);
-		Actor(Context& context, const std::string& name);
+		Actor(Context& context, const String& name);
         virtual ~Actor();
         
         // Visit
@@ -84,22 +84,22 @@ namespace Scene
 		{
 			return StaticPointerCast<T>(component(T::static_object_id()));
 		}
-		Shared<Component> component(const std::string& name);
+		Shared<Component> component(const String& name);
 		Shared<Component> component(uint64 id);		
 		const ComponentMap& components() const;
         
         //get child
         Shared<Actor> child();
         Shared<Actor> child(size_t index);
-        Shared<Actor> child(const std::string& name);
+        Shared<Actor> child(const String& name);
 		const ActorList& childs() const;
 		//an actor by its path from this one, its names split by '/' ("arm/hand"; ".." the parent,
 		//"" this one), nothing made (nullptr: not there)
-		Shared<Actor> find(const std::string& path);
+		Shared<Actor> find(const String& path);
 
         //name        
-        const std::string& name() const;
-        void name(const std::string&);
+        const String& name() const;
+        void name(const String&);
 
         //message
         void send_message(const VariantRef& value, bool brodcast = false);
@@ -152,7 +152,7 @@ namespace Scene
 		bool is_static() const override;
 
         //load actor
-        bool load(const std::string& path) override;
+        bool load(const String& path) override;
 
     protected:
 		//friend class
@@ -181,7 +181,7 @@ namespace Scene
         void    set_dirty();
         void    send_dirty();
         //node name
-        std::string m_name;
+        String m_name;
         //static (its own flag: is_static also asks its parents)
         bool m_static{ false };
         //parent

@@ -145,7 +145,7 @@ namespace Render
 		});
 	}
 
-	void Bloom::debug_options(std::vector<DebugOption>& options)
+	void Bloom::debug_options(Vector<DebugOption>& options)
 	{
 		options.push_back(DebugOption::toggle("Bloom only",
 			[this]() { return m_settings.debug; },

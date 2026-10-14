@@ -18,15 +18,15 @@ namespace Filesystem
 namespace Archive
 {
 	//a path inside an archive (or the archive itself): its directory or one of its entries
-	bool is_directory(const std::string& path);
-	bool is_file(const std::string& path);
+	bool is_directory(const String& path);
+	bool is_file(const String& path);
 	//the bytes of a file of an archive (false: not in an archive)
-	bool read(const std::string& path, std::vector<unsigned char>& output);
+	bool read(const String& path, Vector<unsigned char>& output);
 	//the files and the sub directories of a directory of an archive (false: not in an archive)
-	bool list(const std::string& path, std::vector<std::string>& files, std::vector<std::string>& directories);
+	bool list(const String& path, Vector<String>& files, Vector<String>& directories);
 	//the files of a directory, its sub directories too, in an archive (deflate level 6; images
 	//and gzip files stored as they are)
-	bool write(const std::string& directory, const std::string& archive_path);
+	bool write(const String& directory, const String& archive_path);
 }
 }
 }

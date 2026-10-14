@@ -77,7 +77,7 @@ namespace Render
         //the depth buffer of the software occlusion as an image (DF_DRAW_OCCLUSION)
         Render::Texture*            m_occlusion_texture{ nullptr };
         IVec2                       m_occlusion_size{ 0, 0 };
-        std::vector<unsigned char>  m_occlusion_pixels;
+        Vector<unsigned char>  m_occlusion_pixels;
         //Helps
         void draw_obb
         (

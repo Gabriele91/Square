@@ -28,7 +28,7 @@ namespace Scene
 		SQUARE_OBJECT(StaticMesh)
 
 		Square::Shared< Square::Resource::Mesh >       m_mesh;
-		std::vector< Square::Shared< Square::Resource::Material > >   m_materials;
+		Vector< Square::Shared< Square::Resource::Material > >   m_materials;
 
 		StaticMesh(Square::Context& context);
 
@@ -81,7 +81,7 @@ namespace Scene
 		//its triangles in world space (3 points each, added to out), read from the file of its mesh
 		//(the GPU mesh keeps no copy of them); filter: the sub meshes taken (by their index: e.g.
 		//by their material), none: all of them; false: no mesh, or it cannot be read
-		bool triangles(std::vector<Square::Vec3>& out, const std::function<bool(size_t submesh)>& filter = nullptr);
+		bool triangles(Vector<Square::Vec3>& out, const std::function<bool(size_t submesh)>& filter = nullptr);
 		// build bbox
 		bool build_local_obounding_box(bool from_triangles=true);
 		void set_obounding_box(const Square::Geometry::OBoundingBox& obb);

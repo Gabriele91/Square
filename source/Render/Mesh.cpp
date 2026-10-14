@@ -319,7 +319,7 @@ namespace Render
 		//test
 		if (!layout().get() || !vertex_buffer().get())
 		{
-			context().logger()->debug("Unable to draw mesh: " + std::to_string(size_t(this)));
+			context().logger()->debug("Unable to draw mesh: " + to_string(size_t(this)));
 			return;
 		}
 		//one draw for the profiler (its submeshes)
@@ -359,7 +359,7 @@ namespace Render
 		//test
 		if (!layout().get() || !vertex_buffer().get() || m_sub_meshs.size() <= sub_mesh_id)
 		{
-			context().logger()->debug("Unable to draw mesh: " + std::to_string(size_t(this)) + ", submesh_id: " + std::to_string(sub_mesh_id));
+			context().logger()->debug("Unable to draw mesh: " + to_string(size_t(this)) + ", submesh_id: " + to_string(sub_mesh_id));
 			return;
 		}
 		//ref sub mesh

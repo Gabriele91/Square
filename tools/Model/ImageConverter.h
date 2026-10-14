@@ -20,17 +20,17 @@ namespace ImageConverter
 {
     struct Result
     {
-        std::vector<unsigned char> m_data;
-        std::string                m_description; //what was done ("BMP 8 bit -> PNG RGB")
+        Square::Vector<unsigned char> m_data;
+        Square::String                m_description; //what was done ("BMP 8 bit -> PNG RGB")
     };
 
     //the image (the bytes of its file) for the engine; extension: of its file (".tga"), a TGA
     //has no magic number
-    Result convert(const std::vector<unsigned char>& file, const std::string& extension);
+    Result convert(const Square::Vector<unsigned char>& file, const Square::String& extension);
 
     //a normal map of glTF (OpenGL: green up) for the engine (DirectX: green down, the shaders
     //invert it): a PNG RGB/RGBA with the green inverted; kept as it is if it cannot be decoded
-    Result convert_normal_map(const std::vector<unsigned char>& file);
+    Result convert_normal_map(const Square::Vector<unsigned char>& file);
 
     //the compression of the textures in the GPU (--images bc, the default; astc)
     enum class Compression
@@ -41,10 +41,10 @@ namespace ImageConverter
     };
 
     //the extension of the files of a compression (".dds", ".ktx")
-    std::string extension(Compression compression);
+    Square::String extension(Compression compression);
 
     //the image (a file the engine reads: the m_data of convert/convert_normal_map) compressed,
     //with its levels down to 1x1 (box filter; the normal maps normalized); m_data empty when it
     //cannot be (not decoded; BC: a size not a multiple of 4, DirectX wants it)
-    Result compress(const std::vector<unsigned char>& file, bool normal_map, Compression compression);
+    Result compress(const Square::Vector<unsigned char>& file, bool normal_map, Compression compression);
 }

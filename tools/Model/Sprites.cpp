@@ -19,7 +19,7 @@ namespace Sprites
         //the size of a sprite of a plane: its two largest sides (its box by the scale of its node)
         Vec2 size_of(const Geometry::OBoundingBox& box, const Vec3& scale)
         {
-            std::array<float, 3> sides
+            Square::Array<float, 3> sides
             {
                 box.get_extension().x * 2.0f * std::abs(scale.x),
                 box.get_extension().y * 2.0f * std::abs(scale.y),
@@ -34,7 +34,7 @@ namespace Sprites
     {
         using namespace AuxSprites;
         //the flagged nodes with a mesh (the node of the mesh: it or one under it)
-        std::vector< Shared<Actor> > found;
+        Square::Vector< Shared<Actor> > found;
         root->visit([&](Shared<Actor> node) -> bool
         {
             if (nodes.count(node.get()))

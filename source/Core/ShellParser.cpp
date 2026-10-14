@@ -39,7 +39,7 @@ namespace Shell
             (
                 Error
                 {
-                      std::move(std::string("Invalid argument vector"))
+                      std::move(String("Invalid argument vector"))
                     , 0
                     , ErrorType::invalid_argument
                 }
@@ -71,7 +71,7 @@ namespace Shell
                     (
                         Error
                         {
-                              std::move(std::string("Invalid argument size"))
+                              std::move(String("Invalid argument size"))
                             , c
                             , ErrorType::invalid_argument
                         }
@@ -85,7 +85,7 @@ namespace Shell
                     (
                         Error
                         {
-                              std::move(std::string("Invalid argument name"))
+                              std::move(String("Invalid argument name"))
                             , c
                             , ErrorType::invalid_argument
                         }
@@ -112,7 +112,7 @@ namespace Shell
                         (
                             Error
                             {
-                                  std::move(std::string("Invalid argument name (" + std::string(arg) + ")"))
+                                  std::move(String("Invalid argument name (" + String(arg) + ")"))
                                 , c
                                 , ErrorType::invalid_argument
                             }
@@ -142,7 +142,7 @@ namespace Shell
                 switch (last_command->type)
                 {
                     default:
-                    case ValueType::value_string:   { auto [rok,rval] = to_<std::string>(arg);         ok = rok;  current_value = rval; } break;
+                    case ValueType::value_string:   { auto [rok,rval] = to_<String>(arg);         ok = rok;  current_value = rval; } break;
                     case ValueType::value_bool:     { auto [rok,rval] = to_<bool>(arg);                ok = rok;  current_value = rval; } break;
                     case ValueType::value_short:    { auto [rok,rval] = to_<short>(arg);               ok = rok;  current_value = rval; } break;
                     case ValueType::value_int:      { auto [rok,rval] = to_<int>(arg);                 ok = rok;  current_value = rval; } break;
@@ -163,7 +163,7 @@ namespace Shell
                     (
                         Error
                         {
-                              std::move(std::string("Invalid value"))
+                              std::move(String("Invalid value"))
                             , c
                             , ErrorType::invalid_value
                         }
@@ -184,7 +184,7 @@ namespace Shell
                 (
                       Error
                       {
-                            std::move(std::string("Invalid input"))
+                            std::move(String("Invalid input"))
                           , c
                           , ErrorType::invalid_argument
                       }
@@ -200,7 +200,7 @@ namespace Shell
             (
                   Error
                   {
-                      std::move(std::string("Miss a value"))
+                      std::move(String("Miss a value"))
                     , argc
                     , ErrorType::invalid_value
                   }
@@ -226,7 +226,7 @@ namespace Shell
                 (
                       Error
                       {
-                            std::move(std::string("Mandatory argument (" + cmd.name + ") is missed"))
+                            std::move(String("Mandatory argument (" + cmd.name + ") is missed"))
                           , argc
                           , ErrorType::invalid_argument
                       }
@@ -239,7 +239,7 @@ namespace Shell
         return std::make_tuple(Error{}, std::move(values));
     }
     
-    std::string help(const ParserCommands& commands)
+    String help(const ParserCommands& commands)
     {
         // Get max line size
         size_t max_size_of_name_plus_short_name = 0;
@@ -253,47 +253,47 @@ namespace Shell
         }
 
         // Buffer
-        std::stringstream ss_help;
+        StringStream ss_help;
 
         // Print all commands
         for(const auto& cmd : commands)
         {
             ss_help 
             << "--" << cmd.name << ", -" << cmd.short_name 
-            << std::string(max_size_of_name_plus_short_name - (cmd.name.size() + cmd.short_name.size()) + 4, ' ')
+            << String(max_size_of_name_plus_short_name - (cmd.name.size() + cmd.short_name.size()) + 4, ' ')
             << cmd.description
-            << std::string(max_size_of_description - cmd.description.size() + 4, ' ')
+            << String(max_size_of_description - cmd.description.size() + 4, ' ')
             << std::endl;
         }
         
         return ss_help.str();
     }
 
-    const std::string& path(const Square::Shell::ParserValue& args)
+    const String& path(const Square::Shell::ParserValue& args)
     {
         if (auto it = args.find(__path__); it != args.end())
         {
-            return std::get<std::string>(it->second);
+            return std::get<String>(it->second);
         }
-        static const std::string empty;
+        static const String empty;
         return empty;
     }
-    const std::string& filename(const Square::Shell::ParserValue& args)
+    const String& filename(const Square::Shell::ParserValue& args)
     {
         if (auto it = args.find(__filename__); it != args.end())
         {
-            return std::get<std::string>(it->second);
+            return std::get<String>(it->second);
         }
-        static const std::string empty;
+        static const String empty;
         return empty;
     }
-    const std::string& basename(const Square::Shell::ParserValue& args)
+    const String& basename(const Square::Shell::ParserValue& args)
     {
         if (auto it = args.find(__filename__); it != args.end())
         {
-            return std::get<std::string>(it->second);
+            return std::get<String>(it->second);
         }
-        static const std::string empty;
+        static const String empty;
         return empty;
     }
 }

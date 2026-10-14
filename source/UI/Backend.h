@@ -49,7 +49,7 @@ namespace UI
 
 		//the textures of the engine an image can show (its source: the texture, not owned by the
 		//UI; none: nullptr, the source is a file)
-		void external_textures(std::function<Render::Texture*(const std::string& source, IVec2& size)> textures) { m_external = textures; }
+		void external_textures(std::function<Render::Texture*(const String& source, IVec2& size)> textures) { m_external = textures; }
 
 		//Rml::RenderInterface
 		Rml::CompiledGeometryHandle CompileGeometry(Rml::Span<const Rml::Vertex> vertices, Rml::Span<const int> indices) override;
@@ -90,10 +90,10 @@ namespace UI
 		Shared<Resource::Shader> m_shader;
 		Render::InputLayout*     m_layout{ nullptr };
 		Render::Texture*         m_white{ nullptr };
-		std::vector<Geometry*>   m_geometries;  //alive (released by release())
-		std::vector<Render::Texture*> m_textures;
-		std::function<Render::Texture*(const std::string& source, IVec2& size)> m_external;
-		std::vector<Render::Texture*> m_external_textures; //given by m_external (not released)
+		Vector<Geometry*>   m_geometries;  //alive (released by release())
+		Vector<Render::Texture*> m_textures;
+		std::function<Render::Texture*(const String& source, IVec2& size)> m_external;
+		Vector<Render::Texture*> m_external_textures; //given by m_external (not released)
 		//the frame
 		IVec2               m_size{ 0, 0 };
 		Mat4                m_transform{ 1.0f };

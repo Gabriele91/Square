@@ -54,9 +54,9 @@ namespace Geometry
 		return abs(m_max - get_center());
 	}
 
-	std::array< Vec3, 8 > AABoundingBox::get_bounding_box() const
+	Array< Vec3, 8 > AABoundingBox::get_bounding_box() const
 	{
-		std::array< Vec3, 8 > p;
+		Array< Vec3, 8 > p;
 		
 		Vec3  r(1, 0, 0);
 		Vec3  u(0, 1, 0);
@@ -77,7 +77,7 @@ namespace Geometry
 
 	}
 
-	std::array< Vec3, 8 > AABoundingBox::get_bounding_box(const Mat4& model) const
+	Array< Vec3, 8 > AABoundingBox::get_bounding_box(const Mat4& model) const
 	{
 		auto output = get_bounding_box();
 		for (Vec3& point : output) point = Vec3(model * Vec4(point, 1.0));

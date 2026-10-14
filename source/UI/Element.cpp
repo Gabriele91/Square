@@ -26,35 +26,35 @@ namespace UI
 		return m_element != nullptr;
 	}
 
-	std::string Element::tag() const
+	String Element::tag() const
 	{
-		return m_element ? m_element->GetTagName() : std::string();
+		return m_element ? m_element->GetTagName() : String();
 	}
 
-	std::string Element::id() const
+	String Element::id() const
 	{
-		return m_element ? m_element->GetId() : std::string();
+		return m_element ? m_element->GetId() : String();
 	}
 
-	void Element::set_id(const std::string& id)
+	void Element::set_id(const String& id)
 	{
 		if (m_element) m_element->SetId(id);
 	}
 
 	//tree
-	Element Element::find(const std::string& id) const
+	Element Element::find(const String& id) const
 	{
 		return Element(m_element ? m_element->GetElementById(id) : nullptr);
 	}
 
-	Element Element::query(const std::string& selector) const
+	Element Element::query(const String& selector) const
 	{
 		return Element(m_element ? m_element->QuerySelector(selector) : nullptr);
 	}
 
-	std::vector<Element> Element::query_all(const std::string& selector) const
+	Vector<Element> Element::query_all(const String& selector) const
 	{
-		std::vector<Element> elements;
+		Vector<Element> elements;
 		if (m_element)
 		{
 			Rml::ElementList list;
@@ -72,9 +72,9 @@ namespace UI
 		return Element(m_element ? m_element->GetParentNode() : nullptr);
 	}
 
-	std::vector<Element> Element::children() const
+	Vector<Element> Element::children() const
 	{
-		std::vector<Element> elements;
+		Vector<Element> elements;
 		if (!m_element) return elements;
 		for (int i = 0, count = m_element->GetNumChildren(); i != count; ++i)
 		{
@@ -89,73 +89,73 @@ namespace UI
 	}
 
 	//content
-	void Element::set_text(const std::string& text)
+	void Element::set_text(const String& text)
 	{
 		if (m_element) m_element->SetInnerRML(Rml::StringUtilities::EncodeRml(text));
 	}
 
-	std::string Element::text() const
+	String Element::text() const
 	{
-		return m_element ? Rml::StringUtilities::DecodeRml(m_element->GetInnerRML()) : std::string();
+		return m_element ? Rml::StringUtilities::DecodeRml(m_element->GetInnerRML()) : String();
 	}
 
-	void Element::set_html(const std::string& rml)
+	void Element::set_html(const String& rml)
 	{
 		if (m_element) m_element->SetInnerRML(rml);
 	}
 
-	std::string Element::html() const
+	String Element::html() const
 	{
-		return m_element ? m_element->GetInnerRML() : std::string();
+		return m_element ? m_element->GetInnerRML() : String();
 	}
 
 	//classes, attributes, properties
-	void Element::set_class(const std::string& name, bool enable)
+	void Element::set_class(const String& name, bool enable)
 	{
 		if (m_element) m_element->SetClass(name, enable);
 	}
 
-	bool Element::has_class(const std::string& name) const
+	bool Element::has_class(const String& name) const
 	{
 		return m_element && m_element->IsClassSet(name);
 	}
 
-	void Element::set_pseudo_class(const std::string& name, bool enable)
+	void Element::set_pseudo_class(const String& name, bool enable)
 	{
 		if (m_element) m_element->SetPseudoClass(name, enable);
 	}
 
-	bool Element::has_pseudo_class(const std::string& name) const
+	bool Element::has_pseudo_class(const String& name) const
 	{
 		return m_element && m_element->IsPseudoClassSet(name);
 	}
 
-	void Element::set_attribute(const std::string& name, const std::string& value)
+	void Element::set_attribute(const String& name, const String& value)
 	{
 		if (m_element) m_element->SetAttribute(name, value);
 	}
 
-	std::string Element::attribute(const std::string& name) const
+	String Element::attribute(const String& name) const
 	{
-		return m_element ? m_element->GetAttribute<Rml::String>(name, "") : std::string();
+		return m_element ? m_element->GetAttribute<Rml::String>(name, "") : String();
 	}
 
-	bool Element::has_attribute(const std::string& name) const
+	bool Element::has_attribute(const String& name) const
 	{
 		return m_element && m_element->GetAttribute(name) != nullptr;
 	}
 
-	void Element::remove_attribute(const std::string& name)
+	void Element::remove_attribute(const String& name)
 	{
 		if (m_element) m_element->RemoveAttribute(name);
 	}
 
-	bool Element::set_property(const std::string& name, const std::string& value)
+	bool Element::set_property(const String& name, const String& value)
 	{
 		return m_element && m_element->SetProperty(name, value);
 	}
 
-	void Element::remove_property(const std::string& name)
+	void Element::remove_property(const String& name)
 	{
 		if (m_element) m_element->RemoveProperty(name);
 	}
@@ -213,7 +213,7 @@ namespace UI
 	}
 
 	//children
-	Element Element::create_child(const std::string& tag)
+	Element Element::create_child(const String& tag)
 	{
 		if (!m_element || !m_element->GetOwnerDocument()) return Element();
 		return Element(m_element->AppendChild(m_element->GetOwnerDocument()->CreateElement(tag)));
@@ -232,7 +232,7 @@ namespace UI
 		return on(event_name(type), callback, capture);
 	}
 
-	Listener Element::on(const std::string& type, const EventCallback& callback, bool capture)
+	Listener Element::on(const String& type, const EventCallback& callback, bool capture)
 	{
 		if (!m_element || type.empty()) return Listener();
 		auto* bridge = new ListenerBridge(m_element, type, callback, capture);
@@ -241,7 +241,7 @@ namespace UI
 		return listener;
 	}
 
-	bool Element::dispatch(const std::string& type)
+	bool Element::dispatch(const String& type)
 	{
 		return m_element && m_element->DispatchEvent(type, Rml::Dictionary());
 	}
@@ -267,13 +267,13 @@ namespace UI
 		return control() != nullptr;
 	}
 
-	std::string FormControl::value() const
+	String FormControl::value() const
 	{
 		auto* form_control = control();
-		return form_control ? form_control->GetValue() : std::string();
+		return form_control ? form_control->GetValue() : String();
 	}
 
-	void FormControl::set_value(const std::string& value)
+	void FormControl::set_value(const String& value)
 	{
 		if (auto* form_control = control()) form_control->SetValue(value);
 	}
@@ -324,13 +324,13 @@ namespace UI
 		m_element = nullptr;
 	}
 
-	std::string Document::title() const
+	String Document::title() const
 	{
 		auto* document = native_document();
-		return document ? document->GetTitle() : std::string();
+		return document ? document->GetTitle() : String();
 	}
 
-	void Document::set_title(const std::string& title)
+	void Document::set_title(const String& title)
 	{
 		if (auto* document = native_document()) document->SetTitle(title);
 	}

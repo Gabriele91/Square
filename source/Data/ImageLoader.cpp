@@ -31,7 +31,7 @@ namespace Data
 	//TGA
 	extern bool decode_tga
 	(
-		std::vector<unsigned char>& out_image,
+		Vector<unsigned char>& out_image,
 		unsigned long&  image_width,
 		unsigned long&  image_height,
 		Render::TextureFormat& image_format,
@@ -52,10 +52,10 @@ namespace Data
 #endif
 
 
-	Image::ImageTypeFormat Image::get_image_type_format_from_ext(const std::string& path)
+	Image::ImageTypeFormat Image::get_image_type_format_from_ext(const String& path)
 	{
 		//get ext
-		std::string ext = Filesystem::get_extension(path);
+		String ext = Filesystem::get_extension(path);
 		// Test type
 		if (ext == ".png")					      return Image::ImageTypeFormat::ITF_PNG;
 		else if (ext == ".jpg" || ext == ".jpge") return Image::ImageTypeFormat::ITF_JPG;
@@ -64,7 +64,7 @@ namespace Data
 		return  Image::ImageTypeFormat::ITF_UNKNOWN;
 	}
 
-	Image::ImageTypeFormat Image::get_image_type_format_from_data(const std::vector<unsigned char>& in_data)
+	Image::ImageTypeFormat Image::get_image_type_format_from_data(const Vector<unsigned char>& in_data)
 	{
 		if (in_data.size() < sizeof(int)) return Image::ImageTypeFormat::ITF_UNKNOWN;
 
@@ -106,10 +106,10 @@ namespace Data
 	}
 
 	//load image
-	Shared<Image> Image::load(Allocator* allocator,const std::string& path)
+	Shared<Image> Image::load(Allocator* allocator,const String& path)
 	{
 		
-		std::vector<unsigned char> image_data;
+		Vector<unsigned char> image_data;
 		unsigned long image_width { 0 };
 		unsigned long image_height{ 0 };
 		Render::TextureFormat image_format;
@@ -137,8 +137,8 @@ namespace Data
 	//load raw
 	bool Image::load
 	(
-		const std::string& path,
-		std::vector<unsigned char>& image_data,
+		const String& path,
+		Vector<unsigned char>& image_data,
 		unsigned long&  image_width,
 		unsigned long&  image_height,
 		Render::TextureFormat& image_format,
@@ -150,7 +150,7 @@ namespace Data
 		// test
 		if (image_type_format == ImageTypeFormat::ITF_UNKNOWN) return false;
 		// read all file
-		std::vector<unsigned char> data_file = Filesystem::binary_file_read_all(path);
+		Vector<unsigned char> data_file = Filesystem::binary_file_read_all(path);
 		//fail to read?
 		if (!data_file.size()) return false;
 		// load
@@ -160,8 +160,8 @@ namespace Data
 	//load raw
 	bool Image::load
 	(
-		const std::vector<unsigned char>& data_file,
-		std::vector<unsigned char>& image_data,
+		const Vector<unsigned char>& data_file,
+		Vector<unsigned char>& image_data,
 		unsigned long&  image_width,
 		unsigned long&  image_height,
 		Render::TextureFormat& image_format,
@@ -178,8 +178,8 @@ namespace Data
 	bool Image::load
 	(
 		ImageTypeFormat image_type_format,
-		const std::vector<unsigned char>& data_file,
-		std::vector<unsigned char>& image_data,
+		const Vector<unsigned char>& data_file,
+		Vector<unsigned char>& image_data,
 		unsigned long&  image_width,
 		unsigned long&  image_height,
 		Render::TextureFormat& image_format,

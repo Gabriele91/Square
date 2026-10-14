@@ -40,7 +40,7 @@ namespace Win32
 		void send_window_move_event(double x, double y);
 
 		using EventKey = std::variant < KeyboardEvent, MouseButtonEvent >;
-		std::unordered_map<EventKey, MSG> m_event_pool;
+		UnorderedMap<EventKey, MSG> m_event_pool;
 	};
 }
 }

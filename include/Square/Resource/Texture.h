@@ -48,11 +48,11 @@ namespace Resource
         //Contructor
 		Texture(Context& context);
 
-		Texture(Context& context, const std::string& path);
+		Texture(Context& context, const String& path);
 
 		Texture(Context& context, 
 			    const Attributes& attr,
-			    const std::string& path);
+			    const String& path);
 
 		Texture
 		(
@@ -69,7 +69,7 @@ namespace Resource
 		(
 			Context& context,
 			const Attributes& attr,
-			const std::vector< unsigned char >& buffer,
+			const Vector< unsigned char >& buffer,
 			unsigned long width,
 			unsigned long height,
 			Render::TextureFormat format,
@@ -78,11 +78,11 @@ namespace Resource
 
 		virtual ~Texture();
 
-		bool load(const std::string& path) override;
+		bool load(const String& path) override;
 
-		bool load(const Attributes& attr, const std::string& path);
+		bool load(const Attributes& attr, const String& path);
 
-		bool load(const Attributes& attr, const std::vector< unsigned char >& data_file);
+		bool load(const Attributes& attr, const Vector< unsigned char >& data_file);
 
 		bool build
 		(
@@ -97,7 +97,7 @@ namespace Resource
 		bool build
 		(
 			const Attributes& attr,
-			const std::vector< unsigned char >& buffer,
+			const Vector< unsigned char >& buffer,
 			unsigned long width,
 			unsigned long height,
 			Render::TextureFormat format,
@@ -139,7 +139,7 @@ namespace Resource
 		Attributes		      m_attributes;
 
 		//the DDS/KTX of a file: false when it is not one or the GPU cannot sample its format
-		bool load_compressed(const Attributes& attr, const std::vector< unsigned char >& data_file);
+		bool load_compressed(const Attributes& attr, const Vector< unsigned char >& data_file);
 	};
 }
 }

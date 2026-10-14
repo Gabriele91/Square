@@ -53,9 +53,9 @@ namespace Square
 {
 namespace Filesystem
 {
-    std::vector<std::string> get_shared_lib_env_paths()
+    Vector<String> get_shared_lib_env_paths()
     {
-        std::string raw;
+        String raw;
         
         #ifdef _WIN32
             const char* env_var = std::getenv("PATH");
@@ -74,9 +74,9 @@ namespace Filesystem
         #endif
     
         // Splitting the path into parts
-        std::vector<std::string> paths;
-        std::stringstream ss(raw);
-        std::string path;
+        Vector<String> paths;
+        StringStream ss(raw);
+        String path;
     
         while (std::getline(ss, path, delimiter)) {
             if (!path.empty()) {
@@ -87,7 +87,7 @@ namespace Filesystem
         return paths;
     }
 	
-	std::string program_dir()
+	String program_dir()
 	{
 		#ifdef _WIN32
 			char buffer[MAX_PATH];
@@ -119,7 +119,7 @@ namespace Filesystem
 		return "";
 	}
 	
-    std::string working_dir()
+    String working_dir()
     {
         char buffer[255];
         char *answer = getcwd(buffer, sizeof(buffer));
@@ -127,7 +127,7 @@ namespace Filesystem
         return "";
     }
 
-    std::string home_dir()
+    String home_dir()
     {
         const char *home_dir = std::getenv("HOME");
         if (home_dir && *home_dir) return home_dir;
@@ -139,30 +139,30 @@ namespace Filesystem
         return "";
     }
     
-    std::string app_data_dir()
+    String app_data_dir()
     {
         #if defined(_WIN32)
             const char *app_data = std::getenv("APPDATA");
             if (app_data && *app_data) return app_data;
-            const std::string home = home_dir();
+            const String home = home_dir();
             return home.size() ? join(join(home, "AppData"), "Roaming") : "";
         #elif defined(__APPLE__)
-            const std::string home = home_dir();
+            const String home = home_dir();
             return home.size() ? join(join(home, "Library"), "Application Support") : "";
         #else
             const char *data_home = std::getenv("XDG_DATA_HOME");
             if (data_home && *data_home) return data_home;
-            const std::string home = home_dir();
+            const String home = home_dir();
             return home.size() ? join(join(home, ".local"), "share") : "";
         #endif
     }
 
-    std::string resource_dir()
+    String resource_dir()
     {
         #if defined(__APPLE__)
             char path[PATH_MAX];
-            std::string bundle_path;
-            std::string resources_path;
+            String bundle_path;
+            String resources_path;
             //bundle
             CFBundleRef bundle = CFBundleGetMainBundle();
             //dir bundle
@@ -192,23 +192,23 @@ namespace Filesystem
         #endif
     }
 
-    bool is_file(const std::string& filepath)
+    bool is_file(const String& filepath)
     {
         //an archive is a directory
         return (access(filepath.c_str(), F_OK) != -1 && !is_directory(filepath)) || Archive::is_file(filepath);
     }
 
-    bool is_readable(const std::string& filepath)
+    bool is_readable(const String& filepath)
     {
         return access(filepath.c_str(), R_OK) != -1 || Archive::is_file(filepath) || Archive::is_directory(filepath);
     }
 
-    bool is_writable(const std::string& filepath)
+    bool is_writable(const String& filepath)
     {
         return  access(filepath.c_str(), W_OK) != -1;
     }
 
-    bool exists(const std::string& filepath)
+    bool exists(const String& filepath)
     {
         #if _WIN32
             if (PathFileExistsA(get_fullpath(filepath).m_path.c_str()) == TRUE) return true;
@@ -220,64 +220,64 @@ namespace Filesystem
         return Archive::is_file(filepath) || Archive::is_directory(filepath);
     }
 
-    bool is_archive(const std::string& filepath)
+    bool is_archive(const String& filepath)
     {
-        const std::string extension = get_extension(filepath);
+        const String extension = get_extension(filepath);
         return (extension == ".sqz" || extension == ".zip") && Archive::is_directory(filepath);
     }
 
-    bool archive_write(const std::string& directorypath, const std::string& archivepath)
+    bool archive_write(const String& directorypath, const String& archivepath)
     {
         return Archive::write(directorypath, archivepath);
     }
 
 
     //utilities files
-    std::string get_directory(const std::string& filepath)
+    String get_directory(const String& filepath)
     {
         //do it?
         if (is_directory(filepath)) return filepath;
         //get separetor
         auto separetor = filepath.find_last_of("\\/");
         //test
-        if (separetor == std::string::npos)
+        if (separetor == String::npos)
             return "";
         //return sub path
         return filepath.substr(0, separetor);
     }
 
-    std::string get_filename(const std::string& filepath)
+    String get_filename(const String& filepath)
     {
         //copy path
-        std::string filename = filepath;
+        String filename = filepath;
         //get separetor
         auto separetor = filename.find_last_of("\\/");
         //remove rest of path
-        if (separetor != std::string::npos) filename.erase(0, separetor + 1);
+        if (separetor != String::npos) filename.erase(0, separetor + 1);
         //return
         return filename;
     }
 
-    std::string get_basename(const std::string& filepath)
+    String get_basename(const String& filepath)
     {
         //copy path
-        std::string filename = get_filename(filepath);
+        String filename = get_filename(filepath);
         //get dot
         auto dot = filename.rfind(".");
         //extract
-        if (dot != std::string::npos) filename.erase(dot);
+        if (dot != String::npos) filename.erase(dot);
         //return name
         return filename;
     }
 
-    std::string get_extension(const std::string& filepath, bool to_lower)
+    String get_extension(const String& filepath, bool to_lower)
     {
         //copy path
-        std::string filename = get_filename(filepath);
+        String filename = get_filename(filepath);
         //get dot
         auto dot = filename.rfind(".");
         //extract
-        if (dot != std::string::npos)
+        if (dot != String::npos)
         {
             // get ext
             auto ext = filename.substr(dot);
@@ -293,15 +293,15 @@ namespace Filesystem
         return "";
     }
 
-    std::vector<char> file_read_all(const std::string& filepath)
+    Vector<char> file_read_all(const String& filepath)
     {
-        std::vector<char> out;
+        Vector<char> out;
         /////////////////////////////////////////////////////////////////////
         FILE* file = fopen(filepath.c_str(), "rb");
         //not on the disk: in an archive
         if (!file)
         {
-            std::vector<unsigned char> bytes;
+            Vector<unsigned char> bytes;
             if (Archive::read(filepath, bytes)) out.assign(bytes.begin(), bytes.end());
             return out;
         }
@@ -324,15 +324,15 @@ namespace Filesystem
         return out;
     }
 
-    std::string text_file_read_all(const std::string& filepath)
+    String text_file_read_all(const String& filepath)
     {
-        std::string out;
+        String out;
         /////////////////////////////////////////////////////////////////////
         FILE* file = fopen(filepath.c_str(), "r");
         //not on the disk: in an archive
         if (!file)
         {
-            std::vector<unsigned char> bytes;
+            Vector<unsigned char> bytes;
             if (Archive::read(filepath, bytes)) out.assign(bytes.begin(), bytes.end());
             return out;
         }
@@ -355,9 +355,9 @@ namespace Filesystem
         return out;
     }
 
-    std::vector<unsigned char> binary_file_read_all(const std::string& filepath)
+    Vector<unsigned char> binary_file_read_all(const String& filepath)
     {
-        std::vector<unsigned char> out;
+        Vector<unsigned char> out;
         /////////////////////////////////////////////////////////////////////
         FILE* file = fopen(filepath.c_str(), "rb");
         //not on the disk: in an archive
@@ -391,7 +391,7 @@ namespace Filesystem
         return !*((char*)&i);
     }
 
-    static uint32_t get_uncompressed_size(const std::string& filepath)
+    static uint32_t get_uncompressed_size(const String& filepath)
     {
         /////////////////////////////////////////////////////////////////////
         FILE* file = fopen(filepath.c_str(), "rb");
@@ -410,9 +410,9 @@ namespace Filesystem
     }
 
     //a gzip file in memory (of an archive)
-    static std::vector<unsigned char> gzip_uncompress(const std::vector<unsigned char>& input)
+    static Vector<unsigned char> gzip_uncompress(const Vector<unsigned char>& input)
     {
-        std::vector<unsigned char> out;
+        Vector<unsigned char> out;
         if (input.size() < 18) return out;
         //the size: the last 4 bytes, little-endian
         out.resize(size_t(input[input.size() - 4]) | size_t(input[input.size() - 3]) << 8 | size_t(input[input.size() - 2]) << 16 | size_t(input[input.size() - 1]) << 24);
@@ -429,13 +429,13 @@ namespace Filesystem
         return out;
     }
 
-    std::vector<unsigned char> binary_compress_file_read_all(const std::string& filepath)
+    Vector<unsigned char> binary_compress_file_read_all(const String& filepath)
     {
-        std::vector<unsigned char> out;
+        Vector<unsigned char> out;
         //not on the disk: in an archive
         if (access(filepath.c_str(), F_OK) == -1)
         {
-            std::vector<unsigned char> bytes;
+            Vector<unsigned char> bytes;
             if (Archive::read(filepath, bytes)) out = gzip_uncompress(bytes);
             return out;
         }
@@ -456,7 +456,7 @@ namespace Filesystem
         return out;
     }
 
-    bool file_write_all(const std::string& filepath, const std::vector<char>& buffer)
+    bool file_write_all(const String& filepath, const Vector<char>& buffer)
     {
         /////////////////////////////////////////////////////////////////////
         FILE* file = fopen(filepath.c_str(), "wb");
@@ -470,7 +470,7 @@ namespace Filesystem
         return has_been_write;
     }
 
-    bool text_file_write_all(const std::string& filepath, const std::string& buffer)
+    bool text_file_write_all(const String& filepath, const String& buffer)
     {
         /////////////////////////////////////////////////////////////////////
         FILE* file = std::fopen(filepath.c_str(), "w");
@@ -484,7 +484,7 @@ namespace Filesystem
         return has_been_write;
     }
     
-    bool binary_file_write_all(const std::string& filepath, const std::vector<unsigned char>& buffer)
+    bool binary_file_write_all(const String& filepath, const Vector<unsigned char>& buffer)
     {
         /////////////////////////////////////////////////////////////////////
         FILE* file = std::fopen(filepath.c_str(), "wb");
@@ -498,7 +498,7 @@ namespace Filesystem
         return has_been_write;
     }
 
-    bool binary_compress_file_write_all(const std::string& filepath, const std::vector<unsigned char>& buffer)
+    bool binary_compress_file_write_all(const String& filepath, const Vector<unsigned char>& buffer)
     {
         /////////////////////////////////////////////////////////////////////
         gzFile file = gzopen(filepath.c_str(), "wb");
@@ -512,29 +512,29 @@ namespace Filesystem
         return has_been_write;
     }
 
-    PathOperation get_fullpath(const std::string& relative)
+    PathOperation get_fullpath(const String& relative)
     {
 #ifdef _WIN32
         char fullpath[MAX_PATH];
         if (GetFullPathNameA(relative.c_str(), MAX_PATH, fullpath, 0) == 0) return PathOperation{ false, "" };
-        return PathOperation{ true, std::string(fullpath) };
+        return PathOperation{ true, String(fullpath) };
 #else
         //allocated by realpath (a fixed buffer must be at least PATH_MAX)
         char* realname = realpath(relative.c_str(), nullptr);
         if (!realname) return PathOperation{ false, "" };
-        std::string output(realname);
+        String output(realname);
         free(realname);
         return PathOperation{ true, output };
 #endif
     }
 
-    SQUARE_API PathOperation get_canonical(const std::string& fullpath)
+    SQUARE_API PathOperation get_canonical(const String& fullpath)
     {
         // Path output
         char path[OS_MAX_PATH]{ 0 };
 
 #if defined( _WIN32 )
-        std::string fullpath_win32 = replace_all(fullpath, "/", "\\");
+        String fullpath_win32 = replace_all(fullpath, "/", "\\");
         strncpy(path, fullpath_win32.c_str(), (std::min<size_t>)(fullpath_win32.size(), OS_MAX_PATH));
 #else 
         strncpy(path, fullpath.c_str(), (std::min<size_t>)(fullpath.size(), OS_MAX_PATH));
@@ -584,16 +584,16 @@ namespace Filesystem
             *dst++ = '\0';
         
         // Ok
-        return PathOperation{ true, std::string(path) };
+        return PathOperation{ true, String(path) };
     }
 
-    std::vector<std::string> split(std::string str, const std::string& delimiter)
+    Vector<String> split(String str, const String& delimiter)
     {
         //temps
         size_t pos = 0;
-        std::vector<std::string> tokens;
+        Vector<String> tokens;
         //search
-        while ((pos = str.find(delimiter)) != std::string::npos)
+        while ((pos = str.find(delimiter)) != String::npos)
         {
             tokens.push_back(str.substr(0, pos));
             str.erase(0, pos + delimiter.length());
@@ -604,7 +604,7 @@ namespace Filesystem
         return tokens;
     }
 
-    PathOperation get_relative_to(const std::string& base, const std::string& path)
+    PathOperation get_relative_to(const String& base, const String& path)
     {
         //get abs paths
         PathOperation absolute_base = get_fullpath(base); if (!absolute_base.m_success) return PathOperation{ false, "" };
@@ -619,11 +619,11 @@ namespace Filesystem
             FILE_ATTRIBUTE_NORMAL) == 0) return PathOperation{ false, "" };
 
         // Remove .\"" from relative path .\\"<disk>:"
-        std::string relative(output_path);
-        std::string::size_type dquote1 = relative.find('\"');
-        std::string::size_type dquote2 = relative.rfind('\"');
-        if (dquote1 != std::string::npos && 
-            dquote2 != std::string::npos && 
+        String relative(output_path);
+        String::size_type dquote1 = relative.find('\"');
+        String::size_type dquote2 = relative.rfind('\"');
+        if (dquote1 != String::npos && 
+            dquote2 != String::npos && 
             dquote1 != dquote2)
         {
             relative = relative.substr(dquote1 + 1, dquote2 - dquote1 -1);
@@ -631,12 +631,12 @@ namespace Filesystem
         // Return
         return PathOperation{ true, std::move(relative) };
 #else
-        std::string output_path;
+        String output_path;
 
         //split
-        std::string separetor(SEPARETOR_STR);
-        std::vector< std::string > base_directories = split(absolute_base.m_path, separetor);
-        std::vector< std::string > path_directories = split(absolute_path.m_path, separetor);
+        String separetor(SEPARETOR_STR);
+        Vector< String > base_directories = split(absolute_base.m_path, separetor);
+        Vector< String > path_directories = split(absolute_path.m_path, separetor);
 
         //max loop
         size_t max_size = std::min(base_directories.size(), path_directories.size());
@@ -664,19 +664,19 @@ namespace Filesystem
 #endif
     }
 
-	std::string join(const std::string& path1, const std::string& path2)
+	String join(const String& path1, const String& path2)
 	{
 		if (!path1.size()) return path1;
 		if (!path2.size()) return path2;
 		return path1 + SEPARETOR + path2;
 	}
 
-    bool makedir(const std::string& path)
+    bool makedir(const String& path)
     {
         return mkdir(path.c_str(), 0777) == 0;
     }
     
-    bool copyfile(const std::string& infilepath, const std::string& ofilepath)
+    bool copyfile(const String& infilepath, const String& ofilepath)
     {
         #if defined(_WIN32)
             return !!CopyFile(infilepath.c_str(), ofilepath.c_str(), false);
@@ -733,7 +733,7 @@ namespace Filesystem
 
 
 #ifdef _WIN32
-    bool is_directory(const std::string& directory)
+    bool is_directory(const String& directory)
     {
         DWORD ftyp = GetFileAttributesA(directory.c_str());
         if (ftyp != INVALID_FILE_ATTRIBUTES && (ftyp & FILE_ATTRIBUTE_DIRECTORY)) return true;
@@ -741,21 +741,21 @@ namespace Filesystem
         return Archive::is_directory(directory);
     }
 
-    FilesList get_files(const std::string& directorypath)
+    FilesList get_files(const String& directorypath)
     {
         //an archive, a directory in it
         {
-            FilesList output{ true, std::vector<std::string>{} };
-            std::vector<std::string> directories;
+            FilesList output{ true, Vector<String>{} };
+            Vector<String> directories;
             if (Archive::list(directorypath, output.m_fields, directories)) return output;
         }
         //test directory
-        if (!is_directory(directorypath)) return FilesList{ false, std::vector<std::string>{} };
+        if (!is_directory(directorypath)) return FilesList{ false, Vector<String>{} };
         //alloc output
-        FilesList output{ true, std::vector<std::string>{} };
+        FilesList output{ true, Vector<String>{} };
         //redefine path
-        std::string std_directorypath = directorypath + SEPARETOR;
-        std::string path_all = std_directorypath + "*";
+        String std_directorypath = directorypath + SEPARETOR;
+        String path_all = std_directorypath + "*";
         //attributes
         WIN32_FIND_DATAA ffd;
         //struct stat st;
@@ -776,21 +776,21 @@ namespace Filesystem
         return output;
     }
 
-    DirectoriesList get_sub_directories(const std::string& directorypath)
+    DirectoriesList get_sub_directories(const String& directorypath)
     {
         //an archive, a directory in it
         {
-            DirectoriesList output{ true, std::vector<std::string>{} };
-            std::vector<std::string> files;
+            DirectoriesList output{ true, Vector<String>{} };
+            Vector<String> files;
             if (Archive::list(directorypath, files, output.m_fields)) return output;
         }
         //test directory
-        if (!is_directory(directorypath)) return DirectoriesList{ false, std::vector<std::string>{} };
+        if (!is_directory(directorypath)) return DirectoriesList{ false, Vector<String>{} };
         //alloc output
-        DirectoriesList output{ true, std::vector<std::string>{} };
+        DirectoriesList output{ true, Vector<String>{} };
         //redefine path
-        std::string std_directorypath = directorypath + SEPARETOR;
-        std::string path_all = std_directorypath + "*";
+        String std_directorypath = directorypath + SEPARETOR;
+        String path_all = std_directorypath + "*";
         //attributes
         WIN32_FIND_DATAA ffd;
         //struct stat st;
@@ -812,7 +812,7 @@ namespace Filesystem
     }
 
 #else
-    bool is_directory(const std::string& directory)
+    bool is_directory(const String& directory)
     {
         struct stat st;
         if (stat(directory.c_str(), &st) == 0 && (st.st_mode & S_IFDIR) != 0) return true;
@@ -820,25 +820,25 @@ namespace Filesystem
         return Archive::is_directory(directory);
     }
 
-    FilesList get_files(const std::string& directorypath)
+    FilesList get_files(const String& directorypath)
     {
         //an archive, a directory in it
         {
-            FilesList output{ true, std::vector<std::string>{} };
-            std::vector<std::string> directories;
+            FilesList output{ true, Vector<String>{} };
+            Vector<String> directories;
             if (Archive::list(directorypath, output.m_fields, directories)) return output;
         }
         //test directory
-        if (!is_directory(directorypath)) return FilesList{ false, std::vector<std::string>{} };
+        if (!is_directory(directorypath)) return FilesList{ false, Vector<String>{} };
         //attributes
         DIR *directory;
         struct dirent *dirent;
         //open dir
-        if ((directory = opendir(directorypath.c_str())) == NULL) return FilesList{ false, std::vector<std::string>{} };
+        if ((directory = opendir(directorypath.c_str())) == NULL) return FilesList{ false, Vector<String>{} };
         //alloc output
-        FilesList output{ true, std::vector<std::string>{} };
+        FilesList output{ true, Vector<String>{} };
         //redefine path
-        std::string std_directorypath = directorypath + SEPARETOR;
+        String std_directorypath = directorypath + SEPARETOR;
         //read all elements
         while ((dirent = readdir(directory)) != NULL)
         {
@@ -856,25 +856,25 @@ namespace Filesystem
         return output;
     }
 
-    DirectoriesList get_sub_directories(const std::string& directorypath)
+    DirectoriesList get_sub_directories(const String& directorypath)
     {
         //an archive, a directory in it
         {
-            DirectoriesList output{ true, std::vector<std::string>{} };
-            std::vector<std::string> files;
+            DirectoriesList output{ true, Vector<String>{} };
+            Vector<String> files;
             if (Archive::list(directorypath, files, output.m_fields)) return output;
         }
         //test directory
-        if (!is_directory(directorypath)) return DirectoriesList{ false, std::vector<std::string>{} };
+        if (!is_directory(directorypath)) return DirectoriesList{ false, Vector<String>{} };
         //attributes
         DIR *directory;
         struct dirent *dirent;
         //open dir
-        if ((directory = opendir(directorypath.c_str())) == NULL) return DirectoriesList{ false, std::vector<std::string>{} };
+        if ((directory = opendir(directorypath.c_str())) == NULL) return DirectoriesList{ false, Vector<String>{} };
         //alloc output
-        DirectoriesList output{ true, std::vector<std::string>{} };
+        DirectoriesList output{ true, Vector<String>{} };
         //redefine path
-        std::string std_directorypath = directorypath + SEPARETOR;
+        String std_directorypath = directorypath + SEPARETOR;
         //read all elements
         while ((dirent = readdir(directory)) != NULL)
         {
@@ -906,7 +906,7 @@ namespace Stream
         close();
     }
 
-    bool GZStreambuf::open(const std::string& filename, const char* mode)
+    bool GZStreambuf::open(const String& filename, const char* mode)
     {
         close();  // Close any previously opened file
         file_ = gzopen(filename.c_str(), mode);
@@ -965,7 +965,7 @@ namespace Stream
 #pragma region GZOStream
     GZOStream::GZOStream() : std::ostream(&buf_) {}
 
-    GZOStream::GZOStream(const std::string& filename) : std::ostream(&buf_)
+    GZOStream::GZOStream(const String& filename) : std::ostream(&buf_)
     {
         if (!buf_.open(filename, "wb"))
         {
@@ -973,7 +973,7 @@ namespace Stream
         }
     }
 
-    void GZOStream::open(const std::string& filename)
+    void GZOStream::open(const String& filename)
     {
         if (!buf_.open(filename, "wb"))
         {
@@ -990,7 +990,7 @@ namespace Stream
 #pragma region GZOStream
     GZIStream::GZIStream() : std::istream(&buf_) {}
 
-    GZIStream::GZIStream(const std::string& filename) : std::istream(&buf_)
+    GZIStream::GZIStream(const String& filename) : std::istream(&buf_)
     {
         if (!buf_.open(filename, "rb"))
         {
@@ -998,7 +998,7 @@ namespace Stream
         }
     }
 
-    void GZIStream::open(const std::string& filename)
+    void GZIStream::open(const String& filename)
     {
         if (!buf_.open(filename, "rb"))
         {

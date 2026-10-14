@@ -29,7 +29,7 @@ namespace Square
 		};
 
 		//type
-		using RegistrationList = std::vector< RegistrationItem >;
+		using RegistrationList = Vector< RegistrationItem >;
 		
 		//add
 		static void append(const RegistrationItem& item);
@@ -39,7 +39,7 @@ namespace Square
 		static RegistrationList& item_list();
         
         //info
-		static bool exists(const std::string& name);
+		static bool exists(const String& name);
 		static bool exists(uint64 id);
 		static bool exists(const ObjectInfo& info);
     };

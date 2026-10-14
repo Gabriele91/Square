@@ -22,22 +22,22 @@ namespace Square
 	{
 	public:
 		//object info
-		ObjectInfo(const std::string& name);
+		ObjectInfo(const String& name);
 
 		//compute id
-		static uint64 compute_id(const std::string& name);
+		static uint64 compute_id(const String& name);
 
 		//object id
 		uint64 id() const;
 
 		//object name
-		const std::string& name() const;
+		const String& name() const;
 
 
 	protected:
 
 		uint64		m_id;
-		std::string m_name;
+		String m_name;
 
 	};
 
@@ -47,14 +47,14 @@ namespace Square
         { static ::Square::ObjectInfo obj_info(#Class); return obj_info; }\
         static ::Square::uint64 static_object_id()\
         { return static_object_info().id(); }\
-        static const std::string& static_object_name()\
+        static const Square::String& static_object_name()\
         { return static_object_info().name(); }
     
 	#define SQUARE_OBJECT(Class)\
 	    SQUARE_STATIC_OBJECT(Class)\
 		::Square::uint64 object_id() const override\
 			{ return Class::static_object_id(); }\
-		const std::string& object_name() const override\
+		const Square::String& object_name() const override\
 			{ return Class::static_object_name(); }\
 		const ::Square::ObjectInfo& object_info() const override\
 			{ return Class::static_object_info(); }
@@ -65,7 +65,7 @@ namespace Square
 	public:
 		//info
 		virtual uint64 object_id() const = 0;
-		virtual const std::string& object_name() const = 0;
+		virtual const String& object_name() const = 0;
 		virtual const ObjectInfo& object_info() const = 0;
 	};
 
@@ -74,7 +74,7 @@ namespace Square
 	{
 	protected:
 
-		using VariantMap = std::unordered_map< std::string, Variant >;
+		using VariantMap = UnorderedMap< String, Variant >;
 
 	public:
 		//Resource
@@ -83,8 +83,8 @@ namespace Square
         const Context& context() const { return m_context; }
 
 		// Local variables
-		std::optional<const VariantRef> variable(const std::string& name) const;
-		void set_variable(const std::string& name, const Variant& value);
+		std::optional<const VariantRef> variable(const String& name) const;
+		void set_variable(const String& name, const Variant& value);
 
 	protected:
 		//Context

@@ -65,9 +65,9 @@ namespace Debug
 		return nullptr;
 	}
 
-	inline std::string gl_errors_to_string(const std::string& filename, size_t line)
+	inline String gl_errors_to_string(const String& filename, size_t line)
 	{
-		std::stringstream output;
+		StringStream output;
 		GLenum gl_err = GL_NO_ERROR;
 		bool print_file = false;
 		GLuint finite = 255; // (watchdog count)
@@ -88,6 +88,6 @@ namespace Debug
 	#define debug_gl_errors_to_string_args(source,line) ::Square::Debug::gl_errors_to_string(source,line)
 	#define debug_gl_errors_to_string() ::Square::Debug::gl_errors_to_string(__FILE__,__LINE__)
 #else
-	#define debug_gl_errors_to_string_args(source,line) ::std::string()
-	#define debug_gl_errors_to_string() ::std::string()
+	#define debug_gl_errors_to_string_args(source,line) ::Square::String()
+	#define debug_gl_errors_to_string() ::Square::String()
 #endif

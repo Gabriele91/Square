@@ -60,7 +60,7 @@ namespace GLTF
     };
 
     // Static map for the number of components based on type
-    const static std::unordered_map<std::string, LayoutType> s_name_to_layout_type
+    const static Square::UnorderedMap<Square::String, LayoutType> s_name_to_layout_type
     {
         {"SCALAR", LayoutType::SCALAR},
         {"VEC2",   LayoutType::VEC2},
@@ -72,7 +72,7 @@ namespace GLTF
     };
 
     // Static map for the number of components based on LayoutType enum
-    const static std::unordered_map<LayoutType, unsigned char> s_layout_type_number_of_components
+    const static Square::UnorderedMap<LayoutType, unsigned char> s_layout_type_number_of_components
     {
         {LayoutType::SCALAR, 1},
         {LayoutType::VEC2, 2},
@@ -139,7 +139,7 @@ namespace GLTF
     };
 
     // Type for GLTF primitive attributes
-    using PrimitiveAttributes = std::unordered_map<std::string, size_t>;
+    using PrimitiveAttributes = Square::UnorderedMap<Square::String, size_t>;
 
     // Structure for GLTF primitive
     struct Primitive
@@ -165,18 +165,18 @@ namespace GLTF
     };
 
     // Alias for primitive vector
-    using Primitives = std::vector<Primitive>;
+    using Primitives = Square::Vector<Primitive>;
 
     // Structure for GLTF mesh
     struct Mesh
     {
-        std::string name;       // Name of the mesh
+        Square::String name;       // Name of the mesh
         Primitives  primitives; // List of primitives
         
         // Default move
         Mesh(Mesh&&) = default;
 
-        Mesh(const std::string& name,
+        Mesh(const Square::String& name,
              Primitives&& primitives)
         : name(name)
         , primitives(std::forward<Primitives>(primitives))
@@ -226,7 +226,7 @@ namespace GLTF
             double m_outer_cone_angle{ Square::Constants::pi<double>() / 4.0 };
         };
 
-        std::string m_name;
+        Square::String m_name;
         Vec3        m_color{ 1.0, 1.0, 1.0 };
         double      m_intensity{ 1.0 };
         LightType   m_type;
@@ -234,7 +234,7 @@ namespace GLTF
         std::optional<SpotFields> m_spotfields;
         JsonObject  m_extras;      // custom properties (Blender: of the light data)
 
-        Light(const std::string& name,
+        Light(const Square::String& name,
               const Vec3&        color,
               double             intensity,
               LightType          type,
@@ -273,12 +273,12 @@ namespace GLTF
     struct ImageBuffer
     {
         size_t buffer_view{ 0 };
-        std::string mime_type;
-        std::string name;
+        Square::String mime_type;
+        Square::String name;
 
         ImageBuffer() = default;
 
-        explicit ImageBuffer(size_t buffer_view, const std::string& mime_type, const std::string& name)
+        explicit ImageBuffer(size_t buffer_view, const Square::String& mime_type, const Square::String& name)
         : buffer_view(buffer_view)
         , mime_type(mime_type)
         , name(name)
@@ -304,11 +304,11 @@ namespace GLTF
     };
     struct ImagePath
     {
-        std::string uri;
+        Square::String uri;
 
         ImagePath() = default;
 
-        explicit ImagePath(const std::string& uri)
+        explicit ImagePath(const Square::String& uri)
         : uri(uri)
         {
         }
@@ -397,7 +397,7 @@ namespace GLTF
             std::optional<TextureInfo> specular_glossiness_texture;
         };
 
-        std::string name;
+        Square::String name;
         std::optional<PbrMetallicRoughness> pbr_metallic_roughness;
         std::optional<TextureInfo> normal_texture;
         std::optional<TextureInfo> occlusion_texture;
@@ -410,7 +410,7 @@ namespace GLTF
         JsonObject extras;       // custom properties (Blender: of the material)
 
         Material(
-            const std::string& name = std::string(),
+            const Square::String& name = Square::String(),
             const std::optional<PbrMetallicRoughness>& pbr_metallic_roughness = std::nullopt,
             const std::optional<TextureInfo>& normal_texture = std::nullopt,
             const std::optional<TextureInfo>& occlusion_texture = std::nullopt,
@@ -436,7 +436,7 @@ namespace GLTF
 
     // Variant type for the possible transformations
     using NodeTransform = std::variant<std::monostate, Vec3, Quat, Mat4>;
-    using NodeList = std::vector<size_t>;
+    using NodeList = Square::Vector<size_t>;
 
     // Structure for GLTF node
     struct Node
@@ -454,7 +454,7 @@ namespace GLTF
             size_t m_id;
         };
 
-        std::string name;                   // Name of the node
+        Square::String name;                   // Name of the node
         NodeList children;                  // Indices of child nodes
         std::optional<NodeContent> content; // Index of the mesh this node references (if any)
         std::optional<size_t> skin;         // Index of the skin of its mesh (if any)
@@ -466,8 +466,8 @@ namespace GLTF
         JsonObject extras;               // custom properties (Blender: of the object)
 
         // Constructor
-        Node(std::string name
-            , std::vector<size_t>&& children
+        Node(Square::String name
+            , Square::Vector<size_t>&& children
             , std::optional<NodeContent> content
             , Vec3&& translation
             , Quat&& rotation
@@ -475,7 +475,7 @@ namespace GLTF
             , Mat4&& matrix
             , TransformType transform_type)
             : name(std::move(name))
-            , children(std::forward<std::vector<size_t>>(children))
+            , children(std::forward<Square::Vector<size_t>>(children))
             , content(content)
             , translation(std::forward<Vec3>(translation))
             , rotation(std::forward<Quat>(rotation))
@@ -488,12 +488,12 @@ namespace GLTF
     // Structure for GLTF scene
     struct Scene
     {
-        std::string name;   // Name of the scene
+        Square::String name;   // Name of the scene
         NodeList nodes;     // Root node indices of the scene
 
-        Scene(std::string name, std::vector<size_t>&& nodes)
+        Scene(Square::String name, Square::Vector<size_t>&& nodes)
             : name(std::move(name))
-            , nodes(std::forward<std::vector<size_t>>(nodes))
+            , nodes(std::forward<Square::Vector<size_t>>(nodes))
         {}
     };
 
@@ -530,40 +530,40 @@ namespace GLTF
             Path path{ Path::TRANSLATION };
         };
 
-        std::string name;
-        std::vector<Sampler> samplers;
-        std::vector<Channel> channels;
+        Square::String name;
+        Square::Vector<Sampler> samplers;
+        Square::Vector<Channel> channels;
     };
 
     // Structure for GLTF skin: its joints (nodes), the inverse of their bind matrices
     struct Skin
     {
-        std::string name;
+        Square::String name;
         NodeList joints;
         std::optional<size_t> inverse_bind_matrices; // accessor (none: identities)
         std::optional<size_t> skeleton;              // the root of the joints (if given)
     };
 
     // Aliases for vectors of Views, Buffers, Nodes and Scenes
-    using Animations = std::vector<Animation>;
-    using Skins = std::vector<Skin>;
-    using Views = std::vector<View>;
-    using Buffers = std::vector<std::vector<unsigned char>>;
-    using Accessors = std::vector<Accessor>;
-    using Meshes = std::vector<Mesh>;
-    using Cameras = std::vector<Camera>;
-    using Lights = std::vector<Light>;
-    using Images = std::vector<Image>;
-    using Samplers = std::vector<Sampler>;
-    using Textures = std::vector<Texture>;
-    using Materials = std::vector<Material>;
-    using Nodes = std::vector<Node>;
-    using Scenes = std::vector<Scene>;
+    using Animations = Square::Vector<Animation>;
+    using Skins = Square::Vector<Skin>;
+    using Views = Square::Vector<View>;
+    using Buffers = Square::Vector<Square::Vector<unsigned char>>;
+    using Accessors = Square::Vector<Accessor>;
+    using Meshes = Square::Vector<Mesh>;
+    using Cameras = Square::Vector<Camera>;
+    using Lights = Square::Vector<Light>;
+    using Images = Square::Vector<Image>;
+    using Samplers = Square::Vector<Sampler>;
+    using Textures = Square::Vector<Texture>;
+    using Materials = Square::Vector<Material>;
+    using Nodes = Square::Vector<Node>;
+    using Scenes = Square::Vector<Scene>;
 
     // GLTF Loader
     struct GLTF
     {
-        std::string path;
+        Square::String path;
         Buffers buffers;
         Views views;
         Accessors accessors;
@@ -582,7 +582,7 @@ namespace GLTF
 
         GLTF() = default;
         GLTF(GLTF&&) = default;
-        GLTF(const std::string& path, Buffers&& buffers, Views&& views, Accessors&& accessors, Meshes&& meshes, Cameras&& cameras, Lights&& lights, Images&& images, Samplers&& samplers, Textures&& textures, Materials&& materials, Nodes&& nodes, Scenes&& scenes, size_t default_scene)
+        GLTF(const Square::String& path, Buffers&& buffers, Views&& views, Accessors&& accessors, Meshes&& meshes, Cameras&& cameras, Lights&& lights, Images&& images, Samplers&& samplers, Textures&& textures, Materials&& materials, Nodes&& nodes, Scenes&& scenes, size_t default_scene)
             : path(path)
             , buffers(std::forward<Buffers>(buffers))
             , views(std::forward<Views>(views))
@@ -601,17 +601,17 @@ namespace GLTF
     };
 
     // GLTF loader return
-    using GLTFReturn = std::variant<std::monostate, GLTF, std::string>;
+    using GLTFReturn = std::variant<std::monostate, GLTF, Square::String>;
 
     // Function to load buffers from file
-    static Buffers load_buffers(const std::string& filepath, const JsonValue& buffers)
+    static Buffers load_buffers(const Square::String& filepath, const JsonValue& buffers)
     {
         Buffers out_buffers;
         using namespace Square;
         using namespace Square::Filesystem;
 
         // Get the base directory
-        std::string directory_fullpath = get_directory(filepath);
+        Square::String directory_fullpath = get_directory(filepath);
 
         // Get array
         auto& jbuffers = buffers.array({});
@@ -711,7 +711,7 @@ namespace GLTF
             auto image = jimage.object({});
             if (jimage.object().find("uri") != jimage.object().end())
             {
-                std::string uri = image["uri"].string("");
+                Square::String uri = image["uri"].string("");
                 out_images.emplace_back(ImagePath{ uri });
             }
             else if (image.find("bufferView") != image.end())
@@ -793,7 +793,7 @@ namespace GLTF
         for (auto& jmesh : jmeshes)
         {
             auto& mesh = jmesh.object({});
-            std::string name = mesh.at("name").string({});
+            Square::String name = mesh.at("name").string({});
 
             Primitives primitives;
             auto& jprimitives = mesh.at("primitives").array({});
@@ -842,7 +842,7 @@ namespace GLTF
         for (auto& jcamera : jcameras)
         {
             auto& camera = jcamera.object({});
-            std::string type = camera.at("type").string({});
+            Square::String type = camera.at("type").string({});
 
             if (type == "perspective")
             {
@@ -887,9 +887,9 @@ namespace GLTF
                 {"intensity",1.0},
                 {"type",""}
             });
-            std::string name = light.at("name").string({});
+            Square::String name = light.at("name").string({});
             double intensity = light.at("intensity").number(1.0);            
-            std::string jstring_type = light.at("type").string({});
+            Square::String jstring_type = light.at("type").string({});
             Light::LightType type = jstring_type == "spot" 
                                   ? Light::LightType::LT_SPOTLIGHT
                                   : jstring_type == "point"
@@ -941,7 +941,7 @@ namespace GLTF
     namespace Aux
     {
         // Function to decode Alpha mode from string
-        static Material::AlphaMode decode_alpha_mode(const std::string& alpha_mode)
+        static Material::AlphaMode decode_alpha_mode(const Square::String& alpha_mode)
         {
             if (Square::case_insensitive_equal(alpha_mode, "OPAQUE"))
                 return Material::AlphaMode::AM_OPAQUE;
@@ -1068,7 +1068,7 @@ namespace GLTF
         for (auto& jmaterial : jmaterials)
         {
             auto& mat = jmaterial.object({});
-            std::string name = mat.find("name") != mat.end() ? mat.at("name").string({}) : "";
+            Square::String name = mat.find("name") != mat.end() ? mat.at("name").string({}) : "";
 
             // Decode each sub-structure using the helper functions
             std::optional<Material::PbrMetallicRoughness> pbr_metallic_roughness = std::nullopt;
@@ -1158,7 +1158,7 @@ namespace GLTF
         for (auto& jnode : jnodes)
         {
             auto& node = jnode.object({});
-            std::string name = node.at("name").string({});
+            Square::String name = node.at("name").string({});
             NodeList children;
             std::optional<Node::NodeContent> content = std::nullopt;
 
@@ -1304,7 +1304,7 @@ namespace GLTF
                     out_sampler.output = static_cast<size_t>(sampler.at("output").number(0));
                     if (sampler.find("interpolation") != sampler.end())
                     {
-                        const std::string interpolation = sampler.at("interpolation").string("LINEAR");
+                        const Square::String interpolation = sampler.at("interpolation").string("LINEAR");
                         if (interpolation == "STEP")
                         {
                             out_sampler.interpolation = Animation::Interpolation::STEP;
@@ -1329,7 +1329,7 @@ namespace GLTF
                     {
                         out_channel.node = static_cast<size_t>(target.at("node").number(0));
                     }
-                    const std::string path = target.find("path") != target.end() ? target.at("path").string({}) : std::string();
+                    const Square::String path = target.find("path") != target.end() ? target.at("path").string({}) : Square::String();
                     if (path == "rotation")
                     {
                         out_channel.path = Animation::Path::ROTATION;
@@ -1397,7 +1397,7 @@ namespace GLTF
         for (auto& jscene : jscenes)
         {
             auto& scene = jscene.object({});
-            std::string name = scene.find("name") != scene.end() ? scene.at("name").string({}) : "";
+            Square::String name = scene.find("name") != scene.end() ? scene.at("name").string({}) : "";
 
             // Decode nodes
             NodeList nodes;
@@ -1425,7 +1425,7 @@ namespace GLTF
     namespace Aux
     {
         // Decode GLTF from json and bins
-        static GLTFReturn decode_from_json_and_buffers(const std::string& path, Json&& jmodel, Buffers&& buffers)
+        static GLTFReturn decode_from_json_and_buffers(const Square::String& path, Json&& jmodel, Buffers&& buffers)
         {
             // Get document:
             JsonObject& document = jmodel.document().object();
@@ -1456,12 +1456,12 @@ namespace GLTF
     }
 
     // Load GLTF from GLTF file
-    static GLTFReturn from_gltf(const std::string& path)
+    static GLTFReturn from_gltf(const Square::String& path)
     {
         // Load Json
         Json jmodel(Filesystem::text_file_read_all(path));
         // Get errors
-        std::string parser_errors = jmodel.errors();
+        Square::String parser_errors = jmodel.errors();
         //
         if (parser_errors.size())
         {
@@ -1484,7 +1484,7 @@ namespace GLTF
         // Load Json
         Json jmodel(glb.json);
         // Get errors
-        std::string parser_errors = jmodel.errors();
+        Square::String parser_errors = jmodel.errors();
         //
         if (parser_errors.size())
         {
@@ -1502,7 +1502,7 @@ namespace GLTF
     }
 
     // Load GLTF
-    static GLTFReturn load(const std::string& path)
+    static GLTFReturn load(const Square::String& path)
     {
         // Get Type
         auto model_extension = Filesystem::get_extension(path);

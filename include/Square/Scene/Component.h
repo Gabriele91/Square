@@ -27,7 +27,7 @@ namespace Scene
     class  Component;
 	struct Message;
 	//Alias
-    using ComponentMap = std::unordered_map< uint64, Shared<Component> >;
+    using ComponentMap = UnorderedMap< uint64, Shared<Component> >;
     //..................
     struct SQUARE_API Message
     {

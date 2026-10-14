@@ -64,7 +64,7 @@ namespace Video
 	// Wrapper
 	namespace Win32
 	{
-		std::string win32_get_last_error_as_string()
+		String win32_get_last_error_as_string()
 		{
 			//Get the error message, if any.
 			DWORD error_message_id = ::GetLastError();
@@ -85,7 +85,7 @@ namespace Video
 				, NULL
 			);
 			//C++ message
-			std::string message(message_buffer, size);
+			String message(message_buffer, size);
 			//free the buffer.
 			LocalFree(message_buffer);
 			//return msg
@@ -147,9 +147,9 @@ namespace Video
 
 	struct WrapperContext
 	{
-		std::vector<Win32::ScreenWin32>  m_screens;
-		std::vector<Win32::WindowWin32*> m_windows;
-		std::vector<Win32::InputWin32*>  m_input;
+		Vector<Win32::ScreenWin32>  m_screens;
+		Vector<Win32::WindowWin32*> m_windows;
+		Vector<Win32::InputWin32*>  m_input;
 		//key map
 		InputKeyMap m_key_map;
 	};

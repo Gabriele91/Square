@@ -128,10 +128,10 @@ namespace Scene
 
 		Square::Shared< Square::Resource::Material > m_material;
 		Settings                                     m_settings;
-		std::vector<Particle>                        m_particles; //the pool: max of them, alive or free
-		std::vector<uint32>                          m_free;      //the free ones (a stack of their indices)
+		Vector<Particle>                        m_particles; //the pool: max of them, alive or free
+		Vector<uint32>                          m_free;      //the free ones (a stack of their indices)
 		size_t                                       m_alive{ 0 };
-		std::vector< Square::Render::SpriteInstance > m_sprites;  //max of them: the alive ones drawn
+		Vector< Square::Render::SpriteInstance > m_sprites;  //max of them: the alive ones drawn
 		Square::Render::SpriteBatch                  m_batch;
 		std::mt19937                                 m_random{ 91 };
 		float                                        m_to_emit{ 0.0f }; //a share of a particle not born yet

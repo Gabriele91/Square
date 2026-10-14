@@ -50,9 +50,9 @@ namespace Geometry
 		return 8 * m_extension[0] * m_extension[1] * m_extension[2];
 	}
 
-	std::array< Vec3, 8 > OBoundingBox::get_bounding_box() const
+	Array< Vec3, 8 > OBoundingBox::get_bounding_box() const
 	{
-		std::array< Vec3, 8 > p;
+		Array< Vec3, 8 > p;
 		//its axes: the columns of the rotation
 		const Vec3& r = m_rotation[0];
 		const Vec3& u = m_rotation[1];
@@ -68,9 +68,9 @@ namespace Geometry
 		return p;
 	}
 
-	std::array< Vec3, 8 > OBoundingBox::get_bounding_box(const Mat4& model) const
+	Array< Vec3, 8 > OBoundingBox::get_bounding_box(const Mat4& model) const
 	{
-		std::array< Vec3, 8 > p;
+		Array< Vec3, 8 > p;
 		//its axes: the columns of the rotation
 		const Vec3& r = m_rotation[0];
 		const Vec3& u = m_rotation[1];

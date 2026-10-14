@@ -34,16 +34,16 @@ namespace Resource
 		//the drivers of each language the engine supports (the ones of the platforms); without
 		//geometry shaders and layers by the vertex shader the shadows draw a layer at a time
 		//(RenderSystem::layers_by_target)
-		static const std::vector<Capabilities> s_glsl{ { true, false }, { true, true } };         //GL 4.x, with ARB_shader_viewport_layer_array or not
-		static const std::vector<Capabilities> s_glsl_macos{ { true, false } };                   //GL 4.1 of macOS
-		static const std::vector<Capabilities> s_glsl_es{ { false, false, 310 }, { true, false, 310 }, { true, false, 320 } }; //GLES 3.1, 3.1 + EXT_geometry_shader (AEP), 3.2
-		static const std::vector<Capabilities> s_hlsl{ { true, false }, { true, true } };         //DX11, DX11.3 (VPAndRTArrayIndexFromAnyShader) or not
-		static const std::vector<Capabilities> s_msl{ { false, true } };                          //Metal: no geometry shaders, the layer by the vertex shader
-		static const std::vector<Capabilities> s_spirv{ { true, false }, { true, true }, { false, false }, { false, true } }; //Vulkan: geometry shaders, shaderOutputLayer
+		static const Vector<Capabilities> s_glsl{ { true, false }, { true, true } };         //GL 4.x, with ARB_shader_viewport_layer_array or not
+		static const Vector<Capabilities> s_glsl_macos{ { true, false } };                   //GL 4.1 of macOS
+		static const Vector<Capabilities> s_glsl_es{ { false, false, 310 }, { true, false, 310 }, { true, false, 320 } }; //GLES 3.1, 3.1 + EXT_geometry_shader (AEP), 3.2
+		static const Vector<Capabilities> s_hlsl{ { true, false }, { true, true } };         //DX11, DX11.3 (VPAndRTArrayIndexFromAnyShader) or not
+		static const Vector<Capabilities> s_msl{ { false, true } };                          //Metal: no geometry shaders, the layer by the vertex shader
+		static const Vector<Capabilities> s_spirv{ { true, false }, { true, true }, { false, false }, { false, true } }; //Vulkan: geometry shaders, shaderOutputLayer
 
 		//the gamma corrections of each language (GL: a framebuffer can miss sRGB, the shaders encode)
-		static const std::vector<Gamma> s_gamma_gl{ { false, false }, { true, true }, { true, false } };
-		static const std::vector<Gamma> s_gamma{ { false, false }, { true, true } };
+		static const Vector<Gamma> s_gamma_gl{ { false, false }, { true, true }, { true, false } };
+		static const Vector<Gamma> s_gamma{ { false, false }, { true, true } };
 
 		//a driver as the requirements of the effects see it
 		static Render::RenderDriverInfo info(ShaderTarget::Language language, const Capabilities& capabilities)
@@ -99,10 +99,10 @@ namespace Resource
 		//a language: its drivers x its gamma corrections
 		static void add
 		(
-			  std::vector<ShaderTarget>& out
+			  Vector<ShaderTarget>& out
 			, ShaderTarget::Language language
-			, const std::vector<Capabilities>& drivers
-			, const std::vector<Gamma>& gammas
+			, const Vector<Capabilities>& drivers
+			, const Vector<Gamma>& gammas
 		)
 		{
 			for (const Capabilities& capabilities : drivers)
@@ -161,7 +161,7 @@ namespace Resource
 		out.m_info = render.get_render_driver_info();
 		out.m_gamma = gamma;
 		out.m_srgb_target = gamma && render.is_srgb_framebuffer();
-		const std::string& language = out.m_info.m_shader_language;
+		const String& language = out.m_info.m_shader_language;
 		if (language == "HLSL")
 		{
 			out.m_language = L_HLSL;
@@ -191,10 +191,10 @@ namespace Resource
 		return out;
 	}
 
-	std::vector<ShaderTarget> ShaderTarget::of_platform(const std::string& platform)
+	Vector<ShaderTarget> ShaderTarget::of_platform(const String& platform)
 	{
 		using namespace AuxShaderTarget;
-		std::vector<ShaderTarget> out;
+		Vector<ShaderTarget> out;
 		out.reserve(18 /* window case */);
 		if (platform == "windows")
 		{
@@ -226,7 +226,7 @@ namespace Resource
 		return out;
 	}
 
-	std::string ShaderTarget::host_platform()
+	String ShaderTarget::host_platform()
 	{
 #if defined(_WIN32)
 		return "windows";

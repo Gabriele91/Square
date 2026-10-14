@@ -37,22 +37,22 @@ namespace UI
 
 		//a document (.rml): its path, from the working folder or the resource folder; not
 		//shown (Document::show)
-		Document load(const std::string& path);
+		Document load(const String& path);
 		//a document from its RML
-		Document load_from_memory(const std::string& rml);
+		Document load_from_memory(const String& rml);
 		//a loaded document by its id (the id of its body)
-		Document document(const std::string& id) const;
+		Document document(const String& id) const;
 		//the element with the focus, the one under the mouse
 		Element focused() const;
 		Element hovered() const;
 
 		//data models (before the documents that use them)
-		DataModel create_data_model(const std::string& name);
-		DataModel data_model(const std::string& name) const;
-		bool remove_data_model(const std::string& name);
+		DataModel create_data_model(const String& name);
+		DataModel data_model(const String& name) const;
+		bool remove_data_model(const String& name);
 
 		//a font (.ttf, .otf), for every document; fallback: for the glyphs the others have not
-		static bool load_font(const std::string& path, bool fallback = false);
+		static bool load_font(const String& path, bool fallback = false);
 
 		//the debugger of RmlUi over the documents
 		void debugger(bool visible);

@@ -45,41 +45,41 @@ namespace Scene
 
 		struct Channel
 		{
-			std::string                m_target;   //the path of the actor from the animator ("" itself)
+			String                m_target;   //the path of the actor from the animator ("" itself)
 			Property                   m_property{ P_POSITION };
 			Interpolation              m_interpolation{ I_LINEAR };
-			std::vector< float >       m_times;    //seconds, growing
-			std::vector< Square::Vec4 > m_values;  //a key (3 when cubic)
+			Vector< float >       m_times;    //seconds, growing
+			Vector< Square::Vec4 > m_values;  //a key (3 when cubic)
 		};
 
 		struct Clip
 		{
-			std::string            m_name;
+			String            m_name;
 			float                  m_duration{ 0.0f }; //seconds (the last key of its channels)
-			std::vector< Channel > m_channels;
+			Vector< Channel > m_channels;
 		};
 
 		Animator(Square::Context& context);
 		virtual ~Animator();
 
 		//its clips (their actors found again)
-		void clips(const std::vector< Clip >& clips);
-		const std::vector< Clip >& clips() const { return m_clips; }
+		void clips(const Vector< Clip >& clips);
+		const Vector< Clip >& clips() const { return m_clips; }
 		//the index of a clip by its name (-1: none)
-		int clip_id(const std::string& name) const;
+		int clip_id(const String& name) const;
 
 		//play a clip from its start (again if playing), once or in loop; its speed (1: its time)
-		bool play(const std::string& name, bool loop = true, float speed = 1.0f);
+		bool play(const String& name, bool loop = true, float speed = 1.0f);
 		//all of them in loop
 		void play_all(bool loop = true);
 		//stop a clip (its actors stay where they are), all of them
-		void stop(const std::string& name);
+		void stop(const String& name);
 		void stop_all();
 		//a clip playing (false: stopped, or once and ended)
-		bool playing(const std::string& name) const;
+		bool playing(const String& name) const;
 		//the time of a clip playing (seconds), to set it (a jump)
-		float time(const std::string& name) const;
-		void time(const std::string& name, float time);
+		float time(const String& name) const;
+		void time(const String& name, float time);
 
 		//the speed of all of them (1: their time; 0 paused)
 		void speed(float speed) { m_speed = speed; }
@@ -119,14 +119,14 @@ namespace Scene
 		//the clips flat (the attributes of the scene file)
 		struct Packed
 		{
-			std::vector< std::string >  m_clip_names;
-			std::vector< float >        m_clip_durations;
-			std::vector< int >          m_clip_channels;   //the channels of each clip
-			std::vector< std::string >  m_channel_targets;
-			std::vector< int >          m_channel_kinds;   //property * 4 + interpolation
-			std::vector< int >          m_channel_keys;    //the keys of each channel
-			std::vector< float >        m_key_times;
-			std::vector< Square::Vec4 > m_key_values;
+			Vector< String >  m_clip_names;
+			Vector< float >        m_clip_durations;
+			Vector< int >          m_clip_channels;   //the channels of each clip
+			Vector< String >  m_channel_targets;
+			Vector< int >          m_channel_kinds;   //property * 4 + interpolation
+			Vector< int >          m_channel_keys;    //the keys of each channel
+			Vector< float >        m_key_times;
+			Vector< Square::Vec4 > m_key_values;
 		};
 		Packed pack() const;
 		void unpack(const Packed& packed);
@@ -143,9 +143,9 @@ namespace Scene
 		Track* track(size_t clip);
 		const Track* track(size_t clip) const;
 
-		std::vector< Clip >                                m_clips;
-		std::vector< std::vector< Square::Weak<Actor> > >  m_targets; //by clip, by channel
-		std::vector< Track >                               m_tracks;
+		Vector< Clip >                                m_clips;
+		Vector< Vector< Square::Weak<Actor> > >  m_targets; //by clip, by channel
+		Vector< Track >                               m_tracks;
 		Packed                                             m_packed;  //(while deserialized)
 		float                                              m_speed{ 1.0f };
 		bool                                               m_autoplay{ false };

@@ -58,6 +58,11 @@ namespace Memory
 		the_heap().deallocate_aligned(ptr);
 	}
 
+	void* reallocate(void* ptr, size_t size)
+	{
+		return the_heap().reallocate(ptr, size);
+	}
+
 	const MemoryHooks& hooks()
 	{
 		static const MemoryHooks s_hooks{ &allocate, &deallocate, &deallocate_aligned };

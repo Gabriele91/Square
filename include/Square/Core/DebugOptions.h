@@ -28,13 +28,13 @@ namespace Square
 		};
 
 		Type                         m_type{ Type::TEXT };
-		std::string                  m_name;
-		std::vector<std::string>     m_choices;  //CHOICE: its values by index
+		String                  m_name;
+		Vector<String>     m_choices;  //CHOICE: its values by index
 		std::function<int()>         m_get;      //TOGGLE: 0 / 1, CHOICE: the index
 		std::function<void(int)>     m_set;      //TOGGLE: 0 / 1, CHOICE: the index, BUTTON: pressed
-		std::function<std::string()> m_text;     //TEXT
+		std::function<String()> m_text;     //TEXT
 
-		static DebugOption toggle(const std::string& name, std::function<bool()> get, std::function<void(bool)> set)
+		static DebugOption toggle(const String& name, std::function<bool()> get, std::function<void(bool)> set)
 		{
 			DebugOption option;
 			option.m_type = Type::TOGGLE;
@@ -44,7 +44,7 @@ namespace Square
 			return option;
 		}
 
-		static DebugOption choice(const std::string& name, const std::vector<std::string>& choices, std::function<int()> get, std::function<void(int)> set)
+		static DebugOption choice(const String& name, const Vector<String>& choices, std::function<int()> get, std::function<void(int)> set)
 		{
 			DebugOption option;
 			option.m_type = Type::CHOICE;
@@ -55,7 +55,7 @@ namespace Square
 			return option;
 		}
 
-		static DebugOption button(const std::string& name, std::function<void()> press)
+		static DebugOption button(const String& name, std::function<void()> press)
 		{
 			DebugOption option;
 			option.m_type = Type::BUTTON;
@@ -64,7 +64,7 @@ namespace Square
 			return option;
 		}
 
-		static DebugOption text(const std::string& name, std::function<std::string()> text)
+		static DebugOption text(const String& name, std::function<String()> text)
 		{
 			DebugOption option;
 			option.m_type = Type::TEXT;
@@ -76,11 +76,11 @@ namespace Square
 
 	struct DebugSection
 	{
-		std::string              m_title;
-		std::vector<DebugOption> m_options;
+		String              m_title;
+		Vector<DebugOption> m_options;
 	};
 
 	//the sections of a tab of the debug panel, asked when the panel is made again (it opens, the
 	//worlds or their effects change)
-	using DebugSections = std::function<void(std::vector<DebugSection>& sections)>;
+	using DebugSections = std::function<void(Vector<DebugSection>& sections)>;
 }

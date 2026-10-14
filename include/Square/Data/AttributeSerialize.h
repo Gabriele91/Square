@@ -17,8 +17,8 @@ namespace Square
 {
 namespace  Data
 {
-    SQUARE_API bool attribute_serialize(Archive& archive, const Object* object, const std::vector < Attribute >* attrbutes);
-    SQUARE_API bool attribute_deserialize(Archive& archive, Object* object, const std::vector < Attribute >* attrbutes);
+    SQUARE_API bool attribute_serialize(Archive& archive, const Object* object, const Vector < Attribute >* attrbutes);
+    SQUARE_API bool attribute_deserialize(Archive& archive, Object* object, const Vector < Attribute >* attrbutes);
     
     //from context
     template < class T >
@@ -41,8 +41,8 @@ namespace  Data
         return attribute_deserialize(archive, object, archive.context().attributes(object->object_id()));
     }
 
-    SQUARE_API bool attribute_serialize_json(JsonValue& archive, const Object* object, const std::vector < Attribute >* attrbutes);
-    SQUARE_API bool attribute_deserialize_json(JsonValue& archive, Object* object, const std::vector < Attribute >* attrbutes);
+    SQUARE_API bool attribute_serialize_json(JsonValue& archive, const Object* object, const Vector < Attribute >* attrbutes);
+    SQUARE_API bool attribute_deserialize_json(JsonValue& archive, Object* object, const Vector < Attribute >* attrbutes);
     
     //from context
     template < class T >

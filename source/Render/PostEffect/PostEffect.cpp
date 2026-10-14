@@ -55,7 +55,7 @@ namespace Render
 	const Square::Context& PostEffect::context() const { return m_context; }
 	Render::Context& PostEffect::render() { return *System::get<RenderSystem>(context())->render(); }
 
-	Shared<Resource::Shader> PostEffect::load_shader(const std::string& name)
+	Shared<Resource::Shader> PostEffect::load_shader(const String& name)
 	{
 		auto shader = context().resource<Resource::Shader>(name);
 		if (!shader || !shader->base_shader())
@@ -123,7 +123,7 @@ namespace Render
 
 	Render::Context& PostEffectChain::render() { return *System::get<RenderSystem>(m_context)->render(); }
 
-	bool PostEffectChain::any(const std::vector< Shared<PostEffect> >& effects, PostEffectStage stage)
+	bool PostEffectChain::any(const Vector< Shared<PostEffect> >& effects, PostEffectStage stage)
 	{
 		for (auto& effect : effects)
 		{
@@ -132,7 +132,7 @@ namespace Render
 		return false;
 	}
 
-	bool PostEffectChain::any_velocity(const std::vector< Shared<PostEffect> >& effects)
+	bool PostEffectChain::any_velocity(const Vector< Shared<PostEffect> >& effects)
 	{
 		for (auto& effect : effects)
 		{
@@ -141,7 +141,7 @@ namespace Render
 		return false;
 	}
 
-	Texture* PostEffectChain::debug_texture(const std::vector< Shared<PostEffect> >& effects)
+	Texture* PostEffectChain::debug_texture(const Vector< Shared<PostEffect> >& effects)
 	{
 		for (auto& effect : effects)
 		{
@@ -173,7 +173,7 @@ namespace Render
 		m_size = IVec2(0, 0);
 	}
 
-	void PostEffectChain::draw_gbuffer(const std::vector< Shared<PostEffect> >& effects, PostEffectFrame frame)
+	void PostEffectChain::draw_gbuffer(const Vector< Shared<PostEffect> >& effects, PostEffectFrame frame)
 	{
 		if (!frame.m_gbuffer) return;
 		for (auto& effect : effects)
@@ -184,7 +184,7 @@ namespace Render
 		}
 	}
 
-	Texture* PostEffectChain::draw_color(const std::vector< Shared<PostEffect> >& effects, PostEffectFrame frame, Texture* source)
+	Texture* PostEffectChain::draw_color(const Vector< Shared<PostEffect> >& effects, PostEffectFrame frame, Texture* source)
 	{
 		if (!any(effects, PES_COLOR) || !build(frame.m_size)) return source;
 		//ping-pong: each effect reads the result of the previous one

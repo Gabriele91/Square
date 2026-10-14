@@ -8,6 +8,8 @@
 #include <assert.h>
 #include "Square/Config.h"
 #include "Square/Core/Allocator/Allocator.h"
+#include "Square/Core/Allocator/STLHeapAllocator.h"
+#include <memory>
 
 namespace Square
 {
@@ -45,6 +47,24 @@ namespace Square
     
     template < class T >
     using Weak = std::weak_ptr< T >;
+
+    //the pointers of the STL with their deleter (delete: the heap of the engine), out of the
+    //allocators of the context
+    template < class T, class Deleter = std::default_delete<T> >
+    using UniquePtr = std::unique_ptr< T, Deleter >;
+
+    template < class T, class... Args >
+    UniquePtr<T> MakeUniquePtr(Args&&... args)
+    {
+        return std::make_unique<T>(std::forward<Args>(args)...);
+    }
+
+    //a shared object with its counter in one block of the heap of the engine
+    template < class T, class... Args >
+    Shared<T> MakeSharedPtr(Args&&... args)
+    {
+        return std::allocate_shared<T>(STLHeapAllocator<T>(), std::forward<Args>(args)...);
+    }
     
     template < class T, class U >
     static inline Shared<T> StaticPointerCast( const Shared<U>& sptr ) noexcept

@@ -65,7 +65,7 @@ namespace UI
 	{
 	}
 
-	const std::string& Event::type() const
+	const String& Event::type() const
 	{
 		return m_event->GetType();
 	}
@@ -134,20 +134,20 @@ namespace UI
 		return modifiers;
 	}
 
-	std::string Event::text() const
+	String Event::text() const
 	{
 		return m_event->GetParameter<Rml::String>("text", "");
 	}
 
-	std::string Event::value() const
+	String Event::value() const
 	{
 		return m_event->GetParameter<Rml::String>("value", "");
 	}
 
-	std::string Event::form_values() const
+	String Event::form_values() const
 	{
 		//the parameters of a submit: its fields (name=value&...)
-		std::string values;
+		String values;
 		for (const auto& parameter : m_event->GetParameters())
 		{
 			if (!values.empty()) values += "&";
@@ -161,7 +161,7 @@ namespace UI
 		return Element(static_cast<Rml::Element*>(m_event->GetParameter<void*>("drag_element", nullptr)));
 	}
 
-	std::string Event::property() const
+	String Event::property() const
 	{
 		return m_event->GetParameter<Rml::String>("property", "");
 	}
@@ -171,7 +171,7 @@ namespace UI
 		return m_event->GetParameter<int>("tab_index", -1);
 	}
 
-	std::string Event::parameter(const std::string& name) const
+	String Event::parameter(const String& name) const
 	{
 		return m_event->GetParameter<Rml::String>(name, "");
 	}
@@ -183,8 +183,8 @@ namespace UI
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	//ListenerBridge
-	ListenerBridge::ListenerBridge(Rml::Element* element, const std::string& type, const EventCallback& callback, bool capture)
-	: m_link(std::make_shared<Listener::Link>())
+	ListenerBridge::ListenerBridge(Rml::Element* element, const String& type, const EventCallback& callback, bool capture)
+	: m_link(MakeSharedPtr<Listener::Link>())
 	, m_element(element)
 	, m_type(type)
 	, m_callback(callback)
@@ -219,7 +219,7 @@ namespace UI
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	//Listener
-	Listener::Listener(const std::shared_ptr<Link>& link) : m_link(link)
+	Listener::Listener(const Shared<Link>& link) : m_link(link)
 	{
 	}
 

@@ -119,7 +119,7 @@ bool to_double(const char* arg, double& dvalue)
 
 bool to_boolean(const char* arg, bool& bvalue)
 {
-    std::string arg_cpp(arg);
+    String arg_cpp(arg);
     std::transform(arg_cpp.begin(), arg_cpp.end(), arg_cpp.begin(), ::tolower);
     bvalue =   arg_cpp == "true" 
             || arg_cpp == "yes"

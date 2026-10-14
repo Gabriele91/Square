@@ -9,22 +9,22 @@ using namespace Square::Render;
 
 extern "C"
 {
-    DLL_EXPORT const char* square_render_build()
+    SQUARE_DLL_EXPORT const char* square_render_build()
     {
         return SQUARE_BUILD_ID;
     }
 
-    DLL_EXPORT RenderDriver square_render_get_type()
+    SQUARE_DLL_EXPORT RenderDriver square_render_get_type()
     {
         return DR_METAL;
     }
 
-    DLL_EXPORT Context* square_render_create_context(Allocator* alloc, Logger* log)
+    SQUARE_DLL_EXPORT Context* square_render_create_context(Allocator* alloc, Logger* log)
     {
         return new ContextMTL(alloc, log);
     }
 
-    DLL_EXPORT void square_render_delete_context(Context*& ctx)
+    SQUARE_DLL_EXPORT void square_render_delete_context(Context*& ctx)
     {
         delete (Square::Render::ContextMTL*)ctx;
         ctx = nullptr;

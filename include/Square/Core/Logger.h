@@ -9,24 +9,24 @@ namespace Square
 	{
 	public:
 		Logger() = default;
-		virtual void error(const std::string& value) const = 0;
-		virtual void warning(const std::string& value) const = 0;
-		virtual void debug(const std::string& value) const = 0;
-		virtual void info (const std::string& value) const = 0;
+		virtual void error(const String& value) const = 0;
+		virtual void warning(const String& value) const = 0;
+		virtual void debug(const String& value) const = 0;
+		virtual void info (const String& value) const = 0;
 
-		virtual void errors(const std::vector< std::string >& values) const
+		virtual void errors(const Vector< String >& values) const
 		{
 			for (const auto& value : values) error(value);
 		}
-		virtual void warnings(const std::vector< std::string >& values) const
+		virtual void warnings(const Vector< String >& values) const
 		{
 			for (const auto& value : values) warning(value);
 		}
-		virtual void debugs(const std::vector< std::string >& values) const
+		virtual void debugs(const Vector< String >& values) const
 		{
 			for (const auto& value : values) debug(value);
 		}
-		virtual void infos(const std::vector< std::string >& values) const
+		virtual void infos(const Vector< String >& values) const
 		{
 			for (const auto& value : values) info(value);
 		}

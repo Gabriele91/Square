@@ -4,6 +4,7 @@
 //  passes, the pipelines, the descriptors, the draws
 //
 #include "RenderVK.h"
+#include "AllocationVK.h"
 #include "Square/Driver/Window.h"
 #if defined(__linux__)
 	#include "SurfaceVK.h"
@@ -125,7 +126,7 @@ namespace Render
 			Logger* logger = static_cast<Logger*>(user);
 			if (logger && data && data->pMessage)
 			{
-				const std::string message = std::string("Vulkan: ") + data->pMessage;
+				const String message = String("Vulkan: ") + data->pMessage;
 				if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 				{
 					logger->error(message);
@@ -138,7 +139,7 @@ namespace Render
 			return VK_FALSE;
 		}
 
-		static bool has_extension(const std::vector<VkExtensionProperties>& extensions, const char* name)
+		static bool has_extension(const Vector<VkExtensionProperties>& extensions, const char* name)
 		{
 			for (const VkExtensionProperties& extension : extensions)
 			{
@@ -162,10 +163,10 @@ namespace Render
 
 	void ContextVK::print_info()
 	{
-		logger()->info(std::string("Renderer: Vulkan, ") + m_properties.deviceName
-		               + " (API " + std::to_string(VK_API_VERSION_MAJOR(m_properties.apiVersion))
-		               + "." + std::to_string(VK_API_VERSION_MINOR(m_properties.apiVersion))
-		               + "." + std::to_string(VK_API_VERSION_PATCH(m_properties.apiVersion)) + ")");
+		logger()->info(String("Renderer: Vulkan, ") + m_properties.deviceName
+		               + " (API " + to_string(VK_API_VERSION_MAJOR(m_properties.apiVersion))
+		               + "." + to_string(VK_API_VERSION_MINOR(m_properties.apiVersion))
+		               + "." + to_string(VK_API_VERSION_PATCH(m_properties.apiVersion)) + ")");
 	}
 
 	bool ContextVK::is_srgb_framebuffer() const
@@ -193,7 +194,7 @@ namespace Render
 		VkWin32SurfaceCreateInfoKHR surface_info{ VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
 		surface_info.hinstance = (HINSTANCE)m_resources->get_device();
 		surface_info.hwnd = (HWND)m_resources->get_device_context();
-		if (vkCreateWin32SurfaceKHR(m_instance, &surface_info, nullptr, &m_surface) != VK_SUCCESS)
+		if (vkCreateWin32SurfaceKHR(m_instance, &surface_info, AllocationVK::callbacks(), &m_surface) != VK_SUCCESS)
 		{
 			logger()->error("Vulkan: unable to make the surface of the window");
 			return false;
@@ -255,9 +256,9 @@ namespace Render
 		//extensions: the surface of the window, the messages of the validation
 		uint32_t count = 0;
 		vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr);
-		std::vector<VkExtensionProperties> available(count);
+		Vector<VkExtensionProperties> available(count);
 		vkEnumerateInstanceExtensionProperties(nullptr, &count, available.data());
-		std::vector<const char*> extensions{ VK_KHR_SURFACE_EXTENSION_NAME };
+		Vector<const char*> extensions{ VK_KHR_SURFACE_EXTENSION_NAME };
 #if defined(_WIN32)
 		extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #elif defined(__linux__)
@@ -269,12 +270,12 @@ namespace Render
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		}
 		//the validation layer (debug, when it is installed: the Vulkan SDK)
-		std::vector<const char*> layers;
+		Vector<const char*> layers;
 		if (debug)
 		{
 			uint32_t layer_count = 0;
 			vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
-			std::vector<VkLayerProperties> available_layers(layer_count);
+			Vector<VkLayerProperties> available_layers(layer_count);
 			vkEnumerateInstanceLayerProperties(&layer_count, available_layers.data());
 			for (const VkLayerProperties& layer : available_layers)
 			{
@@ -298,7 +299,7 @@ namespace Render
 		info.ppEnabledExtensionNames = extensions.data();
 		info.enabledLayerCount = uint32_t(layers.size());
 		info.ppEnabledLayerNames = layers.data();
-		if (vkCreateInstance(&info, nullptr, &m_instance) != VK_SUCCESS)
+		if (vkCreateInstance(&info, AllocationVK::callbacks(), &m_instance) != VK_SUCCESS)
 		{
 			logger()->error("Vulkan: unable to make the instance");
 			return false;
@@ -311,7 +312,7 @@ namespace Render
 			messenger.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
 			messenger.pfnUserCallback = AuxVK::debug_message;
 			messenger.pUserData = logger();
-			vkCreateDebugUtilsMessengerEXT(m_instance, &messenger, nullptr, &m_messenger);
+			vkCreateDebugUtilsMessengerEXT(m_instance, &messenger, AllocationVK::callbacks(), &m_messenger);
 		}
 		return true;
 	}
@@ -320,7 +321,7 @@ namespace Render
 	{
 		uint32_t count = 0;
 		vkEnumeratePhysicalDevices(m_instance, &count, nullptr);
-		std::vector<VkPhysicalDevice> devices(count);
+		Vector<VkPhysicalDevice> devices(count);
 		vkEnumeratePhysicalDevices(m_instance, &count, devices.data());
 		int best_score = -1;
 		for (VkPhysicalDevice device : devices)
@@ -331,7 +332,7 @@ namespace Render
 			//a queue of the draws that presents to the window
 			uint32_t families = 0;
 			vkGetPhysicalDeviceQueueFamilyProperties(device, &families, nullptr);
-			std::vector<VkQueueFamilyProperties> family_properties(families);
+			Vector<VkQueueFamilyProperties> family_properties(families);
 			vkGetPhysicalDeviceQueueFamilyProperties(device, &families, family_properties.data());
 			int family = -1;
 			for (uint32_t i = 0; i != families && family < 0; ++i)
@@ -347,7 +348,7 @@ namespace Render
 			//the swap chain
 			uint32_t extension_count = 0;
 			vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, nullptr);
-			std::vector<VkExtensionProperties> extensions(extension_count);
+			Vector<VkExtensionProperties> extensions(extension_count);
 			vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, extensions.data());
 			if (!AuxVK::has_extension(extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME)) continue;
 			//the kind asked first (low: the integrated one; else the discrete one)
@@ -384,9 +385,9 @@ namespace Render
 	{
 		uint32_t extension_count = 0;
 		vkEnumerateDeviceExtensionProperties(m_physical, nullptr, &extension_count, nullptr);
-		std::vector<VkExtensionProperties> available(extension_count);
+		Vector<VkExtensionProperties> available(extension_count);
 		vkEnumerateDeviceExtensionProperties(m_physical, nullptr, &extension_count, available.data());
-		std::vector<const char*> extensions{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+		Vector<const char*> extensions{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 		//the features used, when the device has them
 		VkPhysicalDeviceFeatures enabled{};
 		enabled.geometryShader = m_features.geometryShader;
@@ -435,7 +436,7 @@ namespace Render
 		{
 			info.pNext = &enabled12;
 		}
-		if (vkCreateDevice(m_physical, &info, nullptr, &m_device) != VK_SUCCESS)
+		if (vkCreateDevice(m_physical, &info, AllocationVK::callbacks(), &m_device) != VK_SUCCESS)
 		{
 			logger()->error("Vulkan: unable to make the device");
 			return false;
@@ -452,13 +453,14 @@ namespace Render
 		allocator_info.device = m_device;
 		allocator_info.instance = m_instance;
 		allocator_info.pVulkanFunctions = &functions;
+		allocator_info.pAllocationCallbacks = AllocationVK::callbacks();
 		if (vmaCreateAllocator(&allocator_info, &m_allocator) != VK_SUCCESS)
 		{
 			logger()->error("Vulkan: unable to make the allocator of the memory");
 			return false;
 		}
 		VkPipelineCacheCreateInfo cache{ VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO };
-		vkCreatePipelineCache(m_device, &cache, nullptr, &m_pipeline_cache);
+		vkCreatePipelineCache(m_device, &cache, AllocationVK::callbacks(), &m_pipeline_cache);
 		m_ring_alignment = std::max<VkDeviceSize>(m_properties.limits.minUniformBufferOffsetAlignment, 16);
 		return true;
 	}
@@ -470,7 +472,7 @@ namespace Render
 			VkCommandPoolCreateInfo pool{ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
 			pool.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 			pool.queueFamilyIndex = m_queue_family;
-			if (vkCreateCommandPool(m_device, &pool, nullptr, &frame.m_pool) != VK_SUCCESS) return false;
+			if (vkCreateCommandPool(m_device, &pool, AllocationVK::callbacks(), &frame.m_pool) != VK_SUCCESS) return false;
 			VkCommandBuffer buffers[2];
 			VkCommandBufferAllocateInfo allocate{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 			allocate.commandPool = frame.m_pool;
@@ -481,21 +483,21 @@ namespace Render
 			frame.m_uploads = buffers[1];
 			VkFenceCreateInfo fence{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
 			fence.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-			if (vkCreateFence(m_device, &fence, nullptr, &frame.m_fence) != VK_SUCCESS) return false;
+			if (vkCreateFence(m_device, &fence, AllocationVK::callbacks(), &frame.m_fence) != VK_SUCCESS) return false;
 			VkSemaphoreCreateInfo semaphore{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
-			if (vkCreateSemaphore(m_device, &semaphore, nullptr, &frame.m_acquired) != VK_SUCCESS) return false;
+			if (vkCreateSemaphore(m_device, &semaphore, AllocationVK::callbacks(), &frame.m_acquired) != VK_SUCCESS) return false;
 #if defined(RENDER_PROFILER)
 			if (m_properties.limits.timestampComputeAndGraphics)
 			{
 				VkQueryPoolCreateInfo queries{ VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO };
 				queries.queryType = VK_QUERY_TYPE_TIMESTAMP;
 				queries.queryCount = GPU_TIMER_MAX_TIMESTAMPS;
-				vkCreateQueryPool(m_device, &queries, nullptr, &frame.m_queries);
+				vkCreateQueryPool(m_device, &queries, AllocationVK::callbacks(), &frame.m_queries);
 			}
 #endif
 		}
 		VkFenceCreateInfo fence{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-		return vkCreateFence(m_device, &fence, nullptr, &m_wait_fence) == VK_SUCCESS;
+		return vkCreateFence(m_device, &fence, AllocationVK::callbacks(), &m_wait_fence) == VK_SUCCESS;
 	}
 
 	void ContextVK::compute_driver_info()
@@ -522,9 +524,9 @@ namespace Render
 		{
 			if (m_instance != VK_NULL_HANDLE)
 			{
-				if (m_surface) vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-				if (m_messenger) vkDestroyDebugUtilsMessengerEXT(m_instance, m_messenger, nullptr);
-				vkDestroyInstance(m_instance, nullptr);
+				if (m_surface) vkDestroySurfaceKHR(m_instance, m_surface, AllocationVK::callbacks());
+				if (m_messenger) vkDestroyDebugUtilsMessengerEXT(m_instance, m_messenger, AllocationVK::callbacks());
+				vkDestroyInstance(m_instance, AllocationVK::callbacks());
 				m_instance = VK_NULL_HANDLE;
 			}
 			return;
@@ -541,18 +543,18 @@ namespace Render
 		destroy_swapchain();
 		for (auto& pipeline : m_pipelines)
 		{
-			if (pipeline.second) vkDestroyPipeline(m_device, pipeline.second, nullptr);
+			if (pipeline.second) vkDestroyPipeline(m_device, pipeline.second, AllocationVK::callbacks());
 		}
 		m_pipelines.clear();
-		for (auto& pass : m_render_passes) vkDestroyRenderPass(m_device, pass.second, nullptr);
+		for (auto& pass : m_render_passes) vkDestroyRenderPass(m_device, pass.second, AllocationVK::callbacks());
 		m_render_passes.clear();
 		for (auto& dummy : m_dummy_textures)
 		{
-			for (auto& view : dummy.second->m_views) vkDestroyImageView(m_device, view.second, nullptr);
+			for (auto& view : dummy.second->m_views) vkDestroyImageView(m_device, view.second, AllocationVK::callbacks());
 			vmaDestroyImage(m_allocator, dummy.second->m_image, dummy.second->m_allocation);
 		}
 		m_dummy_textures.clear();
-		for (auto& sampler : m_samplers) vkDestroySampler(m_device, sampler.second, nullptr);
+		for (auto& sampler : m_samplers) vkDestroySampler(m_device, sampler.second, AllocationVK::callbacks());
 		m_samplers.clear();
 		if (m_zero_buffer.m_buffer) vmaDestroyBuffer(m_allocator, m_zero_buffer.m_buffer, m_zero_buffer.m_allocation);
 		m_zero_buffer = BufferVK();
@@ -560,29 +562,29 @@ namespace Render
 		{
 			for (BufferVK& ring : frame.m_ring) vmaDestroyBuffer(m_allocator, ring.m_buffer, ring.m_allocation);
 			frame.m_ring.clear();
-			for (VkDescriptorPool pool : frame.m_descriptor_pools) vkDestroyDescriptorPool(m_device, pool, nullptr);
+			for (VkDescriptorPool pool : frame.m_descriptor_pools) vkDestroyDescriptorPool(m_device, pool, AllocationVK::callbacks());
 			frame.m_descriptor_pools.clear();
-			if (frame.m_pool) vkDestroyCommandPool(m_device, frame.m_pool, nullptr);
-			if (frame.m_fence) vkDestroyFence(m_device, frame.m_fence, nullptr);
-			if (frame.m_acquired) vkDestroySemaphore(m_device, frame.m_acquired, nullptr);
+			if (frame.m_pool) vkDestroyCommandPool(m_device, frame.m_pool, AllocationVK::callbacks());
+			if (frame.m_fence) vkDestroyFence(m_device, frame.m_fence, AllocationVK::callbacks());
+			if (frame.m_acquired) vkDestroySemaphore(m_device, frame.m_acquired, AllocationVK::callbacks());
 #if defined(RENDER_PROFILER)
-			if (frame.m_queries) vkDestroyQueryPool(m_device, frame.m_queries, nullptr);
+			if (frame.m_queries) vkDestroyQueryPool(m_device, frame.m_queries, AllocationVK::callbacks());
 #endif
 			frame = FrameVK();
 		}
-		if (m_wait_fence) vkDestroyFence(m_device, m_wait_fence, nullptr);
+		if (m_wait_fence) vkDestroyFence(m_device, m_wait_fence, AllocationVK::callbacks());
 		m_wait_fence = VK_NULL_HANDLE;
-		if (m_pipeline_cache) vkDestroyPipelineCache(m_device, m_pipeline_cache, nullptr);
+		if (m_pipeline_cache) vkDestroyPipelineCache(m_device, m_pipeline_cache, AllocationVK::callbacks());
 		m_pipeline_cache = VK_NULL_HANDLE;
 		if (m_allocator) vmaDestroyAllocator(m_allocator);
 		m_allocator = VK_NULL_HANDLE;
-		vkDestroyDevice(m_device, nullptr);
+		vkDestroyDevice(m_device, AllocationVK::callbacks());
 		m_device = VK_NULL_HANDLE;
-		if (m_surface) vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+		if (m_surface) vkDestroySurfaceKHR(m_instance, m_surface, AllocationVK::callbacks());
 		m_surface = VK_NULL_HANDLE;
-		if (m_messenger) vkDestroyDebugUtilsMessengerEXT(m_instance, m_messenger, nullptr);
+		if (m_messenger) vkDestroyDebugUtilsMessengerEXT(m_instance, m_messenger, AllocationVK::callbacks());
 		m_messenger = VK_NULL_HANDLE;
-		vkDestroyInstance(m_instance, nullptr);
+		vkDestroyInstance(m_instance, AllocationVK::callbacks());
 		m_instance = VK_NULL_HANDLE;
 	}
 
@@ -609,7 +611,7 @@ namespace Render
 		//its format: BGRA 8 bit, sRGB when the window asks it
 		uint32_t count = 0;
 		vkGetPhysicalDeviceSurfaceFormatsKHR(m_physical, m_surface, &count, nullptr);
-		std::vector<VkSurfaceFormatKHR> formats(count);
+		Vector<VkSurfaceFormatKHR> formats(count);
 		vkGetPhysicalDeviceSurfaceFormatsKHR(m_physical, m_surface, &count, formats.data());
 		const VkFormat wanted[] =
 		{
@@ -632,7 +634,7 @@ namespace Render
 		//vsync: FIFO; else at once (mailbox, immediate)
 		uint32_t mode_count = 0;
 		vkGetPhysicalDeviceSurfacePresentModesKHR(m_physical, m_surface, &mode_count, nullptr);
-		std::vector<VkPresentModeKHR> modes(mode_count);
+		Vector<VkPresentModeKHR> modes(mode_count);
 		vkGetPhysicalDeviceSurfacePresentModesKHR(m_physical, m_surface, &mode_count, modes.data());
 		VkPresentModeKHR mode = VK_PRESENT_MODE_FIFO_KHR;
 		if (!m_swapchain.m_vsync)
@@ -669,7 +671,7 @@ namespace Render
 		info.presentMode = mode;
 		info.clipped = VK_TRUE;
 		info.oldSwapchain = old;
-		if (vkCreateSwapchainKHR(m_device, &info, nullptr, &m_swapchain.m_swapchain) != VK_SUCCESS)
+		if (vkCreateSwapchainKHR(m_device, &info, AllocationVK::callbacks(), &m_swapchain.m_swapchain) != VK_SUCCESS)
 		{
 			logger()->error("Vulkan: unable to make the swap chain");
 			m_swapchain.m_swapchain = old;
@@ -677,17 +679,17 @@ namespace Render
 		}
 		if (old)
 		{
-			vkDestroySwapchainKHR(m_device, old, nullptr);
+			vkDestroySwapchainKHR(m_device, old, AllocationVK::callbacks());
 		}
 		m_swapchain.m_format = format.format;
 		//its images (as textures), the semaphores of their presents
 		uint32_t image_count = 0;
 		vkGetSwapchainImagesKHR(m_device, m_swapchain.m_swapchain, &image_count, nullptr);
-		std::vector<VkImage> swap_images(image_count);
+		Vector<VkImage> swap_images(image_count);
 		vkGetSwapchainImagesKHR(m_device, m_swapchain.m_swapchain, &image_count, swap_images.data());
 		for (VkImage image : swap_images)
 		{
-			auto texture = std::make_unique<Texture>();
+			auto texture = MakeUniquePtr<Texture>();
 			texture->m_image = image;
 			texture->m_format = format.format;
 			texture->m_width = extent.width;
@@ -696,7 +698,7 @@ namespace Render
 			m_swapchain.m_images.push_back(std::move(texture));
 			VkSemaphore semaphore = VK_NULL_HANDLE;
 			VkSemaphoreCreateInfo semaphore_info{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
-			vkCreateSemaphore(m_device, &semaphore_info, nullptr, &semaphore);
+			vkCreateSemaphore(m_device, &semaphore_info, AllocationVK::callbacks(), &semaphore);
 			m_swapchain.m_presented.push_back(semaphore);
 		}
 		//the depth of the window
@@ -720,24 +722,24 @@ namespace Render
 	{
 		if (m_device == VK_NULL_HANDLE) return;
 		vkDeviceWaitIdle(m_device);
-		for (auto& framebuffer : m_default_target.m_framebuffers) vkDestroyFramebuffer(m_device, framebuffer.second, nullptr);
+		for (auto& framebuffer : m_default_target.m_framebuffers) vkDestroyFramebuffer(m_device, framebuffer.second, AllocationVK::callbacks());
 		m_default_target.m_framebuffers.clear();
 		for (auto& image : m_swapchain.m_images)
 		{
-			for (auto& view : image->m_views) vkDestroyImageView(m_device, view.second, nullptr);
+			for (auto& view : image->m_views) vkDestroyImageView(m_device, view.second, AllocationVK::callbacks());
 		}
 		m_swapchain.m_images.clear();
-		for (VkSemaphore semaphore : m_swapchain.m_presented) vkDestroySemaphore(m_device, semaphore, nullptr);
+		for (VkSemaphore semaphore : m_swapchain.m_presented) vkDestroySemaphore(m_device, semaphore, AllocationVK::callbacks());
 		m_swapchain.m_presented.clear();
 		if (m_default_depth)
 		{
-			for (auto& view : m_default_depth->m_views) vkDestroyImageView(m_device, view.second, nullptr);
+			for (auto& view : m_default_depth->m_views) vkDestroyImageView(m_device, view.second, AllocationVK::callbacks());
 			vmaDestroyImage(m_allocator, m_default_depth->m_image, m_default_depth->m_allocation);
 			m_default_depth.reset();
 		}
 		if (m_swapchain.m_swapchain)
 		{
-			vkDestroySwapchainKHR(m_device, m_swapchain.m_swapchain, nullptr);
+			vkDestroySwapchainKHR(m_device, m_swapchain.m_swapchain, AllocationVK::callbacks());
 			m_swapchain.m_swapchain = VK_NULL_HANDLE;
 		}
 		m_swapchain.m_acquired = false;
@@ -871,7 +873,7 @@ namespace Render
 			gpu_timer_end_frame();
 		}
 #endif
-		std::vector<VkCommandBuffer> buffers;
+		Vector<VkCommandBuffer> buffers;
 		if (current.m_uploads_open)
 		{
 			//the uploads seen by the draws after them
@@ -917,7 +919,7 @@ namespace Render
 		if (!m_frame_open) return;
 		FrameVK& current = frame();
 		end_render_pass();
-		std::vector<VkCommandBuffer> buffers;
+		Vector<VkCommandBuffer> buffers;
 		if (current.m_uploads_open)
 		{
 			vkEndCommandBuffer(current.m_uploads);
@@ -1061,7 +1063,7 @@ namespace Render
 		if (!target) return;
 		if (m_pass_open && m_pass_target == target)
 		{
-			std::vector<VkClearAttachment> clears;
+			Vector<VkClearAttachment> clears;
 			if (type & CLEAR_COLOR)
 			{
 				for (uint32_t i = 0; i != uint32_t(target->m_colors.size()); ++i)
@@ -1123,8 +1125,8 @@ namespace Render
 	{
 		auto it = m_render_passes.find(key);
 		if (it != m_render_passes.end()) return it->second;
-		std::vector<VkAttachmentDescription> attachments;
-		std::vector<VkAttachmentReference> colors;
+		Vector<VkAttachmentDescription> attachments;
+		Vector<VkAttachmentReference> colors;
 		for (uint32_t i = 0; i != key.m_count; ++i)
 		{
 			VkAttachmentDescription color{};
@@ -1166,7 +1168,7 @@ namespace Render
 		info.subpassCount = 1;
 		info.pSubpasses = &subpass;
 		VkRenderPass pass = VK_NULL_HANDLE;
-		if (vkCreateRenderPass(m_device, &info, nullptr, &pass) != VK_SUCCESS)
+		if (vkCreateRenderPass(m_device, &info, AllocationVK::callbacks(), &pass) != VK_SUCCESS)
 		{
 			m_errors.push_back("Vulkan: unable to make a render pass");
 		}
@@ -1181,7 +1183,7 @@ namespace Render
 		auto it = target->m_framebuffers.find(key);
 		const bool default_target = target == &m_default_target;
 		if (!default_target && it != target->m_framebuffers.end()) return it->second;
-		std::vector<VkImageView> views;
+		Vector<VkImageView> views;
 		auto attachment_view = [this, target](const Target::Attachment& attachment, VkImageAspectFlags aspect) -> VkImageView
 		{
 			Texture* texture = attachment.m_texture;
@@ -1215,7 +1217,7 @@ namespace Render
 		info.height = target->m_height;
 		info.layers = target->m_layers;
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(m_device, &info, nullptr, &framebuffer) != VK_SUCCESS)
+		if (vkCreateFramebuffer(m_device, &info, AllocationVK::callbacks(), &framebuffer) != VK_SUCCESS)
 		{
 			m_errors.push_back("Vulkan: unable to make a framebuffer");
 		}
@@ -1225,13 +1227,13 @@ namespace Render
 
 	void ContextVK::destroy_framebuffers_later(Target* target)
 	{
-		std::vector<VkFramebuffer> framebuffers;
+		Vector<VkFramebuffer> framebuffers;
 		for (auto& framebuffer : target->m_framebuffers) framebuffers.push_back(framebuffer.second);
 		target->m_framebuffers.clear();
 		VkDevice device = m_device;
 		destroy_later([device, framebuffers]()
 		{
-			for (VkFramebuffer framebuffer : framebuffers) vkDestroyFramebuffer(device, framebuffer, nullptr);
+			for (VkFramebuffer framebuffer : framebuffers) vkDestroyFramebuffer(device, framebuffer, AllocationVK::callbacks());
 		});
 	}
 
@@ -1266,7 +1268,7 @@ namespace Render
 		const VkRenderPass compatible = render_pass(render_pass_key(target, false, false));
 		const VkFramebuffer framebuffer = this->framebuffer(target, compatible);
 		if (!pass || !framebuffer) return false;
-		std::vector<VkClearValue> clears(key.m_count + (key.m_depth != VK_FORMAT_UNDEFINED ? 1 : 0));
+		Vector<VkClearValue> clears(key.m_count + (key.m_depth != VK_FORMAT_UNDEFINED ? 1 : 0));
 		const Vec4& color = m_state.m_clear_color.m_color;
 		for (uint32_t i = 0; i != key.m_count; ++i)
 		{
@@ -1314,7 +1316,7 @@ namespace Render
 		m_pass_target = nullptr;
 	}
 
-	Target* ContextVK::create_render_target(const std::vector<TargetField>& textures)
+	Target* ContextVK::create_render_target(const Vector<TargetField>& textures)
 	{
 		auto* target = new Target();
 		target->m_width = ~uint32_t(0);
@@ -1485,7 +1487,7 @@ namespace Render
 			VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
 			VK_SHADER_STAGE_COMPUTE_BIT
 		};
-		std::vector<VkPipelineShaderStageCreateInfo> stages;
+		Vector<VkPipelineShaderStageCreateInfo> stages;
 		for (int type = 0; type != ST_COMPUTE_SHADER; ++type)
 		{
 			if (shader->m_modules[type])
@@ -1499,8 +1501,8 @@ namespace Render
 		}
 		//its vertices: the attributes of the layout at the location of their type (the inputs of
 		//the shader without one: zeros, the binding 1)
-		std::vector<VkVertexInputBindingDescription> bindings;
-		std::vector<VkVertexInputAttributeDescription> attributes;
+		Vector<VkVertexInputBindingDescription> bindings;
+		Vector<VkVertexInputAttributeDescription> attributes;
 		bool zeros = false;
 		for (const SpirvReflection::Input& input : shader->m_inputs)
 		{
@@ -1526,7 +1528,7 @@ namespace Render
 				description.format = AuxVK::input_format(input);
 				description.offset = 0;
 				zeros = true;
-				m_errors.push_back("Vulkan: the input at location " + std::to_string(input.m_location) + " of a shader is not in the input layout (zeros)");
+				m_errors.push_back("Vulkan: the input at location " + to_string(input.m_location) + " of a shader is not in the input layout (zeros)");
 			}
 			attributes.push_back(description);
 		}
@@ -1572,7 +1574,7 @@ namespace Render
 		depth.minDepthBounds = 0.0f;
 		depth.maxDepthBounds = 1.0f;
 		//the same blend for every color (DirectX: IndependentBlendEnable false)
-		std::vector<VkPipelineColorBlendAttachmentState> blends(key.m_colors);
+		Vector<VkPipelineColorBlendAttachmentState> blends(key.m_colors);
 		for (VkPipelineColorBlendAttachmentState& blend : blends)
 		{
 			blend = VkPipelineColorBlendAttachmentState{};
@@ -1607,7 +1609,7 @@ namespace Render
 		info.renderPass = key.m_render_pass;
 		info.subpass = 0;
 		VkPipeline pipeline = VK_NULL_HANDLE;
-		if (vkCreateGraphicsPipelines(m_device, m_pipeline_cache, 1, &info, nullptr, &pipeline) != VK_SUCCESS)
+		if (vkCreateGraphicsPipelines(m_device, m_pipeline_cache, 1, &info, AllocationVK::callbacks(), &pipeline) != VK_SUCCESS)
 		{
 			m_errors.push_back("Vulkan: unable to make a pipeline");
 		}
@@ -1644,10 +1646,10 @@ namespace Render
 		Shader* shader = m_shader;
 		if (!shader->m_set_layout) return true;
 		//what each binding reads: its slice of the ring (a buffer), its view and sampler (a texture)
-		std::vector<uint64> key;
-		std::vector<uint32_t> offsets;
-		std::vector<VkDescriptorBufferInfo> buffers;
-		std::vector<VkDescriptorImageInfo> images;
+		Vector<uint64> key;
+		Vector<uint32_t> offsets;
+		Vector<VkDescriptorBufferInfo> buffers;
+		Vector<VkDescriptorImageInfo> images;
 		buffers.reserve(shader->m_bindings.size());
 		images.reserve(shader->m_bindings.size());
 		key.reserve(shader->m_bindings.size() * 2);
@@ -1737,7 +1739,7 @@ namespace Render
 					info.poolSizeCount = 3;
 					info.pPoolSizes = sizes;
 					VkDescriptorPool pool = VK_NULL_HANDLE;
-					if (vkCreateDescriptorPool(m_device, &info, nullptr, &pool) != VK_SUCCESS)
+					if (vkCreateDescriptorPool(m_device, &info, AllocationVK::callbacks(), &pool) != VK_SUCCESS)
 					{
 						m_errors.push_back("Vulkan: unable to make a descriptor pool");
 						return false;
@@ -1754,7 +1756,7 @@ namespace Render
 					current.m_descriptor_pool += 1;
 				}
 			}
-			std::vector<VkWriteDescriptorSet> writes;
+			Vector<VkWriteDescriptorSet> writes;
 			writes.reserve(shader->m_bindings.size());
 			size_t buffer_index = 0, image_index = 0;
 			for (const BindingVK& binding : shader->m_bindings)
@@ -1889,7 +1891,7 @@ namespace Render
 	bool ContextVK::print_errors() const
 	{
 		if (m_errors.empty()) return false;
-		for (const std::string& error : m_errors)
+		for (const String& error : m_errors)
 		{
 			logger()->warning(error);
 		}
@@ -1900,9 +1902,9 @@ namespace Render
 	bool ContextVK::print_errors(const char* source_file_name, int line) const
 	{
 		if (m_errors.empty()) return false;
-		std::stringstream output;
+		StringStream output;
 		output << "At file: " << source_file_name << " (" << line << "):" << std::endl;
-		for (const std::string& error : m_errors)
+		for (const String& error : m_errors)
 		{
 			output << error << std::endl;
 		}
@@ -1950,7 +1952,7 @@ namespace Render
 		return int(timer.m_count++);
 	}
 
-	bool ContextVK::gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms)
+	bool ContextVK::gpu_timer_read_frame(uint64& frame_id, Vector<double>& timestamps_ms)
 	{
 		//the oldest frame pending, done by the GPU (its fence: the frames completed)
 		GpuTimerFrame* oldest = nullptr;
@@ -1960,7 +1962,7 @@ namespace Render
 		}
 		if (!oldest) return false;
 		const FrameVK& slot = m_frames[oldest->m_frame % VK_FRAMES];
-		std::vector<uint64_t> ticks(oldest->m_count);
+		Vector<uint64_t> ticks(oldest->m_count);
 		const VkResult result = vkGetQueryPoolResults(m_device, slot.m_queries, 0, oldest->m_count, ticks.size() * sizeof(uint64_t), ticks.data(), sizeof(uint64_t), VK_QUERY_RESULT_64_BIT);
 		if (result != VK_SUCCESS) return false;
 		const double period = double(m_properties.limits.timestampPeriod) * 1.0e-6;

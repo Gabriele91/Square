@@ -45,12 +45,12 @@ namespace Geometry
 		/**
 		* Return the 8 point of obb
 		*/
-		std::array< Vec3, 8 > get_bounding_box() const;
+		Array< Vec3, 8 > get_bounding_box() const;
 
 		/**
 		* Return the 8 points (of obb) multiplied to "model matrix"
 		*/
-		std::array< Vec3, 8 > get_bounding_box(const Mat4& model) const;
+		Array< Vec3, 8 > get_bounding_box(const Mat4& model) const;
 
 		// get volume
 		float volume() const;

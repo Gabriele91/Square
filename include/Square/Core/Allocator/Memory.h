@@ -21,6 +21,7 @@ namespace Square
 		SQUARE_API void* allocate(size_t size, size_t align);
 		SQUARE_API void  deallocate(void* ptr);
 		SQUARE_API void  deallocate_aligned(void* ptr);
+		SQUARE_API void* reallocate(void* ptr, size_t size);
 		//the hooks of the heap, for the modules out of the library (see MemoryHooks.h)
 		SQUARE_API const MemoryHooks& hooks();
 		//the heap now

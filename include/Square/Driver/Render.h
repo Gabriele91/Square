@@ -65,9 +65,9 @@ namespace Render
 	struct ShaderSourceInformation
 	{
 		const ShaderType  m_type;
-		const std::string  m_entry_point{ "main" };
-		const std::string  m_shader_header;
-		const std::string& m_shader_source;
+		const String  m_entry_point{ "main" };
+		const String  m_shader_header;
+		const String& m_shader_source;
 		const size_t m_line;
 
 		ShaderSourceInformation(const ShaderSourceInformation& info)
@@ -83,7 +83,7 @@ namespace Render
 		ShaderSourceInformation
 		(
 			ShaderType type,
-			const std::string& shader_source,
+			const String& shader_source,
 			const size_t line = 0
 		)
 		: m_type(type)
@@ -95,8 +95,8 @@ namespace Render
 		ShaderSourceInformation
 		(
 			ShaderType type,
-			const std::string& shader_header,
-			const std::string& shader_source,
+			const String& shader_header,
+			const String& shader_source,
 			const size_t line = 0
 		)
 		: m_type(type)
@@ -108,9 +108,9 @@ namespace Render
 		ShaderSourceInformation
 		(
 			ShaderType type,
-			const std::string& shader_header,
-			const std::string& shader_source,
-			const std::string& entry_point,
+			const String& shader_header,
+			const String& shader_source,
+			const String& entry_point,
 			const size_t line = 0
 		)
 		: m_type(type)
@@ -568,7 +568,7 @@ namespace Render
 
 	public:
 
-		using raw_attribute_list = std::vector<Attribute>;
+		using raw_attribute_list = Vector<Attribute>;
 
 		AttributeList() :m_size(0)
 		{
@@ -827,12 +827,12 @@ namespace Render
     struct RenderDriverInfo
     {
         RenderDriver             m_render_driver;
-        std::string              m_name;
+        String              m_name;
         int                      m_major_version;
         int                      m_minor_version;
-        std::string              m_shader_language;
+        String              m_shader_language;
         int                      m_shader_version;
-		std::vector<std::string> m_shader_exts;
+		Vector<String> m_shader_exts;
 		// Capabilities: backends that can run geometry shaders (OpenGL, DirectX)
 		// use the single-pass layered shadow techniques; backends without them
 		// (Metal, GLES, Vulkan-without-GS) fall back to the multi-pass variants.
@@ -898,26 +898,26 @@ namespace Render
         virtual void set(const DMat3* m3, size_t n) = 0;
         virtual void set(const DMat4* m4, size_t n) = 0;
 
-        virtual void set(const std::vector < Texture* >& i) = 0;
-        virtual void set(const std::vector < int >& i) = 0;
-        virtual void set(const std::vector < float >& f) = 0;
-        virtual void set(const std::vector < double >& d) = 0;
+        virtual void set(const Vector < Texture* >& i) = 0;
+        virtual void set(const Vector < int >& i) = 0;
+        virtual void set(const Vector < float >& f) = 0;
+        virtual void set(const Vector < double >& d) = 0;
         
-        virtual void set(const std::vector < IVec2 >& v2) = 0;
-        virtual void set(const std::vector < IVec3 >& v3) = 0;
-        virtual void set(const std::vector < IVec4 >& v4) = 0;
+        virtual void set(const Vector < IVec2 >& v2) = 0;
+        virtual void set(const Vector < IVec3 >& v3) = 0;
+        virtual void set(const Vector < IVec4 >& v4) = 0;
         
-        virtual void set(const std::vector < Vec2 >& v2) = 0;
-        virtual void set(const std::vector < Vec3 >& v3) = 0;
-        virtual void set(const std::vector < Vec4 >& v4) = 0;
-        virtual void set(const std::vector < Mat3 >& m3) = 0;
-        virtual void set(const std::vector < Mat4 >& m4) = 0;
+        virtual void set(const Vector < Vec2 >& v2) = 0;
+        virtual void set(const Vector < Vec3 >& v3) = 0;
+        virtual void set(const Vector < Vec4 >& v4) = 0;
+        virtual void set(const Vector < Mat3 >& m3) = 0;
+        virtual void set(const Vector < Mat4 >& m4) = 0;
         
-        virtual void set(const std::vector < DVec2 >& v2) = 0;
-        virtual void set(const std::vector < DVec3 >& v3) = 0;
-        virtual void set(const std::vector < DVec4 >& v4) = 0;
-        virtual void set(const std::vector < DMat3 >& m3) = 0;
-        virtual void set(const std::vector < DMat4 >& m4) = 0;
+        virtual void set(const Vector < DVec2 >& v2) = 0;
+        virtual void set(const Vector < DVec3 >& v3) = 0;
+        virtual void set(const Vector < DVec4 >& v4) = 0;
+        virtual void set(const Vector < DMat3 >& m3) = 0;
+        virtual void set(const Vector < DMat4 >& m4) = 0;
 
 		virtual bool is_valid() = 0;
 		virtual Shader* get_shader() = 0;
@@ -985,25 +985,25 @@ namespace Render
         virtual void add(const DMat3* m3, size_t n);
         virtual void add(const DMat4* m4, size_t n);
         
-        virtual void add(const std::vector < int >& i);
-        virtual void add(const std::vector < float >& f);
-        virtual void add(const std::vector < double >& d);
+        virtual void add(const Vector < int >& i);
+        virtual void add(const Vector < float >& f);
+        virtual void add(const Vector < double >& d);
         
-        virtual void add(const std::vector < IVec2 >& v2);
-        virtual void add(const std::vector < IVec3 >& v3);
-        virtual void add(const std::vector < IVec4 >& v4);
+        virtual void add(const Vector < IVec2 >& v2);
+        virtual void add(const Vector < IVec3 >& v3);
+        virtual void add(const Vector < IVec4 >& v4);
         
-        virtual void add(const std::vector < Vec2 >& v2);
-        virtual void add(const std::vector < Vec3 >& v3);
-        virtual void add(const std::vector < Vec4 >& v4);
-        virtual void add(const std::vector < Mat3 >& m3);
-        virtual void add(const std::vector < Mat4 >& m4);
+        virtual void add(const Vector < Vec2 >& v2);
+        virtual void add(const Vector < Vec3 >& v3);
+        virtual void add(const Vector < Vec4 >& v4);
+        virtual void add(const Vector < Mat3 >& m3);
+        virtual void add(const Vector < Mat4 >& m4);
         
-        virtual void add(const std::vector < DVec2 >& v2);
-        virtual void add(const std::vector < DVec3 >& v3);
-        virtual void add(const std::vector < DVec4 >& v4);
-        virtual void add(const std::vector < DMat3 >& m3);
-        virtual void add(const std::vector < DMat4 >& m4);
+        virtual void add(const Vector < DVec2 >& v2);
+        virtual void add(const Vector < DVec3 >& v3);
+        virtual void add(const Vector < DVec4 >& v4);
+        virtual void add(const Vector < DMat3 >& m3);
+        virtual void add(const Vector < DMat4 >& m4);
         
         virtual ~MapConstBuffer();
         
@@ -1081,9 +1081,9 @@ namespace Render
 		virtual void unbind_VBO(VertexBuffer*) = 0;
 		virtual void unbind_IBO(IndexBuffer*) = 0;
 
-		virtual std::vector<unsigned char> copy_buffer_CB(const ConstBuffer*) = 0;
-		virtual std::vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) = 0;
-		virtual std::vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) = 0;
+		virtual Vector<unsigned char> copy_buffer_CB(const ConstBuffer*) = 0;
+		virtual Vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) = 0;
+		virtual Vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) = 0;
 
 		virtual unsigned char* map_CB(ConstBuffer*, size_t start, size_t n, MappingType type) = 0;
 		virtual unsigned char* map_CB(ConstBuffer*, MappingType type) = 0;
@@ -1148,14 +1148,14 @@ namespace Render
 			const TextureRawDataInformation  data[6],
 			const TextureGpuDataInformation& info
 		) = 0;
-		virtual  std::vector< unsigned char > get_texture(Texture*, int level = 0) = 0;
+		virtual  Vector< unsigned char > get_texture(Texture*, int level = 0) = 0;
 		//all of a texture (its faces, its layers; level 0) into another of its size and format, on
 		//the GPU (e.g. the cache of a shadow map into the shadow map); neither bound to a target
 		virtual void copy_texture(Texture* source, Texture* destination) = 0;
 		//a layer of a texture (a layer of an array, a face of a cube; level 0) into a layer of
 		//another of its size and format, on the GPU; neither bound to a target
 		virtual void copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer) = 0;
-		virtual  std::vector< unsigned char > get_texture(Texture*, int face = 0, int level = 0) = 0;
+		virtual  Vector< unsigned char > get_texture(Texture*, int face = 0, int level = 0) = 0;
 		virtual void bind_texture(Texture*, int texture_id, int sample_id) = 0;
 		virtual void unbind_texture(Texture*) = 0;
 		virtual void unbind_texture(int n) = 0;
@@ -1166,27 +1166,27 @@ namespace Render
 		virtual void update_texture(Texture* texture, const TextureRawDataInformation& data) = 0;
 
 		//shader
-		virtual Shader* create_shader(const std::vector< ShaderSourceInformation >& infos) = 0;
+		virtual Shader* create_shader(const Vector< ShaderSourceInformation >& infos) = 0;
 
 		virtual bool shader_compiled_with_errors(Shader* shader) = 0;
 		virtual bool shader_linked_with_error(Shader* shader) = 0;
-		virtual std::vector< std::string > get_shader_compiler_errors(Shader* shader) = 0;
-		virtual std::string get_shader_linker_error(Shader* shader) = 0;
+		virtual Vector< String > get_shader_compiler_errors(Shader* shader) = 0;
+		virtual String get_shader_linker_error(Shader* shader) = 0;
 
 		virtual void bind_shader(Shader* shader) = 0;
 		virtual void unbind_shader(Shader* shader) = 0;
         
-        virtual void bind_uniform_CB(const ConstBuffer*, Shader*, const std::string& uname) = 0;
-        virtual void unbind_uniform_CB(Shader*, const std::string& uname) = 0;
+        virtual void bind_uniform_CB(const ConstBuffer*, Shader*, const String& uname) = 0;
+        virtual void unbind_uniform_CB(Shader*, const String& uname) = 0;
 
 		virtual void delete_shader(Shader*&) = 0;
 
 		virtual Shader*  get_bind_shader() const = 0;
-        virtual Uniform* get_uniform(Shader*,const std::string& uname) const = 0;
-        virtual UniformConstBuffer* get_uniform_const_buffer(Shader*,const std::string& uname) const = 0;
+        virtual Uniform* get_uniform(Shader*,const String& uname) const = 0;
+        virtual UniformConstBuffer* get_uniform_const_buffer(Shader*,const String& uname) const = 0;
 
 		//target
-		virtual Target* create_render_target(const std::vector< TargetField >& textures) = 0;
+		virtual Target* create_render_target(const Vector< TargetField >& textures) = 0;
 		virtual void enable_render_target(Target*) = 0;
 		virtual void disable_render_target(Target*) = 0;
 		virtual void delete_render_target(Target*&) = 0;
@@ -1215,7 +1215,7 @@ namespace Render
 		virtual int  gpu_timer_timestamp() { return -1; }
 		//the oldest frame done by the GPU: its id (the count of gpu_timer_begin_frame before it)
 		//and its timestamps, in ms from the first one (negative: not sampled); false when none is ready
-		virtual bool gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms) { return false; }
+		virtual bool gpu_timer_read_frame(uint64& frame_id, Vector<double>& timestamps_ms) { return false; }
 
 		//profiler (see Render/Profiler.h): the passes open their scopes on it, nullptr when off
 		void set_profiler(Profiler* profiler) { m_profiler = profiler; }
@@ -1233,25 +1233,25 @@ namespace Render
 		//the folder of the cache of the shaders compiled by the driver (the final cache: their
 		//binaries by the hash of their source, compiled once, read after; a source changed: a new
 		//hash, compiled again). Empty: no cache. A driver without a binary of its own ignores it
-		void shader_cache(const std::string& directory) { m_shader_cache = directory; }
-		const std::string& shader_cache() const { return m_shader_cache; }
+		void shader_cache(const String& directory) { m_shader_cache = directory; }
+		const String& shader_cache() const { return m_shader_cache; }
 
 	private:
 		Allocator* m_allocator;
 		Logger* m_logger;
-		std::string      m_shader_cache;
+		String      m_shader_cache;
 		RenderInspector* m_inspector{ nullptr };
 		Profiler*        m_profiler{ nullptr };
 	};
 	/////////////////////////////////
 	// Buffer smart pointer	
-	DLL_EXPORT Shared<InputLayout>  input_layout(Context* ctx, const AttributeList& attrs);
-	DLL_EXPORT Shared<ConstBuffer>  constant_buffer(Context* ctx,  unsigned char* data, size_t size);
-	DLL_EXPORT Shared<VertexBuffer> vertex_buffer(Context* ctx, unsigned char* data, size_t stride, size_t n);
-	DLL_EXPORT Shared<IndexBuffer>  index_buffer(Context* ctx, unsigned int* data, size_t n);
-	DLL_EXPORT Shared<ConstBuffer>  stream_constant_buffer(Context* ctx, size_t size);
-	DLL_EXPORT Shared<VertexBuffer> stream_vertex_buffer(Context* ctx, size_t stride, size_t n);
-	DLL_EXPORT Shared<IndexBuffer>  stream_index_buffer(Context* ctx, size_t n);
+	SQUARE_DLL_EXPORT Shared<InputLayout>  input_layout(Context* ctx, const AttributeList& attrs);
+	SQUARE_DLL_EXPORT Shared<ConstBuffer>  constant_buffer(Context* ctx,  unsigned char* data, size_t size);
+	SQUARE_DLL_EXPORT Shared<VertexBuffer> vertex_buffer(Context* ctx, unsigned char* data, size_t stride, size_t n);
+	SQUARE_DLL_EXPORT Shared<IndexBuffer>  index_buffer(Context* ctx, unsigned int* data, size_t n);
+	SQUARE_DLL_EXPORT Shared<ConstBuffer>  stream_constant_buffer(Context* ctx, size_t size);
+	SQUARE_DLL_EXPORT Shared<VertexBuffer> stream_vertex_buffer(Context* ctx, size_t stride, size_t n);
+	SQUARE_DLL_EXPORT Shared<IndexBuffer>  stream_index_buffer(Context* ctx, size_t n);
 	/////////////////////////////////
 	template<class T> static inline Shared<ConstBuffer> constant_buffer(Context* ctx, unsigned char* data)
 	{
@@ -1309,8 +1309,8 @@ namespace Render
 	}
 	/////////////////////////////////
 	// Shared wrapper
-	DLL_EXPORT std::vector<RenderDriver> list_of_render_driver();
-	DLL_EXPORT Context* create_render_driver(Allocator*, Logger*, RenderDriver);
-	DLL_EXPORT void delete_render_driver(Context*&);
+	SQUARE_DLL_EXPORT Vector<RenderDriver> list_of_render_driver();
+	SQUARE_DLL_EXPORT Context* create_render_driver(Allocator*, Logger*, RenderDriver);
+	SQUARE_DLL_EXPORT void delete_render_driver(Context*&);
 }
 }

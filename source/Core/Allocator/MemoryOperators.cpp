@@ -31,8 +31,7 @@ void square_memory_install(const Square::MemoryHooks* hooks)
 }
 #endif
 
-//on Linux and macOS the new/delete of the library are those of the process: none in a hooked module
-#if !defined(SQUARE_MEMORY_HOOKED) || defined(_WIN32)
+//the heap of the module (its containers: STLHeapAllocator; its new/delete)
 namespace Square
 {
 namespace MemoryOperators
@@ -44,7 +43,12 @@ namespace MemoryOperators
 		{
 			return hooks->m_allocate(size, align);
 		}
+	#if defined(_WIN32)
 		return align <= 16 ? std::malloc(size ? size : 1) : _aligned_malloc(size ? size : 1, align);
+	#else
+		void* ptr = nullptr;
+		return posix_memalign(&ptr, align < sizeof(void*) ? sizeof(void*) : align, size ? size : 1) == 0 ? ptr : nullptr;
+	#endif
 	}
 
 	void deallocate(void* ptr)
@@ -67,7 +71,11 @@ namespace MemoryOperators
 		}
 		else
 		{
+		#if defined(_WIN32)
 			_aligned_free(ptr);
+		#else
+			std::free(ptr);
+		#endif
 		}
 	}
 #else
@@ -89,6 +97,8 @@ namespace MemoryOperators
 }
 }
 
+//on Linux and macOS the new/delete of the library are those of the process: none in a hooked module
+#if !defined(SQUARE_MEMORY_HOOKED) || defined(_WIN32)
 void* operator new(std::size_t size)
 {
 	if (void* ptr = Square::MemoryOperators::allocate(size, 16)) return ptr;

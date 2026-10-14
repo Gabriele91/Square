@@ -72,7 +72,7 @@ namespace Render
 		Type m_type{ SB_TEXTURE_2D };
 		unsigned int m_layers{ 1 };
 		Render::Target*  m_target{ nullptr };
-		std::vector<Render::Target*> m_layer_targets;
+		Vector<Render::Target*> m_layer_targets;
 		Render::Texture* m_texture{ nullptr };
 
 	};

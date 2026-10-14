@@ -112,9 +112,9 @@ namespace Xorg
 	{
 		Display*				                     m_xdisplay{ nullptr };
 		XContext				                     m_xcontext;
-		std::vector<ScreenXorg>	                     m_screens;
-		std::unordered_map<WindowXorg*, WindowXorg*> m_windows;
-		std::unordered_map<InputXorg*, InputXorg*>   m_input;
+		Vector<ScreenXorg>	                     m_screens;
+		UnorderedMap<WindowXorg*, WindowXorg*> m_windows;
+		UnorderedMap<InputXorg*, InputXorg*>   m_input;
 		//key map
 		InputKeyMap			               m_key_map;
     };    

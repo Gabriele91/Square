@@ -51,7 +51,7 @@ namespace Render
 		const Settings& settings() const { return m_settings; }
 
 		//the depth of the occluders a camera sees (none, disabled, not perspective: nothing hidden)
-		void draw(const Camera& camera, const std::vector< Weak<Occluder> >& occluders);
+		void draw(const Camera& camera, const Vector< Weak<Occluder> >& occluders);
 
 		//a box (world space) hidden by the occluders of the last draw (counted: in the stats; a
 		//debug view does not count its tests)
@@ -71,7 +71,7 @@ namespace Render
 		static const char* instructions();
 
 		//the depth buffer (the inverse of the depth along the view: 0 nothing), its size
-		const std::vector<float>& depth() const { return m_levels.empty() ? m_empty : m_levels[0]; }
+		const Vector<float>& depth() const { return m_levels.empty() ? m_empty : m_levels[0]; }
 		const IVec2& size() const { return m_size; }
 
 	private:
@@ -90,9 +90,9 @@ namespace Render
 		Mat4                             m_view_projection{ 1.0f };
 		float                            m_near{ 0.0f };      //the depth along the view of the near plane
 		IVec2                            m_size{ 0, 0 };
-		std::vector< std::vector<float> > m_levels;           //0: the depth buffer
-		std::vector< IVec2 >             m_level_sizes;
-		std::vector<float>               m_empty;
+		Vector< Vector<float> > m_levels;           //0: the depth buffer
+		Vector< IVec2 >             m_level_sizes;
+		Vector<float>               m_empty;
 	};
 }
 }

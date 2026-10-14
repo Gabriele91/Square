@@ -28,12 +28,12 @@ namespace Scene
 			, [](const StaticMesh* renderable) -> bool { return renderable->Render::Renderable::cast_shadow(); }
 			, [](StaticMesh* renderable, const bool& cast) { renderable->Render::Renderable::cast_shadow(cast); });
 		// Material
-		ctx.add_attribute_function<StaticMesh, std::vector<std::string> >
+		ctx.add_attribute_function<StaticMesh, Vector<String> >
 			("materials"
-			, std::vector<std::string>()
-			, [](const StaticMesh* sm) -> std::vector<std::string>
+			, Vector<String>()
+			, [](const StaticMesh* sm) -> Vector<String>
 			{ 
-				std::vector< std::string > materials_names;
+				Vector< String > materials_names;
 				for (auto& material : sm->m_materials)
 				{
 					if (material)
@@ -41,7 +41,7 @@ namespace Scene
 				}
 				return materials_names;
 			}
-			, [](StaticMesh* sm, const std::vector<std::string>& vnames)
+			, [](StaticMesh* sm, const Vector<String>& vnames)
 			{ 
 				sm->m_materials.clear();
 				sm->m_materials.reserve(vnames.size());
@@ -51,10 +51,10 @@ namespace Scene
 				}
 			});
 		// OBB
-		ctx.add_attribute_function<StaticMesh, std::vector<Vec3> >
+		ctx.add_attribute_function<StaticMesh, Vector<Vec3> >
 			("obb"
-			, std::vector<Vec3>()
-			, [](const StaticMesh* sm) -> std::vector<Vec3>
+			, Vector<Vec3>()
+			, [](const StaticMesh* sm) -> Vector<Vec3>
 			{ 
 				if (sm->m_mesh && sm->m_obb_local.valid()) 
 				{
@@ -68,7 +68,7 @@ namespace Scene
 				}; 
 				return {};
 			}
-			, [](StaticMesh* sm, const std::vector<Vec3>& obb_data)
+			, [](StaticMesh* sm, const Vector<Vec3>& obb_data)
 			{ 
 				if (obb_data.size() == 5)
 			    {
@@ -84,12 +84,12 @@ namespace Scene
 				}
 			});
 		// Mesh
-		ctx.add_attribute_function<StaticMesh, std::string>
+		ctx.add_attribute_function<StaticMesh, String>
 			("mesh"
-			, std::string()
-			, [](const StaticMesh* sm) -> std::string
+			, String()
+			, [](const StaticMesh* sm) -> String
 			{ if (sm->m_mesh) return sm->m_mesh->resource_untyped_name(); else return ""; }
-			, [](StaticMesh* sm, const std::string& name)
+			, [](StaticMesh* sm, const String& name)
 			{ if (name.size())
 			    {
 				    if(sm->m_mesh = sm->context().resource<Mesh>(name); !sm->m_mesh)
@@ -141,7 +141,7 @@ namespace Scene
 		}
 		else if (material_id < num_sub_meshs_to_draw)
 		{
-			context().logger()->debug("Mesh draw with invalid material: " + std::to_string(material_id));
+			context().logger()->debug("Mesh draw with invalid material: " + to_string(material_id));
 		}
 	}
 
@@ -297,11 +297,11 @@ namespace Scene
 		m_obb_local = obb;
 	}
 
-	bool StaticMesh::triangles(std::vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter)
+	bool StaticMesh::triangles(Vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter)
 	{
 		bool read = false;
 		auto owner = actor().lock();
-		std::vector<Vec3> local;
+		Vector<Vec3> local;
 		if (m_mesh && owner)
 		{
 			read = m_mesh->local_triangles(local, filter);

@@ -76,7 +76,7 @@ namespace Resource
 		destoy();
 	}
 
-	Texture::Texture(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
+	Texture::Texture(Context& context, const String& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
 
 	{
 		load(path);
@@ -86,7 +86,7 @@ namespace Resource
 	(
 		Context& context,
 		const Attributes& attr,
-		const std::string& path
+		const String& path
 	) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
 	{
 		load(attr, path);
@@ -110,7 +110,7 @@ namespace Resource
 	(   
 		Context& context,
 		const Attributes& attr,
-		const std::vector< unsigned char >& buffer,
+		const Vector< unsigned char >& buffer,
 		unsigned long width,
 		unsigned long height,
 		Render::TextureFormat format,
@@ -120,15 +120,15 @@ namespace Resource
 		build(attr, buffer, width, height, format, type);
 	}
 	
-	bool Texture::load(const std::string& path)
+	bool Texture::load(const String& path)
 	{
 		//get ext
-		std::string ext = Filesystem::get_extension(path);
+		String ext = Filesystem::get_extension(path);
 		// sqtex
 		if (ext == ".sqtex" || ext == ".sampler")
 		{
 			Parser::Texture::Context tex_context;
-			std::vector<unsigned char> data = Filesystem::binary_file_read_all(path);
+			Vector<unsigned char> data = Filesystem::binary_file_read_all(path);
 			// The parser reads it as a C string
 			data.push_back('\0');
 			// Set default attrs
@@ -145,9 +145,9 @@ namespace Resource
 			// Parse texture data
 			if (Parser::Texture::parse(tex_context, reinterpret_cast<const char*>(data.data()), data.size() - 1))
 			{
-				if (std::holds_alternative<std::string>(tex_context.m_image))
+				if (std::holds_alternative<String>(tex_context.m_image))
 				{
-					auto image_path = Filesystem::join(Filesystem::get_directory(path), std::get<std::string>(tex_context.m_image));
+					auto image_path = Filesystem::join(Filesystem::get_directory(path), std::get<String>(tex_context.m_image));
 					// Load default texture
 					if (load(tex_context.m_attributes, image_path))
 					{ 
@@ -163,9 +163,9 @@ namespace Resource
 					// Load fallback
 					return load(tex_context.m_attributes, fallback_path);
 				}
-				else if (std::holds_alternative< std::vector<unsigned char> >(tex_context.m_image))
+				else if (std::holds_alternative< Vector<unsigned char> >(tex_context.m_image))
 				{
-					return load(tex_context.m_attributes, std::get< std::vector<unsigned char> >(tex_context.m_image));
+					return load(tex_context.m_attributes, std::get< Vector<unsigned char> >(tex_context.m_image));
 				}
 				else
 				{
@@ -197,12 +197,12 @@ namespace Resource
 	bool Texture::load
 	(
 		const Attributes& attr,
-		const std::string& path
+		const String& path
 	)
 	{
 		//compressed: DDS (BC), KTX (ASTC, BC); false when the GPU has not its format (a .sqtex
 		//can give a fallback image)
-		const std::string ext = Filesystem::get_extension(path);
+		const String ext = Filesystem::get_extension(path);
 		if (ext == ".dds" || ext == ".ktx")
 		{
 			if (load_compressed(attr, Filesystem::binary_file_read_all(path))) return true;
@@ -210,7 +210,7 @@ namespace Resource
 			return false;
 		}
 		//decode
-		std::vector<unsigned char> image;
+		Vector<unsigned char> image;
 		unsigned long image_width = 0;
 		unsigned long image_height = 0;
 		Render::TextureFormat image_format;
@@ -225,13 +225,13 @@ namespace Resource
 	bool Texture::load
 	(
 		const Attributes& attr,
-		const std::vector< unsigned char >& data_file
+		const Vector< unsigned char >& data_file
 	)
 	{
 		//compressed: DDS (BC), KTX (ASTC, BC)
 		if (Data::Image::is_compressed(data_file)) return load_compressed(attr, data_file);
 		//decode
-		std::vector<unsigned char> image;
+		Vector<unsigned char> image;
 		unsigned long image_width = 0;
 		unsigned long image_height = 0;
 		Render::TextureFormat image_format;
@@ -246,7 +246,7 @@ namespace Resource
 	bool Texture::build
 	(
 		const Attributes& attr,
-		const std::vector< unsigned char >& buffer,
+		const Vector< unsigned char >& buffer,
 		unsigned long width,
 		unsigned long height,
 		Render::TextureFormat format,
@@ -382,10 +382,10 @@ namespace Resource
 	bool Texture::load_compressed
 	(
 		const Attributes& attr,
-		const std::vector< unsigned char >& data_file
+		const Vector< unsigned char >& data_file
 	)
 	{
-		std::vector<unsigned char> levels_data;
+		Vector<unsigned char> levels_data;
 		unsigned long image_width = 0;
 		unsigned long image_height = 0;
 		unsigned int  image_levels = 0;

@@ -8,13 +8,13 @@
 #include "GLTFImport.h"
 #include <cstddef>
 
-MeshManager::MeshManager(Square::Context& context, const std::string& output, unsigned char mode)
+MeshManager::MeshManager(Square::Context& context, const Square::String& output, unsigned char mode)
 : m_context(context)
 , m_output(output)
 , m_mode(mode)
 {}
 
-MeshManager::MeshManager(Square::Context& context, const std::string& output, unsigned char mode, const Square::Data::GLTF::GLTF& gltf)
+MeshManager::MeshManager(Square::Context& context, const Square::String& output, unsigned char mode, const Square::Data::GLTF::GLTF& gltf)
 : m_context(context)
 , m_output(output)
 , m_mode(mode)
@@ -25,12 +25,12 @@ MeshManager::MeshManager(Square::Context& context, const std::string& output, un
     }
 }
 
-const std::unordered_map<std::string, std::string>& MeshManager::resource_map() const
+const Square::UnorderedMap<Square::String, Square::String>& MeshManager::resource_map() const
 {
     return m_mesh_name_files;
 }
 
-std::optional< std::tuple<const std::string*, const Square::Geometry::OBoundingBox*, const std::vector<size_t>* > > MeshManager::at(size_t id) const
+std::optional< std::tuple<const Square::String*, const Square::Geometry::OBoundingBox*, const Square::Vector<size_t>* > > MeshManager::at(size_t id) const
 {
     if (id < m_mesh_names.size() && id < m_mesh_obbs.size())
     {
@@ -53,8 +53,8 @@ size_t MeshManager::add_mesh(const Square::Data::GLTF::Mesh& mesh, const Square:
     Render::Mesh::Vertex3DNTBUVList context_mesh;
     Render::Mesh::IndexList context_index;
     // The joints of the vertices and their weights (a skinned mesh: a primitive with them)
-    std::vector<Vec4> context_joints;
-    std::vector<Vec4> context_weights;
+    Square::Vector<Vec4> context_joints;
+    Square::Vector<Vec4> context_weights;
     bool skinned = false;
     // Save
     size_t primitive_id = 0;
@@ -74,7 +74,7 @@ size_t MeshManager::add_mesh(const Square::Data::GLTF::Mesh& mesh, const Square:
             // Invalid draw type?
             if (drawtype == Render::DrawType::DRAW_INVALID)
             {
-                m_context.logger()->warning("Error to import primitive[" + std::to_string(primitive_id) + "] mesh: " + mesh.name);
+                m_context.logger()->warning("Error to import primitive[" + Square::to_string(primitive_id) + "] mesh: " + mesh.name);
                 continue;
             }
             // Get data
@@ -154,14 +154,14 @@ size_t MeshManager::add_mesh(const Square::Data::GLTF::Mesh& mesh, const Square:
                     index += context_mesh.size();
             }
             // Its joints and their weights (none: the first joint, all of it)
-            std::vector<Vec4> joints(vertexes.size(), Vec4(0.0f));
-            std::vector<Vec4> weights(vertexes.size(), Vec4(1.0f, 0.0f, 0.0f, 0.0f));
+            Square::Vector<Vec4> joints(vertexes.size(), Vec4(0.0f));
+            Square::Vector<Vec4> weights(vertexes.size(), Vec4(1.0f, 0.0f, 0.0f, 0.0f));
             auto joints_it = primitive.attributes.find("JOINTS_0");
             auto weights_it = primitive.attributes.find("WEIGHTS_0");
             if (joints_it != primitive.attributes.end() && weights_it != primitive.attributes.end())
             {
-                const std::vector<float> joint_values = GLTF::Import::read_floats(gltf, joints_it->second, false);
-                const std::vector<float> weight_values = GLTF::Import::read_floats(gltf, weights_it->second, true);
+                const Square::Vector<float> joint_values = GLTF::Import::read_floats(gltf, joints_it->second, false);
+                const Square::Vector<float> weight_values = GLTF::Import::read_floats(gltf, weights_it->second, true);
                 for (size_t i = 0; i < vertexes.size() && i * 4 + 3 < joint_values.size() && i * 4 + 3 < weight_values.size(); ++i)
                 {
                     joints[i] = Vec4(joint_values[i * 4], joint_values[i * 4 + 1], joint_values[i * 4 + 2], joint_values[i * 4 + 3]);
@@ -199,10 +199,10 @@ size_t MeshManager::add_mesh(const Square::Data::GLTF::Mesh& mesh, const Square:
     }
     m_mesh_obbs.push_back(obb);
     // Serialize
-    std::vector<unsigned char> buffer;
+    Square::Vector<unsigned char> buffer;
     size_t mesh_id = m_mesh_names.size();
-    std::string sm3d_mesh_filename = m_names.make(mesh.name, "mesh" + std::to_string(mesh_id));
-    std::string sm3d_mesh_path = Filesystem::join(m_output, sm3d_mesh_filename + ".sm3dgz");
+    Square::String sm3d_mesh_filename = m_names.make(mesh.name, "mesh" + Square::to_string(mesh_id));
+    Square::String sm3d_mesh_path = Filesystem::join(m_output, sm3d_mesh_filename + ".sm3dgz");
     static_mesh_context.m_index = std::move(context_index);
     m_mesh_skin_points.emplace_back();
     if (skinned)
@@ -245,8 +245,8 @@ bool MeshManager::skinned(size_t id) const
     return id < m_mesh_skin_points.size() && !m_mesh_skin_points[id].empty();
 }
 
-const std::vector<Square::Vec4>& MeshManager::skin_points(size_t id) const
+const Square::Vector<Square::Vec4>& MeshManager::skin_points(size_t id) const
 {
-    static const std::vector<Square::Vec4> none;
+    static const Square::Vector<Square::Vec4> none;
     return id < m_mesh_skin_points.size() ? m_mesh_skin_points[id] : none;
 }

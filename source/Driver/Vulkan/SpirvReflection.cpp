@@ -70,7 +70,7 @@ namespace SpirvReflection
 		struct Type
 		{
 			uint32_t m_op{ 0 };
-			std::vector<uint32_t> m_operands; //the words after its result id
+			Vector<uint32_t> m_operands; //the words after its result id
 		};
 
 		//a member of a struct: its decorations
@@ -84,14 +84,14 @@ namespace SpirvReflection
 		//the module read
 		struct Module
 		{
-			std::unordered_map<uint32_t, std::string> m_names;
-			std::unordered_map<uint64_t, std::string> m_member_names;          //(struct, member)
-			std::unordered_map<uint32_t, Type>        m_types;
-			std::unordered_map<uint32_t, uint32_t>    m_constants;              //id -> value (32 bit)
-			std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> m_decorations; //id -> decoration -> value
-			std::unordered_map<uint64_t, MemberDecorations> m_member_decorations; //(struct, member)
-			std::vector<std::pair<uint32_t, uint32_t>> m_variables;           //id, its pointer type
-			std::vector<uint32_t> m_capabilities;
+			UnorderedMap<uint32_t, String> m_names;
+			UnorderedMap<uint64_t, String> m_member_names;          //(struct, member)
+			UnorderedMap<uint32_t, Type>        m_types;
+			UnorderedMap<uint32_t, uint32_t>    m_constants;              //id -> value (32 bit)
+			UnorderedMap<uint32_t, UnorderedMap<uint32_t, uint32_t>> m_decorations; //id -> decoration -> value
+			UnorderedMap<uint64_t, MemberDecorations> m_member_decorations; //(struct, member)
+			Vector<std::pair<uint32_t, uint32_t>> m_variables;           //id, its pointer type
+			Vector<uint32_t> m_capabilities;
 			bool m_vertex{ false };
 		};
 
@@ -101,9 +101,9 @@ namespace SpirvReflection
 		}
 
 		//a literal string from a word (its bytes up to the first zero)
-		static std::string literal(const uint32_t* words, size_t count)
+		static String literal(const uint32_t* words, size_t count)
 		{
-			std::string out;
+			String out;
 			for (size_t i = 0; i != count; ++i)
 			{
 				for (uint32_t shift = 0; shift != 32; shift += 8)
@@ -299,7 +299,7 @@ namespace SpirvReflection
 		}
 
 		//the name of a resource: its block (a buffer), else its variable
-		static std::string resource_name(const Module& module, uint32_t variable, uint32_t type)
+		static String resource_name(const Module& module, uint32_t variable, uint32_t type)
 		{
 			auto block = module.m_names.find(type);
 			const bool named_block = block != module.m_names.end() && !block->second.empty();
@@ -309,7 +309,7 @@ namespace SpirvReflection
 				return block->second;
 			}
 			auto name = module.m_names.find(variable);
-			return name != module.m_names.end() ? name->second : std::string();
+			return name != module.m_names.end() ? name->second : String();
 		}
 
 		static ImageDim image_dim(uint32_t dim)
@@ -325,11 +325,11 @@ namespace SpirvReflection
 		}
 	}
 
-	Stage read(const std::string& bytes)
+	Stage read(const String& bytes)
 	{
 		using namespace AuxSpirvReflection;
 		Stage stage;
-		std::vector<uint32_t> words(bytes.size() / sizeof(uint32_t));
+		Vector<uint32_t> words(bytes.size() / sizeof(uint32_t));
 		std::memcpy(words.data(), bytes.data(), words.size() * sizeof(uint32_t));
 		Module module;
 		if (!read_module(words.data(), words.size(), module))
@@ -399,7 +399,7 @@ namespace SpirvReflection
 				const bool storage_buffer = storage == SC_STORAGE_BUFFER || has(module, type_id, DEC_BUFFER_BLOCK);
 				out.m_kind = storage_buffer ? ResourceKind::STORAGE_BUFFER : ResourceKind::UNIFORM_BUFFER;
 				out.m_size = (size_of_struct(module, type_id, *type) + 15u) & ~15u;
-				out.m_global = out.m_name.find("Global") != std::string::npos;
+				out.m_global = out.m_name.find("Global") != String::npos;
 				//the loose uniforms: the members of the global block
 				if (out.m_global)
 				{
@@ -407,7 +407,7 @@ namespace SpirvReflection
 					{
 						Member member;
 						auto name = module.m_member_names.find(key(type_id, i));
-						member.m_name = name != module.m_member_names.end() ? name->second : std::string();
+						member.m_name = name != module.m_member_names.end() ? name->second : String();
 						MemberDecorations decorations;
 						auto it = module.m_member_decorations.find(key(type_id, i));
 						if (it != module.m_member_decorations.end())

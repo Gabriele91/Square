@@ -23,7 +23,7 @@ namespace UI
 		//the variables bound (of the game) go, the documents must not read them after
 		Square::Context*          m_context{ nullptr };
 		Rml::Context*             m_owner{ nullptr };
-		std::string               m_name;
+		String               m_name;
 
 		~State()
 		{
@@ -35,10 +35,10 @@ namespace UI
 	};
 
 	//make a DataModel of a constructor of RmlUi, owner of it when made by a context (Context.cpp)
-	DataModel make_data_model(Rml::DataModelConstructor constructor, Square::Context* context, Rml::Context* owner, const std::string& name)
+	DataModel make_data_model(Rml::DataModelConstructor constructor, Square::Context* context, Rml::Context* owner, const String& name)
 	{
 		if (!constructor) return DataModel();
-		auto state = std::make_shared<DataModel::State>();
+		auto state = MakeSharedPtr<DataModel::State>();
 		state->m_constructor = constructor;
 		state->m_context = context;
 		state->m_owner = owner;
@@ -46,7 +46,7 @@ namespace UI
 		return DataModel(state);
 	}
 
-	DataModel::DataModel(const std::shared_ptr<State>& state) : m_state(state)
+	DataModel::DataModel(const Shared<State>& state) : m_state(state)
 	{
 	}
 
@@ -55,14 +55,14 @@ namespace UI
 		return m_state && bool(m_state->m_constructor);
 	}
 
-	bool DataModel::bind(const std::string& name, bool* value)         { return valid() && m_state->m_constructor.Bind(name, value); }
-	bool DataModel::bind(const std::string& name, int* value)          { return valid() && m_state->m_constructor.Bind(name, value); }
-	bool DataModel::bind(const std::string& name, unsigned int* value) { return valid() && m_state->m_constructor.Bind(name, value); }
-	bool DataModel::bind(const std::string& name, float* value)        { return valid() && m_state->m_constructor.Bind(name, value); }
-	bool DataModel::bind(const std::string& name, double* value)       { return valid() && m_state->m_constructor.Bind(name, value); }
-	bool DataModel::bind(const std::string& name, std::string* value)  { return valid() && m_state->m_constructor.Bind(name, value); }
+	bool DataModel::bind(const String& name, bool* value)         { return valid() && m_state->m_constructor.Bind(name, value); }
+	bool DataModel::bind(const String& name, int* value)          { return valid() && m_state->m_constructor.Bind(name, value); }
+	bool DataModel::bind(const String& name, unsigned int* value) { return valid() && m_state->m_constructor.Bind(name, value); }
+	bool DataModel::bind(const String& name, float* value)        { return valid() && m_state->m_constructor.Bind(name, value); }
+	bool DataModel::bind(const String& name, double* value)       { return valid() && m_state->m_constructor.Bind(name, value); }
+	bool DataModel::bind(const String& name, String* value)  { return valid() && m_state->m_constructor.Bind(name, value); }
 
-	bool DataModel::bind_function(const std::string& name, const std::function<std::string()>& get, const std::function<void(const std::string&)>& set)
+	bool DataModel::bind_function(const String& name, const std::function<String()>& get, const std::function<void(const String&)>& set)
 	{
 		if (!valid() || !get) return false;
 		Rml::DataSetFunc set_func;
@@ -73,7 +73,7 @@ namespace UI
 		return m_state->m_constructor.BindFunc(name, [get](Rml::Variant& variant) { variant = get(); }, set_func);
 	}
 
-	bool DataModel::bind_event(const std::string& name, const EventCallback& callback)
+	bool DataModel::bind_event(const String& name, const EventCallback& callback)
 	{
 		if (!valid() || !callback) return false;
 		return m_state->m_constructor.BindEventCallback(name, [callback](Rml::DataModelHandle, Rml::Event& event, const Rml::VariantList&)
@@ -83,7 +83,7 @@ namespace UI
 		});
 	}
 
-	void DataModel::dirty(const std::string& name)
+	void DataModel::dirty(const String& name)
 	{
 		if (valid()) m_state->m_constructor.GetModelHandle().DirtyVariable(name);
 	}

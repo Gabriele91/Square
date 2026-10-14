@@ -106,7 +106,7 @@ namespace Square
 		void remove_overlay(RenderOverlay* overlay);
 
 		//the instances alive (the worlds drawn)
-		std::vector< Shared<RenderInstance> > instances();
+		Vector< Shared<RenderInstance> > instances();
 
 	protected:
 		//device
@@ -123,8 +123,8 @@ namespace Square
 		//the seconds of the last frame (the time of the worlds)
 		double m_delta_time{ 0.0 };
 		//worlds
-		std::vector< Weak<RenderInstance> > m_instances;
-		std::vector< RenderOverlay* >       m_overlays;
+		Vector< Weak<RenderInstance> > m_instances;
+		Vector< RenderOverlay* >       m_overlays;
 	};
 
 	class SQUARE_API RenderInstance : public SystemInstance
@@ -174,8 +174,8 @@ namespace Square
 		//the effects of the pipeline stage (G-Buffer effects only in deferred)
 		void add_post_effect(Shared<Render::PostEffect> effect);
 		void remove_post_effect(Shared<Render::PostEffect> effect);
-		void post_effects(const std::vector< Shared<Render::PostEffect> >& effects);
-		const std::vector< Shared<Render::PostEffect> >& post_effects() const;
+		void post_effects(const Vector< Shared<Render::PostEffect> >& effects);
+		const Vector< Shared<Render::PostEffect> >& post_effects() const;
 
 		//the drawer of the world and its debug pass: while the RenderSystem is ready,
 		//nullptr out of it (and the debug pass without RP_DEBUG)
@@ -203,7 +203,7 @@ namespace Square
 		double      m_time{ 0.0 };
 		Render::LevelOfDetailSettings m_levels_of_detail;
 		Render::SoftwareOcclusion::Settings m_occlusion;
-		std::vector< Shared<Render::PostEffect> > m_post_effects;
+		Vector< Shared<Render::PostEffect> > m_post_effects;
 		//drawer
 		Shared<Render::Drawer>          m_drawer;
 		Shared<Render::DrawerPassDebug> m_debug_pass;

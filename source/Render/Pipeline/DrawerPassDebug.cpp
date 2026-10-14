@@ -433,7 +433,7 @@ namespace Render
     void DrawerPassDebug::draw_occlusion_image(const SoftwareOcclusion& occlusion, const Camera& camera)
     {
         const IVec2 size = occlusion.size();
-        const std::vector<float>& depth = occlusion.depth();
+        const Vector<float>& depth = occlusion.depth();
         const bool drawable = occlusion.active() && m_shader_texture_2D && m_shader_texture_2D->base_shader() && m_mesh_quad
                            && size.x > 0 && size.y > 0 && depth.size() == size_t(size.x) * size_t(size.y);
         if (drawable)

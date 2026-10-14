@@ -18,7 +18,7 @@ namespace Square
 {
 	class System;
 	class SystemInstance;
-	using SystemInstanceList = std::vector< Shared<SystemInstance> >;
+	using SystemInstanceList = Vector< Shared<SystemInstance> >;
 namespace Scene
 {
 	//..................
@@ -26,8 +26,8 @@ namespace Scene
 	class Actor;
 	class Level;
 	struct Message;
-	using ActorList = std::vector< Shared<Actor> >;
-	using LevelList = std::vector< Shared<Level> >;
+	using ActorList = Vector< Shared<Actor> >;
+	using LevelList = Vector< Shared<Level> >;
 	//..................
 	class SQUARE_API World :  public Object
 							, public SharedObject<World>
@@ -45,20 +45,20 @@ namespace Scene
 		virtual ~World();
 
 		//name        
-		const std::string& name() const;
-		void name(const std::string&);
+		const String& name() const;
+		void name(const String&);
 
 		//a new level of this world, named or not (the world is created with MakeShared: its levels
 		//keep it weak)
-		Shared<Level> create_level(const std::string& name = std::string());
+		Shared<Level> create_level(const String& name = String());
 		//query (nullptr: no such level)
 		Shared<Level> level(size_t index);
-		Shared<Level> level(const std::string& name);
+		Shared<Level> level(const String& name);
 		const LevelList& levels() const;
 		//the levels that run (updated, in the systems: render, collisions...): the ones named,
 		//the others not. The levels of a game are made once and switched (the menu, a race...)
-		void active_levels(const std::vector<std::string>& names);
-		Shared<Actor> find_actor(const std::string& name);
+		void active_levels(const Vector<String>& names);
+		Shared<Actor> find_actor(const String& name);
 
 		//contains an actor
 		bool contains(Shared<Actor> child) const;
@@ -97,7 +97,7 @@ namespace Scene
 
 	protected:
 		//name
-		std::string m_name;
+		String m_name;
 		//actor list
 		LevelList m_levels;
 		//system instances

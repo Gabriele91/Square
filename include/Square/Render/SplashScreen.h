@@ -24,7 +24,7 @@ namespace Render
 namespace SplashScreen
 {
 	//the PNG of the icon inside the library (empty: none)
-	SQUARE_API std::vector<unsigned char> image();
+	SQUARE_API Vector<unsigned char> image();
 
 	//draw a frame (the background, the icon in the middle) and present it; false when it cannot
 	//(no render, no window, the image or the shader not there)

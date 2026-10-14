@@ -38,13 +38,13 @@ static Square::Shell::ParserCommands s_ShellCommands
 {
       Square::Shell::Command{ "input",   "i", "input model [gltf, glb]"                  , Square::Shell::ValueType::value_string, true,  Square::Shell::Value_t()                   }
     , Square::Shell::Command{ "output",  "o", "output model path"                        , Square::Shell::ValueType::value_string, true,  Square::Shell::Value_t()                   }
-    , Square::Shell::Command{ "format",  "f", "output model format [bin, bgz, json, jgz]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("bgz")) }
+    , Square::Shell::Command{ "format",  "f", "output model format [bin, bgz, json, jgz]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("bgz")) }
     , Square::Shell::Command{ "name",    "n", "output model name"                        , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t()                   }
     , Square::Shell::Command{ "debug",   "d", "enable debug"                             , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
     , Square::Shell::Command{ "swapzy",  "s", "swap z with y coord"                      , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
     , Square::Shell::Command{ "lhs",     "l", "convert in left hand"                     , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(true)               }
     , Square::Shell::Command{ "shadow",  "r", "force shadow resolution [size]"           , Square::Shell::ValueType::value_int   , false, Square::Shell::Value_t(0)                  }
-    , Square::Shell::Command{ "images",  "m", "texture images [bc, astc, png, keep]"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(std::string("bc"))  }
+    , Square::Shell::Command{ "images",  "m", "texture images [bc, astc, png, keep]"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("bc"))  }
     , Square::Shell::Command{ "pack",    "p", "pack the output folder in an archive (.sqz)", Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
     , Square::Shell::Command{ "cascades","c", "cascades of the directional lights [1-8]"  , Square::Shell::ValueType::value_int   , false, Square::Shell::Value_t(0)                  }
     , Square::Shell::Command{ "static",  "t", "the nodes static by default (they do not move: cached in the shadows; a node: its \"square_static\")", Square::Shell::ValueType::value_none, false, Square::Shell::Value_t(false) }
@@ -55,9 +55,9 @@ class ModelImporter : public Square::AppInterface
 {
 public:
     unsigned char m_mode{ M_NONE };
-    std::string m_input_model_path;
-    std::string m_output_model_path;
-    std::string m_output_model_name;
+    Square::String m_input_model_path;
+    Square::String m_output_model_path;
+    Square::String m_output_model_name;
     OutputFormat m_output_model_format;
     size_t m_shadow_resoluction;
     bool m_convert_images;
@@ -81,9 +81,9 @@ public:
         return (intensity * Square::Constants::pi<double>() * 4) / Consts::LUMENS_PER_WATT;
     }
 
-    ModelImporter(const std::string& input_model_path, 
-                  const std::string& output_model_path,
-                  const std::string& output_model_name, 
+    ModelImporter(const Square::String& input_model_path, 
+                  const Square::String& output_model_path,
+                  const Square::String& output_model_name, 
                   OutputFormat output_model_format,
                   unsigned char mode = M_NONE,
                   size_t shodow_resoluction = 0,
@@ -111,9 +111,9 @@ public:
         // Load
         auto loaded_model = GLTF::load(m_input_model_path);
         // Test
-        if (std::holds_alternative<std::string>(loaded_model))
+        if (std::holds_alternative<Square::String>(loaded_model))
         {
-            context().logger()->warning("Error to parse model: " + std::get<std::string>(loaded_model));
+            context().logger()->warning("Error to parse model: " + std::get<Square::String>(loaded_model));
             return;
         }
         // Get model
@@ -147,7 +147,7 @@ public:
         // The nodes of emitters of particles ("square_particles") and their properties
         Particles::Nodes particle_nodes;
         // The nodes with "square_shadow_cast" (their meshes, their children's: cast or not), in order
-        std::vector< std::pair< Shared<Actor>, bool > > shadow_cast_nodes;
+        Square::Vector< std::pair< Shared<Actor>, bool > > shadow_cast_nodes;
         // The actor of each node (the animations, the skins: by the index of the node)
         Animations::NodeActors node_actors(gltf_model.nodes.size());
         GLTF::Import::visit_default_scene< Shared<Actor> >(gltf_model, main_node,
@@ -239,7 +239,7 @@ public:
                                     {
                                         // Get material id
                                         size_t mat_id = mesh_mats->at(i);
-                                        std::string name = material_manager.at(mat_id).value_or("default");
+                                        Square::String name = material_manager.at(mat_id).value_or("default");
                                         actor->component<StaticMesh>()->m_materials.push_back(context().resource<Resource::Material>(name));
                                     }
                                     for (; i < mesh->number_of_sub_meshs(); ++i)
@@ -374,7 +374,7 @@ public:
         // The skins: the meshes of a node with a skin (before the instances: never one of them)
         if (const size_t skinned = Skins::build(context(), gltf_model, node_actors, mesh_manager, m_mode))
         {
-            context().logger()->info("Skinned meshes: " + std::to_string(skinned));
+            context().logger()->info("Skinned meshes: " + Square::to_string(skinned));
         }
         // The shadows of the nodes "square_shadow_cast": their meshes (before the instances: they group the
         // ones that cast and the ones that do not apart), a parent first, its children over it
@@ -395,34 +395,34 @@ public:
         // The sprites: the planes of a node "square_sprite"
         if (const size_t sprites = Sprites::build(context(), main_node, sprite_nodes))
         {
-            context().logger()->info("Sprites: " + std::to_string(sprites));
+            context().logger()->info("Sprites: " + Square::to_string(sprites));
         }
         // The emitters of particles: the planes of a node "square_particles"
         if (const size_t emitters = Particles::build(context(), main_node, particle_nodes, m_mode))
         {
-            context().logger()->info("Particle emitters: " + std::to_string(emitters));
+            context().logger()->info("Particle emitters: " + Square::to_string(emitters));
         }
         // The occluders: the meshes of a node "square_occluder" (before the instances take them)
         size_t occluder_triangles = 0;
         if (const size_t occluders = Occluders::build(context(), main_node, occluder_nodes, occluder_triangles))
         {
-            context().logger()->info("Occluders: " + std::to_string(occluders) + ", " + std::to_string(occluder_triangles) + " triangles");
+            context().logger()->info("Occluders: " + Square::to_string(occluders) + ", " + Square::to_string(occluder_triangles) + " triangles");
         }
         // The instances: the children of a node "square_instances" by their mesh
         size_t instances = 0;
         if (const size_t meshes = InstanceGroups::build(context(), main_node, instance_nodes, instances))
         {
-            context().logger()->info("Instances: " + std::to_string(instances) + " in " + std::to_string(meshes) + " meshes");
+            context().logger()->info("Instances: " + Square::to_string(instances) + " in " + Square::to_string(meshes) + " meshes");
         }
         // The levels of detail: "<name>_lod<n>" nodes under a LodGroup
         if (const size_t groups = LodGroups::build(context(), main_node, lod_extras))
         {
-            context().logger()->info("Levels of detail: " + std::to_string(groups) + " groups");
+            context().logger()->info("Levels of detail: " + Square::to_string(groups) + " groups");
         }
         // The animations: an animator at the root (after the nodes are moved: their paths)
         if (const size_t clips = Animations::build(context(), main_node, gltf_model, node_actors, m_mode))
         {
-            context().logger()->info("Animations: " + std::to_string(clips) + " clips");
+            context().logger()->info("Animations: " + Square::to_string(clips) + " clips");
         }
         // Serialize
         switch (m_output_model_format)
@@ -432,8 +432,8 @@ public:
         {
             using namespace Square::Data;
             using namespace Square::Filesystem::Stream;
-            std::string actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".ac");
-            std::ofstream ofile(actor_model_name, std::ios::out | std::ios::binary);
+            Square::String actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".ac");
+            std::ofstream ofile(actor_model_name.c_str(), std::ios::out | std::ios::binary);
             ArchiveBinWrite out(context(), ofile);
             main_node->serialize(out);
         }
@@ -442,7 +442,7 @@ public:
         {
             using namespace Square::Data;
             using namespace Square::Filesystem::Stream;
-            std::string actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".acgz");
+            Square::String actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".acgz");
             GZOStream ofile(actor_model_name);
             ArchiveBinWrite out(context(), ofile);
             main_node->serialize(out);
@@ -454,8 +454,8 @@ public:
             using namespace Square::Data;
             Json jout = Json(JsonObject());
             main_node->serialize_json(jout);
-            std::string actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".acj");
-            std::ofstream(actor_model_name) << jout;
+            Square::String actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".acj");
+            std::ofstream(actor_model_name.c_str()) << jout;
         }
         break;
         case OutputFormat::SQ_JSON_GZ:
@@ -465,7 +465,7 @@ public:
             using namespace Square::Filesystem::Stream;
             Json jout = Json(JsonObject());
             main_node->serialize_json(jout);
-            std::string actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".acjgz");
+            Square::String actor_model_name = Filesystem::join(m_output_model_path, m_output_model_name + ".acjgz");
             GZOStream(actor_model_name) << jout;
         }
         break;
@@ -477,9 +477,9 @@ public:
     void pack(bool remove_folder)
     {
         using namespace Square;
-        std::string folder = m_output_model_path;
+        Square::String folder = m_output_model_path;
         while (folder.size() > 1 && (folder.back() == '/' || folder.back() == '\\')) folder.pop_back();
-        const std::string archive = folder + ".sqz";
+        const Square::String archive = folder + ".sqz";
         if (!Filesystem::archive_write(folder, archive))
         {
             context().logger()->warning("Unable to pack the output folder in " + archive);
@@ -504,30 +504,30 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
 	// Show help:
 	if (args.find("help") != args.end() && std::get<bool>(args["help"]))
 	{
-        app.context()->logger()->info((std::get<std::string>(args[Shell::__filename__]) + ":\n"));
+        app.context()->logger()->info((std::get<Square::String>(args[Shell::__filename__]) + ":\n"));
         app.context()->logger()->info(Shell::help(s_ShellCommands));
         return 0;
 	}
 	// Test error
 	if (errors.type != Shell::ErrorType::none)
 	{
-        app.context()->logger()->error("Error to parse input [" + std::to_string(errors.id_argument) + "]: " + errors.what);
+        app.context()->logger()->error("Error to parse input [" + Square::to_string(errors.id_argument) + "]: " + errors.what);
         return -1;
 	}
     // Get mandatory params
-    const std::string& input_model_path = std::get<std::string>(args.at("input"));
-    const std::string& output_model_path = std::get<std::string>(args.at("output"));
+    const Square::String& input_model_path = std::get<Square::String>(args.at("input"));
+    const Square::String& output_model_path = std::get<Square::String>(args.at("output"));
     //  Get name
-    std::string  output_model_name = Filesystem::get_basename(output_model_path);
+    Square::String  output_model_name = Filesystem::get_basename(output_model_path);
     if (auto name_it = args.find("name"); name_it != args.end())
-    if (auto name = std::get<std::string>(name_it->second); name.size())
+    if (auto name = std::get<Square::String>(name_it->second); name.size())
     {
         output_model_name = name;
     }
     // Get format
     OutputFormat output_model_format{ OutputFormat::SQ_BIN_GZ };
     if (auto format_it = args.find("format"); format_it != args.end())
-    if (auto format_str = std::get<std::string>(format_it->second); format_str.size())
+    if (auto format_str = std::get<Square::String>(format_it->second); format_str.size())
     {
         if (Square::case_insensitive_equal(format_str, "bin"))
         {
@@ -571,7 +571,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
     bool convert_images = true;
     ImageConverter::Compression compression = ImageConverter::Compression::BC;
     if (auto images_it = args.find("images"); images_it != args.end())
-    if (auto images_str = std::get<std::string>(images_it->second); images_str.size())
+    if (auto images_str = std::get<Square::String>(images_it->second); images_str.size())
     {
         if (Square::case_insensitive_equal(images_str, "keep"))
         {

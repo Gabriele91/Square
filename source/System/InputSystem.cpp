@@ -127,7 +127,7 @@ namespace Square
 	}
 
 	template < size_t N >
-	void InputSystem::latch(std::array<Button, N>& state, std::array<Button, N>& next)
+	void InputSystem::latch(Array<Button, N>& state, Array<Button, N>& next)
 	{
 		//pressed and released in the same frame: both seen
 		state = next;
@@ -204,18 +204,18 @@ namespace Square
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	//actions
-	void InputSystem::bind(const std::string& action, Video::KeyboardEvent key)
+	void InputSystem::bind(const String& action, Video::KeyboardEvent key)
 	{
 		auto& keys = m_actions[action];
 		if (std::find(keys.begin(), keys.end(), key) == keys.end()) keys.push_back(key);
 	}
 
-	void InputSystem::unbind(const std::string& action)
+	void InputSystem::unbind(const String& action)
 	{
 		m_actions.erase(action);
 	}
 
-	bool InputSystem::action(const std::string& action) const
+	bool InputSystem::action(const String& action) const
 	{
 		auto it = m_actions.find(action);
 		if (it == m_actions.end()) return false;
@@ -223,7 +223,7 @@ namespace Square
 		return false;
 	}
 
-	bool InputSystem::action_pressed(const std::string& action) const
+	bool InputSystem::action_pressed(const String& action) const
 	{
 		auto it = m_actions.find(action);
 		if (it == m_actions.end()) return false;
@@ -231,7 +231,7 @@ namespace Square
 		return false;
 	}
 
-	bool InputSystem::action_released(const std::string& action) const
+	bool InputSystem::action_released(const String& action) const
 	{
 		auto it = m_actions.find(action);
 		if (it == m_actions.end()) return false;

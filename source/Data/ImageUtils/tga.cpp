@@ -58,7 +58,7 @@ namespace Data
 		unsigned long height,
 		unsigned long image_bytes_pixel,
 		const unsigned char* buffer_in,
-		std::vector<unsigned char>& out_image
+		Vector<unsigned char>& out_image
 	)
 	{
 		//bytes
@@ -111,7 +111,7 @@ namespace Data
 		unsigned long height,
 		unsigned long image_bytes_pixel,
 		const unsigned char* buffer_in,
-		std::vector<unsigned char>& out_tga
+		Vector<unsigned char>& out_tga
 	)
 	{
 		//same pixel
@@ -233,7 +233,7 @@ namespace Data
 #if 1
 	static void image_y_flip
 	(
-		std::vector<unsigned char>& bytes,
+		Vector<unsigned char>& bytes,
 		unsigned long image_bytes_pixel,
 		unsigned long image_width,
 		unsigned long image_height
@@ -258,7 +258,7 @@ namespace Data
 
 	static void image_x_flip
 	(
-		std::vector<unsigned char>& bytes,
+		Vector<unsigned char>& bytes,
 		unsigned long image_bytes_pixel,
 		unsigned long image_width,
 		unsigned long image_height
@@ -287,7 +287,7 @@ namespace Data
 
 	bool decode_tga
 	(
-		std::vector<unsigned char>& out_image,
+		Vector<unsigned char>& out_image,
 		unsigned long& image_width,
 		unsigned long& image_height,
 		Render::TextureFormat& image_format,
@@ -357,7 +357,7 @@ namespace Data
 
 	bool encode_tga
 	(
-		std::vector<unsigned char>& out_tga,
+		Vector<unsigned char>& out_tga,
 		unsigned long image_width,
 		unsigned long image_height,
 		unsigned long image_bytes_pixel,

@@ -17,7 +17,7 @@
 namespace InstanceGroups
 {
     //the nodes "square_instances" (their actors)
-    using Nodes = std::unordered_set< const Square::Scene::Actor* >;
+    using Nodes = Square::UnorderedSet< const Square::Scene::Actor* >;
 
     //the instanced meshes of a scene made; how many (and the instances in them)
     size_t build(Square::Context& context, const Square::Shared<Square::Scene::Actor>& root, const Nodes& nodes, size_t& instances);

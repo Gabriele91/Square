@@ -35,12 +35,12 @@ namespace
     }
 }
 
-TextureManager::TextureManager(Square::Context& context, const std::string& output)
+TextureManager::TextureManager(Square::Context& context, const Square::String& output)
 : m_context(context)
 , m_output(output)
 {}
 
-TextureManager::TextureManager(Square::Context& context, const std::string& output, const Square::Data::GLTF::GLTF& gltf, bool convert, ImageConverter::Compression compression)
+TextureManager::TextureManager(Square::Context& context, const Square::String& output, const Square::Data::GLTF::GLTF& gltf, bool convert, ImageConverter::Compression compression)
 : m_context(context)
 , m_output(output)
 , m_convert(convert)
@@ -64,12 +64,12 @@ TextureManager::TextureManager(Square::Context& context, const std::string& outp
     }
 }
 
-size_t TextureManager::add_image(const Square::Data::GLTF::Image& in_image, const std::string& gltfpath)
+size_t TextureManager::add_image(const Square::Data::GLTF::Image& in_image, const Square::String& gltfpath)
 {
     if (std::holds_alternative<Square::Data::GLTF::ImagePath>(in_image))
     {
         const Square::Data::GLTF::ImagePath& image_path = std::get<Square::Data::GLTF::ImagePath>(in_image);
-        const std::string image_name = Square::Filesystem::get_basename(image_path.uri);
+        const Square::String image_name = Square::Filesystem::get_basename(image_path.uri);
         // Real image path
         auto gltfwd = Square::Filesystem::get_directory(gltfpath);
         auto imagepath = Square::Filesystem::join(gltfwd, image_path.uri);
@@ -138,7 +138,7 @@ size_t TextureManager::add_texture(const Square::Data::GLTF::Texture& texture, c
     }
     else if (!texture.sampler.has_value() && texture.source < m_images.size())
     {
-        const std::string sampler = "mag_filter linear\n"
+        const Square::String sampler = "mag_filter linear\n"
                                      "min_filter linear_mipmap_linear\n"
                                      "wrap_s repeat\n"
                                      "wrap_t repeat\n"
@@ -148,19 +148,19 @@ size_t TextureManager::add_texture(const Square::Data::GLTF::Texture& texture, c
     // Output
     if (texture.sampler.has_value())
     {
-        m_context.logger()->warning("Invalid texture(" +  std::to_string(texture.sampler.value()) + ", " +  std::to_string(texture.source) + ")");
+        m_context.logger()->warning("Invalid texture(" +  Square::to_string(texture.sampler.value()) + ", " +  Square::to_string(texture.source) + ")");
     }
     else
     {
-        m_context.logger()->warning("Invalid texture(NONE, " +  std::to_string(texture.source) + ")");
+        m_context.logger()->warning("Invalid texture(NONE, " +  Square::to_string(texture.source) + ")");
     }
     // Return invalid id
     return ~size_t(0);
 }
 
-std::optional<std::string> TextureManager::at(size_t index) const
+std::optional<Square::String> TextureManager::at(size_t index) const
 {
-    std::optional<std::string> texture { };
+    std::optional<Square::String> texture { };
     if (index < m_textures.size())
     {
         return Square::Filesystem::get_basename(m_textures[index]);
@@ -168,11 +168,11 @@ std::optional<std::string> TextureManager::at(size_t index) const
     return texture;
 }
 
-std::vector<unsigned char> TextureManager::image_bytes(const TextureType& in_image, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers) const
+Square::Vector<unsigned char> TextureManager::image_bytes(const TextureType& in_image, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers) const
 {
-    if (std::holds_alternative<std::string>(in_image))
+    if (std::holds_alternative<Square::String>(in_image))
     {
-        return Square::Filesystem::binary_file_read_all(std::get<std::string>(in_image));
+        return Square::Filesystem::binary_file_read_all(std::get<Square::String>(in_image));
     }
     if (std::holds_alternative<ImageFile>(in_image))
     {
@@ -185,29 +185,29 @@ std::vector<unsigned char> TextureManager::image_bytes(const TextureType& in_ima
         const auto& view = views[description.m_index];
         const auto& buffer = buffers[view.buffer];
         if (view.offset + view.length > buffer.size()) return {};
-        return std::vector<unsigned char>(buffer.begin() + view.offset, buffer.begin() + view.offset + view.length);
+        return Square::Vector<unsigned char>(buffer.begin() + view.offset, buffer.begin() + view.offset + view.length);
     }
     return {};
 }
 
-size_t TextureManager::add_texture_internal(size_t image_id, bool normal_map, const std::string& sampler, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers)
+size_t TextureManager::add_texture_internal(size_t image_id, bool normal_map, const Square::String& sampler, const Square::Data::GLTF::Views& views, const Square::Data::GLTF::Buffers& buffers)
 {
     const TextureType& in_image = m_images[image_id];
     //named after its image (a second texture of the same image gets "_2")
-    const std::string texture_name = m_names.make(m_image_names[image_id], "texture" + std::to_string(m_textures.size()));
+    const Square::String texture_name = m_names.make(m_image_names[image_id], "texture" + Square::to_string(m_textures.size()));
     //a copied image: the texture refers to it (not a normal map: its green is inverted)
-    if (std::holds_alternative<std::string>(in_image) && !normal_map)
+    if (std::holds_alternative<Square::String>(in_image) && !normal_map)
     {
-        std::string image_uri = std::get<std::string>(in_image);
-        std::string texture_sampler_body = sampler + "url \"" + Square::Filesystem::get_filename(image_uri) + "\"\n";
-        std::string texture_sampler_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
+        Square::String image_uri = std::get<Square::String>(in_image);
+        Square::String texture_sampler_body = sampler + "url \"" + Square::Filesystem::get_filename(image_uri) + "\"\n";
+        Square::String texture_sampler_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
 
         Square::Filesystem::text_file_write_all(texture_sampler_path, texture_sampler_body);
         m_textures.push_back(texture_sampler_path);
         return m_textures.size();
     }
     //the image in the texture: "data" and its bytes (converted once per image and use)
-    std::vector<unsigned char> bytes = image_bytes(in_image, views, buffers);
+    Square::Vector<unsigned char> bytes = image_bytes(in_image, views, buffers);
     if (bytes.empty())
     {
         m_context.logger()->warning("unable to read the image of: " + texture_name);
@@ -218,9 +218,9 @@ size_t TextureManager::add_texture_internal(size_t image_id, bool normal_map, co
         auto converted = m_converted.find({ image_id, normal_map });
         if (converted == m_converted.end())
         {
-            const std::string extension = std::holds_alternative<ImageFile>(in_image)
+            const Square::String extension = std::holds_alternative<ImageFile>(in_image)
                                         ? Square::Filesystem::get_extension(std::get<ImageFile>(in_image).m_path)
-                                        : std::string();
+                                        : Square::String();
             converted = m_converted.insert({ { image_id, normal_map },
                                              normal_map ? ImageConverter::convert_normal_map(bytes)
                                                         : ImageConverter::convert(bytes, extension) }).first;
@@ -238,14 +238,14 @@ size_t TextureManager::add_texture_internal(size_t image_id, bool normal_map, co
         }
         if (!compressed->second.empty())
         {
-            std::string texture_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
+            Square::String texture_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
             Square::Filesystem::text_file_write_all(texture_path, sampler + compressed->second);
             m_textures.push_back(texture_path);
             return m_textures.size();
         }
     }
-    std::string texture_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
-    std::string texture_body = sampler + "data";
+    Square::String texture_path = Square::Filesystem::join(m_output, texture_name + ".sqtex");
+    Square::String texture_body = sampler + "data";
     FILE* texture_pfile = std::fopen(texture_path.c_str(), "wb");
     if (!texture_pfile)
     {
@@ -259,24 +259,24 @@ size_t TextureManager::add_texture_internal(size_t image_id, bool normal_map, co
     return m_textures.size();
 }
 
-std::string TextureManager::compress_image(size_t image_id, bool normal_map, const std::string& texture_name, const std::vector<unsigned char>& converted)
+Square::String TextureManager::compress_image(size_t image_id, bool normal_map, const Square::String& texture_name, const Square::Vector<unsigned char>& converted)
 {
     ImageConverter::Result result = ImageConverter::compress(converted, normal_map, m_compression);
     m_context.logger()->info("image " + m_image_names[image_id] + ": " + result.m_description);
-    if (result.m_data.empty()) return std::string();
+    if (result.m_data.empty()) return Square::String();
     //the extension of the converted image (PNG, BMP, TGA, else as it was: JPEG)
     const bool png = converted.size() >= 4 && converted[0] == 0x89 && converted[1] == 'P';
     const bool bmp = converted.size() >= 2 && converted[0] == 'B' && converted[1] == 'M';
     const bool jpeg = converted.size() >= 3 && converted[0] == 0xFF && converted[1] == 0xD8;
-    const std::string fallback_extension = png ? ".png" : bmp ? ".bmp" : jpeg ? ".jpg" : ".tga";
+    const Square::String fallback_extension = png ? ".png" : bmp ? ".bmp" : jpeg ? ".jpg" : ".tga";
     //"_img"/"_fallback": apart from the .sqtex named after the image (they are texture resources too)
-    const std::string image_file = m_names.make(texture_name + "_img", "image_img") + ImageConverter::extension(m_compression);
-    const std::string fallback_file = m_names.make(texture_name + "_fallback", "image_fallback") + fallback_extension;
+    const Square::String image_file = m_names.make(texture_name + "_img", "image_img") + ImageConverter::extension(m_compression);
+    const Square::String fallback_file = m_names.make(texture_name + "_fallback", "image_fallback") + fallback_extension;
     if (!Square::Filesystem::binary_file_write_all(Square::Filesystem::join(m_output, image_file), result.m_data)
     ||  !Square::Filesystem::binary_file_write_all(Square::Filesystem::join(m_output, fallback_file), converted))
     {
         m_context.logger()->warning("unable to write the images of: " + texture_name);
-        return std::string();
+        return Square::String();
     }
     return "url \"" + image_file + "\"\nfallback \"" + fallback_file + "\"\n";
 }

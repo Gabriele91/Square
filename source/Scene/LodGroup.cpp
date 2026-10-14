@@ -28,12 +28,12 @@ namespace Scene
 		, [](const LodGroup* group) -> int      { return int(group->mode()); }
 		, [](LodGroup* group, const int& mode)  { group->mode(LodMode(mode)); });
 		//its levels: their children, their thresholds
-		ctx.add_attribute_function<LodGroup, std::vector<std::string> >
+		ctx.add_attribute_function<LodGroup, Vector<String> >
 		("actors"
-		, std::vector<std::string>()
-		, [](const LodGroup* group) -> std::vector<std::string>
+		, Vector<String>()
+		, [](const LodGroup* group) -> Vector<String>
 		{
-			std::vector<std::string> actors;
+			Vector<String> actors;
 			actors.reserve(group->levels().size());
 			for (const LodGroup::Level& level : group->levels())
 			{
@@ -41,9 +41,9 @@ namespace Scene
 			}
 			return actors;
 		}
-		, [](LodGroup* group, const std::vector<std::string>& actors)
+		, [](LodGroup* group, const Vector<String>& actors)
 		{
-			std::vector<LodGroup::Level> levels = group->levels();
+			Vector<LodGroup::Level> levels = group->levels();
 			levels.resize(actors.size());
 			for (size_t i = 0; i != actors.size(); ++i)
 			{
@@ -51,12 +51,12 @@ namespace Scene
 			}
 			group->levels(levels);
 		});
-		ctx.add_attribute_function<LodGroup, std::vector<float> >
+		ctx.add_attribute_function<LodGroup, Vector<float> >
 		("thresholds"
-		, std::vector<float>()
-		, [](const LodGroup* group) -> std::vector<float>
+		, Vector<float>()
+		, [](const LodGroup* group) -> Vector<float>
 		{
-			std::vector<float> thresholds;
+			Vector<float> thresholds;
 			thresholds.reserve(group->levels().size());
 			for (const LodGroup::Level& level : group->levels())
 			{
@@ -64,9 +64,9 @@ namespace Scene
 			}
 			return thresholds;
 		}
-		, [](LodGroup* group, const std::vector<float>& thresholds)
+		, [](LodGroup* group, const Vector<float>& thresholds)
 		{
-			std::vector<LodGroup::Level> levels = group->levels();
+			Vector<LodGroup::Level> levels = group->levels();
 			levels.resize(std::max(levels.size(), thresholds.size()));
 			for (size_t i = 0; i != thresholds.size(); ++i)
 			{
@@ -97,7 +97,7 @@ namespace Scene
 		m_mode = mode;
 	}
 
-	void LodGroup::levels(const std::vector<Level>& levels)
+	void LodGroup::levels(const Vector<Level>& levels)
 	{
 		m_levels = levels;
 		refresh();

@@ -18,9 +18,9 @@ namespace Occluders
         constexpr size_t s_many_triangles = 4096;
 
         //the flagged nodes under a root, with their flag (proxy or not)
-        std::vector< std::pair< Shared<Actor>, bool > > flagged(const Shared<Actor>& root, const Nodes& nodes)
+        Square::Vector< std::pair< Shared<Actor>, bool > > flagged(const Shared<Actor>& root, const Nodes& nodes)
         {
-            std::vector< std::pair< Shared<Actor>, bool > > found;
+            Square::Vector< std::pair< Shared<Actor>, bool > > found;
             root->visit([&](Shared<Actor> node) -> bool
             {
                 auto it = nodes.find(node.get());
@@ -44,7 +44,7 @@ namespace Occluders
                 if (has_mesh)
                 {
                     //its triangles in the space of its node (the one of its mesh)
-                    std::vector<Vec3> points;
+                    Square::Vector<Vec3> points;
                     if (part->component<StaticMesh>()->m_mesh->local_triangles(points))
                     {
                         part->component<Occluder>()->triangles(points);
@@ -52,7 +52,7 @@ namespace Occluders
                         made += 1;
                         if (points.size() / 3 > s_many_triangles)
                         {
-                            context.logger()->warning("Occluder " + part->name() + ": " + std::to_string(points.size() / 3)
+                            context.logger()->warning("Occluder " + part->name() + ": " + Square::to_string(points.size() / 3)
                                                     + " triangles (drawn on the CPU each frame: make it simpler)");
                         }
                     }

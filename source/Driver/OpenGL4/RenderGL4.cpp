@@ -306,74 +306,74 @@ namespace Render
         glUniformMatrix4dv(m_id, (GLsizei)n, GL_FALSE, value_ptr(*m4));
     }
 
-    void UniformGL4::set(const std::vector < Texture* >& t)
+    void UniformGL4::set(const Vector < Texture* >& t)
     {
         set((Texture*)t.data(), t.size());
     }
-	void UniformGL4::set(const std::vector < int >& i)
+	void UniformGL4::set(const Vector < int >& i)
 	{
 		set(i.data(), i.size());
 	}
-    void UniformGL4::set(const std::vector < float >& f)
+    void UniformGL4::set(const Vector < float >& f)
     {
         set(f.data(), f.size());
     }
-    void UniformGL4::set(const std::vector < double >& d)
+    void UniformGL4::set(const Vector < double >& d)
     {
         set(d.data(), d.size());
     }
     
-    void UniformGL4::set(const std::vector < IVec2 >& v2)
+    void UniformGL4::set(const Vector < IVec2 >& v2)
     {
         set(v2.data(), v2.size());
     }
-    void UniformGL4::set(const std::vector < IVec3 >& v3)
+    void UniformGL4::set(const Vector < IVec3 >& v3)
     {
         set(v3.data(), v3.size());
     }
-    void UniformGL4::set(const std::vector < IVec4 >& v4)
+    void UniformGL4::set(const Vector < IVec4 >& v4)
     {
         set(v4.data(), v4.size());
     }
     
-	void UniformGL4::set(const std::vector < Vec2 >& v2)
+	void UniformGL4::set(const Vector < Vec2 >& v2)
 	{
 		set(v2.data(), v2.size());
 	}
-	void UniformGL4::set(const std::vector < Vec3 >& v3)
+	void UniformGL4::set(const Vector < Vec3 >& v3)
 	{
 		set(v3.data(), v3.size());
 	}
-	void UniformGL4::set(const std::vector < Vec4 >& v4)
+	void UniformGL4::set(const Vector < Vec4 >& v4)
 	{
 		set(v4.data(), v4.size());
 	}
-	void UniformGL4::set(const std::vector < Mat3 >& m3)
+	void UniformGL4::set(const Vector < Mat3 >& m3)
 	{
 		set(m3.data(), m3.size());
 	}
-	void UniformGL4::set(const std::vector < Mat4 >& m4)
+	void UniformGL4::set(const Vector < Mat4 >& m4)
 	{
 		set(m4.data(), m4.size());
 	}
     
-    void UniformGL4::set(const std::vector < DVec2 >& v2)
+    void UniformGL4::set(const Vector < DVec2 >& v2)
     {
         set(v2.data(), v2.size());
     }
-    void UniformGL4::set(const std::vector < DVec3 >& v3)
+    void UniformGL4::set(const Vector < DVec3 >& v3)
     {
         set(v3.data(), v3.size());
     }
-    void UniformGL4::set(const std::vector < DVec4 >& v4)
+    void UniformGL4::set(const Vector < DVec4 >& v4)
     {
         set(v4.data(), v4.size());
     }
-    void UniformGL4::set(const std::vector < DMat3 >& m3)
+    void UniformGL4::set(const Vector < DMat3 >& m3)
     {
         set(m3.data(), m3.size());
     }
-    void UniformGL4::set(const std::vector < DMat4 >& m4)
+    void UniformGL4::set(const Vector < DMat4 >& m4)
     {
         set(m4.data(), m4.size());
     }
@@ -596,74 +596,74 @@ namespace Render
 		array_write(m4, n);
 	}
 
-	void UniformGLGUBO::set(const std::vector < Texture* >& t)
+	void UniformGLGUBO::set(const Vector < Texture* >& t)
 	{
 		set((Texture*)t.data(), t.size());
 	}
-	void UniformGLGUBO::set(const std::vector < int >& i)
+	void UniformGLGUBO::set(const Vector < int >& i)
 	{
 		set(i.data(), i.size());
 	}
-	void UniformGLGUBO::set(const std::vector < float >& f)
+	void UniformGLGUBO::set(const Vector < float >& f)
 	{
 		set(f.data(), f.size());
 	}
-	void UniformGLGUBO::set(const std::vector < double >& d)
+	void UniformGLGUBO::set(const Vector < double >& d)
 	{
 		set(d.data(), d.size());
 	}
 
-	void UniformGLGUBO::set(const std::vector < IVec2 >& v2)
+	void UniformGLGUBO::set(const Vector < IVec2 >& v2)
 	{
 		set(v2.data(), v2.size());
 	}
-	void UniformGLGUBO::set(const std::vector < IVec3 >& v3)
+	void UniformGLGUBO::set(const Vector < IVec3 >& v3)
 	{
 		set(v3.data(), v3.size());
 	}
-	void UniformGLGUBO::set(const std::vector < IVec4 >& v4)
+	void UniformGLGUBO::set(const Vector < IVec4 >& v4)
 	{
 		set(v4.data(), v4.size());
 	}
 
-	void UniformGLGUBO::set(const std::vector < Vec2 >& v2)
+	void UniformGLGUBO::set(const Vector < Vec2 >& v2)
 	{
 		set(v2.data(), v2.size());
 	}
-	void UniformGLGUBO::set(const std::vector < Vec3 >& v3)
+	void UniformGLGUBO::set(const Vector < Vec3 >& v3)
 	{
 		set(v3.data(), v3.size());
 	}
-	void UniformGLGUBO::set(const std::vector < Vec4 >& v4)
+	void UniformGLGUBO::set(const Vector < Vec4 >& v4)
 	{
 		set(v4.data(), v4.size());
 	}
-	void UniformGLGUBO::set(const std::vector < Mat3 >& m3)
+	void UniformGLGUBO::set(const Vector < Mat3 >& m3)
 	{
 		set(m3.data(), m3.size());
 	}
-	void UniformGLGUBO::set(const std::vector < Mat4 >& m4)
+	void UniformGLGUBO::set(const Vector < Mat4 >& m4)
 	{
 		set(m4.data(), m4.size());
 	}
 
-	void UniformGLGUBO::set(const std::vector < DVec2 >& v2)
+	void UniformGLGUBO::set(const Vector < DVec2 >& v2)
 	{
 		set(v2.data(), v2.size());
 	}
-	void UniformGLGUBO::set(const std::vector < DVec3 >& v3)
+	void UniformGLGUBO::set(const Vector < DVec3 >& v3)
 	{
 		set(v3.data(), v3.size());
 	}
-	void UniformGLGUBO::set(const std::vector < DVec4 >& v4)
+	void UniformGLGUBO::set(const Vector < DVec4 >& v4)
 	{
 		set(v4.data(), v4.size());
 	}
-	void UniformGLGUBO::set(const std::vector < DMat3 >& m3)
+	void UniformGLGUBO::set(const Vector < DMat3 >& m3)
 	{
 		set(m3.data(), m3.size());
 	}
-	void UniformGLGUBO::set(const std::vector < DMat4 >& m4)
+	void UniformGLGUBO::set(const Vector < DMat4 >& m4)
 	{
 		set(m4.data(), m4.size());
 	}
@@ -733,12 +733,12 @@ namespace Render
     ////////////////////
 	//     RENDER     //
 	////////////////////
-	static std::string compiler_shader_error_log(unsigned int shader);
-	static bool make_test_to_get_shader_ext_feacture(const std::string& ext)
+	static String compiler_shader_error_log(unsigned int shader);
+	static bool make_test_to_get_shader_ext_feacture(const String& ext)
 	{
 		// Test shader: require, not enable (an unknown extension with enable is accepted silently
 		// by some drivers, e.g. Mesa: no error, an empty log)
-		std::string test_shader
+		String test_shader
 		{
 			"#extension " + ext + " : require\n"
 			"void main(){}"
@@ -763,17 +763,17 @@ namespace Render
 			{
 				is_compatible = true;
 			}
-			else if (errors.find(ext) != std::string::npos)
+			else if (errors.find(ext) != String::npos)
 			{
 				is_compatible = false;
 			}
 			// W/O GL
-			else if (ext.size() > 3 && errors.find(&ext[3]) != std::string::npos)
+			else if (ext.size() > 3 && errors.find(&ext[3]) != String::npos)
 			{
 				is_compatible = false;
 			}
 			// W/O GL_XXX_
-			else if (ext.size() > 6 && errors.find(&ext[6]) != std::string::npos)
+			else if (ext.size() > 6 && errors.find(&ext[6]) != String::npos)
 			{
 				is_compatible = false;
 			}
@@ -800,9 +800,9 @@ namespace Render
 		return false;
 	}
 
-	static std::vector<std::string> make_test_all_exts(Logger* logger)
+	static Vector<String> make_test_all_exts(Logger* logger)
 	{
-		static std::string extensions[] = 
+		static String extensions[] = 
 		{
 			"GL_EXT_device_group",
 			"GL_EXT_multiview",
@@ -847,9 +847,9 @@ namespace Render
 			// (SV_RenderTargetArrayIndex without a geometry shader).
 			"GL_ARB_shader_viewport_layer_array"
 		};
-		const size_t extensions_len = sizeof(extensions)/sizeof(std::string);
+		const size_t extensions_len = sizeof(extensions)/sizeof(String);
 		// Test
-		std::vector<std::string> r_exts;
+		Vector<String> r_exts;
 		r_exts.reserve(extensions_len);
 		for (const auto& ext : extensions)
 		{
@@ -1025,7 +1025,7 @@ namespace Render
 		//clear OpenGL error by GLAD init
 		else while ((glGetError()) != GL_NO_ERROR);
 		// log info
-		logger()->info("GLAD OGL loaded: " + std::to_string(GLAD_VERSION_MAJOR(gl_loaded_version)) + "." + std::to_string(GLAD_VERSION_MINOR(gl_loaded_version)));
+		logger()->info("GLAD OGL loaded: " + to_string(GLAD_VERSION_MAJOR(gl_loaded_version)) + "." + to_string(GLAD_VERSION_MINOR(gl_loaded_version)));
 #endif
 		//disable vsync
 		if(resource != nullptr)
@@ -1125,8 +1125,8 @@ namespace Render
 
 	void ContextGL4::print_info()
 	{
-		std::string renderer = (const char*)glGetString(GL_RENDERER);
-		std::string version = (const char*)glGetString(GL_VERSION);
+		String renderer = (const char*)glGetString(GL_RENDERER);
+		String version = (const char*)glGetString(GL_VERSION);
 		logger()->info("Renderer: " + renderer);
 		logger()->info("OpenGL version supported: " + version);
 	}
@@ -1657,7 +1657,7 @@ namespace Render
 		}
 	}
 
-	std::vector<unsigned char> ContextGL4::copy_buffer_CB(const ConstBuffer* cb)
+	Vector<unsigned char> ContextGL4::copy_buffer_CB(const ConstBuffer* cb)
 	{
 		GLuint sb;
 		glGenBuffers(1, &sb);
@@ -1666,14 +1666,14 @@ namespace Render
 		glBufferData(GL_COPY_WRITE_BUFFER, cb->get_size(), nullptr, GL_STATIC_READ);
 		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, cb->get_size());
 
-		std::vector<unsigned char> result(cb->get_size());
+		Vector<unsigned char> result(cb->get_size());
 		glGetBufferSubData(GL_COPY_WRITE_BUFFER, 0, cb->get_size(), result.data());
 
 		glDeleteBuffers(1, &sb);
 		return result;
 	}
 
-	std::vector<unsigned char> ContextGL4::copy_buffer_VBO(const VertexBuffer* vbo)
+	Vector<unsigned char> ContextGL4::copy_buffer_VBO(const VertexBuffer* vbo)
 	{
 		GLuint sb;
 		glGenBuffers(1, &sb);
@@ -1682,14 +1682,14 @@ namespace Render
 		glBufferData(GL_COPY_WRITE_BUFFER, vbo->get_size(), nullptr, GL_STATIC_READ);
 		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, vbo->get_size());
 
-		std::vector<unsigned char> result(vbo->get_size());
+		Vector<unsigned char> result(vbo->get_size());
 		glGetBufferSubData(GL_COPY_WRITE_BUFFER, 0, vbo->get_size(), result.data());
 
 		glDeleteBuffers(1, &sb);
 		return result;
 	}
 	
-	std::vector<unsigned char> ContextGL4::copy_buffer_IBO(const IndexBuffer* ibo)
+	Vector<unsigned char> ContextGL4::copy_buffer_IBO(const IndexBuffer* ibo)
 	{
 		GLuint sb;
 		glGenBuffers(1, &sb);
@@ -1698,7 +1698,7 @@ namespace Render
 		glBufferData(GL_COPY_WRITE_BUFFER, ibo->get_size(), nullptr, GL_STATIC_READ);
 		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, ibo->get_size());
 
-		std::vector<unsigned char> result(ibo->get_size());
+		Vector<unsigned char> result(ibo->get_size());
 		glGetBufferSubData(GL_COPY_WRITE_BUFFER, 0, ibo->get_size(), result.data());
 
 		glDeleteBuffers(1, &sb);
@@ -2548,7 +2548,7 @@ namespace Render
 		return ctx_texture;
 	}
 
-	std::vector< unsigned char > ContextGL4::get_texture(Texture* tex, int level)
+	Vector< unsigned char > ContextGL4::get_texture(Texture* tex, int level)
 	{
 		// get last bind
 		auto last_texture = s_bind_context.m_textures[0];
@@ -2564,7 +2564,7 @@ namespace Render
 		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
 		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
 		// return
-		std::vector< unsigned char > output;
+		Vector< unsigned char > output;
 		GLint image_ret_format;
 		// cases
 		switch (components)
@@ -2653,7 +2653,7 @@ namespace Render
 	{
 		//the layers of a texture, pairs (from, to), blitted (its depth): its framebuffers made and
 		//its bindings kept (no glCopyImageSubData: GL 4.1, macOS)
-		static void blit_layers(const Texture* source, const Texture* destination, const std::vector<IVec2>& layers)
+		static void blit_layers(const Texture* source, const Texture* destination, const Vector<IVec2>& layers)
 		{
 			const IVec3 size = size_of(source);
 			GLint read_previous = 0, draw_previous = 0;
@@ -2714,7 +2714,7 @@ namespace Render
 			}
 			else
 			{
-				std::vector<IVec2> layers;
+				Vector<IVec2> layers;
 				layers.reserve(size_t(count));
 				for (int layer = 0; layer != count; ++layer)
 				{
@@ -2741,7 +2741,7 @@ namespace Render
 		}
 	}
 
-	std::vector< unsigned char > ContextGL4::get_texture(Texture* tex, int cube, int level)
+	Vector< unsigned char > ContextGL4::get_texture(Texture* tex, int cube, int level)
 	{
 		// get last bind
 		auto last_texture = s_bind_context.m_textures[0];
@@ -2757,7 +2757,7 @@ namespace Render
 		glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X + cube, 0, GL_TEXTURE_WIDTH, &width);
 		glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X + cube, 0, GL_TEXTURE_HEIGHT, &height);
 		// return
-		std::vector< unsigned char > output;
+		Vector< unsigned char > output;
 		GLint image_ret_format;
 		// cases
 		switch (components)
@@ -2971,14 +2971,14 @@ namespace Render
 
 
 	//get uniform
-	Uniform* Shader::uniform(const std::string& uname)
+	Uniform* Shader::uniform(const String& uname)
 	{
 		//already asked (the effects that share this shader keep its pointer: never made again)
 		auto cached = m_uniform_map.find(uname);
 		if (cached != m_uniform_map.end()) return cached->second.get();
 		if (m_global_buffer_ref)
 		{
-			std::string real_name = "_Global." + uname;
+			String real_name = "_Global." + uname;
 			const char* ufiled_name[1] = { real_name.data() };
 			GLuint field_index[1] = { 0 };
 			glGetUniformIndices(m_shader_id, 1, ufiled_name, field_index);
@@ -3018,7 +3018,7 @@ namespace Render
 	}
 
 	//get uniform const buffer
-	UniformConstBuffer* Shader::uniform_const_buffer(const std::string& uname)
+	UniformConstBuffer* Shader::uniform_const_buffer(const String& uname)
 	{
 		auto uit = m_uniform_const_buffer_map.find(uname);
 		//if find
@@ -3050,19 +3050,19 @@ namespace Render
 		m_errors.push_back(std::move(error_log));
 	}
 
-	void Shader::push_linker_error(const std::string& error_log)
+	void Shader::push_linker_error(const String& error_log)
 	{
 		m_linker_log += error_log;
 		m_linker_log += "\n";
 	}
 
 	//help
-	Uniform& Shader::add_uniform(const std::string& name, Unique<Uniform>&& u) const
+	Uniform& Shader::add_uniform(const String& name, Unique<Uniform>&& u) const
 	{
 		auto& uref = (m_uniform_map[name] = std::move(u));
 		return *uref.get();
 	}
-	UniformConstBufferGL4& Shader::add_uniform_const_buffer(const std::string& name, const UniformConstBufferGL4& ucb) const
+	UniformConstBufferGL4& Shader::add_uniform_const_buffer(const String& name, const UniformConstBufferGL4& ucb) const
 	{
 		auto& ucbref = (m_uniform_const_buffer_map[name] = ucb);
 		return ucbref;
@@ -3071,10 +3071,10 @@ namespace Render
 	/*
 	Shader
 	*/
-	static std::string compiler_shader_error_log(unsigned int shader)
+	static String compiler_shader_error_log(unsigned int shader)
 	{
 		//return
-		std::string info_log;
+		String info_log;
 		//get len
 		GLint info_len = 0;
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_len);
@@ -3086,10 +3086,10 @@ namespace Render
 		}
 		return info_log;
 	}
-	static std::string linker_shader_error_log(unsigned int program)
+	static String linker_shader_error_log(unsigned int program)
 	{
 		//return
-		std::string info_log;
+		String info_log;
 		//get len
 		GLint info_len = 0;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &info_len);
@@ -3126,7 +3126,7 @@ namespace Render
 
 		//the file of a program: by the sources of its stages (as the driver gets them), the driver
 		//(its vendor, its renderer, its version: another one, another binary)
-		static std::string file_of(const std::string& folder, const std::vector< ShaderSourceInformation >& infos)
+		static String file_of(const String& folder, const Vector< ShaderSourceInformation >& infos)
 		{
 			uint64_t value = 14695981039346656037ull;
 			for (const ShaderSourceInformation& info : infos)
@@ -3145,7 +3145,7 @@ namespace Render
 			value = hash(s_version, value);
 			char name[32];
 			std::snprintf(name, sizeof(name), "%016llx.glbin", (unsigned long long)value);
-			return (std::filesystem::u8path(folder) / name).string();
+			return String((std::filesystem::u8path(folder) / name).string());
 		}
 
 		//the driver can save its programs (some formats of binaries)
@@ -3157,14 +3157,14 @@ namespace Render
 		}
 
 		//a program from its binary in the cache (false: not there, or the driver does not take it)
-		static bool read(const std::string& file, GLuint program)
+		static bool read(const String& file, GLuint program)
 		{
 			bool linked = false;
-			std::ifstream in(file, std::ios::binary | std::ios::ate);
+			std::ifstream in(file.c_str(), std::ios::binary | std::ios::ate);
 			const std::streamsize size = in ? std::streamsize(in.tellg()) : 0;
 			if (size > std::streamsize(sizeof(GLenum)))
 			{
-				std::vector<char> bytes(size_t(size), 0);
+				Vector<char> bytes(size_t(size), 0);
 				in.seekg(0);
 				if (in.read(bytes.data(), size))
 				{
@@ -3181,22 +3181,22 @@ namespace Render
 
 		//the binary of a program linked into the cache (its format first; a file aside, then
 		//renamed: never read half written)
-		static void write(const std::string& file, GLuint program)
+		static void write(const String& file, GLuint program)
 		{
 			GLint length = 0;
 			glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &length);
 			if (length > 0)
 			{
-				std::vector<char> bytes(sizeof(GLenum) + size_t(length), 0);
+				Vector<char> bytes(sizeof(GLenum) + size_t(length), 0);
 				GLenum format = 0;
 				GLsizei written = 0;
 				glGetProgramBinary(program, length, &written, &format, bytes.data() + sizeof(format));
 				std::memcpy(bytes.data(), &format, sizeof(format));
 				if (written > 0)
 				{
-					const std::string temporary = file + ".tmp";
+					const String temporary = file + ".tmp";
 					{
-						std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+						std::ofstream out(temporary.c_str(), std::ios::binary | std::ios::trunc);
 						out.write(bytes.data(), std::streamsize(sizeof(format) + size_t(written)));
 					}
 					std::error_code error;
@@ -3210,14 +3210,14 @@ namespace Render
 		}
 
 		//a file used: touched (kept by the pruning of the cache)
-		static void touch(const std::string& file)
+		static void touch(const String& file)
 		{
 			std::error_code error;
 			std::filesystem::last_write_time(std::filesystem::u8path(file), std::filesystem::file_time_type::clock::now(), error);
 		}
 	}
 
-	Shader* ContextGL4::create_shader(const std::vector< ShaderSourceInformation >& infos)
+	Shader* ContextGL4::create_shader(const Vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
 		Shader* out_shader = SQ_NEW(allocator(), Shader, AllocType::ALCT_DEFAULT) Shader(*this);
@@ -3225,7 +3225,7 @@ namespace Render
 		out_shader->m_shader_id = glCreateProgram();
 		//the final cache: its binary (the same stages, the same driver), else compiled and kept
 		const bool cached = !shader_cache().empty() && AuxProgramCache::supported();
-		const std::string cache_file = cached ? AuxProgramCache::file_of(shader_cache(), infos) : std::string();
+		const String cache_file = cached ? AuxProgramCache::file_of(shader_cache(), infos) : String();
 		if (cached && std::filesystem::exists(std::filesystem::u8path(cache_file)))
 		{
 			if (AuxProgramCache::read(cache_file, out_shader->m_shader_id))
@@ -3253,7 +3253,7 @@ namespace Render
 				//create 
 				source_shader = glCreateShader(Shader::glsl_type_from_square_type[info.m_type]);
 				//start line
-				std::string start_line = "#line " + std::to_string(info.m_line) + "\n";
+				String start_line = "#line " + to_string(info.m_line) + "\n";
 				//source
 				const char* sources[] =
 				{
@@ -3283,7 +3283,7 @@ namespace Render
 					// Fetch warnings
 					else
 					{
-						std::string warnings = compiler_shader_error_log(source_shader);
+						String warnings = compiler_shader_error_log(source_shader);
 						if(!warnings.empty())
 							out_shader->push_compiler_error({ info.m_type, warnings });
 					}
@@ -3309,7 +3309,7 @@ namespace Render
 			//if 0 return an error
 			if (!count_linked_shaders)
 			{
-				out_shader->push_linker_error("No shader linked to the program: " + std::to_string(out_shader->m_shader_id));
+				out_shader->push_linker_error("No shader linked to the program: " + to_string(out_shader->m_shader_id));
 			}
 		}
 		//error?
@@ -3348,9 +3348,9 @@ namespace Render
 		return shader->m_linker_log.size() != 0;
 	}
 	
-	std::vector< std::string > ContextGL4::get_shader_compiler_errors(Shader* shader)
+	Vector< String > ContextGL4::get_shader_compiler_errors(Shader* shader)
 	{
-		std::vector< std::string > output;
+		Vector< String > output;
 		//state
 		ShaderType last_type = ST_N_SHADER;
 		//push
@@ -3366,7 +3366,7 @@ namespace Render
 		return output;
 	}
 	
-	std::string ContextGL4::get_shader_linker_error(Shader* shader)
+	String ContextGL4::get_shader_linker_error(Shader* shader)
 	{
 		return shader->m_linker_log;
 	}
@@ -3400,7 +3400,7 @@ namespace Render
 		}
 	}
     
-    void ContextGL4::bind_uniform_CB(const ConstBuffer* buffer, Shader* shader, const std::string& uname)
+    void ContextGL4::bind_uniform_CB(const ConstBuffer* buffer, Shader* shader, const String& uname)
     {
         //get
         auto* ucb = get_uniform_const_buffer(shader,uname);
@@ -3408,7 +3408,7 @@ namespace Render
         if(ucb) ucb->bind(buffer);
     }
     
-    void ContextGL4::unbind_uniform_CB(Shader* shader, const std::string& uname)
+    void ContextGL4::unbind_uniform_CB(Shader* shader, const String& uname)
     {
         //get
         auto* ucb = get_uniform_const_buffer(shader,uname);
@@ -3432,12 +3432,12 @@ namespace Render
 		return s_bind_context.m_shader;
 	}
     
-    Uniform* ContextGL4::get_uniform(Shader* shader,const std::string& uname) const
+    Uniform* ContextGL4::get_uniform(Shader* shader,const String& uname) const
     {
 		return shader->uniform(uname);
     }
     
-    UniformConstBuffer* ContextGL4::get_uniform_const_buffer(Square::Render::Shader* shader, const std::string& uname) const
+    UniformConstBuffer* ContextGL4::get_uniform_const_buffer(Square::Render::Shader* shader, const String& uname) const
     {
 		return shader->uniform_const_buffer(uname);
     }
@@ -3446,7 +3446,7 @@ namespace Render
 		FBO
 	*/
 
-	static std::string framebuffer_error_to_str(GLenum error)
+	static String framebuffer_error_to_str(GLenum error)
 	{
 		switch (error)
 		{
@@ -3481,7 +3481,7 @@ namespace Render
 		}
 	}
 
-	Target* ContextGL4::create_render_target(const std::vector< TargetField >& textures)
+	Target* ContextGL4::create_render_target(const Vector< TargetField >& textures)
 	{
 		bool   depth_attach = false;
 		size_t color_count = 0;
@@ -3509,7 +3509,7 @@ namespace Render
 			}
 		}
 		//set buffer to draw
-		std::vector < GLenum > m_buffers_to_draw(color_count);
+		Vector < GLenum > m_buffers_to_draw(color_count);
 		for (size_t i = 0; i != color_count; ++i) m_buffers_to_draw[i] = (GLenum)(GL_COLOR_ATTACHMENT0 + i);
 		glDrawBuffers((GLuint)color_count, m_buffers_to_draw.data());
 		//status
@@ -3678,7 +3678,7 @@ namespace Render
 		return int(frame.m_count++);
 	}
 
-	bool ContextGL4::gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms)
+	bool ContextGL4::gpu_timer_read_frame(uint64& frame_id, Vector<double>& timestamps_ms)
 	{
 		//the oldest frame pending
 		GpuTimerFrame* oldest = nullptr;
@@ -3710,7 +3710,7 @@ namespace Render
 	bool ContextGL4::print_errors() const
 	{
 		//get all gl errors
-		std::string gl_errors = debug_gl_errors_to_string();
+		String gl_errors = debug_gl_errors_to_string();
 		//print
 		if (gl_errors.size())
 		{
@@ -3724,7 +3724,7 @@ namespace Render
 	bool ContextGL4::print_errors(const char* source_file_name, int line) const
 	{
 		//get all gl errors
-		std::string gl_errors = debug_gl_errors_to_string_args(source_file_name,line);
+		String gl_errors = debug_gl_errors_to_string_args(source_file_name,line);
 		//print
 		if (gl_errors.size())
 		{

@@ -75,7 +75,7 @@ namespace Resource
 
 		//the location of each input of a vertex stage of Vulkan by its semantic: the attribute of the
 		//input layouts (Render::AttributeType), as DirectX matches them by semantic
-		static std::vector< std::pair<std::string, unsigned int> > vertex_input_locations()
+		static Vector< std::pair<String, unsigned int> > vertex_input_locations()
 		{
 			return
 			{
@@ -116,7 +116,7 @@ namespace Resource
 	Shader::Shader(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
 	{
 	}
-	Shader::Shader(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
+	Shader::Shader(Context& context, const String& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator())
 	{
 		load(path);
 	}
@@ -127,13 +127,13 @@ namespace Resource
 		destoy();
 	}
 	//load shader
-	bool Shader::load(const std::string& path) 
+	bool Shader::load(const String& path) 
 	{
 		//load & compile
 		return compile(path, Filesystem::text_file_read_all(path), PreprocessMap());
 	}
 
-	bool Shader::load(const std::string& path, const PreprocessMap& defines)
+	bool Shader::load(const String& path, const PreprocessMap& defines)
 	{
 		//load & compile
 		return  compile(path, Filesystem::text_file_read_all(path), defines);
@@ -142,7 +142,7 @@ namespace Resource
 	//compile from source
 	bool Shader::compile
 	(
-		const std::string& insource,
+		const String& insource,
 		const PreprocessMap& defines
 	)
 	{
@@ -152,8 +152,8 @@ namespace Resource
 	//compile
     bool Shader::compile
 	(
-		const std::string& path,
-        const std::string& insource,
+		const String& path,
+        const String& insource,
         const PreprocessMap& defines,
         const size_t line
 	)
@@ -166,7 +166,7 @@ namespace Resource
 		struct Timed
 		{
 			Shader& m_shader;
-			std::string m_name;
+			String m_name;
 			std::chrono::high_resolution_clock::time_point m_start;
 			~Timed()
 			{
@@ -179,12 +179,12 @@ namespace Resource
 		Timed timed
 		{ 
 			*this, 
-			*resource_name() ? std::string(resource_name()) : Filesystem::get_filename(path), 
+			*resource_name() ? String(resource_name()) : Filesystem::get_filename(path), 
 			compile_start 
 		};
 #endif
 		//allocs
-		std::string       preprocessed_source;
+		String       preprocessed_source;
 		PostprocessOutput postprocessed_source;
 		//process include/import
 		ShaderImportLoader preprocess(context(), insource, path, m_filepath_map, preprocessed_source, true, line);
@@ -199,7 +199,7 @@ namespace Resource
 		if (!source_preprocess(preprocessed_source, defines, target, postprocessed_source)) return false;
 		//its stages: from the intermediate cache (the pack, the folder of the runtime), else
 		//translated and kept there
-		const std::string language = target.name();
+		const String language = target.name();
 		const ShaderCache::Key key = ShaderCache::key(cache_key(postprocessed_source, target));
 		const ShaderCache& cache = render_system->shader_cache();
 		ShaderStages stages;
@@ -212,15 +212,15 @@ namespace Resource
 		return target.m_translate_only || create_from(stages);
     }
 
-	std::string Shader::cache_key(const PostprocessOutput& source, const ShaderTarget& target) const
+	String Shader::cache_key(const PostprocessOutput& source, const ShaderTarget& target) const
 	{
 		//what makes the stages: the target (its language, its version), the version of the
 		//converter, the source preprocessed (its includes, its defines, the common header in it:
 		//the backend, the gamma correction); never the driver (a pack serves every machine)
-		std::string what = target.name();
-		what += "|" + std::to_string(source.m_version);
+		String what = target.name();
+		what += "|" + to_string(source.m_version);
 		what += source.m_texture_target ? "|texture" : "|screen";
-		what += "|cache" + std::to_string(ShaderCache::version);
+		what += "|cache" + to_string(ShaderCache::version);
 		what += "|" + source.m_source;
 		return what;
 	}
@@ -263,7 +263,7 @@ namespace Resource
 	bool Shader::create_from(const ShaderStages& stages)
 	{
 		//the input of the driver (its strings: the stages)
-		std::vector< Render::ShaderSourceInformation > infos;
+		Vector< Render::ShaderSourceInformation > infos;
 		infos.reserve(stages.size());
 		for (const ShaderStage& stage : stages)
 		{
@@ -296,7 +296,7 @@ namespace Resource
 
 	bool Shader::source_preprocess
 	(
-		const std::string& raw_source,
+		const String& raw_source,
 		const PreprocessMap& defines,
 		const ShaderTarget& target,
 		PostprocessOutput& source
@@ -307,7 +307,7 @@ namespace Resource
 		source.m_version = size_t(target.m_version);
 		source.m_texture_target = false;
         //commond header: the conventions of the backend (GL: depth in [-1,1], rows up)
-		std::string shader_commond_header = "#pragma pack_matrix( row_major )\n";
+		String shader_commond_header = "#pragma pack_matrix( row_major )\n";
 		switch (target.m_language)
 		{
 		case ShaderTarget::L_HLSL:    shader_commond_header += "#define SQ_BACKEND_HLSL\n";  break;
@@ -336,7 +336,7 @@ namespace Resource
 		#include "ShaderCommonHeader.hlsl"
 		;
 		//list define
-		std::string header_string;
+		String header_string;
 		//defines
 		for (auto& p : defines)
 		{
@@ -373,7 +373,7 @@ namespace Resource
 	{		
 		////////////////////////////////////////////////////////////////////////////////////////////////////
 		//inputs
-		std::string shader_target_name[Render::ST_N_SHADER]
+		String shader_target_name[Render::ST_N_SHADER]
 		{
 			  "vertex"
             , "fragment"
@@ -436,7 +436,7 @@ namespace Resource
 	)
 	{
 		////////////////////////////////////////////////////////////////////////////////////////////////////
-		static const std::string shader_target_name[Render::ST_N_SHADER]
+		static const String shader_target_name[Render::ST_N_SHADER]
 		{
 			  "vertex"
 			, "fragment"
@@ -487,8 +487,8 @@ namespace Resource
 		{			
 			// Unpack
 			Render::ShaderType type   = (Render::ShaderType)shader_hlsl_outputs[idx].m_type;
-			std::string& hlslsource   = (std::string&)shader_hlsl_outputs[idx].m_shader;
-			const std::string& target = shader_target_name[type];
+			String& hlslsource   = (String&)shader_hlsl_outputs[idx].m_shader;
+			const String& target = shader_target_name[type];
 			// Remove
 			shader_remove_void_lines(hlslsource);
 			//output
@@ -507,7 +507,7 @@ namespace Resource
 	)
 	{
 		////////////////////////////////////////////////////////////////////////////////////////////////////
-		std::string shader_target_name[Render::ST_N_SHADER]
+		String shader_target_name[Render::ST_N_SHADER]
 		{
 			  "vertex"
 			, "fragment"
@@ -517,8 +517,8 @@ namespace Resource
 			, "compute"
 		};
 		//compile
-		std::string shader_headers[Render::ST_N_SHADER];
-		std::string shader_sources[Render::ST_N_SHADER];
+		String shader_headers[Render::ST_N_SHADER];
+		String shader_sources[Render::ST_N_SHADER];
         //config
         HLSL2ALL::GLSLConfig glsl_config;
 		glsl_config.m_version = int(source.m_version);
@@ -547,7 +547,7 @@ namespace Resource
             glsl_config.m_rename_input_with_locations = glsl_config.m_rename_output_with_locations;
             glsl_config.m_input_prefix = glsl_config.m_output_prefix;
             glsl_config.m_rename_output_with_locations = type != HLSL2ALL::ST_COMPUTE_SHADER;
-            glsl_config.m_output_prefix = std::string("__") + shader_target_name[type];
+            glsl_config.m_output_prefix = String("__") + shader_target_name[type];
             //compile
 			if (!HLSL2ALL::spirv_to_glsl(shader_spirv_out, shader_sources[type], shader_glsl_tslist, shader_spirv_errors, glsl_config))
 			{
@@ -566,10 +566,10 @@ namespace Resource
 		//by the hash of the vertex source (the stages of a shader together)
 		if (const char* dump = std::getenv("SQUARE_DUMP_GLSL"))
 		{
-			const size_t id = std::hash<std::string>()(shader_sources[Render::ST_VERTEX_SHADER] + shader_sources[Render::ST_FRAGMENT_SHADER]);
+			const size_t id = std::hash<String>()(shader_sources[Render::ST_VERTEX_SHADER] + shader_sources[Render::ST_FRAGMENT_SHADER]);
 			for (const ShaderStage& stage : stages)
 			{
-				const std::string file = Filesystem::join(dump, std::to_string(id) + "." + shader_target_name[stage.m_type] + ".glsl");
+				const String file = Filesystem::join(dump, to_string(id) + "." + shader_target_name[stage.m_type] + ".glsl");
 				Filesystem::text_file_write_all(file, stage.m_header + stage.m_source);
 			}
 		}
@@ -587,7 +587,7 @@ namespace Resource
 		ShaderStages& stages
 	)
 	{
-		std::string shader_target_name[Render::ST_N_SHADER]
+		String shader_target_name[Render::ST_N_SHADER]
 		{
 			  "vertex"
 			, "fragment"
@@ -597,7 +597,7 @@ namespace Resource
 			, "compute"
 		};
 
-		std::string shader_sources[Render::ST_N_SHADER];
+		String shader_sources[Render::ST_N_SHADER];
 
 		HLSL2ALL::MSLConfig msl_config;
 		msl_config.m_ios   = source.m_language == ShaderTarget::L_MSL_IOS;
@@ -632,7 +632,7 @@ namespace Resource
 		ShaderStages& stages
 	)
 	{
-		static const std::string shader_target_name[Render::ST_N_SHADER]
+		static const String shader_target_name[Render::ST_N_SHADER]
 		{
 			  "vertex"
 			, "fragment"
@@ -645,13 +645,13 @@ namespace Resource
 		{
 			//its words without the debug info, as bytes (the entry: the function of the stage)
 			const HLSL2ALL::SpirvShader words = AuxShader::spirv_strip_debug(ssoutput.m_shader);
-			std::string bytes(reinterpret_cast<const char*>(words.data()), words.size() * sizeof(words[0]));
+			String bytes(reinterpret_cast<const char*>(words.data()), words.size() * sizeof(words[0]));
 			stages.push_back(ShaderStage{ (Render::ShaderType)ssoutput.m_type, shader_target_name[ssoutput.m_type], "", std::move(bytes) });
 		}
 		return true;
 	}
 
-	Render::Shader* Shader::create_shader(Render::Context& render, const std::vector< Render::ShaderSourceInformation >& stages)
+	Render::Shader* Shader::create_shader(Render::Context& render, const Vector< Render::ShaderSourceInformation >& stages)
 	{
 #if defined(SQUARE_DEBUG_TOOLS)
 		const auto start = std::chrono::high_resolution_clock::now();
@@ -664,17 +664,17 @@ namespace Resource
 	}
 
     //get buffer
-    Render::Uniform* Shader::uniform(const std::string& name) const
+    Render::Uniform* Shader::uniform(const String& name) const
     {
         //(none without the shader of the driver: a tool translates only)
         if (auto render = System::get<RenderSystem>(context())->render(); render && m_shader)
         {
-            return render->get_uniform(m_shader, std::string(name));
+            return render->get_uniform(m_shader, String(name));
         }
         return nullptr;
     }
     
-    Render::UniformConstBuffer* Shader::constant_buffer(const std::string& name) const
+    Render::UniformConstBuffer* Shader::constant_buffer(const String& name) const
     {
         if (auto render = System::get<RenderSystem>(context())->render(); render && m_shader)
         {
@@ -699,20 +699,20 @@ namespace Resource
 	}
 
 	//name in the profiler
-	const std::string& Shader::profile_name() const
+	const String& Shader::profile_name() const
 	{
 		if (m_profile_name.empty())
 		{
 			//the resource name without its type ("Shader:SSAO" -> "SSAO")
-			const std::string name = resource_name();
+			const String name = resource_name();
 			const size_t colon = name.find(':');
-			m_profile_name = colon == std::string::npos ? name : name.substr(colon + 1);
+			m_profile_name = colon == String::npos ? name : name.substr(colon + 1);
 			if (m_profile_name.empty()) m_profile_name = "(unnamed)";
 		}
 		return m_profile_name;
 	}
 
-	void Shader::profile_name(const std::string& name)
+	void Shader::profile_name(const String& name)
 	{
 		m_profile_name = name;
 	}

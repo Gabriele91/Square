@@ -28,7 +28,7 @@ namespace UI
 	{
 	}
 
-	std::string ProfilerPanel::rml()
+	String ProfilerPanel::rml()
 	{
 		return
 			"<div class=\"controls\">"
@@ -158,19 +158,19 @@ namespace UI
 		return m_pool[index];
 	}
 
-	void ProfilerPanel::set_row(size_t index, const std::string& name, int depth, const std::string& gpu, const std::string& cpu, const std::string& draws, double fraction, bool head)
+	void ProfilerPanel::set_row(size_t index, const String& name, int depth, const String& gpu, const String& cpu, const String& draws, double fraction, bool head)
 	{
 		Row& entry = row(index);
 		entry.m_row.set_property("display", "block");
 		entry.m_row.set_class("head", head);
 		entry.m_name.set_text(name);
 		//the indentation inside the column: the others stay aligned
-		entry.m_name.set_property("padding-left", std::to_string(depth * 12) + "dp");
-		entry.m_name.set_property("width", std::to_string(230 - depth * 12) + "dp");
+		entry.m_name.set_property("padding-left", to_string(depth * 12) + "dp");
+		entry.m_name.set_property("width", to_string(230 - depth * 12) + "dp");
 		entry.m_gpu.set_text(gpu);
 		entry.m_cpu.set_text(cpu);
 		entry.m_draws.set_text(draws);
-		entry.m_fill.set_property("width", std::to_string(int(std::clamp(fraction, 0.0, 1.0) * 100.0)) + "%");
+		entry.m_fill.set_property("width", to_string(int(std::clamp(fraction, 0.0, 1.0) * 100.0)) + "%");
 	}
 
 	void ProfilerPanel::update()
@@ -180,15 +180,15 @@ namespace UI
 		m_version = render_profiler->version();
 		//the note
 		m_note.set_text(render_profiler->gpu()
-					   ? "(average / maximum of " + std::to_string(render_profiler->window()) + " frames)"
+					   ? "(average / maximum of " + to_string(render_profiler->window()) + " frames)"
 					   : "(no GPU timer: CPU only)");
-		auto ms = [](double value, double max) -> std::string
+		auto ms = [](double value, double max) -> String
 		{
 			char text[64];
 			std::snprintf(text, sizeof(text), "%.2f / %.2f", value, max);
 			return text;
 		};
-		auto number = [](double value, int decimals) -> std::string
+		auto number = [](double value, int decimals) -> String
 		{
 			char text[32];
 			std::snprintf(text, sizeof(text), "%.*f", decimals, value);

@@ -18,7 +18,7 @@
 namespace LodGroups
 {
     //the extras of the nodes (by their actor)
-    using Extras = std::unordered_map< const Square::Scene::Actor*, Square::Data::JsonObject >;
+    using Extras = Square::UnorderedMap< const Square::Scene::Actor*, Square::Data::JsonObject >;
 
     //the groups of a scene made; how many
     size_t build(Square::Context& context, const Square::Shared<Square::Scene::Actor>& root, const Extras& extras);

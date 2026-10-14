@@ -65,20 +65,20 @@
 /////////////////////////////////////////////////////////////////////////////
 // EXPORT/IMPOT
 #ifdef _WIN32
-	#define DLL_EXPORT __declspec(dllexport)
-	#define DLL_IMPORT __declspec(dllimport)
+	#define SQUARE_DLL_EXPORT __declspec(dllexport)
+	#define SQUARE_DLL_IMPORT __declspec(dllimport)
 #else 
-	#define DLL_EXPORT 
-	#define DLL_IMPORT 
+	#define SQUARE_DLL_EXPORT 
+	#define SQUARE_DLL_IMPORT 
 #endif
 /////////////////////////////////////////////////////////////////////////////
 // TYPE OF LIB
 #if defined(SQUARE_LIBRARY_EXPORT)
 	// inside DLL
-	#define SQUARE_API   DLL_EXPORT
+	#define SQUARE_API   SQUARE_DLL_EXPORT
 #elif defined(SQUARE_LIBRARY_IMPORT)
 	// outside DLL
-	#define SQUARE_API   DLL_IMPORT
+	#define SQUARE_API   SQUARE_DLL_IMPORT
 #else 
 	// static
 	#define SQUARE_API
@@ -128,6 +128,9 @@ namespace Square
 	using uint16 = unsigned short;
 	using uint8  = unsigned char;
 }
+/////////////////////////////////////////////////////////////////////////////
+// CONTAINERS: the ones of the STL on the heap of the engine (String, Vector, Map...)
+#include "Square/Core/Container/Container.h"
 
 namespace Square 
 {
@@ -287,8 +290,8 @@ namespace Square
 		return const_enumerate_wrapper<T>(container);
 	}
 
-	template<typename T, typename... Args>
-	inline void init_vector(std::vector<T>& vector, size_t size, Args&&... args)
+	template<typename T, typename Allocator, typename... Args>
+	inline void init_vector(std::vector<T, Allocator>& vector, size_t size, Args&&... args)
 	{
 		vector.reserve(size);
 		for (size_t i = 0; i < size; ++i) vector.emplace_back(std::forward<Args>(args)...);

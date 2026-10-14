@@ -20,9 +20,9 @@
 
 namespace Square
 {
-	using CSMMatrixArray   = std::array<Mat4,  DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>;
-	using CSMCascadeSplits = std::array<float, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>;
-	using CSMCascadeDepth  = std::array<float, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES + 1>;
+	using CSMMatrixArray   = Array<Mat4,  DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>;
+	using CSMCascadeSplits = Array<float, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>;
+	using CSMCascadeDepth  = Array<float, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES + 1>;
 }
 
 namespace Square
@@ -283,7 +283,7 @@ namespace Scene
 			return cascade_depth;
 		}
 
-		constexpr std::array<Vec4, 8> get_ndc_box()
+		constexpr Array<Vec4, 8> get_ndc_box()
 		{
 			return
 			{
@@ -336,7 +336,7 @@ namespace Scene
 			Vec3 boundingB(-std::numeric_limits<float>::infinity());
 
 			// start with <-1 -1 -1> to <1 1 1> cube
-			std::array<Vec4, 8> bounding_vertices = get_ndc_box();
+			Array<Vec4, 8> bounding_vertices = get_ndc_box();
 			
 			for (Vec4& vert : bounding_vertices) 
 			{
@@ -474,10 +474,10 @@ namespace Scene
 	{
 		//the corners of the slice of a cascade in world space (its frustum: the inverse of its
 		//projection by the view)
-		std::array<Vec3, 8> slice_corners(const Mat4& cascade_cam)
+		Array<Vec3, 8> slice_corners(const Mat4& cascade_cam)
 		{
-			std::array<Vec3, 8> corners;
-			const std::array<Vec4, 8> ndc = get_ndc_box();
+			Array<Vec3, 8> corners;
+			const Array<Vec4, 8> ndc = get_ndc_box();
 			for (size_t i = 0; i != ndc.size(); ++i)
 			{
 				const Vec4 point = cascade_cam * ndc[i];
@@ -488,7 +488,7 @@ namespace Scene
 
 		//the sphere around a slice: its center, its radius (rounded up: the same every frame, it
 		//depends only on the splits, the field of view, the aspect)
-		std::tuple<Vec3, float> slice_sphere(const std::array<Vec3, 8>& corners)
+		std::tuple<Vec3, float> slice_sphere(const Array<Vec3, 8>& corners)
 		{
 			Vec3 center(0.0f);
 			for (const Vec3& corner : corners)
@@ -539,7 +539,7 @@ namespace Scene
 		//what the cascades are made for: one changed, all of them again
 		const Render::Viewport& viewport = camera.viewport();
 		const Vec2 planes = viewport.near_and_far();
-		const std::vector<float> key
+		const Vector<float> key
 		{
 			  m_direction.x, m_direction.y, m_direction.z
 			, float(cascades), float(size.x), m_shadow_distance, m_cascade_margin

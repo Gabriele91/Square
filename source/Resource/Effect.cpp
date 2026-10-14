@@ -38,7 +38,7 @@ namespace Resource
         DEF_RENDERING_POINT_LIGHT,
         DEF_RENDERING_SPOT_LIGHT
     };
-	const std::string shader_lights_define_table[] =
+	const String shader_lights_define_table[] =
 	{
 		"SQ_LIGHT_COLOR",
 		"SQ_LIGHT_AMBIENT",
@@ -46,7 +46,7 @@ namespace Resource
 		"SQ_LIGHT_POINT",
 		"SQ_LIGHT_SPOT"
 	};
-	const std::string shader_target_define_table[] =
+	const String shader_target_define_table[] =
 	{
 		"target_screen",
 		"target_texture",
@@ -54,12 +54,12 @@ namespace Resource
 
     //constructor
     Effect::Effect(Context& context): ResourceObject(context), BaseInheritableSharedObject(context.allocator()), Render::Effect(context.allocator()) {}
-    Effect::Effect(Context& context, const std::string& path): ResourceObject(context), BaseInheritableSharedObject(context.allocator()), Render::Effect(context.allocator()) { load(path); }
+    Effect::Effect(Context& context, const String& path): ResourceObject(context), BaseInheritableSharedObject(context.allocator()), Render::Effect(context.allocator()) { load(path); }
     
     namespace AuxEffect
     {
         //the name of a technique and its variants (the profiler): "deferred (instanced, clip)"
-        std::string technique_name(const std::string& name, unsigned char variant)
+        String technique_name(const String& name, unsigned char variant)
         {
             switch (variant)
             {
@@ -76,7 +76,7 @@ namespace Resource
         bool build_technique
         (
               Context& context
-            , const std::string& path
+            , const String& path
             , const Parser::Effect::SubEffectField& sub_effect
             , const Parser::Effect::TechniqueField& parser_technique
             , unsigned char variant
@@ -157,7 +157,7 @@ namespace Resource
 							case Parser::Effect::ShaderField::S_NONE:
 							{
 								context.logger()->warning("Effect: " + path);
-								context.logger()->warning("Error from technique: " + parser_technique.m_name + ", pass[" + std::to_string(p) + "] ");
+								context.logger()->warning("Error from technique: " + parser_technique.m_name + ", pass[" + to_string(p) + "] ");
 								context.logger()->warning("Error pass: shader source is required");
 								return false;
 							}
@@ -168,27 +168,27 @@ namespace Resource
 							{
 								Shader::PreprocessMap shader_defines
 								{
-									std::make_tuple(std::string("version"), std::to_string(sub_effect.m_requirement.m_shader_version)),
-								  //std::make_tuple(std::string("pragma"), shader_target_define_table[shadow]),
-									std::make_tuple(std::string("define"), shader_lights_define_table[current_shader_def])
+									std::make_tuple(String("version"), to_string(sub_effect.m_requirement.m_shader_version)),
+								  //std::make_tuple(String("pragma"), shader_target_define_table[shadow]),
+									std::make_tuple(String("define"), shader_lights_define_table[current_shader_def])
 								};
 								//the pass of the shadow
 								if (shadow)
 								{
-									shader_defines.push_back(std::make_tuple(std::string("define"), std::string("SQ_SHADOW")));
+									shader_defines.push_back(std::make_tuple(String("define"), String("SQ_SHADOW")));
 								}
 								//the defines of the variant
 								if (variant & Render::EV_INSTANCED)
 								{
-									shader_defines.push_back(std::make_tuple(std::string("define"), std::string("SQ_INSTANCED")));
+									shader_defines.push_back(std::make_tuple(String("define"), String("SQ_INSTANCED")));
 								}
 								if (variant & Render::EV_CLIP)
 								{
-									shader_defines.push_back(std::make_tuple(std::string("define"), std::string("SQ_CLIP")));
+									shader_defines.push_back(std::make_tuple(String("define"), String("SQ_CLIP")));
 								}
 								if (variant & Render::EV_SKINNED)
 								{
-									shader_defines.push_back(std::make_tuple(std::string("define"), std::string("SQ_SKINNED")));
+									shader_defines.push_back(std::make_tuple(String("define"), String("SQ_SKINNED")));
 								}
 								//shader
 								this_pass.m_shader = MakeShared<Shader>(context);
@@ -217,7 +217,7 @@ namespace Resource
 									(
 										Filesystem::get_basename(path)
 										+ "/" + technique_name(parser_technique.m_name, variant)
-										+ "[" + std::to_string(p) + "]"
+										+ "[" + to_string(p) + "]"
 										+ light_names[current_shader_def]
 										+ (shadow ? " shadow" : "")
 									);
@@ -226,14 +226,14 @@ namespace Resource
 								if (!success)
 								{
 									//preproc, debug
-									std::string debug_preproc;
+									String debug_preproc;
 									for (const Shader::PreprocessElement& preproc : shader_defines)
 									{
 										debug_preproc += "#" + std::get<0>(preproc) + " " + std::get<1>(preproc) + "\t";
 									}
 									//output
 									context.logger()->warning("Effect: " + path);
-									context.logger()->warning("Error from technique: " + parser_technique.m_name + ", pass[" + std::to_string(p) + "] ");
+									context.logger()->warning("Error from technique: " + parser_technique.m_name + ", pass[" + to_string(p) + "] ");
 									context.logger()->warning("Error technique preproces: " + debug_preproc);
 									return false;
 								}
@@ -348,7 +348,7 @@ namespace Resource
     }
 
     //load effect
-    bool Effect::load(const std::string& path)
+    bool Effect::load(const String& path)
     {
 		//alias
 		using EffectParameter     = Render::EffectParameter;
@@ -376,9 +376,9 @@ namespace Resource
                 case EffectParameterType::PT_STD_VECTOR_TEXTURE:
                 {
                     //vector of texture
-                    std::vector< Shared<Texture> > v_textures;
+                    Vector< Shared<Texture> > v_textures;
                     //get all texture
-                    for(const std::string& tex_name : e_context.m_parameters[i].m_resources)
+                    for(const String& tex_name : e_context.m_parameters[i].m_resources)
                         v_textures.push_back( context().resource<Texture>(tex_name) );
 					//add
 					add_parameter((int)i, e_context.m_parameters[i].m_name, std::move(EffectParameter::create(context().allocator(), v_textures)));

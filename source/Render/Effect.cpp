@@ -48,23 +48,23 @@ namespace Render
 	void EffectParameter::set(const DMat3* m3, size_t n) {}
 	void EffectParameter::set(const DMat4* m4, size_t n) {}
 
-	void EffectParameter::set(const std::vector < Shared < Resource::Texture > > & i) {}
-	void EffectParameter::set(const std::vector < int >& i) {}
-	void EffectParameter::set(const std::vector < float >& f) {}
-	void EffectParameter::set(const std::vector < double >& d) {}
-	void EffectParameter::set(const std::vector < IVec2 >& v2) {}
-	void EffectParameter::set(const std::vector < IVec3 >& v3) {}
-	void EffectParameter::set(const std::vector < IVec4 >& v4) {}
-	void EffectParameter::set(const std::vector < Vec2 >& v2) {}
-	void EffectParameter::set(const std::vector < Vec3 >& v3) {}
-	void EffectParameter::set(const std::vector < Vec4 >& v4) {}
-	void EffectParameter::set(const std::vector < Mat3 >& m3) {}
-	void EffectParameter::set(const std::vector < Mat4 >& m4) {}
-	void EffectParameter::set(const std::vector < DVec2 >& v2) {}
-	void EffectParameter::set(const std::vector < DVec3 >& v3) {}
-	void EffectParameter::set(const std::vector < DVec4 >& v4) {}
-	void EffectParameter::set(const std::vector < DMat3 >& m3) {}
-	void EffectParameter::set(const std::vector < DMat4 >& m4) {}
+	void EffectParameter::set(const Vector < Shared < Resource::Texture > > & i) {}
+	void EffectParameter::set(const Vector < int >& i) {}
+	void EffectParameter::set(const Vector < float >& f) {}
+	void EffectParameter::set(const Vector < double >& d) {}
+	void EffectParameter::set(const Vector < IVec2 >& v2) {}
+	void EffectParameter::set(const Vector < IVec3 >& v3) {}
+	void EffectParameter::set(const Vector < IVec4 >& v4) {}
+	void EffectParameter::set(const Vector < Vec2 >& v2) {}
+	void EffectParameter::set(const Vector < Vec3 >& v3) {}
+	void EffectParameter::set(const Vector < Vec4 >& v4) {}
+	void EffectParameter::set(const Vector < Mat3 >& m3) {}
+	void EffectParameter::set(const Vector < Mat4 >& m4) {}
+	void EffectParameter::set(const Vector < DVec2 >& v2) {}
+	void EffectParameter::set(const Vector < DVec3 >& v3) {}
+	void EffectParameter::set(const Vector < DVec4 >& v4) {}
+	void EffectParameter::set(const Vector < DMat3 >& m3) {}
+	void EffectParameter::set(const Vector < DMat4 >& m4) {}
 
 	EffectParameter::EffectParameter(Allocator* allocator) : m_allocator(allocator) {}
 	EffectParameter::~EffectParameter() {}
@@ -97,26 +97,26 @@ namespace Render
 	const DMat3&    EffectParameter::get_dmat3()    const { return none_const_t_return<DMat3>(); }
 	const DMat4&    EffectParameter::get_dmat4()    const { return none_const_t_return<DMat4>(); }
 
-	const std::vector< Shared<Resource::Texture> >&  EffectParameter::get_vector_texture()  const { return none_const_t_return< std::vector< Shared<Resource::Texture> > >(); }
-	const std::vector<int>&    EffectParameter::get_vector_int()    const { return none_const_t_return< std::vector<int> >(); }
-	const std::vector<float>&  EffectParameter::get_vector_float()  const { return none_const_t_return< std::vector<float> >(); }
-	const std::vector<double>& EffectParameter::get_vector_double() const { return none_const_t_return< std::vector<double> >(); }
+	const Vector< Shared<Resource::Texture> >&  EffectParameter::get_vector_texture()  const { return none_const_t_return< Vector< Shared<Resource::Texture> > >(); }
+	const Vector<int>&    EffectParameter::get_vector_int()    const { return none_const_t_return< Vector<int> >(); }
+	const Vector<float>&  EffectParameter::get_vector_float()  const { return none_const_t_return< Vector<float> >(); }
+	const Vector<double>& EffectParameter::get_vector_double() const { return none_const_t_return< Vector<double> >(); }
 
-	const std::vector<IVec2>&  EffectParameter::get_vector_ivec2()  const { return none_const_t_return< std::vector<IVec2> >(); }
-	const std::vector<IVec3>&  EffectParameter::get_vector_ivec3()  const { return none_const_t_return< std::vector<IVec3> >(); }
-	const std::vector<IVec4>&  EffectParameter::get_vector_ivec4()  const { return none_const_t_return< std::vector<IVec4> >(); }
+	const Vector<IVec2>&  EffectParameter::get_vector_ivec2()  const { return none_const_t_return< Vector<IVec2> >(); }
+	const Vector<IVec3>&  EffectParameter::get_vector_ivec3()  const { return none_const_t_return< Vector<IVec3> >(); }
+	const Vector<IVec4>&  EffectParameter::get_vector_ivec4()  const { return none_const_t_return< Vector<IVec4> >(); }
 
-	const std::vector<Vec2>&   EffectParameter::get_vector_vec2()   const { return none_const_t_return< std::vector<Vec2> >(); }
-	const std::vector<Vec3>&   EffectParameter::get_vector_vec3()   const { return none_const_t_return< std::vector<Vec3> >(); }
-	const std::vector<Vec4>&   EffectParameter::get_vector_vec4()   const { return none_const_t_return< std::vector<Vec4> >(); }
-	const std::vector<Mat3>&   EffectParameter::get_vector_mat3()   const { return none_const_t_return< std::vector<Mat3> >(); }
-	const std::vector<Mat4>&   EffectParameter::get_vector_mat4()   const { return none_const_t_return< std::vector<Mat4> >(); }
+	const Vector<Vec2>&   EffectParameter::get_vector_vec2()   const { return none_const_t_return< Vector<Vec2> >(); }
+	const Vector<Vec3>&   EffectParameter::get_vector_vec3()   const { return none_const_t_return< Vector<Vec3> >(); }
+	const Vector<Vec4>&   EffectParameter::get_vector_vec4()   const { return none_const_t_return< Vector<Vec4> >(); }
+	const Vector<Mat3>&   EffectParameter::get_vector_mat3()   const { return none_const_t_return< Vector<Mat3> >(); }
+	const Vector<Mat4>&   EffectParameter::get_vector_mat4()   const { return none_const_t_return< Vector<Mat4> >(); }
 
-	const std::vector<DVec2>&  EffectParameter::get_vector_dvec2()  const { return none_const_t_return< std::vector<DVec2> >(); }
-	const std::vector<DVec3>&  EffectParameter::get_vector_dvec3()  const { return none_const_t_return< std::vector<DVec3> >(); }
-	const std::vector<DVec4>&  EffectParameter::get_vector_dvec4()  const { return none_const_t_return< std::vector<DVec4> >(); }
-	const std::vector<DMat3>&  EffectParameter::get_vector_dmat3()  const { return none_const_t_return< std::vector<DMat3> >(); }
-	const std::vector<DMat4>&  EffectParameter::get_vector_dmat4()  const { return none_const_t_return< std::vector<DMat4> >(); }
+	const Vector<DVec2>&  EffectParameter::get_vector_dvec2()  const { return none_const_t_return< Vector<DVec2> >(); }
+	const Vector<DVec3>&  EffectParameter::get_vector_dvec3()  const { return none_const_t_return< Vector<DVec3> >(); }
+	const Vector<DVec4>&  EffectParameter::get_vector_dvec4()  const { return none_const_t_return< Vector<DVec4> >(); }
+	const Vector<DMat3>&  EffectParameter::get_vector_dmat3()  const { return none_const_t_return< Vector<DMat3> >(); }
+	const Vector<DMat4>&  EffectParameter::get_vector_dmat4()  const { return none_const_t_return< Vector<DMat4> >(); }
 
 	//struct by type
 	struct EffectParameterTexture : public EffectParameter
@@ -159,25 +159,25 @@ namespace Render
 	struct EffectParameterVectorTexture : public EffectParameter
 	{
 		//value
-		std::vector< Shared<Resource::Texture> > m_value;
+		Vector< Shared<Resource::Texture> > m_value;
 		//init
 		EffectParameterVectorTexture(Allocator* allocator) : EffectParameter(allocator)
 		{
 			m_value = {};
 			m_type = EffectParameterType::PT_STD_VECTOR_TEXTURE;
 		}
-		EffectParameterVectorTexture(Allocator* allocator, const std::vector< Shared<Resource::Texture> >& value) : EffectParameter(allocator)
+		EffectParameterVectorTexture(Allocator* allocator, const Vector< Shared<Resource::Texture> >& value) : EffectParameter(allocator)
 		{
 			m_value = value;
 			m_type = EffectParameterType::PT_STD_VECTOR_TEXTURE;
 		}
 		//set value
-		virtual void set(const std::vector< Shared<Resource::Texture> >& value) override
+		virtual void set(const Vector< Shared<Resource::Texture> >& value) override
 		{
 			m_value = value;
 		}
 		//get value
-		virtual const std::vector< Shared<Resource::Texture> >& get_vector_texture() const override
+		virtual const Vector< Shared<Resource::Texture> >& get_vector_texture() const override
 		{
 			return m_value;
 		}
@@ -222,11 +222,11 @@ namespace Render
     #define DefineVectorObjectParameter(Classname,Type, getname)\
     struct Classname : public EffectParameter\
     {\
-        std::vector< Type > m_value;\
-        Classname(Allocator* allocator, const std::vector< Type >& value = {}) : EffectParameter(allocator) \
+        Vector< Type > m_value;\
+        Classname(Allocator* allocator, const Vector< Type >& value = {}) : EffectParameter(allocator) \
         {m_value = value; m_type = parameter_type_traits<Type>();}\
-        virtual void set(const std::vector< Type >& value) override { m_value = value; }\
-        virtual const std::vector< Type >& get_vector_ ## getname () const override { return m_value; }\
+        virtual void set(const Vector< Type >& value) override { m_value = value; }\
+        virtual const Vector< Type >& get_vector_ ## getname () const override { return m_value; }\
         virtual Unique<EffectParameter> copy() const  override {  return std::move(MakeUnique< Classname >(m_allocator, m_allocator, m_value)); }\
 	    virtual void copy_to(EffectParameter* dest) const override { *((Classname*)dest) = (*this); }\
         virtual void* value_ptr() override { return (void*)&m_value; }\
@@ -672,7 +672,7 @@ namespace Render
 		return m_techniques[variant];
 	}
 
-	void EffectTechniqueVariants::clip_parameters(const std::vector< std::string >& names)
+	void EffectTechniqueVariants::clip_parameters(const Vector< String >& names)
 	{
 		m_clip_parameters = names;
 		m_clip_parameter_ids.clear();
@@ -682,7 +682,7 @@ namespace Render
 	{
 		m_clip_parameter_ids.clear();
 		m_clip_parameter_ids.reserve(m_clip_parameters.size());
-		for (const std::string& name : m_clip_parameters)
+		for (const String& name : m_clip_parameters)
 		{
 			auto it_param = parameters.find(name);
 			if (it_param != parameters.end()) m_clip_parameter_ids.push_back(it_param->second);
@@ -722,19 +722,19 @@ namespace Render
 	Effect::~Effect(){}
 
 	//get technique
-	EffectTechnique* Effect::technique(const std::string& technique_name)
+	EffectTechnique* Effect::technique(const String& technique_name)
 	{
 		auto it_tech = m_techniques_map.find(technique_name);
 		if (it_tech == m_techniques_map.end()) return nullptr;
 		return it_tech->second.variant(EV_NONE);
 	}
-	const EffectTechnique* Effect::technique(const std::string& technique_name) const
+	const EffectTechnique* Effect::technique(const String& technique_name) const
 	{
 		auto it_tech = m_techniques_map.find(technique_name);
 		if (it_tech == m_techniques_map.end()) return nullptr;
 		return it_tech->second.variant(EV_NONE);
 	}
-	EffectTechnique* Effect::technique(const std::string& technique_name, unsigned char variant, const EffectParameters& parameters, bool fading)
+	EffectTechnique* Effect::technique(const String& technique_name, unsigned char variant, const EffectParameters& parameters, bool fading)
 	{
 		auto it_tech = m_techniques_map.find(technique_name);
 		if (it_tech == m_techniques_map.end()) return nullptr;
@@ -763,7 +763,7 @@ namespace Render
 		return nullptr;
 	}
 
-	EffectParameter* Effect::parameter(const std::string& parameter_name) const
+	EffectParameter* Effect::parameter(const String& parameter_name) const
 	{
 		auto it_param = m_parameters_map.find(parameter_name);
 		if (it_param != m_parameters_map.end()) return parameter(it_param->second);
@@ -782,14 +782,14 @@ namespace Render
 		return std::move(new_params);
 	}
 	
-	const std::string&  Effect::parameter_name(int parameter_id) const
+	const String&  Effect::parameter_name(int parameter_id) const
 	{
 		for (const auto& element : m_parameters_map) if (element.second == parameter_id) return element.first;
-		static const std::string emptry;
+		static const String emptry;
 		return emptry;
 	}
 	//get id
-	int Effect::parameter_id(const std::string& parameter_name)
+	int Effect::parameter_id(const String& parameter_name)
 	{
 		auto it_param = m_parameters_map.find(parameter_name);
 		if (it_param != m_parameters_map.end()) return it_param->second;
@@ -797,7 +797,7 @@ namespace Render
 	}
 
 	//copy pass (import)
-	bool Effect::import_technique(const Effect& effect,const std::string& name)
+	bool Effect::import_technique(const Effect& effect,const String& name)
 	{
 		//get
 		auto it_tech = effect.techniques().find(name);
@@ -823,7 +823,7 @@ namespace Render
 	}
 
 	//add
-	int Effect::add_parameter(int id, const std::string& name, Unique<EffectParameter>&& parameter)
+	int Effect::add_parameter(int id, const String& name, Unique<EffectParameter>&& parameter)
 	{
 		parameter->m_id = id; 
 		m_parameters[id] = std::move(parameter);

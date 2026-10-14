@@ -44,11 +44,11 @@ namespace Render
         
         
         GBuffer(Square::Context& context);
-        GBuffer(Square::Context& context, const IVec2& size, const std::vector<BufferFormat>& buffer_list, bool cpu_access = false);
+        GBuffer(Square::Context& context, const IVec2& size, const Vector<BufferFormat>& buffer_list, bool cpu_access = false);
         virtual ~GBuffer();
 
         //cpu_access allows reading the textures back (get_texture), e.g. for debugging
-        bool build( const IVec2& size, const std::vector<BufferFormat>& buffer_list, bool cpu_access = false );
+        bool build( const IVec2& size, const Vector<BufferFormat>& buffer_list, bool cpu_access = false );
         void destoy();
         
         Render::Target* target() const;
@@ -67,7 +67,7 @@ namespace Render
         
         IVec2 m_size;
         Render::Target*               m_target{ nullptr };
-        std::vector<Render::Texture*> m_textures;
+        Vector<Render::Texture*> m_textures;
     };
 }
 }

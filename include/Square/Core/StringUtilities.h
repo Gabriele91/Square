@@ -16,25 +16,25 @@
 
 namespace Square
 {
-	inline void replace_implace(std::string& source, std::string const& find, std::string const& replace)
+	inline void replace_implace(String& source, String const& find, String const& replace)
 	{
-		std::string::size_type i = source.find(find, 0);
-		if (i != std::string::npos) source.replace(i, find.length(), replace);
+		String::size_type i = source.find(find, 0);
+		if (i != String::npos) source.replace(i, find.length(), replace);
 	}
 
-	inline void replace_all_implace(std::string& source, std::string const& find, std::string const& replace)
+	inline void replace_all_implace(String& source, String const& find, String const& replace)
 	{
-		for (std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
+		for (String::size_type i = 0; (i = source.find(find, i)) != String::npos;)
 		{
 			source.replace(i, find.length(), replace);
 			i += replace.length();
 		}
 	}
 
-	inline std::string replace(std::string str, const std::string& old_str, const std::string& new_str)
+	inline String replace(String str, const String& old_str, const String& new_str)
 	{
-		std::string::size_type pos = 0u;
-		while ((pos = str.find(old_str, pos)) != std::string::npos)
+		String::size_type pos = 0u;
+		while ((pos = str.find(old_str, pos)) != String::npos)
 		{
 			str.replace(pos, old_str.length(), new_str);
 			pos += new_str.length();
@@ -42,9 +42,9 @@ namespace Square
 		return std::move(str);
 	}
 
-	inline std::string replace_all(std::string source, std::string const& find, std::string const& replace)
+	inline String replace_all(String source, String const& find, String const& replace)
 	{
-		for (std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
+		for (String::size_type i = 0; (i = source.find(find, i)) != String::npos;)
 		{
 			source.replace(i, find.length(), replace);
 			i += replace.length();
@@ -52,12 +52,12 @@ namespace Square
 		return std::move(source);
 	}
 
-	inline bool case_insensitive_equal(const std::string& lstr, const std::string& rstr)
+	inline bool case_insensitive_equal(const String& lstr, const String& rstr)
 	{
 		//not equal len
 		if (lstr.size() != rstr.size()) return false;
 		//test
-		for (std::string::const_iterator c1 = lstr.begin(), c2 = rstr.begin(); c1 != lstr.end(); ++c1, ++c2)
+		for (String::const_iterator c1 = lstr.begin(), c2 = rstr.begin(); c1 != lstr.end(); ++c1, ++c2)
 		{
 			if (std::tolower(*c1) != std::tolower(*c2)) return false;
 		}
@@ -65,12 +65,14 @@ namespace Square
 		return true;
 	}
 
-	inline std::vector<std::string> split(const std::string& input, const  std::string& regex_str)
+	inline Vector<String> split(const String& input, const  String& regex_str)
 	{
-		std::regex regex(regex_str);
-		std::sregex_token_iterator first{ input.begin(), input.end(), regex, -1 };
-		std::sregex_token_iterator last;
-		return { first, last };
+		std::regex regex(regex_str.c_str());
+		std::regex_token_iterator<String::const_iterator> first{ input.begin(), input.end(), regex, -1 };
+		std::regex_token_iterator<String::const_iterator> last;
+		Vector<String> out;
+		for (; first != last; ++first) out.emplace_back(first->first, first->second);
+		return out;
 	}
 
 	SQUARE_API bool to_short(const char* arg, short& svalue);
@@ -99,9 +101,9 @@ namespace Square
 	inline std::tuple< bool, T > to_(const char* arg){ assert(0); return std::make_tuple(false, T()); }
 
 	template <> 
-	inline std::tuple< bool, std::string > to_<std::string>(const char* arg)
+	inline std::tuple< bool, String > to_<String>(const char* arg)
 	{
-		std::string v{arg};
+		String v{arg};
 		return std::make_tuple(!!v.size(), v);
 	}
 
@@ -186,9 +188,9 @@ namespace Square
 
 namespace std
 {
-	inline std::string operator * (const std::string& value, size_t n)
+	inline Square::String operator * (const Square::String& value, size_t n)
 	{
-		std::string out;
+		Square::String out;
 		out.reserve(value.size() * n);
 		for(size_t i = 0;i < n; ++i)
 		{
@@ -197,10 +199,10 @@ namespace std
 		return out;
 	}
 	
-    inline std::string& operator *= (std::string& inout_string, size_t n)
+    inline Square::String& operator *= (Square::String& inout_string, size_t n)
 	{
 	    
-		std::string tmp(inout_string);
+		Square::String tmp(inout_string);
 		inout_string.reserve(tmp.size() * n);
 		for(size_t i = 0;i < n; ++i)
 		{

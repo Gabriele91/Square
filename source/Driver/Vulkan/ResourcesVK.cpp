@@ -4,6 +4,7 @@
 //  views, samplers, layouts), what is read back from the GPU
 //
 #include "RenderVK.h"
+#include "AllocationVK.h"
 #include <algorithm>
 #include <cstring>
 
@@ -109,10 +110,10 @@ namespace Render
 		}
 
 		//the pixels of an RGB image with their alpha (the alpha of DirectX: the most of its type)
-		static std::vector<unsigned char> with_alpha(const unsigned char* rgb, size_t pixels, TextureFormat format)
+		static Vector<unsigned char> with_alpha(const unsigned char* rgb, size_t pixels, TextureFormat format)
 		{
 			const size_t channel = pixel_bytes(format) / 3;
-			std::vector<unsigned char> alpha(channel, 0xFF);
+			Vector<unsigned char> alpha(channel, 0xFF);
 			switch (format)
 			{
 			case TF_RGB16I: alpha = { 0xFF, 0x7F }; break;
@@ -121,7 +122,7 @@ namespace Render
 			case TF_RGB32F: alpha = { 0x00, 0x00, 0x80, 0x3F }; break; //1.0
 			default: break;
 			}
-			std::vector<unsigned char> out(pixels * channel * 4);
+			Vector<unsigned char> out(pixels * channel * 4);
 			for (size_t i = 0; i != pixels; ++i)
 			{
 				std::memcpy(&out[i * channel * 4], rgb + i * channel * 3, channel * 3);
@@ -175,7 +176,7 @@ namespace Render
 		VmaAllocationInfo allocated{};
 		if (vmaCreateBuffer(m_allocator, &info, &allocation, &out.m_buffer, &out.m_allocation, &allocated) != VK_SUCCESS)
 		{
-			m_errors.push_back("Vulkan: unable to make a buffer of " + std::to_string(size) + " bytes");
+			m_errors.push_back("Vulkan: unable to make a buffer of " + to_string(size) + " bytes");
 			return BufferVK();
 		}
 		out.m_mapped = static_cast<unsigned char*>(allocated.pMappedData);
@@ -231,12 +232,12 @@ namespace Render
 		}
 	}
 
-	std::vector<unsigned char> ContextVK::read_buffer(const BufferVK& buffer, size_t size)
+	Vector<unsigned char> ContextVK::read_buffer(const BufferVK& buffer, size_t size)
 	{
 		if (!buffer.m_buffer || !size) return {};
 		if (buffer.m_mapped)
 		{
-			return std::vector<unsigned char>(buffer.m_mapped, buffer.m_mapped + size);
+			return Vector<unsigned char>(buffer.m_mapped, buffer.m_mapped + size);
 		}
 		//a static one: copied to the host after what is recorded (done at once)
 		end_render_pass();
@@ -246,7 +247,7 @@ namespace Render
 		vkCmdCopyBuffer(commands(), buffer.m_buffer, staging.m_buffer, 1, &region);
 		flush_and_wait();
 		vmaInvalidateAllocation(m_allocator, staging.m_allocation, 0, VK_WHOLE_SIZE);
-		std::vector<unsigned char> out(staging.m_mapped, staging.m_mapped + size);
+		Vector<unsigned char> out(staging.m_mapped, staging.m_mapped + size);
 		vmaDestroyBuffer(m_allocator, staging.m_buffer, staging.m_allocation);
 		return out;
 	}
@@ -337,19 +338,19 @@ namespace Render
 	void ContextVK::bind_IBO(IndexBuffer* ibo) { m_index_buffer = ibo; }
 	void ContextVK::unbind_IBO(IndexBuffer* ibo) { if (m_index_buffer == ibo) m_index_buffer = nullptr; }
 
-	std::vector<unsigned char> ContextVK::copy_buffer_CB(const ConstBuffer* cb)
+	Vector<unsigned char> ContextVK::copy_buffer_CB(const ConstBuffer* cb)
 	{
-		return cb ? cb->m_bytes : std::vector<unsigned char>();
+		return cb ? cb->m_bytes : Vector<unsigned char>();
 	}
 
-	std::vector<unsigned char> ContextVK::copy_buffer_VBO(const VertexBuffer* vbo)
+	Vector<unsigned char> ContextVK::copy_buffer_VBO(const VertexBuffer* vbo)
 	{
-		return vbo ? read_buffer(vbo->m_buffer, vbo->m_size) : std::vector<unsigned char>();
+		return vbo ? read_buffer(vbo->m_buffer, vbo->m_size) : Vector<unsigned char>();
 	}
 
-	std::vector<unsigned char> ContextVK::copy_buffer_IBO(const IndexBuffer* ibo)
+	Vector<unsigned char> ContextVK::copy_buffer_IBO(const IndexBuffer* ibo)
 	{
-		return ibo ? read_buffer(ibo->m_buffer, ibo->m_size) : std::vector<unsigned char>();
+		return ibo ? read_buffer(ibo->m_buffer, ibo->m_size) : Vector<unsigned char>();
 	}
 
 	unsigned char* ContextVK::map_CB(ConstBuffer* cb, size_t start, size_t n, MappingType type)
@@ -502,7 +503,7 @@ namespace Render
 			vkGetPhysicalDeviceFormatProperties(m_physical, candidate, &properties);
 			return (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0;
 		};
-		std::vector<VkFormat> candidates;
+		Vector<VkFormat> candidates;
 		switch (format)
 		{
 		case TF_DEPTH16_STENCIL8:   candidates = { VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT }; break;
@@ -548,7 +549,7 @@ namespace Render
 		sampler.maxLod = float(std::max(info.m_mipmap_min, info.m_mipmap_max));
 		sampler.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
 		VkSampler out = VK_NULL_HANDLE;
-		if (vkCreateSampler(m_device, &sampler, nullptr, &out) != VK_SUCCESS)
+		if (vkCreateSampler(m_device, &sampler, AllocationVK::callbacks(), &out) != VK_SUCCESS)
 		{
 			m_errors.push_back("Vulkan: unable to make a sampler");
 		}
@@ -571,7 +572,7 @@ namespace Render
 		info.subresourceRange.baseArrayLayer = layer;
 		info.subresourceRange.layerCount = layers;
 		VkImageView view = VK_NULL_HANDLE;
-		if (vkCreateImageView(m_device, &info, nullptr, &view) != VK_SUCCESS)
+		if (vkCreateImageView(m_device, &info, AllocationVK::callbacks(), &view) != VK_SUCCESS)
 		{
 			m_errors.push_back("Vulkan: unable to make an image view");
 		}
@@ -670,7 +671,7 @@ namespace Render
 		VkFormatProperties properties;
 		vkGetPhysicalDeviceFormatProperties(m_physical, format, &properties);
 		const VkFormatFeatureFlags features = properties.optimalTilingFeatures;
-		auto texture = std::make_unique<Texture>();
+		auto texture = MakeUniquePtr<Texture>();
 		texture->m_format = format;
 		texture->m_texture_format = first.m_format;
 		texture->m_width = std::max(first.m_width, 1u);
@@ -723,14 +724,14 @@ namespace Render
 		allocation.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
 		if (vmaCreateImage(m_allocator, &image, &allocation, &texture->m_image, &texture->m_allocation, nullptr) != VK_SUCCESS)
 		{
-			m_errors.push_back("Vulkan: unable to make an image of " + std::to_string(texture->m_width) + "x" + std::to_string(texture->m_height));
+			m_errors.push_back("Vulkan: unable to make an image of " + to_string(texture->m_width) + "x" + to_string(texture->m_height));
 			return nullptr;
 		}
 		//its pixels: level 0 of each layer (an array: its first one, as DirectX), all the levels of
 		//a compressed one; by a staging buffer, in the uploads of the frame
 		VkCommandBuffer buffer = uploads();
-		std::vector<unsigned char> bytes;
-		std::vector<VkBufferImageCopy> regions;
+		Vector<unsigned char> bytes;
+		Vector<VkBufferImageCopy> regions;
 		const uint32_t faces = cube ? 6 : 1;
 		for (uint32_t face = 0; face != faces; ++face)
 		{
@@ -763,7 +764,7 @@ namespace Render
 				regions.push_back(region);
 				if (AuxResourcesVK::is_rgb(layer.m_format))
 				{
-					const std::vector<unsigned char> rgba = AuxResourcesVK::with_alpha(layer.m_bytes, pixels, layer.m_format);
+					const Vector<unsigned char> rgba = AuxResourcesVK::with_alpha(layer.m_bytes, pixels, layer.m_format);
 					bytes.insert(bytes.end(), rgba.begin(), rgba.end());
 				}
 				else
@@ -871,12 +872,12 @@ namespace Render
 		VmaAllocator allocator = m_allocator;
 		VkImage image = texture->m_image;
 		VmaAllocation allocation = texture->m_allocation;
-		std::vector<VkImageView> views;
+		Vector<VkImageView> views;
 		for (auto& view : texture->m_views) views.push_back(view.second);
 		texture->m_views.clear();
 		destroy_later([device, allocator, image, allocation, views]()
 		{
-			for (VkImageView view : views) vkDestroyImageView(device, view, nullptr);
+			for (VkImageView view : views) vkDestroyImageView(device, view, AllocationVK::callbacks());
 			if (allocation) vmaDestroyImage(allocator, image, allocation);
 		});
 		texture->m_image = VK_NULL_HANDLE;
@@ -908,7 +909,7 @@ namespace Render
 		//the level 0 of a 2D texture again, after what is recorded (in the draws of the frame)
 		if (!texture || !data.m_bytes || is_compressed_format(data.m_format) || texture->m_layers != 1) return;
 		const size_t pixels = size_t(data.m_width) * size_t(data.m_height);
-		std::vector<unsigned char> rgba;
+		Vector<unsigned char> rgba;
 		const unsigned char* bytes = data.m_bytes;
 		size_t size = pixels * AuxResourcesVK::pixel_bytes(data.m_format);
 		if (AuxResourcesVK::is_rgb(data.m_format))
@@ -974,12 +975,12 @@ namespace Render
 		destination->m_last_frame = m_frame_index + 1;
 	}
 
-	std::vector<unsigned char> ContextVK::get_texture(Texture* texture, int level)
+	Vector<unsigned char> ContextVK::get_texture(Texture* texture, int level)
 	{
 		return get_texture(texture, 0, level);
 	}
 
-	std::vector<unsigned char> ContextVK::get_texture(Texture* texture, int face, int level)
+	Vector<unsigned char> ContextVK::get_texture(Texture* texture, int face, int level)
 	{
 		//a layer, a level: its pixels (rows packed), read after what is recorded (done at once)
 		if (!texture || is_compressed_format(texture->m_texture_format)) return {};
@@ -998,7 +999,7 @@ namespace Render
 		vkCmdCopyImageToBuffer(buffer, texture->m_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, staging.m_buffer, 1, &region);
 		flush_and_wait();
 		vmaInvalidateAllocation(m_allocator, staging.m_allocation, 0, VK_WHOLE_SIZE);
-		std::vector<unsigned char> out(staging.m_mapped, staging.m_mapped + size);
+		Vector<unsigned char> out(staging.m_mapped, staging.m_mapped + size);
 		vmaDestroyBuffer(m_allocator, staging.m_buffer, staging.m_allocation);
 		return out;
 	}

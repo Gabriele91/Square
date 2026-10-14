@@ -28,7 +28,7 @@ namespace Video
 namespace Win32
 {
 	///////////////////////////////////////////////////////////////////////////////////
-	SQUARE_API std::string win32_get_last_error_as_string();
+	SQUARE_API String win32_get_last_error_as_string();
 
 	SQUARE_API void get_rect_of_window_including_aero(HWND wnd, RECT *rect);
 

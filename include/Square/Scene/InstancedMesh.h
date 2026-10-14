@@ -49,22 +49,22 @@ namespace Scene
 		virtual ~InstancedMesh();
 
 		//the mesh, its materials (one a sub mesh)
-		void mesh(const Square::Shared<Square::Resource::Mesh>& mesh, const std::vector< Square::Shared<Square::Resource::Material> >& materials);
+		void mesh(const Square::Shared<Square::Resource::Mesh>& mesh, const Vector< Square::Shared<Square::Resource::Material> >& materials);
 		const Square::Shared<Square::Resource::Mesh>& mesh() const { return m_mesh; }
-		const std::vector< Square::Shared<Square::Resource::Material> >& materials() const { return m_materials; }
+		const Vector< Square::Shared<Square::Resource::Material> >& materials() const { return m_materials; }
 
 		//the box of the mesh (its own space: the box of all the instances from it)
 		void mesh_box(const Square::Geometry::OBoundingBox& box);
 		const Square::Geometry::OBoundingBox& mesh_box() const { return m_mesh_box; }
 
 		//its instances: their matrices in the space of the actor
-		void instances(const std::vector<Square::Mat4>& models);
-		const std::vector<Square::Mat4>& instances() const { return m_instances; }
+		void instances(const Vector<Square::Mat4>& models);
+		const Vector<Square::Mat4>& instances() const { return m_instances; }
 
 		//the triangles of all its instances in world space (3 points each, added to out), read from
 		//the file of its mesh; filter: the sub meshes taken (by their index), none: all of them;
 		//false: no mesh, or it cannot be read
-		bool triangles(std::vector<Square::Vec3>& out, const std::function<bool(size_t submesh)>& filter = nullptr);
+		bool triangles(Vector<Square::Vec3>& out, const std::function<bool(size_t submesh)>& filter = nullptr);
 
 		//Renderable
 		virtual size_t materials_count() const override;
@@ -112,28 +112,28 @@ namespace Scene
 		//sphere of each instance
 		void build_local_box();
 		//the spheres of the instances in world space (again when the actor moved)
-		const std::vector<Square::Geometry::Sphere>& world_spheres();
+		const Vector<Square::Geometry::Sphere>& world_spheres();
 		//the instances in a frustum not hidden by an occlusion (none: nothing hidden; the last ones
 		//while they, the frustum and the actor stay)
-		const std::vector<Square::Mat4>& visible_instances(const Square::Geometry::Frustum& frustum, const Square::Render::SoftwareOcclusion* occlusion);
+		const Vector<Square::Mat4>& visible_instances(const Square::Geometry::Frustum& frustum, const Square::Render::SoftwareOcclusion* occlusion);
 
 		Square::Shared< Square::Resource::Mesh >                    m_mesh;
-		std::vector< Square::Shared< Square::Resource::Material > > m_materials;
-		std::vector< Square::Mat4 >                                 m_instances;
+		Vector< Square::Shared< Square::Resource::Material > > m_materials;
+		Vector< Square::Mat4 >                                 m_instances;
 		Square::Shared< Square::Render::ConstBuffer >               m_buffer;   //the matrices of a draw
-		std::vector< Square::Mat4 >                                 m_batch;    //... on the CPU (instances_max)
+		Vector< Square::Mat4 >                                 m_batch;    //... on the CPU (instances_max)
 		Square::Geometry::OBoundingBox                              m_mesh_box;
 		Square::Geometry::OBoundingBox                              m_obb_local;
 		Square::Geometry::OBoundingBox                              m_obb_global;
 		Square::Weak< Square::Render::Transform >                   m_transform;
 		bool                                                        m_obb_dirty{ true };
 		//the sphere of each instance: in the space of the actor, in world space
-		std::vector< Square::Geometry::Sphere >                     m_spheres_local;
-		std::vector< Square::Geometry::Sphere >                     m_spheres_world;
+		Vector< Square::Geometry::Sphere >                     m_spheres_local;
+		Vector< Square::Geometry::Sphere >                     m_spheres_world;
 		bool                                                        m_spheres_dirty{ true };
 		//the instances in the last frustum (its planes), still right while valid
-		std::vector< Square::Mat4 >                                 m_visible;
-		std::array< Square::Vec4, Square::Geometry::Frustum::N_PLANES > m_visible_planes;
+		Vector< Square::Mat4 >                                 m_visible;
+		Array< Square::Vec4, Square::Geometry::Frustum::N_PLANES > m_visible_planes;
 		const Square::Render::SoftwareOcclusion*                    m_visible_occlusion{ nullptr };
 		Square::uint64                                              m_visible_version{ 0 };
 		bool                                                        m_visible_valid{ false };

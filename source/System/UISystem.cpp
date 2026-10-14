@@ -124,7 +124,7 @@ namespace Square
 		auto* input_system = System::get<InputSystem>(context());
 		if (!render_system || !render_system->render() || !context().window()) return false;
 		//the backend of RmlUi (render, time, log)
-		m_backend = std::make_unique<UI::Backend>(context());
+		m_backend = MakeUniquePtr<UI::Backend>(context());
 		if (!m_backend->initialize())
 		{
 			context().logger()->warning("UI: unable to start the backend");
@@ -152,7 +152,7 @@ namespace Square
 		Rml::Debugger::Initialise(ui_context);
 		m_ui = UI::Context(context(), ui_context);
 		//the images of the textures of the engine (the thumbnails of the debug panel)
-		m_backend->external_textures([this](const std::string& source, IVec2& size) -> Render::Texture*
+		m_backend->external_textures([this](const String& source, IVec2& size) -> Render::Texture*
 		{
 			return m_debug_panel ? m_debug_panel->preview(source, size) : nullptr;
 		});
@@ -224,7 +224,7 @@ namespace Square
 #if defined(SQUARE_DEBUG_TOOLS)
 		if (!m_debug_panel && m_ui.valid())
 		{
-			m_debug_panel = std::make_unique<UI::DebugPanel>(context(), m_ui, m_debug_providers);
+			m_debug_panel = MakeUniquePtr<UI::DebugPanel>(context(), m_ui, m_debug_providers);
 		}
 #endif
 		return m_debug_panel.get();
@@ -260,7 +260,7 @@ namespace Square
 		return m_debug_panel_key;
 	}
 
-	void UISystem::debug_sections(const std::string& tab, const std::string& key, DebugSections sections)
+	void UISystem::debug_sections(const String& tab, const String& key, DebugSections sections)
 	{
 		auto it = std::find_if(m_debug_providers.begin(), m_debug_providers.end(), [&](const UI::DebugProvider& provider) { return provider.m_key == key; });
 		if (it != m_debug_providers.end())
@@ -278,7 +278,7 @@ namespace Square
 		}
 	}
 
-	void UISystem::remove_debug_sections(const std::string& key)
+	void UISystem::remove_debug_sections(const String& key)
 	{
 		m_debug_providers.erase(std::remove_if(m_debug_providers.begin(), m_debug_providers.end(), [&](const UI::DebugProvider& provider)
 		{

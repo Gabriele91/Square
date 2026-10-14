@@ -30,7 +30,7 @@ namespace Geometry
 
         // Default
         Frustum() = default;
-        Frustum(const std::array<Vec4,N_PLANES>& planes);
+        Frustum(const Array<Vec4,N_PLANES>& planes);
         
         //results
         enum TestingResult { OUTSIDE, INTERSECT, INSIDE };
@@ -50,7 +50,7 @@ namespace Geometry
         
     private:
         
-        std::array<Vec4, N_PLANES> m_planes;
+        Array<Vec4, N_PLANES> m_planes;
         
     };
 }

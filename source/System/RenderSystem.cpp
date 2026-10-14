@@ -41,9 +41,9 @@ namespace Square
 		{ RP_DEBUG,    "debug"    }
 	};
 
-	static std::string pipeline_to_string(unsigned int pipeline)
+	static String pipeline_to_string(unsigned int pipeline)
 	{
-		std::string names;
+		String names;
 		for (const auto& flag : s_pipeline_names)
 		{
 			if (!(pipeline & flag.first)) continue;
@@ -53,19 +53,19 @@ namespace Square
 		return names;
 	}
 
-	static unsigned int pipeline_from_string(const std::string& names)
+	static unsigned int pipeline_from_string(const String& names)
 	{
 		unsigned int pipeline = 0;
 		size_t start = 0;
 		while (start <= names.size())
 		{
 			size_t end = names.find('|', start);
-			if (end == std::string::npos) end = names.size();
+			if (end == String::npos) end = names.size();
 			//trim
 			size_t first = start, last = end;
 			while (first < last && std::isspace((unsigned char)names[first])) ++first;
 			while (last > first && std::isspace((unsigned char)names[last - 1])) --last;
-			const std::string name = names.substr(first, last - first);
+			const String name = names.substr(first, last - first);
 			for (const auto& flag : s_pipeline_names)
 			{
 				if (case_insensitive_equal(name, flag.second)) pipeline |= flag.first;
@@ -89,11 +89,11 @@ namespace Square
 	void RenderInstance::object_registration(Context& ctx)
 	{
 		//Attributes: the render settings of a world
-		ctx.add_attribute_function<RenderInstance, std::string>
+		ctx.add_attribute_function<RenderInstance, String>
 		("pipeline"
-		, std::string("deferred")
-		, [](const RenderInstance* instance) -> std::string { return pipeline_to_string(instance->pipeline()); }
-		, [](RenderInstance* instance, const std::string& pipeline) { instance->pipeline(pipeline_from_string(pipeline)); });
+		, String("deferred")
+		, [](const RenderInstance* instance) -> String { return pipeline_to_string(instance->pipeline()); }
+		, [](RenderInstance* instance, const String& pipeline) { instance->pipeline(pipeline_from_string(pipeline)); });
 		ctx.add_attribute_function<RenderInstance, bool>
 		("shadows"
 		, true
@@ -123,8 +123,8 @@ namespace Square
 		{
 			if (const char* off = std::getenv("SQUARE_DRIVER_CAPS_OFF"))
 			{
-				std::stringstream list(off);
-				for (std::string capability; std::getline(list, capability, ',');)
+				StringStream list(off);
+				for (String capability; std::getline(list, capability, ',');)
 				{
 					if (capability == "geometry")
 					{
@@ -139,7 +139,7 @@ namespace Square
 						info.m_draw_instanced = false;
 					}
 				}
-				context.logger()->warning(std::string("RenderSystem: capabilities of the driver off: ") + off);
+				context.logger()->warning(String("RenderSystem: capabilities of the driver off: ") + off);
 			}
 		}
 	}
@@ -163,19 +163,19 @@ namespace Square
 	{
 		//<app data>/square/shader_cache: the files not used for a month gone
 		static constexpr int s_unused_days = 30;
-		const std::string square = Filesystem::join(Filesystem::app_data_dir(), "square");
-		const std::string root = Filesystem::join(square, "shader_cache");
+		const String square = Filesystem::join(Filesystem::app_data_dir(), "square");
+		const String root = Filesystem::join(square, "shader_cache");
 		const bool made = (Filesystem::exists(square) || Filesystem::makedir(square))
 		               && (Filesystem::exists(root) || Filesystem::makedir(root));
 		if (made)
 		{
 			if (const size_t removed = Resource::ShaderCache::prune(root, s_unused_days))
 			{
-				context().logger()->info("RenderSystem: " + std::to_string(removed) + " files of the shader cache not used for " + std::to_string(s_unused_days) + " days removed");
+				context().logger()->info("RenderSystem: " + to_string(removed) + " files of the shader cache not used for " + to_string(s_unused_days) + " days removed");
 			}
 			//the translations (by language), the binaries of the driver (its language)
 			m_shader_cache.folder(Filesystem::join(root, "translated"));
-			const std::string driver = Filesystem::join(root, m_render->get_render_driver_info().m_shader_language);
+			const String driver = Filesystem::join(root, m_render->get_render_driver_info().m_shader_language);
 			if (Filesystem::exists(driver) || Filesystem::makedir(driver))
 			{
 				m_render->shader_cache(driver);
@@ -186,7 +186,7 @@ namespace Square
 			context().logger()->warning("RenderSystem: no shader cache (unable to make " + root + ")");
 		}
 		//the pack (tools/ShaderPack: the shaders of a Retail build), if there is
-		const std::string pack = Filesystem::join(Filesystem::resource_dir(), "shaders.sqz");
+		const String pack = Filesystem::join(Filesystem::resource_dir(), "shaders.sqz");
 		if (Filesystem::exists(pack))
 		{
 			m_shader_cache.pack(pack);
@@ -339,11 +339,11 @@ namespace Square
 		return m_ready;
 	}
 
-	std::vector< Shared<RenderInstance> > RenderSystem::instances()
+	Vector< Shared<RenderInstance> > RenderSystem::instances()
 	{
 		//worlds gone
 		m_instances.erase(std::remove_if(m_instances.begin(), m_instances.end(), [](const Weak<RenderInstance>& instance) { return instance.expired(); }), m_instances.end());
-		std::vector< Shared<RenderInstance> > alive;
+		Vector< Shared<RenderInstance> > alive;
 		for (const Weak<RenderInstance>& weak_instance : m_instances)
 		{
 			if (auto instance = weak_instance.lock()) alive.push_back(instance);
@@ -481,13 +481,13 @@ namespace Square
 		if (m_drawer) m_drawer->post_effects(m_post_effects);
 	}
 
-	void RenderInstance::post_effects(const std::vector< Shared<Render::PostEffect> >& effects)
+	void RenderInstance::post_effects(const Vector< Shared<Render::PostEffect> >& effects)
 	{
 		m_post_effects = effects;
 		if (m_drawer) m_drawer->post_effects(m_post_effects);
 	}
 
-	const std::vector< Shared<Render::PostEffect> >& RenderInstance::post_effects() const
+	const Vector< Shared<Render::PostEffect> >& RenderInstance::post_effects() const
 	{
 		return m_post_effects;
 	}

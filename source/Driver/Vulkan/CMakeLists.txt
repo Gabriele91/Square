@@ -14,6 +14,8 @@ set(VMA_DIR ${SQUARE_ROOT_DIR}/dependencies/VulkanMemoryAllocator/include)
 # Define source files
 set(SOURCE_FILES
     ${SQUARE_ROOT_DIR}/source/Core/Allocator/MemoryOperators.cpp
+    ${SQUARE_ROOT_DIR}/source/Core/Container/String.cpp
+    AllocationVK.cpp
     InterfaceVK.cpp
     RenderVK.cpp
     ResourcesVK.cpp
@@ -29,6 +31,7 @@ endif()
 
 # Define header files
 set(HEADER_FILES
+    AllocationVK.h
     Interface.h
     RenderVK.h
     SpirvReflection.h

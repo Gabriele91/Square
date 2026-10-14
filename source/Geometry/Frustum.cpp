@@ -11,7 +11,7 @@ namespace Square
 namespace Geometry
 {
 	// Contrusctor
-    Frustum::Frustum(const std::array<Vec4,N_PLANES>& planes)
+    Frustum::Frustum(const Array<Vec4,N_PLANES>& planes)
 	: m_planes(planes)
 	{
 

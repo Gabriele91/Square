@@ -20,7 +20,7 @@ namespace InstanceGroups
         struct Group
         {
             Shared<StaticMesh>    m_first;
-            std::vector<Mat4>     m_models;
+            Square::Vector<Mat4>     m_models;
             ActorList             m_nodes;
             bool                  m_static{ false };
             bool                  m_cast_shadow{ true };
@@ -45,9 +45,9 @@ namespace InstanceGroups
 
         //the children of a node by their mesh and their shadow (cast or not: a group each)
         using GroupKey = std::pair<const void*, bool>;
-        std::map<GroupKey, Group> groups_of(const Shared<Actor>& node)
+        Square::Map<GroupKey, Group> groups_of(const Shared<Actor>& node)
         {
-            std::map<GroupKey, Group> groups;
+            Square::Map<GroupKey, Group> groups;
             const Mat4 to_node = inverse(node->global_model_matrix());
             //(a copy: the children change)
             const ActorList children = node->childs();
@@ -74,7 +74,7 @@ namespace InstanceGroups
         //a group: its node of instances under the node, its copies gone
         void instance(Context& context, const Shared<Actor>& node, Group& group, size_t index)
         {
-            auto instances = MakeShared<Actor>(context, "instances_" + std::to_string(index));
+            auto instances = MakeShared<Actor>(context, "instances_" + Square::to_string(index));
             instances->set_static(group.m_static);
             auto instanced = instances->component<InstancedMesh>();
             instanced->mesh(group.m_first->m_mesh, group.m_first->m_materials);

@@ -53,7 +53,7 @@ namespace Render
 		//it draws only with the deferred pipeline (its G-Buffer)
 		virtual bool active(const PostEffectFrame& frame) const override { return frame.m_gbuffer && frame.m_camera; }
 		virtual void draw(PostEffectFrame& frame) override;
-		virtual void debug_options(std::vector<DebugOption>& options) override;
+		virtual void debug_options(Vector<DebugOption>& options) override;
 
 	protected:
 		virtual void on_release() override;

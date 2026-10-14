@@ -45,7 +45,7 @@ namespace Navigation
 
 		//the grid over min/max (x, z) of triangles (world space, 3 vertices each); false: nothing
 		//walkable
-		bool build(const std::vector<Vec3>& triangles, const Vec3& min, const Vec3& max, const Settings& settings);
+		bool build(const Vector<Vec3>& triangles, const Vec3& min, const Vec3& max, const Settings& settings);
 		//the grid of the geometry of an actor and its children (the triangles of their static
 		//meshes, world space; e.g. a navmesh made in an editor: the walkable area, the holes of
 		//the obstacles), over its bounds; false: nothing walkable
@@ -65,7 +65,7 @@ namespace Navigation
 		bool line_of_sight(const Vec3& from, const Vec3& to) const;
 		//a path from a point to another (both moved to the nearest walkable point), its points on
 		//the floor, smoothed (the first: from); false: no path
-		bool find_path(const Vec3& from, const Vec3& to, std::vector<Vec3>& path) const;
+		bool find_path(const Vec3& from, const Vec3& to, Vector<Vec3>& path) const;
 
 		//size of the grid (cells), a cell
 		int width() const { return m_width; }
@@ -95,7 +95,7 @@ namespace Navigation
 		Vec3              m_min{ 0.0f };
 		int               m_width{ 0 };
 		int               m_height{ 0 };
-		std::vector<Cell> m_cells;
+		Vector<Cell> m_cells;
 	};
 }
 }

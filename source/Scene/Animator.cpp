@@ -24,7 +24,7 @@ namespace Scene
 
 		//the key before a time (the last one at or before it) and the share of the way to the
 		//next one; one key, or before the first: the first, after the last: the last
-		static size_t key_at(const std::vector<float>& times, float time, float& share, float& span)
+		static size_t key_at(const Vector<float>& times, float time, float& share, float& span)
 		{
 			share = 0.0f;
 			span = 0.0f;
@@ -124,14 +124,14 @@ namespace Scene
 	void Animator::object_registration(Square::Context& ctx)
 	{
 		ctx.add_object<Animator>();
-		packed_attribute< std::vector<std::string>, &Packed::m_clip_names >(ctx, "clip_names");
-		packed_attribute< std::vector<float>, &Packed::m_clip_durations >(ctx, "clip_durations");
-		packed_attribute< std::vector<int>, &Packed::m_clip_channels >(ctx, "clip_channels");
-		packed_attribute< std::vector<std::string>, &Packed::m_channel_targets >(ctx, "channel_targets");
-		packed_attribute< std::vector<int>, &Packed::m_channel_kinds >(ctx, "channel_kinds");
-		packed_attribute< std::vector<int>, &Packed::m_channel_keys >(ctx, "channel_keys");
-		packed_attribute< std::vector<float>, &Packed::m_key_times >(ctx, "key_times");
-		packed_attribute< std::vector<Vec4>, &Packed::m_key_values >(ctx, "key_values");
+		packed_attribute< Vector<String>, &Packed::m_clip_names >(ctx, "clip_names");
+		packed_attribute< Vector<float>, &Packed::m_clip_durations >(ctx, "clip_durations");
+		packed_attribute< Vector<int>, &Packed::m_clip_channels >(ctx, "clip_channels");
+		packed_attribute< Vector<String>, &Packed::m_channel_targets >(ctx, "channel_targets");
+		packed_attribute< Vector<int>, &Packed::m_channel_kinds >(ctx, "channel_kinds");
+		packed_attribute< Vector<int>, &Packed::m_channel_keys >(ctx, "channel_keys");
+		packed_attribute< Vector<float>, &Packed::m_key_times >(ctx, "key_times");
+		packed_attribute< Vector<Vec4>, &Packed::m_key_values >(ctx, "key_values");
 		ctx.add_attribute_function<Animator, float>
 			("speed"
 			, 1.0f
@@ -153,14 +153,14 @@ namespace Scene
 	{
 	}
 
-	void Animator::clips(const std::vector<Clip>& clips)
+	void Animator::clips(const Vector<Clip>& clips)
 	{
 		m_clips = clips;
 		m_tracks.clear();
 		m_targets_found = false;
 	}
 
-	int Animator::clip_id(const std::string& name) const
+	int Animator::clip_id(const String& name) const
 	{
 		int id = -1;
 		for (size_t i = 0; i < m_clips.size() && id < 0; ++i)
@@ -191,7 +191,7 @@ namespace Scene
 		return const_cast<Animator*>(this)->track(clip);
 	}
 
-	bool Animator::play(const std::string& name, bool loop, float speed)
+	bool Animator::play(const String& name, bool loop, float speed)
 	{
 		const int id = clip_id(name);
 		if (id >= 0)
@@ -219,7 +219,7 @@ namespace Scene
 		}
 	}
 
-	void Animator::stop(const std::string& name)
+	void Animator::stop(const String& name)
 	{
 		const int id = clip_id(name);
 		m_tracks.erase
@@ -234,21 +234,21 @@ namespace Scene
 		m_tracks.clear();
 	}
 
-	bool Animator::playing(const std::string& name) const
+	bool Animator::playing(const String& name) const
 	{
 		const int id = clip_id(name);
 		const Track* played = id >= 0 ? track(size_t(id)) : nullptr;
 		return played && !played->m_ended;
 	}
 
-	float Animator::time(const std::string& name) const
+	float Animator::time(const String& name) const
 	{
 		const int id = clip_id(name);
 		const Track* played = id >= 0 ? track(size_t(id)) : nullptr;
 		return played ? played->m_time : 0.0f;
 	}
 
-	void Animator::time(const std::string& name, float time)
+	void Animator::time(const String& name, float time)
 	{
 		const int id = clip_id(name);
 		if (Track* played = id >= 0 ? track(size_t(id)) : nullptr)
@@ -265,7 +265,7 @@ namespace Scene
 		m_targets.reserve(m_clips.size());
 		for (const auto& clip : m_clips)
 		{
-			std::vector< Weak<Actor> > targets;
+			Vector< Weak<Actor> > targets;
 			targets.reserve(clip.m_channels.size());
 			for (const auto& channel : clip.m_channels)
 			{
@@ -379,7 +379,7 @@ namespace Scene
 
 	void Animator::unpack(const Packed& packed)
 	{
-		std::vector<Clip> clips;
+		Vector<Clip> clips;
 		size_t channel_id = 0;
 		size_t time_id = 0;
 		size_t value_id = 0;

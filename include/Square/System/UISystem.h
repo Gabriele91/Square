@@ -61,8 +61,8 @@ namespace UI
 		bool debug_panel_key() const;
 		//the sections a game gives to a tab of it (an engine tab: "Pipeline", "Debug draw", "UI",
 		//or a tab of its own), by a key (given again: replaced); asked when the panel is made
-		void debug_sections(const std::string& tab, const std::string& key, DebugSections sections);
-		void remove_debug_sections(const std::string& key);
+		void debug_sections(const String& tab, const String& key, DebugSections sections);
+		void remove_debug_sections(const String& key);
 
 		//the render profiler (Render/Profiler.h) on, the debug panel shown with it. Without
 		//RENDER_PROFILER (no profiler) it is never on
@@ -87,9 +87,9 @@ namespace UI
 		//RenderOverlay
 		virtual void draw_overlay(Render::Context& render) override;
 
-		std::unique_ptr<UI::Backend>       m_backend;
-		std::unique_ptr<UI::DebugPanel>    m_debug_panel;
-		std::vector<UI::DebugProvider>     m_debug_providers;
+		UniquePtr<UI::Backend>       m_backend;
+		UniquePtr<UI::DebugPanel>    m_debug_panel;
+		Vector<UI::DebugProvider>     m_debug_providers;
 		bool                               m_debug_panel_key{ true };
 		//the debug panel, made the first time it is needed (nullptr: no UI)
 		UI::DebugPanel* debug_panel_instance();

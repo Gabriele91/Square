@@ -63,7 +63,7 @@ namespace Geometry
 		// Calculate eigenvectors using power iteration method
 		Mat3 calculate_eigenvectors(const Mat3& cov)
 		{
-			std::vector<Vec3> eigenbasis;
+			Vector<Vec3> eigenbasis;
 			eigenbasis.reserve(3);
 
 			// Find dominant eigenvector
@@ -110,9 +110,9 @@ namespace Geometry
 		}
 
 		// Rotate points by a rotation matrix
-		std::vector<Vec3> rotate_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points, const Mat3& rot_matrix)
+		Vector<Vec3> rotate_points(const unsigned char* points, size_t pos_offset, size_t vertex_size, size_t n_points, const Mat3& rot_matrix)
 		{
-			std::vector<Vec3> rotated_points;
+			Vector<Vec3> rotated_points;
 			rotated_points.reserve(n_points);
 			for (size_t i = 0; i < n_points; ++i)
 			{
@@ -122,7 +122,7 @@ namespace Geometry
 		}
 
 		// Find min and max bounds of a set of 3D points
-		std::pair<Vec3, Vec3> find_bounds(const std::vector<Vec3>& points) 
+		std::pair<Vec3, Vec3> find_bounds(const Vector<Vec3>& points) 
 		{
 			Vec3 min_bound = points[0];
 			Vec3 max_bound = points[0];
@@ -138,7 +138,7 @@ namespace Geometry
 		#undef att_vertex
 	}
 
-	OBoundingBox obounding_box_from_points(const std::vector< Vec3 >& points)
+	OBoundingBox obounding_box_from_points(const Vector< Vec3 >& points)
 	{
 		return obounding_box_from_points((const unsigned char*)points.data(), 0, sizeof(Vec3), points.size());
 	}
@@ -158,7 +158,7 @@ namespace Geometry
 		Mat3 rot_matrix = transpose(eigenvectors);
 
 		// Rotate points to align with principal axes
-		std::vector<Vec3> rotated_points = OBBAux::rotate_points(points, pos_offset, vertex_size, n_points, rot_matrix);
+		Vector<Vec3> rotated_points = OBBAux::rotate_points(points, pos_offset, vertex_size, n_points, rot_matrix);
 
 		// Find min and max along rotated axes
 		auto [min_bound, max_bound] = OBBAux::find_bounds(rotated_points);
@@ -177,7 +177,7 @@ namespace Geometry
 		return OBoundingBox{ world_rotation, world_center, half_size };
 	}
 
-    AABoundingBox aabounding_from_points(const std::vector< Vec3 >& points)
+    AABoundingBox aabounding_from_points(const Vector< Vec3 >& points)
     {
         return aabounding_from_points((const unsigned char*)points.data(), 0, sizeof(Vec3), points.size());
     }
@@ -206,7 +206,7 @@ namespace Geometry
         
     }
     
-	Sphere sphere_from_points(const std::vector< Vec3 >& points)
+	Sphere sphere_from_points(const Vector< Vec3 >& points)
 	{
 		return sphere_from_points((const unsigned char*)points.data(), 0, sizeof(Vec3), points.size());
 	}

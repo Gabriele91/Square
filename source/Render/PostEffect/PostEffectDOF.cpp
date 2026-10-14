@@ -119,7 +119,7 @@ namespace Render
 		if (auto u = shader.uniform("dof_motion")) u->set(Vec4(motion, m_settings.motion_from, std::max(m_settings.motion_to, m_settings.motion_from + 0.001f), 0.0f));
 	}
 
-	void DOF::debug_options(std::vector<DebugOption>& options)
+	void DOF::debug_options(Vector<DebugOption>& options)
 	{
 		options.push_back(DebugOption::choice("Resolution", { "Full", "Half", "Quarter" },
 			[this]() { return int(m_settings.resolution); },

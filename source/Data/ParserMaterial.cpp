@@ -23,9 +23,9 @@ namespace Parser
 	}
 	//////////////////////////////////////////////////////
 	// Context
-	std::string Material::Context::errors_to_string() const
+	String Material::Context::errors_to_string() const
 	{
-		std::stringstream sbuffer;
+		StringStream sbuffer;
 
 		for (auto& error : m_errors)
 		{
@@ -35,7 +35,7 @@ namespace Parser
 		return sbuffer.str();
 	}
 	//////////////////////////////////////////////////////
-	bool Material::parse(Allocator* allocator, Context& default_context, const std::string& source)
+	bool Material::parse(Allocator* allocator, Context& default_context, const String& source)
 	{
 		const char* source_ptr = source.c_str();
 		return parse(allocator, default_context, source_ptr);
@@ -86,7 +86,7 @@ namespace Parser
 		//skip spaces
 		skip_space_and_comments(m_context->m_line, ptr);
 		//name technique
-		std::string effect_name;
+		String effect_name;
 		//get name
 		if (!parse_string(m_context->m_line, ptr, effect_name))
 		{
@@ -121,7 +121,7 @@ namespace Parser
 		return success;
 	}
 	//////////////////////////////////////////////////////
-	void Material::push_error(const std::string& error)
+	void Material::push_error(const String& error)
 	{
 		m_context->m_errors.push_front(ErrorField{ m_context->m_line,error });
 	}

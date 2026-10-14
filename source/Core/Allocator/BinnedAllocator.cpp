@@ -350,6 +350,25 @@ namespace AuxBinnedAllocator
 		}
 	}
 
+	void* BinnedAllocator::reallocate(void* ptr, size_t size)
+	{
+		if (!ptr) return allocate(size);
+		if (owns(ptr))
+		{
+			//its block big enough: the same one
+			const size_t old_size = block_size(ptr);
+			if (size <= old_size) return ptr;
+			void* out = allocate(size);
+			if (!out) return nullptr;
+			std::memcpy(out, ptr, old_size);
+			bin_deallocate(ptr);
+			return out;
+		}
+		//a block of malloc (not one with an offset of its alignment: alloc)
+		square_assert_debug(!m_registered.load(std::memory_order_relaxed) || m_registry->m_blocks.find(ptr) == m_registry->m_blocks.end());
+		return std::realloc(ptr, size ? size : 1);
+	}
+
 	void* BinnedAllocator::registered_allocate(size_t size, size_t align, size_t align_offset)
 	{
 		if (!m_registry) return nullptr;

@@ -16,7 +16,7 @@ namespace Render
     GBuffer::GBuffer(Square::Context& context)
     : Object(context) {}
     
-    GBuffer::GBuffer(Square::Context& context, const IVec2& size, const std::vector<BufferFormat>& buffer_list, bool cpu_access)
+    GBuffer::GBuffer(Square::Context& context, const IVec2& size, const Vector<BufferFormat>& buffer_list, bool cpu_access)
     : Object(context)
     {
         build(size, buffer_list, cpu_access);
@@ -24,7 +24,7 @@ namespace Render
 
     GBuffer::~GBuffer(){ destoy(); }
 
-    bool GBuffer::build( const IVec2& size, const std::vector<BufferFormat>& buffer_list, bool cpu_access )
+    bool GBuffer::build( const IVec2& size, const Vector<BufferFormat>& buffer_list, bool cpu_access )
     {
         //delete if target
         if(m_target) destoy();
@@ -34,7 +34,7 @@ namespace Render
             //save size
             m_size = size;
             //type of texture
-            std::vector<TargetField> targets;
+            Vector<TargetField> targets;
             //create textures
             for (unsigned int i = 0; i != buffer_list.size(); i++)
             {

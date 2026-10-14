@@ -27,11 +27,11 @@ namespace Scene
 	{
 		//no factory: a level is created by its world (World::level)
 		//Attributes
-		ctx.add_attribute_field<Level, std::string>("name", std::string(), offsetof(Level,m_name));
+		ctx.add_attribute_field<Level, String>("name", String(), offsetof(Level,m_name));
 	}
 
 	//constructor
-	Level::Level(Context& context, Weak<World> world, const std::string& name)
+	Level::Level(Context& context, Weak<World> world, const String& name)
 	: Object(context)
 	, SharedObject_t(context.allocator())
 	, m_name(name)
@@ -117,7 +117,7 @@ namespace Scene
 		m_actors.push_back(actor);
 		actor->level(this->shared_from_this());
 	}
-	Shared<Actor> Level::load_actor(const std::string& resource_name)
+	Shared<Actor> Level::load_actor(const String& resource_name)
 	{
 		//an actor in the level is an instance: a new one from the file of the resource every time
 		//(the cache of the resources would give back the same actor, moved here again)
@@ -169,7 +169,7 @@ namespace Scene
 	{
 		return m_actors.size() ? m_actors[index] : nullptr;
 	}
-	Shared<Actor> Level::actor(const std::string& name)
+	Shared<Actor> Level::actor(const String& name)
 	{
 		//search
 		for (auto actor : m_actors) if (actor->name() == name) return actor;
@@ -187,7 +187,7 @@ namespace Scene
 	}
 
 	//search
-	Shared<Actor> Level::find_actor(const std::string& path_names)
+	Shared<Actor> Level::find_actor(const String& path_names)
 	{
 		//fail
 		if (!path_names.size()) return nullptr;
@@ -198,7 +198,7 @@ namespace Scene
 		//ptr
 		const char* ptr = path_names.c_str();
 		//ptr name
-		std::string name;
+		String name;
 		//pre alloc
 		name.reserve(path_names.size());
 		//bool found!
@@ -263,11 +263,11 @@ namespace Scene
 	}
 
 	//name
-	const std::string& Level::name() const
+	const String& Level::name() const
 	{
 		return m_name;
 	}
-	void Level::name(const std::string& name)
+	void Level::name(const String& name)
 	{
 		m_name = name;
 	}

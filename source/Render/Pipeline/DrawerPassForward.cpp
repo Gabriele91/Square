@@ -129,7 +129,7 @@ namespace Render
     bool DrawerPassForward::build_frame(const IVec2& size)
     {
         if (m_frame && m_frame->size() == size) return m_frame->target() != nullptr;
-        m_frame = MakeShared<GBuffer>(context(), size, std::vector<GBuffer::BufferFormat>
+        m_frame = MakeShared<GBuffer>(context(), size, Vector<GBuffer::BufferFormat>
         {
             GBuffer::BufferFormat(TF_RGBA16F, TT_RGBA, TTF_FLOAT, RT_COLOR),
             //same depth format as the screen: it is copied there after the post effects

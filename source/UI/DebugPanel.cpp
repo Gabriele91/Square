@@ -39,7 +39,7 @@ namespace UI
 		static const char* s_ui = "UI";
 
 		//the name of a format of a texture
-		static std::string format_name(Render::TextureFormat format)
+		static String format_name(Render::TextureFormat format)
 		{
 			switch (format)
 			{
@@ -66,15 +66,15 @@ namespace UI
 			case Render::TF_BC4: return "BC4";
 			case Render::TF_BC5: return "BC5";
 			case Render::TF_ASTC_4x4: return "ASTC 4x4";
-			default: return "format " + std::to_string(int(format));
+			default: return "format " + to_string(int(format));
 			}
 		}
 
 		//the textures of the driver of a kind (0: render targets, 1: shadow maps: depth, arrays,
 		//cubes, 2: images), not the ones of the thumbnails; none without the registry
-		static std::vector<TexturePreviews::Item> textures_of(Square::Context& context, int kind, const TexturePreviews& previews)
+		static Vector<TexturePreviews::Item> textures_of(Square::Context& context, int kind, const TexturePreviews& previews)
 		{
-			std::vector<TexturePreviews::Item> items;
+			Vector<TexturePreviews::Item> items;
 			auto* render_system = System::get<RenderSystem>(context);
 			Render::RenderInspector* inspector = render_system && render_system->render() ? render_system->render()->inspector() : nullptr;
 			if (inspector)
@@ -102,9 +102,9 @@ namespace UI
 		}
 
 		//a text in RML (its markup characters escaped)
-		static std::string escape(const std::string& text)
+		static String escape(const String& text)
 		{
-			std::string out;
+			String out;
 			out.reserve(text.size());
 			for (char c : text)
 			{
@@ -121,11 +121,11 @@ namespace UI
 		}
 
 		//the markup of an option, its control "o<id>"
-		static std::string option_rml(const DebugOption& option, size_t id)
+		static String option_rml(const DebugOption& option, size_t id)
 		{
-			const std::string control = "o" + std::to_string(id);
-			const std::string name = "<span class=\"name\">" + escape(option.m_name) + "</span>";
-			std::string rml;
+			const String control = "o" + to_string(id);
+			const String name = "<span class=\"name\">" + escape(option.m_name) + "</span>";
+			String rml;
 			switch (option.m_type)
 			{
 			case DebugOption::Type::TOGGLE:
@@ -136,7 +136,7 @@ namespace UI
 				rml = name + "<select id=\"" + control + "\">";
 				for (size_t i = 0; i != option.m_choices.size(); ++i)
 				{
-					rml += "<option value=\"" + std::to_string(i) + "\">" + escape(option.m_choices[i]) + "</option>";
+					rml += "<option value=\"" + to_string(i) + "\">" + escape(option.m_choices[i]) + "</option>";
 				}
 				rml += "</select>";
 			}
@@ -169,20 +169,20 @@ namespace UI
 			if (option.m_text)
 			{
 				auto text = option.m_text;
-				option.m_text = [owner, text]() { return owner.lock() ? text() : std::string(); };
+				option.m_text = [owner, text]() { return owner.lock() ? text() : String(); };
 			}
 		}
 
 		//the name of a world among more of them ("" if it is the only one)
-		static std::string world_prefix(size_t index, size_t count)
+		static String world_prefix(size_t index, size_t count)
 		{
-			return count > 1 ? "World " + std::to_string(index + 1) + ": " : std::string();
+			return count > 1 ? "World " + to_string(index + 1) + ": " : String();
 		}
 
 		//the render system's worlds alive
-		static std::vector< Shared<RenderInstance> > worlds(Square::Context& context)
+		static Vector< Shared<RenderInstance> > worlds(Square::Context& context)
 		{
-			std::vector< Shared<RenderInstance> > instances;
+			Vector< Shared<RenderInstance> > instances;
 			if (auto* render_system = System::get<RenderSystem>(context))
 			{
 				instances = render_system->instances();
@@ -191,9 +191,9 @@ namespace UI
 		}
 
 		//the direction lights of a world
-		static std::vector< Shared<Scene::DirectionLight> > direction_lights(const RenderInstance& world)
+		static Vector< Shared<Scene::DirectionLight> > direction_lights(const RenderInstance& world)
 		{
-			std::vector< Shared<Scene::DirectionLight> > lights;
+			Vector< Shared<Scene::DirectionLight> > lights;
 			for (const Weak<Render::Light>& weak_light : world.collection().m_lights)
 			{
 				if (auto light = DynamicPointerCast<Scene::DirectionLight>(weak_light.lock()))
@@ -205,12 +205,12 @@ namespace UI
 		}
 	}
 
-	DebugPanel::DebugPanel(Square::Context& context, UI::Context& ui, const std::vector<DebugProvider>& providers)
+	DebugPanel::DebugPanel(Square::Context& context, UI::Context& ui, const Vector<DebugProvider>& providers)
 	: m_context(context)
 	, m_ui(ui)
 	, m_providers(providers)
-	, m_profiler(std::make_unique<ProfilerPanel>(context))
-	, m_previews(std::make_unique<TexturePreviews>(context))
+	, m_profiler(MakeUniquePtr<ProfilerPanel>(context))
+	, m_previews(MakeUniquePtr<TexturePreviews>(context))
 	{
 	}
 
@@ -231,7 +231,7 @@ namespace UI
 			made = m_content.valid();
 			if (!made)
 			{
-				m_context.logger()->warning("UI: unable to load the debug panel " + std::string(AuxDebugPanel::s_debug_rml));
+				m_context.logger()->warning("UI: unable to load the debug panel " + String(AuxDebugPanel::s_debug_rml));
 			}
 			m_dirty = true;
 		}
@@ -275,10 +275,10 @@ namespace UI
 		m_dirty = true;
 	}
 
-	std::string DebugPanel::signature() const
+	String DebugPanel::signature() const
 	{
 		using namespace AuxDebugPanel;
-		std::ostringstream out;
+		OStringStream out;
 		for (const Shared<RenderInstance>& world : worlds(m_context))
 		{
 			out << world.get() << '/' << world->debug_pass().get() << '/';
@@ -291,10 +291,10 @@ namespace UI
 		return out.str();
 	}
 
-	std::vector<DebugPanel::Tab> DebugPanel::tabs()
+	Vector<DebugPanel::Tab> DebugPanel::tabs()
 	{
 		using namespace AuxDebugPanel;
-		std::vector<Tab> list;
+		Vector<Tab> list;
 		list.push_back({ s_profiler, {} });
 		list.push_back({ s_pipeline, {} });
 		list.push_back({ s_draw, {} });
@@ -338,8 +338,8 @@ namespace UI
 		m_controls.clear();
 		m_captions.clear();
 		m_profiler->detach();
-		const std::vector<Tab> list = tabs();
-		std::string rml = "<tabset id=\"debug_tabs\">";
+		const Vector<Tab> list = tabs();
+		String rml = "<tabset id=\"debug_tabs\">";
 		m_textures_tab = -1;
 		for (const Tab& tab : list)
 		{
@@ -362,7 +362,7 @@ namespace UI
 				for (const DebugOption& option : section.m_options)
 				{
 					rml += option_rml(option, m_controls.size());
-					m_controls.push_back({ option, Element(), -1, std::string() });
+					m_controls.push_back({ option, Element(), -1, String() });
 				}
 				rml += "</div>";
 			}
@@ -373,7 +373,7 @@ namespace UI
 				for (size_t slot = 0; slot != TexturePreviews::slots; ++slot)
 				{
 					rml += "<div class=\"thumb\"><img src=\"" + TexturePreviews::source(slot) + "\"/>"
-					       "<div class=\"caption\" id=\"tc" + std::to_string(slot) + "\"></div></div>";
+					       "<div class=\"caption\" id=\"tc" + to_string(slot) + "\"></div></div>";
 				}
 				rml += "</div>";
 				//the pages: back and forth
@@ -391,13 +391,13 @@ namespace UI
 		//the controls, their events
 		for (size_t i = 0; i != m_controls.size(); ++i)
 		{
-			m_controls[i].m_element = m_document.find("o" + std::to_string(i));
+			m_controls[i].m_element = m_document.find("o" + to_string(i));
 			bind(m_controls[i]);
 		}
 		m_profiler->attach(m_document);
 		for (size_t slot = 0; slot != TexturePreviews::slots; ++slot)
 		{
-			m_captions.push_back(m_document.find("tc" + std::to_string(slot)));
+			m_captions.push_back(m_document.find("tc" + to_string(slot)));
 		}
 		//the arrows of the pages of the textures
 		m_page_label = m_document.find("tp_page");
@@ -444,7 +444,7 @@ namespace UI
 				element.on(EventType::CHANGE, [this, index](Event& event)
 				{
 					Control& changed = m_controls[index];
-					const std::string text = event.value();
+					const String text = event.value();
 					const int value = text.empty() ? changed.m_shown : std::atoi(text.c_str());
 					if (value != changed.m_shown && changed.m_option.m_set)
 					{
@@ -493,13 +493,13 @@ namespace UI
 				if (value != control.m_shown)
 				{
 					control.m_shown = value;
-					control.m_element.set_attribute("value", std::to_string(value));
+					control.m_element.set_attribute("value", to_string(value));
 				}
 			}
 			break;
 			case DebugOption::Type::TEXT:
 			{
-				const std::string text = control.m_option.m_text ? control.m_option.m_text() : std::string();
+				const String text = control.m_option.m_text ? control.m_option.m_text() : String();
 				if (text != control.m_text)
 				{
 					control.m_text = text;
@@ -533,16 +533,16 @@ namespace UI
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	//the sections of the engine
-	void DebugPanel::pipeline_sections(std::vector<DebugSection>& sections) const
+	void DebugPanel::pipeline_sections(Vector<DebugSection>& sections) const
 	{
 		using namespace AuxDebugPanel;
-		const std::vector< Shared<RenderInstance> > instances = worlds(m_context);
+		const Vector< Shared<RenderInstance> > instances = worlds(m_context);
 		for (size_t w = 0; w != instances.size(); ++w)
 		{
 			const Shared<RenderInstance>& world = instances[w];
 			const Weak<RenderInstance> weak_world = world;
 			RenderInstance* raw = world.get();
-			const std::string prefix = world_prefix(w, instances.size());
+			const String prefix = world_prefix(w, instances.size());
 			//its render
 			DebugSection render{ prefix + "Render", {} };
 			render.m_options.push_back(DebugOption::toggle("Shadows",
@@ -564,7 +564,7 @@ namespace UI
 			{
 				const Weak<Scene::DirectionLight> weak_light = light;
 				Scene::DirectionLight* sun = light.get();
-				std::string name = "Light";
+				String name = "Light";
 				if (auto actor = light->actor().lock())
 				{
 					name = "Light " + actor->name();
@@ -605,17 +605,17 @@ namespace UI
 	namespace AuxDebugPanel
 	{
 		//the kinds of the loads, the slowest first
-		static std::vector< std::pair<std::string, Square::BaseContext::ResourceLoadStat> > load_kinds(const Square::Context& context)
+		static Vector< std::pair<String, Square::BaseContext::ResourceLoadStat> > load_kinds(const Square::Context& context)
 		{
 			const auto& stats = context.resource_load_stats();
-			std::vector< std::pair<std::string, Square::BaseContext::ResourceLoadStat> > kinds(stats.begin(), stats.end());
+			Vector< std::pair<String, Square::BaseContext::ResourceLoadStat> > kinds(stats.begin(), stats.end());
 			std::sort(kinds.begin(), kinds.end(), [](const auto& a, const auto& b) { return a.second.m_ms > b.second.m_ms; });
 			return kinds;
 		}
 
-		static std::string milliseconds(double ms)
+		static String milliseconds(double ms)
 		{
-			std::ostringstream text;
+			OStringStream text;
 			text << std::fixed << std::setprecision(1) << ms << " ms";
 			return text.str();
 		}
@@ -623,7 +623,7 @@ namespace UI
 
 #endif
 
-	void DebugPanel::loading_sections(std::vector<DebugSection>& sections) const
+	void DebugPanel::loading_sections(Vector<DebugSection>& sections) const
 	{
 #if defined(SQUARE_DEBUG_TOOLS)
 		using namespace AuxDebugPanel;
@@ -638,20 +638,20 @@ namespace UI
 				ms += kind.second.m_ms;
 				count += kind.second.m_count;
 			}
-			return milliseconds(ms) + ", " + std::to_string(count) + " resources";
+			return milliseconds(ms) + ", " + to_string(count) + " resources";
 		}));
 		//the slowest kinds: their time, how many, the slowest one of each
 		static constexpr size_t s_kinds = 8;
 		for (size_t i = 0; i != s_kinds; ++i)
 		{
-			loading.m_options.push_back(DebugOption::text("#" + std::to_string(i + 1), [context, i]()
+			loading.m_options.push_back(DebugOption::text("#" + to_string(i + 1), [context, i]()
 			{
 				const auto kinds = load_kinds(*context);
-				std::string text = "-";
+				String text = "-";
 				if (i < kinds.size())
 				{
 					const auto& [ext, stat] = kinds[i];
-					text = ext + "  " + milliseconds(stat.m_ms) + "  x" + std::to_string(stat.m_count)
+					text = ext + "  " + milliseconds(stat.m_ms) + "  x" + to_string(stat.m_count)
 					     + "  slowest " + stat.m_slowest + " (" + milliseconds(stat.m_slowest_ms) + ")";
 				}
 				return text;
@@ -662,21 +662,21 @@ namespace UI
 #endif
 	}
 
-	void DebugPanel::draw_sections(std::vector<DebugSection>& sections) const
+	void DebugPanel::draw_sections(Vector<DebugSection>& sections) const
 	{
 		using namespace AuxDebugPanel;
-		const std::vector< Shared<RenderInstance> > instances = worlds(m_context);
+		const Vector< Shared<RenderInstance> > instances = worlds(m_context);
 		for (size_t w = 0; w != instances.size(); ++w)
 		{
 			const Shared<RenderInstance>& world = instances[w];
-			const std::string prefix = world_prefix(w, instances.size());
+			const String prefix = world_prefix(w, instances.size());
 			const Shared<Render::DrawerPassDebug> pass = world->debug_pass();
 			DebugSection draw{ prefix + "Draw", {} };
 			if (pass)
 			{
 				const Weak<Render::DrawerPassDebug> weak_pass = pass;
 				Render::DrawerPassDebug* raw = pass.get();
-				auto flag = [&](const std::string& name, unsigned short flags)
+				auto flag = [&](const String& name, unsigned short flags)
 				{
 					draw.m_options.push_back(DebugOption::toggle(name,
 						[raw, flags]() { return (raw->draw_flags() & flags) == flags; },
@@ -691,14 +691,14 @@ namespace UI
 			}
 			else
 			{
-				draw.m_options.push_back(DebugOption::text("Debug pass", []() { return std::string("none (the pipeline without RP_DEBUG)"); }));
+				draw.m_options.push_back(DebugOption::text("Debug pass", []() { return String("none (the pipeline without RP_DEBUG)"); }));
 			}
 			//the shadows of the direction lights: a color a cascade
 			for (const Shared<Scene::DirectionLight>& light : direction_lights(*world))
 			{
 				const Weak<Scene::DirectionLight> weak_light = light;
 				Scene::DirectionLight* sun = light.get();
-				std::string name = "Shadow cascades (colors)";
+				String name = "Shadow cascades (colors)";
 				if (auto actor = light->actor().lock())
 				{
 					name += " " + actor->name();
@@ -717,17 +717,17 @@ namespace UI
 			occlusion.m_options.push_back(DebugOption::text("Occluders", [raw_world]()
 			{
 				const auto stats = raw_world->occlusion_stats();
-				return std::to_string(stats.m_occluders) + " (" + std::to_string(stats.m_triangles) + " triangles)";
+				return to_string(stats.m_occluders) + " (" + to_string(stats.m_triangles) + " triangles)";
 			}));
 			occlusion.m_options.push_back(DebugOption::text("Hidden", [raw_world]()
 			{
 				const auto stats = raw_world->occlusion_stats();
-				return std::to_string(stats.m_hidden) + " of " + std::to_string(stats.m_tested) + " tested";
+				return to_string(stats.m_hidden) + " of " + to_string(stats.m_tested) + " tested";
 			}));
 			occlusion.m_options.push_back(DebugOption::text("Instances hidden", [raw_world]()
 			{
 				const auto stats = raw_world->occlusion_stats();
-				return std::to_string(stats.m_instances_hidden) + " of " + std::to_string(stats.m_instances_tested) + " tested";
+				return to_string(stats.m_instances_hidden) + " of " + to_string(stats.m_instances_tested) + " tested";
 			}));
 			for (DebugOption& option : occlusion.m_options) guard(option, weak_world);
 			sections.push_back(occlusion);
@@ -757,27 +757,27 @@ namespace UI
 		if (shown)
 		{
 			//the page of the kind shown, a caption each
-			const std::vector<TexturePreviews::Item> all = AuxDebugPanel::textures_of(m_context, m_texture_filter, *m_previews);
+			const Vector<TexturePreviews::Item> all = AuxDebugPanel::textures_of(m_context, m_texture_filter, *m_previews);
 			const size_t first = size_t(std::max(m_texture_page, 0)) * TexturePreviews::slots;
-			std::vector<TexturePreviews::Item> page;
+			Vector<TexturePreviews::Item> page;
 			for (size_t i = first; i < all.size() && page.size() != TexturePreviews::slots; ++i)
 			{
 				page.push_back(all[i]);
 			}
 			m_previews->items(page);
-			const std::string label = "page " + std::to_string(m_texture_page + 1) + " of " + std::to_string(m_texture_pages);
+			const String label = "page " + to_string(m_texture_page + 1) + " of " + to_string(m_texture_pages);
 			if (m_page_label.valid() && m_page_label.text() != label)
 			{
 				m_page_label.set_text(label);
 			}
 			for (size_t slot = 0; slot != m_captions.size(); ++slot)
 			{
-				std::string caption;
+				String caption;
 				if (slot < page.size())
 				{
 					const Render::TextureInfo& info = page[slot].m_info;
-					caption = AuxDebugPanel::format_name(info.m_format) + " " + std::to_string(info.m_width) + " x " + std::to_string(info.m_height);
-					if (info.m_shape == Render::TS_TEXTURE_ARRAY) caption += ", " + std::to_string(info.m_layers) + " layers";
+					caption = AuxDebugPanel::format_name(info.m_format) + " " + to_string(info.m_width) + " x " + to_string(info.m_height);
+					if (info.m_shape == Render::TS_TEXTURE_ARRAY) caption += ", " + to_string(info.m_layers) + " layers";
 					if (info.m_shape == Render::TS_TEXTURE_CUBE) caption += ", cube";
 				}
 				if (m_captions[slot].valid() && m_captions[slot].text() != caption)
@@ -793,7 +793,7 @@ namespace UI
 		m_previews->draw(render);
 	}
 
-	Render::Texture* DebugPanel::preview(const std::string& source, IVec2& size)
+	Render::Texture* DebugPanel::preview(const String& source, IVec2& size)
 	{
 		Render::Texture* texture = nullptr;
 		size_t slot = 0;
@@ -805,17 +805,17 @@ namespace UI
 		return texture;
 	}
 
-	void DebugPanel::textures_sections(std::vector<DebugSection>& sections)
+	void DebugPanel::textures_sections(Vector<DebugSection>& sections)
 	{
 		DebugSection section{ "Textures of the driver", {} };
 		const size_t count = AuxDebugPanel::textures_of(m_context, m_texture_filter, *m_previews).size();
 		const size_t pages = std::max<size_t>((count + TexturePreviews::slots - 1) / TexturePreviews::slots, 1);
 		m_texture_pages = int(pages);
 		m_texture_page = std::min(m_texture_page, m_texture_pages - 1);
-		std::vector<std::string> numbers;
+		Vector<String> numbers;
 		for (size_t page = 0; page != pages; ++page)
 		{
-			numbers.push_back(std::to_string(page + 1) + " of " + std::to_string(pages));
+			numbers.push_back(to_string(page + 1) + " of " + to_string(pages));
 		}
 		section.m_options.push_back(DebugOption::choice("Show", { "Render targets", "Shadow maps (depth, arrays, cubes)", "Images" },
 			[this]() { return m_texture_filter; },
@@ -825,17 +825,17 @@ namespace UI
 			[this](int value) { m_texture_page = value; }));
 		section.m_options.push_back(DebugOption::text("Count", [count]()
 		{
-			return std::to_string(count) + " textures";
+			return to_string(count) + " textures";
 		}));
 		auto* render_system = System::get<RenderSystem>(m_context);
 		if (!render_system || !render_system->render() || !render_system->render()->inspector())
 		{
-			section.m_options.push_back(DebugOption::text("Registry", []() { return std::string("none (TEXTURE_INTROSPECTION off)"); }));
+			section.m_options.push_back(DebugOption::text("Registry", []() { return String("none (TEXTURE_INTROSPECTION off)"); }));
 		}
 		sections.push_back(section);
 	}
 
-	void DebugPanel::ui_sections(std::vector<DebugSection>& sections) const
+	void DebugPanel::ui_sections(Vector<DebugSection>& sections) const
 	{
 		UI::Context* ui = &m_ui;
 		DebugSection section{ "RmlUi", {} };
@@ -845,7 +845,7 @@ namespace UI
 		section.m_options.push_back(DebugOption::text("Size", [ui]()
 		{
 			const IVec2 size = ui->size();
-			return std::to_string(size.x) + " x " + std::to_string(size.y);
+			return to_string(size.x) + " x " + to_string(size.y);
 		}));
 		sections.push_back(section);
 	}

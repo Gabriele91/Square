@@ -21,11 +21,11 @@ namespace Scene
 	{
 		ctx.add_object<Occluder>();
 		// Its triangles
-		ctx.add_attribute_function<Occluder, std::vector<Vec3> >
+		ctx.add_attribute_function<Occluder, Vector<Vec3> >
 			("triangles"
-			, std::vector<Vec3>()
-			, [](const Occluder* occluder) -> std::vector<Vec3> { return occluder->m_triangles; }
-			, [](Occluder* occluder, const std::vector<Vec3>& triangles) { occluder->triangles(triangles); });
+			, Vector<Vec3>()
+			, [](const Occluder* occluder) -> Vector<Vec3> { return occluder->m_triangles; }
+			, [](Occluder* occluder, const Vector<Vec3>& triangles) { occluder->triangles(triangles); });
 		// Enabled
 		ctx.add_attribute_function<Occluder, bool >
 			("enabled"
@@ -43,13 +43,13 @@ namespace Scene
 	{
 	}
 
-	void Occluder::triangles(const std::vector<Vec3>& triangles)
+	void Occluder::triangles(const Vector<Vec3>& triangles)
 	{
 		m_triangles = triangles;
 		m_dirty = true;
 	}
 
-	const std::vector<Vec3>& Occluder::occluder_triangles()
+	const Vector<Vec3>& Occluder::occluder_triangles()
 	{
 		build_world();
 		return m_world;

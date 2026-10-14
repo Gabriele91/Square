@@ -38,11 +38,11 @@ namespace Render
     {
     public:
         //all objects
-        using Cameras = std::vector < Weak<Camera> >;
-        using Lights = std::vector < Weak<Light> >;
-		using Renderables = std::vector < Weak<Renderable> >;
-		using LevelsOfDetail = std::vector < Weak<LevelOfDetail> >;
-		using Occluders = std::vector < Weak<Occluder> >;
+        using Cameras = Vector < Weak<Camera> >;
+        using Lights = Vector < Weak<Light> >;
+		using Renderables = Vector < Weak<Renderable> >;
+		using LevelsOfDetail = Vector < Weak<LevelOfDetail> >;
+		using Occluders = Vector < Weak<Occluder> >;
         Cameras m_cameras;
 		Lights m_lights;
 		Renderables m_renderables;

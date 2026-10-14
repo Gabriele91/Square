@@ -44,7 +44,7 @@ namespace Render
 		const Settings& settings() const { return m_settings; }
 
 		virtual void draw(PostEffectFrame& frame) override;
-		virtual void debug_options(std::vector<DebugOption>& options) override;
+		virtual void debug_options(Vector<DebugOption>& options) override;
 
 	protected:
 		virtual void on_release() override;
@@ -66,7 +66,7 @@ namespace Render
 		Shared<Resource::Shader> m_shader_upsample;
 		Shared<Resource::Shader> m_shader_composite;
 		Shared<Resource::Shader> m_shader_copy;    //the frame as it is, when the bloom cannot be drawn
-		std::vector<Level>       m_levels;
+		Vector<Level>       m_levels;
 		IVec2                    m_size{ 0, 0 };   //frame size of the chain
 		int                      m_levels_count{ 0 }; //levels asked when it was built
 

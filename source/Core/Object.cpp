@@ -18,7 +18,7 @@ namespace Square
 	}
 
 	//compute id
-	uint64 ObjectInfo::compute_id(const std::string& name)
+	uint64 ObjectInfo::compute_id(const String& name)
 	{
 		//buffer
 		uint64 buffer = 0;
@@ -36,7 +36,7 @@ namespace Square
 	}
 
 	//object info
-	ObjectInfo::ObjectInfo(const std::string& name)
+	ObjectInfo::ObjectInfo(const String& name)
 	{
 		//sead
 		m_id = compute_id(name);
@@ -51,13 +51,13 @@ namespace Square
 	}
 
 	//object name
-	const std::string& ObjectInfo::name() const
+	const String& ObjectInfo::name() const
 	{
 		return m_name;
 	}
 
 	// Object
-	std::optional<const VariantRef> Object::variable(const std::string& name) const
+	std::optional<const VariantRef> Object::variable(const String& name) const
 	{
 		//get var
 		auto variable = m_variables.find(name);
@@ -66,7 +66,7 @@ namespace Square
 		return {};
 	}
 
-	void Object::set_variable(const std::string& name, const Variant& value)
+	void Object::set_variable(const String& name, const Variant& value)
 	{
 		m_variables[name] = value;
 	}

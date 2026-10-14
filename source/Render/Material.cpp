@@ -4,7 +4,7 @@ namespace Square
 {
 namespace Render
 {
-	std::string Material::name_of_default_parameters[Material::MAT_DEFAULT_MAX]
+	String Material::name_of_default_parameters[Material::MAT_DEFAULT_MAX]
 	{
 		"diffuse_map",
 		"normal_map",
@@ -47,7 +47,7 @@ namespace Render
 		return nullptr;
 	}
 
-	EffectParameter* Material::parameter_by_name(const std::string& name)
+	EffectParameter* Material::parameter_by_name(const String& name)
 	{
 		if (!m_effect) return nullptr;
 		//get param
@@ -55,7 +55,7 @@ namespace Render
 		if (id_param >= 0) return (*m_parameters)[id_param].get();
 		return nullptr;
 	}
-	const EffectParameter* Material::parameter_by_name(const std::string& name) const
+	const EffectParameter* Material::parameter_by_name(const String& name) const
 	{
 		if (!m_effect) return nullptr;
 		//get param

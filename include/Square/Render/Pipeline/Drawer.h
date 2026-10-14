@@ -32,11 +32,11 @@ namespace Render
         Shared<Render::Renderable> operator*() const;
 
     private:
-        RenderableIterator(const PoolQueues& queues, const std::array<bool, RQ_MAX>& queues_types, QueueType queue_current);
+        RenderableIterator(const PoolQueues& queues, const Array<bool, RQ_MAX>& queues_types, QueueType queue_current);
         void test_it_or_queue_next();
 
         const PoolQueues&               m_queues;
-        const std::array<bool, RQ_MAX>& m_queues_types;
+        const Array<bool, RQ_MAX>& m_queues_types;
         QueueType                       m_queue_current;
         QueueIterator                   m_queue_it;
         
@@ -46,11 +46,11 @@ namespace Render
     class SQUARE_API RenderableQuery
     {
     public:
-        RenderableQuery(const PoolQueues& queues, const std::vector<QueueType>& select_queues);
+        RenderableQuery(const PoolQueues& queues, const Vector<QueueType>& select_queues);
         const RenderableIterator& begin() const;
         const RenderableIterator& end() const;
     private:
-        std::array<bool, RQ_MAX> m_queues_types{ false };
+        Array<bool, RQ_MAX> m_queues_types{ false };
         RenderableIterator m_begin;
         RenderableIterator m_end;
     };
@@ -146,8 +146,8 @@ namespace Render
         void occlusion(const SoftwareOcclusion::Settings& settings) { m_occlusion.settings(settings); }
         const SoftwareOcclusion& occlusion() const { return m_occlusion; }
         //post effects of the frame (drawn by the render passes, see PostEffect.h)
-        void post_effects(const std::vector< Shared<PostEffect> >& effects) { m_post_effects = effects; }
-        const std::vector< Shared<PostEffect> >& post_effects() const { return m_post_effects; }
+        void post_effects(const Vector< Shared<PostEffect> >& effects) { m_post_effects = effects; }
+        const Vector< Shared<PostEffect> >& post_effects() const { return m_post_effects; }
 
         template<class T, typename ...ARGS>
         Shared<T> create(ARGS&&... args)
@@ -161,8 +161,8 @@ namespace Render
         
         //CPU DATA
         Square::Context& m_context;
-        std::vector< Shared<DrawerPass> > m_rendering_pass[RPT_MAX];
-        std::vector< Shared<PostEffect> > m_post_effects;
+        Vector< Shared<DrawerPass> > m_rendering_pass[RPT_MAX];
+        Vector< Shared<PostEffect> > m_post_effects;
         LevelOfDetailSettings m_levels_of_detail;
         Vec2 m_time{ 0.0f, 0.0f };
         SoftwareOcclusion m_occlusion;
@@ -170,7 +170,7 @@ namespace Render
         //Cache objects to draw
         PoolQueues m_camera_queue;
         PoolQueues m_light_queue;   
-        std::set<Light*> m_drawn_shadow_lights;
+        Set<Light*> m_drawn_shadow_lights;
 
         bool can_draw_shadow(Light* light);
         Geometry::AABoundingBox scene_size(PoolQueues& queues);

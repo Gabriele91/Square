@@ -80,7 +80,7 @@ namespace Navigation
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	//build
-	bool NavGrid::build(const std::vector<Vec3>& triangles, const Vec3& min, const Vec3& max, const Settings& settings)
+	bool NavGrid::build(const Vector<Vec3>& triangles, const Vec3& min, const Vec3& max, const Settings& settings)
 	{
 		clear();
 		m_settings = settings;
@@ -101,7 +101,7 @@ namespace Navigation
 	{
 		clear();
 		if (!actor) return false;
-		std::vector<Vec3> triangles;
+		Vector<Vec3> triangles;
 		actor->visit([&triangles](Shared<Scene::Actor> node) -> bool
 		{
 			if (node->contains<Scene::StaticMesh>()) node->component<Scene::StaticMesh>()->triangles(triangles);
@@ -209,7 +209,7 @@ namespace Navigation
 		//the distance (cells) of every cell from the nearest blocked one or the border: two passes
 		//of a chamfer (1, sqrt 2)
 		const float far = std::numeric_limits<float>::max() * 0.5f;
-		std::vector<float> distance(m_cells.size(), far);
+		Vector<float> distance(m_cells.size(), far);
 		for (int z = 0; z != m_height; ++z)
 		{
 			for (int x = 0; x != m_width; ++x)
@@ -341,7 +341,7 @@ namespace Navigation
 		return true;
 	}
 
-	bool NavGrid::find_path(const Vec3& from, const Vec3& to, std::vector<Vec3>& path) const
+	bool NavGrid::find_path(const Vec3& from, const Vec3& to, Vector<Vec3>& path) const
 	{
 		using namespace AuxNavGrid;
 		path.clear();
@@ -365,10 +365,10 @@ namespace Navigation
 			const float dx = float(std::abs(x - gx)), dz = float(std::abs(z - gz));
 			return std::max(dx, dz) + 0.41421356f * std::min(dx, dz);
 		};
-		std::vector<float> cost(m_cells.size(), std::numeric_limits<float>::max());
-		std::vector<int>   parent(m_cells.size(), -1);
-		std::vector<bool>  closed(m_cells.size(), false);
-		std::priority_queue<Open> open;
+		Vector<float> cost(m_cells.size(), std::numeric_limits<float>::max());
+		Vector<int>   parent(m_cells.size(), -1);
+		Vector<bool>  closed(m_cells.size(), false);
+		Square::PriorityQueue<Open> open;
 		cost[size_t(start_index)] = 0.0f;
 		open.push({ heuristic(sx, sz), start_index });
 		bool found = false;
@@ -401,7 +401,7 @@ namespace Navigation
 		}
 		if (!found) return false;
 		//the cells, goal to start
-		std::vector<Vec3> cells;
+		Vector<Vec3> cells;
 		for (int i = goal_index; i != -1; i = parent[size_t(i)]) cells.push_back(cell_center(i % m_width, i / m_width));
 		std::reverse(cells.begin(), cells.end());
 		cells.front() = start;

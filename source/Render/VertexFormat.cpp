@@ -51,9 +51,9 @@ namespace Layout
     };
     
     //map
-    static std::vector < VertexItem >& vertex_list()
+    static Vector < VertexItem >& vertex_list()
     {
-        static std::vector < VertexItem > list;
+        static Vector < VertexItem > list;
         return list;
     };
     
@@ -109,7 +109,7 @@ namespace Layout
 		if (it == vertex_list().end()) return nullptr;
 		return it->layout(render);
     }
-	Shared< Render::InputLayout > Collection::index_by_object_name(Render::Context* render, const std::string& name)
+	Shared< Render::InputLayout > Collection::index_by_object_name(Render::Context* render, const String& name)
     {
         auto it = std::find_if(vertex_list().begin(), vertex_list().end(), [&name](const VertexItem& element){
             return element.m_info.name() == name;

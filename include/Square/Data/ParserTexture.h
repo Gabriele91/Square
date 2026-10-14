@@ -16,15 +16,15 @@ namespace Parser
 		struct Context
 		{
 			Resource::Texture::Attributes                         m_attributes;
-			std::variant<std::string, std::vector<unsigned char>> m_image;
-			std::string                                           m_fallback; //an image for a GPU without the format of m_image (DDS/KTX)
-			std::list< ErrorField >	                              m_errors;
+			std::variant<String, Vector<unsigned char>> m_image;
+			String                                           m_fallback; //an image for a GPU without the format of m_image (DDS/KTX)
+			List< ErrorField >	                              m_errors;
 			size_t						                          m_line{ 0 };
 
-			std::string errors_to_string() const;
+			String errors_to_string() const;
 		};
 
-		static bool parse(Context& default_context, const std::string& source);
+		static bool parse(Context& default_context, const String& source);
 
 		static bool parse(Context& default_context, const char* ptr, size_t size);
 

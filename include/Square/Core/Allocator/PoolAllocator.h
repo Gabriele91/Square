@@ -44,7 +44,7 @@ namespace Square
 		size_t             m_block_align{ 0 };
 		size_t             m_blocks_per_chunk{ 0 };
 		void*              m_free{ nullptr };   //its free blocks (each one: the next one in its first bytes)
-		std::vector<void*> m_chunks;
+		Vector<void*> m_chunks;
 		size_t             m_used{ 0 };
 		size_t             m_capacity{ 0 };
 	};

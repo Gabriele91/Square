@@ -18,11 +18,11 @@ namespace Resource
 
 	public:
 		//Types
-		using PreprocessElement = std::tuple< std::string, std::string >;
-		using PreprocessMap     = std::vector< PreprocessElement >;
-		using FilepathMap       = std::unordered_map< size_t, std::string >;
-		using UnifomMap         = std::unordered_map< std::string, std::string >;
-		using CBufferMap        = std::unordered_map< std::string, std::string >;
+		using PreprocessElement = std::tuple< String, String >;
+		using PreprocessMap     = Vector< PreprocessElement >;
+		using FilepathMap       = UnorderedMap< size_t, String >;
+		using UnifomMap         = UnorderedMap< String, String >;
+		using CBufferMap        = UnorderedMap< String, String >;
         using InputLayoutList   = Render::Layout::InputLayoutList;
 
         //Init object
@@ -32,33 +32,33 @@ namespace Resource
         
         //Contructor
 		Shader(Context& context);
-		Shader(Context& context, const std::string& path);
+		Shader(Context& context, const String& path);
 
 		//Destructor
 		virtual ~Shader();
 
 		//load shader
-        bool load(const std::string& path) override;
+        bool load(const String& path) override;
         
         //load + defiles
-        bool load(const std::string& path, const PreprocessMap& defines);
+        bool load(const String& path, const PreprocessMap& defines);
 		        
 		//compile from source
 		bool compile
 		(
-			const std::string& source,
+			const String& source,
 			const PreprocessMap& defines
 		);
 		bool compile
 		(
-			const std::string& path,					 
-			const std::string& source,
+			const String& path,					 
+			const String& source,
 			const PreprocessMap& defines,
 			const size_t line = 0
 		);
 		//get buffer
-		Render::Uniform*            uniform(const std::string& name) const;
-		Render::UniformConstBuffer* constant_buffer(const std::string& name) const;
+		Render::Uniform*            uniform(const String& name) const;
+		Render::UniformConstBuffer* constant_buffer(const String& name) const;
 
 		//RAW Shader
 		Render::Shader* base_shader() const;
@@ -74,19 +74,19 @@ namespace Resource
 
 		//the name of the shader in the render profiler: the resource name (without its type), or the
 		//one given (the shaders of the effects are not resources)
-		const std::string& profile_name() const;
-		void profile_name(const std::string& name);
+		const String& profile_name() const;
+		void profile_name(const String& name);
 
 	protected:
 
 		//the name in the profiler (made by profile_name() when empty)
-		mutable std::string m_profile_name;
+		mutable String m_profile_name;
 
 		//Values
 		Render::Shader* m_shader{ nullptr };
 		//the shader of the driver from its stages (with the debug tools: its time, the one of the
 		//driver, in the details of the loads)
-		Render::Shader* create_shader(Render::Context& render, const std::vector< Render::ShaderSourceInformation >& stages);
+		Render::Shader* create_shader(Render::Context& render, const Vector< Render::ShaderSourceInformation >& stages);
 #if defined(SQUARE_DEBUG_TOOLS)
 		double m_driver_ms{ 0.0 };
 #endif
@@ -100,14 +100,14 @@ namespace Resource
 			ShaderTarget::Language m_language;
 			size_t	    m_version;
 			bool	    m_texture_target;
-			std::string m_header;
-			std::string m_source;
-			std::string m_raw_source;
+			String m_header;
+			String m_source;
+			String m_raw_source;
 		};
 
 		bool source_preprocess
 		(
-			const std::string& sourcecode,
+			const String& sourcecode,
 			const PreprocessMap& defines,
 			const ShaderTarget& target,
 			PostprocessOutput& source
@@ -115,7 +115,7 @@ namespace Resource
 
 		//what makes the stages of a source (the key of the intermediate cache: its target, its
 		//version, the source preprocessed)
-		std::string cache_key(const PostprocessOutput& source, const ShaderTarget& target) const;
+		String cache_key(const PostprocessOutput& source, const ShaderTarget& target) const;
 		//its stages in the language of the target (HLSL -> SPIR-V -> GLSL / GLSL ES / MSL / SPIR-V,
 		//or HLSL)
 		bool translate(const PostprocessOutput& source, ShaderStages& stages);

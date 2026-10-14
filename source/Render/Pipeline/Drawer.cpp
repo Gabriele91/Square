@@ -24,7 +24,7 @@ namespace Square
 namespace Render
 {
 #pragma region RenderableIterator
-    RenderableIterator::RenderableIterator(const PoolQueues& queues, const std::array<bool, RQ_MAX>& queues_types, QueueType queue_current)
+    RenderableIterator::RenderableIterator(const PoolQueues& queues, const Array<bool, RQ_MAX>& queues_types, QueueType queue_current)
     : m_queues(queues)
     , m_queues_types(queues_types)
     , m_queue_current(queue_current)
@@ -102,10 +102,10 @@ namespace Render
 #pragma endregion
 
 #pragma region RenderableQuery
-    static std::array<bool, RQ_MAX> query_from_select_queues(const std::vector<QueueType>& select_queues)
+    static Array<bool, RQ_MAX> query_from_select_queues(const Vector<QueueType>& select_queues)
     {
         square_assert(select_queues.size());
-        std::array<bool, RQ_MAX> queues_types{ false };
+        Array<bool, RQ_MAX> queues_types{ false };
         for (QueueType qtype : select_queues)
         {
             queues_types[qtype] = true;
@@ -113,7 +113,7 @@ namespace Render
         return queues_types;
     }
 
-    RenderableQuery::RenderableQuery(const PoolQueues& queues, const std::vector<QueueType>& select_queues)
+    RenderableQuery::RenderableQuery(const PoolQueues& queues, const Vector<QueueType>& select_queues)
     : m_queues_types(query_from_select_queues(select_queues))
     , m_begin(queues, m_queues_types, select_queues.size() ? select_queues[0] : RQ_MAX)
     , m_end(queues, m_queues_types, RQ_MAX)

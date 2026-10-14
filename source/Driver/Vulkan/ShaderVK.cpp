@@ -4,6 +4,7 @@
 //  Vulkan: one set, one binding for each resource of the program), their uniforms
 //
 #include "RenderVK.h"
+#include "AllocationVK.h"
 #include <algorithm>
 #include <cstring>
 
@@ -17,7 +18,7 @@ namespace Render
 	{
 		//a loose uniform: its bytes in the global block (copied at the next draw)
 		if (m_texture || !data) return;
-		std::vector<unsigned char>& bytes = m_shader->m_global.m_bytes;
+		Vector<unsigned char>& bytes = m_shader->m_global.m_bytes;
 		if (m_offset >= bytes.size()) return;
 		const size_t count = std::min(size, bytes.size() - m_offset);
 		std::memcpy(bytes.data() + m_offset, data, count);
@@ -50,7 +51,7 @@ namespace Render
 
 	////////////////////////////////////////////////////////////////////////////////////////////
 	// Shaders
-	Shader* ContextVK::create_shader(const std::vector<ShaderSourceInformation>& infos)
+	Shader* ContextVK::create_shader(const Vector<ShaderSourceInformation>& infos)
 	{
 		static const VkShaderStageFlagBits stages_of[ST_N_SHADER] =
 		{
@@ -64,42 +65,42 @@ namespace Render
 		static const char* names[ST_N_SHADER] = { "VERTEX_SHADER", "FRAGMENT_SHADER", "GEOMETRY_SHADER", "TESS_CONTROL_SHADER", "TESS_EVALUATION_SHADER", "COMPUTE_SHADER" };
 		auto* shader = new Shader();
 		m_shaders.push_back(shader);
-		std::vector<BindingVK> bindings;
+		Vector<BindingVK> bindings;
 		for (const ShaderSourceInformation& info : infos)
 		{
 			const int type = int(info.m_type);
-			const std::string& bytes = info.m_shader_source;
+			const String& bytes = info.m_shader_source;
 			if (type < 0 || type >= ST_COMPUTE_SHADER || bytes.empty()) continue;
 			if (bytes.size() % sizeof(uint32_t))
 			{
-				shader->m_errors.push_back(std::string(names[type]) + ": not SPIR-V (its size)");
+				shader->m_errors.push_back(String(names[type]) + ": not SPIR-V (its size)");
 				continue;
 			}
 			if (info.m_type == ST_GEOMETRY_SHADER && !m_features.geometryShader)
 			{
-				shader->m_errors.push_back(std::string(names[type]) + ": the device has no geometry shaders");
+				shader->m_errors.push_back(String(names[type]) + ": the device has no geometry shaders");
 				continue;
 			}
 			const SpirvReflection::Stage stage = SpirvReflection::read(bytes);
 			if (!stage.m_error.empty())
 			{
-				shader->m_errors.push_back(std::string(names[type]) + ": " + stage.m_error);
+				shader->m_errors.push_back(String(names[type]) + ": " + stage.m_error);
 				continue;
 			}
 			if (stage.m_writes_layer && !m_vertex_layer)
 			{
-				shader->m_errors.push_back(std::string(names[type]) + ": the device cannot write the layer from the vertex shader");
+				shader->m_errors.push_back(String(names[type]) + ": the device cannot write the layer from the vertex shader");
 				continue;
 			}
 			//its module (the words aligned)
-			std::vector<uint32_t> words(bytes.size() / sizeof(uint32_t));
+			Vector<uint32_t> words(bytes.size() / sizeof(uint32_t));
 			std::memcpy(words.data(), bytes.data(), bytes.size());
 			VkShaderModuleCreateInfo module{ VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
 			module.codeSize = bytes.size();
 			module.pCode = words.data();
-			if (vkCreateShaderModule(m_device, &module, nullptr, &shader->m_modules[type]) != VK_SUCCESS)
+			if (vkCreateShaderModule(m_device, &module, AllocationVK::callbacks(), &shader->m_modules[type]) != VK_SUCCESS)
 			{
-				shader->m_errors.push_back(std::string(names[type]) + ": unable to make its module");
+				shader->m_errors.push_back(String(names[type]) + ": unable to make its module");
 				continue;
 			}
 			shader->m_entries[type] = info.m_entry_point;
@@ -115,12 +116,12 @@ namespace Render
 				const bool texture = resource.m_kind == SpirvReflection::ResourceKind::COMBINED_IMAGE_SAMPLER;
 				if (!uniform_buffer && !texture)
 				{
-					shader->m_errors.push_back(std::string(names[type]) + ": " + resource.m_name + ", a resource of a kind not supported");
+					shader->m_errors.push_back(String(names[type]) + ": " + resource.m_name + ", a resource of a kind not supported");
 					continue;
 				}
 				if (resource.m_set != 0)
 				{
-					shader->m_errors.push_back(std::string(names[type]) + ": " + resource.m_name + ", not in the set 0 (the layout of HLSL2ALL for Vulkan)");
+					shader->m_errors.push_back(String(names[type]) + ": " + resource.m_name + ", not in the set 0 (the layout of HLSL2ALL for Vulkan)");
 					continue;
 				}
 				auto it = std::find_if(bindings.begin(), bindings.end(), [&](const BindingVK& binding) { return binding.m_binding == resource.m_binding; });
@@ -159,7 +160,7 @@ namespace Render
 		}
 		const bool dynamic = uniform_buffers <= m_properties.limits.maxDescriptorSetUniformBuffersDynamic;
 		uint32_t last = 0;
-		std::vector<VkDescriptorSetLayoutBinding> layout_bindings;
+		Vector<VkDescriptorSetLayoutBinding> layout_bindings;
 		for (BindingVK& binding : bindings)
 		{
 			if (binding.m_type != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
@@ -186,7 +187,7 @@ namespace Render
 		VkDescriptorSetLayoutCreateInfo set{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
 		set.bindingCount = uint32_t(layout_bindings.size());
 		set.pBindings = layout_bindings.data();
-		if (vkCreateDescriptorSetLayout(m_device, &set, nullptr, &shader->m_set_layout) != VK_SUCCESS)
+		if (vkCreateDescriptorSetLayout(m_device, &set, AllocationVK::callbacks(), &shader->m_set_layout) != VK_SUCCESS)
 		{
 			shader->m_link_error = "unable to make its descriptor set layout";
 			return shader;
@@ -194,7 +195,7 @@ namespace Render
 		VkPipelineLayoutCreateInfo pipeline{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
 		pipeline.setLayoutCount = 1;
 		pipeline.pSetLayouts = &shader->m_set_layout;
-		if (vkCreatePipelineLayout(m_device, &pipeline, nullptr, &shader->m_pipeline_layout) != VK_SUCCESS)
+		if (vkCreatePipelineLayout(m_device, &pipeline, AllocationVK::callbacks(), &shader->m_pipeline_layout) != VK_SUCCESS)
 		{
 			shader->m_link_error = "unable to make its pipeline layout";
 			return shader;
@@ -216,14 +217,14 @@ namespace Render
 		return !shader || !shader->m_link_error.empty();
 	}
 
-	std::vector<std::string> ContextVK::get_shader_compiler_errors(Shader* shader)
+	Vector<String> ContextVK::get_shader_compiler_errors(Shader* shader)
 	{
-		return shader ? shader->m_errors : std::vector<std::string>();
+		return shader ? shader->m_errors : Vector<String>();
 	}
 
-	std::string ContextVK::get_shader_linker_error(Shader* shader)
+	String ContextVK::get_shader_linker_error(Shader* shader)
 	{
-		return shader ? shader->m_link_error : std::string();
+		return shader ? shader->m_link_error : String();
 	}
 
 	void ContextVK::bind_shader(Shader* shader)
@@ -236,7 +237,7 @@ namespace Render
 		if (m_shader == shader) m_shader = nullptr;
 	}
 
-	void ContextVK::bind_uniform_CB(const ConstBuffer* buffer, Shader* shader, const std::string& uname)
+	void ContextVK::bind_uniform_CB(const ConstBuffer* buffer, Shader* shader, const String& uname)
 	{
 		if (auto* uniform = get_uniform_const_buffer(shader, uname))
 		{
@@ -244,7 +245,7 @@ namespace Render
 		}
 	}
 
-	void ContextVK::unbind_uniform_CB(Shader* shader, const std::string& uname)
+	void ContextVK::unbind_uniform_CB(Shader* shader, const String& uname)
 	{
 		if (auto* uniform = get_uniform_const_buffer(shader, uname))
 		{
@@ -255,7 +256,7 @@ namespace Render
 	void ContextVK::forget_pipelines(const Shader* shader, const InputLayout* layout)
 	{
 		//the pipelines of a shader, of an input layout deleted (another one could have its address)
-		std::vector<VkPipeline> pipelines;
+		Vector<VkPipeline> pipelines;
 		for (auto it = m_pipelines.begin(); it != m_pipelines.end();)
 		{
 			const bool of_it = (shader && it->first.m_shader == shader) || (layout && it->first.m_input_layout == layout);
@@ -275,7 +276,7 @@ namespace Render
 			VkDevice device = m_device;
 			destroy_later([device, pipelines]()
 			{
-				for (VkPipeline pipeline : pipelines) vkDestroyPipeline(device, pipeline, nullptr);
+				for (VkPipeline pipeline : pipelines) vkDestroyPipeline(device, pipeline, AllocationVK::callbacks());
 			});
 		}
 	}
@@ -287,7 +288,7 @@ namespace Render
 		forget_pipelines(shader, nullptr);
 		m_shaders.erase(std::remove(m_shaders.begin(), m_shaders.end(), shader), m_shaders.end());
 		VkDevice device = m_device;
-		std::vector<VkShaderModule> modules;
+		Vector<VkShaderModule> modules;
 		for (VkShaderModule module : shader->m_modules)
 		{
 			if (module) modules.push_back(module);
@@ -296,9 +297,9 @@ namespace Render
 		VkPipelineLayout pipeline_layout = shader->m_pipeline_layout;
 		destroy_later([device, modules, set_layout, pipeline_layout]()
 		{
-			for (VkShaderModule module : modules) vkDestroyShaderModule(device, module, nullptr);
-			if (pipeline_layout) vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
-			if (set_layout) vkDestroyDescriptorSetLayout(device, set_layout, nullptr);
+			for (VkShaderModule module : modules) vkDestroyShaderModule(device, module, AllocationVK::callbacks());
+			if (pipeline_layout) vkDestroyPipelineLayout(device, pipeline_layout, AllocationVK::callbacks());
+			if (set_layout) vkDestroyDescriptorSetLayout(device, set_layout, AllocationVK::callbacks());
 		});
 		delete shader;
 		shader = nullptr;
@@ -309,18 +310,18 @@ namespace Render
 		return m_shader;
 	}
 
-	Uniform* ContextVK::get_uniform(Shader* shader, const std::string& uname) const
+	Uniform* ContextVK::get_uniform(Shader* shader, const String& uname) const
 	{
 		if (!shader) return nullptr;
 		auto cached = shader->m_uniforms.find(uname);
 		if (cached != shader->m_uniforms.end()) return cached->second.get();
-		std::unique_ptr<UniformVK> uniform;
+		UniquePtr<UniformVK> uniform;
 		//a texture (its binding)
 		for (const BindingVK& binding : shader->m_bindings)
 		{
 			if (!uniform && binding.m_type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER && binding.m_name == uname)
 			{
-				uniform = std::make_unique<UniformVK>(shader, binding.m_binding);
+				uniform = MakeUniquePtr<UniformVK>(shader, binding.m_binding);
 			}
 		}
 		//a loose uniform (its bytes in the global block)
@@ -333,7 +334,7 @@ namespace Render
 			}
 			if (member != shader->m_members.end())
 			{
-				uniform = std::make_unique<UniformVK>(shader, member->second.m_offset, member->second.m_size);
+				uniform = MakeUniquePtr<UniformVK>(shader, member->second.m_offset, member->second.m_size);
 			}
 		}
 		if (!uniform) return nullptr;
@@ -342,7 +343,7 @@ namespace Render
 		return out;
 	}
 
-	UniformConstBuffer* ContextVK::get_uniform_const_buffer(Shader* shader, const std::string& uname) const
+	UniformConstBuffer* ContextVK::get_uniform_const_buffer(Shader* shader, const String& uname) const
 	{
 		if (!shader) return nullptr;
 		auto cached = shader->m_uniform_buffers.find(uname);
@@ -352,7 +353,7 @@ namespace Render
 			const bool uniform_buffer = binding.m_type != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			if (uniform_buffer && !binding.m_global && binding.m_name == uname)
 			{
-				auto uniform = std::make_unique<UniformConstBufferVK>(shader, binding.m_binding);
+				auto uniform = MakeUniquePtr<UniformConstBufferVK>(shader, binding.m_binding);
 				UniformConstBufferVK* out = uniform.get();
 				shader->m_uniform_buffers[uname] = std::move(uniform);
 				return out;

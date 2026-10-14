@@ -12,19 +12,19 @@
 //Custom properties of Blender (glTF "extras") for Square: "square_<name>"
 namespace SquareExtras
 {
-    extern const std::string PREFIX;
+    extern const Square::String PREFIX;
 
     //the name without the prefix, empty if it is not a square property
-    std::string name(const std::string& key);
+    Square::String name(const Square::String& key);
 
     //the string of an extra ("square_effect"), if there is
-    std::optional<std::string> string(const Square::Data::JsonObject& extras, const std::string& key);
+    std::optional<Square::String> string(const Square::Data::JsonObject& extras, const Square::String& key);
 
     //a number of an extra value (a boolean is 0/1)
     double number(const Square::Data::JsonValue& value);
 
     //a flag of an extra ("square_static": true/false, a number not 0/0), if there is
-    std::optional<bool> flag(const Square::Data::JsonObject& extras, const std::string& key);
+    std::optional<bool> flag(const Square::Data::JsonObject& extras, const Square::String& key);
 
     //the i-th number of an array (or the number itself: all the components)
     double component(const Square::Data::JsonValue& value, size_t i);
@@ -32,7 +32,7 @@ namespace SquareExtras
     //the value of a material parameter: a number (or a boolean) is a float, an array of 2/3/4
     //numbers a Vec2/3/4, a string name(...) the value as it is (square_shadow_cull "cullface(off)"),
     //another string a texture; empty if it is none of them
-    std::string material_value(const Square::Data::JsonValue& value);
+    Square::String material_value(const Square::Data::JsonValue& value);
 
     //the attributes of an object (a light...) from the extras "square_<attribute>": the value
     //is turned into the type of the attribute (a number for an IVec2 fills both components)
@@ -40,6 +40,6 @@ namespace SquareExtras
 
     //the properties for the game ("game_<name>", the prefix out) in a Scene::Properties of the
     //actor (made only if there is one); how many
-    extern const std::string GAME_PREFIX;
+    extern const Square::String GAME_PREFIX;
     size_t game_properties(Square::Scene::Actor& actor, const Square::Data::JsonObject& extras);
 }

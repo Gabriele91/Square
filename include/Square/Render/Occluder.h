@@ -23,7 +23,7 @@ namespace Render
 		virtual ~Occluder() = default;
 
 		//its triangles in world space (3 points each)
-		virtual const std::vector<Vec3>& occluder_triangles() = 0;
+		virtual const Vector<Vec3>& occluder_triangles() = 0;
 		//the box of its triangles in world space
 		virtual const Geometry::AABoundingBox& occluder_box() = 0;
 		//it hides now (false: not drawn into the occlusion)

@@ -41,7 +41,7 @@ namespace Layout
     };
     //list of layouts
     using InputLayoutId   = size_t;
-    using InputLayoutList = std::vector< Shared< Render::InputLayout > >;
+    using InputLayoutList = Vector< Shared< Render::InputLayout > >;
     
     //collections
     class SQUARE_API Collection
@@ -54,7 +54,7 @@ namespace Layout
         static size_t size_by_type(unsigned long type);                                                              //O(N)
         static Shared< Render::InputLayout > index_by_type(Render::Context* render, unsigned long type);             //O(N)
         static Shared< Render::InputLayout > index_by_object_id(Render::Context* render, ::Square::uint64 id);       //O(N)
-        static Shared< Render::InputLayout > index_by_object_name(Render::Context* render, const std::string& name); //O(N + |name|)
+        static Shared< Render::InputLayout > index_by_object_name(Render::Context* render, const String& name); //O(N + |name|)
     };
     
     //class used for static registration of a costum vertex

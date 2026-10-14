@@ -18,13 +18,13 @@
 namespace Animations
 {
     //the actor of each node of the glTF (by its index: nullptr, not in the scene)
-    using NodeActors = std::vector< Square::Shared<Square::Scene::Actor> >;
+    using NodeActors = Square::Vector< Square::Shared<Square::Scene::Actor> >;
 
     //a transform of glTF (a node, a key) in the axes of the scene (mode: Modes of MeshManager.h)
     void turn(Square::Vec3& translation, Square::Quat& rotation, Square::Vec3& scale, unsigned char mode);
 
     //the path of an actor from another one above it ("" itself; false: not under it)
-    bool path(const Square::Scene::Actor& root, const Square::Scene::Actor& actor, std::string& out);
+    bool path(const Square::Scene::Actor& root, const Square::Scene::Actor& actor, Square::String& out);
 
     //the animator of a scene made (none: no animation); how many clips
     size_t build

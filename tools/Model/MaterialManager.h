@@ -15,20 +15,20 @@
 //The materials of a glTF: a .mat per material, for its effect (see MaterialTemplate)
 class MaterialManager
 {
-    std::unordered_map<std::string, std::string> m_materials_resrouces;
-    std::vector< std::string > m_materials;
+    Square::UnorderedMap<Square::String, Square::String> m_materials_resrouces;
+    Square::Vector< Square::String > m_materials;
     Square::Context& m_context;
-    std::string m_output;
+    Square::String m_output;
     UniqueNames m_names;
 
 public:
-    MaterialManager(Square::Context& context, const std::string& output);
+    MaterialManager(Square::Context& context, const Square::String& output);
 
-    MaterialManager(Square::Context& context, const std::string& output, const TextureManager& texture_manager, const Square::Data::GLTF::GLTF& gltf);
+    MaterialManager(Square::Context& context, const Square::String& output, const TextureManager& texture_manager, const Square::Data::GLTF::GLTF& gltf);
 
-    const std::unordered_map<std::string, std::string>& resource_map() const;
+    const Square::UnorderedMap<Square::String, Square::String>& resource_map() const;
 
-    std::optional<std::string> at(size_t id);
+    std::optional<Square::String> at(size_t id);
 
     size_t add_material(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager);
 };

@@ -71,7 +71,7 @@ namespace Render
     public:
         //its texture, its type, its layer (a face of a cube, a layer of an array; -1: all of them)
         struct Attachment { Texture* texture; TargetType type; int layer{ -1 }; };
-        std::vector<Attachment> m_attachments;
+        Vector<Attachment> m_attachments;
         // Invalid until a RT_COLOR attachment sets it: a depth-only target (e.g. CSM
         // shadow pass) must leave every entry Invalid so the PSO declares no color
         // attachment. Multiple RT_COLOR attachments fill the slots in order (MRT).
@@ -83,12 +83,12 @@ namespace Render
     // ── Reflection data (parsed from the MSL header comment) ─────────────────
     struct MTLReflection
     {
-        std::string entry_point;
-        std::unordered_map<std::string, int>    textures; // name → slot
-        std::unordered_map<std::string, int>    samplers; // name → slot
-        std::unordered_map<std::string, int>    buffers;  // cbuffer name → slot
+        String entry_point;
+        UnorderedMap<String, int>    textures; // name → slot
+        UnorderedMap<String, int>    samplers; // name → slot
+        UnorderedMap<String, int>    buffers;  // cbuffer name → slot
         struct Member { int buffer_slot; uint32_t offset; uint32_t size; };
-        std::unordered_map<std::string, Member> members;  // loose uniform name → info
+        UnorderedMap<String, Member> members;  // loose uniform name → info
     };
 
     // ── Uniform for a texture slot ────────────────────────────────────────────
@@ -132,23 +132,23 @@ namespace Render
         virtual void set(const DVec4*, size_t)                   override {}
         virtual void set(const DMat3*, size_t)                   override {}
         virtual void set(const DMat4*, size_t)                   override {}
-        virtual void set(const std::vector<Texture*>&)           override {}
-        virtual void set(const std::vector<int>&)                override {}
-        virtual void set(const std::vector<float>&)              override {}
-        virtual void set(const std::vector<double>&)             override {}
-        virtual void set(const std::vector<IVec2>&)              override {}
-        virtual void set(const std::vector<IVec3>&)              override {}
-        virtual void set(const std::vector<IVec4>&)              override {}
-        virtual void set(const std::vector<Vec2>&)               override {}
-        virtual void set(const std::vector<Vec3>&)               override {}
-        virtual void set(const std::vector<Vec4>&)               override {}
-        virtual void set(const std::vector<Mat3>&)               override {}
-        virtual void set(const std::vector<Mat4>&)               override {}
-        virtual void set(const std::vector<DVec2>&)              override {}
-        virtual void set(const std::vector<DVec3>&)              override {}
-        virtual void set(const std::vector<DVec4>&)              override {}
-        virtual void set(const std::vector<DMat3>&)              override {}
-        virtual void set(const std::vector<DMat4>&)              override {}
+        virtual void set(const Vector<Texture*>&)           override {}
+        virtual void set(const Vector<int>&)                override {}
+        virtual void set(const Vector<float>&)              override {}
+        virtual void set(const Vector<double>&)             override {}
+        virtual void set(const Vector<IVec2>&)              override {}
+        virtual void set(const Vector<IVec3>&)              override {}
+        virtual void set(const Vector<IVec4>&)              override {}
+        virtual void set(const Vector<Vec2>&)               override {}
+        virtual void set(const Vector<Vec3>&)               override {}
+        virtual void set(const Vector<Vec4>&)               override {}
+        virtual void set(const Vector<Mat3>&)               override {}
+        virtual void set(const Vector<Mat4>&)               override {}
+        virtual void set(const Vector<DVec2>&)              override {}
+        virtual void set(const Vector<DVec3>&)              override {}
+        virtual void set(const Vector<DVec4>&)              override {}
+        virtual void set(const Vector<DMat3>&)              override {}
+        virtual void set(const Vector<DMat4>&)              override {}
         virtual bool is_valid()   override { return m_slot >= 0; }
         virtual Shader* get_shader() override;
         virtual ~UniformTextureMTL() {}
@@ -203,23 +203,23 @@ namespace Render
         virtual void set(const DVec4* p, size_t n)               override { write_raw(p, sizeof(DVec4)*n); }
         virtual void set(const DMat3* p, size_t n)               override { write_raw(p, sizeof(DMat3)*n); }
         virtual void set(const DMat4* p, size_t n)               override { write_raw(p, sizeof(DMat4)*n); }
-        virtual void set(const std::vector<Texture*>&)           override {}
-        virtual void set(const std::vector<int>& v)              override { write_raw(v.data(), sizeof(int)*v.size()); }
-        virtual void set(const std::vector<float>& v)            override { write_raw(v.data(), sizeof(float)*v.size()); }
-        virtual void set(const std::vector<double>& v)           override { write_raw(v.data(), sizeof(double)*v.size()); }
-        virtual void set(const std::vector<IVec2>& v)            override { write_raw(v.data(), sizeof(IVec2)*v.size()); }
-        virtual void set(const std::vector<IVec3>& v)            override { write_raw(v.data(), sizeof(IVec3)*v.size()); }
-        virtual void set(const std::vector<IVec4>& v)            override { write_raw(v.data(), sizeof(IVec4)*v.size()); }
-        virtual void set(const std::vector<Vec2>& v)             override { write_raw(v.data(), sizeof(Vec2)*v.size()); }
-        virtual void set(const std::vector<Vec3>& v)             override { write_raw(v.data(), sizeof(Vec3)*v.size()); }
-        virtual void set(const std::vector<Vec4>& v)             override { write_raw(v.data(), sizeof(Vec4)*v.size()); }
-        virtual void set(const std::vector<Mat3>& v)             override { write_raw(v.data(), sizeof(Mat3)*v.size()); }
-        virtual void set(const std::vector<Mat4>& v)             override { write_raw(v.data(), sizeof(Mat4)*v.size()); }
-        virtual void set(const std::vector<DVec2>& v)            override { write_raw(v.data(), sizeof(DVec2)*v.size()); }
-        virtual void set(const std::vector<DVec3>& v)            override { write_raw(v.data(), sizeof(DVec3)*v.size()); }
-        virtual void set(const std::vector<DVec4>& v)            override { write_raw(v.data(), sizeof(DVec4)*v.size()); }
-        virtual void set(const std::vector<DMat3>& v)            override { write_raw(v.data(), sizeof(DMat3)*v.size()); }
-        virtual void set(const std::vector<DMat4>& v)            override { write_raw(v.data(), sizeof(DMat4)*v.size()); }
+        virtual void set(const Vector<Texture*>&)           override {}
+        virtual void set(const Vector<int>& v)              override { write_raw(v.data(), sizeof(int)*v.size()); }
+        virtual void set(const Vector<float>& v)            override { write_raw(v.data(), sizeof(float)*v.size()); }
+        virtual void set(const Vector<double>& v)           override { write_raw(v.data(), sizeof(double)*v.size()); }
+        virtual void set(const Vector<IVec2>& v)            override { write_raw(v.data(), sizeof(IVec2)*v.size()); }
+        virtual void set(const Vector<IVec3>& v)            override { write_raw(v.data(), sizeof(IVec3)*v.size()); }
+        virtual void set(const Vector<IVec4>& v)            override { write_raw(v.data(), sizeof(IVec4)*v.size()); }
+        virtual void set(const Vector<Vec2>& v)             override { write_raw(v.data(), sizeof(Vec2)*v.size()); }
+        virtual void set(const Vector<Vec3>& v)             override { write_raw(v.data(), sizeof(Vec3)*v.size()); }
+        virtual void set(const Vector<Vec4>& v)             override { write_raw(v.data(), sizeof(Vec4)*v.size()); }
+        virtual void set(const Vector<Mat3>& v)             override { write_raw(v.data(), sizeof(Mat3)*v.size()); }
+        virtual void set(const Vector<Mat4>& v)             override { write_raw(v.data(), sizeof(Mat4)*v.size()); }
+        virtual void set(const Vector<DVec2>& v)            override { write_raw(v.data(), sizeof(DVec2)*v.size()); }
+        virtual void set(const Vector<DVec3>& v)            override { write_raw(v.data(), sizeof(DVec3)*v.size()); }
+        virtual void set(const Vector<DVec4>& v)            override { write_raw(v.data(), sizeof(DVec4)*v.size()); }
+        virtual void set(const Vector<DMat3>& v)            override { write_raw(v.data(), sizeof(DMat3)*v.size()); }
+        virtual void set(const Vector<DMat4>& v)            override { write_raw(v.data(), sizeof(DMat4)*v.size()); }
         virtual bool is_valid()   override { return m_buf_slot >= 0; }
         virtual Shader* get_shader() override;
         virtual ~UniformMemberMTL() {}
@@ -241,7 +241,7 @@ namespace Render
         struct StageSlot { int stage; int slot; };
 
         UniformConstBufferMTL() {}
-        UniformConstBufferMTL(ContextMTL* ctx, Shader* sh, std::vector<StageSlot> bindings)
+        UniformConstBufferMTL(ContextMTL* ctx, Shader* sh, Vector<StageSlot> bindings)
             : m_context(ctx), m_shader(sh), m_bindings(std::move(bindings)) {}
 
         virtual void bind(const ConstBuffer* cb) override;
@@ -252,7 +252,7 @@ namespace Render
 
         ContextMTL*              m_context  { nullptr };
         Shader*                  m_shader   { nullptr };
-        std::vector<StageSlot>   m_bindings;
+        Vector<StageSlot>   m_bindings;
         const ConstBuffer*       m_bound    { nullptr };
     };
 
@@ -297,7 +297,7 @@ namespace Render
         MTLReflection    m_refl[ST_N_SHADER];
 
         // Per-stage CPU-side "auto" cbuffer for loose uniforms
-        std::vector<unsigned char> m_auto_cpu[ST_N_SHADER];
+        Vector<unsigned char> m_auto_cpu[ST_N_SHADER];
         id<MTLBuffer>              m_auto_gpu[ST_N_SHADER];
         bool                       m_auto_dirty[ST_N_SHADER];
 
@@ -307,8 +307,8 @@ namespace Render
         static constexpr int MAX_BUFFERS = 16;
         const ConstBuffer* m_bound_cb_per_stage[ST_N_SHADER][MAX_BUFFERS];
 
-        std::vector<std::string> m_compiler_errors;
-        std::string              m_linker_error;
+        Vector<String> m_compiler_errors;
+        String              m_linker_error;
 
         // True when the vertex stage writes [[render_target_array_index]] (layered
         // rendering). Metal then requires the PSO to declare inputPrimitiveTopology.
@@ -323,8 +323,8 @@ namespace Render
         // Uniform handles are owned by the shader (lifetime == shader) and handed
         // out as non-owning pointers, mirroring the OpenGL/DirectX backends. The
         // caller must NOT delete them.
-        std::unordered_map<std::string, std::unique_ptr<Uniform>>            m_uniform_cache;
-        std::unordered_map<std::string, std::unique_ptr<UniformConstBuffer>> m_ucb_cache;
+        UnorderedMap<String, UniquePtr<Uniform>>            m_uniform_cache;
+        UnorderedMap<String, UniquePtr<UniformConstBuffer>> m_ucb_cache;
 
         explicit Shader(ContextMTL& ctx);
         ~Shader();
@@ -400,9 +400,9 @@ namespace Render
         virtual void unbind_CB(ConstBuffer*) override;
         virtual void unbind_VBO(VertexBuffer*) override;
         virtual void unbind_IBO(IndexBuffer*) override;
-        virtual std::vector<unsigned char> copy_buffer_CB(const ConstBuffer*) override;
-        virtual std::vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) override;
-        virtual std::vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) override;
+        virtual Vector<unsigned char> copy_buffer_CB(const ConstBuffer*) override;
+        virtual Vector<unsigned char> copy_buffer_VBO(const VertexBuffer*) override;
+        virtual Vector<unsigned char> copy_buffer_IBO(const IndexBuffer*) override;
         virtual unsigned char* map_CB(ConstBuffer*, size_t, size_t, MappingType) override;
         virtual unsigned char* map_CB(ConstBuffer*, MappingType) override;
         virtual void unmap_CB(ConstBuffer*) override;
@@ -439,8 +439,8 @@ namespace Render
         virtual Texture* create_texture(const TextureRawDataInformation&, const TextureGpuDataInformation&) override;
         virtual Texture* create_texture_array(const TextureRawDataInformation&, const TextureGpuDataInformation&, int) override;
         virtual Texture* create_cube_texture(const TextureRawDataInformation[6], const TextureGpuDataInformation&) override;
-        virtual std::vector<unsigned char> get_texture(Texture*, int) override;
-        virtual std::vector<unsigned char> get_texture(Texture*, int, int) override;
+        virtual Vector<unsigned char> get_texture(Texture*, int) override;
+        virtual Vector<unsigned char> get_texture(Texture*, int, int) override;
         virtual void copy_texture(Texture* source, Texture* destination) override;
         virtual void copy_texture_layer(Texture* source, unsigned int source_layer, Texture* destination, unsigned int destination_layer) override;
         virtual void bind_texture(Texture*, int, int) override;
@@ -449,21 +449,21 @@ namespace Render
         virtual void delete_texture(Texture*&) override;
         virtual void update_texture(Texture* texture, const TextureRawDataInformation& data) override;
 
-        virtual Shader* create_shader(const std::vector<ShaderSourceInformation>&) override;
+        virtual Shader* create_shader(const Vector<ShaderSourceInformation>&) override;
         virtual bool shader_compiled_with_errors(Shader*) override;
         virtual bool shader_linked_with_error(Shader*) override;
-        virtual std::vector<std::string> get_shader_compiler_errors(Shader*) override;
-        virtual std::string get_shader_linker_error(Shader*) override;
+        virtual Vector<String> get_shader_compiler_errors(Shader*) override;
+        virtual String get_shader_linker_error(Shader*) override;
         virtual void bind_shader(Shader*) override;
         virtual void unbind_shader(Shader*) override;
-        virtual void bind_uniform_CB(const ConstBuffer*, Shader*, const std::string&) override;
-        virtual void unbind_uniform_CB(Shader*, const std::string&) override;
+        virtual void bind_uniform_CB(const ConstBuffer*, Shader*, const String&) override;
+        virtual void unbind_uniform_CB(Shader*, const String&) override;
         virtual void delete_shader(Shader*&) override;
         virtual Shader* get_bind_shader() const override;
-        virtual Uniform* get_uniform(Shader*, const std::string&) const override;
-        virtual UniformConstBuffer* get_uniform_const_buffer(Shader*, const std::string&) const override;
+        virtual Uniform* get_uniform(Shader*, const String&) const override;
+        virtual UniformConstBuffer* get_uniform_const_buffer(Shader*, const String&) const override;
 
-        virtual Target* create_render_target(const std::vector<TargetField>&) override;
+        virtual Target* create_render_target(const Vector<TargetField>&) override;
         virtual void enable_render_target(Target*) override;
         virtual void disable_render_target(Target*) override;
         virtual void delete_render_target(Target*&) override;
@@ -481,7 +481,7 @@ namespace Render
         virtual void gpu_timer_begin_frame() override;
         virtual void gpu_timer_end_frame() override;
         virtual int  gpu_timer_timestamp() override;
-        virtual bool gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms) override;
+        virtual bool gpu_timer_read_frame(uint64& frame_id, Vector<double>& timestamps_ms) override;
 #endif
 
         // ── Internal ─────────────────────────────────────────────────────────
@@ -523,8 +523,8 @@ namespace Render
         BindContextMTL  m_bind;
         RenderDriverInfo m_driver_info;
 
-        std::unordered_map<PSOKey, id<MTLRenderPipelineState>, PSOKeyHash> m_pso_cache;
-        std::unordered_map<uint32_t, id<MTLDepthStencilState>>             m_ds_cache;
+        UnorderedMap<PSOKey, id<MTLRenderPipelineState>, PSOKeyHash> m_pso_cache;
+        UnorderedMap<uint32_t, id<MTLDepthStencilState>>             m_ds_cache;
 
         void ensure_command_buffer();
         void ensure_encoder(MTLRenderPassDescriptor* rpd = nil);
@@ -551,7 +551,7 @@ namespace Render
             uint64                     m_id{ 0 };
             id                         m_samples{ nil };   // id<MTLCounterSampleBuffer>
             NSUInteger                 m_sample_count{ 0 };
-            std::vector<int>           m_timestamp_sample; // timestamp -> its sample (-1: none)
+            Vector<int>           m_timestamp_sample; // timestamp -> its sample (-1: none)
             bool                       m_pending{ false };
             std::atomic<uint64>        m_done_id{ ~0ull }; // by the completed handler
         };
@@ -564,7 +564,7 @@ namespace Render
         bool             m_gpu_timer_supported{ false };
         id               m_gpu_timer_counter_set{ nil }; // id<MTLCounterSet>, the timestamps
         id<MTLBuffer>    m_gpu_timer_dummy{ nil };       // the work of the blit at the end of a frame
-        std::vector<int> m_gpu_timer_waiting;            // timestamps waiting for the next sample
+        Vector<int> m_gpu_timer_waiting;            // timestamps waiting for the next sample
         // GPU ticks -> ns: from two pairs of CPU / GPU timestamps
         uint64           m_gpu_timer_cpu_origin{ 0 };
         uint64           m_gpu_timer_gpu_origin{ 0 };

@@ -16,26 +16,26 @@ namespace LodGroups
     namespace AuxLodGroups
     {
         //the levels of a name "<base>_lod<n>" (n: one or two digits): its base, its level
-        static bool level_name(const std::string& name, std::string& base, size_t& level)
+        static bool level_name(const Square::String& name, Square::String& base, size_t& level)
         {
             const size_t at = name.rfind("_lod");
-            if (at == std::string::npos || at == 0) return false;
-            const std::string digits = name.substr(at + 4);
+            if (at == Square::String::npos || at == 0) return false;
+            const Square::String digits = name.substr(at + 4);
             if (digits.empty() || digits.size() > 2) return false;
             for (const char c : digits)
             {
                 if (!std::isdigit((unsigned char)c)) return false;
             }
             base = name.substr(0, at);
-            level = size_t(std::stoul(digits));
+            level = size_t(Square::stoul(digits));
             return true;
         }
 
         //the defaults of a mode for some levels: screen 0.6, 0.3, 0.15... the last 0.1 (culled
         //under a tenth of the screen, as Unity); distance 100, 200, 400...
-        static std::vector<float> defaults(Square::Scene::LodMode mode, size_t count)
+        static Square::Vector<float> defaults(Square::Scene::LodMode mode, size_t count)
         {
-            std::vector<float> thresholds;
+            Square::Vector<float> thresholds;
             thresholds.reserve(count);
             for (size_t i = 0; i != count; ++i)
             {
@@ -59,7 +59,7 @@ namespace LodGroups
         }
 
         //the extras of the first level that has them
-        static const Square::Data::JsonObject* first_extras(const std::map< size_t, Square::Shared<Square::Scene::Actor> >& levels, const Extras& extras)
+        static const Square::Data::JsonObject* first_extras(const Square::Map< size_t, Square::Shared<Square::Scene::Actor> >& levels, const Extras& extras)
         {
             for (const auto& level : levels)
             {
@@ -75,7 +75,7 @@ namespace LodGroups
         using namespace Square;
         using namespace Square::Scene;
         //the nodes (before the groups: the levels moved under them are not grouped again)
-        std::vector< Shared<Actor> > parents;
+        Square::Vector< Shared<Actor> > parents;
         root->visit([&parents](Shared<Actor> node) -> bool
         {
             parents.push_back(node);
@@ -85,10 +85,10 @@ namespace LodGroups
         for (const auto& parent : parents)
         {
             //its children by their base: their levels
-            std::map< std::string, std::map< size_t, Shared<Actor> > > sets;
+            Square::Map< Square::String, Square::Map< size_t, Shared<Actor> > > sets;
             for (const auto& child : parent->childs())
             {
-                std::string base;
+                Square::String base;
                 size_t level = 0;
                 if (AuxLodGroups::level_name(child->name(), base, level))
                 {
@@ -100,7 +100,7 @@ namespace LodGroups
                 const auto& levels = set.second;
                 //its mode, its thresholds
                 LodMode mode = LodMode::SCREEN;
-                std::vector<float> thresholds;
+                Square::Vector<float> thresholds;
                 if (const Data::JsonObject* properties = AuxLodGroups::first_extras(levels, extras))
                 {
                     const auto mode_name = SquareExtras::string(*properties, "lod_mode");
@@ -128,7 +128,7 @@ namespace LodGroups
                 group_node->set_static(levels.begin()->second->is_static());
                 parent->add(group_node);
                 // build the group
-                std::vector<LodGroup::Level> group_levels;
+                Square::Vector<LodGroup::Level> group_levels;
                 group_levels.reserve(levels.size());
                 for (const auto& level : levels)
                 {

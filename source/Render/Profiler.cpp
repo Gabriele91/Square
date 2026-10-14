@@ -148,7 +148,7 @@ namespace Render
 
 	int Profiler::node(int parent, const char* name)
 	{
-		auto key = std::make_pair(parent, std::string(name));
+		auto key = std::make_pair(parent, String(name));
 		auto it = m_node_map.find(key);
 		if (it != m_node_map.end()) return it->second;
 		Node node;
@@ -173,7 +173,7 @@ namespace Render
 			m_current_shader = -1;
 			return;
 		}
-		std::string key(name);
+		String key(name);
 		auto it = m_shader_map.find(key);
 		if (it != m_shader_map.end())
 		{
@@ -271,7 +271,7 @@ namespace Render
 		const double gpu_frames = double(std::max(m_gpu_frames, 1u));
 		//the scopes of the window, in the tree order
 		m_scopes.clear();
-		std::vector<int> stack;
+		Vector<int> stack;
 		for (int id = int(m_nodes.size()) - 1; id >= 0; --id)
 		{
 			if (m_nodes[id].m_parent < 0) stack.push_back(id);
@@ -342,12 +342,12 @@ namespace Render
 		++m_version;
 	}
 
-	const std::vector<Profiler::Stat>& Profiler::scopes() const
+	const Vector<Profiler::Stat>& Profiler::scopes() const
 	{
 		return m_scopes;
 	}
 
-	const std::vector<Profiler::Stat>& Profiler::shaders() const
+	const Vector<Profiler::Stat>& Profiler::shaders() const
 	{
 		return m_shaders;
 	}
@@ -357,15 +357,15 @@ namespace Render
 		return m_version;
 	}
 
-	std::string Profiler::report() const
+	String Profiler::report() const
 	{
-		std::string text;
+		String text;
 		char line[256];
 		std::snprintf(line, sizeof(line), "%-36s %16s %16s %7s %7s\n", "scope", "GPU ms (max)", "CPU ms (max)", "calls", "draws");
 		text += line;
 		for (const Stat& stat : m_scopes)
 		{
-			const std::string name = std::string(size_t(stat.m_depth) * 2, ' ') + stat.m_name;
+			const String name = String(size_t(stat.m_depth) * 2, ' ') + stat.m_name;
 			std::snprintf(line, sizeof(line), "%-36.36s %7.3f (%6.3f) %7.3f (%6.3f) %7.1f %7.1f\n"
 						 , name.c_str(), stat.m_gpu_ms, stat.m_gpu_max_ms, stat.m_cpu_ms, stat.m_cpu_max_ms, stat.m_calls, stat.m_draws);
 			text += line;

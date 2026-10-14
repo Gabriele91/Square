@@ -23,14 +23,14 @@ namespace Scene
 		using namespace Square::Resource;
 		ctx.add_object<Sprite>();
 		// Material
-		ctx.add_attribute_function<Sprite, std::string>
+		ctx.add_attribute_function<Sprite, String>
 			("material"
-			, std::string()
-			, [](const Sprite* sprite) -> std::string
+			, String()
+			, [](const Sprite* sprite) -> String
 			{
-				return sprite->m_material ? sprite->m_material->resource_untyped_name() : std::string();
+				return sprite->m_material ? sprite->m_material->resource_untyped_name() : String();
 			}
-			, [](Sprite* sprite, const std::string& name)
+			, [](Sprite* sprite, const String& name)
 			{
 				if (name.size())
 				{

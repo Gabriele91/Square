@@ -200,7 +200,7 @@ namespace Render
 #endif
 	}
 
-	void SoftwareOcclusion::draw(const Camera& camera, const std::vector< Weak<Occluder> >& occluders)
+	void SoftwareOcclusion::draw(const Camera& camera, const Vector< Weak<Occluder> >& occluders)
 	{
 		++m_version;
 		m_active = false;
@@ -228,7 +228,7 @@ namespace Render
 				               && Geometry::Intersection::check(frustum, occluder->occluder_box()) != Geometry::Intersection::OUTSIDE;
 				if (seen)
 				{
-					const std::vector<Vec3>& triangles = occluder->occluder_triangles();
+					const Vector<Vec3>& triangles = occluder->occluder_triangles();
 					for (size_t i = 0; i + 2 < triangles.size(); i += 3)
 					{
 						draw_triangle
@@ -250,8 +250,8 @@ namespace Render
 	void SoftwareOcclusion::draw_triangle(const Vec4& a, const Vec4& b, const Vec4& c)
 	{
 		//cut by the near plane (w >= near): nothing, a triangle or a quad
-		const std::array<Vec4, 3> points{ a, b, c };
-		std::array<Vec4, 4> kept;
+		const Array<Vec4, 3> points{ a, b, c };
+		Array<Vec4, 4> kept;
 		size_t count = 0;
 		for (size_t i = 0; i != points.size(); ++i)
 		{
@@ -298,7 +298,7 @@ namespace Render
 			const float sign = area > 0.0f ? 1.0f : -1.0f;
 			const float scale = sign / area;
 			const Vec3 depths(p0.z, p1.z, p2.z);
-			std::vector<float>& depth = m_levels[0];
+			Vector<float>& depth = m_levels[0];
 			for (int y = low_y; y <= high_y; ++y)
 			{
 				const float py = float(y) + 0.5f;
@@ -323,8 +323,8 @@ namespace Render
 		while (size.x > 1 || size.y > 1)
 		{
 			const IVec2 next_size(std::max((size.x + 1) / 2, 1), std::max((size.y + 1) / 2, 1));
-			std::vector<float> next(size_t(next_size.x) * size_t(next_size.y), 0.0f);
-			const std::vector<float>& source = m_levels.back();
+			Vector<float> next(size_t(next_size.x) * size_t(next_size.y), 0.0f);
+			const Vector<float>& source = m_levels.back();
 			for (int y = 0; y != next_size.y; ++y)
 			{
 				for (int x = 0; x != next_size.x; ++x)
@@ -396,7 +396,7 @@ namespace Render
 				//hidden while every texel is nearer than it (a farther one or nothing: seen)
 				const size_t level = level_of(clamped_low, clamped_high, m_levels.size());
 				const IVec2& level_size = m_level_sizes[level];
-				const std::vector<float>& texels = m_levels[level];
+				const Vector<float>& texels = m_levels[level];
 				hidden = true;
 				for (int y = (clamped_low.y >> level); y <= (clamped_high.y >> level) && hidden; ++y)
 				{

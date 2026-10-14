@@ -66,16 +66,16 @@ namespace UI
 		if (buffer.m_texture) render.delete_texture(buffer.m_texture);
 	}
 
-	std::string TexturePreviews::source(size_t slot)
+	String TexturePreviews::source(size_t slot)
 	{
-		return AuxTexturePreviews::s_prefix + std::to_string(slot);
+		return AuxTexturePreviews::s_prefix + to_string(slot);
 	}
 
-	bool TexturePreviews::slot_of(const std::string& source, size_t& slot)
+	bool TexturePreviews::slot_of(const String& source, size_t& slot)
 	{
-		const std::string prefix = AuxTexturePreviews::s_prefix;
+		const String prefix = AuxTexturePreviews::s_prefix;
 		const size_t at = source.rfind(prefix);
-		bool found = at != std::string::npos && at + prefix.size() < source.size();
+		bool found = at != String::npos && at + prefix.size() < source.size();
 		if (found)
 		{
 			slot = size_t(std::atoi(source.c_str() + at + prefix.size()));
@@ -89,7 +89,7 @@ namespace UI
 		if (m_textures.empty())
 		{
 			//dark, until something is drawn in them
-			const std::vector<unsigned char> dark(size_t(width) * size_t(height) * 4, 20);
+			const Vector<unsigned char> dark(size_t(width) * size_t(height) * 4, 20);
 			for (size_t i = 0; i != slots; ++i)
 			{
 				Render::Texture* texture = render.create_texture
@@ -129,7 +129,7 @@ namespace UI
 		return slot || texture == m_raw.m_texture || texture == m_reduce.m_texture || texture == m_minmax.m_texture;
 	}
 
-	void TexturePreviews::items(const std::vector<Item>& items)
+	void TexturePreviews::items(const Vector<Item>& items)
 	{
 		m_items = items;
 	}

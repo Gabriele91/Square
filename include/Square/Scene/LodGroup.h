@@ -45,7 +45,7 @@ namespace Scene
 		//a level: its child (by its name), where it ends (see the modes)
 		struct Level
 		{
-			std::string m_actor;
+			String m_actor;
 			float       m_threshold{ 0.0f };
 		};
 
@@ -56,8 +56,8 @@ namespace Scene
 		LodMode mode() const { return m_mode; }
 
 		//its levels, the detailed one first
-		void levels(const std::vector<Level>& levels);
-		const std::vector<Level>& levels() const { return m_levels; }
+		void levels(const Vector<Level>& levels);
+		const Vector<Level>& levels() const { return m_levels; }
 
 		//its bounds in the space of its actor: center, size (the largest side)
 		void bounds(const Square::Vec3& center, float size);
@@ -94,7 +94,7 @@ namespace Scene
 
 	private:
 
-		using Renderables = std::vector< Square::Weak<Square::Render::Renderable> >;
+		using Renderables = Vector< Square::Weak<Square::Render::Renderable> >;
 
 		//the renderables of each level, found when needed (none yet, or one gone)
 		bool found() const;
@@ -104,10 +104,10 @@ namespace Scene
 		void apply();
 
 		LodMode                  m_mode{ LodMode::SCREEN };
-		std::vector<Level>       m_levels;
+		Vector<Level>       m_levels;
 		Square::Vec3             m_center{ 0.0f };
 		float                    m_size{ 0.0f };
-		std::vector<Renderables> m_renderables;
+		Vector<Renderables> m_renderables;
 		bool                     m_found{ false };
 		size_t                   m_shown{ ~size_t(0) };    //(none applied yet)
 		size_t                   m_previous{ ~size_t(0) }; //the level fading out (none)

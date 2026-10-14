@@ -13,14 +13,14 @@ namespace ImageConverter
 {
     namespace
     {
-        unsigned int u16_le(const std::vector<unsigned char>& d, size_t at) { return at + 2 <= d.size() ? unsigned(d[at]) | (unsigned(d[at + 1]) << 8) : 0; }
-        unsigned int u32_le(const std::vector<unsigned char>& d, size_t at) { return at + 4 <= d.size() ? u16_le(d, at) | (u16_le(d, at + 2) << 16) : 0; }
+        unsigned int u16_le(const Square::Vector<unsigned char>& d, size_t at) { return at + 2 <= d.size() ? unsigned(d[at]) | (unsigned(d[at + 1]) << 8) : 0; }
+        unsigned int u32_le(const Square::Vector<unsigned char>& d, size_t at) { return at + 4 <= d.size() ? u16_le(d, at) | (u16_le(d, at + 2) << 16) : 0; }
 
-        bool is_png(const std::vector<unsigned char>& d)  { return d.size() >= 8 && d[0] == 0x89 && d[1] == 'P' && d[2] == 'N' && d[3] == 'G'; }
-        bool is_jpeg(const std::vector<unsigned char>& d) { return d.size() >= 3 && d[0] == 0xFF && d[1] == 0xD8 && d[2] == 0xFF; }
-        bool is_bmp(const std::vector<unsigned char>& d)  { return d.size() >= 54 && d[0] == 'B' && d[1] == 'M'; }
+        bool is_png(const Square::Vector<unsigned char>& d)  { return d.size() >= 8 && d[0] == 0x89 && d[1] == 'P' && d[2] == 'N' && d[3] == 'G'; }
+        bool is_jpeg(const Square::Vector<unsigned char>& d) { return d.size() >= 3 && d[0] == 0xFF && d[1] == 0xD8 && d[2] == 0xFF; }
+        bool is_bmp(const Square::Vector<unsigned char>& d)  { return d.size() >= 54 && d[0] == 'B' && d[1] == 'M'; }
         //TGA: no magic; its extension, and a plausible header (color map 0/1, a TGA image type)
-        bool is_tga(const std::vector<unsigned char>& d, const std::string& extension)
+        bool is_tga(const Square::Vector<unsigned char>& d, const Square::String& extension)
         {
             if (d.size() < 18 || d[1] > 1) return false;
             const unsigned char type = d[2];
@@ -29,9 +29,9 @@ namespace ImageConverter
         }
 
         //decoded by the engine (PNG, JPEG, BMP, TGA 2.0), then a PNG of 3/4 channels
-        bool to_png(const std::vector<unsigned char>& file, Result& result, const std::string& what)
+        bool to_png(const Square::Vector<unsigned char>& file, Result& result, const Square::String& what)
         {
-            std::vector<unsigned char> pixels;
+            Square::Vector<unsigned char> pixels;
             unsigned long width = 0, height = 0;
             Square::Render::TextureFormat format;
             Square::Render::TextureType type;
@@ -49,7 +49,7 @@ namespace ImageConverter
             if (channels <= 2)
             {
                 const unsigned int out_channels = channels + 2;
-                std::vector<unsigned char> expanded(size_t(width) * height * out_channels);
+                Square::Vector<unsigned char> expanded(size_t(width) * height * out_channels);
                 for (size_t i = 0, n = size_t(width) * height; i != n; ++i)
                 {
                     const unsigned char grey = pixels[i * channels];
@@ -67,7 +67,7 @@ namespace ImageConverter
         }
 
         //the pixels of a BMP of 16 bit (u16), rows from the top
-        bool read_bmp16(const std::vector<unsigned char>& file, std::vector<unsigned int>& pixels, unsigned long& width, unsigned long& height)
+        bool read_bmp16(const Square::Vector<unsigned char>& file, Square::Vector<unsigned int>& pixels, unsigned long& width, unsigned long& height)
         {
             const unsigned int offset = u32_le(file, 10);
             const int bmp_width  = int(u32_le(file, 18));
@@ -93,12 +93,12 @@ namespace ImageConverter
         unsigned char expand6(unsigned int v) { return (unsigned char)((v << 2) | (v >> 4)); }
 
         //a BMP of 16 bit 5:6:5 to a PNG RGB (stb_image decodes its green wrong)
-        bool bmp565_to_png(const std::vector<unsigned char>& file, Result& result)
+        bool bmp565_to_png(const Square::Vector<unsigned char>& file, Result& result)
         {
-            std::vector<unsigned int> pixels;
+            Square::Vector<unsigned int> pixels;
             unsigned long width = 0, height = 0;
             if (!read_bmp16(file, pixels, width, height)) return false;
-            std::vector<unsigned char> rgb(pixels.size() * 3);
+            Square::Vector<unsigned char> rgb(pixels.size() * 3);
             for (size_t i = 0; i != pixels.size(); ++i)
             {
                 rgb[i * 3 + 0] = expand5((pixels[i] >> 11) & 0x1F);
@@ -111,12 +111,12 @@ namespace ImageConverter
         }
 
         //a BMP of 16 bit 1:5:5:5 (x:5:5:5 or a1:5:5:5) to a TGA 16 RLE (the same pixels)
-        bool bmp555_to_tga(const std::vector<unsigned char>& file, bool has_alpha, Result& result)
+        bool bmp555_to_tga(const Square::Vector<unsigned char>& file, bool has_alpha, Result& result)
         {
-            std::vector<unsigned int> pixels;
+            Square::Vector<unsigned int> pixels;
             unsigned long width = 0, height = 0;
             if (!read_bmp16(file, pixels, width, height)) return false;
-            std::vector<unsigned char> tga(pixels.size() * 2);
+            Square::Vector<unsigned char> tga(pixels.size() * 2);
             for (size_t i = 0; i != pixels.size(); ++i)
             {
                 const unsigned int pixel = has_alpha ? pixels[i] : (pixels[i] | 0x8000); //else opaque
@@ -124,12 +124,12 @@ namespace ImageConverter
                 tga[i * 2 + 1] = (unsigned char)(pixel >> 8);
             }
             result.m_data = Square::Data::Image::encode_tga_rle(tga.data(), width, height, 2, true);
-            result.m_description = std::string("BMP 16 bit ") + (has_alpha ? "1:5:5:5" : "5:5:5") + " -> TGA 16 bit RLE";
+            result.m_description = Square::String("BMP 16 bit ") + (has_alpha ? "1:5:5:5" : "5:5:5") + " -> TGA 16 bit RLE";
             return !result.m_data.empty();
         }
 
         //a TGA of 16 bit without compression to a TGA 16 RLE (the same pixels)
-        bool tga16_to_rle(const std::vector<unsigned char>& file, Result& result)
+        bool tga16_to_rle(const Square::Vector<unsigned char>& file, Result& result)
         {
             const size_t id_size = file[0];
             const size_t color_map_size = file[1] ? size_t(u16_le(file, 5)) * ((file[7] + 7) / 8) : 0;
@@ -138,7 +138,7 @@ namespace ImageConverter
             const unsigned char descriptor = file[17];
             const size_t offset = 18 + id_size + color_map_size;
             if (!width || !height || offset + size_t(width) * height * 2 > file.size()) return false;
-            std::vector<unsigned char> pixels(file.begin() + offset, file.begin() + offset + size_t(width) * height * 2);
+            Square::Vector<unsigned char> pixels(file.begin() + offset, file.begin() + offset + size_t(width) * height * 2);
             //no alpha bit (attribute bits 0): opaque
             if (!(descriptor & 0x0F))
             {
@@ -150,7 +150,7 @@ namespace ImageConverter
         }
     }
 
-    Result convert(const std::vector<unsigned char>& file, const std::string& extension)
+    Result convert(const Square::Vector<unsigned char>& file, const Square::String& extension)
     {
         Result result;
         if (is_png(file))
@@ -192,10 +192,10 @@ namespace ImageConverter
             else if (bits <= 8)
             {
                 result.m_data = file;
-                result.m_description = "BMP " + std::to_string(bits) + " bit palette, kept";
+                result.m_description = "BMP " + Square::to_string(bits) + " bit palette, kept";
                 return result;
             }
-            else if (to_png(file, result, "BMP " + std::to_string(bits) + " bit"))
+            else if (to_png(file, result, "BMP " + Square::to_string(bits) + " bit"))
             {
                 return result;
             }
@@ -214,7 +214,7 @@ namespace ImageConverter
                 }
                 if (file[2] == 2 && tga16_to_rle(file, result)) return result;
             }
-            if (to_png(file, result, "TGA " + std::to_string(bits) + " bit")) return result;
+            if (to_png(file, result, "TGA " + Square::to_string(bits) + " bit")) return result;
         }
         //as it is
         result.m_data = file;
@@ -222,10 +222,10 @@ namespace ImageConverter
         return result;
     }
 
-    Result convert_normal_map(const std::vector<unsigned char>& file)
+    Result convert_normal_map(const Square::Vector<unsigned char>& file)
     {
         Result result;
-        std::vector<unsigned char> pixels;
+        Square::Vector<unsigned char> pixels;
         unsigned long width = 0, height = 0;
         Square::Render::TextureFormat format;
         Square::Render::TextureType type;
@@ -245,7 +245,7 @@ namespace ImageConverter
             pixels[i] = 255 - pixels[i];
         }
         result.m_data = Square::Data::Image::encode_png(pixels.data(), width, height, channels);
-        result.m_description = std::string("normal map OpenGL -> DirectX (green inverted), PNG ") + (channels == 4 ? "RGBA" : "RGB");
+        result.m_description = Square::String("normal map OpenGL -> DirectX (green inverted), PNG ") + (channels == 4 ? "RGBA" : "RGB");
         return result;
     }
 
@@ -256,15 +256,15 @@ namespace ImageConverter
         //a level: RGBA pixels, rows from the top
         struct Level
         {
-            std::vector<unsigned char> m_rgba;
+            Square::Vector<unsigned char> m_rgba;
             unsigned long m_width{ 0 };
             unsigned long m_height{ 0 };
         };
 
         //the pixels of a file of 8 bit channels as RGBA (grey: RGB); false for the others
-        bool decode_rgba(const std::vector<unsigned char>& file, Level& level, bool& has_alpha)
+        bool decode_rgba(const Square::Vector<unsigned char>& file, Level& level, bool& has_alpha)
         {
-            std::vector<unsigned char> pixels;
+            Square::Vector<unsigned char> pixels;
             Square::Render::TextureFormat format;
             Square::Render::TextureType type;
             if (!Square::Data::Image::load(file, pixels, level.m_width, level.m_height, format, type)) return false;
@@ -336,17 +336,17 @@ namespace ImageConverter
         }
     }
 
-    std::string extension(Compression compression)
+    Square::String extension(Compression compression)
     {
         switch (compression)
         {
         case Compression::BC:   return ".dds";
         case Compression::ASTC: return ".ktx";
-        default:                return std::string();
+        default:                return Square::String();
         }
     }
 
-    Result compress(const std::vector<unsigned char>& file, bool normal_map, Compression compression)
+    Result compress(const Square::Vector<unsigned char>& file, bool normal_map, Compression compression)
     {
         Result result;
         Level level;
@@ -363,7 +363,7 @@ namespace ImageConverter
         }
         if (compression == Compression::BC && (level.m_width % 4 || level.m_height % 4))
         {
-            result.m_description = "not compressed (" + std::to_string(level.m_width) + "x" + std::to_string(level.m_height) + ": BC wants a multiple of 4)";
+            result.m_description = "not compressed (" + Square::to_string(level.m_width) + "x" + Square::to_string(level.m_height) + ": BC wants a multiple of 4)";
             return result;
         }
         //the format
@@ -375,12 +375,12 @@ namespace ImageConverter
         //the levels, down to 1x1
         const unsigned long width = level.m_width;
         const unsigned long height = level.m_height;
-        std::vector<unsigned char> levels_data;
+        Square::Vector<unsigned char> levels_data;
         unsigned int levels = 0;
         bool compressed = true;
         while (true)
         {
-            std::vector<unsigned char> blocks = format == TF_ASTC_4x4
+            Square::Vector<unsigned char> blocks = format == TF_ASTC_4x4
                                               ? Square::Data::Image::compress_astc(level.m_rgba.data(), level.m_width, level.m_height)
                                               : Square::Data::Image::compress_bc(level.m_rgba.data(), level.m_width, level.m_height, format);
             compressed = !blocks.empty();
@@ -401,8 +401,8 @@ namespace ImageConverter
         result.m_data = format == TF_ASTC_4x4
                       ? Square::Data::Image::encode_ktx(levels_data.data(), width, height, levels, format)
                       : Square::Data::Image::encode_dds(levels_data.data(), width, height, levels, format);
-        result.m_description = std::string(format == TF_ASTC_4x4 ? "KTX " : "DDS ") + format_name
-                             + ", " + std::to_string(levels) + " levels, " + std::to_string(result.m_data.size() / 1024) + " KB";
+        result.m_description = Square::String(format == TF_ASTC_4x4 ? "KTX " : "DDS ") + format_name
+                             + ", " + Square::to_string(levels) + " levels, " + Square::to_string(result.m_data.size() / 1024) + " KB";
         return result;
     }
 }

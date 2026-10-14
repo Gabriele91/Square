@@ -39,7 +39,7 @@ namespace Square
 		//Resource
 		ResourceObject(Context& context) ;
 		//load from file
-		virtual bool         load(const std::string& path) = 0;
+		virtual bool         load(const String& path) = 0;
         virtual ResourceType resource_type()               { return ResourceType::UNKNOWN;                  }
 		virtual const char*  resource_name()         const { return m_resource_name ? m_resource_name : ""; }
 		virtual const char*  resource_untyped_name() const 

@@ -107,7 +107,7 @@ namespace Parser
             return nullptr;
         }
         // on/true/yes -> CAP_REQUIRE, off/false/no -> CAP_EXCLUDE; false if neither.
-        inline bool parse_capability_value(const std::string& value, Effect::CapabilityTest& out)
+        inline bool parse_capability_value(const String& value, Effect::CapabilityTest& out)
         {
             if (is_true_keyword(value))  { out = Effect::CAP_REQUIRE; return true; }
             if (is_false_keyword(value)) { out = Effect::CAP_EXCLUDE; return true; }
@@ -152,44 +152,44 @@ namespace Parser
         };
     }
     // // // // // // // // // // // // // // // // // // // // // // // // // //
-    std::string Effect::blend_to_string(Render::BlendType blend)
+    String Effect::blend_to_string(Render::BlendType blend)
     {
         for (const auto& e : s_blend_table)
-            if (e.value == blend) return std::string(e.name);
+            if (e.value == blend) return String(e.name);
         return "";
     }
 
-    Render::BlendType Effect::blend_from_string(const std::string& blend, Render::BlendType blend_default)
+    Render::BlendType Effect::blend_from_string(const String& blend, Render::BlendType blend_default)
     {
         for (const auto& e : s_blend_table)
             if (e.name == std::string_view(blend)) return e.value;
         return blend_default;
     }
     
-    std::string Effect::depth_to_string(Render::DepthFuncType depth)
+    String Effect::depth_to_string(Render::DepthFuncType depth)
     {
         for (const auto& e : s_depth_table)
-            if (e.value == depth) return std::string(e.name);
+            if (e.value == depth) return String(e.name);
         square_assert_debug(0);
         return "less";
     }
 
-    Render::DepthFuncType Effect::depth_from_string(const std::string& depth, Render::DepthFuncType depth_default)
+    Render::DepthFuncType Effect::depth_from_string(const String& depth, Render::DepthFuncType depth_default)
     {
         for (const auto& e : s_depth_table)
             if (e.name == std::string_view(depth)) return e.value;
         return depth_default;
     }
     
-    std::string Effect::cullface_to_string(Render::CullfaceType cullface)
+    String Effect::cullface_to_string(Render::CullfaceType cullface)
     {
         for (const auto& e : s_cullface_table)
-            if (e.value == cullface) return std::string(e.name);
+            if (e.value == cullface) return String(e.name);
         square_assert_debug(0);
         return "front_and_back";
     }
 
-    Render::CullfaceType Effect::cullface_from_string(const std::string& cullface, Render::CullfaceType cullface_default)
+    Render::CullfaceType Effect::cullface_from_string(const String& cullface, Render::CullfaceType cullface_default)
     {
         for (const auto& e : s_cullface_table)
             if (e.name == std::string_view(cullface)) return e.value;
@@ -224,9 +224,9 @@ namespace Parser
     }
     // // // // // // // // // // // // // // // // // // // // // // // // // //
     // Context
-    std::string Effect::Context::errors_to_string() const
+    String Effect::Context::errors_to_string() const
     {
-        std::stringstream sbuffer;
+        StringStream sbuffer;
         
         for (auto& error : m_errors)
         {
@@ -237,7 +237,7 @@ namespace Parser
     }
     // // // // // // // // // // // // // // // // // // // // // // // // // //
     // Parser
-    bool Effect::parse(Allocator* allocator, Context& default_context, const std::string& source)
+    bool Effect::parse(Allocator* allocator, Context& default_context, const String& source)
     {
         const char* c_ptr = source.c_str();
         return parse(allocator, default_context, c_ptr);
@@ -495,15 +495,15 @@ namespace Parser
                     //skip spaces
                     skip_space_and_comments(m_context->m_line, ptr);
                     //parse the on/off value
-                    std::string value;
+                    String value;
                     if (!parse_name(ptr, value))
                     {
-                        push_error("Requirement: " + std::string(gate->name) + " value not valid");
+                        push_error("Requirement: " + String(gate->name) + " value not valid");
                         return false;
                     }
                     if (!parse_capability_value(value, r_field.*(gate->field)))
                     {
-                        push_error("Requirement: " + std::string(gate->name) + " expects on/off");
+                        push_error("Requirement: " + String(gate->name) + " expects on/off");
                         return false;
                     }
                     //skip spaces
@@ -632,7 +632,7 @@ namespace Parser
 		skip_line_space(m_context->m_line, ptr);
 		while (*ptr != ')')
 		{
-			std::string name;
+			String name;
 			if (!parse_name(ptr, name))
 			{
 				push_error("clip: a parameter name or ) expected");
@@ -660,7 +660,7 @@ namespace Parser
 		case '\"':
 		{
 			//path
-			std::string effect_path;
+			String effect_path;
 			//get
 			if (!parse_string(m_context->m_line, ptr, effect_path))
 			{
@@ -675,7 +675,7 @@ namespace Parser
 		case '<':
 		{
 			//name
-			std::string effect_name;
+			String effect_name;
 			//get
 			if (!parse_string(m_context->m_line, ptr, effect_name, '<', '>'))
 			{
@@ -705,7 +705,7 @@ namespace Parser
 		case '\"':
 		{
 			//path
-			std::string effect_path;
+			String effect_path;
 			//get
 			if (!parse_string(m_context->m_line, ptr, effect_path))
 			{
@@ -719,7 +719,7 @@ namespace Parser
 		case '<':
 		{
 			//name
-			std::string effect_name;
+			String effect_name;
 			//get
 			if (!parse_string(m_context->m_line, ptr, effect_name, '<', '>'))
 			{
@@ -746,7 +746,7 @@ namespace Parser
 		//skip spaces
 		skip_space_and_comments(m_context->m_line, ptr);
 		//name of technique
-		std::string technique_name;
+		String technique_name;
 		if (!parse_string(m_context->m_line, ptr, technique_name))
 		{
 			push_error("Not valid import technique name");
@@ -763,7 +763,7 @@ namespace Parser
     {
 		//field alias		
 		using PKey = const char*;
-		using PKeys = std::vector<PKey>;
+		using PKeys = Vector<PKey>;
 		using PFunction = bool (Effect::*)(const char*&, PassField&);
 		//table
 		struct { PKeys m_keys; PFunction m_funtion; } keys_function_table[]
@@ -889,7 +889,7 @@ namespace Parser
         //parametric (without the parameter: off)
         if (cstr_cmp_skip(ptr, "param")) return parse_state_param(ptr, pass.m_blend.m_param);
         //string
-        std::string param1, param2;
+        String param1, param2;
         //parse name
         if (!parse_name(ptr, param1))
         {
@@ -923,7 +923,7 @@ namespace Parser
         //parametric (without the parameter: less, written)
         if (cstr_cmp_skip(ptr, "param")) return parse_state_param(ptr, pass.m_depth.m_param);
         //string
-        std::string param1;
+        String param1;
         //parse name
         if (!parse_name(ptr, param1))
         {
@@ -943,7 +943,7 @@ namespace Parser
         skip_line_space(m_context->m_line, ptr);
         if (std::isalpha((unsigned char)*ptr))
         {
-            std::string param2;
+            String param2;
             if (!parse_name(ptr, param2) || (param2 != "read_only" && param2 != "only_read"))
             {
                 push_error("Depth write parameter not valid (read_only)");
@@ -964,7 +964,7 @@ namespace Parser
             return parse_state_param(ptr, pass.m_cullface.m_param);
         }
         //string
-        std::string param1;
+        String param1;
         //parse name
         if (!parse_name(ptr, param1))
         {
@@ -981,7 +981,7 @@ namespace Parser
         pass.m_cullface.m_value.m_cullface = cullface_from_string(param1, Render::CF_BACK);
         return true;
     }
-    bool Effect::parse_state_param(const char*& ptr, std::string& name)
+    bool Effect::parse_state_param(const char*& ptr, String& name)
     {
         //(name)
         skip_line_space(m_context->m_line, ptr);
@@ -1087,7 +1087,7 @@ namespace Parser
 			case '\"':
 			{
 				//shader name
-				std::string shader_path;
+				String shader_path;
 				//get
 				if (!parse_string(m_context->m_line, ptr, shader_path))
 				{
@@ -1101,7 +1101,7 @@ namespace Parser
 			case '<':
 			{
 				//shader name
-				std::string shader_name;
+				String shader_name;
 				//get
 				if (!parse_string(m_context->m_line, ptr, shader_name, '<', '>'))
 				{
@@ -1127,7 +1127,7 @@ namespace Parser
         //inside a comment
         bool c_inside = false;
 		//ref to data field
-		std::string& output_source = pass.m_shader.m_data;
+		String& output_source = pass.m_shader.m_data;
         //parse table
         if (is_start_table(*ptr))
         {
@@ -1193,7 +1193,7 @@ namespace Parser
         return false;
     }
     //////////////////////////////////////////////////////
-    void Effect::push_error(const std::string& error)
+    void Effect::push_error(const String& error)
     {
         m_context->m_errors.push_front(ErrorField{ m_context->m_line,error });
     }

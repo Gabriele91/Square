@@ -24,16 +24,16 @@ namespace Square
 // UTF-32 has no native Win32 API, so it goes through UTF-16 manually.
 namespace
 {
-    static std::wstring win_u8_to_wstr(const std::u8string& s)
+    static WString win_u8_to_wstr(const std::u8string& s)
     {
         if (s.empty()) return {};
         int len = MultiByteToWideChar(CP_UTF8, 0, s.data(), (int)s.size(), nullptr, 0);
-        std::wstring result(len, L'\0');
+        WString result(len, L'\0');
         MultiByteToWideChar(CP_UTF8, 0, s.data(), (int)s.size(), result.data(), len);
         return result;
     }
 
-    static std::u8string win_wstr_to_u8(const std::wstring& ws)
+    static std::u8string win_wstr_to_u8(const WString& ws)
     {
         if (ws.empty()) return {};
         int len = WideCharToMultiByte(CP_UTF8, 0, ws.data(), (int)ws.size(), nullptr, 0, nullptr, nullptr);
@@ -42,20 +42,20 @@ namespace
         return result;
     }
 
-    static std::wstring win_u16_to_wstr(const std::u16string& s)
+    static WString win_u16_to_wstr(const U16String& s)
     {
         // char16_t and wchar_t are both 2 bytes on Windows — same layout
-        return std::wstring(reinterpret_cast<const wchar_t*>(s.data()), s.size());
+        return WString(reinterpret_cast<const wchar_t*>(s.data()), s.size());
     }
 
-    static std::u16string win_wstr_to_u16(const std::wstring& ws)
+    static U16String win_wstr_to_u16(const WString& ws)
     {
-        return std::u16string(reinterpret_cast<const char16_t*>(ws.data()), ws.size());
+        return U16String(reinterpret_cast<const char16_t*>(ws.data()), ws.size());
     }
 
-    static std::wstring win_u32_to_wstr(const std::u32string& s)
+    static WString win_u32_to_wstr(const U32String& s)
     {
-        std::wstring result;
+        WString result;
         result.reserve(s.size());
         for (char32_t cp : s)
         {
@@ -73,9 +73,9 @@ namespace
         return result;
     }
 
-    static std::u32string win_wstr_to_u32(const std::wstring& ws)
+    static U32String win_wstr_to_u32(const WString& ws)
     {
-        std::u32string result;
+        U32String result;
         const wchar_t* p   = ws.data();
         const wchar_t* end = p + ws.size();
         while (p < end)
@@ -96,15 +96,15 @@ namespace
     }
 }
 
-    SQUARE_API std::u8string to_utf8(const std::u16string &s) { return win_wstr_to_u8(win_u16_to_wstr(s)); }
-    SQUARE_API std::u8string to_utf8(const std::u32string &s) { return win_wstr_to_u8(win_u32_to_wstr(s)); }
-    SQUARE_API std::u16string to_utf16(const std::u8string &s) { return win_wstr_to_u16(win_u8_to_wstr(s)); }
-    SQUARE_API std::u16string to_utf16(const std::u32string &s) { return win_wstr_to_u16(win_u32_to_wstr(s)); }
-    SQUARE_API std::u32string to_utf32(const std::u8string &s) { return win_wstr_to_u32(win_u8_to_wstr(s)); }
-    SQUARE_API std::u32string to_utf32(const std::u16string &s) { return win_wstr_to_u32(win_u16_to_wstr(s)); }
-    SQUARE_API std::u16string to_ucs2(const std::u8string &s) { return win_wstr_to_u16(win_u8_to_wstr(s)); }
-    SQUARE_API std::u32string to_ucs4(const std::u8string &s) { return to_utf32(s); }
-    SQUARE_API std::u32string to_ucs4(const std::u16string &s) { return to_utf32(s); }
+    SQUARE_API std::u8string to_utf8(const U16String &s) { return win_wstr_to_u8(win_u16_to_wstr(s)); }
+    SQUARE_API std::u8string to_utf8(const U32String &s) { return win_wstr_to_u8(win_u32_to_wstr(s)); }
+    SQUARE_API U16String to_utf16(const std::u8string &s) { return win_wstr_to_u16(win_u8_to_wstr(s)); }
+    SQUARE_API U16String to_utf16(const U32String &s) { return win_wstr_to_u16(win_u32_to_wstr(s)); }
+    SQUARE_API U32String to_utf32(const std::u8string &s) { return win_wstr_to_u32(win_u8_to_wstr(s)); }
+    SQUARE_API U32String to_utf32(const U16String &s) { return win_wstr_to_u32(win_u16_to_wstr(s)); }
+    SQUARE_API U16String to_ucs2(const std::u8string &s) { return win_wstr_to_u16(win_u8_to_wstr(s)); }
+    SQUARE_API U32String to_ucs4(const std::u8string &s) { return to_utf32(s); }
+    SQUARE_API U32String to_ucs4(const U16String &s) { return to_utf32(s); }
 
 ///////////////////////////////////////////////////////////////////////////////
 #elif defined(__APPLE__)
@@ -122,7 +122,7 @@ namespace
         );
     }
 
-    static CFStringRef cf_from_utf16(const std::u16string& s)
+    static CFStringRef cf_from_utf16(const U16String& s)
     {
         return CFStringCreateWithCharacters(
             kCFAllocatorDefault,
@@ -131,7 +131,7 @@ namespace
         );
     }
 
-    static CFStringRef cf_from_utf32(const std::u32string& s)
+    static CFStringRef cf_from_utf32(const U32String& s)
     {
         return CFStringCreateWithBytes(
             kCFAllocatorDefault,
@@ -154,30 +154,30 @@ namespace
         return result;
     }
 
-    static std::u16string cf_to_utf16(CFStringRef str)
+    static U16String cf_to_utf16(CFStringRef str)
     {
         if (!str) return {};
         CFIndex length = CFStringGetLength(str);
-        std::u16string result(length, u'\0');
+        U16String result(length, u'\0');
         CFStringGetCharacters(str, CFRangeMake(0, length),
                               reinterpret_cast<UniChar*>(result.data()));
         return result;
     }
 
-    static std::u32string cf_to_utf32(CFStringRef str)
+    static U32String cf_to_utf32(CFStringRef str)
     {
         if (!str) return {};
         CFIndex length = CFStringGetLength(str);
         CFIndex used = 0;
         CFStringGetBytes(str, CFRangeMake(0, length), kCFStringEncodingUTF32LE, 0, false, nullptr, 0, &used);
-        std::u32string result(used / CFIndex(sizeof(char32_t)), U'\0');
+        U32String result(used / CFIndex(sizeof(char32_t)), U'\0');
         CFStringGetBytes(str, CFRangeMake(0, length), kCFStringEncodingUTF32LE, 0, false,
                          reinterpret_cast<UInt8*>(result.data()), used, nullptr);
         return result;
     }
 }
 
-    SQUARE_API std::u8string to_utf8(const std::u16string &s)
+    SQUARE_API std::u8string to_utf8(const U16String &s)
     {
         CFStringRef str = cf_from_utf16(s);
         auto result = cf_to_utf8(str);
@@ -185,7 +185,7 @@ namespace
         return result;
     }
 
-    SQUARE_API std::u8string to_utf8(const std::u32string &s)
+    SQUARE_API std::u8string to_utf8(const U32String &s)
     {
         CFStringRef str = cf_from_utf32(s);
         auto result = cf_to_utf8(str);
@@ -193,7 +193,7 @@ namespace
         return result;
     }
 
-    SQUARE_API std::u16string to_utf16(const std::u8string &s)
+    SQUARE_API U16String to_utf16(const std::u8string &s)
     {
         CFStringRef str = cf_from_utf8(s);
         auto result = cf_to_utf16(str);
@@ -201,7 +201,7 @@ namespace
         return result;
     }
 
-    SQUARE_API std::u16string to_utf16(const std::u32string &s)
+    SQUARE_API U16String to_utf16(const U32String &s)
     {
         CFStringRef str = cf_from_utf32(s);
         auto result = cf_to_utf16(str);
@@ -209,7 +209,7 @@ namespace
         return result;
     }
 
-    SQUARE_API std::u32string to_utf32(const std::u8string &s)
+    SQUARE_API U32String to_utf32(const std::u8string &s)
     {
         CFStringRef str = cf_from_utf8(s);
         auto result = cf_to_utf32(str);
@@ -217,7 +217,7 @@ namespace
         return result;
     }
 
-    SQUARE_API std::u32string to_utf32(const std::u16string &s)
+    SQUARE_API U32String to_utf32(const U16String &s)
     {
         CFStringRef str = cf_from_utf16(s);
         auto result = cf_to_utf32(str);
@@ -225,7 +225,7 @@ namespace
         return result;
     }
 
-    SQUARE_API std::u16string to_ucs2(const std::u8string &s)
+    SQUARE_API U16String to_ucs2(const std::u8string &s)
     {
         CFStringRef str = cf_from_utf8(s);
         auto result = cf_to_utf16(str);
@@ -233,8 +233,8 @@ namespace
         return result;
     }
 
-    SQUARE_API std::u32string to_ucs4(const std::u8string &s) { return to_utf32(s); }
-    SQUARE_API std::u32string to_ucs4(const std::u16string &s) { return to_utf32(s); }
+    SQUARE_API U32String to_ucs4(const std::u8string &s) { return to_utf32(s); }
+    SQUARE_API U32String to_ucs4(const U16String &s) { return to_utf32(s); }
 
 ///////////////////////////////////////////////////////////////////////////////
 #else
@@ -252,7 +252,7 @@ namespace
     static bool iconv_convert(
         const char* from_enc, const char* to_enc,
         const char* in_data, size_t in_bytes,
-        std::string& out)
+        String& out)
     {
         iconv_t cd = iconv_open(to_enc, from_enc);
         if (cd == (iconv_t)-1) return false;
@@ -285,61 +285,61 @@ namespace
     }
 }
 
-    SQUARE_API std::u8string to_utf8(const std::u16string &s)
+    SQUARE_API std::u8string to_utf8(const U16String &s)
     {
-        std::string out;
+        String out;
         iconv_convert(SQ_UTF16_NATIVE, "UTF-8",
                       reinterpret_cast<const char*>(s.data()), s.size() * sizeof(char16_t), out);
         return out;
     }
 
-    SQUARE_API std::u8string to_utf8(const std::u32string &s)
+    SQUARE_API std::u8string to_utf8(const U32String &s)
     {
-        std::string out;
+        String out;
         iconv_convert(SQ_UTF32_NATIVE, "UTF-8",
                       reinterpret_cast<const char*>(s.data()), s.size() * sizeof(char32_t), out);
         return out;
     }
 
-    SQUARE_API std::u16string to_utf16(const std::u8string &s)
+    SQUARE_API U16String to_utf16(const std::u8string &s)
     {
-        std::string out;
+        String out;
         iconv_convert("UTF-8", SQ_UTF16_NATIVE, s.data(), s.size(), out);
-        return std::u16string(reinterpret_cast<const char16_t*>(out.data()), out.size() / sizeof(char16_t));
+        return U16String(reinterpret_cast<const char16_t*>(out.data()), out.size() / sizeof(char16_t));
     }
 
-    SQUARE_API std::u16string to_utf16(const std::u32string &s)
+    SQUARE_API U16String to_utf16(const U32String &s)
     {
-        std::string out;
+        String out;
         iconv_convert(SQ_UTF32_NATIVE, SQ_UTF16_NATIVE,
                       reinterpret_cast<const char*>(s.data()), s.size() * sizeof(char32_t), out);
-        return std::u16string(reinterpret_cast<const char16_t*>(out.data()), out.size() / sizeof(char16_t));
+        return U16String(reinterpret_cast<const char16_t*>(out.data()), out.size() / sizeof(char16_t));
     }
 
-    SQUARE_API std::u32string to_utf32(const std::u8string &s)
+    SQUARE_API U32String to_utf32(const std::u8string &s)
     {
-        std::string out;
+        String out;
         iconv_convert("UTF-8", SQ_UTF32_NATIVE, s.data(), s.size(), out);
-        return std::u32string(reinterpret_cast<const char32_t*>(out.data()), out.size() / sizeof(char32_t));
+        return U32String(reinterpret_cast<const char32_t*>(out.data()), out.size() / sizeof(char32_t));
     }
 
-    SQUARE_API std::u32string to_utf32(const std::u16string &s)
+    SQUARE_API U32String to_utf32(const U16String &s)
     {
-        std::string out;
+        String out;
         iconv_convert(SQ_UTF16_NATIVE, SQ_UTF32_NATIVE,
                       reinterpret_cast<const char*>(s.data()), s.size() * sizeof(char16_t), out);
-        return std::u32string(reinterpret_cast<const char32_t*>(out.data()), out.size() / sizeof(char32_t));
+        return U32String(reinterpret_cast<const char32_t*>(out.data()), out.size() / sizeof(char32_t));
     }
 
-    SQUARE_API std::u16string to_ucs2(const std::u8string &s)
+    SQUARE_API U16String to_ucs2(const std::u8string &s)
     {
-        std::string out;
+        String out;
         iconv_convert("UTF-8", "UCS-2LE", s.data(), s.size(), out);
-        return std::u16string(reinterpret_cast<const char16_t*>(out.data()), out.size() / sizeof(char16_t));
+        return U16String(reinterpret_cast<const char16_t*>(out.data()), out.size() / sizeof(char16_t));
     }
 
-    SQUARE_API std::u32string to_ucs4(const std::u8string &s) { return to_utf32(s); }
-    SQUARE_API std::u32string to_ucs4(const std::u16string &s) { return to_utf32(s); }
+    SQUARE_API U32String to_ucs4(const std::u8string &s) { return to_utf32(s); }
+    SQUARE_API U32String to_ucs4(const U16String &s) { return to_utf32(s); }
 
 #undef SQ_UTF16_NATIVE
 #undef SQ_UTF32_NATIVE

@@ -27,7 +27,7 @@ namespace Parser
         //else
         return true;
     }
-    bool  Parameters::ParameterField::alloc(Allocator* allocator, const std::string& name,ParameterType type)
+    bool  Parameters::ParameterField::alloc(Allocator* allocator, const String& name,ParameterType type)
     {
         //name
         m_name = name;
@@ -79,9 +79,9 @@ namespace Parser
     }
     // // // // // // // // // // // // // // // // // // // // // // // // // //
     // Context
-    std::string Parameters::Context::errors_to_string() const
+    String Parameters::Context::errors_to_string() const
     {
-        std::stringstream sbuffer;
+        StringStream sbuffer;
         
         for (auto& error : m_errors)
         {
@@ -92,7 +92,7 @@ namespace Parser
     }
     // // // // // // // // // // // // // // // // // // // // // // // // // //
     // Parser
-    bool Parameters::parse(Allocator* allocator, Context& default_context, const std::string& source)
+    bool Parameters::parse(Allocator* allocator, Context& default_context, const String& source)
     {
         const char* c_ptr = source.c_str();
         return parse(allocator, default_context, c_ptr);
@@ -161,7 +161,7 @@ namespace Parser
     }
     
     //(name, name, ...): the names of a value of a state
-    bool Parameters::parse_state_names(const char*& ptr, std::vector<std::string>& names)
+    bool Parameters::parse_state_names(const char*& ptr, Vector<String>& names)
     {
         skip_space_and_comments(m_context->m_line, ptr);
         if (!is_start_arg(*ptr)) return false;
@@ -169,7 +169,7 @@ namespace Parser
         while (true)
         {
             skip_space_and_comments(m_context->m_line, ptr);
-            std::string name;
+            String name;
             if (!parse_name(ptr, name)) return false;
             names.push_back(name);
             skip_space_and_comments(m_context->m_line, ptr);
@@ -184,7 +184,7 @@ namespace Parser
     //cullface(back|front|off): an int, the Render::CullfaceType
     bool Parameters::parse_cullface_value(const char*& ptr, ParameterField& field)
     {
-        std::vector<std::string> names;
+        Vector<String> names;
         if (!parse_state_names(ptr, names) || names.size() != 1) return false;
         const Render::CullfaceType cullface = is_false_keyword(names[0])
                                             ? Render::CF_DISABLE
@@ -202,7 +202,7 @@ namespace Parser
     //zbuffer(less|...|off [, read_only]): an IVec2, the Render::DepthMode and the Render::DepthFuncType
     bool Parameters::parse_zbuffer_value(const char*& ptr, ParameterField& field)
     {
-        std::vector<std::string> names;
+        Vector<String> names;
         if (!parse_state_names(ptr, names) || names.empty() || names.size() > 2) return false;
         IVec2 value(Render::DM_DISABLE, Render::DT_LESS);
         if (!is_false_keyword(names[0]))
@@ -223,7 +223,7 @@ namespace Parser
     //blend(src, dst | off): an IVec3, enabled and the two Render::BlendType
     bool Parameters::parse_blend_value(const char*& ptr, ParameterField& field)
     {
-        std::vector<std::string> names;
+        Vector<String> names;
         if (!parse_state_names(ptr, names) || names.empty() || names.size() > 2) return false;
         IVec3 value(0, Render::BLEND_ONE, Render::BLEND_ZERO);
         if (names.size() == 2)
@@ -256,7 +256,7 @@ namespace Parser
             if (cstr_cmp_skip(ptr, state.m_key))
             {
                 if ((this->*state.m_parse)(ptr, field)) return true;
-                push_error(std::string("Not valid ") + state.m_key + " value");
+                push_error(String("Not valid ") + state.m_key + " value");
                 return false;
             }
         }
@@ -380,7 +380,7 @@ namespace Parser
     bool Parameters::parse_texture(const char*& ptr, ParameterField& field)
     {
         //texture name
-        std::string texture_name;
+        String texture_name;
         //parse
         if (!parse_string(m_context->m_line, ptr, texture_name))
         {
@@ -574,7 +574,7 @@ namespace Parser
 		return false;
 	}
 	//////////////////////////////////////////////////////
-    void Parameters::push_error(const std::string& error)
+    void Parameters::push_error(const String& error)
     {
         m_context->m_errors.push_front(ErrorField{ m_context->m_line,error });
     }

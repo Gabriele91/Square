@@ -16,7 +16,7 @@
 namespace Sprites
 {
     //the nodes "square_sprite" (their actors)
-    using Nodes = std::unordered_set< const Square::Scene::Actor* >;
+    using Nodes = Square::UnorderedSet< const Square::Scene::Actor* >;
 
     //the sprites of a scene made; how many
     size_t build(Square::Context& context, const Square::Shared<Square::Scene::Actor>& root, const Nodes& nodes);

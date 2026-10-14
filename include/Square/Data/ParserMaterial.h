@@ -18,15 +18,15 @@ namespace Parser
 
 		struct Context
 		{
-			std::string						m_effect;
-			std::vector< ParameterField >   m_parameters;
-			std::list< ErrorField >	        m_errors;
+			String						m_effect;
+			Vector< ParameterField >   m_parameters;
+			List< ErrorField >	        m_errors;
 			size_t						    m_line{ 0 };
 
-			std::string errors_to_string() const;
+			String errors_to_string() const;
 		};
 
-		bool parse(Allocator* allocator, Context& default_context, const std::string& source);
+		bool parse(Allocator* allocator, Context& default_context, const String& source);
 
 		bool parse(Allocator* allocator, Context& default_context, const char*& ptr);
 		
@@ -39,7 +39,7 @@ namespace Parser
 		//////////////////////////////////////////////////////
 		bool parse_parameters_block(const char*& ptr);
 		//////////////////////////////////////////////////////
-		void push_error(const std::string& error);
+		void push_error(const String& error);
 		//////////////////////////////////////////////////////
 	};
 }

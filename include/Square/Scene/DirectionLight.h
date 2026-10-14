@@ -130,8 +130,8 @@ namespace Scene
 			float m_half{ 0.0f };
 			bool  m_valid{ false };
 		};
-		mutable std::array<StableCascade, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> m_stable;
-		mutable std::vector<float> m_stable_key;
+		mutable Array<StableCascade, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> m_stable;
+		mutable Vector<float> m_stable_key;
 		mutable Vec2 m_stable_depth{ 0.0f };
 		mutable bool m_stable_depth_valid{ false };
 	};

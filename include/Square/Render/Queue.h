@@ -131,8 +131,8 @@ namespace Render
         static const size_t page_capacity = 128;
         
         //pool type
-        using Page  = std::array< QueueElement, page_capacity >;
-        using Pages = std::vector< Unique<Page> >;
+        using Page  = Array< QueueElement, page_capacity >;
+        using Pages = Vector< Unique<Page> >;
         
         //pool utilities
         void new_page();
@@ -147,7 +147,7 @@ namespace Render
         //the list, sorted when it is read (its memory kept between the frames)
         mutable QueueElement*              m_first{ nullptr };
         mutable bool                       m_sorted{ true };
-        mutable std::vector<QueueElement*> m_order;
+        mutable Vector<QueueElement*> m_order;
     };
     
     //all queue
@@ -155,7 +155,7 @@ namespace Render
     {
     public:
         //queues
-        std::array< Queue, RQ_MAX > m_queues;
+        Array< Queue, RQ_MAX > m_queues;
         //get a queue
         Queue& operator[](QueueType type);
         const Queue& operator[](QueueType type) const;

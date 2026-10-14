@@ -19,7 +19,7 @@
 namespace Particles
 {
     //the nodes "square_particles" (their actors) and their custom properties
-    using Nodes = std::unordered_map< const Square::Scene::Actor*, Square::Data::JsonObject >;
+    using Nodes = Square::UnorderedMap< const Square::Scene::Actor*, Square::Data::JsonObject >;
 
     //the emitters of a scene made; how many. mode: the turn of the axes (Modes of MeshManager.h)
     size_t build(Square::Context& context, const Square::Shared<Square::Scene::Actor>& root, const Nodes& nodes, unsigned char mode);

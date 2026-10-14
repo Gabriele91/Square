@@ -5,11 +5,11 @@
 #if defined( SQUARE_MAIN )
 
 // OpenGL Optimus selection variables
-#if defined( _WIN32 ) && defined( DLL_EXPORT )
+#if defined( _WIN32 ) && defined( SQUARE_DLL_EXPORT )
 extern "C"
 {
-	DLL_EXPORT uint32_t NvOptimusEnablement = 1;
-	DLL_EXPORT int AmdPowerXpressRequestHighPerformance = 1;
+	SQUARE_DLL_EXPORT uint32_t NvOptimusEnablement = 1;
+	SQUARE_DLL_EXPORT int AmdPowerXpressRequestHighPerformance = 1;
 }
 #endif // _WIN32 && SQUARE_LIBRARY_IMPORT
 

@@ -44,13 +44,13 @@ namespace Render
 			MAT_DEFAULT_MAX
 		};
 
-		static std::string name_of_default_parameters[Material::MAT_DEFAULT_MAX];
+		static String name_of_default_parameters[Material::MAT_DEFAULT_MAX];
 
 		EffectParameter* default_parameter(default_parameters dp);
 		const EffectParameter* default_parameter(default_parameters dp) const;
 
-		EffectParameter* parameter_by_name(const std::string& name);
-		const EffectParameter* parameter_by_name(const std::string& name) const;
+		EffectParameter* parameter_by_name(const String& name);
+		const EffectParameter* parameter_by_name(const String& name) const;
 
 		EffectQueueType queue() const;
 

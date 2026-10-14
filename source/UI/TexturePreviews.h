@@ -51,8 +51,8 @@ namespace UI
 		~TexturePreviews();
 
 		//the source of the image of a slot; the slot of a source (false: not one of them)
-		static std::string source(size_t slot);
-		static bool slot_of(const std::string& source, size_t& slot);
+		static String source(size_t slot);
+		static bool slot_of(const String& source, size_t& slot);
 
 		//the texture of a slot (made the first time)
 		Render::Texture* texture(size_t slot);
@@ -60,7 +60,7 @@ namespace UI
 		bool owns(const Render::Texture* texture) const;
 
 		//the textures of the slots (fewer: the others empty); drawn at the next draw
-		void items(const std::vector<Item>& items);
+		void items(const Vector<Item>& items);
 		//drawn (false: not drawn, the slots as they are)
 		void active(bool active) { m_active = active; }
 
@@ -85,9 +85,9 @@ namespace UI
 		static void release(Render::Context& render, Buffer& buffer);
 
 		Square::Context&                 m_context;
-		std::vector<Render::Texture*>    m_textures;
-		std::vector<Render::Target*>     m_targets;
-		std::vector<Item>                m_items;
+		Vector<Render::Texture*>    m_textures;
+		Vector<Render::Target*>     m_targets;
+		Vector<Item>                m_items;
 		Shared<Resource::Shader>         m_shader_2D;
 		Shared<Resource::Shader>         m_shader_array;
 		Shared<Resource::Shader>         m_shader_cube;

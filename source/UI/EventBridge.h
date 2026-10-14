@@ -25,7 +25,7 @@ namespace UI
 	class ListenerBridge : public Rml::EventListener
 	{
 	public:
-		ListenerBridge(Rml::Element* element, const std::string& type, const EventCallback& callback, bool capture);
+		ListenerBridge(Rml::Element* element, const String& type, const EventCallback& callback, bool capture);
 		virtual ~ListenerBridge();
 
 		//Rml::EventListener
@@ -34,12 +34,12 @@ namespace UI
 
 		//remove it from its element (it is deleted)
 		void detach();
-		const std::shared_ptr<Listener::Link>& link() const { return m_link; }
+		const Shared<Listener::Link>& link() const { return m_link; }
 
 	private:
-		std::shared_ptr<Listener::Link> m_link;
+		Shared<Listener::Link> m_link;
 		Rml::Element*  m_element{ nullptr };
-		std::string    m_type;
+		String    m_type;
 		EventCallback  m_callback;
 		bool           m_capture{ false };
 	};

@@ -332,7 +332,7 @@ namespace Square
          const WindowSize& size,
          WindowMode mode,
 		 WindowRenderDriver driver,
-         const std::string& app_name,
+         const String& app_name,
          AppInterface* app,
          size_t n_workers
     )
@@ -398,7 +398,7 @@ namespace Square
         //send event
         if (auto* scene_world = world())
         {
-            static std::string init_finished ("application::init::finished" );
+            static String init_finished ("application::init::finished" );
             static const VariantRef init_finished_ref(init_finished);
             scene_world->send_message(init_finished_ref, true);
         }
@@ -425,7 +425,7 @@ namespace Square
         //send event
         if (auto* scene_world = world())
         {
-            static std::string loop_finished("application::loop::finished");
+            static String loop_finished("application::loop::finished");
             static const VariantRef loop_finished_ref(loop_finished);
             scene_world->send_message(loop_finished_ref, true);
         }

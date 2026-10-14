@@ -20,56 +20,56 @@ namespace Render
 	Shared<InputLayout>  input_layout(Context* ctx, const AttributeList& attrs)
 	{
 		InputLayout* buffer = ctx->create_IL(attrs);
-		return std::shared_ptr<InputLayout>(buffer, [=](InputLayout* ptr) { ctx->delete_IL(ptr); });
+		return Shared<InputLayout>(buffer, [=](InputLayout* ptr) { ctx->delete_IL(ptr); });
 	}
 	Shared<ConstBuffer>  constant_buffer(Context* ctx, unsigned char* data, size_t size)
 	{
 		ConstBuffer* buffer = ctx->create_CB(data, size);
-		return std::shared_ptr<ConstBuffer>(buffer, [=](ConstBuffer* ptr) { ctx->delete_CB(ptr); });
+		return Shared<ConstBuffer>(buffer, [=](ConstBuffer* ptr) { ctx->delete_CB(ptr); });
 	}
 	Shared<VertexBuffer> vertex_buffer(Context* ctx, unsigned char* data, size_t stride, size_t n)
 	{
 		VertexBuffer* buffer = ctx->create_VBO(data, stride, n);
-		return std::shared_ptr<VertexBuffer>(buffer, [=](VertexBuffer* ptr) { ctx->delete_VBO(ptr); });
+		return Shared<VertexBuffer>(buffer, [=](VertexBuffer* ptr) { ctx->delete_VBO(ptr); });
 	}
 	Shared<IndexBuffer> index_buffer(Context* ctx, unsigned int* data, size_t n)
 	{
 		IndexBuffer* buffer = ctx->create_IBO(data, n);
-		return std::shared_ptr<IndexBuffer>(buffer, [=](IndexBuffer* ptr) { ctx->delete_IBO(ptr); });
+		return Shared<IndexBuffer>(buffer, [=](IndexBuffer* ptr) { ctx->delete_IBO(ptr); });
 	}
 
 	Shared<ConstBuffer>  stream_constant_buffer(Context* ctx, size_t size)
 	{
 		ConstBuffer* buffer = ctx->create_stream_CB(nullptr, size);
-		return std::shared_ptr<ConstBuffer>(buffer, [=](ConstBuffer* ptr) { ctx->delete_CB(ptr); });
+		return Shared<ConstBuffer>(buffer, [=](ConstBuffer* ptr) { ctx->delete_CB(ptr); });
 	}
 	Shared<VertexBuffer> stream_vertex_buffer(Context* ctx, size_t stride, size_t n)
 	{
 		VertexBuffer* buffer = ctx->create_stream_VBO(nullptr, stride, n);
-		return std::shared_ptr<VertexBuffer>(buffer, [=](VertexBuffer* ptr) { ctx->delete_VBO(ptr); });
+		return Shared<VertexBuffer>(buffer, [=](VertexBuffer* ptr) { ctx->delete_VBO(ptr); });
 	}
 	Shared<IndexBuffer> stream_index_buffer(Context* ctx, size_t n)
 	{
 		IndexBuffer* buffer = ctx->create_stream_IBO(nullptr, n);
-		return std::shared_ptr<IndexBuffer>(buffer, [=](IndexBuffer* ptr) { ctx->delete_IBO(ptr); });
+		return Shared<IndexBuffer>(buffer, [=](IndexBuffer* ptr) { ctx->delete_IBO(ptr); });
 	}
 
 	//a driver of the build of the library (its kind, the version of its interface)
-	static bool same_build(void* lib, std::string& build)
+	static bool same_build(void* lib, String& build)
 	{
 		auto get_build = (square_render_build)SharedLibrary::get(lib, "square_render_build");
 		build = get_build ? get_build() : "unknown";
 		return build == SQUARE_BUILD_ID;
 	}
 	//list
-	std::vector<RenderDriver> list_of_render_driver()
+	Vector<RenderDriver> list_of_render_driver()
 	{
 		//usings
 		using namespace Square;
 		using namespace Square::Filesystem;
 		using namespace Square::SharedLibrary;
 		//locs
-		const std::string locations[] =
+		const String locations[] =
 		{
 			program_dir(),
 		#if !defined(WIN32)
@@ -81,7 +81,7 @@ namespace Render
 			home_dir(),
 		};
 		//output
-		std::vector<RenderDriver> out;
+		Vector<RenderDriver> out;
 		//try
 		for (auto location : locations)
 		if  (location.size())
@@ -92,7 +92,7 @@ namespace Render
 			if (auto lib = open(Filesystem::join(location, file)))
 			{
 				//get function (a driver of its build)
-				std::string build;
+				String build;
 				if (auto get_type = (square_render_get_type)SharedLibrary::get(lib, "square_render_get_type"))
 				if (same_build(lib, build))
 				{
@@ -105,9 +105,9 @@ namespace Render
 	}
 	
 	//alloc map
-	static std::unordered_map<Context*, void*>& get_lib_map()
+	static UnorderedMap<Context*, void*>& get_lib_map()
 	{
-		static std::unordered_map<Context*, void*> ctx_lib_map;
+		static UnorderedMap<Context*, void*> ctx_lib_map;
 		return ctx_lib_map;
 	}
 
@@ -120,9 +120,9 @@ namespace Render
 		using namespace Square::SharedLibrary;
 		//locs
         #if defined(WIN32)
-            std::vector<std::string> locations;
+            Vector<String> locations;
         #else
-            std::vector<std::string> locations = get_shared_lib_env_paths();
+            Vector<String> locations = get_shared_lib_env_paths();
         #endif
         locations.push_back(program_dir());
         #if !defined(WIN32)
@@ -146,7 +146,7 @@ namespace Render
 			if (auto lib = open(Filesystem::join(location, file)))
 			{
 				//get function (a driver of the type, of the build of the library: else not loaded)
-				std::string build;
+				String build;
 				if (auto get_type = (square_render_get_type)SharedLibrary::get(lib, "square_render_get_type"))
 				if (get_type() == type)
 				{
@@ -173,7 +173,7 @@ namespace Render
 		}
 		if (logger && mismatches)
 		{
-			logger->error(std::string("Render driver: none of the build ") + SQUARE_BUILD_ID + " (" + std::to_string(mismatches)
+			logger->error(String("Render driver: none of the build ") + SQUARE_BUILD_ID + " (" + to_string(mismatches)
 			              + " of others: build the drivers with the library, the same configuration)");
 		}
 		return context;
@@ -385,70 +385,70 @@ namespace Render
         while(n--){ add(*m4); m4++; }
     }
     
-    void MapConstBuffer::add(const std::vector < int >& i)
+    void MapConstBuffer::add(const Vector < int >& i)
     {
         add(i.data(),i.size());
     }
-    void MapConstBuffer::add(const std::vector < float >& f)
+    void MapConstBuffer::add(const Vector < float >& f)
     {
         add(f.data(),f.size());
     }
-    void MapConstBuffer::add(const std::vector < double >& d)
+    void MapConstBuffer::add(const Vector < double >& d)
     {
         add(d.data(),d.size());
     }
     
-    void MapConstBuffer::add(const std::vector < IVec2 >& v2)
+    void MapConstBuffer::add(const Vector < IVec2 >& v2)
     {
         add(v2.data(),v2.size());
     }
-    void MapConstBuffer::add(const std::vector < IVec3 >& v3)
+    void MapConstBuffer::add(const Vector < IVec3 >& v3)
     {
         add(v3.data(),v3.size());
     }
-    void MapConstBuffer::add(const std::vector < IVec4 >& v4)
+    void MapConstBuffer::add(const Vector < IVec4 >& v4)
     {
         add(v4.data(),v4.size());
     }
     
-    void MapConstBuffer::add(const std::vector < Vec2 >& v2)
+    void MapConstBuffer::add(const Vector < Vec2 >& v2)
     {
         add(v2.data(),v2.size());
     }
-    void MapConstBuffer::add(const std::vector < Vec3 >& v3)
+    void MapConstBuffer::add(const Vector < Vec3 >& v3)
     {
         add(v3.data(),v3.size());
     }
-    void MapConstBuffer::add(const std::vector < Vec4 >& v4)
+    void MapConstBuffer::add(const Vector < Vec4 >& v4)
     {
         add(v4.data(),v4.size());
     }
-    void MapConstBuffer::add(const std::vector < Mat3 >& m3)
+    void MapConstBuffer::add(const Vector < Mat3 >& m3)
     {
         add(m3.data(),m3.size());
     }
-    void MapConstBuffer::add(const std::vector < Mat4 >& m4)
+    void MapConstBuffer::add(const Vector < Mat4 >& m4)
     {
         add(m4.data(),m4.size());
     }
     
-    void MapConstBuffer::add(const std::vector < DVec2 >& v2)
+    void MapConstBuffer::add(const Vector < DVec2 >& v2)
     {
         add(v2.data(),v2.size());
     }
-    void MapConstBuffer::add(const std::vector < DVec3 >& v3)
+    void MapConstBuffer::add(const Vector < DVec3 >& v3)
     {
         add(v3.data(),v3.size());
     }
-    void MapConstBuffer::add(const std::vector < DVec4 >& v4)
+    void MapConstBuffer::add(const Vector < DVec4 >& v4)
     {
         add(v4.data(),v4.size());
     }
-    void MapConstBuffer::add(const std::vector < DMat3 >& m3)
+    void MapConstBuffer::add(const Vector < DMat3 >& m3)
     {
         add(m3.data(),m3.size());
     }
-    void MapConstBuffer::add(const std::vector < DMat4 >& m4)
+    void MapConstBuffer::add(const Vector < DMat4 >& m4)
     {
         add(m4.data(),m4.size());
     }

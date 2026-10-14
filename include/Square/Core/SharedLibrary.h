@@ -12,8 +12,8 @@ namespace Square
 {
 namespace SharedLibrary
 {
-	void* open(const std::string& path);
-	void* get(void* shared, const std::string& name);
+	void* open(const String& path);
+	void* get(void* shared, const String& name);
 	void  close(void*);
 }
 }

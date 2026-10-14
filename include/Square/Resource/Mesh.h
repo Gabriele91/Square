@@ -36,7 +36,7 @@ namespace Square
 
             //constructor
             Mesh(Context& context);
-            Mesh(Context& context, const std::string& path);
+            Mesh(Context& context, const String& path);
 
             //info
             unsigned int layout_type() const;
@@ -55,10 +55,10 @@ namespace Square
             //its triangles in its own space (3 points each, added to out), read from its file (the
             //GPU keeps no copy of them); filter: the sub meshes taken (by their index), none: all
             //of them; false: its file cannot be read
-            bool local_triangles(std::vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter = nullptr) const;
+            bool local_triangles(Vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter = nullptr) const;
 
             //load mesh
-            bool load(const std::string& path) override;
+            bool load(const String& path) override;
 
         };
     }

@@ -51,18 +51,18 @@ namespace Scene
 		//its mesh (a skinned layout), its materials (a sub mesh each)
 		void mesh(const Square::Shared<Square::Resource::Mesh>& mesh) { m_mesh = mesh; }
 		const Square::Shared<Square::Resource::Mesh>& mesh() const { return m_mesh; }
-		void materials(const std::vector< Square::Shared<Square::Resource::Material> >& materials) { m_materials = materials; }
-		const std::vector< Square::Shared<Square::Resource::Material> >& materials() const { return m_materials; }
+		void materials(const Vector< Square::Shared<Square::Resource::Material> >& materials) { m_materials = materials; }
+		const Vector< Square::Shared<Square::Resource::Material> >& materials() const { return m_materials; }
 
 		//its joints: their paths from its actor, the inverse of their bind matrices (as many)
-		void joints(const std::vector<std::string>& paths, const std::vector<Square::Mat4>& inverse_binds);
-		const std::vector<std::string>& joint_paths() const { return m_joint_paths; }
-		const std::vector<Square::Mat4>& inverse_binds() const { return m_inverse_binds; }
+		void joints(const Vector<String>& paths, const Vector<Square::Mat4>& inverse_binds);
+		const Vector<String>& joint_paths() const { return m_joint_paths; }
+		const Vector<Square::Mat4>& inverse_binds() const { return m_inverse_binds; }
 		//how far its vertices are from their joints (world units: its box)
 		void reach(float reach) { m_reach = reach; }
 		float reach() const { return m_reach; }
 		//the matrices of its joints in the world (the last frame)
-		const std::vector<Square::Mat4>& joint_matrices() const { return m_joint_matrices; }
+		const Vector<Square::Mat4>& joint_matrices() const { return m_joint_matrices; }
 
 		//its joints in the world, its box (after the updates: the animators moved them)
 		virtual void on_late_update(double delta_time) override;
@@ -114,11 +114,11 @@ namespace Scene
 		void pose();
 
 		Square::Shared< Square::Resource::Mesh >                     m_mesh;
-		std::vector< Square::Shared< Square::Resource::Material > >  m_materials;
-		std::vector< std::string >                                   m_joint_paths;
-		std::vector< Square::Mat4 >                                  m_inverse_binds;
-		std::vector< Square::Weak<Actor> >                           m_joints;
-		std::vector< Square::Mat4 >                                  m_joint_matrices; //joints_max of them
+		Vector< Square::Shared< Square::Resource::Material > >  m_materials;
+		Vector< String >                                   m_joint_paths;
+		Vector< Square::Mat4 >                                  m_inverse_binds;
+		Vector< Square::Weak<Actor> >                           m_joints;
+		Vector< Square::Mat4 >                                  m_joint_matrices; //joints_max of them
 		Square::Shared< Square::Render::ConstBuffer >                m_buffer;
 		Square::Geometry::OBoundingBox                               m_obb_global;
 		Square::Weak< Square::Render::Transform >                    m_transform;

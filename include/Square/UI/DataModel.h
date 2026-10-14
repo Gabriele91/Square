@@ -25,29 +25,29 @@ namespace UI
 		struct State;
 
 		DataModel() = default;
-		DataModel(const std::shared_ptr<State>& state);
+		DataModel(const Shared<State>& state);
 
 		//a model
 		bool valid() const;
 
 		//a variable of the game (by pointer: the document reads it when it is dirty)
-		bool bind(const std::string& name, bool* value);
-		bool bind(const std::string& name, int* value);
-		bool bind(const std::string& name, unsigned int* value);
-		bool bind(const std::string& name, float* value);
-		bool bind(const std::string& name, double* value);
-		bool bind(const std::string& name, std::string* value);
+		bool bind(const String& name, bool* value);
+		bool bind(const String& name, int* value);
+		bool bind(const String& name, unsigned int* value);
+		bool bind(const String& name, float* value);
+		bool bind(const String& name, double* value);
+		bool bind(const String& name, String* value);
 		//a value computed by a function (and set by one: an input of a form)
-		bool bind_function(const std::string& name, const std::function<std::string()>& get, const std::function<void(const std::string&)>& set = {});
+		bool bind_function(const String& name, const std::function<String()>& get, const std::function<void(const String&)>& set = {});
 		//an event of the documents (data-event-click="name")
-		bool bind_event(const std::string& name, const EventCallback& callback);
+		bool bind_event(const String& name, const EventCallback& callback);
 
 		//a variable changed: the documents update it (all of them)
-		void dirty(const std::string& name);
+		void dirty(const String& name);
 		void dirty_all();
 
 	private:
-		std::shared_ptr<State> m_state;
+		Shared<State> m_state;
 	};
 }
 }

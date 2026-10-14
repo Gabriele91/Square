@@ -37,7 +37,7 @@ namespace  Data
 		//archive operator
 		virtual Archive& operator % (VariantRef value) = 0;
 		//a block: its size then its bytes (read: all of them, the reader can skip them)
-		virtual Archive& block(std::string& data) = 0;
+		virtual Archive& block(String& data) = 0;
 		//info
 		Context& context() { return m_context;  }
 		uint32 version() const { return m_version; }
@@ -57,7 +57,7 @@ namespace  Data
         ArchiveBinWrite(Context& context, std::ostream& stream, bool header = true);
 		//Archivie operator
         virtual Archive& operator % (VariantRef value) override;
-        virtual Archive& block(std::string& data) override;
+        virtual Archive& block(String& data) override;
 	private:
 		//output stream
 		std::ostream& m_stream;
@@ -72,13 +72,13 @@ namespace  Data
         ArchiveBinRead(Context& context, std::istream& stream, uint32 version);
         //Archivie operator
         virtual Archive& operator % (VariantRef value) override;
-        virtual Archive& block(std::string& data) override;
+        virtual Archive& block(String& data) override;
         //the version of the engine that wrote it ("" without a header)
-        const std::string& engine_version() const { return m_engine_version; }
+        const String& engine_version() const { return m_engine_version; }
     private:
         //output stream
         std::istream& m_stream;
-        std::string   m_engine_version;
+        String   m_engine_version;
     };
 
 

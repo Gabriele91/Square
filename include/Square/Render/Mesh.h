@@ -37,15 +37,15 @@ namespace Render
 
 	public:
 		//alias
-		using Vertex2DList      = std::vector< Layout::Position2D >;
-		using Vertex3DList      = std::vector< Layout::Position3D >;
-		using Vertex2DUVList    = std::vector< Layout::Position2DUV >;
-		using Vertex3DUVList    = std::vector< Layout::Position3DUV >;
-		using Vertex3DNUVList   = std::vector< Layout::Position3DNormalUV >;
-		using Vertex3DNTBUVList = std::vector< Layout::Position3DNormalTangetBinomialUV >;
-		using Vertex3DNTBUVSkinList = std::vector< Layout::Position3DNormalTangetBinomialUVSkin >;
-		using IndexList   = std::vector<unsigned int>;
-		using SubMeshList = std::vector< SubMesh >;
+		using Vertex2DList      = Vector< Layout::Position2D >;
+		using Vertex3DList      = Vector< Layout::Position3D >;
+		using Vertex2DUVList    = Vector< Layout::Position2DUV >;
+		using Vertex3DUVList    = Vector< Layout::Position3DUV >;
+		using Vertex3DNUVList   = Vector< Layout::Position3DNormalUV >;
+		using Vertex3DNTBUVList = Vector< Layout::Position3DNormalTangetBinomialUV >;
+		using Vertex3DNTBUVSkinList = Vector< Layout::Position3DNormalTangetBinomialUVSkin >;
+		using IndexList   = Vector<unsigned int>;
+		using SubMeshList = Vector< SubMesh >;
 
 		//implement
 		SQUARE_OBJECT(Mesh)
@@ -110,11 +110,11 @@ namespace Render
 		bool build_index_buffer(unsigned int* data, size_t size, bool cpu_access);
 		//template help
 		template< typename T >
-		bool build_vertex_buffer(const std::vector<T>& vertexs, bool cpu_access)
+		bool build_vertex_buffer(const Vector<T>& vertexs, bool cpu_access)
 		{
 			return build_vertex_buffer((unsigned char*)vertexs.data(), sizeof(T), vertexs.size(), cpu_access);
 		}
-		bool build_index_buffer(const std::vector<unsigned int>& indexs, bool cpu_access)
+		bool build_index_buffer(const Vector<unsigned int>& indexs, bool cpu_access)
 		{
 			return build_index_buffer((unsigned int*)indexs.data(), indexs.size(), cpu_access);
 		}
@@ -124,7 +124,7 @@ namespace Render
 		Shared<Render::VertexBuffer> m_vertex_buffer;
 		Shared<Render::IndexBuffer>  m_index_buffer;
 		//vector of sub meshs
-		std::vector< SubMesh > m_sub_meshs;
+		Vector< SubMesh > m_sub_meshs;
 	};
 }
 }

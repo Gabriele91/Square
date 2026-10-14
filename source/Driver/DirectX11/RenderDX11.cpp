@@ -238,74 +238,74 @@ namespace Render
 		array_write(m4, n);
     }
 
-    void UniformDX11::set(const std::vector < Texture* >& t)
+    void UniformDX11::set(const Vector < Texture* >& t)
     {
         set((Texture*)t.data(), t.size());
     }
-	void UniformDX11::set(const std::vector < int >& i)
+	void UniformDX11::set(const Vector < int >& i)
 	{
 		set(i.data(), i.size());
 	}
-    void UniformDX11::set(const std::vector < float >& f)
+    void UniformDX11::set(const Vector < float >& f)
     {
         set(f.data(), f.size());
     }
-    void UniformDX11::set(const std::vector < double >& d)
+    void UniformDX11::set(const Vector < double >& d)
     {
         set(d.data(), d.size());
     }
     
-    void UniformDX11::set(const std::vector < IVec2 >& v2)
+    void UniformDX11::set(const Vector < IVec2 >& v2)
     {
         set(v2.data(), v2.size());
     }
-    void UniformDX11::set(const std::vector < IVec3 >& v3)
+    void UniformDX11::set(const Vector < IVec3 >& v3)
     {
         set(v3.data(), v3.size());
     }
-    void UniformDX11::set(const std::vector < IVec4 >& v4)
+    void UniformDX11::set(const Vector < IVec4 >& v4)
     {
         set(v4.data(), v4.size());
     }
     
-	void UniformDX11::set(const std::vector < Vec2 >& v2)
+	void UniformDX11::set(const Vector < Vec2 >& v2)
 	{
 		set(v2.data(), v2.size());
 	}
-	void UniformDX11::set(const std::vector < Vec3 >& v3)
+	void UniformDX11::set(const Vector < Vec3 >& v3)
 	{
 		set(v3.data(), v3.size());
 	}
-	void UniformDX11::set(const std::vector < Vec4 >& v4)
+	void UniformDX11::set(const Vector < Vec4 >& v4)
 	{
 		set(v4.data(), v4.size());
 	}
-	void UniformDX11::set(const std::vector < Mat3 >& m3)
+	void UniformDX11::set(const Vector < Mat3 >& m3)
 	{
 		set(m3.data(), m3.size());
 	}
-	void UniformDX11::set(const std::vector < Mat4 >& m4)
+	void UniformDX11::set(const Vector < Mat4 >& m4)
 	{
 		set(m4.data(), m4.size());
 	}
     
-    void UniformDX11::set(const std::vector < DVec2 >& v2)
+    void UniformDX11::set(const Vector < DVec2 >& v2)
     {
         set(v2.data(), v2.size());
     }
-    void UniformDX11::set(const std::vector < DVec3 >& v3)
+    void UniformDX11::set(const Vector < DVec3 >& v3)
     {
         set(v3.data(), v3.size());
     }
-    void UniformDX11::set(const std::vector < DVec4 >& v4)
+    void UniformDX11::set(const Vector < DVec4 >& v4)
     {
         set(v4.data(), v4.size());
     }
-    void UniformDX11::set(const std::vector < DMat3 >& m3)
+    void UniformDX11::set(const Vector < DMat3 >& m3)
     {
         set(m3.data(), m3.size());
     }
-    void UniformDX11::set(const std::vector < DMat4 >& m4)
+    void UniformDX11::set(const Vector < DMat4 >& m4)
     {
         set(m4.data(), m4.size());
     }
@@ -343,7 +343,7 @@ namespace Render
 		//none
 	}
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    UniformConstBufferDX11::UniformConstBufferDX11(ContextDX11* context, Shader* shader, const std::string& cname)
+    UniformConstBufferDX11::UniformConstBufferDX11(ContextDX11* context, Shader* shader, const String& cname)
     : m_context(context)
 	, m_shader(shader)
     {
@@ -670,9 +670,9 @@ namespace Render
 	{
 		logger()->debug("Renderer: " + s_render_driver_info.m_name);
 		logger()->debug("DirectX version supported: "
-			         + std::to_string(s_render_driver_info.m_major_version) 
+			         + to_string(s_render_driver_info.m_major_version) 
 			         + '.'
-					 + std::to_string(s_render_driver_info.m_minor_version));
+					 + to_string(s_render_driver_info.m_minor_version));
 	}
 
 	void ContextDX11::close()
@@ -1351,7 +1351,7 @@ namespace Render
 		}
 	}
 
-	std::vector<unsigned char> ContextDX11::copy_buffer_CB(const ConstBuffer* cb)
+	Vector<unsigned char> ContextDX11::copy_buffer_CB(const ConstBuffer* cb)
 	{
 		D3D11_BUFFER_DESC sbd = {};
 		sbd.Usage = D3D11_USAGE_STAGING;
@@ -1362,7 +1362,7 @@ namespace Render
 
 		if (dx_op_success(device()->CreateBuffer(&sbd, nullptr, &sb)))
 		{
-			std::vector<unsigned char> result;
+			Vector<unsigned char> result;
 			device_context()->CopyResource(sb, *cb);
 			D3D11_MAPPED_SUBRESOURCE mapping;
 
@@ -1370,7 +1370,7 @@ namespace Render
 			{
 				auto data_start_ptr = static_cast<unsigned char*>(mapping.pData);
 				auto data_end_ptr = data_start_ptr + cb->get_size();
-				result = std::vector<unsigned char>{ data_start_ptr, data_end_ptr };
+				result = Vector<unsigned char>{ data_start_ptr, data_end_ptr };
 				device_context()->Unmap(sb, 0);
 			}
 
@@ -1381,7 +1381,7 @@ namespace Render
 		return {};
 	}
 
-	std::vector<unsigned char> ContextDX11::copy_buffer_VBO(const VertexBuffer* vbo)
+	Vector<unsigned char> ContextDX11::copy_buffer_VBO(const VertexBuffer* vbo)
 	{
 		D3D11_BUFFER_DESC sbd = {};
 		sbd.Usage = D3D11_USAGE_STAGING;
@@ -1392,7 +1392,7 @@ namespace Render
 
 		if (dx_op_success(device()->CreateBuffer(&sbd, nullptr, &sb)))
 		{
-			std::vector<unsigned char> result;
+			Vector<unsigned char> result;
 			device_context()->CopyResource(sb, *vbo);
 			D3D11_MAPPED_SUBRESOURCE mapping;
 
@@ -1400,7 +1400,7 @@ namespace Render
 			{
 				auto data_start_ptr = static_cast<unsigned char*>(mapping.pData);
 				auto data_end_ptr = data_start_ptr + vbo->get_size();
-				result = std::move(std::vector<unsigned char>{ data_start_ptr, data_end_ptr });
+				result = std::move(Vector<unsigned char>{ data_start_ptr, data_end_ptr });
 				device_context()->Unmap(sb, 0);
 			}
 
@@ -1410,7 +1410,7 @@ namespace Render
 		return {};
 	}
 
-	std::vector<unsigned char> ContextDX11::copy_buffer_IBO(const IndexBuffer* ibo)
+	Vector<unsigned char> ContextDX11::copy_buffer_IBO(const IndexBuffer* ibo)
 	{
 		D3D11_BUFFER_DESC sbd = {};
 		sbd.Usage = D3D11_USAGE_STAGING;
@@ -1421,7 +1421,7 @@ namespace Render
 
 		if (dx_op_success(device()->CreateBuffer(&sbd, nullptr, &sb)))
 		{
-			std::vector<unsigned char> result;
+			Vector<unsigned char> result;
 			device_context()->CopyResource(sb, *ibo);
 			D3D11_MAPPED_SUBRESOURCE mapping;
 
@@ -1429,7 +1429,7 @@ namespace Render
 			{
 				auto data_start_ptr = static_cast<unsigned char*>(mapping.pData);
 				auto data_end_ptr = data_start_ptr + ibo->get_size();
-				result = std::vector<unsigned char>{ data_start_ptr, data_end_ptr };
+				result = Vector<unsigned char>{ data_start_ptr, data_end_ptr };
 				device_context()->Unmap(sb, 0);
 			}
 
@@ -1723,17 +1723,17 @@ namespace Render
 	InputLayout::InputLayout
 	(
 		  const AttributeList& attributes
-		, const std::vector< D3D11_INPUT_ELEMENT_DESC >& description
+		, const Vector< D3D11_INPUT_ELEMENT_DESC >& description
 	)
 	: m_attributes(attributes)
 	, m_description(description)
 	{
 	}
 
-	static std::map<std::string, DXGI_FORMAT> reflaction_input_layout(ID3DBlob* shader)
+	static Map<String, DXGI_FORMAT> reflaction_input_layout(ID3DBlob* shader)
 	{
 		//////////////////////////////////////
-		std::map<std::string, DXGI_FORMAT> semantic_type_map;
+		Map<String, DXGI_FORMAT> semantic_type_map;
 		//////////////////////////////////////
 		ID3D11ShaderReflection* shader_ref = nullptr;
 		if (FAILED(D3DReflect(
@@ -1784,13 +1784,13 @@ namespace Render
 			}
 
 			//save element desc
-			semantic_type_map[std::string(paramDesc.SemanticName)] = format;
+			semantic_type_map[String(paramDesc.SemanticName)] = format;
 		}
 		shader_ref->Release();
 		return std::move(semantic_type_map);
 	}
 
-	static bool test_input_layout(ContextDX11* context, ID3DBlob* shader, const std::vector<D3D11_INPUT_ELEMENT_DESC>& vals)
+	static bool test_input_layout(ContextDX11* context, ID3DBlob* shader, const Vector<D3D11_INPUT_ELEMENT_DESC>& vals)
 	{
 		auto map = reflaction_input_layout(shader);
 		for (auto it : map)
@@ -1798,7 +1798,7 @@ namespace Render
 			bool find = false;
 			for (auto val : vals)
 			{
-				if (it.first == std::string(val.SemanticName))
+				if (it.first == String(val.SemanticName))
 				{
 					if (it.second != val.Format)
 					{
@@ -1875,7 +1875,7 @@ namespace Render
 	InputLayout* ContextDX11::create_IL(const AttributeList& atl)
 	{
 		//directx li
-		std::vector<D3D11_INPUT_ELEMENT_DESC> layouts;
+		Vector<D3D11_INPUT_ELEMENT_DESC> layouts;
 		//for each  attribute
 		size_t i = 0;
 		//create attributes
@@ -2751,7 +2751,7 @@ namespace Render
 		return nullptr;
 	}
         
-	std::vector< unsigned char > ContextDX11::get_texture(Texture* tex, int level)
+	Vector< unsigned char > ContextDX11::get_texture(Texture* tex, int level)
 	{
 		D3D11_MAPPED_SUBRESOURCE source;
 		ID3D11Resource* texture_resource;
@@ -2766,7 +2766,7 @@ namespace Render
 		//size
 		size_t size = source.RowPitch * (tex->m_height >> level);
 		//alloc
-		std::vector< unsigned char > output;
+		Vector< unsigned char > output;
 		output.resize(size);
 		//copy
 		std::memcpy(output.data(), source.pData, size);
@@ -2821,7 +2821,7 @@ namespace Render
 		}
 	}
 
-	std::vector< unsigned char > ContextDX11::get_texture(Texture* tex, int cube, int level)
+	Vector< unsigned char > ContextDX11::get_texture(Texture* tex, int cube, int level)
 	{
 		D3D11_MAPPED_SUBRESOURCE source;
 		ID3D11Resource* texture_resource;
@@ -2836,7 +2836,7 @@ namespace Render
 		//size
 		size_t size = source.RowPitch * (tex->m_height >> level);
 		//alloc
-		std::vector< unsigned char > output;
+		Vector< unsigned char > output;
 		output.resize(size);
 		//copy
 		std::memcpy(output.data(), source.pData, size);
@@ -3008,9 +3008,9 @@ namespace Render
 			D3D11_SHADER_BUFFER_DESC desc;
 			global->GetDesc(&desc);
 			//name of buffer
-			std::string name(desc.Name);
+			String name(desc.Name);
 			//info
-			if ((name.find("$Global") != std::string::npos) || (name.find("_Global") != std::string::npos))
+			if ((name.find("$Global") != String::npos) || (name.find("_Global") != String::npos))
 			{
 				D3D11_SHADER_INPUT_BIND_DESC bind_desc;
 				reflector->GetResourceBindingDescByName(desc.Name, &bind_desc);
@@ -3059,9 +3059,9 @@ namespace Render
 			D3D11_SHADER_BUFFER_DESC desc;
 			global->GetDesc(&desc);
 			//name of buffer
-			std::string name(desc.Name);
+			String name(desc.Name);
 			//info
-			if ((name.find("$Global") != std::string::npos) || (name.find("_Global") != std::string::npos))
+			if ((name.find("$Global") != String::npos) || (name.find("_Global") != String::npos))
 			{
 				D3D11_SHADER_INPUT_BIND_DESC bind_desc;
 				reflector->GetResourceBindingDescByName(desc.Name, &bind_desc);
@@ -3099,13 +3099,13 @@ namespace Render
 		reflector->GetDesc(&desc_shader);
 		//samplers: the compiler assigns s# independently from t# (unused samplers are stripped,
 		//textures read without a sampler take no s#), so match them by name: "sempler_<texture>"
-		std::unordered_map<std::string, UINT> samplers;
+		UnorderedMap<String, UINT> samplers;
 		for (UINT i = 0; i < desc_shader.BoundResources; ++i)
 		{
 			D3D11_SHADER_INPUT_BIND_DESC bind_desc;
 			if (SUCCEEDED(reflector->GetResourceBindingDesc(i, &bind_desc)) && bind_desc.Type == D3D_SIT_SAMPLER)
 			{
-				samplers[std::string(bind_desc.Name)] = bind_desc.BindPoint;
+				samplers[String(bind_desc.Name)] = bind_desc.BindPoint;
 			}
 		}
 		for (UINT i = 0; i < desc_shader.BoundResources; ++i)
@@ -3113,7 +3113,7 @@ namespace Render
 			D3D11_SHADER_INPUT_BIND_DESC bind_desc;
 			if (SUCCEEDED(reflector->GetResourceBindingDesc(i, &bind_desc)) && bind_desc.Type == D3D_SIT_TEXTURE)
 			{
-				std::string name(bind_desc.Name);
+				String name(bind_desc.Name);
 				auto it_sampler = samplers.find("sempler_" + name);
 				UINT sampler_slot = it_sampler != samplers.end() ? it_sampler->second : bind_desc.BindPoint;
 				info.m_fields_uniforms[name] = UniformDX11(context, shader, (size_t)bind_desc.BindPoint, (size_t)sampler_slot);
@@ -3139,7 +3139,7 @@ namespace Render
 		}
 
 		//the file of a compiled stage: by its source, its entry, its profile, its flags
-		static std::string file_of(const std::string& folder, const std::string& source, const std::string& entry, const char* profile, UINT flags)
+		static String file_of(const String& folder, const String& source, const String& entry, const char* profile, UINT flags)
 		{
 			uint64_t value = hash(source.data(), source.size());
 			value = hash(entry.data(), entry.size(), value);
@@ -3148,14 +3148,14 @@ namespace Render
 			value = hash(s_version, std::strlen(s_version), value);
 			char name[32];
 			std::snprintf(name, sizeof(name), "%016llx.dxbc", (unsigned long long)value);
-			return (std::filesystem::path(folder) / name).string();
+			return String((std::filesystem::path(folder) / name).string());
 		}
 
 		//its bytecode from the cache (nullptr: not there)
-		static ID3DBlob* read(const std::string& file)
+		static ID3DBlob* read(const String& file)
 		{
 			ID3DBlob* blob = nullptr;
-			std::ifstream in(file, std::ios::binary | std::ios::ate);
+			std::ifstream in(file.c_str(), std::ios::binary | std::ios::ate);
 			const std::streamsize size = in ? std::streamsize(in.tellg()) : 0;
 			if (size > 0 && D3DCreateBlob(SIZE_T(size), &blob) == S_OK)
 			{
@@ -3170,11 +3170,11 @@ namespace Render
 		}
 
 		//its bytecode into the cache (a file aside, then renamed: never read half written)
-		static void write(const std::string& file, ID3DBlob* blob)
+		static void write(const String& file, ID3DBlob* blob)
 		{
-			const std::string temporary = file + ".tmp";
+			const String temporary = file + ".tmp";
 			{
-				std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+				std::ofstream out(temporary.c_str(), std::ios::binary | std::ios::trunc);
 				out.write(static_cast<const char*>(blob->GetBufferPointer()), std::streamsize(blob->GetBufferSize()));
 			}
 			std::error_code error;
@@ -3186,7 +3186,7 @@ namespace Render
 		}
 	}
 
-	Shader* ContextDX11::create_shader(const std::vector< ShaderSourceInformation >& infos)
+	Shader* ContextDX11::create_shader(const Vector< ShaderSourceInformation >& infos)
 	{
 		//alloc
 		Shader* oshader = SQ_NEW(allocator(), Shader, AllocType::ALCT_DEFAULT) Shader(allocator());
@@ -3206,9 +3206,9 @@ namespace Render
 			if (info.m_shader_source.size())
 			{
 				//start line
-				std::string start_line = "\n#line " + std::to_string(info.m_line) + "\n";
+				String start_line = "\n#line " + to_string(info.m_line) + "\n";
 				//source
-				const std::string source
+				const String source
 				{
 					info.m_shader_header +
 					Shader::hlsl_header_by_type[info.m_type] +
@@ -3228,7 +3228,7 @@ namespace Render
 #endif
 				                 ;
 				const bool cached = !shader_cache().empty();
-				const std::string cache_file = cached ? AuxShaderCache::file_of(shader_cache(), source, info.m_entry_point, shader_version[info.m_type], flags) : std::string();
+				const String cache_file = cached ? AuxShaderCache::file_of(shader_cache(), source, info.m_entry_point, shader_version[info.m_type], flags) : String();
 				ID3DBlob* shader_blob = cached ? AuxShaderCache::read(cache_file) : nullptr;
 				ID3DBlob* error_blob = nullptr;
 				const bool compiled = shader_blob || D3DCompile2(
@@ -3254,7 +3254,7 @@ namespace Render
 				if (!compiled)
 				{
 					//save error
-					std::string err = error_blob ? std::string(static_cast<char*>(error_blob->GetBufferPointer()), error_blob->GetBufferSize()) : std::string("unknown error");
+					String err = error_blob ? String(static_cast<char*>(error_blob->GetBufferPointer()), error_blob->GetBufferSize()) : String("unknown error");
 					oshader->push_compiler_error({ info.m_type,  err.c_str() });
 					//release
 					if (error_blob) error_blob->Release();
@@ -3327,9 +3327,9 @@ namespace Render
 		return shader->m_linker_log.size() != 0;
 	}
 
-	std::vector< std::string > ContextDX11::get_shader_compiler_errors(Shader* shader)
+	Vector< String > ContextDX11::get_shader_compiler_errors(Shader* shader)
 	{
-		std::vector< std::string > output;
+		Vector< String > output;
 		//state
 		ShaderType last_type = ST_N_SHADER;
 		//push
@@ -3344,7 +3344,7 @@ namespace Render
 		}
 		return output;
 	}
-	std::string ContextDX11::get_shader_linker_error(Shader* shader)
+	String ContextDX11::get_shader_linker_error(Shader* shader)
 	{
 		return shader->m_linker_log;
 	}
@@ -3408,7 +3408,7 @@ namespace Render
 		}
 	}
     
-    void ContextDX11::bind_uniform_CB(const ConstBuffer* buffer, Shader* shader, const std::string& uname)
+    void ContextDX11::bind_uniform_CB(const ConstBuffer* buffer, Shader* shader, const String& uname)
     {
         //get
         auto* ucb = get_uniform_const_buffer(shader,uname);
@@ -3416,7 +3416,7 @@ namespace Render
         if(ucb) ucb->bind(buffer);
     }
     
-    void ContextDX11::unbind_uniform_CB(Shader* shader, const std::string& uname)
+    void ContextDX11::unbind_uniform_CB(Shader* shader, const String& uname)
     {
         //get
         auto* ucb = get_uniform_const_buffer(shader,uname);
@@ -3439,7 +3439,7 @@ namespace Render
 		return s_bind_context.m_shader;
 	}
     
-    Uniform* ContextDX11::get_uniform(Shader* shader,const std::string& uname) const
+    Uniform* ContextDX11::get_uniform(Shader* shader,const String& uname) const
     {
         auto uit = shader->m_global_buffer_info.m_fields_uniforms.find(uname);
         //if find
@@ -3452,7 +3452,7 @@ namespace Render
         return nullptr;
     }
     
-    UniformConstBuffer* ContextDX11::get_uniform_const_buffer(Square::Render::Shader* shader, const std::string& uname) const
+    UniformConstBuffer* ContextDX11::get_uniform_const_buffer(Square::Render::Shader* shader, const String& uname) const
     {
         auto uit = shader->m_uniform_const_buffer_map.find(uname);
         //if find (a cbuffer the shader does not have is saved too: not valid)
@@ -3467,7 +3467,7 @@ namespace Render
 	/*
 		FBO
 	*/
-	Target* ContextDX11::create_render_target(const std::vector< TargetField >& textures)
+	Target* ContextDX11::create_render_target(const Vector< TargetField >& textures)
 	{
 		//create FBO
 		auto target = SQ_NEW(allocator(), Target, AllocType::ALCT_DEFAULT) Target();
@@ -3704,7 +3704,7 @@ namespace Render
 		return int(frame.m_count++);
 	}
 
-	bool ContextDX11::gpu_timer_read_frame(uint64& frame_id, std::vector<double>& timestamps_ms)
+	bool ContextDX11::gpu_timer_read_frame(uint64& frame_id, Vector<double>& timestamps_ms)
 	{
 		while (true)
 		{
@@ -3769,7 +3769,7 @@ namespace Render
 	//Output file name and line
 	bool ContextDX11::print_errors(const char* source_file_name, int line) const
 	{
-		std::stringstream output;
+		StringStream output;
 		if (m_errors.size())
 		{
 			output << "At file: " << source_file_name << " (" << line << ")" << ":" << std::endl;

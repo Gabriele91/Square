@@ -30,17 +30,17 @@ namespace GLB
 	
 	struct GLB
 	{
-		std::string path;
-		std::string json;
-		std::vector<unsigned char> bin;
+		Square::String path;
+		Square::String json;
+		Square::Vector<unsigned char> bin;
 		GLB() = default;
 		GLB(GLB&& glb) = default;
 		GLB(const GLB& glb) = default;
 	};
 
-	static std::optional<GLB> decode_glb(const std::string& path)
+	static std::optional<GLB> decode_glb(const Square::String& path)
 	{
-		std::vector<unsigned char> buffer = std::move(Filesystem::binary_file_read_all(path));
+		Square::Vector<unsigned char> buffer = std::move(Filesystem::binary_file_read_all(path));
 		// Test
 		if (buffer.size() < sizeof(Header))
 			return {};
@@ -72,14 +72,14 @@ namespace GLB
 			{
 				const char* start_string = reinterpret_cast<const char*>(chunk_data);
 				const char* end_string = reinterpret_cast<const char*>(chunk_data + chunk->lenght);
-				glb_output.json = std::string(start_string, end_string);
+				glb_output.json = Square::String(start_string, end_string);
 			}
 			break;
 			case ChunkType::CT_BIN:
 			{
 				const unsigned char* start_bin = chunk_data;
 				const unsigned char* end_bin = chunk_data + chunk->lenght;
-				glb_output.bin = std::vector<unsigned char>(start_bin, end_bin);
+				glb_output.bin = Square::Vector<unsigned char>(start_bin, end_bin);
 			}
 			break;
 			default: break;

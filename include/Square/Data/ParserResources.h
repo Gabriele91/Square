@@ -11,30 +11,30 @@ namespace Parser
 	public:
 		struct PathField
 		{
-			std::string m_path;
-			std::string m_reg_exp;
+			String m_path;
+			String m_reg_exp;
 			bool		m_recursive{ false };
 			bool		m_filtered{ false };
 		};
 
 		struct FileField
 		{
-			std::string m_path;
-			std::string m_asset_name;
+			String m_path;
+			String m_asset_name;
 			bool		m_use_asset_name{ false };
 		};
 
 		struct Context
 		{
-			std::vector< PathField > m_paths;
-			std::vector< FileField > m_files;
-			std::list < ErrorField >	    m_errors;
+			Vector< PathField > m_paths;
+			Vector< FileField > m_files;
+			List < ErrorField >	    m_errors;
 			size_t						    m_line{ 0 };
 
-			std::string errors_to_string() const;
+			String errors_to_string() const;
 		};
 
-		bool parse(Context& default_context, const std::string& source);
+		bool parse(Context& default_context, const String& source);
 
 		bool parse(Context& default_context, const char*& ptr);
 
@@ -45,7 +45,7 @@ namespace Parser
 		//////////////////////////////////////////////////////
 		bool parse_resources_block(const char*& ptr);
 		//////////////////////////////////////////////////////
-		void push_error(const std::string& error);
+		void push_error(const String& error);
 	};
 }
 }

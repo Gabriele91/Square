@@ -24,14 +24,14 @@ namespace
             PBR     //PBR, PBRTranslucent: metallic, roughness, emissive
         };
 
-        static Family family(const std::string& effect)
+        static Family family(const Square::String& effect)
         {
             return effect.compare(0, 6, "Legacy") == 0 ? Family::LEGACY : Family::PBR;
         }
 
         //effect: "square_effect", else by the glTF alphaMode (BLEND: translucent, drawn after the
         //opaque scene)
-        static std::string effect(const Square::Data::GLTF::Material& material)
+        static Square::String effect(const Square::Data::GLTF::Material& material)
         {
             using AlphaMode = Square::Data::GLTF::Material::AlphaMode;
             return SquareExtras::string(material.extras, "effect")
@@ -45,7 +45,7 @@ namespace
         }
 
         //the text of the .mat
-        std::string build(const std::string& effect) const
+        Square::String build(const Square::String& effect) const
         {
             Parameters parameters = family(effect) == Family::LEGACY ? legacy() : pbr();
             //the faces: double sided (Blender: Backface Culling, Camera off) both, in the view and
@@ -58,9 +58,9 @@ namespace
             //square_<parameter>: set or override
             for (const auto& extra : m_material.extras)
             {
-                std::string name = SquareExtras::name(extra.first);
+                Square::String name = SquareExtras::name(extra.first);
                 if (name.empty() || name == "effect") continue;
-                std::string value = SquareExtras::material_value(extra.second);
+                Square::String value = SquareExtras::material_value(extra.second);
                 //square_shadow_cast false: none of its pixels in the shadow maps (its mask of the
                 //shadow over any alpha: the engine leaves it out of them); true: as it is
                 if (name == "shadow_cast")
@@ -74,7 +74,7 @@ namespace
                 if (it != parameters.end()) it->second = value;
                 else parameters.emplace_back(name, value);
             }
-            std::ostringstream text;
+            Square::OStringStream text;
             text << "effect \"" << effect << "\"\n{\n";
             for (const Parameter& parameter : parameters) text << "\t" << parameter.first << " " << parameter.second << "\n";
             text << "}";
@@ -82,34 +82,34 @@ namespace
         }
 
     private:
-        using Parameter = std::pair<std::string, std::string>;
-        using Parameters = std::vector<Parameter>;
+        using Parameter = std::pair<Square::String, Square::String>;
+        using Parameters = Square::Vector<Parameter>;
         using Material = Square::Data::GLTF::Material;
 
         const Material&       m_material;
         const TextureManager& m_texture_manager;
 
         //texture("name") of a texture of the material, the default if it has none
-        std::string texture(const std::optional<Material::TextureInfo>& info, const std::string& default_name) const
+        Square::String texture(const std::optional<Material::TextureInfo>& info, const Square::String& default_name) const
         {
-            const std::string name = info.has_value() ? m_texture_manager.at(info.value().index).value_or(default_name) : default_name;
+            const Square::String name = info.has_value() ? m_texture_manager.at(info.value().index).value_or(default_name) : default_name;
             return "texture(\"" + name + "\")";
         }
-        static std::string real(float value)
+        static Square::String real(float value)
         {
-            std::ostringstream text;
+            Square::OStringStream text;
             text << "float(" << value << ")";
             return text.str();
         }
-        static std::string vec3(const Square::Vec3& value)
+        static Square::String vec3(const Square::Vec3& value)
         {
-            std::ostringstream text;
+            Square::OStringStream text;
             text << "Vec3(" << value.x << "," << value.y << "," << value.z << ")";
             return text.str();
         }
-        static std::string vec4(const Square::Vec4& value)
+        static Square::String vec4(const Square::Vec4& value)
         {
-            std::ostringstream text;
+            Square::OStringStream text;
             text << "Vec4(" << value.x << "," << value.y << "," << value.z << "," << value.w << ")";
             return text.str();
         }
@@ -175,12 +175,12 @@ namespace
     };
 }
 
-MaterialManager::MaterialManager(Square::Context& context, const std::string& output)
+MaterialManager::MaterialManager(Square::Context& context, const Square::String& output)
 : m_context(context)
 , m_output(output)
 {}
 
-MaterialManager::MaterialManager(Square::Context& context, const std::string& output, const TextureManager& texture_manager, const Square::Data::GLTF::GLTF& gltf)
+MaterialManager::MaterialManager(Square::Context& context, const Square::String& output, const TextureManager& texture_manager, const Square::Data::GLTF::GLTF& gltf)
 : m_context(context)
 , m_output(output)
 {
@@ -190,24 +190,24 @@ MaterialManager::MaterialManager(Square::Context& context, const std::string& ou
     }
 }
 
-const std::unordered_map<std::string, std::string>& MaterialManager::resource_map() const
+const Square::UnorderedMap<Square::String, Square::String>& MaterialManager::resource_map() const
 {
     return m_materials_resrouces;
 }
 
-std::optional<std::string> MaterialManager::at(size_t id)
+std::optional<Square::String> MaterialManager::at(size_t id)
 {
     return id < m_materials.size()
-           ? std::optional<std::string> { m_materials[id] }
-           : std::optional<std::string>{};
+           ? std::optional<Square::String> { m_materials[id] }
+           : std::optional<Square::String>{};
 }
 
 size_t MaterialManager::add_material(const Square::Data::GLTF::Material& material, const TextureManager& texture_manager)
 {
     // the parameters of its effect, from the glTF values and the square_* properties
-    const std::string material_data = MaterialTemplate(material, texture_manager).build(MaterialTemplate::effect(material));
-    const std::string material_name = m_names.make(material.name, "material" + std::to_string(m_materials.size()));
-    const std::string material_path = Square::Filesystem::join(m_output, material_name + ".mat");
+    const Square::String material_data = MaterialTemplate(material, texture_manager).build(MaterialTemplate::effect(material));
+    const Square::String material_name = m_names.make(material.name, "material" + Square::to_string(m_materials.size()));
+    const Square::String material_path = Square::Filesystem::join(m_output, material_name + ".mat");
     Square::Filesystem::text_file_write_all(material_path, material_data);
     m_materials.push_back(material_name);
     m_materials_resrouces[material_name] = material_path;

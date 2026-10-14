@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include "Square/Core/Container/Container.h"
 
 namespace Square
 {
@@ -42,7 +43,7 @@ namespace SpirvReflection
 	//a resource of the stage
 	struct Resource
 	{
-		std::string  m_name;               //its block (a buffer), its variable (an image, a sampler)
+		String  m_name;               //its block (a buffer), its variable (an image, a sampler)
 		uint32_t     m_binding{ 0 };
 		uint32_t     m_set{ 0 };
 		uint32_t     m_count{ 1 };         //an array: its length
@@ -56,7 +57,7 @@ namespace SpirvReflection
 	//a member of the global block (a loose uniform)
 	struct Member
 	{
-		std::string m_name;
+		String m_name;
 		uint32_t    m_offset{ 0 };
 		uint32_t    m_size{ 0 };
 	};
@@ -73,16 +74,16 @@ namespace SpirvReflection
 	//a stage of SPIR-V read
 	struct Stage
 	{
-		std::vector<Resource> m_resources;
-		std::vector<Member>   m_members;         //of the global block
-		std::vector<Input>    m_inputs;          //a vertex stage: its vertex attributes
+		Vector<Resource> m_resources;
+		Vector<Member>   m_members;         //of the global block
+		Vector<Input>    m_inputs;          //a vertex stage: its vertex attributes
 		bool                  m_geometry{ false };      //capability Geometry
 		bool                  m_writes_layer{ false };  //a vertex stage writes the layer (ShaderLayer, ShaderViewportIndexLayerEXT)
-		std::string           m_error;           //not empty: not read
+		String           m_error;           //not empty: not read
 	};
 
 	//a stage read from its words (as bytes: the source of the driver)
-	Stage read(const std::string& bytes);
+	Stage read(const String& bytes);
 }
 }
 }

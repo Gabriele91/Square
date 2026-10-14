@@ -40,19 +40,19 @@ namespace Scene
 			, [](const InstancedMesh* renderable) -> bool { return renderable->Render::Renderable::cast_shadow(); }
 			, [](InstancedMesh* renderable, const bool& cast) { renderable->Render::Renderable::cast_shadow(cast); });
 		// Mesh
-		ctx.add_attribute_function<InstancedMesh, std::string>
+		ctx.add_attribute_function<InstancedMesh, String>
 			("mesh"
-			, std::string()
-			, [](const InstancedMesh* im) -> std::string
+			, String()
+			, [](const InstancedMesh* im) -> String
 			{
-				std::string name;
+				String name;
 				if (im->m_mesh)
 				{
 					name = im->m_mesh->resource_untyped_name();
 				}
 				return name;
 			}
-			, [](InstancedMesh* im, const std::string& name)
+			, [](InstancedMesh* im, const String& name)
 			{
 				if (name.size())
 				{
@@ -64,12 +64,12 @@ namespace Scene
 				}
 			});
 		// Materials
-		ctx.add_attribute_function<InstancedMesh, std::vector<std::string> >
+		ctx.add_attribute_function<InstancedMesh, Vector<String> >
 			("materials"
-			, std::vector<std::string>()
-			, [](const InstancedMesh* im) -> std::vector<std::string>
+			, Vector<String>()
+			, [](const InstancedMesh* im) -> Vector<String>
 			{
-				std::vector<std::string> names;
+				Vector<String> names;
 				names.reserve(im->m_materials.size());
 				for (const auto& material : im->m_materials)
 				{
@@ -80,7 +80,7 @@ namespace Scene
 				}
 				return names;
 			}
-			, [](InstancedMesh* im, const std::vector<std::string>& names)
+			, [](InstancedMesh* im, const Vector<String>& names)
 			{
 				im->m_materials.clear();
 				im->m_materials.reserve(names.size());
@@ -90,10 +90,10 @@ namespace Scene
 				}
 			});
 		// The box of the mesh
-		ctx.add_attribute_function<InstancedMesh, std::vector<Vec3> >
+		ctx.add_attribute_function<InstancedMesh, Vector<Vec3> >
 			("obb"
-			, std::vector<Vec3>()
-			, [](const InstancedMesh* im) -> std::vector<Vec3>
+			, Vector<Vec3>()
+			, [](const InstancedMesh* im) -> Vector<Vec3>
 			{
 				const Geometry::OBoundingBox& box = im->m_mesh_box;
 				return
@@ -105,7 +105,7 @@ namespace Scene
 					, box.get_extension()
 				};
 			}
-			, [](InstancedMesh* im, const std::vector<Vec3>& data)
+			, [](InstancedMesh* im, const Vector<Vec3>& data)
 			{
 				if (data.size() == 5)
 				{
@@ -113,11 +113,11 @@ namespace Scene
 				}
 			});
 		// The instances
-		ctx.add_attribute_function<InstancedMesh, std::vector<Mat4> >
+		ctx.add_attribute_function<InstancedMesh, Vector<Mat4> >
 			("instances"
-			, std::vector<Mat4>()
-			, [](const InstancedMesh* im) -> std::vector<Mat4> { return im->m_instances; }
-			, [](InstancedMesh* im, const std::vector<Mat4>& models) { im->instances(models); });
+			, Vector<Mat4>()
+			, [](const InstancedMesh* im) -> Vector<Mat4> { return im->m_instances; }
+			, [](InstancedMesh* im, const Vector<Mat4>& models) { im->instances(models); });
 	}
 
 	InstancedMesh::InstancedMesh(Square::Context& context)
@@ -129,7 +129,7 @@ namespace Scene
 	{
 	}
 
-	void InstancedMesh::mesh(const Shared<Resource::Mesh>& mesh, const std::vector< Shared<Resource::Material> >& materials)
+	void InstancedMesh::mesh(const Shared<Resource::Mesh>& mesh, const Vector< Shared<Resource::Material> >& materials)
 	{
 		m_mesh = mesh;
 		m_materials = materials;
@@ -141,7 +141,7 @@ namespace Scene
 		build_local_box();
 	}
 
-	void InstancedMesh::instances(const std::vector<Mat4>& models)
+	void InstancedMesh::instances(const Vector<Mat4>& models)
 	{
 		m_instances = models;
 		build_local_box();
@@ -175,7 +175,7 @@ namespace Scene
 		m_visible_valid = false;
 	}
 
-	const std::vector<Geometry::Sphere>& InstancedMesh::world_spheres()
+	const Vector<Geometry::Sphere>& InstancedMesh::world_spheres()
 	{
 		if (m_spheres_dirty)
 		{
@@ -197,7 +197,7 @@ namespace Scene
 		return m_spheres_world;
 	}
 
-	const std::vector<Mat4>& InstancedMesh::visible_instances(const Geometry::Frustum& frustum, const Render::SoftwareOcclusion* occlusion)
+	const Vector<Mat4>& InstancedMesh::visible_instances(const Geometry::Frustum& frustum, const Render::SoftwareOcclusion* occlusion)
 	{
 		//the frustum and the occlusion of the last selection, the same ones: as it was
 		const uint64 version = occlusion ? occlusion->version() : 0;
@@ -208,7 +208,7 @@ namespace Scene
 		}
 		if (!same)
 		{
-			const std::vector<Geometry::Sphere>& spheres = world_spheres();
+			const Vector<Geometry::Sphere>& spheres = world_spheres();
 			m_visible.clear();
 			m_visible.reserve(m_instances.size());
 			for (size_t i = 0; i != m_instances.size(); ++i)
@@ -230,11 +230,11 @@ namespace Scene
 		return m_visible;
 	}
 
-	bool InstancedMesh::triangles(std::vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter)
+	bool InstancedMesh::triangles(Vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter)
 	{
 		bool read = false;
 		auto owner = actor().lock();
-		std::vector<Vec3> local;
+		Vector<Vec3> local;
 		if (m_mesh && owner)
 		{
 			read = m_mesh->local_triangles(local, filter);
@@ -311,7 +311,7 @@ namespace Scene
 		if (uniform)
 		{
 			//the ones the pass sees (none said: all of them)
-			const std::vector<Mat4>& drawn = input.m_frustum ? visible_instances(*input.m_frustum, input.m_occlusion) : m_instances;
+			const Vector<Mat4>& drawn = input.m_frustum ? visible_instances(*input.m_frustum, input.m_occlusion) : m_instances;
 			//in batches: their matrices, a draw each
 			for (size_t first = 0; first < drawn.size(); first += instances_max)
 			{

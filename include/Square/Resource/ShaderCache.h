@@ -29,11 +29,11 @@ namespace Resource
 	struct SQUARE_API ShaderStage
 	{
 		Render::ShaderType m_type{ Render::ST_VERTEX_SHADER };
-		std::string        m_entry{ "main" };
-		std::string        m_header;
-		std::string        m_source;
+		String        m_entry{ "main" };
+		String        m_header;
+		String        m_source;
 	};
-	using ShaderStages = std::vector< ShaderStage >;
+	using ShaderStages = Vector< ShaderStage >;
 
 	class SQUARE_API ShaderCache
 	{
@@ -50,33 +50,33 @@ namespace Resource
 			uint64 m_hash{ 0 };  //its name
 			uint64 m_check{ 0 }; //another hash of the same, in the file (a collision: not taken)
 		};
-		static Key key(const std::string& what);
+		static Key key(const String& what);
 
 		//the folder of the runtime (written), the pack (read only; none: "")
-		void folder(const std::string& folder) { m_folder = folder; }
-		const std::string& folder() const { return m_folder; }
-		void pack(const std::string& pack) { m_pack = pack; }
-		const std::string& pack() const { return m_pack; }
+		void folder(const String& folder) { m_folder = folder; }
+		const String& folder() const { return m_folder; }
+		void pack(const String& pack) { m_pack = pack; }
+		const String& pack() const { return m_pack; }
 
 		//the stages of a shader translated for a language (the pack, then the folder); false: not
 		//there (or not whole)
-		bool find(const std::string& language, const Key& key, ShaderStages& stages) const;
+		bool find(const String& language, const Key& key, ShaderStages& stages) const;
 		//the stages of a shader translated: into the folder of the runtime
-		bool store(const std::string& language, const Key& key, const ShaderStages& stages) const;
+		bool store(const String& language, const Key& key, const ShaderStages& stages) const;
 
 		//the file of a shader in a root (the pack, a folder)
-		static std::string file_of(const std::string& root, const std::string& language, const Key& key);
+		static String file_of(const String& root, const String& language, const Key& key);
 		//the stages to bytes and back (the files)
-		static std::vector<unsigned char> encode(const Key& key, const ShaderStages& stages);
-		static bool decode(const std::vector<unsigned char>& bytes, const Key& key, ShaderStages& stages);
+		static Vector<unsigned char> encode(const Key& key, const ShaderStages& stages);
+		static bool decode(const Vector<unsigned char>& bytes, const Key& key, ShaderStages& stages);
 
 		//the files under a folder not written or read for days gone (the leftovers of a write too)
-		static size_t prune(const std::string& folder, int days);
+		static size_t prune(const String& folder, int days);
 
 	private:
 
-		std::string m_folder;
-		std::string m_pack;
+		String m_folder;
+		String m_pack;
 	};
 }
 }

@@ -16,7 +16,7 @@ namespace Shell
 
     struct SQUARE_API Error
     {
-        std::string what;
+        String what;
         int         id_argument { -1              };
         ErrorType   type        { ErrorType::none };
 
@@ -43,7 +43,7 @@ namespace Shell
     
     using Value_t = std::variant
     <
-        std::string,
+        String,
         bool,
         short,
         int,
@@ -59,17 +59,17 @@ namespace Shell
 
     struct SQUARE_API Command
     {
-        std::string            name;
-        std::string            short_name;
-        std::string            description;
+        String            name;
+        String            short_name;
+        String            description;
         ValueType             type;
         bool                   mandatory { false };
         std::optional<Value_t> default_value;
     };
 
-    using ParserValue = std::unordered_map
+    using ParserValue = UnorderedMap
     < 
-          std::string
+          String
         , Value_t 
     >;
 
@@ -79,7 +79,7 @@ namespace Shell
         , ParserValue
     >;
 
-    using ParserCommands = std::vector<Command>;
+    using ParserCommands = Vector<Command>;
 
     SQUARE_API ParserReturn parser
     (
@@ -88,13 +88,13 @@ namespace Shell
       , const ParserCommands& commands
     );
 
-    SQUARE_API std::string help(const ParserCommands& commands);
+    SQUARE_API String help(const ParserCommands& commands);
 
     SQUARE_API extern const char __path__[];
     SQUARE_API extern const char __filename__[];
     SQUARE_API extern const char __basename__[];
-    SQUARE_API const std::string& path(const Square::Shell::ParserValue& args);
-    SQUARE_API const std::string& filename(const Square::Shell::ParserValue& args);
-    SQUARE_API const std::string& basename(const Square::Shell::ParserValue& args);
+    SQUARE_API const String& path(const Square::Shell::ParserValue& args);
+    SQUARE_API const String& filename(const Square::Shell::ParserValue& args);
+    SQUARE_API const String& basename(const Square::Shell::ParserValue& args);
 }
 }

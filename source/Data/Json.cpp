@@ -108,7 +108,7 @@ namespace Data
         m_type = Type::IS_OBJECT;
         m_object = new JsonObject(std::move(v));
     }
-    JsonValue::JsonValue(std::string&& value) noexcept
+    JsonValue::JsonValue(String&& value) noexcept
     {
         m_type   = Type::IS_STRING;
         m_string = new JsonString(std::move(value));
@@ -128,7 +128,7 @@ namespace Data
 		case Type::IS_OBJECT: m_object  = new JsonObject(*v.m_object); break;
 		}
 	}
-    JsonValue::JsonValue(const std::string& value)
+    JsonValue::JsonValue(const String& value)
     {
         m_type   = Type::IS_STRING;
         m_string = new JsonString(value);
@@ -205,7 +205,7 @@ namespace Data
 	{ 
 		return array()[key];
 	}
-	JsonValue& JsonValue::operator[] (const std::string& key)  
+	JsonValue& JsonValue::operator[] (const String& key)  
 	{ 
 		return object()[key];
 	}
@@ -217,7 +217,7 @@ namespace Data
 		static const JsonValue null_value;
 		return key < m_array->size() ? (*m_array)[key] : null_value;
 	}
-	const JsonValue& JsonValue::operator[] (const std::string& key) const
+	const JsonValue& JsonValue::operator[] (const String& key) const
 	{
 		//A const lookup cannot insert (unlike the non-const overload), so on a
 		//missing key return a shared null value instead of dereferencing end().
@@ -271,7 +271,7 @@ namespace Data
         return *this;
     }
 
-    bool JsonValue::contains(const std::string& key) const
+    bool JsonValue::contains(const String& key) const
     {
         if (!is_object()) return false;
         auto it = m_object->find(key);
@@ -284,12 +284,12 @@ namespace Data
     }
 
 	//stream
-	inline std::string json_string_dump(const std::string& str)
+	inline String json_string_dump(const String& str)
 	{
 		//copy ptr
 		const char *tmp = str.c_str();
 		//start '"'
-		std::string out = "\"";
+		String out = "\"";
 		//push all chars. Only emit escapes valid per RFC 8259: the named ones
 		//below, and \uXXXX for any remaining control character (< 0x20). \a, \?
 		//and \' are NOT valid JSON and must never be produced.
@@ -326,11 +326,11 @@ namespace Data
 	//Serialize a double with the shortest representation that round-trips back to
 	//the exact same value (e.g. 0.1 -> "0.1", not "0.10000000000000001"). The
 	//default ostream formatting only keeps ~6 significant digits, losing precision.
-	inline std::string json_number_dump(double value)
+	inline String json_number_dump(double value)
 	{
 		char   buffer[32];
 		auto   res = std::to_chars(buffer, buffer + sizeof(buffer), value);
-		return std::string(buffer, res.ptr);
+		return String(buffer, res.ptr);
 	}
 	std::ostream& operator<< (std::ostream& stream, const Json& value)
 	{
@@ -375,10 +375,10 @@ namespace Data
 	Json::Json(JsonArray&& json_array):m_document(std::move(json_array)) {}
 	Json::Json(JsonObject&& json_object):m_document(std::move(json_object)) {}
 	Json::Json(const JsonValue& document) :m_document(document) {}
-    Json::Json(const std::string& source) { parser(source); }
+    Json::Json(const String& source) { parser(source); }
     Json::Json(const char* source, std::size_t n) { parser(source, n); }
 
-    bool Json::parser(const std::string& cppsource)
+    bool Json::parser(const String& cppsource)
     {
         return parser(cppsource.c_str(), cppsource.size());
     }
@@ -394,7 +394,7 @@ namespace Data
         bool                   separator = false;
         bool                   added_key = false;
         JsonString             key;
-        std::stack<JsonValue*> stack;
+        Square::Stack<JsonValue*> stack;
         //info
         auto in_object = [&]() -> bool
         {
@@ -517,7 +517,7 @@ namespace Data
                 // string
                 case '"':
                 {
-                    std::string str_out;
+                    String str_out;
                     if (!parse_string(line, source, str_out))
                     {
                         m_list_errors.emplace_back(line, get_line_character(source, start_source),"JSON_BAD_STRING");
@@ -631,9 +631,9 @@ namespace Data
     }
 	
 	//get error
-    std::string Json::errors() const
+    String Json::errors() const
     {
-        std::stringstream ssout;
+        StringStream ssout;
         for(auto& error : m_list_errors)
         {
             if(error.m_character == (~size_t(0)))
@@ -651,8 +651,8 @@ namespace Data
     Json::operator JsonValue& ()                                    { return document(); }
     Json::operator const JsonValue& () const                        { return document(); }
     JsonValue& Json::operator[] (const size_t& key)                 { return document()[key]; }
-    JsonValue& Json::operator[] (const std::string& key)            { return document()[key]; }
+    JsonValue& Json::operator[] (const String& key)            { return document()[key]; }
     const JsonValue& Json::operator[] (const size_t& key) const     { return document()[key]; }
-    const JsonValue& Json::operator[] (const std::string& key) const{ return document()[key]; }
+    const JsonValue& Json::operator[] (const String& key) const{ return document()[key]; }
 }
 }

@@ -34,9 +34,9 @@ namespace Data
 
         //a vector of another type
         template < class To, class From >
-        std::vector< To > convert(const std::vector< From >& from)
+        Vector< To > convert(const Vector< From >& from)
         {
-            std::vector< To > to;
+            Vector< To > to;
             to.reserve(from.size());
             for (const From& value : from) to.push_back(To(value));
             return to;
@@ -51,7 +51,7 @@ namespace Data
     }
     
     template <>
-    std::ostream& operator < (std::ostream& ostream, const std::string& value)
+    std::ostream& operator < (std::ostream& ostream, const String& value)
     {
         int64 size = value.size();
         ostream.write((const char*)&size, sizeof(int64));
@@ -106,7 +106,7 @@ namespace Data
     }
     
     template < typename V >
-    std::ostream& operator < (std::ostream& ostream, const std::vector< V >& value)
+    std::ostream& operator < (std::ostream& ostream, const Vector< V >& value)
     {
         //vector
         uint64 len = value.size();
@@ -126,7 +126,7 @@ namespace Data
         m_stream < uint32(SQUARE_VERSION_PATCH);
     }
 
-    Archive& ArchiveBinWrite::block(std::string& data)
+    Archive& ArchiveBinWrite::block(String& data)
     {
         m_stream < data;
         return *this;
@@ -151,15 +151,15 @@ namespace Data
             return *this;
             case Square::VR_STD_VECTOR_LONG:
                 m_stream < int(VR_STD_VECTOR_LONGLONG);
-                m_stream < AuxArchive::convert<long long>(value.get<std::vector<long>>());
+                m_stream < AuxArchive::convert<long long>(value.get<Vector<long>>());
             return *this;
             case Square::VR_STD_VECTOR_ULONG:
                 m_stream < int(VR_STD_VECTOR_ULONGLONG);
-                m_stream < AuxArchive::convert<unsigned long long>(value.get<std::vector<unsigned long>>());
+                m_stream < AuxArchive::convert<unsigned long long>(value.get<Vector<unsigned long>>());
             return *this;
             case Square::VR_STD_VECTOR_LONG_DOUBLE:
                 m_stream < int(VR_STD_VECTOR_DOUBLE);
-                m_stream < AuxArchive::convert<double>(value.get<std::vector<long double>>());
+                m_stream < AuxArchive::convert<double>(value.get<Vector<long double>>());
             return *this;
             default: break;
         }
@@ -202,46 +202,46 @@ namespace Data
             case Square::VR_FLOAT_MATRIX:  m_stream < value.get<Mat4>(); break;
             case Square::VR_DOUBLE_MATRIX: m_stream < value.get<DMat4>();  break;
             ////////////////////////////////////////////////////////////////////////////////////////////
-            case Square::VR_STD_VECTOR_SHORT: m_stream < value.get<std::vector<short>>(); break;
-            case Square::VR_STD_VECTOR_INT: m_stream < value.get<std::vector<int>>(); break;
-            case Square::VR_STD_VECTOR_LONG: m_stream < value.get<std::vector<long>>(); break;
-            case Square::VR_STD_VECTOR_LONGLONG: m_stream < value.get<std::vector<long long>>(); break;
-            case Square::VR_STD_VECTOR_USHORT: m_stream < value.get<std::vector<unsigned short>>(); break;
-            case Square::VR_STD_VECTOR_UINT: m_stream < value.get<std::vector<unsigned int>>(); break;
-            case Square::VR_STD_VECTOR_ULONG: m_stream < value.get<std::vector<unsigned long>>(); break;
-            case Square::VR_STD_VECTOR_ULONGLONG: m_stream < value.get<std::vector<unsigned long long>>(); break;
-            case Square::VR_STD_VECTOR_FLOAT: m_stream < value.get<std::vector<float>>(); break;
-            case Square::VR_STD_VECTOR_DOUBLE: m_stream < value.get<std::vector<double>>(); break;
-            case Square::VR_STD_VECTOR_LONG_DOUBLE: m_stream < value.get<std::vector<long double>>(); break;
+            case Square::VR_STD_VECTOR_SHORT: m_stream < value.get<Vector<short>>(); break;
+            case Square::VR_STD_VECTOR_INT: m_stream < value.get<Vector<int>>(); break;
+            case Square::VR_STD_VECTOR_LONG: m_stream < value.get<Vector<long>>(); break;
+            case Square::VR_STD_VECTOR_LONGLONG: m_stream < value.get<Vector<long long>>(); break;
+            case Square::VR_STD_VECTOR_USHORT: m_stream < value.get<Vector<unsigned short>>(); break;
+            case Square::VR_STD_VECTOR_UINT: m_stream < value.get<Vector<unsigned int>>(); break;
+            case Square::VR_STD_VECTOR_ULONG: m_stream < value.get<Vector<unsigned long>>(); break;
+            case Square::VR_STD_VECTOR_ULONGLONG: m_stream < value.get<Vector<unsigned long long>>(); break;
+            case Square::VR_STD_VECTOR_FLOAT: m_stream < value.get<Vector<float>>(); break;
+            case Square::VR_STD_VECTOR_DOUBLE: m_stream < value.get<Vector<double>>(); break;
+            case Square::VR_STD_VECTOR_LONG_DOUBLE: m_stream < value.get<Vector<long double>>(); break;
             ////////////////////////////////////////////////////////////////////////////////////////////
-            case Square::VR_STD_VECTOR_FLOAT_MATRIX: m_stream < value.get<std::vector<Mat4>>(); break;
-            case Square::VR_STD_VECTOR_DOUBLE_MATRIX: m_stream < value.get<std::vector<DMat4>>(); break;
+            case Square::VR_STD_VECTOR_FLOAT_MATRIX: m_stream < value.get<Vector<Mat4>>(); break;
+            case Square::VR_STD_VECTOR_DOUBLE_MATRIX: m_stream < value.get<Vector<DMat4>>(); break;
             ////////////////////////////////////////////////////////////////////////////////////////////
-            case Square::VR_STD_VECTOR_VEC2: m_stream < value.get<std::vector<Vec2>>(); break;
-            case Square::VR_STD_VECTOR_VEC3: m_stream < value.get<std::vector<Vec3>>(); break;
-            case Square::VR_STD_VECTOR_VEC4: m_stream < value.get<std::vector<Vec4>>(); break;
+            case Square::VR_STD_VECTOR_VEC2: m_stream < value.get<Vector<Vec2>>(); break;
+            case Square::VR_STD_VECTOR_VEC3: m_stream < value.get<Vector<Vec3>>(); break;
+            case Square::VR_STD_VECTOR_VEC4: m_stream < value.get<Vector<Vec4>>(); break;
                 
-            case Square::VR_STD_VECTOR_DVEC2: m_stream < value.get<std::vector<DVec2>>(); break;
-            case Square::VR_STD_VECTOR_DVEC3: m_stream < value.get<std::vector<DVec3>>(); break;
-            case Square::VR_STD_VECTOR_DVEC4: m_stream < value.get<std::vector<DVec4>>(); break;
+            case Square::VR_STD_VECTOR_DVEC2: m_stream < value.get<Vector<DVec2>>(); break;
+            case Square::VR_STD_VECTOR_DVEC3: m_stream < value.get<Vector<DVec3>>(); break;
+            case Square::VR_STD_VECTOR_DVEC4: m_stream < value.get<Vector<DVec4>>(); break;
                 
-            case Square::VR_STD_VECTOR_IVEC2: m_stream < value.get<std::vector<IVec2>>(); break;
-            case Square::VR_STD_VECTOR_IVEC3: m_stream < value.get<std::vector<IVec3>>(); break;
-            case Square::VR_STD_VECTOR_IVEC4: m_stream < value.get<std::vector<IVec4>>(); break;
+            case Square::VR_STD_VECTOR_IVEC2: m_stream < value.get<Vector<IVec2>>(); break;
+            case Square::VR_STD_VECTOR_IVEC3: m_stream < value.get<Vector<IVec3>>(); break;
+            case Square::VR_STD_VECTOR_IVEC4: m_stream < value.get<Vector<IVec4>>(); break;
             ////////////////////////////////////////////////////////////////////////////////////////////
             case Square::VR_C_STRING:
                 throw std::runtime_error("ArchiveBinWrite, can't write a C string");
             break;
             case Square::VR_STD_STRING:
-                m_stream < value.get<std::string>();
+                m_stream < value.get<String>();
             break;
-			case Square::VR_STD_VECTOR_STRING: m_stream < value.get<std::vector<std::string>>(); break;
+			case Square::VR_STD_VECTOR_STRING: m_stream < value.get<Vector<String>>(); break;
 			////////////////////////////////////////////////////////////////////////////////////////////
 			case Square::VR_RESOURCE: 
 				if (value.get< Shared<ResourceObject> >())
 				{
 					m_stream < true;
-					m_stream < std::string(value.get< Shared<ResourceObject> >()->resource_name());
+					m_stream < String(value.get< Shared<ResourceObject> >()->resource_name());
 				}
 				else
 				{
@@ -268,7 +268,7 @@ namespace Data
     }
 
     template <>
-    std::istream& operator > (std::istream& istream, std::string& value)
+    std::istream& operator > (std::istream& istream, String& value)
     {
         //read size
 		uint64 size = 0;
@@ -327,7 +327,7 @@ namespace Data
     }
     
     template < typename V >
-    std::istream& operator > (std::istream& istream, std::vector< V >& value)
+    std::istream& operator > (std::istream& istream, Vector< V >& value)
     {
         //vector len
         uint64 len = 0;
@@ -357,10 +357,10 @@ namespace Data
         m_stream > major;
         m_stream > minor;
         m_stream > patch;
-        m_engine_version = std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch);
+        m_engine_version = to_string(major) + "." + to_string(minor) + "." + to_string(patch);
         //a format of a newer engine
         if (version > format_version)
-            throw std::runtime_error("ArchiveBinRead, format " + std::to_string(version) + " of the engine " + m_engine_version + ", newer than this one");
+            throw std::runtime_error(("ArchiveBinRead, format " + to_string(version) + " of the engine " + m_engine_version + ", newer than this one").c_str());
         m_version = version;
     }
 
@@ -368,7 +368,7 @@ namespace Data
     {
     }
 
-    Archive& ArchiveBinRead::block(std::string& data)
+    Archive& ArchiveBinRead::block(String& data)
     {
         m_stream > data;
         if (!m_stream) throw std::runtime_error("ArchiveBinRead, a block past the end of the stream");
@@ -409,23 +409,23 @@ namespace Data
                 break;
                 case Square::VR_STD_VECTOR_LONG:
                 {
-                    std::vector<long long> stored;
+                    Vector<long long> stored;
                     m_stream > stored;
-                    value.get<std::vector<long>>() = AuxArchive::convert<long>(stored);
+                    value.get<Vector<long>>() = AuxArchive::convert<long>(stored);
                 }
                 break;
                 case Square::VR_STD_VECTOR_ULONG:
                 {
-                    std::vector<unsigned long long> stored;
+                    Vector<unsigned long long> stored;
                     m_stream > stored;
-                    value.get<std::vector<unsigned long>>() = AuxArchive::convert<unsigned long>(stored);
+                    value.get<Vector<unsigned long>>() = AuxArchive::convert<unsigned long>(stored);
                 }
                 break;
                 case Square::VR_STD_VECTOR_LONG_DOUBLE:
                 {
-                    std::vector<double> stored;
+                    Vector<double> stored;
                     m_stream > stored;
-                    value.get<std::vector<long double>>() = AuxArchive::convert<long double>(stored);
+                    value.get<Vector<long double>>() = AuxArchive::convert<long double>(stored);
                 }
                 break;
                 default: break;
@@ -471,40 +471,40 @@ namespace Data
             case Square::VR_FLOAT_MATRIX:  m_stream > value.get<Mat4>(); break;
             case Square::VR_DOUBLE_MATRIX: m_stream > value.get<DMat4>();  break;
             ////////////////////////////////////////////////////////////////////////////////////////////
-            case Square::VR_STD_VECTOR_SHORT: m_stream > value.get<std::vector<short>>(); break;
-            case Square::VR_STD_VECTOR_INT: m_stream > value.get<std::vector<int>>(); break;
-            case Square::VR_STD_VECTOR_LONG: m_stream > value.get<std::vector<long>>(); break;
-            case Square::VR_STD_VECTOR_LONGLONG: m_stream > value.get<std::vector<long long>>(); break;
-            case Square::VR_STD_VECTOR_USHORT: m_stream > value.get<std::vector<unsigned short>>(); break;
-            case Square::VR_STD_VECTOR_UINT: m_stream > value.get<std::vector<unsigned int>>(); break;
-            case Square::VR_STD_VECTOR_ULONG: m_stream > value.get<std::vector<unsigned long>>(); break;
-            case Square::VR_STD_VECTOR_ULONGLONG: m_stream > value.get<std::vector<unsigned long long>>(); break;
-            case Square::VR_STD_VECTOR_FLOAT: m_stream > value.get<std::vector<float>>(); break;
-            case Square::VR_STD_VECTOR_DOUBLE: m_stream > value.get<std::vector<double>>(); break;
-            case Square::VR_STD_VECTOR_LONG_DOUBLE: m_stream > value.get<std::vector<long double>>(); break;
+            case Square::VR_STD_VECTOR_SHORT: m_stream > value.get<Vector<short>>(); break;
+            case Square::VR_STD_VECTOR_INT: m_stream > value.get<Vector<int>>(); break;
+            case Square::VR_STD_VECTOR_LONG: m_stream > value.get<Vector<long>>(); break;
+            case Square::VR_STD_VECTOR_LONGLONG: m_stream > value.get<Vector<long long>>(); break;
+            case Square::VR_STD_VECTOR_USHORT: m_stream > value.get<Vector<unsigned short>>(); break;
+            case Square::VR_STD_VECTOR_UINT: m_stream > value.get<Vector<unsigned int>>(); break;
+            case Square::VR_STD_VECTOR_ULONG: m_stream > value.get<Vector<unsigned long>>(); break;
+            case Square::VR_STD_VECTOR_ULONGLONG: m_stream > value.get<Vector<unsigned long long>>(); break;
+            case Square::VR_STD_VECTOR_FLOAT: m_stream > value.get<Vector<float>>(); break;
+            case Square::VR_STD_VECTOR_DOUBLE: m_stream > value.get<Vector<double>>(); break;
+            case Square::VR_STD_VECTOR_LONG_DOUBLE: m_stream > value.get<Vector<long double>>(); break;
             ////////////////////////////////////////////////////////////////////////////////////////////
-            case Square::VR_STD_VECTOR_FLOAT_MATRIX: m_stream > value.get<std::vector<Mat4>>(); break;
-            case Square::VR_STD_VECTOR_DOUBLE_MATRIX: m_stream > value.get<std::vector<DMat4>>(); break;
+            case Square::VR_STD_VECTOR_FLOAT_MATRIX: m_stream > value.get<Vector<Mat4>>(); break;
+            case Square::VR_STD_VECTOR_DOUBLE_MATRIX: m_stream > value.get<Vector<DMat4>>(); break;
             ////////////////////////////////////////////////////////////////////////////////////////////
-            case Square::VR_STD_VECTOR_VEC2: m_stream > value.get<std::vector<Vec2>>(); break;
-            case Square::VR_STD_VECTOR_VEC3: m_stream > value.get<std::vector<Vec3>>(); break;
-            case Square::VR_STD_VECTOR_VEC4: m_stream > value.get<std::vector<Vec4>>(); break;
+            case Square::VR_STD_VECTOR_VEC2: m_stream > value.get<Vector<Vec2>>(); break;
+            case Square::VR_STD_VECTOR_VEC3: m_stream > value.get<Vector<Vec3>>(); break;
+            case Square::VR_STD_VECTOR_VEC4: m_stream > value.get<Vector<Vec4>>(); break;
                 
-            case Square::VR_STD_VECTOR_DVEC2: m_stream > value.get<std::vector<DVec2>>(); break;
-            case Square::VR_STD_VECTOR_DVEC3: m_stream > value.get<std::vector<DVec3>>(); break;
-            case Square::VR_STD_VECTOR_DVEC4: m_stream > value.get<std::vector<DVec4>>(); break;
+            case Square::VR_STD_VECTOR_DVEC2: m_stream > value.get<Vector<DVec2>>(); break;
+            case Square::VR_STD_VECTOR_DVEC3: m_stream > value.get<Vector<DVec3>>(); break;
+            case Square::VR_STD_VECTOR_DVEC4: m_stream > value.get<Vector<DVec4>>(); break;
                 
-            case Square::VR_STD_VECTOR_IVEC2: m_stream > value.get<std::vector<IVec2>>(); break;
-            case Square::VR_STD_VECTOR_IVEC3: m_stream > value.get<std::vector<IVec3>>(); break;
-            case Square::VR_STD_VECTOR_IVEC4: m_stream > value.get<std::vector<IVec4>>(); break;
+            case Square::VR_STD_VECTOR_IVEC2: m_stream > value.get<Vector<IVec2>>(); break;
+            case Square::VR_STD_VECTOR_IVEC3: m_stream > value.get<Vector<IVec3>>(); break;
+            case Square::VR_STD_VECTOR_IVEC4: m_stream > value.get<Vector<IVec4>>(); break;
             ////////////////////////////////////////////////////////////////////////////////////////////
             case Square::VR_C_STRING:
                 throw std::runtime_error("ArchiveBinWrite, can't write a C string");
                 break;
             case Square::VR_STD_STRING:
-                m_stream > value.get<std::string>();
+                m_stream > value.get<String>();
                 break;
-            case Square::VR_STD_VECTOR_STRING: m_stream > value.get<std::vector<std::string>>(); break;
+            case Square::VR_STD_VECTOR_STRING: m_stream > value.get<Vector<String>>(); break;
 			////////////////////////////////////////////////////////////////////////////////////////////
 			case Square::VR_RESOURCE:
 			{
@@ -513,13 +513,13 @@ namespace Data
 				m_stream > exists;
 				if (!exists) break;
 				//get name
-				std::string resource_name;
+				String resource_name;
 				m_stream > resource_name;
 				//load
 				Shared<ResourceObject>  resource_object;
 				//load resource
 				if(!(resource_object = context().resource(resource_name)))
-					throw std::runtime_error("ArchiveBinWrite, can't load resource: " + resource_name + ", not exists");
+					throw std::runtime_error(("ArchiveBinWrite, can't load resource: " + resource_name + ", not exists").c_str());
 				//save
 				value.get<Shared<ResourceObject>>() = resource_object;
 			}

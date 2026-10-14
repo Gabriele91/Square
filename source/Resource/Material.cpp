@@ -32,9 +32,9 @@ namespace Resource
 	//////////////////////////////////////////////////////////////
 	//constructor
 	Material::Material(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) {}
-	Material::Material(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) { load(path); }
+	Material::Material(Context& context, const String& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) { load(path); }
 	//help
-	static void save_default_parameter(int id_param, const std::string& name, int default_parameters[])
+	static void save_default_parameter(int id_param, const String& name, int default_parameters[])
 	{
 		for (int i = 0; i != Material::MAT_DEFAULT_MAX; ++i)
 		{
@@ -46,7 +46,7 @@ namespace Resource
 		}
 	}
 	//load effect
-	bool Material::load(const std::string& path)
+	bool Material::load(const String& path)
 	{
 		//parse
 		Parser::Material mat_parser;
@@ -85,9 +85,9 @@ namespace Resource
 				case Render::EffectParameterType::PT_STD_VECTOR_TEXTURE:
 				{
 					//vector of texture
-					std::vector< Shared<Resource::Texture> > textures;
+					Vector< Shared<Resource::Texture> > textures;
 					//get all texture
-					for (const std::string& tex_name : ctx_param.m_resources)
+					for (const String& tex_name : ctx_param.m_resources)
 					{
 						textures.push_back(context().resource<Resource::Texture>(tex_name));
 					}

@@ -32,10 +32,10 @@ namespace Resource
         
         //constructor
         Effect(Context& context);
-        Effect(Context& context, const std::string& path);
+        Effect(Context& context, const String& path);
         
         //load shader
-        bool load(const std::string& path) override;    
+        bool load(const String& path) override;    
         
     };
     

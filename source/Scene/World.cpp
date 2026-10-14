@@ -30,7 +30,7 @@ namespace Scene
 		//factory
 		ctx.add_object<World>();
 		//Attributes
-		ctx.add_attribute_field<World, std::string>("name", std::string(), offsetof(World,m_name));
+		ctx.add_attribute_field<World, String>("name", String(), offsetof(World,m_name));
 	}
 
 	World::World(Context& context) : Object(context), SharedObject_t(context.allocator())
@@ -89,17 +89,17 @@ namespace Scene
 	}
 	
 	//name
-	const std::string& World::name() const
+	const String& World::name() const
 	{
 		return m_name;
 	}
-	void World::name(const std::string& name)
+	void World::name(const String& name)
 	{
 		m_name = name;
 	}
 
 	//add an level	
-	Shared<Level> World::create_level(const std::string& name)
+	Shared<Level> World::create_level(const String& name)
 	{
 		m_levels.push_back(MakeShared<Level>(context(), weak_from_this(), name));
 		return m_levels.back();
@@ -110,7 +110,7 @@ namespace Scene
 	{
 		return index < m_levels.size() ? m_levels[index] : nullptr;
 	}
-	Shared<Level> World::level(const std::string& name)
+	Shared<Level> World::level(const String& name)
 	{
 		for (const Shared<Level>& level : m_levels)
 		{
@@ -119,7 +119,7 @@ namespace Scene
 		return nullptr;
 	}
 
-	void World::active_levels(const std::vector<std::string>& names)
+	void World::active_levels(const Vector<String>& names)
 	{
 		//off first: a level that goes on finds the systems free of the ones that went off
 		auto named = [&names](const Shared<Level>& level)
@@ -140,7 +140,7 @@ namespace Scene
 	{
 		return m_levels;
 	}
-	Shared<Actor> World::find_actor(const std::string& name)
+	Shared<Actor> World::find_actor(const String& name)
 	{
 		//search
 		for (const Shared<Level>& level : m_levels)

@@ -200,166 +200,166 @@ namespace Square
 		*((DMat4*)(m_ptr)) = dm;
 	}
 
-	Variant::Variant(const std::vector< char >& v_c)
+	Variant::Variant(const Vector< char >& v_c)
 	{
 		set_type(VR_STD_VECTOR_CHAR);
-		*((std::vector< char >*)(m_ptr)) = v_c;
+		*((Vector< char >*)(m_ptr)) = v_c;
 	}
 
-	Variant::Variant(const std::vector< short >& v_s)
+	Variant::Variant(const Vector< short >& v_s)
 	{
 		set_type(VR_STD_VECTOR_SHORT);
-		*((std::vector< short >*)(m_ptr)) = v_s;
+		*((Vector< short >*)(m_ptr)) = v_s;
 	}
 
-	Variant::Variant(const std::vector< int >& v_i)
+	Variant::Variant(const Vector< int >& v_i)
 	{
 		set_type(VR_STD_VECTOR_INT);
-		*((std::vector< int >*)(m_ptr)) = v_i;
+		*((Vector< int >*)(m_ptr)) = v_i;
 	}
 
-	Variant::Variant(const std::vector< long >& v_l)
+	Variant::Variant(const Vector< long >& v_l)
 	{
 		set_type(VR_STD_VECTOR_LONG);
-		*((std::vector< long >*)(m_ptr)) = v_l;
+		*((Vector< long >*)(m_ptr)) = v_l;
 	}
 
-	Variant::Variant(const std::vector< long long >& v_ll)
+	Variant::Variant(const Vector< long long >& v_ll)
 	{
 		set_type(VR_STD_VECTOR_LONGLONG);
-		*((std::vector< long long >*)(m_ptr)) = v_ll;
+		*((Vector< long long >*)(m_ptr)) = v_ll;
 	}
 
-	Variant::Variant(const std::vector< unsigned char >& v_uc)
+	Variant::Variant(const Vector< unsigned char >& v_uc)
 	{
 		set_type(VR_STD_VECTOR_UCHAR);
-		*((std::vector< unsigned char >*)(m_ptr)) = v_uc;
+		*((Vector< unsigned char >*)(m_ptr)) = v_uc;
 	}
 
-	Variant::Variant(const std::vector< unsigned short >& v_us)
+	Variant::Variant(const Vector< unsigned short >& v_us)
 	{
 		set_type(VR_STD_VECTOR_USHORT);
-		*((std::vector< unsigned short >*)(m_ptr)) = v_us;
+		*((Vector< unsigned short >*)(m_ptr)) = v_us;
 	}
 
-	Variant::Variant(const std::vector< unsigned int >& v_ui)
+	Variant::Variant(const Vector< unsigned int >& v_ui)
 	{
 		set_type(VR_STD_VECTOR_UINT);
-		*((std::vector< unsigned int >*)(m_ptr)) = v_ui;
+		*((Vector< unsigned int >*)(m_ptr)) = v_ui;
 	}
 
-	Variant::Variant(const std::vector< unsigned long >& v_ul)
+	Variant::Variant(const Vector< unsigned long >& v_ul)
 	{
 		set_type(VR_STD_VECTOR_ULONG);
-		*((std::vector< unsigned long >*)(m_ptr)) = v_ul;
+		*((Vector< unsigned long >*)(m_ptr)) = v_ul;
 	}
 
-	Variant::Variant(const std::vector< unsigned long long >& v_ull)
+	Variant::Variant(const Vector< unsigned long long >& v_ull)
 	{
 		set_type(VR_STD_VECTOR_ULONGLONG);
-		*((std::vector< unsigned long long >*)(m_ptr)) = v_ull;
+		*((Vector< unsigned long long >*)(m_ptr)) = v_ull;
 	}
 
-	Variant::Variant(const std::vector< float >& v_f)
+	Variant::Variant(const Vector< float >& v_f)
 	{
 		set_type(VR_STD_VECTOR_FLOAT);
-		*((std::vector< float >*)(m_ptr)) = v_f;
+		*((Vector< float >*)(m_ptr)) = v_f;
 	}
 
-	Variant::Variant(const std::vector< double >& v_d)
+	Variant::Variant(const Vector< double >& v_d)
 	{
 		set_type(VR_STD_VECTOR_DOUBLE);
-		*((std::vector< double >*)(m_ptr)) = v_d;
+		*((Vector< double >*)(m_ptr)) = v_d;
 	}
 
-	Variant::Variant(const std::vector< long double >& v_ld)
+	Variant::Variant(const Vector< long double >& v_ld)
 	{
 		set_type(VR_STD_VECTOR_LONG_DOUBLE);
-		*((std::vector< long double >*)(m_ptr)) = v_ld;
+		*((Vector< long double >*)(m_ptr)) = v_ld;
 	}
 
-	Variant::Variant(const std::vector< Mat4 >& v_m4)
+	Variant::Variant(const Vector< Mat4 >& v_m4)
 	{
 		set_type(VR_STD_VECTOR_FLOAT_MATRIX);
-		*((std::vector< Mat4 >*)(m_ptr)) = v_m4;
+		*((Vector< Mat4 >*)(m_ptr)) = v_m4;
 	}
 
-	Variant::Variant(const std::vector< DMat4 >& v_dm4)
+	Variant::Variant(const Vector< DMat4 >& v_dm4)
 	{
 		set_type(VR_STD_VECTOR_DOUBLE_MATRIX);
-		*((std::vector< DMat4 >*)(m_ptr)) = v_dm4;
+		*((Vector< DMat4 >*)(m_ptr)) = v_dm4;
 	}
 
-	Variant::Variant(const std::vector< Vec2 >& v_v2)
+	Variant::Variant(const Vector< Vec2 >& v_v2)
 	{
 		set_type(VR_STD_VECTOR_VEC2);
-		*((std::vector< Vec2 >*)(m_ptr)) = v_v2;
+		*((Vector< Vec2 >*)(m_ptr)) = v_v2;
 	}
 
-	Variant::Variant(const std::vector< Vec3 >& v_v3)
+	Variant::Variant(const Vector< Vec3 >& v_v3)
 	{
 		set_type(VR_STD_VECTOR_VEC3);
-		*((std::vector< Vec3 >*)(m_ptr)) = v_v3;
+		*((Vector< Vec3 >*)(m_ptr)) = v_v3;
 	}
 
-	Variant::Variant(const std::vector< Vec4 >& v_v4)
+	Variant::Variant(const Vector< Vec4 >& v_v4)
 	{
 		set_type(VR_STD_VECTOR_VEC4);
-		*((std::vector< Vec4 >*)(m_ptr)) = v_v4;
+		*((Vector< Vec4 >*)(m_ptr)) = v_v4;
 	}
 
-	Variant::Variant(const std::vector< IVec2 >& v_iv2)
+	Variant::Variant(const Vector< IVec2 >& v_iv2)
 	{
 		set_type(VR_STD_VECTOR_IVEC2);
-		*((std::vector< IVec2 >*)(m_ptr)) = v_iv2;
+		*((Vector< IVec2 >*)(m_ptr)) = v_iv2;
 	}
 
-	Variant::Variant(const std::vector< IVec3 >& v_iv3)
+	Variant::Variant(const Vector< IVec3 >& v_iv3)
 	{
 		set_type(VR_STD_VECTOR_IVEC3);
-		*((std::vector< IVec3 >*)(m_ptr)) = v_iv3;
+		*((Vector< IVec3 >*)(m_ptr)) = v_iv3;
 	}
 
-	Variant::Variant(const std::vector< IVec4 >& v_iv4)
+	Variant::Variant(const Vector< IVec4 >& v_iv4)
 	{
 		set_type(VR_STD_VECTOR_IVEC4);
-		*((std::vector< IVec4 >*)(m_ptr)) = v_iv4;
+		*((Vector< IVec4 >*)(m_ptr)) = v_iv4;
 	}
 
-	Variant::Variant(const std::vector< DVec2 >& v_dv2)
+	Variant::Variant(const Vector< DVec2 >& v_dv2)
 	{
 		set_type(VR_STD_VECTOR_DVEC2);
-		*((std::vector< DVec2 >*)(m_ptr)) = v_dv2;
+		*((Vector< DVec2 >*)(m_ptr)) = v_dv2;
 	}
 
-	Variant::Variant(const std::vector< DVec3 >& v_dv3)
+	Variant::Variant(const Vector< DVec3 >& v_dv3)
 	{
 		set_type(VR_STD_VECTOR_DVEC3);
-		*((std::vector< DVec3 >*)(m_ptr)) = v_dv3;
+		*((Vector< DVec3 >*)(m_ptr)) = v_dv3;
 	}
 
-	Variant::Variant(const std::vector< DVec4 >& v_dv4)
+	Variant::Variant(const Vector< DVec4 >& v_dv4)
 	{
 		set_type(VR_STD_VECTOR_DVEC4);
-		*((std::vector< DVec4 >*)(m_ptr)) = v_dv4;
+		*((Vector< DVec4 >*)(m_ptr)) = v_dv4;
 	}
 
 	Variant::Variant(const char* c_str)
 	{
 		set_type(VR_C_STRING);
-		*((std::string*)(m_ptr)) = c_str;
+		*((String*)(m_ptr)) = c_str;
 	}
 
-	Variant::Variant(const std::string& str)
+	Variant::Variant(const String& str)
 	{
 		set_type(VR_STD_STRING);
-		*((std::string*)(m_ptr)) = str;
+		*((String*)(m_ptr)) = str;
 	}
 
-	Variant::Variant(const std::vector< std::string >& v_str)
+	Variant::Variant(const Vector< String >& v_str)
 	{
 		set_type(VR_STD_VECTOR_STRING);
-		*((std::vector< std::string >*)(m_ptr)) = v_str;
+		*((Vector< String >*)(m_ptr)) = v_str;
 	}
 
 	Variant::Variant(const Shared< ResourceObject >& resouce)
@@ -463,89 +463,89 @@ namespace Square
 		case VariantType::VR_DOUBLE_MATRIX:   get<DMat4>() = std::move(in.get< DMat4 >()); break;
 
 		case VariantType::VR_STD_VECTOR_CHAR:
-			get< std::vector<char> >() = std::move(in.get< std::vector<char> >());
+			get< Vector<char> >() = std::move(in.get< Vector<char> >());
 			break;
 		case VariantType::VR_STD_VECTOR_SHORT:
-			get< std::vector<short> >() = std::move(in.get< std::vector<short> >());
+			get< Vector<short> >() = std::move(in.get< Vector<short> >());
 			break;
 		case VariantType::VR_STD_VECTOR_INT:
-			get< std::vector<int> >() = std::move(in.get< std::vector<int> >());
+			get< Vector<int> >() = std::move(in.get< Vector<int> >());
 			break;
 		case VariantType::VR_STD_VECTOR_LONG:
-			get< std::vector<long> >() = std::move(in.get< std::vector<long> >());
+			get< Vector<long> >() = std::move(in.get< Vector<long> >());
 			break;
 		case VariantType::VR_STD_VECTOR_LONGLONG:
-			get< std::vector<long long> >() = std::move(in.get< std::vector<long long> >());
+			get< Vector<long long> >() = std::move(in.get< Vector<long long> >());
 			break;
 		case VariantType::VR_STD_VECTOR_UCHAR:
-			get< std::vector<unsigned char> >() = std::move(in.get< std::vector<unsigned char> >());
+			get< Vector<unsigned char> >() = std::move(in.get< Vector<unsigned char> >());
 			break;
 		case VariantType::VR_STD_VECTOR_USHORT:
-			get< std::vector<unsigned short> >() = std::move(in.get< std::vector<unsigned short> >());
+			get< Vector<unsigned short> >() = std::move(in.get< Vector<unsigned short> >());
 			break;
 		case VariantType::VR_STD_VECTOR_UINT:
-			get< std::vector<unsigned int> >() = std::move(in.get< std::vector<unsigned int> >());
+			get< Vector<unsigned int> >() = std::move(in.get< Vector<unsigned int> >());
 			break;
 		case VariantType::VR_STD_VECTOR_ULONG:
-			get< std::vector<unsigned long> >() = std::move(in.get< std::vector<unsigned long> >());
+			get< Vector<unsigned long> >() = std::move(in.get< Vector<unsigned long> >());
 			break;
 		case VariantType::VR_STD_VECTOR_ULONGLONG:
-			get< std::vector<unsigned long long> >() = std::move(in.get< std::vector<unsigned long long> >());
+			get< Vector<unsigned long long> >() = std::move(in.get< Vector<unsigned long long> >());
 			break;
 		case VariantType::VR_STD_VECTOR_FLOAT:
-			get< std::vector<float> >() = std::move(in.get< std::vector<float> >());
+			get< Vector<float> >() = std::move(in.get< Vector<float> >());
 			break;
 		case VariantType::VR_STD_VECTOR_DOUBLE:
-			get< std::vector<double> >() = std::move(in.get< std::vector<double> >());
+			get< Vector<double> >() = std::move(in.get< Vector<double> >());
 			break;
 		case VariantType::VR_STD_VECTOR_LONG_DOUBLE:
-			get< std::vector<long double> >() = std::move(in.get< std::vector<long double> >());
+			get< Vector<long double> >() = std::move(in.get< Vector<long double> >());
 			break;
 		case VariantType::VR_STD_VECTOR_FLOAT_MATRIX:
-			get< std::vector<Mat4> >() = std::move(in.get< std::vector<Mat4> >());
+			get< Vector<Mat4> >() = std::move(in.get< Vector<Mat4> >());
 			break;
 		case VariantType::VR_STD_VECTOR_DOUBLE_MATRIX:
-			get< std::vector<DMat4> >() = std::move(in.get< std::vector<DMat4> >());
+			get< Vector<DMat4> >() = std::move(in.get< Vector<DMat4> >());
 			break;
 
 		case VariantType::VR_STD_VECTOR_VEC2:
-			get< std::vector<Vec2> >() = std::move(in.get< std::vector<Vec2> >());
+			get< Vector<Vec2> >() = std::move(in.get< Vector<Vec2> >());
 			break;
 		case VariantType::VR_STD_VECTOR_VEC3:
-			get< std::vector<Vec3> >() = std::move(in.get< std::vector<Vec3> >());
+			get< Vector<Vec3> >() = std::move(in.get< Vector<Vec3> >());
 			break;
 		case VariantType::VR_STD_VECTOR_VEC4:
-			get< std::vector<Vec4> >() = std::move(in.get< std::vector<Vec4> >());
+			get< Vector<Vec4> >() = std::move(in.get< Vector<Vec4> >());
 			break;
 
 		case VariantType::VR_STD_VECTOR_IVEC2:
-			get< std::vector<IVec2> >() = std::move(in.get< std::vector<IVec2> >());
+			get< Vector<IVec2> >() = std::move(in.get< Vector<IVec2> >());
 			break;
 		case VariantType::VR_STD_VECTOR_IVEC3:
-			get< std::vector<IVec3> >() = std::move(in.get< std::vector<IVec3> >());
+			get< Vector<IVec3> >() = std::move(in.get< Vector<IVec3> >());
 			break;
 		case VariantType::VR_STD_VECTOR_IVEC4:
-			get< std::vector<IVec4> >() = std::move(in.get< std::vector<IVec4> >());
+			get< Vector<IVec4> >() = std::move(in.get< Vector<IVec4> >());
 			break;
 
 		case VariantType::VR_STD_VECTOR_DVEC2:
-			get< std::vector<DVec2> >() = std::move(in.get< std::vector<DVec2> >());
+			get< Vector<DVec2> >() = std::move(in.get< Vector<DVec2> >());
 			break;
 		case VariantType::VR_STD_VECTOR_DVEC3:
-			get< std::vector<DVec3> >() = std::move(in.get< std::vector<DVec3> >());
+			get< Vector<DVec3> >() = std::move(in.get< Vector<DVec3> >());
 			break;
 		case VariantType::VR_STD_VECTOR_DVEC4:
-			get< std::vector<DVec4> >() = std::move(in.get < std::vector<DVec4> >());
+			get< Vector<DVec4> >() = std::move(in.get < Vector<DVec4> >());
 			break;
 
 		case VariantType::VR_C_STRING:
 			square_assert(0);
 			break;
 		case VariantType::VR_STD_STRING:
-			get<std::string>() = std::move(in.get<std::string>());
+			get<String>() = std::move(in.get<String>());
 			break;
 		case VariantType::VR_STD_VECTOR_STRING:
-			get< std::vector<std::string> >() = std::move(in.get< std::vector<std::string> >());
+			get< Vector<String> >() = std::move(in.get< Vector<String> >());
 			break;
 		case VariantType::VR_RESOURCE:
 			get< Shared<ResourceObject> >() = std::move(in.get< Shared<ResourceObject> >());
@@ -573,89 +573,89 @@ namespace Square
 		case VariantType::VR_DOUBLE_MATRIX:			   get<DMat4>() = (const  DMat4&)in; break;
 
 		case VariantType::VR_STD_VECTOR_CHAR:
-			get< std::vector<char> >() = (const std::vector<char>&)in;
+			get< Vector<char> >() = (const Vector<char>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_SHORT:
-			get< std::vector<short> >() = (const std::vector<short>&)in;
+			get< Vector<short> >() = (const Vector<short>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_INT:
-			get< std::vector<int> >() = (const std::vector<int>&)in;
+			get< Vector<int> >() = (const Vector<int>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_LONG:
-			get< std::vector<long> >() = (const std::vector<long>&)in;
+			get< Vector<long> >() = (const Vector<long>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_LONGLONG:
-			get< std::vector<long long> >() = (const std::vector<long long>&)in;
+			get< Vector<long long> >() = (const Vector<long long>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_UCHAR:
-			get< std::vector<unsigned char> >() = (const std::vector<unsigned char>&)in;
+			get< Vector<unsigned char> >() = (const Vector<unsigned char>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_USHORT:
-			get< std::vector<unsigned short> >() = (const std::vector<unsigned short>&)in;
+			get< Vector<unsigned short> >() = (const Vector<unsigned short>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_UINT:
-			get< std::vector<unsigned int> >() = (const std::vector<unsigned int>&)in;
+			get< Vector<unsigned int> >() = (const Vector<unsigned int>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_ULONG:
-			get< std::vector<unsigned long> >() = (const std::vector<unsigned long>&)in;
+			get< Vector<unsigned long> >() = (const Vector<unsigned long>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_ULONGLONG:
-			get< std::vector<unsigned long long> >() = (const std::vector<unsigned long long>&)in;
+			get< Vector<unsigned long long> >() = (const Vector<unsigned long long>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_FLOAT:
-			get< std::vector<float> >() = (const std::vector<float>&)in;
+			get< Vector<float> >() = (const Vector<float>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_DOUBLE:
-			get< std::vector<double> >() = (const std::vector<double>&)in;
+			get< Vector<double> >() = (const Vector<double>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_LONG_DOUBLE:
-			get< std::vector<long double> >() = (const std::vector<long double>&)in;
+			get< Vector<long double> >() = (const Vector<long double>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_FLOAT_MATRIX:
-			get< std::vector<Mat4> >() = (const std::vector<Mat4>&)in;
+			get< Vector<Mat4> >() = (const Vector<Mat4>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_DOUBLE_MATRIX:
-			get< std::vector<DMat4> >() = (const std::vector<DMat4>&)in;
+			get< Vector<DMat4> >() = (const Vector<DMat4>&)in;
 			break;
 
 		case VariantType::VR_STD_VECTOR_VEC2:
-			get< std::vector<Vec2> >() = (const std::vector<Vec2>&)in;
+			get< Vector<Vec2> >() = (const Vector<Vec2>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_VEC3:
-			get< std::vector<Vec3> >() = (const std::vector<Vec3>&)in;
+			get< Vector<Vec3> >() = (const Vector<Vec3>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_VEC4:
-			get< std::vector<Vec4> >() = (const std::vector<Vec4>&)in;
+			get< Vector<Vec4> >() = (const Vector<Vec4>&)in;
 			break;
 
 		case VariantType::VR_STD_VECTOR_IVEC2:
-			get< std::vector<IVec2> >() = (const std::vector<IVec2>&)in;
+			get< Vector<IVec2> >() = (const Vector<IVec2>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_IVEC3:
-			get< std::vector<IVec3> >() = (const std::vector<IVec3>&)in;
+			get< Vector<IVec3> >() = (const Vector<IVec3>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_IVEC4:
-			get< std::vector<IVec4> >() = (const std::vector<IVec4>&)in;
+			get< Vector<IVec4> >() = (const Vector<IVec4>&)in;
 			break;
 
 		case VariantType::VR_STD_VECTOR_DVEC2:
-			get< std::vector<DVec2> >() = (const std::vector<DVec2>&)in;
+			get< Vector<DVec2> >() = (const Vector<DVec2>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_DVEC3:
-			get< std::vector<DVec3> >() = (const std::vector<DVec3>&)in;
+			get< Vector<DVec3> >() = (const Vector<DVec3>&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_DVEC4:
-			get< std::vector<DVec4> >() = (const std::vector<DVec4>&)in;
+			get< Vector<DVec4> >() = (const Vector<DVec4>&)in;
 			break;
 
 		case VariantType::VR_C_STRING:
 			square_assert(0);
 			break;
 		case VariantType::VR_STD_STRING:
-			get<std::string>() = (const std::string&)in;
+			get<String>() = (const String&)in;
 			break;
 		case VariantType::VR_STD_VECTOR_STRING:
-			get< std::vector<std::string> >() = (const std::vector<std::string>&)in;
+			get< Vector<String> >() = (const Vector<String>&)in;
 			break;
 
 		case VariantType::VR_RESOURCE:
@@ -677,37 +677,37 @@ namespace Square
 			case VariantType::VR_FLOAT_MATRIX:			   delete (Mat4*)(m_ptr);  break;
 			case VariantType::VR_DOUBLE_MATRIX:			   delete (DMat4*)(m_ptr);  break;
 
-			case VariantType::VR_STD_VECTOR_CHAR:    delete (std::vector<char>*)m_ptr;    break;
-			case VariantType::VR_STD_VECTOR_SHORT:    delete (std::vector<short>*)m_ptr;    break;
-			case VariantType::VR_STD_VECTOR_INT:    delete (std::vector<int>*)m_ptr;    break;
-			case VariantType::VR_STD_VECTOR_LONG:    delete (std::vector<long>*)m_ptr;    break;
-			case VariantType::VR_STD_VECTOR_LONGLONG:    delete (std::vector<long long>*)m_ptr;    break;
-			case VariantType::VR_STD_VECTOR_UCHAR:    delete (std::vector<unsigned char>*)m_ptr;    break;
-			case VariantType::VR_STD_VECTOR_USHORT:    delete (std::vector<unsigned short>*)m_ptr;    break;
-			case VariantType::VR_STD_VECTOR_UINT:    delete (std::vector<unsigned int>*)m_ptr;    break;
-			case VariantType::VR_STD_VECTOR_ULONG:    delete (std::vector<unsigned long>*)m_ptr;    break;
-			case VariantType::VR_STD_VECTOR_ULONGLONG:    delete (std::vector<unsigned long long>*)m_ptr;    break;
-			case VariantType::VR_STD_VECTOR_FLOAT:  delete (std::vector<float>*)m_ptr;  break;
-			case VariantType::VR_STD_VECTOR_DOUBLE:  delete (std::vector<double>*)m_ptr;  break;
-			case VariantType::VR_STD_VECTOR_LONG_DOUBLE:  delete (std::vector<long double>*)m_ptr;  break;
-			case VariantType::VR_STD_VECTOR_FLOAT_MATRIX:        delete (std::vector<Mat4>*)m_ptr;   break;
-			case VariantType::VR_STD_VECTOR_DOUBLE_MATRIX:        delete (std::vector<DMat4>*)m_ptr;   break;
+			case VariantType::VR_STD_VECTOR_CHAR:    delete (Vector<char>*)m_ptr;    break;
+			case VariantType::VR_STD_VECTOR_SHORT:    delete (Vector<short>*)m_ptr;    break;
+			case VariantType::VR_STD_VECTOR_INT:    delete (Vector<int>*)m_ptr;    break;
+			case VariantType::VR_STD_VECTOR_LONG:    delete (Vector<long>*)m_ptr;    break;
+			case VariantType::VR_STD_VECTOR_LONGLONG:    delete (Vector<long long>*)m_ptr;    break;
+			case VariantType::VR_STD_VECTOR_UCHAR:    delete (Vector<unsigned char>*)m_ptr;    break;
+			case VariantType::VR_STD_VECTOR_USHORT:    delete (Vector<unsigned short>*)m_ptr;    break;
+			case VariantType::VR_STD_VECTOR_UINT:    delete (Vector<unsigned int>*)m_ptr;    break;
+			case VariantType::VR_STD_VECTOR_ULONG:    delete (Vector<unsigned long>*)m_ptr;    break;
+			case VariantType::VR_STD_VECTOR_ULONGLONG:    delete (Vector<unsigned long long>*)m_ptr;    break;
+			case VariantType::VR_STD_VECTOR_FLOAT:  delete (Vector<float>*)m_ptr;  break;
+			case VariantType::VR_STD_VECTOR_DOUBLE:  delete (Vector<double>*)m_ptr;  break;
+			case VariantType::VR_STD_VECTOR_LONG_DOUBLE:  delete (Vector<long double>*)m_ptr;  break;
+			case VariantType::VR_STD_VECTOR_FLOAT_MATRIX:        delete (Vector<Mat4>*)m_ptr;   break;
+			case VariantType::VR_STD_VECTOR_DOUBLE_MATRIX:        delete (Vector<DMat4>*)m_ptr;   break;
 
-			case VariantType::VR_STD_VECTOR_VEC2:   delete (std::vector<Vec2>*)m_ptr;   break;
-			case VariantType::VR_STD_VECTOR_VEC3:   delete (std::vector<Vec3>*)m_ptr;   break;
-			case VariantType::VR_STD_VECTOR_VEC4:   delete (std::vector<Vec4>*)m_ptr;   break;
+			case VariantType::VR_STD_VECTOR_VEC2:   delete (Vector<Vec2>*)m_ptr;   break;
+			case VariantType::VR_STD_VECTOR_VEC3:   delete (Vector<Vec3>*)m_ptr;   break;
+			case VariantType::VR_STD_VECTOR_VEC4:   delete (Vector<Vec4>*)m_ptr;   break;
 
-			case VariantType::VR_STD_VECTOR_IVEC2:   delete (std::vector<IVec2>*)m_ptr;   break;
-			case VariantType::VR_STD_VECTOR_IVEC3:   delete (std::vector<IVec3>*)m_ptr;   break;
-			case VariantType::VR_STD_VECTOR_IVEC4:   delete (std::vector<IVec4>*)m_ptr;   break;
+			case VariantType::VR_STD_VECTOR_IVEC2:   delete (Vector<IVec2>*)m_ptr;   break;
+			case VariantType::VR_STD_VECTOR_IVEC3:   delete (Vector<IVec3>*)m_ptr;   break;
+			case VariantType::VR_STD_VECTOR_IVEC4:   delete (Vector<IVec4>*)m_ptr;   break;
 
-			case VariantType::VR_STD_VECTOR_DVEC2:   delete (std::vector<DVec2>*)m_ptr;   break;
-			case VariantType::VR_STD_VECTOR_DVEC3:   delete (std::vector<DVec3>*)m_ptr;   break;
-			case VariantType::VR_STD_VECTOR_DVEC4:   delete (std::vector<DVec4>*)m_ptr;   break;
+			case VariantType::VR_STD_VECTOR_DVEC2:   delete (Vector<DVec2>*)m_ptr;   break;
+			case VariantType::VR_STD_VECTOR_DVEC3:   delete (Vector<DVec3>*)m_ptr;   break;
+			case VariantType::VR_STD_VECTOR_DVEC4:   delete (Vector<DVec4>*)m_ptr;   break;
 
 			case VariantType::VR_C_STRING:          square_assert(0);                        break;
-			case VariantType::VR_STD_STRING:        delete (std::string*)m_ptr;			     break;
-			case VariantType::VR_STD_VECTOR_STRING: delete (std::vector<std::string>*)m_ptr; break;
+			case VariantType::VR_STD_STRING:        delete (String*)m_ptr;			     break;
+			case VariantType::VR_STD_VECTOR_STRING: delete (Vector<String>*)m_ptr; break;
 			case VariantType::VR_RESOURCE:          delete (Shared<ResourceObject>*)m_ptr;   break;
 			default: break;
 			}
@@ -719,37 +719,37 @@ namespace Square
 			case VariantType::VR_FLOAT_MATRIX:			   m_ptr = new Mat4; break;
 			case VariantType::VR_DOUBLE_MATRIX:			   m_ptr = new DMat4; break;
 
-			case VariantType::VR_STD_VECTOR_CHAR:            m_ptr = new std::vector<char>;      break;
-			case VariantType::VR_STD_VECTOR_SHORT:           m_ptr = new std::vector<short>;      break;
-			case VariantType::VR_STD_VECTOR_INT:             m_ptr = new std::vector<int>;	     break;
-			case VariantType::VR_STD_VECTOR_LONG:            m_ptr = new std::vector<long>;       break;
-			case VariantType::VR_STD_VECTOR_LONGLONG:        m_ptr = new std::vector<long long>;	 break;
-			case VariantType::VR_STD_VECTOR_UCHAR:           m_ptr = new std::vector<unsigned char>;     break;
-			case VariantType::VR_STD_VECTOR_USHORT:          m_ptr = new std::vector<unsigned short>;     break;
-			case VariantType::VR_STD_VECTOR_UINT:            m_ptr = new std::vector<unsigned int>;	     break;
-			case VariantType::VR_STD_VECTOR_ULONG:           m_ptr = new std::vector<unsigned long>;      break;
-			case VariantType::VR_STD_VECTOR_ULONGLONG:       m_ptr = new std::vector<unsigned long long>; break;
-			case VariantType::VR_STD_VECTOR_FLOAT:           m_ptr = new std::vector<float>;	     break;
-			case VariantType::VR_STD_VECTOR_DOUBLE:          m_ptr = new std::vector<double>;     break;
-			case VariantType::VR_STD_VECTOR_LONG_DOUBLE:     m_ptr = new std::vector<long double>; break;
-			case VariantType::VR_STD_VECTOR_FLOAT_MATRIX:    m_ptr = new std::vector<Mat4>;    break;
-			case VariantType::VR_STD_VECTOR_DOUBLE_MATRIX:   m_ptr = new std::vector<DMat4>;	 break;
+			case VariantType::VR_STD_VECTOR_CHAR:            m_ptr = new Vector<char>;      break;
+			case VariantType::VR_STD_VECTOR_SHORT:           m_ptr = new Vector<short>;      break;
+			case VariantType::VR_STD_VECTOR_INT:             m_ptr = new Vector<int>;	     break;
+			case VariantType::VR_STD_VECTOR_LONG:            m_ptr = new Vector<long>;       break;
+			case VariantType::VR_STD_VECTOR_LONGLONG:        m_ptr = new Vector<long long>;	 break;
+			case VariantType::VR_STD_VECTOR_UCHAR:           m_ptr = new Vector<unsigned char>;     break;
+			case VariantType::VR_STD_VECTOR_USHORT:          m_ptr = new Vector<unsigned short>;     break;
+			case VariantType::VR_STD_VECTOR_UINT:            m_ptr = new Vector<unsigned int>;	     break;
+			case VariantType::VR_STD_VECTOR_ULONG:           m_ptr = new Vector<unsigned long>;      break;
+			case VariantType::VR_STD_VECTOR_ULONGLONG:       m_ptr = new Vector<unsigned long long>; break;
+			case VariantType::VR_STD_VECTOR_FLOAT:           m_ptr = new Vector<float>;	     break;
+			case VariantType::VR_STD_VECTOR_DOUBLE:          m_ptr = new Vector<double>;     break;
+			case VariantType::VR_STD_VECTOR_LONG_DOUBLE:     m_ptr = new Vector<long double>; break;
+			case VariantType::VR_STD_VECTOR_FLOAT_MATRIX:    m_ptr = new Vector<Mat4>;    break;
+			case VariantType::VR_STD_VECTOR_DOUBLE_MATRIX:   m_ptr = new Vector<DMat4>;	 break;
 
-			case VariantType::VR_STD_VECTOR_VEC2: m_ptr = new std::vector<Vec2>; break;
-			case VariantType::VR_STD_VECTOR_VEC3: m_ptr = new std::vector<Vec3>; break;
-			case VariantType::VR_STD_VECTOR_VEC4: m_ptr = new std::vector<Vec4>; break;
+			case VariantType::VR_STD_VECTOR_VEC2: m_ptr = new Vector<Vec2>; break;
+			case VariantType::VR_STD_VECTOR_VEC3: m_ptr = new Vector<Vec3>; break;
+			case VariantType::VR_STD_VECTOR_VEC4: m_ptr = new Vector<Vec4>; break;
 
-			case VariantType::VR_STD_VECTOR_IVEC2: m_ptr = new std::vector<IVec2>; break;
-			case VariantType::VR_STD_VECTOR_IVEC3: m_ptr = new std::vector<IVec3>; break;
-			case VariantType::VR_STD_VECTOR_IVEC4: m_ptr = new std::vector<IVec4>; break;
+			case VariantType::VR_STD_VECTOR_IVEC2: m_ptr = new Vector<IVec2>; break;
+			case VariantType::VR_STD_VECTOR_IVEC3: m_ptr = new Vector<IVec3>; break;
+			case VariantType::VR_STD_VECTOR_IVEC4: m_ptr = new Vector<IVec4>; break;
 
-			case VariantType::VR_STD_VECTOR_DVEC2: m_ptr = new std::vector<DVec2>; break;
-			case VariantType::VR_STD_VECTOR_DVEC3: m_ptr = new std::vector<DVec3>; break;
-			case VariantType::VR_STD_VECTOR_DVEC4: m_ptr = new std::vector<DVec4>; break;
+			case VariantType::VR_STD_VECTOR_DVEC2: m_ptr = new Vector<DVec2>; break;
+			case VariantType::VR_STD_VECTOR_DVEC3: m_ptr = new Vector<DVec3>; break;
+			case VariantType::VR_STD_VECTOR_DVEC4: m_ptr = new Vector<DVec4>; break;
 
 			case VariantType::VR_C_STRING:          square_assert(0);                      break;
-			case VariantType::VR_STD_STRING:        m_ptr = new std::string();			   break;
-			case VariantType::VR_STD_VECTOR_STRING: m_ptr = new std::vector<std::string>(); break;
+			case VariantType::VR_STD_STRING:        m_ptr = new String();			   break;
+			case VariantType::VR_STD_VECTOR_STRING: m_ptr = new Vector<String>(); break;
 			case VariantType::VR_RESOURCE:          m_ptr = new Shared<ResourceObject>();  break;
 			default: break;
 			}
@@ -805,37 +805,37 @@ namespace Square
 		case VariantType::VR_FLOAT_MATRIX:      (*this) = ref.get<Mat4>(); break;
 		case VariantType::VR_DOUBLE_MATRIX:     (*this) = ref.get<DMat4>(); break;
 
-		case VariantType::VR_STD_VECTOR_CHAR:              (*this) = ref.get< std::vector<char> >(); break;
-		case VariantType::VR_STD_VECTOR_SHORT:             (*this) = ref.get< std::vector<short> >(); break;
-		case VariantType::VR_STD_VECTOR_INT:               (*this) = ref.get< std::vector<int> >(); break;
-		case VariantType::VR_STD_VECTOR_LONG:              (*this) = ref.get< std::vector<long> >(); break;
-		case VariantType::VR_STD_VECTOR_LONGLONG:          (*this) = ref.get< std::vector<long long> >(); break;
-		case VariantType::VR_STD_VECTOR_UCHAR:             (*this) = ref.get< std::vector<unsigned char> >(); break;
-		case VariantType::VR_STD_VECTOR_USHORT:            (*this) = ref.get< std::vector<unsigned short> >(); break;
-		case VariantType::VR_STD_VECTOR_UINT:              (*this) = ref.get< std::vector<unsigned int> >(); break;
-		case VariantType::VR_STD_VECTOR_ULONG:             (*this) = ref.get< std::vector<unsigned long> >(); break;
-		case VariantType::VR_STD_VECTOR_ULONGLONG:         (*this) = ref.get< std::vector<unsigned long long> >(); break;
-		case VariantType::VR_STD_VECTOR_FLOAT:             (*this) = ref.get< std::vector<float> >(); break;
-		case VariantType::VR_STD_VECTOR_DOUBLE:            (*this) = ref.get< std::vector<double> >(); break;
-		case VariantType::VR_STD_VECTOR_LONG_DOUBLE:       (*this) = ref.get< std::vector<long double> >(); break;
-		case VariantType::VR_STD_VECTOR_FLOAT_MATRIX:      (*this) = ref.get< std::vector<Mat4> >(); break;
-		case VariantType::VR_STD_VECTOR_DOUBLE_MATRIX:     (*this) = ref.get< std::vector<DMat4> >(); break;
+		case VariantType::VR_STD_VECTOR_CHAR:              (*this) = ref.get< Vector<char> >(); break;
+		case VariantType::VR_STD_VECTOR_SHORT:             (*this) = ref.get< Vector<short> >(); break;
+		case VariantType::VR_STD_VECTOR_INT:               (*this) = ref.get< Vector<int> >(); break;
+		case VariantType::VR_STD_VECTOR_LONG:              (*this) = ref.get< Vector<long> >(); break;
+		case VariantType::VR_STD_VECTOR_LONGLONG:          (*this) = ref.get< Vector<long long> >(); break;
+		case VariantType::VR_STD_VECTOR_UCHAR:             (*this) = ref.get< Vector<unsigned char> >(); break;
+		case VariantType::VR_STD_VECTOR_USHORT:            (*this) = ref.get< Vector<unsigned short> >(); break;
+		case VariantType::VR_STD_VECTOR_UINT:              (*this) = ref.get< Vector<unsigned int> >(); break;
+		case VariantType::VR_STD_VECTOR_ULONG:             (*this) = ref.get< Vector<unsigned long> >(); break;
+		case VariantType::VR_STD_VECTOR_ULONGLONG:         (*this) = ref.get< Vector<unsigned long long> >(); break;
+		case VariantType::VR_STD_VECTOR_FLOAT:             (*this) = ref.get< Vector<float> >(); break;
+		case VariantType::VR_STD_VECTOR_DOUBLE:            (*this) = ref.get< Vector<double> >(); break;
+		case VariantType::VR_STD_VECTOR_LONG_DOUBLE:       (*this) = ref.get< Vector<long double> >(); break;
+		case VariantType::VR_STD_VECTOR_FLOAT_MATRIX:      (*this) = ref.get< Vector<Mat4> >(); break;
+		case VariantType::VR_STD_VECTOR_DOUBLE_MATRIX:     (*this) = ref.get< Vector<DMat4> >(); break;
 
-		case VariantType::VR_STD_VECTOR_VEC2:(*this) = ref.get< std::vector<Vec2> >(); break;
-		case VariantType::VR_STD_VECTOR_VEC3:(*this) = ref.get< std::vector<Vec3> >(); break;
-		case VariantType::VR_STD_VECTOR_VEC4:(*this) = ref.get< std::vector<Vec4> >(); break;
+		case VariantType::VR_STD_VECTOR_VEC2:(*this) = ref.get< Vector<Vec2> >(); break;
+		case VariantType::VR_STD_VECTOR_VEC3:(*this) = ref.get< Vector<Vec3> >(); break;
+		case VariantType::VR_STD_VECTOR_VEC4:(*this) = ref.get< Vector<Vec4> >(); break;
 
-		case VariantType::VR_STD_VECTOR_IVEC2:(*this) = ref.get< std::vector<IVec2> >(); break;
-		case VariantType::VR_STD_VECTOR_IVEC3:(*this) = ref.get< std::vector<IVec3> >(); break;
-		case VariantType::VR_STD_VECTOR_IVEC4:(*this) = ref.get< std::vector<IVec4> >(); break;
+		case VariantType::VR_STD_VECTOR_IVEC2:(*this) = ref.get< Vector<IVec2> >(); break;
+		case VariantType::VR_STD_VECTOR_IVEC3:(*this) = ref.get< Vector<IVec3> >(); break;
+		case VariantType::VR_STD_VECTOR_IVEC4:(*this) = ref.get< Vector<IVec4> >(); break;
 
-		case VariantType::VR_STD_VECTOR_DVEC2:(*this) = ref.get< std::vector<DVec2> >(); break;
-		case VariantType::VR_STD_VECTOR_DVEC3:(*this) = ref.get< std::vector<DVec3> >(); break;
-		case VariantType::VR_STD_VECTOR_DVEC4:(*this) = ref.get< std::vector<DVec4> >(); break;
+		case VariantType::VR_STD_VECTOR_DVEC2:(*this) = ref.get< Vector<DVec2> >(); break;
+		case VariantType::VR_STD_VECTOR_DVEC3:(*this) = ref.get< Vector<DVec3> >(); break;
+		case VariantType::VR_STD_VECTOR_DVEC4:(*this) = ref.get< Vector<DVec4> >(); break;
 
 		case VariantType::VR_C_STRING:
-		case VariantType::VR_STD_STRING:           (*this) = ref.get< std::string >(); break;
-		case VariantType::VR_STD_VECTOR_STRING:    (*this) = ref.get< std::vector<std::string> >(); break;
+		case VariantType::VR_STD_STRING:           (*this) = ref.get< String >(); break;
+		case VariantType::VR_STD_VECTOR_STRING:    (*this) = ref.get< Vector<String> >(); break;
 
 		case VariantType::VR_RESOURCE: (*this).get< Shared<ResourceObject> >() = ref.get< Shared<ResourceObject> >(); break;
 
@@ -1019,145 +1019,145 @@ namespace Square
 		m_type = VariantType::VR_DOUBLE_MATRIX;
 	}
 
-	VariantRef::VariantRef(const std::vector< char >&v_c)
+	VariantRef::VariantRef(const Vector< char >&v_c)
 	{
 		m_ptr = (void*)&v_c;
 		m_type = VariantType::VR_STD_VECTOR_CHAR;
 	}
 
-	VariantRef::VariantRef(const std::vector< short > &v_s)
+	VariantRef::VariantRef(const Vector< short > &v_s)
 	{
 		m_ptr = (void*)&v_s;
 		m_type = VariantType::VR_STD_VECTOR_SHORT;
 	}
 
-	VariantRef::VariantRef(const std::vector< int > &v_i)
+	VariantRef::VariantRef(const Vector< int > &v_i)
 	{
 		m_ptr = (void*)&v_i;
 		m_type = VariantType::VR_STD_VECTOR_INT;
 	}
 
-	VariantRef::VariantRef(const std::vector< long > &v_l)
+	VariantRef::VariantRef(const Vector< long > &v_l)
 	{
 		m_ptr = (void*)&v_l;
 		m_type = VariantType::VR_STD_VECTOR_LONG;
 	}
 
-	VariantRef::VariantRef(const std::vector< long long > &v_ll)
+	VariantRef::VariantRef(const Vector< long long > &v_ll)
 	{
 		m_ptr = (void*)&v_ll;
 		m_type = VariantType::VR_STD_VECTOR_LONGLONG;
 	}
 
-	VariantRef::VariantRef(const std::vector< unsigned char >&v_uc)
+	VariantRef::VariantRef(const Vector< unsigned char >&v_uc)
 	{
 		m_ptr = (void*)&v_uc;
 		m_type = VariantType::VR_STD_VECTOR_UCHAR;
 	}
 
-	VariantRef::VariantRef(const std::vector< unsigned short >&v_us)
+	VariantRef::VariantRef(const Vector< unsigned short >&v_us)
 	{
 		m_ptr = (void*)&v_us;
 		m_type = VariantType::VR_STD_VECTOR_USHORT;
 	}
 
-	VariantRef::VariantRef(const std::vector< unsigned int > &v_ui)
+	VariantRef::VariantRef(const Vector< unsigned int > &v_ui)
 	{
 		m_ptr = (void*)&v_ui;
 		m_type = VariantType::VR_STD_VECTOR_UINT;
 	}
 
-	VariantRef::VariantRef(const std::vector< unsigned long > &v_ul)
+	VariantRef::VariantRef(const Vector< unsigned long > &v_ul)
 	{
 		m_ptr = (void*)&v_ul;
 		m_type = VariantType::VR_STD_VECTOR_ULONG;
 	}
 
-	VariantRef::VariantRef(const std::vector< unsigned long long > &v_ull)
+	VariantRef::VariantRef(const Vector< unsigned long long > &v_ull)
 	{
 		m_ptr = (void*)&v_ull;
 		m_type = VariantType::VR_STD_VECTOR_ULONGLONG;
 	}
 
-	VariantRef::VariantRef(const std::vector< float > &v_f)
+	VariantRef::VariantRef(const Vector< float > &v_f)
 	{
 		m_ptr = (void*)&v_f;
 		m_type = VariantType::VR_STD_VECTOR_FLOAT;
 	}
 
-	VariantRef::VariantRef(const std::vector< double > &v_d)
+	VariantRef::VariantRef(const Vector< double > &v_d)
 	{
 		m_ptr = (void*)&v_d;
 		m_type = VariantType::VR_STD_VECTOR_DOUBLE;
 	}
 
-	VariantRef::VariantRef(const std::vector< long double > &v_ld)
+	VariantRef::VariantRef(const Vector< long double > &v_ld)
 	{
 		m_ptr = (void*)&v_ld;
 		m_type = VariantType::VR_STD_VECTOR_LONG_DOUBLE;
 	}
 
-	VariantRef::VariantRef(const std::vector< Mat4 > &v_fm)
+	VariantRef::VariantRef(const Vector< Mat4 > &v_fm)
 	{
 		m_ptr = (void*)&v_fm;
 		m_type = VariantType::VR_STD_VECTOR_FLOAT_MATRIX;
 	}
 
-	VariantRef::VariantRef(const std::vector< DMat4 > &v_dm)
+	VariantRef::VariantRef(const Vector< DMat4 > &v_dm)
 	{
 		m_ptr = (void*)&v_dm;
 		m_type = VariantType::VR_STD_VECTOR_DOUBLE_MATRIX;
 	}
 
-	VariantRef::VariantRef(const std::vector< Vec2 > &v_v2)
+	VariantRef::VariantRef(const Vector< Vec2 > &v_v2)
 	{
 		m_ptr = (void*)&v_v2;
 		m_type = VariantType::VR_STD_VECTOR_VEC2;
 	}
 
-	VariantRef::VariantRef(const std::vector< Vec3 > &v_v3)
+	VariantRef::VariantRef(const Vector< Vec3 > &v_v3)
 	{
 		m_ptr = (void*)&v_v3;
 		m_type = VariantType::VR_STD_VECTOR_VEC3;
 	}
 
-	VariantRef::VariantRef(const std::vector< Vec4 > &v_v4)
+	VariantRef::VariantRef(const Vector< Vec4 > &v_v4)
 	{
 		m_ptr = (void*)&v_v4;
 		m_type = VariantType::VR_STD_VECTOR_VEC4;
 	}
 
-	VariantRef::VariantRef(const std::vector< IVec2 > &v_iv2)
+	VariantRef::VariantRef(const Vector< IVec2 > &v_iv2)
 	{
 		m_ptr = (void*)&v_iv2;
 		m_type = VariantType::VR_STD_VECTOR_IVEC2;
 	}
 
-	VariantRef::VariantRef(const std::vector< IVec3 > &v_iv3)
+	VariantRef::VariantRef(const Vector< IVec3 > &v_iv3)
 	{
 		m_ptr = (void*)&v_iv3;
 		m_type = VariantType::VR_STD_VECTOR_IVEC3;
 	}
 
-	VariantRef::VariantRef(const std::vector< IVec4 > &v_iv4)
+	VariantRef::VariantRef(const Vector< IVec4 > &v_iv4)
 	{
 		m_ptr = (void*)&v_iv4;
 		m_type = VariantType::VR_STD_VECTOR_IVEC4;
 	}
 
-	VariantRef::VariantRef(const std::vector< DVec2 > &v_dv2)
+	VariantRef::VariantRef(const Vector< DVec2 > &v_dv2)
 	{
 		m_ptr = (void*)&v_dv2;
 		m_type = VariantType::VR_STD_VECTOR_DVEC2;
 	}
 
-	VariantRef::VariantRef(const std::vector< DVec3 > &v_dv3)
+	VariantRef::VariantRef(const Vector< DVec3 > &v_dv3)
 	{
 		m_ptr = (void*)&v_dv3;
 		m_type = VariantType::VR_STD_VECTOR_DVEC3;
 	}
 
-	VariantRef::VariantRef(const std::vector< DVec4 > &v_dv4)
+	VariantRef::VariantRef(const Vector< DVec4 > &v_dv4)
 	{
 		m_ptr = (void*)&v_dv4;
 		m_type = VariantType::VR_STD_VECTOR_DVEC4;
@@ -1169,13 +1169,13 @@ namespace Square
 		m_type = VariantType::VR_C_STRING;
 	}
 
-	VariantRef::VariantRef(const std::string & str)
+	VariantRef::VariantRef(const String & str)
 	{
 		m_ptr = (void*)&str;
 		m_type = VariantType::VR_STD_STRING;
 	}
 
-	VariantRef::VariantRef(const std::vector< std::string >&v_str)
+	VariantRef::VariantRef(const Vector< String >&v_str)
 	{
 		m_ptr = (void*)&v_str;
 		m_type = VariantType::VR_STD_VECTOR_STRING;
@@ -1235,38 +1235,38 @@ namespace Square
 		case VariantType::VR_FLOAT_MATRIX:      ((Mat4&)(*this)) = ref.get<Mat4>(); break;
 		case VariantType::VR_DOUBLE_MATRIX:     ((DMat4&)(*this)) = ref.get<DMat4>(); break;
 
-		case VariantType::VR_STD_VECTOR_CHAR:              ((std::vector<char>&)(*this)) = ref.get< std::vector<char> >(); break;
-		case VariantType::VR_STD_VECTOR_SHORT:             ((std::vector<short>&)(*this)) = ref.get< std::vector<short> >(); break;
-		case VariantType::VR_STD_VECTOR_INT:               ((std::vector<int>&)(*this)) = ref.get< std::vector<int> >(); break;
-		case VariantType::VR_STD_VECTOR_LONG:              ((std::vector<long>&)(*this)) = ref.get< std::vector<long> >(); break;
-		case VariantType::VR_STD_VECTOR_LONGLONG:          ((std::vector<long long>&)(*this)) = ref.get< std::vector<long long> >(); break;
-		case VariantType::VR_STD_VECTOR_UCHAR:             ((std::vector<unsigned char>&)(*this)) = ref.get< std::vector<unsigned char> >(); break;
-		case VariantType::VR_STD_VECTOR_USHORT:            ((std::vector<unsigned short>&)(*this)) = ref.get< std::vector<unsigned short> >(); break;
-		case VariantType::VR_STD_VECTOR_UINT:              ((std::vector<unsigned int>&)(*this)) = ref.get< std::vector<unsigned int> >(); break;
-		case VariantType::VR_STD_VECTOR_ULONG:             ((std::vector<unsigned long>&)(*this)) = ref.get< std::vector<unsigned long> >(); break;
-		case VariantType::VR_STD_VECTOR_ULONGLONG:         ((std::vector<unsigned long long>&)(*this)) = ref.get< std::vector<unsigned long long> >(); break;
-		case VariantType::VR_STD_VECTOR_FLOAT:             ((std::vector<float>&)(*this)) = ref.get< std::vector<float> >(); break;
-		case VariantType::VR_STD_VECTOR_DOUBLE:            ((std::vector<double>&)(*this)) = ref.get< std::vector<double> >(); break;
-		case VariantType::VR_STD_VECTOR_LONG_DOUBLE:       ((std::vector<long double>&)(*this)) = ref.get< std::vector<long double> >(); break;
+		case VariantType::VR_STD_VECTOR_CHAR:              ((Vector<char>&)(*this)) = ref.get< Vector<char> >(); break;
+		case VariantType::VR_STD_VECTOR_SHORT:             ((Vector<short>&)(*this)) = ref.get< Vector<short> >(); break;
+		case VariantType::VR_STD_VECTOR_INT:               ((Vector<int>&)(*this)) = ref.get< Vector<int> >(); break;
+		case VariantType::VR_STD_VECTOR_LONG:              ((Vector<long>&)(*this)) = ref.get< Vector<long> >(); break;
+		case VariantType::VR_STD_VECTOR_LONGLONG:          ((Vector<long long>&)(*this)) = ref.get< Vector<long long> >(); break;
+		case VariantType::VR_STD_VECTOR_UCHAR:             ((Vector<unsigned char>&)(*this)) = ref.get< Vector<unsigned char> >(); break;
+		case VariantType::VR_STD_VECTOR_USHORT:            ((Vector<unsigned short>&)(*this)) = ref.get< Vector<unsigned short> >(); break;
+		case VariantType::VR_STD_VECTOR_UINT:              ((Vector<unsigned int>&)(*this)) = ref.get< Vector<unsigned int> >(); break;
+		case VariantType::VR_STD_VECTOR_ULONG:             ((Vector<unsigned long>&)(*this)) = ref.get< Vector<unsigned long> >(); break;
+		case VariantType::VR_STD_VECTOR_ULONGLONG:         ((Vector<unsigned long long>&)(*this)) = ref.get< Vector<unsigned long long> >(); break;
+		case VariantType::VR_STD_VECTOR_FLOAT:             ((Vector<float>&)(*this)) = ref.get< Vector<float> >(); break;
+		case VariantType::VR_STD_VECTOR_DOUBLE:            ((Vector<double>&)(*this)) = ref.get< Vector<double> >(); break;
+		case VariantType::VR_STD_VECTOR_LONG_DOUBLE:       ((Vector<long double>&)(*this)) = ref.get< Vector<long double> >(); break;
 
-		case VariantType::VR_STD_VECTOR_FLOAT_MATRIX:      ((std::vector<Mat4>&)(*this)) = ref.get< std::vector<Mat4> >(); break;
-		case VariantType::VR_STD_VECTOR_DOUBLE_MATRIX:     ((std::vector<DMat4>&)(*this)) = ref.get< std::vector<DMat4> >(); break;
+		case VariantType::VR_STD_VECTOR_FLOAT_MATRIX:      ((Vector<Mat4>&)(*this)) = ref.get< Vector<Mat4> >(); break;
+		case VariantType::VR_STD_VECTOR_DOUBLE_MATRIX:     ((Vector<DMat4>&)(*this)) = ref.get< Vector<DMat4> >(); break;
 
-		case VariantType::VR_STD_VECTOR_VEC2:((std::vector<Vec2>&)(*this)) = ref.get< std::vector<Vec2> >(); break;
-		case VariantType::VR_STD_VECTOR_VEC3:((std::vector<Vec3>&)(*this)) = ref.get< std::vector<Vec3> >(); break;
-		case VariantType::VR_STD_VECTOR_VEC4:((std::vector<Vec4>&)(*this)) = ref.get< std::vector<Vec4> >(); break;
+		case VariantType::VR_STD_VECTOR_VEC2:((Vector<Vec2>&)(*this)) = ref.get< Vector<Vec2> >(); break;
+		case VariantType::VR_STD_VECTOR_VEC3:((Vector<Vec3>&)(*this)) = ref.get< Vector<Vec3> >(); break;
+		case VariantType::VR_STD_VECTOR_VEC4:((Vector<Vec4>&)(*this)) = ref.get< Vector<Vec4> >(); break;
 
-		case VariantType::VR_STD_VECTOR_IVEC2:((std::vector<IVec2>&)(*this)) = ref.get< std::vector<IVec2> >(); break;
-		case VariantType::VR_STD_VECTOR_IVEC3:((std::vector<IVec3>&)(*this)) = ref.get< std::vector<IVec3> >(); break;
-		case VariantType::VR_STD_VECTOR_IVEC4:((std::vector<IVec4>&)(*this)) = ref.get< std::vector<IVec4> >(); break;
+		case VariantType::VR_STD_VECTOR_IVEC2:((Vector<IVec2>&)(*this)) = ref.get< Vector<IVec2> >(); break;
+		case VariantType::VR_STD_VECTOR_IVEC3:((Vector<IVec3>&)(*this)) = ref.get< Vector<IVec3> >(); break;
+		case VariantType::VR_STD_VECTOR_IVEC4:((Vector<IVec4>&)(*this)) = ref.get< Vector<IVec4> >(); break;
 
-		case VariantType::VR_STD_VECTOR_DVEC2:((std::vector<DVec2>&)(*this)) = ref.get< std::vector<DVec2> >(); break;
-		case VariantType::VR_STD_VECTOR_DVEC3:((std::vector<DVec3>&)(*this)) = ref.get< std::vector<DVec3> >(); break;
-		case VariantType::VR_STD_VECTOR_DVEC4:((std::vector<DVec4>&)(*this)) = ref.get< std::vector<DVec4> >(); break;
+		case VariantType::VR_STD_VECTOR_DVEC2:((Vector<DVec2>&)(*this)) = ref.get< Vector<DVec2> >(); break;
+		case VariantType::VR_STD_VECTOR_DVEC3:((Vector<DVec3>&)(*this)) = ref.get< Vector<DVec3> >(); break;
+		case VariantType::VR_STD_VECTOR_DVEC4:((Vector<DVec4>&)(*this)) = ref.get< Vector<DVec4> >(); break;
 
 		case VariantType::VR_C_STRING:
-		case VariantType::VR_STD_STRING:           ((std::string&)(*this)) = ref.get< std::string >(); break;
-		case VariantType::VR_STD_VECTOR_STRING:    ((std::vector<std::string>&)(*this)) = ref.get< std::vector<std::string> >(); break;
+		case VariantType::VR_STD_STRING:           ((String&)(*this)) = ref.get< String >(); break;
+		case VariantType::VR_STD_VECTOR_STRING:    ((Vector<String>&)(*this)) = ref.get< Vector<String> >(); break;
 
 		case VariantType::VR_RESOURCE: ((Shared<ResourceObject>&)(*this)) = ref.get< Shared<ResourceObject> >(); break;
 

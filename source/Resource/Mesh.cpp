@@ -43,7 +43,7 @@ namespace Resource
 		}
 
 		//the triangles of a sub mesh (its positions)
-		static void add(std::vector<Vec3>& out, const Parser::StaticMesh::Context& mesh, const Render::SubMesh& submesh, const std::vector<Vec3>& positions)
+		static void add(Vector<Vec3>& out, const Parser::StaticMesh::Context& mesh, const Render::SubMesh& submesh, const Vector<Vec3>& positions)
 		{
 			for (unsigned int i = 0; i + 2 < submesh.m_index_count; i += 3)
 			{
@@ -61,16 +61,16 @@ namespace Resource
 		}
 	}
 
-	bool Mesh::local_triangles(std::vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter) const
+	bool Mesh::local_triangles(Vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter) const
 	{
 		//its file
-		const std::string& path = const_cast<Mesh*>(this)->context().resource_path<Mesh>(resource_untyped_name());
+		const String& path = const_cast<Mesh*>(this)->context().resource_path<Mesh>(resource_untyped_name());
 		if (path.empty())
 		{
 			return false;
 		}
 		const bool compressed = Filesystem::get_extension(path) == ".sm3dgz";
-		std::vector<unsigned char> bytes;
+		Vector<unsigned char> bytes;
 		if (compressed)
 		{
 			bytes = Filesystem::binary_compress_file_read_all(path);
@@ -85,7 +85,7 @@ namespace Resource
 			return false;
 		}
 		//its positions
-		std::vector<Vec3> positions;
+		Vector<Vec3> positions;
 		std::visit([&positions](const auto& vertices)
 		{
 			positions.reserve(vertices.size());
@@ -121,7 +121,7 @@ namespace Resource
 	//////////////////////////////////////////////////////////////
 	//constructor
 	Mesh::Mesh(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_mesh(context) {}
-	Mesh::Mesh(Context& context, const std::string& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_mesh(context) { load(path); }
+	Mesh::Mesh(Context& context, const String& path) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_mesh(context) { load(path); }
 
 	//info
 	unsigned int Mesh::layout_type() const
@@ -200,13 +200,13 @@ namespace Resource
 	};
 
 	//load effect
-	bool Mesh::load(const std::string& path)
+	bool Mesh::load(const String& path)
 	{
 		Parser::StaticMesh static_mesh_parser;
 		Parser::StaticMesh::Context static_mesh_context;
 		//get ext
 		bool is_compress = Filesystem::get_extension(path) == ".sm3dgz";
-		std::vector<unsigned char> buffer = is_compress
+		Vector<unsigned char> buffer = is_compress
 			                                ? Filesystem::binary_compress_file_read_all(path) 
 			                                : Filesystem::binary_file_read_all(path);
 		//do parsing

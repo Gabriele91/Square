@@ -92,10 +92,10 @@ namespace Render
 
         //the bytes of a uniform of a shadow (the key of a cache: its place, its views)
         template < typename T >
-        std::vector<unsigned char> key(const T& uniform)
+        Vector<unsigned char> key(const T& uniform)
         {
             const unsigned char* bytes = reinterpret_cast<const unsigned char*>(&uniform);
-            return std::vector<unsigned char>(bytes, bytes + sizeof(T));
+            return Vector<unsigned char>(bytes, bytes + sizeof(T));
         }
 
         //bytes into a hash (FNV-1a)
@@ -139,12 +139,12 @@ namespace Render
         }
 
         //the buffer of a cache made as the shadow map of its light, if it is not (true: made)
-        bool fit(std::unique_ptr<ShadowBuffer>& cache, const ShadowBuffer& shadow, Square::Context& context)
+        bool fit(UniquePtr<ShadowBuffer>& cache, const ShadowBuffer& shadow, Square::Context& context)
         {
             bool made = false;
             if (!cache || !same(*cache, shadow))
             {
-                cache = std::make_unique<ShadowBuffer>(context);
+                cache = MakeUniquePtr<ShadowBuffer>(context);
                 cache->build(shadow.size(), shadow.type(), shadow.layers());
                 made = true;
             }
@@ -197,7 +197,7 @@ namespace Render
     {
 		++m_draws;
 		//names
-		static const std::string techniques_table[]
+		static const String techniques_table[]
 		{
 			"None",
 			"SpotShadow",
@@ -274,9 +274,9 @@ namespace Render
     void DrawerPassShadow::draw_cached
     (
       const Light& light
-    , const std::vector<unsigned char>& key
+    , const Vector<unsigned char>& key
     , const PoolQueues& queues
-    , const std::string& technique_name
+    , const String& technique_name
     , EffectPassInputs& inputs
     )
     {
@@ -334,7 +334,7 @@ namespace Render
 		return shown;
     }
 
-    void DrawerPassShadow::cascades_casters(const PoolQueues& queues, const UniformDirectionShadowLight& cascades, std::array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>& hashes) const
+    void DrawerPassShadow::cascades_casters(const PoolQueues& queues, const UniformDirectionShadowLight& cascades, Array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES>& hashes) const
     {
 		//(FNV-1a: its offset basis)
 		hashes.fill(14695981039346656037ull);
@@ -372,7 +372,7 @@ namespace Render
       const Light& light
     , const UniformDirectionShadowLight& cascades
     , const PoolQueues& queues
-    , const std::string& technique_name
+    , const String& technique_name
     , EffectPassInputs& inputs
     )
     {
@@ -383,7 +383,7 @@ namespace Render
 		const bool made = AuxShadowCache::fit(cache.m_buffer, shadow, m_context);
 		if (!cache.m_blank || cache.m_blank->size() != shadow.size())
 		{
-			cache.m_blank = std::make_unique<ShadowBuffer>(m_context);
+			cache.m_blank = MakeUniquePtr<ShadowBuffer>(m_context);
 			cache.m_blank->build(shadow.size(), ShadowBuffer::SB_TEXTURE_CSM, 1);
 			render().enable_render_target(cache.m_blank->target());
 			render().clear(Render::CLEAR_DEPTH);
@@ -391,13 +391,13 @@ namespace Render
 		}
 		//the cascades out of date: new, moved, their static casters changed
 		const int count = std::clamp(cascades.m_options.y, 1, int(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
-		std::array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> hashes;
+		Array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> hashes;
 		cascades_casters(queues, cascades, hashes);
 		uint32 dirty = 0;
 		for (int i = 0; i != count; ++i)
 		{
-			std::vector<unsigned char> key = AuxShadowCache::key(cascades.m_projection[i]);
-			const std::vector<unsigned char> view = AuxShadowCache::key(cascades.m_view[i]);
+			Vector<unsigned char> key = AuxShadowCache::key(cascades.m_projection[i]);
+			const Vector<unsigned char> view = AuxShadowCache::key(cascades.m_view[i]);
 			key.insert(key.end(), view.begin(), view.end());
 			const bool moved = cache.m_keys[i] != key;
 			const bool changed = cache.m_casters[i] != hashes[i];
@@ -480,7 +480,7 @@ namespace Render
       const ShadowBuffer& buffer
     , bool clear
     , const PoolQueues& queues
-    , const std::string& technique_name
+    , const String& technique_name
     , EffectPassInputs& inputs
     , const UniformDirectionShadowLight* cascades
     , Casters casters
@@ -522,7 +522,7 @@ namespace Render
     void DrawerPassShadow::draw_casters
     (
       const PoolQueues& queues
-    , const std::string& technique_name
+    , const String& technique_name
     , EffectPassInputs& inputs
     , const UniformDirectionShadowLight* cascades
     , Casters casters

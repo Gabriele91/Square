@@ -18,7 +18,7 @@
 namespace Occluders
 {
     //the nodes "square_occluder" (their actors): proxy or not
-    using Nodes = std::unordered_map< const Square::Scene::Actor*, bool >;
+    using Nodes = Square::UnorderedMap< const Square::Scene::Actor*, bool >;
 
     //the occluders of a scene made; how many (and their triangles)
     size_t build(Square::Context& context, const Square::Shared<Square::Scene::Actor>& root, const Nodes& nodes, size_t& triangles);

@@ -32,10 +32,10 @@ namespace Resource
         
         //constructor
 		Material(Context& context);
-		Material(Context& context, const std::string& path);
+		Material(Context& context, const String& path);
         
         //load shader
-        bool load(const std::string& path) override;    
+        bool load(const String& path) override;    
         
     };
 

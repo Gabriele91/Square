@@ -14,13 +14,13 @@ namespace Parser
 	struct ErrorField
 	{
 		size_t m_line{ 0 };
-		std::string m_error;
+		String m_error;
 
 		ErrorField()
 		{
 		}
 
-		ErrorField(size_t line, const std::string& error)
+		ErrorField(size_t line, const String& error)
 		: m_line(line)
 		, m_error(error)
 		{
@@ -386,7 +386,7 @@ namespace Parser
 		return out = (((*inout) <= '9') ? (*inout) - '0' : ((*inout) & ~' ') - 'A' + 10), true;
 	}
 
-	static inline bool parse_name(const char*& inout, std::string& out)
+	static inline bool parse_name(const char*& inout, String& out)
 	{
 		const char*  strin = inout;
 		//test first
@@ -406,7 +406,7 @@ namespace Parser
 		return true;
 	}
 
-	static inline bool parse_string(size_t& line,  const char*& inout, std::string& out, const char open_string = '\"', const char close_string = '\"')
+	static inline bool parse_string(size_t& line,  const char*& inout, String& out, const char open_string = '\"', const char close_string = '\"')
 	{
 		//temp ptr
 		const char *tmp = inout;

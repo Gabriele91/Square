@@ -40,15 +40,15 @@ namespace Skins
         }
 
         //the path of an actor from another one ("../" up to the first actor above both)
-        bool relative_path(const Actor& from, const Actor& to, std::string& out)
+        bool relative_path(const Actor& from, const Actor& to, Square::String& out)
         {
-            std::string up;
+            Square::String up;
             Shared<Actor> parent;
             const Actor* at = &from;
             bool found = false;
             while (at && !found)
             {
-                std::string down;
+                Square::String down;
                 found = Animations::path(*at, to, down);
                 if (found)
                 {
@@ -69,12 +69,12 @@ namespace Skins
         }
 
         //the inverse bind matrices of a skin, in the axes of the scene (none: identities)
-        std::vector<Mat4> inverse_binds(const GLTF::GLTF& gltf, const GLTF::Skin& skin, unsigned char mode)
+        Square::Vector<Mat4> inverse_binds(const GLTF::GLTF& gltf, const GLTF::Skin& skin, unsigned char mode)
         {
-            std::vector<Mat4> out(skin.joints.size(), Mat4(1.0f));
+            Square::Vector<Mat4> out(skin.joints.size(), Mat4(1.0f));
             if (skin.inverse_bind_matrices.has_value())
             {
-                const std::vector<float> values = GLTF::Import::read_floats(gltf, *skin.inverse_bind_matrices, false);
+                const Square::Vector<float> values = GLTF::Import::read_floats(gltf, *skin.inverse_bind_matrices, false);
                 for (size_t i = 0; i < out.size() && (i + 1) * 16 <= values.size(); ++i)
                 {
                     //(column major, as glm)
@@ -91,9 +91,9 @@ namespace Skins
         }
 
         //how far the vertices are from their strongest joint (where it is when bound)
-        float reach(const std::vector<Vec4>& points, const std::vector<Mat4>& inverse_binds)
+        float reach(const Square::Vector<Vec4>& points, const Square::Vector<Mat4>& inverse_binds)
         {
-            std::vector<Vec3> bound(inverse_binds.size());
+            Square::Vector<Vec3> bound(inverse_binds.size());
             for (size_t i = 0; i < inverse_binds.size(); ++i)
             {
                 bound[i] = Vec3(inverse(inverse_binds[i])[3]);
@@ -137,10 +137,10 @@ namespace Skins
                 skinned->materials(static_mesh->m_materials);
                 actor->remove(static_mesh);
                 //its joints: their paths from it
-                std::vector<std::string> paths;
+                Square::Vector<Square::String> paths;
                 for (size_t joint_id : skin.joints)
                 {
-                    std::string path;
+                    Square::String path;
                     const Shared<Actor> joint = joint_id < actors.size() ? actors[joint_id] : nullptr;
                     if (!joint || !relative_path(*actor, *joint, path))
                     {
@@ -152,12 +152,12 @@ namespace Skins
                     }
                     paths.push_back(path);
                 }
-                const std::vector<Mat4> binds = inverse_binds(gltf, skin, mode);
+                const Square::Vector<Mat4> binds = inverse_binds(gltf, skin, mode);
                 skinned->joints(paths, binds);
                 skinned->reach(reach(meshes.skin_points(node.content->m_id), binds));
                 if (paths.size() > SkinnedMesh::joints_max)
                 {
-                    context.logger()->warning("Skin " + skin.name + ": " + std::to_string(paths.size()) + " joints, at most " + std::to_string(SkinnedMesh::joints_max));
+                    context.logger()->warning("Skin " + skin.name + ": " + Square::to_string(paths.size()) + " joints, at most " + Square::to_string(SkinnedMesh::joints_max));
                 }
                 actor->set_static(false);
                 made += 1;

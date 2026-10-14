@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Define source files
 set(SOURCE_FILES
     ${SQUARE_ROOT_DIR}/source/Core/Allocator/MemoryOperators.cpp
+    ${SQUARE_ROOT_DIR}/source/Core/Container/String.cpp
     InterfaceGL4.cpp
     RenderGL4.cpp
 )

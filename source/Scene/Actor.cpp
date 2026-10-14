@@ -35,7 +35,7 @@ namespace Scene
 		//factory
 		ctx.add_object<Actor>();
 		//Attributes
-        ctx.add_attribute_field<Actor, std::string>("name", std::string(), offsetof(Actor,m_name));
+        ctx.add_attribute_field<Actor, String>("name", String(), offsetof(Actor,m_name));
 		ctx.add_attribute_function<Actor, Vec3>
 		("position"
 		, Vec3(0)
@@ -63,13 +63,13 @@ namespace Scene
 	}
 
 	Actor::Actor(Context& context) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()) {}
-	Actor::Actor(Context& context, const std::string& name) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_name(name) {}
+	Actor::Actor(Context& context, const String& name) : ResourceObject(context), BaseInheritableSharedObject(context.allocator()), m_name(name) {}
     Actor::~Actor()
     {
     }
 
     // Load child node from resource
-    Shared<Actor> Actor::load_child(const std::string& resource_name)
+    Shared<Actor> Actor::load_child(const String& resource_name)
     {
         //a child is an instance: a new one from the file of the resource every time (the cache of
         //the resources would give back the same actor, moved here again)
@@ -96,10 +96,10 @@ namespace Scene
                 //serialize name
                 archive % component.second->object_name();
                 //serialize component, in a block (unknown to the reader: skipped)
-                std::ostringstream bytes(std::ios::out | std::ios::binary);
+                OStringStream bytes(std::ios::out | std::ios::binary);
                 Data::ArchiveBinWrite block(context(), bytes, false);
                 component.second->serialize(block);
-                std::string data = bytes.str();
+                String data = bytes.str();
                 archive.block(data);
             }
         }
@@ -161,19 +161,19 @@ namespace Scene
             for(uint64 i = 0; i!=size; ++i)
             {
                 //name of component
-                std::string name;
+                String name;
                 //serialize name
                 archive % name;
                 //the format 0: in the stream, it must be known
                 if (archive.version() == 0)
                 {
                     Shared<Component> component = this->component(name);
-                    if (!component) throw std::runtime_error("Actor, unknown component: " + name);
+                    if (!component) throw std::runtime_error(("Actor, unknown component: " + name).c_str());
                     component->deserialize(archive);
                     continue;
                 }
                 //its block: unknown, skipped
-                std::string data;
+                String data;
                 archive.block(data);
                 Shared<Component> component = this->component(name);
                 if (!component)
@@ -181,7 +181,7 @@ namespace Scene
                     context().logger()->warning("Actor " + m_name + ", unknown component skipped: " + name);
                     continue;
                 }
-                std::istringstream bytes(data, std::ios::in | std::ios::binary);
+                IStringStream bytes(data, std::ios::in | std::ios::binary);
                 Data::ArchiveBinRead block(context(), bytes, archive.version());
                 component->deserialize(block);
             }
@@ -217,7 +217,7 @@ namespace Scene
             for(auto& jcomponent : jcomponents.array())
             if (jcomponent.contains("name") && jcomponent["name"].is_string())
             {
-                const std::string& component_name = jcomponent["name"].string();
+                const String& component_name = jcomponent["name"].string();
                 //new component
                 Shared<Component> component = this->component(component_name);
                 //test component
@@ -336,11 +336,11 @@ namespace Scene
     }
     
     //name
-    const std::string& Actor::name() const
+    const String& Actor::name() const
     {
         return m_name;
     }
-    void Actor::name(const std::string& name)
+    void Actor::name(const String& name)
     {
         m_name = name;
     }
@@ -363,7 +363,7 @@ namespace Scene
         return  component_it->second == component;
     }
 
-	Shared<Component> Actor::component(const std::string& name)
+	Shared<Component> Actor::component(const String& name)
 	{
 		return component(ObjectInfo::compute_id(name));
 	}
@@ -404,18 +404,18 @@ namespace Scene
     {
         return m_childs.size() ? m_childs[index] : nullptr;
     }
-    Shared<Actor> Actor::find(const std::string& path)
+    Shared<Actor> Actor::find(const String& path)
     {
         Shared<Actor> at = shared_from_this();
         size_t start = 0;
         while (at && start < path.size())
         {
             size_t end = path.find('/', start);
-            if (end == std::string::npos)
+            if (end == String::npos)
             {
                 end = path.size();
             }
-            const std::string name = path.substr(start, end - start);
+            const String name = path.substr(start, end - start);
             if (name == "..")
             {
                 at = at->parent().lock();
@@ -438,7 +438,7 @@ namespace Scene
         return at;
     }
 
-    Shared<Actor> Actor::child(const std::string& name)
+    Shared<Actor> Actor::child(const String& name)
     {
         //search
         for(auto child : m_childs) 
@@ -755,7 +755,7 @@ namespace Scene
         SQ_JSON_GZ
     };
 
-    static ActorFormat get_actor_format_from_extension(const std::string& extension)
+    static ActorFormat get_actor_format_from_extension(const String& extension)
     {
         ActorFormat actor_format{ ActorFormat::SQ_BIN };
         if (Square::case_insensitive_equal(extension, ".ac"))
@@ -778,7 +778,7 @@ namespace Scene
     }
 
     //load actor
-    bool Actor::load(const std::string& path)
+    bool Actor::load(const String& path)
     {
         using namespace Square;
         using namespace Square::Data;
@@ -790,8 +790,8 @@ namespace Scene
         case ActorFormat::SQ_BIN:
         {
             //by Filesystem: on the disk or in an archive
-            const std::vector<unsigned char> bytes = Filesystem::binary_file_read_all(path);
-            std::istringstream in_file_stream(std::string(bytes.begin(), bytes.end()), std::ios::in | std::ios::binary);
+            const Vector<unsigned char> bytes = Filesystem::binary_file_read_all(path);
+            IStringStream in_file_stream(String(bytes.begin(), bytes.end()), std::ios::in | std::ios::binary);
             if (!bytes.empty())
             {
                 ArchiveBinRead in_archive(Object::context(), in_file_stream);
@@ -807,8 +807,8 @@ namespace Scene
         case ActorFormat::SQ_BIN_GZ:
         {
             //by Filesystem: on the disk or in an archive
-            const std::vector<unsigned char> bytes = Filesystem::binary_compress_file_read_all(path);
-            std::istringstream in_file_stream(std::string(bytes.begin(), bytes.end()), std::ios::in | std::ios::binary);
+            const Vector<unsigned char> bytes = Filesystem::binary_compress_file_read_all(path);
+            IStringStream in_file_stream(String(bytes.begin(), bytes.end()), std::ios::in | std::ios::binary);
             if (!bytes.empty())
             {
                 ArchiveBinRead in_archive(Object::context(), in_file_stream);
@@ -858,7 +858,7 @@ namespace Scene
             // Get string
             const char* json_cppstr_begin = (const char*)(bin_vector.data());
             const char* json_cppstr_end = (const char*)(bin_vector.data() + bin_vector.size());
-            std::string json_string(json_cppstr_begin, json_cppstr_end);
+            String json_string(json_cppstr_begin, json_cppstr_end);
             // Parsing
             if (jin.parser(json_string))
             {

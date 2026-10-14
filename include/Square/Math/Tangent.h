@@ -6,7 +6,7 @@ namespace Square
 {
     // Compute tangent per vertex
     template < class T, typename Scalar = float >
-    void tangent_model_fast(std::vector< T >& vertices)
+    void tangent_model_fast(Vector< T >& vertices)
     {
         //all to 0
         for (unsigned int i = 0; i < vertices.size(); ++i)
@@ -85,7 +85,7 @@ namespace Square
     }
     // Compute tangent per index
     template < class T, typename Scalar = float >
-    void tangent_model_fast(const std::vector<unsigned int>& indexes, std::vector< T >& vertices)
+    void tangent_model_fast(const Vector<unsigned int>& indexes, Vector< T >& vertices)
     {
         for (unsigned int i = 0; i < indexes.size(); ++i)
         {
@@ -180,10 +180,10 @@ namespace Square
 		template< typename T >
 		struct IndexedAccessor : public Proxy
 		{
-			std::vector< T >& m_vertices;
-			const std::vector<unsigned int>& m_indexes;
+			Vector< T >& m_vertices;
+			const Vector<unsigned int>& m_indexes;
 
-            IndexedAccessor(const std::vector<unsigned int>& indexes, std::vector< T >& vertices)
+            IndexedAccessor(const Vector<unsigned int>& indexes, Vector< T >& vertices)
 			: m_indexes(indexes), m_vertices(vertices) {}
 
 			virtual unsigned int triangles() { return m_indexes.size() / 3; }
@@ -201,9 +201,9 @@ namespace Square
         template< typename T >
         struct NoIndexedAccessor : public Proxy
         {
-            std::vector< T >& m_vertices;
+            Vector< T >& m_vertices;
 
-            NoIndexedAccessor(std::vector< T >& vertices): m_vertices(vertices) {}
+            NoIndexedAccessor(Vector< T >& vertices): m_vertices(vertices) {}
 
             virtual unsigned int triangles() { return m_vertices.size() / 3; }
             virtual IVec3 indices(const unsigned int index) { return { index * 3, index * 3 + 1, index * 3 + 2 }; }
@@ -221,14 +221,14 @@ namespace Square
 	}
     // Compute tangent per vertex
     template < class T, typename Scalar = float >
-    void tangent_model_slow(std::vector< T >& vertices, bool replace_normal = false)
+    void tangent_model_slow(Vector< T >& vertices, bool replace_normal = false)
     {
         TangentUtils::NoIndexedAccessor< T > proxy(vertices);
         tangent_model_slow(proxy, replace_normal);
     }
     // Compute tangent per index
     template < class T, typename Scalar = float >
-    void tangent_model_slow(const std::vector<unsigned int>& indexes, std::vector< T >& vertices, bool replace_normal = false)
+    void tangent_model_slow(const Vector<unsigned int>& indexes, Vector< T >& vertices, bool replace_normal = false)
     {
         TangentUtils::IndexedAccessor< T > proxy(indexes, vertices);
         tangent_model_slow(proxy, replace_normal);

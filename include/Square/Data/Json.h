@@ -15,9 +15,9 @@ namespace Data
 	//list of types
 	class Json;
 	class JsonValue;
-	using JsonString = std::string;
-	using JsonArray  = std::vector< JsonValue >;
-	using JsonObject = std::unordered_map< JsonString, JsonValue >;
+	using JsonString = String;
+	using JsonArray  = Vector< JsonValue >;
+	using JsonObject = UnorderedMap< JsonString, JsonValue >;
 	//stream
 	SQUARE_API std::ostream& operator<< (std::ostream& stream, const Json& value);
 	SQUARE_API std::ostream& operator<< (std::ostream& stream, const JsonValue& value);
@@ -73,10 +73,10 @@ namespace Data
 		JsonValue(JsonValue&& v) noexcept;
 		JsonValue(JsonArray&& v) noexcept;
 		JsonValue(JsonObject&& v) noexcept;
-		JsonValue(std::string&& value) noexcept;
+		JsonValue(String&& value) noexcept;
 		JsonValue(const JsonValue& v);
         JsonValue(const char* value);
-		JsonValue(const std::string& value);
+		JsonValue(const String& value);
 		JsonValue(double);
 		JsonValue(int);
 		JsonValue(unsigned int);
@@ -89,14 +89,14 @@ namespace Data
 		// operator
 		size_t size() const;
 		JsonValue& operator[] (const size_t& key);
-		JsonValue& operator[] (const std::string& key);
+		JsonValue& operator[] (const String& key);
 		const JsonValue& operator[] (const size_t& key) const;
-		const JsonValue& operator[] (const std::string& key) const;
+		const JsonValue& operator[] (const String& key) const;
 		// move assignment
         JsonValue& operator= (JsonValue&&);
         JsonValue& operator= (const JsonValue&);
 		// Contains
-		bool contains(const std::string& key) const;
+		bool contains(const String& key) const;
 		bool contains(size_t index) const;
 	private:
 		//Free the held string/array/object (if any) and become null
@@ -126,15 +126,15 @@ namespace Data
 		Json(JsonArray&& json_array);
 		Json(JsonObject&& json_object);
 		Json(const JsonValue& document);
-		Json(const std::string& source);
+		Json(const String& source);
 		Json(const char* source, std::size_t n);
 
         //parsing
-		bool parser(const std::string& source);
+		bool parser(const String& source);
 		bool parser(const char* source, std::size_t n);
 
         //get error
-        std::string errors() const;
+        String errors() const;
         
         //get document
 		JsonValue& document();
@@ -144,9 +144,9 @@ namespace Data
         operator JsonValue& ();
         operator const JsonValue& () const;
         JsonValue& operator[] (const size_t& key);
-        JsonValue& operator[] (const std::string& key);
+        JsonValue& operator[] (const String& key);
         const JsonValue& operator[] (const size_t& key) const;
-        const JsonValue& operator[] (const std::string& key) const;
+        const JsonValue& operator[] (const String& key) const;
     
     protected:
         
@@ -156,14 +156,14 @@ namespace Data
             {
             }
             
-            ErrorLine(size_t line, const std::string& error)
+            ErrorLine(size_t line, const String& error)
             : m_line(line)
 			, m_character(~size_t(0))
             , m_error(error)
             {
             }
             
-            ErrorLine(size_t line, size_t character, const std::string& error)
+            ErrorLine(size_t line, size_t character, const String& error)
             : m_line(line)
 			, m_character(character)
             , m_error(error)
@@ -172,11 +172,11 @@ namespace Data
 
 			size_t m_line{ 0 };
 			size_t m_character{ 0 };
-			std::string m_error;
+			String m_error;
         };
         
         JsonValue                m_document;
-        std::vector< ErrorLine > m_list_errors;
+        Vector< ErrorLine > m_list_errors;
     };
 
 	//string illiterals

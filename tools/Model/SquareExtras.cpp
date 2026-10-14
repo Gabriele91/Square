@@ -10,15 +10,15 @@
 
 namespace SquareExtras
 {
-    const std::string PREFIX = "square_";
+    const Square::String PREFIX = "square_";
 
-    std::string name(const std::string& key)
+    Square::String name(const Square::String& key)
     {
         if (key.size() <= PREFIX.size() || key.compare(0, PREFIX.size(), PREFIX) != 0) return {};
         return key.substr(PREFIX.size());
     }
 
-    std::optional<std::string> string(const Square::Data::JsonObject& extras, const std::string& key)
+    std::optional<Square::String> string(const Square::Data::JsonObject& extras, const Square::String& key)
     {
         auto it = extras.find(PREFIX + key);
         if (it == extras.end() || !it->second.is_string()) return std::nullopt;
@@ -31,7 +31,7 @@ namespace SquareExtras
         return value.is_number() ? value.number() : 0.0;
     }
 
-    std::optional<bool> flag(const Square::Data::JsonObject& extras, const std::string& key)
+    std::optional<bool> flag(const Square::Data::JsonObject& extras, const Square::String& key)
     {
         std::optional<bool> value;
         auto it = extras.find(PREFIX + key);
@@ -50,10 +50,10 @@ namespace SquareExtras
     }
 
     //a value of a parameter as it is in a .mat: name(...) (cullface(off), zbuffer(less), Vec3(...))
-    static bool literal(const std::string& value)
+    static bool literal(const Square::String& value)
     {
         const size_t open = value.find('(');
-        if (open == 0 || open == std::string::npos || value.back() != ')') return false;
+        if (open == 0 || open == Square::String::npos || value.back() != ')') return false;
         for (size_t i = 0; i != open; ++i)
         {
             if (!std::isalnum((unsigned char)value[i]) && value[i] != '_') return false;
@@ -61,9 +61,9 @@ namespace SquareExtras
         return true;
     }
 
-    std::string material_value(const Square::Data::JsonValue& value)
+    Square::String material_value(const Square::Data::JsonValue& value)
     {
-        std::ostringstream text;
+        Square::OStringStream text;
         if (value.is_number() || value.is_boolean())
         {
             text << "float(" << number(value) << ")";
@@ -89,7 +89,7 @@ namespace SquareExtras
     void apply(Square::Object& object, const Square::Data::JsonObject& extras)
     {
         using namespace Square;
-        const std::vector<Attribute>* attributes = object.context().attributes(object);
+        const Square::Vector<Attribute>* attributes = object.context().attributes(object);
         if (!attributes) return;
         for (const Attribute& attribute : *attributes)
         {
@@ -115,7 +115,7 @@ namespace SquareExtras
         }
     }
 
-    const std::string GAME_PREFIX = "game_";
+    const Square::String GAME_PREFIX = "game_";
 
     size_t game_properties(Square::Scene::Actor& actor, const Square::Data::JsonObject& extras)
     {
@@ -127,7 +127,7 @@ namespace SquareExtras
             {
                 continue;
             }
-            const std::string name = key.substr(GAME_PREFIX.size());
+            const Square::String name = key.substr(GAME_PREFIX.size());
             auto properties = actor.component<Scene::Properties>();
             if (value.is_boolean())
             {

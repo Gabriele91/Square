@@ -158,7 +158,7 @@ namespace Square
 		// bulk memcpy lands the payload in the vector's aligned storage; on a
 		// little-endian host the bytes are already in the right order.
 		template<typename T>
-		static bool read_array(BinaryReader& reader, std::vector<T>& out)
+		static bool read_array(BinaryReader& reader, Vector<T>& out)
 		{
 			const std::optional<ArrayBlock> block = read_array_block(reader, sizeof(T));
 			if (!block) return false;
@@ -222,7 +222,7 @@ namespace Square
 			return header;
 		}
 
-		bool StaticMesh::parse(Context& default_context, const std::vector<unsigned char>& binary)
+		bool StaticMesh::parse(Context& default_context, const Vector<unsigned char>& binary)
 		{
 			const unsigned char* binary_ptr = binary.data();
 			return parse(default_context, binary_ptr, binary.size());
@@ -240,42 +240,42 @@ namespace Square
 			{
 				case StaticMeshLayoutType::SMLTYPE_POSITON2D:
 				{
-					std::vector<Render::Layout::Position2D> vertex;
+					Vector<Render::Layout::Position2D> vertex;
 					if (!read_array(reader, vertex)) return false;
 					context.m_vertex = std::move(vertex);
 				}
 				break;
 				case StaticMeshLayoutType::SMLTYPE_POSITON3D:
 				{
-					std::vector<Render::Layout::Position3D> vertex;
+					Vector<Render::Layout::Position3D> vertex;
 					if (!read_array(reader, vertex)) return false;
 					context.m_vertex = std::move(vertex);
 				}
 				break;
 				case StaticMeshLayoutType::SMLTYPE_POSITON2DUV:
 				{
-					std::vector<Render::Layout::Position2DUV> vertex;
+					Vector<Render::Layout::Position2DUV> vertex;
 					if (!read_array(reader, vertex)) return false;
 					context.m_vertex = std::move(vertex);
 				}
 				break;
 				case StaticMeshLayoutType::SMLTYPE_POSITON3DUV:
 				{
-					std::vector<Render::Layout::Position3DUV> vertex;
+					Vector<Render::Layout::Position3DUV> vertex;
 					if (!read_array(reader, vertex)) return false;
 					context.m_vertex = std::move(vertex);
 				}
 				break;
 				case StaticMeshLayoutType::SMLTYPE_POSITON3DTANGENTBINOMIALUV:
 				{
-					std::vector<Render::Layout::Position3DNormalTangetBinomialUV> vertex;
+					Vector<Render::Layout::Position3DNormalTangetBinomialUV> vertex;
 					if (!read_array(reader, vertex)) return false;
 					context.m_vertex = std::move(vertex);
 				}
 				break;
 				case StaticMeshLayoutType::SMLTYPE_POSITON3DTANGENTBINOMIALUVSKIN:
 				{
-					std::vector<Render::Layout::Position3DNormalTangetBinomialUVSkin> vertex;
+					Vector<Render::Layout::Position3DNormalTangetBinomialUVSkin> vertex;
 					if (!read_array(reader, vertex)) return false;
 					context.m_vertex = std::move(vertex);
 				}
@@ -285,7 +285,7 @@ namespace Square
 			// Index
 			if (header->has_index)
 			{
-				std::vector<unsigned int> index;
+				Vector<unsigned int> index;
 				if (!read_array(reader, index)) return false;
 				context.m_index = std::move(index);
 			}
@@ -302,7 +302,7 @@ namespace Square
 
 		#pragma region Serializer
 		template < typename T >
-		static void write_a_vector(const std::vector< T >& vector_t, std::vector<unsigned char>& binary)
+		static void write_a_vector(const Vector< T >& vector_t, Vector<unsigned char>& binary)
 		{
 			unsigned long long size_array = (unsigned long long)vector_t.size();
 			unsigned long long size_element = (unsigned long long)sizeof(T);
@@ -322,7 +322,7 @@ namespace Square
 			std::memcpy(bytes + sizeof(size_array) + sizeof(size_element), vector_t.data(), size_bytes);
 		}
 
-		static bool write_vertex_buffer(StaticMesh::Context& context, std::vector<unsigned char>& binary)
+		static bool write_vertex_buffer(StaticMesh::Context& context, Vector<unsigned char>& binary)
 		{
 			bool status = true;
 			context.visit(
@@ -367,7 +367,7 @@ namespace Square
 
 		// Mirror of read_header: write the header at the start of the buffer, single-byte
 		// fields in place and the 8-byte body offset little-endian (no unaligned store).
-		static void write_header(std::vector<unsigned char>& binary, bool has_index, bool has_submesh, StaticMeshLayoutType layout_type)
+		static void write_header(Vector<unsigned char>& binary, bool has_index, bool has_submesh, StaticMeshLayoutType layout_type)
 		{
 			static const char magic[4] = { 's', 'm', '3', 'd' };
 			binary.resize(sizeof(StaticMeshHeader));
@@ -391,7 +391,7 @@ namespace Square
 
 		// Write the submesh array { count, element_size, data } endian-safe, encoding each
 		// element field-by-field (no packed temporary).
-		static void write_submeshes(const Render::Mesh::SubMeshList& submeshes, std::vector<unsigned char>& binary)
+		static void write_submeshes(const Render::Mesh::SubMeshList& submeshes, Vector<unsigned char>& binary)
 		{
 			const unsigned long long count        = (unsigned long long)submeshes.size();
 			const unsigned long long element_size = (unsigned long long)sizeof(StaticSubMesh);
@@ -412,7 +412,7 @@ namespace Square
 			}
 		}
 
-		bool StaticMesh::serialize(Context& context, std::vector<unsigned char>& binary)
+		bool StaticMesh::serialize(Context& context, Vector<unsigned char>& binary)
 		{
 			// Header (the body follows immediately)
 			write_header(binary, !!context.m_index.size(), !!context.m_submesh.size(), get_type_of_layout(context));

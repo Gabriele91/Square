@@ -27,7 +27,7 @@ namespace Render
 	void DrawList::add
 	(
 		  const Shared<Renderable>& renderable
-		, const std::string& technique_name
+		, const String& technique_name
 		, uint32 layers
 		, bool settle
 	)

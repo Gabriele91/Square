@@ -36,7 +36,7 @@ namespace Render
 		//the statistic of a scope (or of a shader)
 		struct Stat
 		{
-			std::string m_name;
+			String m_name;
 			int    m_depth{ 0 };       //in the tree (0: Frame), 0 for the shaders
 			double m_gpu_ms{ 0 };      //average per frame
 			double m_gpu_max_ms{ 0 };  //maximum in a frame
@@ -80,12 +80,12 @@ namespace Render
 		void end_draw();
 
 		//the statistics of the last window
-		const std::vector<Stat>& scopes() const;
-		const std::vector<Stat>& shaders() const;
+		const Vector<Stat>& scopes() const;
+		const Vector<Stat>& shaders() const;
 		//a counter of the windows published (the statistics have changed when it changes)
 		unsigned long long version() const;
 		//the statistics as text (a table)
-		std::string report() const;
+		String report() const;
 
 	protected:
 		using Clock = std::chrono::high_resolution_clock;
@@ -93,10 +93,10 @@ namespace Render
 		//the scopes, by their parent and their name (a tree)
 		struct Node
 		{
-			std::string           m_name;
+			String           m_name;
 			int                   m_parent{ -1 };
 			int                   m_depth{ 0 };
-			std::vector<int>      m_children;
+			Vector<int>      m_children;
 			//the frame (a scope can be opened more times), the accumulation of the window
 			double m_gpu_frame{ 0 }, m_gpu_sum{ 0 }, m_gpu_max{ 0 };
 			double m_cpu_frame{ 0 }, m_cpu_sum{ 0 }, m_cpu_max{ 0 };
@@ -104,7 +104,7 @@ namespace Render
 		};
 		struct ShaderNode
 		{
-			std::string m_name;
+			String m_name;
 			double m_gpu_frame{ 0 }, m_gpu_sum{ 0 }, m_gpu_max{ 0 };
 			double m_calls{ 0 };
 		};
@@ -124,8 +124,8 @@ namespace Render
 		struct FrameRecord
 		{
 			unsigned long long       m_id{ 0 };
-			std::vector<ScopeRecord> m_scopes;
-			std::vector<DrawRecord>  m_draws;
+			Vector<ScopeRecord> m_scopes;
+			Vector<DrawRecord>  m_draws;
 		};
 		//the scope open
 		struct OpenScope
@@ -146,23 +146,23 @@ namespace Render
 		bool                   m_in_frame{ false };
 		unsigned long long     m_frame_id{ 0 };
 		FrameRecord            m_frame;
-		std::vector<OpenScope> m_open;
+		Vector<OpenScope> m_open;
 		int                    m_current_shader{ -1 };
 		bool                   m_draw_open{ false };
 		//the frames waiting for their timestamps
-		std::deque<FrameRecord> m_pending;
-		std::vector<double>     m_timestamps;
+		Deque<FrameRecord> m_pending;
+		Vector<double>     m_timestamps;
 		//the tree, the shaders
-		std::vector<Node>                    m_nodes;
-		std::map<std::pair<int, std::string>, int> m_node_map;
-		std::vector<ShaderNode>              m_shader_nodes;
-		std::map<std::string, int>           m_shader_map;
+		Vector<Node>                    m_nodes;
+		Map<std::pair<int, String>, int> m_node_map;
+		Vector<ShaderNode>              m_shader_nodes;
+		Map<String, int>           m_shader_map;
 		//the window
 		unsigned int m_cpu_frames{ 0 };
 		unsigned int m_gpu_frames{ 0 };
 		//published
-		std::vector<Stat>  m_scopes;
-		std::vector<Stat>  m_shaders;
+		Vector<Stat>  m_scopes;
+		Vector<Stat>  m_shaders;
 		unsigned long long m_version{ 0 };
 
 		int  node(int parent, const char* name);

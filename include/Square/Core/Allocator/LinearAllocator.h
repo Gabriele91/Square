@@ -60,7 +60,7 @@ namespace Square
 
 		Allocator*         m_parent{ nullptr };
 		size_t             m_chunk_size{ 0 };
-		std::vector<Chunk> m_chunks;
+		Vector<Chunk> m_chunks;
 		size_t             m_chunk{ 0 };     //the chunk in use
 		size_t             m_offset{ 0 };    //its first free byte
 	};

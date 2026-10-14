@@ -134,7 +134,7 @@ namespace UI
 	{
 		auto* render = this->render();
 		if (!render || vertices.empty() || indices.empty()) return 0;
-		std::vector<UIVertex> ui_vertices(vertices.size());
+		Vector<UIVertex> ui_vertices(vertices.size());
 		for (size_t i = 0; i != vertices.size(); ++i)
 		{
 			const Rml::Vertex& vertex = vertices[i];
@@ -210,8 +210,8 @@ namespace UI
 			return (Rml::TextureHandle)external;
 		}
 		//the image (PNG, JPEG, BMP, TGA) to premultiplied RGBA
-		std::vector<unsigned char> file = Filesystem::binary_file_read_all(source);
-		std::vector<unsigned char> pixels;
+		Vector<unsigned char> file = Filesystem::binary_file_read_all(source);
+		Vector<unsigned char> pixels;
 		unsigned long width = 0, height = 0;
 		Render::TextureFormat format;
 		Render::TextureType type;
@@ -225,7 +225,7 @@ namespace UI
 		case Render::TF_RGBA8: channels = 4; break;
 		default: return 0;
 		}
-		std::vector<unsigned char> rgba(size_t(width) * height * 4);
+		Vector<unsigned char> rgba(size_t(width) * height * 4);
 		for (size_t i = 0, count = size_t(width) * height; i != count; ++i)
 		{
 			const unsigned char* in = &pixels[i * channels];
@@ -318,7 +318,7 @@ namespace UI
 	//files
 	struct BackendFile
 	{
-		std::vector<unsigned char> m_bytes;
+		Vector<unsigned char> m_bytes;
 		size_t                     m_position{ 0 };
 	};
 

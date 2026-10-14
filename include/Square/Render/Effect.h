@@ -87,12 +87,12 @@ namespace Render
 
 	//static reflaction
 	template < class T, typename Enable = void >
-	inline typename std::enable_if< !std::is_convertible< T, std::shared_ptr<ResourceObject> >::value, EffectParameterType >::type parameter_type_traits()
+	inline typename std::enable_if< !std::is_convertible< T, Shared<ResourceObject> >::value, EffectParameterType >::type parameter_type_traits()
 	{
 		return EffectParameterType::PT_NONE;
 	};
 	template < class T >
-	inline typename std::enable_if< std::is_convertible< T, std::shared_ptr<ResourceObject> >::value, EffectParameterType >::type parameter_type_traits()
+	inline typename std::enable_if< std::is_convertible< T, Shared<ResourceObject> >::value, EffectParameterType >::type parameter_type_traits()
 	{
 		return EffectParameterType::PT_RESOURCE;
 	};
@@ -118,26 +118,26 @@ namespace Render
 	template <> inline EffectParameterType parameter_type_traits<DMat3>() { return EffectParameterType::PT_DMAT3; };
 	template <> inline EffectParameterType parameter_type_traits<DMat4>() { return EffectParameterType::PT_DMAT4; };
 
-	template <> inline EffectParameterType parameter_type_traits< std::vector<Shared<Resource::Texture> > >() { return EffectParameterType::PT_STD_VECTOR_TEXTURE; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<int> >() { return EffectParameterType::PT_STD_VECTOR_INT; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<float> >() { return EffectParameterType::PT_STD_VECTOR_FLOAT; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<double> >() { return EffectParameterType::PT_STD_VECTOR_DOUBLE; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<Shared<Resource::Texture> > >() { return EffectParameterType::PT_STD_VECTOR_TEXTURE; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<int> >() { return EffectParameterType::PT_STD_VECTOR_INT; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<float> >() { return EffectParameterType::PT_STD_VECTOR_FLOAT; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<double> >() { return EffectParameterType::PT_STD_VECTOR_DOUBLE; };
 
-	template <> inline EffectParameterType parameter_type_traits< std::vector<IVec2> >() { return EffectParameterType::PT_STD_VECTOR_VEC2; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<IVec3> >() { return EffectParameterType::PT_STD_VECTOR_VEC3; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<IVec4> >() { return EffectParameterType::PT_STD_VECTOR_VEC4; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<IVec2> >() { return EffectParameterType::PT_STD_VECTOR_VEC2; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<IVec3> >() { return EffectParameterType::PT_STD_VECTOR_VEC3; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<IVec4> >() { return EffectParameterType::PT_STD_VECTOR_VEC4; };
 
-	template <> inline EffectParameterType parameter_type_traits< std::vector<Vec2> >() { return EffectParameterType::PT_STD_VECTOR_VEC2; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<Vec3> >() { return EffectParameterType::PT_STD_VECTOR_VEC3; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<Vec4> >() { return EffectParameterType::PT_STD_VECTOR_VEC4; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<Mat3> >() { return EffectParameterType::PT_STD_VECTOR_MAT3; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<Mat4> >() { return EffectParameterType::PT_STD_VECTOR_MAT4; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<Vec2> >() { return EffectParameterType::PT_STD_VECTOR_VEC2; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<Vec3> >() { return EffectParameterType::PT_STD_VECTOR_VEC3; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<Vec4> >() { return EffectParameterType::PT_STD_VECTOR_VEC4; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<Mat3> >() { return EffectParameterType::PT_STD_VECTOR_MAT3; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<Mat4> >() { return EffectParameterType::PT_STD_VECTOR_MAT4; };
 
-	template <> inline EffectParameterType parameter_type_traits< std::vector<DVec2> >() { return EffectParameterType::PT_STD_VECTOR_DVEC2; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<DVec3> >() { return EffectParameterType::PT_STD_VECTOR_DVEC3; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<DVec4> >() { return EffectParameterType::PT_STD_VECTOR_DVEC4; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<DMat3> >() { return EffectParameterType::PT_STD_VECTOR_DMAT3; };
-	template <> inline EffectParameterType parameter_type_traits< std::vector<DMat4> >() { return EffectParameterType::PT_STD_VECTOR_DMAT4; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<DVec2> >() { return EffectParameterType::PT_STD_VECTOR_DVEC2; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<DVec3> >() { return EffectParameterType::PT_STD_VECTOR_DVEC3; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<DVec4> >() { return EffectParameterType::PT_STD_VECTOR_DVEC4; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<DMat3> >() { return EffectParameterType::PT_STD_VECTOR_DMAT3; };
+	template <> inline EffectParameterType parameter_type_traits< Vector<DMat4> >() { return EffectParameterType::PT_STD_VECTOR_DMAT4; };
 
 	//definitions
 	struct SQUARE_API EffectQueueType
@@ -187,23 +187,23 @@ namespace Render
 		virtual void set(const DMat3* m3, size_t n);
 		virtual void set(const DMat4* m4, size_t n);
 
-		virtual void set(const std::vector < Shared< Resource::Texture > >& i);
-		virtual void set(const std::vector < int >& i);
-		virtual void set(const std::vector < float >& f);
-		virtual void set(const std::vector < double >& d);
-		virtual void set(const std::vector < IVec2 >& v2);
-		virtual void set(const std::vector < IVec3 >& v3);
-		virtual void set(const std::vector < IVec4 >& v4);
-		virtual void set(const std::vector < Vec2 >& v2);
-		virtual void set(const std::vector < Vec3 >& v3);
-		virtual void set(const std::vector < Vec4 >& v4);
-		virtual void set(const std::vector < Mat3 >& m3);
-		virtual void set(const std::vector < Mat4 >& m4);
-		virtual void set(const std::vector < DVec2 >& v2);
-		virtual void set(const std::vector < DVec3 >& v3);
-		virtual void set(const std::vector < DVec4 >& v4);
-		virtual void set(const std::vector < DMat3 >& m3);
-		virtual void set(const std::vector < DMat4 >& m4);
+		virtual void set(const Vector < Shared< Resource::Texture > >& i);
+		virtual void set(const Vector < int >& i);
+		virtual void set(const Vector < float >& f);
+		virtual void set(const Vector < double >& d);
+		virtual void set(const Vector < IVec2 >& v2);
+		virtual void set(const Vector < IVec3 >& v3);
+		virtual void set(const Vector < IVec4 >& v4);
+		virtual void set(const Vector < Vec2 >& v2);
+		virtual void set(const Vector < Vec3 >& v3);
+		virtual void set(const Vector < Vec4 >& v4);
+		virtual void set(const Vector < Mat3 >& m3);
+		virtual void set(const Vector < Mat4 >& m4);
+		virtual void set(const Vector < DVec2 >& v2);
+		virtual void set(const Vector < DVec3 >& v3);
+		virtual void set(const Vector < DVec4 >& v4);
+		virtual void set(const Vector < DMat3 >& m3);
+		virtual void set(const Vector < DMat4 >& m4);
 
 		//init
 		EffectParameter(Allocator* allocator);
@@ -248,26 +248,26 @@ namespace Render
 		virtual const DMat3&    get_dmat3()    const;
 		virtual const DMat4&    get_dmat4()    const;
 
-		virtual const std::vector< Shared<Resource::Texture> >&  get_vector_texture()  const;
-		virtual const std::vector<int>&    get_vector_int()    const;
-		virtual const std::vector<float>&  get_vector_float()  const;
-		virtual const std::vector<double>& get_vector_double() const;
+		virtual const Vector< Shared<Resource::Texture> >&  get_vector_texture()  const;
+		virtual const Vector<int>&    get_vector_int()    const;
+		virtual const Vector<float>&  get_vector_float()  const;
+		virtual const Vector<double>& get_vector_double() const;
 
-		virtual const std::vector<IVec2>&  get_vector_ivec2()  const;
-		virtual const std::vector<IVec3>&  get_vector_ivec3()  const;
-		virtual const std::vector<IVec4>&  get_vector_ivec4()  const;
+		virtual const Vector<IVec2>&  get_vector_ivec2()  const;
+		virtual const Vector<IVec3>&  get_vector_ivec3()  const;
+		virtual const Vector<IVec4>&  get_vector_ivec4()  const;
 
-		virtual const std::vector<Vec2>&   get_vector_vec2()   const;
-		virtual const std::vector<Vec3>&   get_vector_vec3()   const;
-		virtual const std::vector<Vec4>&   get_vector_vec4()   const;
-		virtual const std::vector<Mat3>&   get_vector_mat3()   const;
-		virtual const std::vector<Mat4>&   get_vector_mat4()   const;
+		virtual const Vector<Vec2>&   get_vector_vec2()   const;
+		virtual const Vector<Vec3>&   get_vector_vec3()   const;
+		virtual const Vector<Vec4>&   get_vector_vec4()   const;
+		virtual const Vector<Mat3>&   get_vector_mat3()   const;
+		virtual const Vector<Mat4>&   get_vector_mat4()   const;
 
-		virtual const std::vector<DVec2>&  get_vector_dvec2()  const;
-		virtual const std::vector<DVec3>&  get_vector_dvec3()  const;
-		virtual const std::vector<DVec4>&  get_vector_dvec4()  const;
-		virtual const std::vector<DMat3>&  get_vector_dmat3()  const;
-		virtual const std::vector<DMat4>&  get_vector_dmat4()  const;
+		virtual const Vector<DVec2>&  get_vector_dvec2()  const;
+		virtual const Vector<DVec3>&  get_vector_dvec3()  const;
+		virtual const Vector<DVec4>&  get_vector_dvec4()  const;
+		virtual const Vector<DMat3>&  get_vector_dmat3()  const;
+		virtual const Vector<DMat4>&  get_vector_dmat4()  const;
 
 		virtual Unique<EffectParameter> copy() const = 0;
 		virtual void copy_to(EffectParameter*) const = 0;
@@ -284,7 +284,7 @@ namespace Render
 	};
 
 	//alias vector of parameters
-	using EffectParameters = std::vector < Unique< EffectParameter > >;
+	using EffectParameters = Vector < Unique< EffectParameter > >;
 	
 	//input pass //todo: rename in pipeline inputs
 	struct SQUARE_API EffectPassInputs
@@ -351,7 +351,7 @@ namespace Render
 	struct PassState
 	{
 		T           m_value;          //fixed, or the one without the parameter
-		std::string m_param;          //parametric: the name of its parameter (empty: fixed)
+		String m_param;          //parametric: the name of its parameter (empty: fixed)
 		int         m_param_id{ -1 }; //its id in the effect (an imported technique: in the importer)
 
 		PassState() = default;
@@ -368,8 +368,8 @@ namespace Render
 		PassState< Render::DepthBufferState > m_depth;
 		PassState< Render::BlendState >       m_blend;
 		Shared<Resource::Shader>           m_shader;
-		std::vector< int >                 m_param_id;
-		std::vector< Render::Uniform* >    m_uniform;
+		Vector< int >                 m_param_id;
+		Vector< Render::Uniform* >    m_uniform;
 		//Number of times this pass is drawn (multi-pass techniques). 1 = normal.
 		//Declared in the .sqfx with "draw_count N"; the drawer iterates the pass
 		//that many times, advancing the MultiPass index each step.
@@ -437,7 +437,7 @@ namespace Render
 	{
 
 	public:
-		using PastList = std::vector < EffectPass >;
+		using PastList = Vector < EffectPass >;
 		using PassListIt = PastList::iterator;
 		using PassListCIt = PastList::const_iterator;
 
@@ -502,7 +502,7 @@ namespace Render
 	};
 
 	//alias map of parameters
-	using EffectParametersMap = std::unordered_map< std::string, int >;
+	using EffectParametersMap = UnorderedMap< String, int >;
 
 	//the variants of a technique: its passes compiled again with a define. A technique declares
 	//them in the .sqfx ("variants instanced clip"), each combination of them is compiled
@@ -535,8 +535,8 @@ namespace Render
 
 		//the parameters that turn the clip variant on ("clip(mask, dither)" in the .sqfx): one of
 		//them over 0 in the parameters of a draw (its material)
-		void clip_parameters(const std::vector< std::string >& names);
-		const std::vector< std::string >& clip_parameters() const { return m_clip_parameters; }
+		void clip_parameters(const Vector< String >& names);
+		const Vector< String >& clip_parameters() const { return m_clip_parameters; }
 		//their ids in an effect (an imported technique: the importer)
 		void resolve_clip_parameters(const EffectParametersMap& parameters);
 		//one of them is on in the parameters
@@ -554,12 +554,12 @@ namespace Render
 	private:
 		EffectTechnique            m_techniques[EV_COUNT];
 		bool                       m_declared[EV_COUNT]{ false, false, false, false, false, false, false, false };
-		std::vector< std::string > m_clip_parameters;
-		std::vector< int >         m_clip_parameter_ids;
+		Vector< String > m_clip_parameters;
+		Vector< int >         m_clip_parameter_ids;
 	};
 
 	//alias map of techniques
-	using EffectTechniquesMap = std::unordered_map< std::string, EffectTechniqueVariants >;
+	using EffectTechniquesMap = UnorderedMap< String, EffectTechniqueVariants >;
 
 	//Effect
 	class SQUARE_API Effect : public BaseObject
@@ -586,12 +586,12 @@ namespace Render
 		const EffectQueueType& queue() const { return m_queue; }
 
 		//get technique (without variants)
-		EffectTechnique* technique(const std::string& technique);
-		const EffectTechnique* technique(const std::string& technique) const;
+		EffectTechnique* technique(const String& technique);
+		const EffectTechnique* technique(const String& technique) const;
 		//the technique of a draw: the variant of its renderable (Renderable::variant: EV_INSTANCED,
 		//EV_SKINNED; nullptr: not declared); its EV_CLIP variant, if declared, when one of its clip
 		//parameters is on in the parameters (its material) or when fading (a level of detail)
-		EffectTechnique* technique(const std::string& technique, unsigned char variant, const EffectParameters& parameters, bool fading);
+		EffectTechnique* technique(const String& technique, unsigned char variant, const EffectParameters& parameters, bool fading);
 
 		//all techniques, with their variants
 		const EffectTechniquesMap& techniques() const { return m_techniques_map; }
@@ -599,15 +599,15 @@ namespace Render
 		//get parameter
 		EffectParameters*   parameters();
 		EffectParameter*    parameter(int parameter) const;
-		EffectParameter*    parameter(const std::string& parameter) const;
-		const std::string&  parameter_name(int parameter) const;
+		EffectParameter*    parameter(const String& parameter) const;
+		const String&  parameter_name(int parameter) const;
 		Unique<EffectParameters>  copy_all_parameters() const;;
 
 		//get id
-		int parameter_id(const std::string& parameter);
+		int parameter_id(const String& parameter);
 
 		//get technique from other effect
-		bool import_technique(const Effect& effect, const std::string& name);
+		bool import_technique(const Effect& effect, const String& name);
 
 		//get all techniques from other effect
 		bool import_techniques(const Effect& effect);
@@ -621,7 +621,7 @@ namespace Render
 		Allocator*			 m_allocator;
 
 		//get id
-		int add_parameter(int id, const std::string& name, Unique<EffectParameter>&& parameter);
+		int add_parameter(int id, const String& name, Unique<EffectParameter>&& parameter);
 
 		//help
 		void for_each_pass_build_params_id();

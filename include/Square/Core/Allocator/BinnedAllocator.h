@@ -56,6 +56,8 @@ namespace Square
 		void  deallocate(void* ptr);
 		//a block of allocate (align > 16) or of the aligned malloc of the platform
 		void  deallocate_aligned(void* ptr);
+		//a block (of allocate, align <= 16, or of malloc) of a new size, its bytes kept (realloc)
+		void* reallocate(void* ptr, size_t size);
 
 		//Allocator
 		virtual void* alloc(size_t size, const char* name, uint8 flag) override;

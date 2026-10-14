@@ -84,7 +84,7 @@ namespace Video
 	{
 		const Screen*   m_screen{ nullptr };
 		ContextInfo	    m_context;
-		std::string		m_title		{ "Square" };
+		String		m_title		{ "Square" };
 		unsigned int	m_size[2]	{ 1280, 720 };
 		int				m_position[2]{ 0,	0   };
 		bool			m_fullscreen{ false };

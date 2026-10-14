@@ -19,13 +19,13 @@ namespace Square
 namespace UI
 {
 	//DataModel.cpp
-	DataModel make_data_model(Rml::DataModelConstructor constructor, Square::Context* context, Rml::Context* owner, const std::string& name);
+	DataModel make_data_model(Rml::DataModelConstructor constructor, Square::Context* context, Rml::Context* owner, const String& name);
 
 	//a path: as it is, else in the resource folder
-	static std::string find_path(const std::string& path)
+	static String find_path(const String& path)
 	{
 		if (Filesystem::exists(path)) return path;
-		const std::string resource_path = Filesystem::join(Filesystem::resource_dir(), path);
+		const String resource_path = Filesystem::join(Filesystem::resource_dir(), path);
 		if (Filesystem::exists(resource_path)) return resource_path;
 		return path;
 	}
@@ -41,7 +41,7 @@ namespace UI
 		return m_ui_context != nullptr;
 	}
 
-	Document Context::load(const std::string& path)
+	Document Context::load(const String& path)
 	{
 		if (!m_ui_context) return Document();
 		Rml::ElementDocument* document = m_ui_context->LoadDocument(find_path(path));
@@ -49,12 +49,12 @@ namespace UI
 		return Document(document);
 	}
 
-	Document Context::load_from_memory(const std::string& rml)
+	Document Context::load_from_memory(const String& rml)
 	{
 		return Document(m_ui_context ? m_ui_context->LoadDocumentFromMemory(rml) : nullptr);
 	}
 
-	Document Context::document(const std::string& id) const
+	Document Context::document(const String& id) const
 	{
 		return Document(m_ui_context ? m_ui_context->GetDocument(id) : nullptr);
 	}
@@ -69,22 +69,22 @@ namespace UI
 		return Element(m_ui_context ? m_ui_context->GetHoverElement() : nullptr);
 	}
 
-	DataModel Context::create_data_model(const std::string& name)
+	DataModel Context::create_data_model(const String& name)
 	{
 		return m_ui_context ? make_data_model(m_ui_context->CreateDataModel(name), m_context, m_ui_context, name) : DataModel();
 	}
 
-	DataModel Context::data_model(const std::string& name) const
+	DataModel Context::data_model(const String& name) const
 	{
 		return m_ui_context ? make_data_model(m_ui_context->GetDataModel(name), nullptr, nullptr, name) : DataModel();
 	}
 
-	bool Context::remove_data_model(const std::string& name)
+	bool Context::remove_data_model(const String& name)
 	{
 		return m_ui_context && m_ui_context->RemoveDataModel(name);
 	}
 
-	bool Context::load_font(const std::string& path, bool fallback)
+	bool Context::load_font(const String& path, bool fallback)
 	{
 		return Rml::LoadFontFace(find_path(path), fallback);
 	}

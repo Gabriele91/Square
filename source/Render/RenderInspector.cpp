@@ -26,7 +26,7 @@ namespace Render
 		}
 	}
 
-	void RegistryInspector::on_create_target(Target* target, const std::vector<TargetField>& fields)
+	void RegistryInspector::on_create_target(Target* target, const Vector<TargetField>& fields)
 	{
 		if (target) m_targets.push_back({ target, TargetInfo{ fields } });
 	}

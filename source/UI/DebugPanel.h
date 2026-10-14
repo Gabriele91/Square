@@ -41,15 +41,15 @@ namespace UI
 	//the sections a game gives to a tab (a key: given again, replaced)
 	struct DebugProvider
 	{
-		std::string   m_tab;
-		std::string   m_key;
+		String   m_tab;
+		String   m_key;
 		DebugSections m_sections;
 	};
 
 	class DebugPanel
 	{
 	public:
-		DebugPanel(Square::Context& context, UI::Context& ui, const std::vector<DebugProvider>& providers);
+		DebugPanel(Square::Context& context, UI::Context& ui, const Vector<DebugProvider>& providers);
 		~DebugPanel();
 
 		//shown or hidden (its profiler stays as it is)
@@ -70,7 +70,7 @@ namespace UI
 		//the thumbnails of the tab Textures (it shown), in the frame before the UI
 		void draw(Render::Context& render);
 		//the texture of a thumbnail of a source of an image (none: nullptr)
-		Render::Texture* preview(const std::string& source, IVec2& size);
+		Render::Texture* preview(const String& source, IVec2& size);
 
 	private:
 		//a control of an option, the value it shows
@@ -79,41 +79,41 @@ namespace UI
 			DebugOption m_option;
 			Element     m_element;
 			int         m_shown{ -1 };
-			std::string m_text;
+			String m_text;
 		};
 		//the sections of a tab
 		struct Tab
 		{
-			std::string               m_name;
-			std::vector<DebugSection> m_sections;
+			String               m_name;
+			Vector<DebugSection> m_sections;
 		};
 
 		bool create();
 		//the tabs, their markup, their controls (the tab shown kept)
 		void rebuild();
-		std::vector<Tab> tabs();
+		Vector<Tab> tabs();
 		//what the controls stand for (when it changes: made again)
-		std::string signature() const;
+		String signature() const;
 		void bind(Control& control);
 		void refresh(Control& control);
 
 		//the sections of the engine
-		void pipeline_sections(std::vector<DebugSection>& sections) const;
-		void draw_sections(std::vector<DebugSection>& sections) const;
+		void pipeline_sections(Vector<DebugSection>& sections) const;
+		void draw_sections(Vector<DebugSection>& sections) const;
 		//the loads of the resources (BaseContext::resource_load_stats): their time by kind
-		void loading_sections(std::vector<DebugSection>& sections) const;
-		void ui_sections(std::vector<DebugSection>& sections) const;
-		void textures_sections(std::vector<DebugSection>& sections);
+		void loading_sections(Vector<DebugSection>& sections) const;
+		void ui_sections(Vector<DebugSection>& sections) const;
+		void textures_sections(Vector<DebugSection>& sections);
 		//the tab Textures shown; its thumbnails as the filter and the page
 		bool textures_shown() const;
 		void update_textures();
 
 		Square::Context&                  m_context;
 		UI::Context&                      m_ui;
-		const std::vector<DebugProvider>& m_providers;
-		std::unique_ptr<ProfilerPanel>    m_profiler;
-		std::unique_ptr<TexturePreviews>  m_previews;
-		std::vector<Element>              m_captions;      //of the thumbnails
+		const Vector<DebugProvider>& m_providers;
+		UniquePtr<ProfilerPanel>    m_profiler;
+		UniquePtr<TexturePreviews>  m_previews;
+		Vector<Element>              m_captions;      //of the thumbnails
 		int                               m_textures_tab{ -1 };
 		int                               m_texture_filter{ 0 }; //render targets, shadow maps, images
 		int                               m_texture_page{ 0 };
@@ -121,8 +121,8 @@ namespace UI
 		Element                           m_page_label;    //under the thumbnails, between the arrows
 		Document                          m_document;
 		Element                           m_content;
-		std::vector<Control>              m_controls;
-		std::string                       m_signature;
+		Vector<Control>              m_controls;
+		String                       m_signature;
 		bool                              m_visible{ false };
 		bool                              m_dirty{ true };
 	};

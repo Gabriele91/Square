@@ -51,11 +51,11 @@ namespace Parser
 			}
 		};
 
-		bool parse(Context& default_context, const std::vector<unsigned char>& binary);
+		bool parse(Context& default_context, const Vector<unsigned char>& binary);
 
 		bool parse(Context& default_context, const unsigned char*& ptr, size_t size);
 
-		bool serialize(Context& context, std::vector<unsigned char>& binary);
+		bool serialize(Context& context, Vector<unsigned char>& binary);
 	};
 }
 }

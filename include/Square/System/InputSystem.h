@@ -82,11 +82,11 @@ namespace Square
 		float scroll() const;
 
 		//actions: a name bound to keys (any of them)
-		void bind(const std::string& action, Video::KeyboardEvent key);
-		void unbind(const std::string& action);
-		bool action(const std::string& action) const;          //one of its keys held
-		bool action_pressed(const std::string& action) const;  //one of its keys went down in this frame
-		bool action_released(const std::string& action) const; //one of its keys went up in this frame
+		void bind(const String& action, Video::KeyboardEvent key);
+		void unbind(const String& action);
+		bool action(const String& action) const;          //one of its keys held
+		bool action_pressed(const String& action) const;  //one of its keys went down in this frame
+		bool action_released(const String& action) const; //one of its keys went up in this frame
 
 	protected:
 		//state of a key/button: held, and the changes of the frame
@@ -102,22 +102,22 @@ namespace Square
 		//an event (next: the state being built by the events, until the next update)
 		static void change(Button& button, Video::ActionEvent action);
 		//the state of the frame from the events, then the next one starts from it
-		template < size_t N > static void latch(std::array<Button, N>& state, std::array<Button, N>& next);
+		template < size_t N > static void latch(Array<Button, N>& state, Array<Button, N>& next);
 
 		Video::Input* m_input{ nullptr };
 		bool          m_close_requested{ false };
-		std::vector<InputListener*> m_listeners;
+		Vector<InputListener*> m_listeners;
 		//state of the frame, and the next one
-		std::array<Button, KEY_COUNT>    m_keys;
-		std::array<Button, KEY_COUNT>    m_keys_next;
-		std::array<Button, BUTTON_COUNT> m_buttons;
-		std::array<Button, BUTTON_COUNT> m_buttons_next;
+		Array<Button, KEY_COUNT>    m_keys;
+		Array<Button, KEY_COUNT>    m_keys_next;
+		Array<Button, BUTTON_COUNT> m_buttons;
+		Array<Button, BUTTON_COUNT> m_buttons_next;
 		Vec2  m_mouse{ 0.0f };
 		Vec2  m_mouse_next{ 0.0f };
 		Vec2  m_mouse_delta{ 0.0f };
 		float m_scroll{ 0.0f };
 		float m_scroll_next{ 0.0f };
 		//actions
-		std::unordered_map<std::string, std::vector<Video::KeyboardEvent>> m_actions;
+		UnorderedMap<String, Vector<Video::KeyboardEvent>> m_actions;
 	};
 }

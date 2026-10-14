@@ -143,14 +143,14 @@ namespace Parser
 			//copy the rest of the buffer as raw bytes and end the parsing
 			const unsigned char* data_start = reinterpret_cast<const unsigned char*>(cursor);
 			const unsigned char* data_end   = reinterpret_cast<const unsigned char*>(buffer_end);
-			context.m_image = std::vector<unsigned char>{ data_start, data_end };
+			context.m_image = Vector<unsigned char>{ data_start, data_end };
 			cursor = buffer_end;
 			return true;
 		}
 		bool handle_image(Context& context, const char*& cursor, const char* /*buffer_end*/)
 		{
 			skip_space_and_comments(context.m_line, cursor);
-			std::string url;
+			String url;
 			if (!parse_string(context.m_line, cursor, url))
 			{
 				context.m_errors.emplace_back(context.m_line, "Invalid image/url/texture value");
@@ -207,7 +207,7 @@ namespace Parser
 					}
 				}
 				//keyword matched but no valid value: report it instead of silently ignoring
-				context.m_errors.emplace_back(context.m_line, "Invalid value for '" + std::string(command.keyword) + "'");
+				context.m_errors.emplace_back(context.m_line, "Invalid value for '" + String(command.keyword) + "'");
 				return CommandResult::Error;
 			}
 			return CommandResult::NotFound;
@@ -240,9 +240,9 @@ namespace Parser
 	}
 	// // // // // // // // // // // // // // // // // // // // // // // // // //
 	// Context
-	std::string Texture::Context::errors_to_string() const
+	String Texture::Context::errors_to_string() const
 	{
-		std::stringstream sbuffer;
+		StringStream sbuffer;
 
 		for (auto& error : m_errors)
 		{
@@ -252,7 +252,7 @@ namespace Parser
 		return sbuffer.str();
 	}
 	// // // // // // // // // // // // // // // // // // // // // // // // // //
-	bool Texture::parse(Context& default_context, const std::string& source)
+	bool Texture::parse(Context& default_context, const String& source)
 	{
 		const char* source_ptr = source.c_str();
 		return parse(default_context, source_ptr, source.size());

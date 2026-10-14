@@ -80,7 +80,7 @@ namespace Animations
                 }
                 out.m_times = GLTF::Import::read_floats(gltf, sampler.input, false);
                 //the values: 3 or 4 components (rotations in bytes or shorts: normalized)
-                const std::vector<float> values = GLTF::Import::read_floats(gltf, sampler.output, true);
+                const Square::Vector<float> values = GLTF::Import::read_floats(gltf, sampler.output, true);
                 const size_t components = out.m_property == Animator::P_ROTATION ? 4 : 3;
                 out.m_values.reserve(values.size() / components);
                 for (size_t i = 0; i + components <= values.size(); i += components)
@@ -111,10 +111,10 @@ namespace Animations
         }
     }
 
-    bool path(const Square::Scene::Actor& root, const Square::Scene::Actor& actor, std::string& out)
+    bool path(const Square::Scene::Actor& root, const Square::Scene::Actor& actor, Square::String& out)
     {
         using namespace Square::Scene;
-        std::vector<std::string> names;
+        Square::Vector<Square::String> names;
         const Actor* at = &actor;
         Square::Shared<Actor> parent;
         while (at && at != &root)
@@ -142,11 +142,11 @@ namespace Animations
     )
     {
         using namespace AuxAnimations;
-        std::vector<Animator::Clip> clips;
+        Square::Vector<Animator::Clip> clips;
         for (const GLTF::Animation& animation : gltf.animations)
         {
             Animator::Clip clip;
-            clip.m_name = animation.name.size() ? animation.name : "clip_" + std::to_string(clips.size());
+            clip.m_name = animation.name.size() ? animation.name : "clip_" + Square::to_string(clips.size());
             for (const GLTF::Animation::Channel& channel : animation.channels)
             {
                 Shared<Actor> target;
@@ -155,7 +155,7 @@ namespace Animations
                     target = actors[*channel.node];
                 }
                 Animator::Channel out;
-                std::string target_path;
+                Square::String target_path;
                 const bool found = target && path(*root, *target, target_path);
                 if (found && channel_of(gltf, animation, channel, mode, out))
                 {
