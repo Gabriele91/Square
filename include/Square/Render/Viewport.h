@@ -77,7 +77,7 @@ namespace Render
         const float far() const;
 
         //cast
-        explicit operator const IVec2& () const;
+        explicit operator IVec2 () const;
         explicit operator const IVec4& () const;
         explicit operator const Mat4& () const;
 

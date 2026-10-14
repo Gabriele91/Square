@@ -6,7 +6,9 @@
 //
 #pragma once
 // Windows
-#define NOMINMAX
+#ifndef NOMINMAX
+	#define NOMINMAX
+#endif
 /////////////////////////////////////////////////////////////////////////////
 // DEFAULT INCLUDE
 #include <string>
@@ -85,24 +87,15 @@
 // Macro help
 #define ConstantBufferStruct  struct alignas(16)
 /////////////////////////////////////////////////////////////////////////////
-// Export STD libs
-#if defined( _WIN32 ) && defined( SQUARE_API )
-// Disable warning
-#pragma warning(disable: 4251)
-// Import commonest class/struct
-#include <string>
-#include <vector>
-// Export string
-template class SQUARE_API std::allocator<char>;
-template struct SQUARE_API std::char_traits<char>;
-template class SQUARE_API std::basic_string<char, std::char_traits<char>, std::allocator<char>>;
-// Export vector
-template class SQUARE_API std::allocator<int>;
-template class SQUARE_API std::vector<int>;
-template class SQUARE_API std::allocator<unsigned int>;
-template class SQUARE_API std::vector<unsigned int>;
-template class SQUARE_API std::allocator< std::string >;
-template class SQUARE_API std::vector< std::string >;
+// STD types in the exported classes
+// The library, its drivers and its games are built by the same compiler with the same runtime
+// (/MD, see Core/Build.h), so the members of the STD (std::string, std::vector...) of an exported
+// class have the same layout and code on both sides: C4251/C4275 are harmless here. The STD
+// templates are not exported (an explicit instantiation of std::basic_string as dllexport warns
+// C4251 inside the STL itself, where a pragma cannot silence it, and makes every client import
+// std::string from the library)
+#if defined( _MSC_VER )
+#pragma warning(disable: 4251 4275)
 #endif
 /////////////////////////////////////////////////////////////////////////////
 // debug

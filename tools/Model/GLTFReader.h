@@ -648,11 +648,11 @@ namespace GLTF
             auto& jview = i_view.object({});
             out_views.emplace_back
             (
-                jview.find("buffer") != jview.end() ? jview.at("buffer").number(0) : 0,
-                jview.find("byteOffset") != jview.end() ? jview.at("byteOffset").number(0) : 0,
-                jview.find("byteLength") != jview.end() ? jview.at("byteLength").number(0) : 0,
-                jview.find("target") != jview.end() ? jview.at("target").number(0) : 0,
-                jview.find("byteStride") != jview.end() ? jview.at("byteStride").number(0) : 0
+                jview.find("buffer") != jview.end() ? size_t(jview.at("buffer").number(0)) : 0,
+                jview.find("byteOffset") != jview.end() ? size_t(jview.at("byteOffset").number(0)) : 0,
+                jview.find("byteLength") != jview.end() ? size_t(jview.at("byteLength").number(0)) : 0,
+                jview.find("target") != jview.end() ? size_t(jview.at("target").number(0)) : 0,
+                jview.find("byteStride") != jview.end() ? size_t(jview.at("byteStride").number(0)) : 0
             );
         }
         return out_views;
@@ -772,7 +772,7 @@ namespace GLTF
             auto it_texture_sampler = texture.find("sampler");
             if(it_texture_sampler != texture.end())
             {
-                sampler_index = it_texture_sampler->second.number(0);
+                sampler_index = size_t(it_texture_sampler->second.number(0));
             }
             // Get source
             size_t image_index = texture["source"].number(0);
@@ -808,7 +808,7 @@ namespace GLTF
                 auto& jattributes = primitive.at("attributes").object({});
                 for (const auto& attribute : jattributes)
                 {
-                    attributes.emplace(attribute.first, attribute.second.number(0));
+                    attributes.emplace(attribute.first, size_t(attribute.second.number(0)));
                 }
 
                 // Decode other primitive properties

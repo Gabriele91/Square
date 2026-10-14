@@ -39,28 +39,28 @@ namespace Render
 	{
 		if (!build_vertex_layout(Layout::LF_POSITION_2D)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(vertexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(vertexs.size()));
 		return true;
 	}
 	bool Mesh::build(const Mesh::Vertex3DList& vertexs, bool cpu_access)
 	{
 		if (!build_vertex_layout( Layout::LF_POSITION_3D )) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(vertexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(vertexs.size()));
 		return true;
 	}
 	bool Mesh::build(const Mesh::Vertex2DUVList& vertexs, bool cpu_access)
 	{
 		if (!build_vertex_layout(Layout::LF_POSITION_2D | Layout::LF_UVMAP)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(vertexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(vertexs.size()));
 		return true;
 	}
 	bool Mesh::build(const Mesh::Vertex3DUVList& vertexs, bool cpu_access)
 	{
 		if (!build_vertex_layout(Layout::LF_POSITION_3D | Layout::LF_UVMAP)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(vertexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(vertexs.size()));
 		return true;
 	}
 	bool Mesh::build(const Mesh::Vertex3DNUVList& vertexs, bool cpu_access)
@@ -72,7 +72,7 @@ namespace Render
 			| Layout::LF_UVMAP
 		)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(vertexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(vertexs.size()));
 		return true;
 	}
 	bool Mesh::build(const Mesh::Vertex3DNTBUVList& vertexs, bool cpu_access)
@@ -86,7 +86,7 @@ namespace Render
 			| Layout::LF_UVMAP
 		)) return false;
 		if(!build_vertex_buffer(vertexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(vertexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(vertexs.size()));
 		return true;
 	}
 
@@ -103,7 +103,7 @@ namespace Render
 			| Layout::LF_EXTRA1
 		)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(vertexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(vertexs.size()));
 		return true;
 	}
 
@@ -159,7 +159,7 @@ namespace Render
 		)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
 		if (!build_index_buffer(indexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(indexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(indexs.size()));
 		return true;
 	}
 	bool Mesh::build(const Vertex3DList& vertexs, const IndexList& indexs, bool cpu_access)
@@ -170,7 +170,7 @@ namespace Render
 		)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
 		if (!build_index_buffer(indexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(indexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(indexs.size()));
 		return true;
 	}
 	bool Mesh::build(const Vertex2DUVList& vertexs, const IndexList& indexs, bool cpu_access)
@@ -182,7 +182,7 @@ namespace Render
 		)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
 		if (!build_index_buffer(indexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(indexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(indexs.size()));
 		return true;
 	}
 	bool Mesh::build(const Vertex3DUVList& vertexs, const IndexList& indexs, bool cpu_access)
@@ -194,7 +194,7 @@ namespace Render
 		)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
 		if (!build_index_buffer(indexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(indexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(indexs.size()));
 		return true;
 	}
 	bool Mesh::build(const Vertex3DNUVList& vertexs, const IndexList& indexs, bool cpu_access)
@@ -207,7 +207,7 @@ namespace Render
 		)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
 		if (!build_index_buffer(indexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(indexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(indexs.size()));
 		return true;
 	}
 	bool Mesh::build(const Vertex3DNTBUVList& vertexs, const IndexList& indexs, bool cpu_access)
@@ -222,7 +222,7 @@ namespace Render
 		)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
 		if (!build_index_buffer(indexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(indexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(indexs.size()));
 		return true;
 	}
 
@@ -240,7 +240,7 @@ namespace Render
 		)) return false;
 		if (!build_vertex_buffer(vertexs, cpu_access)) return false;
 		if (!build_index_buffer(indexs, cpu_access)) return false;
-		m_sub_meshs.emplace_back(indexs.size());
+		m_sub_meshs.emplace_back(static_cast<unsigned int>(indexs.size()));
 		return true;
 	}
 

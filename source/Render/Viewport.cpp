@@ -134,7 +134,7 @@ namespace Render
         return m_projection_info.far;
     }
 
-    Viewport::operator const IVec2& () const
+    Viewport::operator IVec2 () const
     {
         return viewport_size();
     }

@@ -97,7 +97,7 @@ size_t MeshManager::add_mesh(const Square::Data::GLTF::Mesh& mesh, const Square:
             {
                 indices.reserve(vertexes.size());
                 for (size_t i = 0; i < vertexes.size(); ++i)
-                    indices.emplace_back(i);
+                    indices.emplace_back(static_cast<unsigned int>(i));
             }
             // to LHs
             if (m_mode & M_TO_LHS)
@@ -146,7 +146,7 @@ size_t MeshManager::add_mesh(const Square::Data::GLTF::Mesh& mesh, const Square:
                 }
             }
             // Add sub mesh
-            static_mesh_context.m_submesh.emplace_back(drawtype, indices.size(), context_index.size());
+            static_mesh_context.m_submesh.emplace_back(drawtype, static_cast<unsigned int>(indices.size()), static_cast<unsigned int>(context_index.size()));
             // Update indices
             if (context_mesh.size())
             {

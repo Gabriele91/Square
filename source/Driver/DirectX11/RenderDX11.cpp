@@ -815,8 +815,8 @@ namespace Render
 				get_depth_write_mask(dbs.m_mode),// D3D11_DEPTH_WRITE_MASK DepthWriteMask;
 				get_depth_comp_func(dbs.m_type), // D3D11_COMPARISON_FUNC DepthFunc;
 				enable,                          // BOOL StencilEnable;
-				(UINT8)0xFFFFFFFF * enable,      // UINT8 StencilReadMask;
-				(UINT8)0xFFFFFFFF * enable,      // UINT8 StencilWriteMask;
+				UINT8(enable ? 0xFF : 0),       // UINT8 StencilReadMask;
+				UINT8(enable ? 0xFF : 0),       // UINT8 StencilWriteMask;
 				{                                // D3D11_DEPTH_STENCILOP_DESC FrontFace;
 					D3D11_STENCIL_OP_KEEP,       // D3D11_STENCIL_OP StencilFailOp;
 					front_face,					 // D3D11_STENCIL_OP StencilDepthFailOp;
@@ -2537,7 +2537,7 @@ namespace Render
 			data.m_width,		//UINT Width;
 			data.m_height,		//UINT Height;
 			mip_levels,			//UINT MipLevels;
-			size,		        //UINT ArraySize;
+			UINT(size),		        //UINT ArraySize;
 			texture_format_data,//DXGI_FORMAT Format;
 			1, 0,				//DXGI_SAMPLE_DESC SampleDesc;
 			usage,				//D3D11_USAGE Usage;
