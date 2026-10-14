@@ -1,31 +1,31 @@
 [submodule "dependencies/HLSL2ALL"]
 	path = dependencies/HLSL2ALL
-	url = https://github.com/Gabriele91/HLSL2ALL.git
+	url = git@github.com:Gabriele91/HLSL2ALL.git
 	branch = master
 [submodule "dependencies/glm"]
 	path = dependencies/glm
-	url = https://github.com/g-truc/glm.git
+	url = git@github.com:g-truc/glm.git
 [submodule "dependencies/zlib"]
 	path = dependencies/zlib
-	url = https://github.com/madler/zlib.git
+	url = git@github.com:madler/zlib.git
 [submodule "dependencies/glad"]
 	path = dependencies/glad
-	url = https://github.com/Dav1dde/glad.git
+	url = git@github.com:Dav1dde/glad.git
 [submodule "dependencies/astc-encoder"]
 	path = dependencies/astc-encoder
-	url = https://github.com/ARM-software/astc-encoder.git
+	url = git@github.com:ARM-software/astc-encoder.git
 [submodule "dependencies/RmlUi"]
 	path = dependencies/RmlUi
-	url = https://github.com/mikke89/RmlUi.git
+	url = git@github.com:mikke89/RmlUi.git
 [submodule "dependencies/freetype"]
 	path = dependencies/freetype
-	url = https://github.com/freetype/freetype.git
+	url = git@github.com:freetype/freetype.git
 [submodule "dependencies/volk"]
 	path = dependencies/volk
-	url = https://github.com/zeux/volk.git
+	url = git@github.com:zeux/volk.git
 [submodule "dependencies/VulkanMemoryAllocator"]
 	path = dependencies/VulkanMemoryAllocator
-	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+	url = git@github.com:GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
 [submodule "dependencies/Vulkan-Headers"]
 	path = dependencies/Vulkan-Headers
-	url = https://github.com/KhronosGroup/Vulkan-Headers.git
+	url = git@github.com:KhronosGroup/Vulkan-Headers.git
