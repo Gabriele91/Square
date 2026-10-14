@@ -59,7 +59,7 @@
 #endif
 // The version of the interface between the library and its drivers (Render::Context): up when
 // it changes (a driver of another version is not loaded)
-#define SQUARE_DRIVER_ABI "1"
+#define SQUARE_DRIVER_ABI "2"
 // The build: its kind and the version of the interface ("release/abi1")
 #define SQUARE_BUILD_ID SQUARE_BUILD_KIND "/abi" SQUARE_DRIVER_ABI
 /////////////////////////////////////////////////////////////////////////////

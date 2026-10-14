@@ -2,12 +2,10 @@
 //  Square
 //
 //  Created by Gabriele Di Bari on 09/08/2024.
-//  Copyright � 2024 Gabriele Di Bari. All rights reserved.
+//  Copyright © 2024 Gabriele Di Bari. All rights reserved.
 //
-#include <stdlib.h>
 #include <string>
-#include <algorithm>
-#include "Square/Core/Allocator.h"
+#include "Square/Core/Allocator/DebugAllocator.h"
 // Enable verbose allocator in debug mode
 #if defined(_DEBUG) && (DEBUG_ALLOCATOR == 1)
 	#define DEBUG_ALLOCATOR_SUPER_VERBOSE 1
@@ -15,60 +13,8 @@
 
 namespace Square
 {
-	static const size_t s_default_align = 16;
-
-	Allocator::~Allocator() {}
-
-	DefaultAllocator::~DefaultAllocator() {}
-
-#if _WIN32
-	void* DefaultAllocator::alloc(size_t size, const char* name, uint8 flag)
-	{
-		void* alloc_memory_ptr = _aligned_malloc(size, s_default_align);;
-		return alloc_memory_ptr;
-	}
-
-	void* DefaultAllocator::alloc(size_t size, const char* name, uint8 flag, uint16 align, uint16 align_offset) 
-	{
-		void* alloc_memory_ptr = _aligned_offset_malloc(size, align, align_offset);
-		return alloc_memory_ptr;
-	}
-
-	void  DefaultAllocator::free(void* ptr, size_t size)
-	{
-		_aligned_free(ptr);
-	}
-	
-	void  DefaultAllocator::free(void* ptr)
-	{
-		_aligned_free(ptr);
-	}
-#else
-	void* DefaultAllocator::alloc(size_t size, const char* name, uint8 flag)
-	{
-		size_t aligned_size = (size + s_default_align - 1) & ~(s_default_align - 1);
-		return aligned_alloc(s_default_align, aligned_size);
-	}
-
-	void* DefaultAllocator::alloc(size_t size, const char* name, uint8 flag, uint16 align, uint16 align_offset)
-	{
-		size_t aligned_size = (size + align - 1) & ~(size_t(align) - 1);
-		return aligned_alloc(align, aligned_size);
-	}
-
-	void  DefaultAllocator::free(void* ptr, size_t size)
-	{
-		::free(ptr);
-	}
-
-	void  DefaultAllocator::free(void* ptr)
-	{
-		::free(ptr);
-	}
-#endif
-
-	DebugAllocator::DebugAllocator(Allocator* allocator, Logger* logger) : m_allocator(allocator), m_logger(logger) {}
-	DebugAllocator::~DebugAllocator() 
+	DebugAllocator::DebugAllocator(Allocator* allocator, Logger* logger) : m_logger(logger), m_allocator(allocator) {}
+	DebugAllocator::~DebugAllocator()
 	{
 		for (auto& it : m_debug_map)
 		{
@@ -96,7 +42,7 @@ namespace Square
 	}
 
 	void* DebugAllocator::alloc(size_t size, const char* name, uint8 flag, uint16 align, uint16 align_offset)
-	{	
+	{
 		std::lock_guard _lock(m_mutex);
 		void* alloc_memory_ptr = m_allocator->alloc(size, name, flag, align, align_offset);
 		// Map allocation
@@ -129,7 +75,7 @@ namespace Square
 			m_logger->debug("Free: UNKNOWN ptr: " + std::to_string(size_t(ptr)));
 		m_allocator->free(ptr,size);
 	}
-	
+
 	void  DebugAllocator::free(void* ptr)
 	{
 		std::lock_guard _lock(m_mutex);

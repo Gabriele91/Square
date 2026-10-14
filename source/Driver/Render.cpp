@@ -4,6 +4,7 @@
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/SharedLibrary.h"
 #include "Square/Core/Logger.h"
+#include "Square/Core/Allocator/Memory.h"
 #include "Square/Driver/Render.h"
 
 namespace Square
@@ -157,6 +158,11 @@ namespace Render
 					}
 					else if (auto create_context = (square_render_create_context)SharedLibrary::get(lib, "square_render_create_context"))
 					{
+						//its new/delete on the heap of the library (they share their memory)
+						if (auto install = (MemoryHooksInstall)SharedLibrary::get(lib, "square_memory_install"))
+						{
+							install(&Memory::hooks());
+						}
 						Context* context = create_context(allocator, logger);
 						get_lib_map()[context] = lib;
 						return context;

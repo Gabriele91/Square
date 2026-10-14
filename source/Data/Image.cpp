@@ -5,7 +5,7 @@
 //  Copyright © 2016 Gabriele. All rights reserved.
 //
 #include "Square/Config.h"
-#include "Square/Core/Allocator.h"
+#include "Square/Core/Allocator/Allocator.h"
 #include "Square/Data/Image.h"
 
 namespace Square

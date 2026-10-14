@@ -7,7 +7,7 @@
 #pragma once
 #include <assert.h>
 #include "Square/Config.h"
-#include "Square/Core/Allocator.h"
+#include "Square/Core/Allocator/Allocator.h"
 
 namespace Square
 {

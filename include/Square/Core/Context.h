@@ -6,7 +6,8 @@
 //
 #pragma once
 #include "Square/Config.h"
-#include "Square/Core/Allocator.h"
+#include "Square/Core/Allocator/Allocator.h"
+#include "Square/Core/Allocator/FrameAllocator.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/Variant.h"
 #include "Square/Core/Resource.h"
@@ -159,6 +160,8 @@ namespace Square
 		Application* application();
 		//get allocator
 		Allocator* allocator();
+		//get the allocator of the frames (its blocks live until the end of the next frame)
+		FrameAllocator* frame_allocator();
 		//get logger
 		Logger* logger();
         //get window
@@ -167,6 +170,8 @@ namespace Square
         const Application* application() const;
 		//get allocator
 		Allocator* allocator() const;
+		//get the allocator of the frames (its blocks live until the end of the next frame)
+		FrameAllocator* frame_allocator() const;
 		//get logger
 		Logger* logger() const;
         //get window
@@ -218,6 +223,7 @@ namespace Square
 		Application*     m_application{ nullptr };
 		//Allocator refs
 		Allocator*		 m_allocator;
+		FrameAllocator*  m_frame_allocator{ nullptr };
 		//Logger refs
 		Logger*			 m_logger;
         //Reousce factory

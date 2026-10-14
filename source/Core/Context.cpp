@@ -444,6 +444,11 @@ namespace Square
 	{
 		return m_allocator;
 	}
+	//get the allocator of the frames
+	FrameAllocator* BaseContext::frame_allocator()
+	{
+		return m_frame_allocator;
+	}
 	//get logger
 	Logger* BaseContext::logger()
 	{
@@ -463,6 +468,11 @@ namespace Square
 	Allocator* BaseContext::allocator() const
 	{
 		return m_allocator;
+	}
+	//get the allocator of the frames
+	FrameAllocator* BaseContext::frame_allocator() const
+	{
+		return m_frame_allocator;
 	}
 	//get logger
 	Logger* BaseContext::logger() const

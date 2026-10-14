@@ -8,7 +8,7 @@
 #include "Square/Config.h"
 #include "Square/Math/Linear.h"
 #include "Square/Core/Variant.h"
-#include "Square/Core/Allocator.h"
+#include "Square/Core/Allocator/Allocator.h"
 #include "Square/Core/Logger.h"
 
 

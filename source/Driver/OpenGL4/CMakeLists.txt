@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Define source files
 set(SOURCE_FILES
+    ${SQUARE_ROOT_DIR}/source/Core/Allocator/MemoryOperators.cpp
     InterfaceGL4.cpp
     RenderGL4.cpp
 )
@@ -62,6 +63,9 @@ glad_add_library(glad_gl_core_41 REPRODUCIBLE API gl:core=4.1)
 
 # Create library target
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${HEADER_FILES})
+
+# its new/delete on the heap of Square (the hooks Square installs when it loads the driver)
+target_compile_definitions(${PROJECT_NAME} PRIVATE SQUARE_MEMORY_HOOKED)
 
 # Set preprocessor definitions
 target_compile_definitions(${PROJECT_NAME} PRIVATE

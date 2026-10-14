@@ -12,6 +12,7 @@ endif()
 
 
 set(SOURCE_FILES
+    ${SQUARE_ROOT_DIR}/source/Core/Allocator/MemoryOperators.cpp
     InterfaceMTL.mm
     RenderMTL.mm
 )
@@ -21,6 +22,9 @@ set(HEADER_FILES
     RenderMTL.h
 )
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${HEADER_FILES})
+
+# its new/delete on the heap of Square (the hooks Square installs when it loads the driver)
+target_compile_definitions(${PROJECT_NAME} PRIVATE SQUARE_MEMORY_HOOKED)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     _CRT_SECURE_NO_WARNINGS

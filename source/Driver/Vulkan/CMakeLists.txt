@@ -13,6 +13,7 @@ set(VMA_DIR ${SQUARE_ROOT_DIR}/dependencies/VulkanMemoryAllocator/include)
 
 # Define source files
 set(SOURCE_FILES
+    ${SQUARE_ROOT_DIR}/source/Core/Allocator/MemoryOperators.cpp
     InterfaceVK.cpp
     RenderVK.cpp
     ResourcesVK.cpp
@@ -37,6 +38,9 @@ set(HEADER_FILES
 
 # Create library target
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${HEADER_FILES})
+
+# its new/delete on the heap of Square (the hooks Square installs when it loads the driver)
+target_compile_definitions(${PROJECT_NAME} PRIVATE SQUARE_MEMORY_HOOKED)
 
 # Set preprocessor definitions
 target_compile_definitions(${PROJECT_NAME} PRIVATE

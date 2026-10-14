@@ -6,6 +6,9 @@
 //
 #include <algorithm>
 #include "Square/Core/Time.h"
+#include "Square/Core/Allocator/Memory.h"
+#include "Square/Core/Allocator/DebugAllocator.h"
+#include "Square/Core/Allocator/FrameAllocator.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/Core/Application.h"
@@ -77,15 +80,16 @@ namespace Square
         m_context.m_application = this;
         // Logger
         m_context.m_logger = get_logger_intance(LoggerType::LOGGER_OS_DEFAULT);
-        // Allocator
+        // Allocator: the heap of the engine (its leaks in the log in debug), the memory of the frames
         {
-            static DefaultAllocator s_default_allocator;
             #if defined(_DEBUG)
-            static DebugAllocator s_debug_allocator(&s_default_allocator, m_context.m_logger);
+            static DebugAllocator s_debug_allocator(&Memory::heap(), m_context.m_logger);
             m_context.m_allocator = &s_debug_allocator;
             #else 
-            m_context.m_allocator = &s_default_allocator;
+            m_context.m_allocator = &Memory::heap();
             #endif
+            static FrameAllocator s_frame_allocator(&Memory::heap());
+            m_context.m_frame_allocator = &s_frame_allocator;
         }
 		//Add static object factory
 		for (const auto& item : ClassObjectRegistration::item_list())
@@ -105,6 +109,7 @@ namespace Square
 		// Unregister
         m_context.m_application = nullptr;
         m_context.m_allocator = nullptr;
+        m_context.m_frame_allocator = nullptr;
     }
     
     void Application::clear() const
@@ -408,7 +413,8 @@ namespace Square
             last_time = Time::get_ms_time();
             //update delta time
             m_last_delta_time = std::max(last_time - old_time,  1E-16) / 1000.0;
-            //a frame
+            //a frame (the memory of the frame before the last one freed)
+            m_context.m_frame_allocator->next_frame();
             m_context.update_systems(m_last_delta_time);
             if (!m_instance->run(m_last_delta_time)) break;
             m_context.late_update_systems(m_last_delta_time);

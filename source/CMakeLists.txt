@@ -26,6 +26,7 @@ set(CMAKE_CXX_FLAGS_RETAIL "${CMAKE_CXX_FLAGS_RELEASE}")
 
 # Square project
 file(GLOB SOURCES Core/*.cpp
+                  Core/Allocator/*.cpp
                   Data/*.cpp
                   Data/ImageUtils/*.cpp
                   Geometry/*.cpp
@@ -109,8 +110,13 @@ if(APPLE)
     list(APPEND INSTALL_DY_LIBS SqMetal)
 endif()
 
-# Executable
+# Executable (its new/delete on the heap of the engine: Core/Allocator/MemoryOperators.cpp)
 add_library(Square SHARED ${SOURCES} ${OS_SOURCES})
+
+# The new/delete of the heap of the engine also in each module that links Square (they share their
+# memory with it: a std::string made in one, freed in the other; see Square/Core/Allocator/MemoryOperators.h)
+target_sources(Square INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Core/Allocator/MemoryOperators.cpp>)
+target_include_directories(Square INTERFACE $<BUILD_INTERFACE:${SQUARE_ROOT_DIR}/include>)
 
 # Flags
 target_compile_definitions(Square PRIVATE ${OS_FLAGS})

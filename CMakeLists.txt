@@ -49,6 +49,10 @@ set(SPIRV_CROSS_SKIP_INSTALL ON CACHE BOOL "Do not install SPIRV CROSS" FORCE)
 set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE BOOL "Do not compile SPIRV testes" FORCE)
 set(ENABLE_HLSL2ALL_TEST OFF CACHE BOOL "Skip HLSL2ALL compilation" FORCE)
 add_subdirectory(${SQUARE_ROOT_DIR}/dependencies/HLSL2ALL)
+# its new/delete on the heap of Square (they share their containers): the hooks Square installs
+target_sources(HLSL2ALL PRIVATE ${SQUARE_ROOT_DIR}/source/Core/Allocator/MemoryOperators.cpp)
+target_include_directories(HLSL2ALL PRIVATE ${SQUARE_ROOT_DIR}/include)
+target_compile_definitions(HLSL2ALL PRIVATE SQUARE_MEMORY_HOOKED)
 
 # Zlib
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static zlib" FORCE)
