@@ -218,7 +218,7 @@ public:
 		using namespace Square::Data;
 		Json jout = Json(JsonObject());
 		world().serialize_json(jout);
-		std::ofstream(path) << jout;
+		std::ofstream(path.c_str()) << jout;
 	}
 	//level deserialize
 	void deserialize(const Square::String& path)

@@ -1,0 +1,5 @@
+effect "Sprite"
+{
+    albedo_map texture("puff")
+    color      Vec4(1.0, 1.0, 1.0, 1.0)
+}

@@ -1,0 +1,700 @@
+{
+    "data": {
+        "name": {
+            "dtype": "STD_STRING",
+            "value": "particles_scene"
+        },
+        "position": {
+            "dtype": "VEC3",
+            "value": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        },
+        "scale": {
+            "dtype": "VEC3",
+            "value": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+            }
+        },
+        "rotation": {
+            "dtype": "QUAT",
+            "value": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+            }
+        }
+    },
+    "components": [],
+    "children": [
+        {
+            "data": {
+                "name": {
+                    "dtype": "STD_STRING",
+                    "value": "camera"
+                },
+                "position": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 0,
+                        "y": 1.6,
+                        "z": 3.0
+                    }
+                },
+                "scale": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                    }
+                },
+                "rotation": {
+                    "dtype": "QUAT",
+                    "value": {
+                        "x": 0.08715574274765817,
+                        "y": 0.0,
+                        "z": 0.0,
+                        "w": 0.9961946980917455
+                    }
+                }
+            },
+            "components": [
+                {
+                    "name": "Camera",
+                    "data": {
+                        "enable": {
+                            "dtype": "BOOL",
+                            "value": true
+                        },
+                        "viewport": {
+                            "dtype": "VEC4",
+                            "value": {
+                                "x": 0,
+                                "y": 0,
+                                "z": 1920,
+                                "w": 1080
+                            }
+                        },
+                        "projection": {
+                            "dtype": "FLOAT_MATRIX",
+                            "value": [
+                                1.30323,
+                                0,
+                                0,
+                                0,
+                                0,
+                                2.31685,
+                                0,
+                                0,
+                                0,
+                                0,
+                                1.001,
+                                -0.1001,
+                                0,
+                                0,
+                                1,
+                                0
+                            ]
+                        }
+                    }
+                }
+            ],
+            "children": []
+        },
+        {
+            "data": {
+                "name": {
+                    "dtype": "STD_STRING",
+                    "value": "light"
+                },
+                "position": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 0,
+                        "y": 10,
+                        "z": 0
+                    }
+                },
+                "scale": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                    }
+                },
+                "rotation": {
+                    "dtype": "QUAT",
+                    "value": {
+                        "x": 0.2126311099715939,
+                        "y": 0.6743797232066279,
+                        "z": -0.2126311099715939,
+                        "w": 0.6743797232066279
+                    }
+                }
+            },
+            "components": [
+                {
+                    "name": "DirectionLight",
+                    "data": {
+                        "shadow": {
+                            "dtype": "IVEC2",
+                            "value": {
+                                "x": 2048,
+                                "y": 2048
+                            }
+                        },
+                        "visible": {
+                            "dtype": "BOOL",
+                            "value": true
+                        },
+                        "diffuse": {
+                            "dtype": "VEC3",
+                            "value": {
+                                "x": 1.0,
+                                "y": 0.95,
+                                "z": 0.85
+                            }
+                        },
+                        "specular": {
+                            "dtype": "VEC3",
+                            "value": {
+                                "x": 1,
+                                "y": 1,
+                                "z": 1
+                            }
+                        }
+                    }
+                }
+            ],
+            "children": []
+        },
+        {
+            "data": {
+                "name": {
+                    "dtype": "STD_STRING",
+                    "value": "ground"
+                },
+                "position": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 0,
+                        "y": -0.1,
+                        "z": 8
+                    }
+                },
+                "scale": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 20,
+                        "y": 0.1,
+                        "z": 20
+                    }
+                },
+                "rotation": {
+                    "dtype": "QUAT",
+                    "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0,
+                        "w": 1
+                    }
+                }
+            },
+            "components": [
+                {
+                    "name": "StaticMesh",
+                    "data": {
+                        "materials": {
+                            "dtype": "STD_VECTOR_STRING",
+                            "value": [
+                                "default"
+                            ]
+                        },
+                        "obb": {
+                            "dtype": "STD_VECTOR_VEC3",
+                            "value": [
+                                {
+                                    "x": 1,
+                                    "y": 0,
+                                    "z": 0
+                                },
+                                {
+                                    "x": 0,
+                                    "y": 1,
+                                    "z": 0
+                                },
+                                {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 1
+                                },
+                                {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0
+                                },
+                                {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            ]
+                        },
+                        "mesh": {
+                            "dtype": "STD_STRING",
+                            "value": "csm/csm_scene_mesh0"
+                        }
+                    }
+                }
+            ],
+            "children": []
+        },
+        {
+            "data": {
+                "name": {
+                    "dtype": "STD_STRING",
+                    "value": "back"
+                },
+                "position": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 0,
+                        "y": 5,
+                        "z": 16
+                    }
+                },
+                "scale": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 20,
+                        "y": 5,
+                        "z": 0.2
+                    }
+                },
+                "rotation": {
+                    "dtype": "QUAT",
+                    "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0,
+                        "w": 1
+                    }
+                }
+            },
+            "components": [
+                {
+                    "name": "StaticMesh",
+                    "data": {
+                        "materials": {
+                            "dtype": "STD_VECTOR_STRING",
+                            "value": [
+                                "default"
+                            ]
+                        },
+                        "obb": {
+                            "dtype": "STD_VECTOR_VEC3",
+                            "value": [
+                                {
+                                    "x": 1,
+                                    "y": 0,
+                                    "z": 0
+                                },
+                                {
+                                    "x": 0,
+                                    "y": 1,
+                                    "z": 0
+                                },
+                                {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 1
+                                },
+                                {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0
+                                },
+                                {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            ]
+                        },
+                        "mesh": {
+                            "dtype": "STD_STRING",
+                            "value": "csm/csm_scene_mesh0"
+                        }
+                    }
+                }
+            ],
+            "children": []
+        },
+        {
+            "data": {
+                "name": {
+                    "dtype": "STD_STRING",
+                    "value": "cube"
+                },
+                "position": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 0,
+                        "y": 0.5,
+                        "z": 8
+                    }
+                },
+                "scale": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "z": 0.5
+                    }
+                },
+                "rotation": {
+                    "dtype": "QUAT",
+                    "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0,
+                        "w": 1
+                    }
+                }
+            },
+            "components": [
+                {
+                    "name": "StaticMesh",
+                    "data": {
+                        "materials": {
+                            "dtype": "STD_VECTOR_STRING",
+                            "value": [
+                                "default"
+                            ]
+                        },
+                        "obb": {
+                            "dtype": "STD_VECTOR_VEC3",
+                            "value": [
+                                {
+                                    "x": 1,
+                                    "y": 0,
+                                    "z": 0
+                                },
+                                {
+                                    "x": 0,
+                                    "y": 1,
+                                    "z": 0
+                                },
+                                {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 1
+                                },
+                                {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0
+                                },
+                                {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            ]
+                        },
+                        "mesh": {
+                            "dtype": "STD_STRING",
+                            "value": "csm/csm_scene_mesh0"
+                        }
+                    }
+                }
+            ],
+            "children": []
+        },
+        {
+            "data": {
+                "name": {
+                    "dtype": "STD_STRING",
+                    "value": "sparks"
+                },
+                "position": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 0,
+                        "y": 0.1,
+                        "z": 9.0
+                    }
+                },
+                "scale": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                    }
+                },
+                "rotation": {
+                    "dtype": "QUAT",
+                    "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0,
+                        "w": 1
+                    }
+                }
+            },
+            "components": [
+                {
+                    "name": "ParticleEmitter",
+                    "data": {
+                        "material": {
+                            "dtype": "STD_STRING",
+                            "value": "spark"
+                        },
+                        "rate": {
+                            "dtype": "FLOAT",
+                            "value": 80
+                        },
+                        "max": {
+                            "dtype": "INT",
+                            "value": 256
+                        },
+                        "life": {
+                            "dtype": "VEC2",
+                            "value": {
+                                "x": 0.8,
+                                "y": 1.2
+                            }
+                        },
+                        "box": {
+                            "dtype": "VEC3",
+                            "value": {
+                                "x": 0.25,
+                                "y": 0,
+                                "z": 0.1
+                            }
+                        },
+                        "direction": {
+                            "dtype": "VEC3",
+                            "value": {
+                                "x": 0,
+                                "y": 1,
+                                "z": 0
+                            }
+                        },
+                        "spread": {
+                            "dtype": "FLOAT",
+                            "value": 0.12
+                        },
+                        "speed": {
+                            "dtype": "VEC2",
+                            "value": {
+                                "x": 1.2,
+                                "y": 2.0
+                            }
+                        },
+                        "gravity": {
+                            "dtype": "VEC3",
+                            "value": {
+                                "x": 0,
+                                "y": 0,
+                                "z": 0
+                            }
+                        },
+                        "drag": {
+                            "dtype": "FLOAT",
+                            "value": 0.2
+                        },
+                        "size": {
+                            "dtype": "VEC2",
+                            "value": {
+                                "x": 0.18,
+                                "y": 0.05
+                            }
+                        },
+                        "size_random": {
+                            "dtype": "FLOAT",
+                            "value": 0.4
+                        },
+                        "color_start": {
+                            "dtype": "VEC4",
+                            "value": {
+                                "x": 1,
+                                "y": 1,
+                                "z": 1,
+                                "w": 1
+                            }
+                        },
+                        "color_end": {
+                            "dtype": "VEC4",
+                            "value": {
+                                "x": 1,
+                                "y": 0.4,
+                                "z": 0.1,
+                                "w": 0
+                            }
+                        },
+                        "spin": {
+                            "dtype": "VEC2",
+                            "value": {
+                                "x": 0,
+                                "y": 0
+                            }
+                        },
+                        "prewarm": {
+                            "dtype": "FLOAT",
+                            "value": 2
+                        }
+                    }
+                }
+            ],
+            "children": []
+        },
+        {
+            "data": {
+                "name": {
+                    "dtype": "STD_STRING",
+                    "value": "smoke"
+                },
+                "position": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 1.3,
+                        "y": 0.1,
+                        "z": 7.6
+                    }
+                },
+                "scale": {
+                    "dtype": "VEC3",
+                    "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                    }
+                },
+                "rotation": {
+                    "dtype": "QUAT",
+                    "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0,
+                        "w": 1
+                    }
+                }
+            },
+            "components": [
+                {
+                    "name": "ParticleEmitter",
+                    "data": {
+                        "material": {
+                            "dtype": "STD_STRING",
+                            "value": "smoke"
+                        },
+                        "rate": {
+                            "dtype": "FLOAT",
+                            "value": 14
+                        },
+                        "max": {
+                            "dtype": "INT",
+                            "value": 128
+                        },
+                        "life": {
+                            "dtype": "VEC2",
+                            "value": {
+                                "x": 3,
+                                "y": 5
+                            }
+                        },
+                        "box": {
+                            "dtype": "VEC3",
+                            "value": {
+                                "x": 0.4,
+                                "y": 0,
+                                "z": 0.4
+                            }
+                        },
+                        "direction": {
+                            "dtype": "VEC3",
+                            "value": {
+                                "x": 0,
+                                "y": 1,
+                                "z": 0
+                            }
+                        },
+                        "spread": {
+                            "dtype": "FLOAT",
+                            "value": 0.25
+                        },
+                        "speed": {
+                            "dtype": "VEC2",
+                            "value": {
+                                "x": 0.6,
+                                "y": 1.0
+                            }
+                        },
+                        "gravity": {
+                            "dtype": "VEC3",
+                            "value": {
+                                "x": 0.1,
+                                "y": 0,
+                                "z": 0
+                            }
+                        },
+                        "drag": {
+                            "dtype": "FLOAT",
+                            "value": 0.1
+                        },
+                        "size": {
+                            "dtype": "VEC2",
+                            "value": {
+                                "x": 0.5,
+                                "y": 1.6
+                            }
+                        },
+                        "size_random": {
+                            "dtype": "FLOAT",
+                            "value": 0.3
+                        },
+                        "color_start": {
+                            "dtype": "VEC4",
+                            "value": {
+                                "x": 1,
+                                "y": 1,
+                                "z": 1,
+                                "w": 0.8
+                            }
+                        },
+                        "color_end": {
+                            "dtype": "VEC4",
+                            "value": {
+                                "x": 1,
+                                "y": 1,
+                                "z": 1,
+                                "w": 0
+                            }
+                        },
+                        "spin": {
+                            "dtype": "VEC2",
+                            "value": {
+                                "x": -0.4,
+                                "y": 0.4
+                            }
+                        },
+                        "prewarm": {
+                            "dtype": "FLOAT",
+                            "value": 5
+                        }
+                    }
+                }
+            ],
+            "children": []
+        }
+    ]
+}

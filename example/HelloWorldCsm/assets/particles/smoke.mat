@@ -1,0 +1,5 @@
+effect "Sprite"
+{
+    albedo_map texture("smoke")
+    color      Vec4(1.0, 1.0, 1.0, 1.0)
+}
