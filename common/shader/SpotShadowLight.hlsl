@@ -8,9 +8,15 @@ Sampler2D(spot_shadow_map)
 #define IGNORE_SHADOWS_UNIFORM
 float ignore_shadows;
 #endif
+// Material option: 1 = one sample of the shadow, no filter (e.g. sprites: many over each other).
+// A material that does not set it gets 0: the filter of the light.
+#ifndef SHADOW_ONE_SAMPLE_UNIFORM
+#define SHADOW_ONE_SAMPLE_UNIFORM
+float shadow_one_sample;
+#endif
 
 #ifdef PCF_SHADOW
-float spot_light_shadow(in Vec3 proj_coords, const float bias)
+float spot_light_shadow_pcf(in Vec3 proj_coords, const float bias)
 {
 	//depth of current pos
 	float current_depth = proj_coords.z;
@@ -37,8 +43,9 @@ float spot_light_shadow(in Vec3 proj_coords, const float bias)
 	//return
 	return shadow;
 }
-#else
-float spot_light_shadow(in Vec3 proj_coords, const float bias)
+#endif
+
+float spot_light_shadow_one(in Vec3 proj_coords, const float bias)
 {
 	// depth of shadow map
 	float closest_depth = shadow2D(spot_shadow_map, proj_coords.xy).r;
@@ -49,7 +56,15 @@ float spot_light_shadow(in Vec3 proj_coords, const float bias)
 	// shadow
 	return shadow;
 }
+
+//its shadow: the filter of the light (PCF_SHADOW), else one sample (the material: shadow_one_sample)
+float spot_light_shadow(in Vec3 proj_coords, const float bias)
+{
+#ifdef PCF_SHADOW
+	if (shadow_one_sample < 0.5) return spot_light_shadow_pcf(proj_coords, bias);
 #endif
+	return spot_light_shadow_one(proj_coords, bias);
+}
 
 
 float spot_light_compute_shadow(in Vec4 fposition, const float bias)

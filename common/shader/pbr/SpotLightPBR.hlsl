@@ -7,39 +7,8 @@
 //
 #pragma once
 
-struct SpotLightStruct
-{
-	Vec3  m_position;
-	Vec3  m_direction;
-    Vec3  m_diffuse;
-    Vec3  m_specular;
-    float m_constant;
-    float m_radius;
-    float m_inside_radius;
-    float m_inner_cut_off;
-    float m_outer_cut_off;
-};
-
-cbuffer Light
-{
-    SpotLightStruct light;
-}
-
-#ifdef SQ_SHADOW
-#include <SpotShadowLight>
-#else
-float spot_light_apply_shadow(in Vec4 fposition)
-{
-    return 1.0;
-}
-#endif
-
-//attenuation
-float spot_light_compute_attenuation(in Vec3 light_relative)
-{
-	float light_distance = length(light_relative);
-	return pow(smoothstep(light.m_radius, light.m_inside_radius, light_distance), light.m_constant);
-}
+//the light (its buffer, its shadow): the same of every surface
+#include <SpotLight>
 
 LightResult compute_light
 (
@@ -64,9 +33,7 @@ LightResult compute_light
 	Vec3 light_direction = normalize(light_relative);
 
     // Spotlight penumbra intensity
-    float theta = dot(light_direction, -light.m_direction);
-    float epsilon = light.m_inner_cut_off - light.m_outer_cut_off;
-    float penumbra_intensity = clamp((theta - light.m_outer_cut_off) / epsilon, 0.0, 1.0);
+    float penumbra_intensity = spot_light_compute_penumbra(light_direction);
 
     // Shadow
     float shadow_factor = spot_light_apply_shadow(data.m_position);

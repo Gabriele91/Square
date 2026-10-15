@@ -21,6 +21,12 @@ Sampler2DArray(direction_shadow_map)
 #define IGNORE_SHADOWS_UNIFORM
 float ignore_shadows;
 #endif
+// Material option: 1 = one sample of the shadow, no filter (e.g. sprites: many over each other).
+// A material that does not set it gets 0: the filter of the light.
+#ifndef SHADOW_ONE_SAMPLE_UNIFORM
+#define SHADOW_ONE_SAMPLE_UNIFORM
+float shadow_one_sample;
+#endif
 
 uint find_csm_layer(in float depth)
 {
@@ -236,9 +242,11 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec
 	proj_coords = invY(proj_coords);
 	// Compute bias
 	float bias = bias_depth_driven(light_dir, normal, cascade_id);
-	// Shadow: by the filter of the light
+	// Shadow: by the filter of the light, else one sample (the material: shadow_one_sample)
 	float shadow = 1.0;
-	switch (direction_shadow_camera.m_options.x)
+	int shadow_filter = direction_shadow_camera.m_options.x;
+	if (shadow_one_sample > 0.5) shadow_filter = SHADOW_FILTER_NONE;
+	switch (shadow_filter)
 	{
 	case SHADOW_FILTER_NONE: shadow = direction_light_shadow_none(proj_coords, cascade_id, bias); break;
 	case SHADOW_FILTER_PCSS: shadow = direction_light_shadow_pcss(proj_coords, cascade_id, bias); break;

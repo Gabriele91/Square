@@ -6,31 +6,8 @@
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #pragma once
-struct DirectionLight
-{
-	Vec3 m_direction;
-    Vec3 m_diffuse;
-    Vec3 m_specular;
-};
-
-cbuffer Light
-{
-    DirectionLight light;
-}
-
-#ifdef SQ_SHADOW
-#include <DirectionShadowLight>
-#else
-float direction_light_apply_shadow(in Vec4 fposition, in Vec3  view_dir, in Vec3  normal)
-{
-    return 1.0;
-}
-Vec3 direction_light_shadow_tint(in Vec4 fposition)
-{
-    return Vec3(1.0, 1.0, 1.0);
-}
-#endif
-
+//the light (its buffer, its shadow): the same of every surface
+#include <DirectionLight>
 
 LightResult compute_light
 (

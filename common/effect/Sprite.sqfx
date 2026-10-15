@@ -9,10 +9,18 @@ parameters
     //rows, frames a second, frames used: 0 all); a sprite with a frame of its own: by it
     uv_scroll  Vec2(0.0, 0.0)
     flipbook   Vec4(1.0, 1.0, 0.0, 0.0)
+    //its light: through it toward the light (0 none: smoke, mist against the sun), its normal
+    //bent to its border (0: a plane, 1: a ball)
+    translucency float(0.5)
+    roundness    float(0.5)
+    //its shadow: the filter of the light (0, as every surface), one sample (1: many over each other)
+    shadow_one_sample float(0.0)
 }
 
-//Sprites alpha blended (smoke, mist, leaves): unlit quads turned toward the camera (Sprite.hlsl, Render::SpriteBatch),
-//drawn after the opaque scene, back to front; no shadow
+//Sprites alpha blended (smoke, mist, leaves): quads turned toward the camera (Sprite.hlsl,
+//Render::SpriteBatch), drawn after the opaque scene, back to front; lit as the translucent
+//surfaces (the ambient, then each light added, its shadow), by a light made for sprites (at each
+//vertex, diffuse); no shadow of their own
 sub_effect
 {
     queue { type translucent }
@@ -31,6 +39,19 @@ sub_effect
                 #include <Sprite>
             }
         }
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one
+            cullface off
+            lights spot_point_direction
+            shadows spot_point_direction
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #include <Sprite>
+            }
+        }
     }
     //deferred rendering pipeline: drawn into the light buffer (linear, encoded by the present)
     technique "translucent"
@@ -41,6 +62,20 @@ sub_effect
             blend src_alpha one_minus_src_alpha
             cullface off
             lights only_ambient
+            shader source
+            {
+                #define FORWARD_RENDERING
+                #define OUTPUT_LINEAR_COLOR
+                #include <Sprite>
+            }
+        }
+        pass
+        {
+            zbuffer less_equal read_only
+            blend src_alpha one
+            cullface off
+            lights spot_point_direction
+            shadows spot_point_direction
             shader source
             {
                 #define FORWARD_RENDERING

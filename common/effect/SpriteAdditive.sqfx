@@ -24,7 +24,7 @@ sub_effect
             zbuffer less_equal read_only
             blend src_alpha one
             cullface off
-            lights only_ambient
+            lights off
             shader source
             {
                 #define FORWARD_RENDERING
@@ -40,7 +40,7 @@ sub_effect
             zbuffer less_equal read_only
             blend src_alpha one
             cullface off
-            lights only_ambient
+            lights off
             shader source
             {
                 #define FORWARD_RENDERING

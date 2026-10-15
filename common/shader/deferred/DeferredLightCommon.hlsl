@@ -154,9 +154,7 @@ LegacyLightResult legacy_compute_light
 	Vec3  halfway_dir = normalize(light_dir + view_dir);
 	float spec = pow(max(dot(normal, halfway_dir), 0.0), shininess);
 	// Spotlight intensity
-	float theta = dot(light_dir, normalize(-light.m_direction));
-	float epsilon = light.m_inner_cut_off - light.m_outer_cut_off;
-	float intensity = clamp((theta - light.m_outer_cut_off) / epsilon, 0.0, 1.0);
+	float intensity = spot_light_compute_penumbra(light_dir);
 	// Apply shadow
 	float shadow_factor = spot_light_apply_shadow(fposition);
 	// Combine results
