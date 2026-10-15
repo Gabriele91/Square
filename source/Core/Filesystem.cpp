@@ -348,7 +348,11 @@ namespace Filesystem
         }
         /////////////////////////////////////////////////////////////////////
         out.resize(size);
-        square_assert_or_release(std::fread(&out[0], 1, size, file));
+        //the characters read: fewer than the bytes of the file in text mode (Windows: "\r\n" read
+        //as "\n", in the same buffer: its tail left with the last bytes of the file)
+        const size_t read = std::fread(&out[0], 1, size, file);
+        square_assert_or_release(read);
+        out.resize(read);
         /////////////////////////////////////////////////////////////////////
         std::fclose(file);
         //return
