@@ -1755,6 +1755,12 @@ namespace Render
 		{
 			D3D11_SIGNATURE_PARAMETER_DESC paramDesc;
 			shader_ref->GetInputParameterDesc(i, &paramDesc);
+			//a value of the system (SV_VertexID, SV_InstanceID): made by the input assembler, not an
+			//attribute of the layout
+			if (paramDesc.SystemValueType != D3D_NAME_UNDEFINED)
+			{
+				continue;
+			}
 			DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
 
 			// determine DXGI format
