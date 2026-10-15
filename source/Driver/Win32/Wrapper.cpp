@@ -123,8 +123,16 @@ namespace Video
 			}
 		}
 
-		void compute_window_size(const unsigned int size_in[2], unsigned int size_out[2])
+		void compute_window_size(const unsigned int size_in[2], unsigned int size_out[2], HWND window, UINT dpi)
 		{
+			//Windows 10 1607+: the DPI of the window, of the system, the borders of a DPI
+			using GetDpiForWindowFunction = UINT(WINAPI*)(HWND);
+			using GetDpiForSystemFunction = UINT(WINAPI*)();
+			using AdjustWindowRectExForDpiFunction = BOOL(WINAPI*)(LPRECT, DWORD, BOOL, DWORD, UINT);
+			static const HMODULE user32 = GetModuleHandle(TEXT("user32.dll"));
+			static const auto get_dpi_for_window = user32 ? (GetDpiForWindowFunction)GetProcAddress(user32, "GetDpiForWindow") : nullptr;
+			static const auto get_dpi_for_system = user32 ? (GetDpiForSystemFunction)GetProcAddress(user32, "GetDpiForSystem") : nullptr;
+			static const auto adjust_for_dpi = user32 ? (AdjustWindowRectExForDpiFunction)GetProcAddress(user32, "AdjustWindowRectExForDpi") : nullptr;
 			RECT window_rect
 			{
 				  0
@@ -132,10 +140,30 @@ namespace Video
 				, LONG(size_in[0]) // right = Width
 				, LONG(size_in[1]) // bottom = Height
 			};
-			AdjustWindowRectEx(&window_rect, SQUARE_WINDOW_STYLE, true, 0);
+			//its style (resizable or not, a popup), else the one of a new window; no menu
+			const DWORD style = window ? DWORD(GetWindowLong(window, GWL_STYLE)) : DWORD(SQUARE_WINDOW_STYLE);
+			const DWORD exstyle = window ? DWORD(GetWindowLong(window, GWL_EXSTYLE)) : 0;
+			if (!dpi && window && get_dpi_for_window) dpi = get_dpi_for_window(window);
+			if (!dpi && get_dpi_for_system) dpi = get_dpi_for_system();
+			if (dpi && adjust_for_dpi)
+			{
+				adjust_for_dpi(&window_rect, style, FALSE, exstyle, dpi);
+			}
+			else
+			{
+				AdjustWindowRectEx(&window_rect, style, FALSE, exstyle);
+			}
 			//calc size window
 			size_out[0] = window_rect.right - window_rect.left;
-			size_out[1] = window_rect.bottom - window_rect.top - WINDOW_ERROR_BAD_LENGTH;
+			size_out[1] = window_rect.bottom - window_rect.top;
+		}
+
+		void fit_window_size(HWND window, const unsigned int size[2])
+		{
+			if (!window) return;
+			unsigned int window_size[2] = { 0, 0 };
+			compute_window_size(size, window_size, window);
+			SetWindowPos(window, nullptr, 0, 0, window_size[0], window_size[1], SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////
@@ -484,6 +512,8 @@ namespace Video
 			hInstance,
 			NULL
 		);
+		//its client area of the size asked (the borders of its style, of its DPI)
+		Win32::fit_window_size(hWnd, info.m_size);
 		//////////////////////////////////////////////////////////////////////
 		// create PFD:
 		static	PIXELFORMATDESCRIPTOR pfd =				// pfd Tells Windows How We Want Things To Be
@@ -584,6 +614,8 @@ namespace Video
 				hInstance,
 				NULL
 			);
+            //its client area of the size asked (the borders of its style, of its DPI)
+            Win32::fit_window_size(hWnd, info.m_size);
             hDC = GetDC(hWnd);
 
 			// Get pixel format
@@ -679,6 +711,8 @@ namespace Video
 			hInstance,
 			NULL
 		);
+		//its client area of the size asked (the borders of its style, of its DPI)
+		Win32::fit_window_size(hWnd, info.m_size);
 		return hWnd;
 	}
 
@@ -1205,17 +1239,31 @@ namespace Video
 
 		case WM_DPICHANGED:
 		{
+			//a monitor of another DPI: the window where Windows puts it, its client area of the same
+			//pixels (the resolution of the game, its back buffer: not scaled by the DPI), its borders
+			//of the new DPI; maximized: the rectangle of Windows
 			RECT* rect = (RECT*)lParam;
+			unsigned int frame[2]{ unsigned(rect->right - rect->left), unsigned(rect->bottom - rect->top) };
+			if (!IsZoomed(hWnd))
+			{
+				RECT client{ 0, 0, 0, 0 };
+				GetClientRect(hWnd, &client);
+				const unsigned int size[2]{ unsigned(client.right - client.left), unsigned(client.bottom - client.top) };
+				if (size[0] && size[1])
+				{
+					Win32::compute_window_size(size, frame, hWnd, HIWORD(wParam));
+				}
+			}
 			SetWindowPos(
 				hWnd,
 				HWND_TOP,
 				rect->left,
 				rect->top,
-				rect->right - rect->left,
-				rect->bottom - rect->top,
+				frame[0],
+				frame[1],
 				SWP_NOACTIVATE | SWP_NOZORDER
 			);
-			break;
+			return 0;
 		}
 
 		}

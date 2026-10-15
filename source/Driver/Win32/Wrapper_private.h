@@ -16,7 +16,6 @@
 #include "Input_private.h"
 
 #define WINDOW_CLASS_NAME TEXT("Square")
-#define WINDOW_ERROR_BAD_LENGTH (ERROR_BAD_LENGTH-4);
 #define SQUARE_WINDOW_STYLE WS_TILEDWINDOW
 #define SQUARE_WINDOW_NORESIZE_STYLE (WS_TILEDWINDOW ^ WS_THICKFRAME)
 #define SQUARE_FULLSCREEN_STYLE (WS_POPUP | WS_VISIBLE)
@@ -32,7 +31,12 @@ namespace Win32
 
 	SQUARE_API void get_rect_of_window_including_aero(HWND wnd, RECT *rect);
 
-	SQUARE_API void compute_window_size(const unsigned int size_in[2], unsigned int size_out[2]);
+	//the size of a window (its borders, its title) of a client area: of its style and its DPI (of
+	//its monitor; none: of the system); dpi: another one (WM_DPICHANGED), 0: of the window
+	SQUARE_API void compute_window_size(const unsigned int size_in[2], unsigned int size_out[2], HWND window = nullptr, UINT dpi = 0);
+	//a window just made: of the client area asked (its borders of its style and of the DPI of its
+	//monitor, not known before it is made)
+	SQUARE_API void fit_window_size(HWND window, const unsigned int size[2]);
 	///////////////////////////////////////////////////////////////////////////////////
 }
 }

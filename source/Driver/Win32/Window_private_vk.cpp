@@ -160,7 +160,7 @@ namespace Win32
 		}
 		//calc size window
 		unsigned int window_real_size[2] = { 0,0 };
-		compute_window_size(size, window_real_size);
+		compute_window_size(size, window_real_size, m_hWnd);
 		//Resize (the swap chain follows the client area: the driver)
 		if (SetWindowPos(
 			m_hWnd
@@ -181,7 +181,7 @@ namespace Win32
 	{
 		//calc size window
 		unsigned int window_real_size[2] = { 0,0 };
-		compute_window_size(m_info.m_size, window_real_size);
+		compute_window_size(m_info.m_size, window_real_size, m_hWnd);
 		//Resize
 		if (SetWindowPos(
 			m_hWnd
@@ -272,7 +272,7 @@ namespace Win32
 				//no more maximized (SW_MAXIMIZE of the fullscreen), else it keeps the work area
 				ShowWindow(m_hWnd, SW_SHOWNORMAL);
 				unsigned int last_window_real_size[2] = { 0,0 };
-				compute_window_size(m_last_window_size, last_window_real_size);
+				compute_window_size(m_last_window_size, last_window_real_size, m_hWnd);
 				SetWindowPos(
 					m_hWnd
 					, HWND_NOTOPMOST

@@ -308,7 +308,11 @@ namespace Win32
 		m_depth_stencil_view->Release();
 		m_depth_stencil->Release();
 
-		// After releasing references to these resources, we need to call Flush() to 
+		// The back buffer bound as a target holds a reference to it (ResizeBuffers then fails):
+		// unbound before the flush
+		m_d3d_device_context->OMSetRenderTargets(0, nullptr, nullptr);
+
+		// After releasing references to these resources, we need to call Flush() to
 		// ensure that Direct3D also releases any references it might still have to
 		// the same resources - such as pipeline bindings.
 		m_d3d_device_context->Flush();
@@ -414,6 +418,19 @@ namespace Win32
 		if (m_device)
 		{
 			m_device->present();
+			//the window resized by Windows (its border dragged, a monitor of another DPI): the back
+			//buffer of its client area, as the swap chain of Vulkan (not stretched, not fullscreen)
+			if (!m_scaled && !m_info.m_fullscreen)
+			{
+				RECT box{ 0, 0, 0, 0 };
+				GetClientRect(m_hWnd, &box);
+				const unsigned int width = unsigned(box.right - box.left);
+				const unsigned int height = unsigned(box.bottom - box.top);
+				if (width && height && (width != m_device->width() || height != m_device->height()))
+				{
+					m_device->resize_backbuffer(0, 0);
+				}
+			}
 		}
 	}
 
@@ -468,7 +485,7 @@ namespace Win32
 		}
 		//calc size window
 		unsigned int window_real_size[2] = { 0,0 };
-		compute_window_size(size, window_real_size);
+		compute_window_size(size, window_real_size, m_hWnd);
 		//Resize
 		if (SetWindowPos(
 			m_hWnd
@@ -492,7 +509,7 @@ namespace Win32
 	{
 		//calc size window
 		unsigned int window_real_size[2] = { 0,0 };
-		compute_window_size(m_info.m_size, window_real_size);
+		compute_window_size(m_info.m_size, window_real_size, m_hWnd);
 		//Resize
 		if (SetWindowPos(
 			m_hWnd
@@ -615,7 +632,7 @@ namespace Win32
 				ShowWindow(m_hWnd, SW_SHOWNORMAL);
 				//calc size window
 				unsigned int last_window_real_size[2] = { 0,0 };
-				compute_window_size(m_last_window_size, last_window_real_size);
+				compute_window_size(m_last_window_size, last_window_real_size, m_hWnd);
 				//Resize
 				SetWindowPos(
 					m_hWnd

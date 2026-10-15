@@ -144,7 +144,7 @@ namespace Win32
 	{
 		//calc size window
 		unsigned int window_real_size[2] = { 0,0 };
-		compute_window_size(size, window_real_size);
+		compute_window_size(size, window_real_size, m_hWnd);
 		//Resize
 		if (SetWindowPos(
 			m_hWnd
@@ -166,7 +166,7 @@ namespace Win32
 	{
 		//calc size window
 		unsigned int window_real_size[2] = { 0,0 };
-		compute_window_size(m_info.m_size, window_real_size);
+		compute_window_size(m_info.m_size, window_real_size, m_hWnd);
 		//Resize
 		if (SetWindowPos(
 			m_hWnd
@@ -259,7 +259,7 @@ namespace Win32
 				ShowWindow(m_hWnd, SW_SHOWNORMAL);
 				//calc size window
 				unsigned int last_window_real_size[2] = { 0,0 };
-				compute_window_size(m_last_window_size, last_window_real_size);
+				compute_window_size(m_last_window_size, last_window_real_size, m_hWnd);
 				//Resize
 				SetWindowPos(
 					m_hWnd
