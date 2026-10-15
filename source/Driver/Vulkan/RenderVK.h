@@ -656,6 +656,12 @@ namespace Render
 		UnorderedMap<uint32_t, UniquePtr<Texture>> m_dummy_textures;
 		BufferVK                 m_zero_buffer;
 		VkDeviceSize             m_ring_alignment{ 256 };
+		//the lists of bind_resources, of every draw (cleared, their memory kept: no block a draw)
+		Vector<uint64>                 m_bind_key;
+		Vector<uint32_t>               m_bind_offsets;
+		Vector<VkDescriptorBufferInfo> m_bind_buffers;
+		Vector<VkDescriptorImageInfo>  m_bind_images;
+		Vector<VkWriteDescriptorSet>   m_bind_writes;
 		//errors
 		mutable Vector<String> m_errors;
 #if defined(RENDER_PROFILER)

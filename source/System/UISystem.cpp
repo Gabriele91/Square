@@ -176,6 +176,7 @@ namespace Square
 			m_backend.reset();
 		}
 		m_ui = UI::Context();
+		m_models.clear();
 	}
 
 	void UISystem::update(double delta_time)
@@ -197,8 +198,30 @@ namespace Square
 			}
 			//the debug panel: its controls before the update (their layout)
 			if (m_debug_panel) m_debug_panel->update();
+			//the variables of the models that changed (the models gone: forgotten)
+			for (size_t i = 0; i < m_models.size();)
+			{
+				if (auto state = m_models[i].lock())
+				{
+					UI::DataModel(state).dirty_changed();
+					++i;
+				}
+				else
+				{
+					m_models[i] = std::move(m_models.back());
+					m_models.pop_back();
+				}
+			}
 			// Update
 			ui_context->Update();
+		}
+	}
+
+	void UISystem::watch(const UI::DataModel& model)
+	{
+		if (model.valid())
+		{
+			m_models.push_back(model.weak());
 		}
 	}
 

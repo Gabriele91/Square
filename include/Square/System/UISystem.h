@@ -46,6 +46,10 @@ namespace UI
 		//the UI of the window
 		UI::Context& ui();
 
+		//a model whose variables changed are updated at every frame (DataModel::dirty_changed),
+		//until it goes: the models of UI::Context::create_data_model
+		void watch(const UI::DataModel& model);
+
 		//it wants the mouse (it is over an element of a document) or the keyboard (an element
 		//has the focus): the game can ignore them
 		bool wants_mouse() const;
@@ -94,6 +98,8 @@ namespace UI
 		//the debug panel, made the first time it is needed (nullptr: no UI)
 		UI::DebugPanel* debug_panel_instance();
 		UI::Context                  m_ui;
+		//the models watched (not kept: a model goes with its last DataModel)
+		Vector<Weak<UI::DataModel::State>> m_models;
 		int                          m_modifiers{ 0 };
 		bool                         m_wants_mouse{ false };
 		IVec2                        m_reference_size{ 0, 0 };

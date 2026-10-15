@@ -310,6 +310,13 @@ namespace AuxBinnedAllocator
 	void* BinnedAllocator::allocate(size_t size, size_t align)
 	{
 		square_assert_debug((align & (align - 1)) == 0);
+#if !defined(SQUARE_RETAIL)
+		if (Observer observer = m_observer.load(std::memory_order_relaxed))
+		{
+			observer(size, align);
+		}
+#endif
+
 		if (align <= default_align)
 		{
 			if (size <= max_bin_size)
@@ -366,12 +373,24 @@ namespace AuxBinnedAllocator
 		}
 		//a block of malloc (not one with an offset of its alignment: alloc)
 		square_assert_debug(!m_registered.load(std::memory_order_relaxed) || m_registry->m_blocks.find(ptr) == m_registry->m_blocks.end());
+#if !defined(SQUARE_RETAIL)
+		if (Observer observer = m_observer.load(std::memory_order_relaxed))
+		{
+			observer(size, default_align);
+		}
+#endif
 		return std::realloc(ptr, size ? size : 1);
 	}
 
 	void* BinnedAllocator::registered_allocate(size_t size, size_t align, size_t align_offset)
 	{
 		if (!m_registry) return nullptr;
+#if !defined(SQUARE_RETAIL)
+		if (Observer observer = m_observer.load(std::memory_order_relaxed))
+		{
+			observer(size + align_offset, align);
+		}
+#endif
 		align = std::max(align, default_align);
 		char* raw = static_cast<char*>(std::malloc(size + align + align_offset));
 		if (!raw) return nullptr;

@@ -5,10 +5,12 @@
 //  Copyright Â© 2017 Gabriele Di Bari. All rights reserved.
 //
 #include <algorithm>
+#include <cstdlib>
 #include "Square/Core/Time.h"
 #include "Square/Core/Allocator/Memory.h"
 #include "Square/Core/Allocator/DebugAllocator.h"
 #include "Square/Core/Allocator/FrameAllocator.h"
+#include "Square/Core/Allocator/MemoryProfiler.h"
 #include "Square/Core/Object.h"
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/Core/Application.h"
@@ -395,6 +397,16 @@ namespace Square
         double last_time = Time::get_ms_time();
         m_last_delta_time = 0;
 
+    #if !defined(SQUARE_RETAIL)
+        //the profile of the heap (SQUARE_HEAP_PROFILE=N: N frames after 300, see MemoryProfiler.h)
+        MemoryProfiler heap_profiler(Memory::heap());
+        if (const char* profile = std::getenv("SQUARE_HEAP_PROFILE"))
+        {
+            const long frames = std::strtol(profile, nullptr, 10);
+            heap_profiler.start(frames > 0 ? (unsigned int)frames : 600, 300);
+        }
+    #endif
+
         //send event
         if (auto* scene_world = world())
         {
@@ -415,6 +427,9 @@ namespace Square
             m_last_delta_time = std::max(last_time - old_time,  1E-16) / 1000.0;
             //a frame (the memory of the frame before the last one freed)
             m_context.m_frame_allocator->next_frame();
+        #if !defined(SQUARE_RETAIL)
+            if (heap_profiler.frame()) m_context.m_logger->info(heap_profiler.report());
+        #endif
             m_context.update_systems(m_last_delta_time);
             if (!m_instance->run(m_last_delta_time)) break;
             m_context.late_update_systems(m_last_delta_time);

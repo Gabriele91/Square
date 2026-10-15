@@ -8,6 +8,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <mutex>
+#include <new>
 #include "Square/Driver/Render.h"
 #include "Square/Render/Light.h"
 #include "Square/Render/Material.h"
@@ -19,6 +21,117 @@ namespace Square
 {
 namespace Render
 {
+	//the lists of the lists gone (their memory kept: the next lists without a block)
+	struct DrawList::Pool
+	{
+		std::mutex          m_mutex;
+		Vector<Vector<Draw>> m_lists;
+
+		Pool()
+		{
+			m_lists.reserve(pool_lists);
+		}
+
+		//never destroyed (the lists of the static objects given back after the end of main)
+		static Pool& instance()
+		{
+			alignas(Pool) static unsigned char s_storage[sizeof(Pool)];
+			static Pool* s_pool = new (s_storage) Pool();
+			return *s_pool;
+		}
+
+		Vector<Draw> take()
+		{
+			{
+				std::lock_guard<std::mutex> lock(m_mutex);
+				if (!m_lists.empty())
+				{
+					Vector<Draw> list = std::move(m_lists.back());
+					m_lists.pop_back();
+					return list;
+				}
+			}
+			Vector<Draw> list;
+			list.reserve(pool_capacity);
+			return list;
+		}
+
+		void give(Vector<Draw>&& list)
+		{
+			if (!list.capacity())
+			{
+				return;
+			}
+			list.clear();
+			std::lock_guard<std::mutex> lock(m_mutex);
+			if (m_lists.size() < pool_lists)
+			{
+				m_lists.push_back(std::move(list));
+			}
+		}
+	};
+
+	DrawList::~DrawList()
+	{
+		Pool::instance().give(std::move(m_draws));
+	}
+
+	DrawList::DrawList(DrawList&& other) noexcept
+	: m_draws(std::move(other.m_draws))
+	, m_drawn(other.m_drawn)
+	, m_batches(other.m_batches)
+	, m_peak(other.m_peak)
+	, m_window(other.m_window)
+#if defined(SQUARE_DEBUG_TOOLS)
+	, m_test(other.m_test)
+#endif
+	{
+	}
+
+	DrawList& DrawList::operator=(DrawList&& other) noexcept
+	{
+		if (this != &other)
+		{
+			Pool::instance().give(std::move(m_draws));
+			m_draws = std::move(other.m_draws);
+			m_drawn = other.m_drawn;
+			m_batches = other.m_batches;
+			m_peak = other.m_peak;
+			m_window = other.m_window;
+		#if defined(SQUARE_DEBUG_TOOLS)
+			m_test = other.m_test;
+		#endif
+		}
+		return *this;
+	}
+
+	void DrawList::reserve()
+	{
+		if (!m_draws.capacity())
+		{
+			m_draws = Pool::instance().take();
+		}
+	}
+
+	void DrawList::trim(size_t draws)
+	{
+		m_peak = std::max(m_peak, draws);
+		if (++m_window < trim_window)
+		{
+			return;
+		}
+		//a quarter of it used at most in the window: halved (to the capacity of the pool at least)
+		const size_t capacity = m_draws.capacity();
+		if (capacity > pool_capacity && m_peak * 4 < capacity && m_draws.empty())
+		{
+			Vector<Draw> list;
+			list.reserve(std::max(capacity / 2, pool_capacity));
+			m_draws.swap(list);
+		}
+		m_peak = 0;
+		m_window = 0;
+	}
+
 	void DrawList::clear()
 	{
 		m_draws.clear();
@@ -32,6 +145,7 @@ namespace Render
 		, bool settle
 	)
 	{
+		reserve();
 		//its fade (settled: whole); the clip variant: by its material, or its fade
 		const float fade = settle ? 1.0f : renderable->lod_fade();
 		const bool fading = fade < 1.0f;
@@ -74,6 +188,7 @@ namespace Render
 		, Light* light
 	)
 	{
+		reserve();
 		m_draws.push_back(Draw{ &pass, pass_index, parameters, light, renderable, material_id, draw_id, MULTI_PASS_ALL_LAYERS, renderable->lod_fade(), m_draws.size() });
 	}
 
@@ -200,6 +315,7 @@ namespace Render
 		inputs.m_layer_mask = layers;
 		m_drawn = m_draws.size();
 		m_draws.clear();
+		trim(m_drawn);
 	}
 }
 }

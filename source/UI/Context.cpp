@@ -12,6 +12,7 @@
 #include "Square/Core/Context.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/Logger.h"
+#include "Square/System/UISystem.h"
 #include "Square/UI/Context.h"
 
 namespace Square
@@ -71,7 +72,20 @@ namespace UI
 
 	DataModel Context::create_data_model(const String& name)
 	{
-		return m_ui_context ? make_data_model(m_ui_context->CreateDataModel(name), m_context, m_ui_context, name) : DataModel();
+		if (!m_ui_context)
+		{
+			return DataModel();
+		}
+		DataModel model = make_data_model(m_ui_context->CreateDataModel(name), m_context, m_ui_context, name);
+		//its variables changed updated at every frame
+		if (model.valid() && m_context)
+		{
+			if (auto* ui_system = System::get<UISystem>(*m_context))
+			{
+				ui_system->watch(model);
+			}
+		}
+		return model;
 	}
 
 	DataModel Context::data_model(const String& name) const

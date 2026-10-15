@@ -75,6 +75,16 @@ namespace Square
 		//its memory now (the fields of a bin read without its lock: about)
 		Stats stats() const;
 
+#if !defined(SQUARE_RETAIL)
+		//a function called at each block (its size, its alignment): the profile (MemoryProfiler.h);
+		//nullptr: none (not in the Retail builds)
+		using Observer = void(*)(size_t size, size_t align);
+		void observe(Observer observer)
+		{
+			m_observer.store(observer, std::memory_order_release);
+		}
+#endif
+
 	private:
 		struct alignas(64) Bin
 		{
@@ -105,5 +115,8 @@ namespace Square
 		//the blocks with an offset of their alignment (alloc), out of the bins: their block of malloc
 		Registry*           m_registry{ nullptr };
 		std::atomic<size_t> m_registered{ 0 };
+#if !defined(SQUARE_RETAIL)
+		std::atomic<Observer> m_observer{ nullptr };
+#endif
 	};
 }

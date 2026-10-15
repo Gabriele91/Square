@@ -17,6 +17,11 @@
 //  of the draws in a row that share it. The worst case (no draw shares a batch): a binding each,
 //  as without the list.
 //
+//  Its memory: a list of a pool of the lists (big: pool_capacity draws at least), taken at its
+//  first draw, given back to the pool when the list goes (a list of a scope made at every frame
+//  makes no block); a list bigger than it needs given back lazily (its peak under a quarter of
+//  it for trim_window draws in a row: halved, to pool_capacity at least).
+//
 #pragma once
 #include <functional>
 #include <string>
@@ -40,6 +45,20 @@ namespace Render
 		//the buffers of a light written (its uniforms, its shadow map in the inputs): before the
 		//draws with it
 		using LightSetup = std::function<void(Light& light)>;
+		//the draws of a list of the pool (at least), the lists kept by the pool
+		static constexpr size_t pool_capacity = 1024;
+		static constexpr size_t pool_lists = 32;
+		//the draws (draw) of a list bigger than it needs before it is halved
+		static constexpr size_t trim_window = 600;
+
+		DrawList() = default;
+		//its list given back to the pool
+		~DrawList();
+		//its list moved (no copy: a list of the pool each)
+		DrawList(DrawList&& other) noexcept;
+		DrawList& operator=(DrawList&& other) noexcept;
+		DrawList(const DrawList&) = delete;
+		DrawList& operator=(const DrawList&) = delete;
 
 		//no draw (the memory kept for the next frame)
 		void clear();
@@ -103,9 +122,18 @@ namespace Render
 			float                m_fade{ 1.0f };
 			size_t               m_order{ 0 };
 		};
+		struct Pool;
+
+		//its list: of the pool (before its first draw)
+		void reserve();
+		//its list halved, lazily (its peak in the window under a quarter of it): after a draw
+		void trim(size_t draws);
+
 		Vector<Draw> m_draws;
 		size_t            m_drawn{ 0 };
 		size_t            m_batches{ 0 };
+		size_t            m_peak{ 0 };       //the draws, at most, in the window
+		size_t            m_window{ 0 };     //its draws (draw) in the window
 #if defined(SQUARE_DEBUG_TOOLS)
 		Test              m_test{ Test::NONE };
 #endif

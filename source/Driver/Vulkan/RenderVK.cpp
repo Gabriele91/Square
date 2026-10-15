@@ -1646,12 +1646,17 @@ namespace Render
 		Shader* shader = m_shader;
 		if (!shader->m_set_layout) return true;
 		//what each binding reads: its slice of the ring (a buffer), its view and sampler (a texture)
-		Vector<uint64> key;
-		Vector<uint32_t> offsets;
-		Vector<VkDescriptorBufferInfo> buffers;
-		Vector<VkDescriptorImageInfo> images;
+		Vector<uint64>& key = m_bind_key;
+		Vector<uint32_t>& offsets = m_bind_offsets;
+		Vector<VkDescriptorBufferInfo>& buffers = m_bind_buffers;
+		Vector<VkDescriptorImageInfo>& images = m_bind_images;
+		key.clear();
+		offsets.clear();
+		buffers.clear();
+		images.clear();
 		buffers.reserve(shader->m_bindings.size());
 		images.reserve(shader->m_bindings.size());
+		offsets.reserve(shader->m_bindings.size());
 		key.reserve(shader->m_bindings.size() * 2);
 		for (const BindingVK& binding : shader->m_bindings)
 		{
@@ -1756,7 +1761,8 @@ namespace Render
 					current.m_descriptor_pool += 1;
 				}
 			}
-			Vector<VkWriteDescriptorSet> writes;
+			Vector<VkWriteDescriptorSet>& writes = m_bind_writes;
+			writes.clear();
 			writes.reserve(shader->m_bindings.size());
 			size_t buffer_index = 0, image_index = 0;
 			for (const BindingVK& binding : shader->m_bindings)
@@ -1778,7 +1784,8 @@ namespace Render
 			}
 			vkUpdateDescriptorSets(m_device, uint32_t(writes.size()), writes.data(), 0, nullptr);
 			shader->m_set = set;
-			shader->m_set_key = std::move(key);
+			//a copy (its memory of the last one kept): the list of the context kept for the next draw
+			shader->m_set_key.assign(key.begin(), key.end());
 			shader->m_set_frame = m_frame_index;
 		}
 		vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_pipeline_layout, 0, 1, &shader->m_set, uint32_t(offsets.size()), offsets.data());

@@ -8,6 +8,10 @@
 //  removed with the last DataModel made by it (not by Context::data_model), so keep it with
 //  the variables bound: the documents never read them after they go.
 //
+//  The UISystem updates the variables bound that changed (dirty_changed) of its models (made by
+//  Context::create_data_model) at every frame, before the update of the documents: a game sets
+//  them, no dirty (dirty: a value of bind_function, or a variable at once).
+//
 #pragma once
 #include <memory>
 #include <string>
@@ -45,6 +49,13 @@ namespace UI
 		//a variable changed: the documents update it (all of them)
 		void dirty(const String& name);
 		void dirty_all();
+		//the variables bound whose value changed since they were shown (each one compared with
+		//its copy): only those updated. By the UISystem at every frame (a value of bind_function:
+		//dirty)
+		void dirty_changed();
+
+		//the model without keeping it (the UISystem: the model goes with the last DataModel)
+		Weak<State> weak() const;
 
 	private:
 		Shared<State> m_state;
