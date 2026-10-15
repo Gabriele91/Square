@@ -587,23 +587,6 @@ namespace Filesystem
         return PathOperation{ true, String(path) };
     }
 
-    Vector<String> split(String str, const String& delimiter)
-    {
-        //temps
-        size_t pos = 0;
-        Vector<String> tokens;
-        //search
-        while ((pos = str.find(delimiter)) != String::npos)
-        {
-            tokens.push_back(str.substr(0, pos));
-            str.erase(0, pos + delimiter.length());
-        }
-        //add last
-        if (str.size()) tokens.push_back(str);
-        //return
-        return tokens;
-    }
-
     PathOperation get_relative_to(const String& base, const String& path)
     {
         //get abs paths
