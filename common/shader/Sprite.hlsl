@@ -42,6 +42,7 @@ Vec4 color;
 Vec4 axis;
 float translucency;
 float roundness;
+float light_alpha_power;
 
 //the diffuse of a sprite: wrapped, and through it toward the light
 float sprite_diffuse(in Vec3 normal, in Vec3 to_light, in Vec3 to_camera)
@@ -189,9 +190,10 @@ Vec4 fragment(SpriteVSOutput input) : SV_TARGET0
 	const Vec4 albedo = to_rgb_space(texture2D(albedo_map, input.m_uv)) * input.m_color;
 	Vec4 result = Vec4(albedo.rgb * (input.m_light * sprite_shadow(input.m_world, normalize(input.m_normal))), albedo.a);
 #if defined(SQ_LIGHT_DIRECTION) || defined(SQ_LIGHT_POINT) || defined(SQ_LIGHT_SPOT)
-	//a light added (its pass: blend src_alpha one) by its alpha again: only where it is thick (not
-	//its fringes, not the thin ones over each other: no light piled up, no halo)
-	result.a *= albedo.a;
+	//a light added (its pass: blend src_alpha one) by its alpha to a power (light_alpha_power): 2,
+	//only where it is thick (not its fringes, not the thin ones over each other: no light piled up,
+	//no halo: smoke); 1, by its alpha (thin mist, spray: lit as they are)
+	result.a = pow(saturate(albedo.a), max(light_alpha_power, 1.0));
 #endif
 #if !defined(ENABLE_TARGET_SRGB) && !defined(OUTPUT_LINEAR_COLOR)
 	result = to_srgb_space(result);

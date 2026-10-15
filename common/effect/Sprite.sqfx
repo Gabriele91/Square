@@ -15,6 +15,9 @@ parameters
     roundness    float(0.5)
     //its shadow: the filter of the light (0, as every surface), one sample (1: many over each other)
     shadow_one_sample float(0.0)
+    //the light added by its alpha to this power: 2 only where it is thick (dense smoke: no light
+    //piled up, no halo), 1 by its alpha (thin mist, spray), between them
+    light_alpha_power float(1.0)
 }
 
 //Sprites alpha blended (smoke, mist, leaves): quads turned toward the camera (Sprite.hlsl,
