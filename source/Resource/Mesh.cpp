@@ -12,6 +12,8 @@
 #include "Square/Render/Mesh.h"
 #include "Square/Resource/Mesh.h"
 #include "Square/Data/ParserStaticMesh.h"
+#include "Square/System/RenderSystem.h"
+#include "Square/Driver/Render.h"
 
 namespace Square
 {
@@ -61,9 +63,13 @@ namespace Resource
 		}
 	}
 
-	bool Mesh::local_triangles(Vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter) const
+	bool Mesh::local_data(Parser::StaticMesh::Context& out) const
 	{
-		//its file
+		//its file (a mesh made at run time, of no file: none)
+		if (!*resource_name())
+		{
+			return false;
+		}
 		const String& path = const_cast<Mesh*>(this)->context().resource_path<Mesh>(resource_untyped_name());
 		if (path.empty())
 		{
@@ -79,8 +85,14 @@ namespace Resource
 		{
 			bytes = Filesystem::binary_file_read_all(path);
 		}
+		return Parser::StaticMesh().parse(out, bytes);
+	}
+
+	bool Mesh::local_triangles(Vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter) const
+	{
+		//its file
 		Parser::StaticMesh::Context mesh;
-		if (!Parser::StaticMesh().parse(mesh, bytes))
+		if (!local_data(mesh))
 		{
 			return false;
 		}
@@ -165,16 +177,19 @@ namespace Resource
 		Render::Mesh& m_mesh;
 		Parser::StaticMesh::Context& m_context;
 		bool& m_gpu_build_status;
+		bool m_cpu_access;
 
 		vertex_gpu_build
 		(
 			Render::Mesh& mesh,
 			Parser::StaticMesh::Context& context,
-			bool& gpu_build_status
+			bool& gpu_build_status,
+			bool cpu_access
 		)
 		: m_mesh(mesh)
 		, m_context(context)
 		, m_gpu_build_status(gpu_build_status)
+		, m_cpu_access(cpu_access)
 		{
 		}
 
@@ -182,19 +197,19 @@ namespace Resource
 		{
 			if (m_context.m_index.empty() && m_context.m_submesh.empty())
 			{
-				m_gpu_build_status = m_mesh.build(value);
+				m_gpu_build_status = m_mesh.build(value, m_cpu_access);
 			}
 			else if (m_context.m_submesh.empty())
 			{
-				m_gpu_build_status = m_mesh.build(value, m_context.m_index);
+				m_gpu_build_status = m_mesh.build(value, m_context.m_index, m_cpu_access);
 			}
 			else if (m_context.m_index.empty())
 			{
-				m_gpu_build_status = m_mesh.build(value, m_context.m_submesh);
+				m_gpu_build_status = m_mesh.build(value, m_context.m_submesh, m_cpu_access);
 			}
 			else
 			{
-				m_gpu_build_status = m_mesh.build(value, m_context.m_index, m_context.m_submesh);
+				m_gpu_build_status = m_mesh.build(value, m_context.m_index, m_context.m_submesh, m_cpu_access);
 			}
 		}
 	};
@@ -215,21 +230,45 @@ namespace Resource
 			ResourceObject::context().logger()->warning("Static model: " + path);
 			return false;
 		}
+		return build(static_mesh_context, false);
+	}
+
+	bool Mesh::build(Parser::StaticMesh::Context& data, bool cpu_access)
+	{
 		// Ok?
 		bool gpu_build_status = true;
 		//build
-		static_mesh_context.visit(
+		data.visit(
 			[&](auto arg) { gpu_build_status = false; },
-			vertex_gpu_build<Render::Mesh::Vertex2DList>(m_mesh, static_mesh_context, gpu_build_status),
-			vertex_gpu_build<Render::Mesh::Vertex3DList>(m_mesh, static_mesh_context, gpu_build_status),
-			vertex_gpu_build<Render::Mesh::Vertex2DUVList>(m_mesh, static_mesh_context, gpu_build_status),
-			vertex_gpu_build<Render::Mesh::Vertex3DUVList>(m_mesh, static_mesh_context, gpu_build_status),
-			vertex_gpu_build<Render::Mesh::Vertex3DNUVList>(m_mesh, static_mesh_context, gpu_build_status),
-			vertex_gpu_build<Render::Mesh::Vertex3DNTBUVList>(m_mesh, static_mesh_context, gpu_build_status),
-			vertex_gpu_build<Render::Mesh::Vertex3DNTBUVSkinList>(m_mesh, static_mesh_context, gpu_build_status)
+			vertex_gpu_build<Render::Mesh::Vertex2DList>(m_mesh, data, gpu_build_status, cpu_access),
+			vertex_gpu_build<Render::Mesh::Vertex3DList>(m_mesh, data, gpu_build_status, cpu_access),
+			vertex_gpu_build<Render::Mesh::Vertex2DUVList>(m_mesh, data, gpu_build_status, cpu_access),
+			vertex_gpu_build<Render::Mesh::Vertex3DUVList>(m_mesh, data, gpu_build_status, cpu_access),
+			vertex_gpu_build<Render::Mesh::Vertex3DNUVList>(m_mesh, data, gpu_build_status, cpu_access),
+			vertex_gpu_build<Render::Mesh::Vertex3DNTBUVList>(m_mesh, data, gpu_build_status, cpu_access),
+			vertex_gpu_build<Render::Mesh::Vertex3DNTBUVSkinList>(m_mesh, data, gpu_build_status, cpu_access)
 		);
 		// Return status
 		return gpu_build_status;
+	}
+
+	bool Mesh::build_dynamic(const Mesh& source, const Parser::StaticMesh::Context& data)
+	{
+		//the file of source: its triangles, its data (the collisions on it as on source)
+		resource_name(source.resource_name());
+		Parser::StaticMesh::Context copy = data;
+		m_dynamic = build(copy, true);
+		return m_dynamic;
+	}
+
+	bool Mesh::update_vertices(const unsigned char* data, size_t size)
+	{
+		auto buffer = m_mesh.vertex_buffer();
+		if (!m_dynamic || !buffer || !data) return false;
+		auto render = System::get<RenderSystem>(context())->render();
+		if (!render) return false;
+		render->update_steam_VBO(buffer.get(), data, size);
+		return true;
 	}
 }
 }

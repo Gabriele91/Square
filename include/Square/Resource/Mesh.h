@@ -12,6 +12,7 @@
 #include "Square/Core/Resource.h"
 #include "Square/Render/Queue.h"
 #include "Square/Render/Mesh.h"
+#include "Square/Data/ParserStaticMesh.h"
 #include <functional>
 #include <vector>
 
@@ -57,8 +58,26 @@ namespace Square
             //of them; false: its file cannot be read
             bool local_triangles(Vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter = nullptr) const;
 
+            //its vertices, indices and sub meshes, read from its file (the GPU keeps no copy of
+            //them); false: its file cannot be read
+            bool local_data(Parser::StaticMesh::Context& out) const;
+
+            //a mesh of its own whose vertices the CPU rewrites (update_vertices), e.g. deformed,
+            //from the data of source (its local_data): the file of source its file (its triangles,
+            //its data, the collisions on it: the ones of source)
+            bool build_dynamic(const Mesh& source, const Parser::StaticMesh::Context& data);
+            //its vertices (a dynamic mesh): as many as it has, of its layout (size: their bytes)
+            bool update_vertices(const unsigned char* data, size_t size);
+            bool dynamic() const { return m_dynamic; }
+
             //load mesh
             bool load(const String& path) override;
+
+        private:
+
+            //its GPU mesh from data (cpu_access: its vertices rewritten later)
+            bool build(Parser::StaticMesh::Context& data, bool cpu_access);
+            bool m_dynamic{ false };
 
         };
     }

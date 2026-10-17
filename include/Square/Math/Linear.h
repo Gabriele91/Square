@@ -16,6 +16,7 @@
 #define GLM_FORCE_XYZW_ONLY
 #define GLM_FORCE_QUAT_DATA_XYZW
 
+#include <limits>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -99,6 +100,22 @@ namespace Square
         inline T epsilon()
         {
            return glm::epsilon<T>();
+        }
+        //the limits of a type (its largest value, its lowest, its infinity)
+        template <class T>
+        inline constexpr T max()
+        {
+            return std::numeric_limits<T>::max();
+        }
+        template <class T>
+        inline constexpr T lowest()
+        {
+            return std::numeric_limits<T>::lowest();
+        }
+        template <class T>
+        inline constexpr T infinity()
+        {
+            return std::numeric_limits<T>::infinity();
         }
         //the axes: unit vectors along x (right), y (up), z (forward)
         inline const Vec3 axis_x{ 1.0f, 0.0f, 0.0f };

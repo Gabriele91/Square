@@ -412,7 +412,8 @@ namespace Render
 			if (cpu_access)
 			{
 				m_vertex_buffer = Render::stream_vertex_buffer(render, stride, size);
-				if(m_vertex_buffer) render->update_steam_VBO(m_vertex_buffer.get(), data, size);
+				//(its bytes: size vertices of stride bytes)
+				if(m_vertex_buffer) render->update_steam_VBO(m_vertex_buffer.get(), data, size * stride);
 			}
 			else
 			{
