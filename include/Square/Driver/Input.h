@@ -152,6 +152,10 @@ namespace Video
 		KEY_LAST = KEY_MENU
 	};
 
+	//serialize: "SPACE", "A", "UP", "LEFT SHIFT", "NUM 0", "F1"... ("": a key without name)
+	SQUARE_API StringView key_to_string(KeyboardEvent key);
+	SQUARE_API KeyboardEvent key_from_string(StringView key, KeyboardEvent key_default);
+
 	enum KeyboardModEvent : unsigned char
 	{
 		SHIFT  = 0b0001,

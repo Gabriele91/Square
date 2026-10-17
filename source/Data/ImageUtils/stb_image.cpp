@@ -218,9 +218,11 @@
 #ifndef STBI_INCLUDE_STB_IMAGE_H
 #define STBI_INCLUDE_STB_IMAGE_H
 
-//DISABLE WARNINGS
+//DISABLE WARNINGS (GCC, Clang)
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"
+#endif
 
 #define STB_IMAGE_IMPLEMENTATION
 
@@ -6595,7 +6597,9 @@ STBIDEF int stbi_info_from_callbacks(stbi_io_callbacks const *c, void *user, int
 }
 
 //DISABLE WARNINGS //END
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
+#endif
 
 #endif // STB_IMAGE_IMPLEMENTATION
 

@@ -29,6 +29,11 @@
 #include "Square/System/InputSystem.h"
 #include "Square/System/SceneSystem.h"
 #include "Square/System/UISystem.h"
+#include "Square/System/AudioSystem.h"
+/* --- Audio --- */
+#include "Square/Audio/Bus.h"
+#include "Square/Audio/Voice.h"
+#include "Square/Audio/MusicPlayer.h"
 #include "Square/UI/Context.h"
 /* --- Math --- */
 #include "Square/Math/Linear.h"
@@ -97,12 +102,15 @@
 #include "Square/Resource/Effect.h"
 #include "Square/Resource/Material.h"
 #include "Square/Resource/Mesh.h"
+#include "Square/Resource/Sound.h"
 #include "Square/Resource/Actor.h"
 /* --- Scene --- */
 #include "Square/Scene/Actor.h"
 #include "Square/Scene/Component.h"
 #include "Square/Scene/Level.h"
 #include "Square/Scene/Camera.h"
+#include "Square/Scene/AudioSource.h"
+#include "Square/Scene/AudioListener.h"
 #include "Square/Scene/DirectionLight.h"
 #include "Square/Scene/PointLight.h"
 #include "Square/Scene/SpotLight.h"

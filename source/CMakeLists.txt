@@ -28,6 +28,7 @@ set(CMAKE_CXX_FLAGS_RETAIL "${CMAKE_CXX_FLAGS_RELEASE}")
 file(GLOB SOURCES Core/*.cpp
                   Core/Allocator/*.cpp
                   Core/Container/*.cpp
+                  Audio/*.cpp
                   Data/*.cpp
                   Data/ImageUtils/*.cpp
                   Geometry/*.cpp
@@ -80,6 +81,8 @@ elseif(APPLE)
         "-framework QuartzCore"
         "-framework CoreGraphics"
         "-framework CoreFoundation"
+        "-framework CoreAudio"
+        "-framework AudioToolbox"
     )
 
 elseif(UNIX AND NOT APPLE)
@@ -90,7 +93,9 @@ elseif(UNIX AND NOT APPLE)
                       GLU
                       GL
                       xcb
-                      dl)
+                      dl
+                      pthread
+                      m)
 
   # Add Vulkan Driver
   add_subdirectory(Driver/Vulkan)
@@ -112,7 +117,16 @@ if(APPLE)
 endif()
 
 # Executable (its new/delete on the heap of the engine: Core/Allocator/MemoryOperators.cpp)
-add_library(Square SHARED ${SOURCES} ${OS_SOURCES})
+add_library(Square SHARED ${SOURCES} ${OS_SOURCES} Audio/AudioLibrary.c)
+
+# miniaudio (the AudioSystem): built once in Square (Audio/AudioLibrary.c, with stb_vorbis), its
+# warnings its own; no encoder (the engine only plays)
+target_compile_definitions(Square PRIVATE MA_NO_ENCODING)
+if(MSVC)
+    set_source_files_properties(Audio/AudioLibrary.c PROPERTIES COMPILE_OPTIONS "/W0")
+else()
+    set_source_files_properties(Audio/AudioLibrary.c PROPERTIES COMPILE_OPTIONS "-w")
+endif()
 
 # The new/delete of the heap of the engine also in each module that links Square (they share their
 # memory with it: a std::string made in one, freed in the other; see Square/Core/Allocator/MemoryOperators.h)
@@ -168,6 +182,7 @@ endif()
 # Include directories
 target_include_directories(Square PRIVATE
     ${SQUARE_ROOT_DIR}/include
+    ${SQUARE_ROOT_DIR}/dependencies/miniaudio
     ${SQUARE_ROOT_DIR}/dependencies/zlib
     ${SQUARE_ROOT_DIR}/dependencies/glm
     ${SQUARE_ROOT_DIR}/dependencies/HLSL2ALL/include

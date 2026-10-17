@@ -29,3 +29,6 @@
 [submodule "dependencies/Vulkan-Headers"]
 	path = dependencies/Vulkan-Headers
 	url = git@github.com:KhronosGroup/Vulkan-Headers.git
+[submodule "dependencies/miniaudio"]
+	path = dependencies/miniaudio
+	url = git@github.com:mackron/miniaudio.git
