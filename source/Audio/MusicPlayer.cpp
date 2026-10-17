@@ -15,6 +15,11 @@ namespace Square
 {
 namespace Audio
 {
+namespace AuxMusicPlayer
+{
+	//constants
+	static constexpr float s_volume_now = -1.0f; //a fade from the volume it has now
+}
 	//////////////////////////////////////////////////////////////
 	//Init
 	MusicPlayer::MusicPlayer(AudioSystem& system)
@@ -66,6 +71,15 @@ namespace Audio
 			deck.stop(fade_seconds);
 		}
 		m_song.clear();
+	}
+
+	void MusicPlayer::volume(float volume, float fade_seconds)
+	{
+		if (m_song.empty())
+		{
+			return;
+		}
+		m_decks[m_deck].fade(AuxMusicPlayer::s_volume_now, volume, fade_seconds);
 	}
 
 	//////////////////////////////////////////////////////////////

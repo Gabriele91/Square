@@ -31,6 +31,8 @@ namespace Audio
 		//play a song (a Resource::Sound), if it is already playing nothing changes
 		bool play(const String& name, float fade_seconds, bool loop = true);
 		void stop(float fade_seconds);
+		//fade the song from its volume now to another (1 = normal)
+		void volume(float volume, float fade_seconds);
 
 		//get the name of the song ("" = none)
 		const String& song() const;

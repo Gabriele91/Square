@@ -5,6 +5,7 @@
 //  Created by Gabriele Di Bari on 09/04/18.
 //  Copyright � 2018 Gabriele Di Bari. All rights reserved.
 //
+#include <type_traits>
 #include "Square/Config.h"
 #include "Square/Core/Context.h"
 #include "Square/Core/Filesystem.h"
@@ -42,6 +43,25 @@ namespace Resource
 				id = size_t(mesh.m_index[id]);
 			}
 			return id;
+		}
+
+		//the uv of a vertex (none: 0)
+		template < class V, class = void >
+		struct has_uv : std::false_type {};
+		template < class V >
+		struct has_uv<V, std::void_t<decltype(std::declval<V&>().m_uvmap)>> : std::true_type {};
+
+		template < class V >
+		static Vec2 uv_of(const V& vertex)
+		{
+			if constexpr (has_uv<V>::value)
+			{
+				return Vec2(vertex.m_uvmap);
+			}
+			else
+			{
+				return Vec2(0.0f);
+			}
 		}
 
 		//the triangles of a sub mesh (its positions)
@@ -126,6 +146,59 @@ namespace Resource
 			{
 				AuxMeshTriangles::add(out, mesh, submesh, positions);
 			}
+		}
+		return true;
+	}
+
+	bool Mesh::local_triangles(Vector<Vec3>& out, Vector<Vec2>& out_uvs, const std::function<bool(size_t submesh)>& filter) const
+	{
+		//its file
+		Parser::StaticMesh::Context mesh;
+		if (!local_data(mesh))
+		{
+			return false;
+		}
+		//its positions, its uv
+		Vector<Vec3> positions;
+		Vector<Vec3> uvs;
+		std::visit([&positions, &uvs](const auto& vertices)
+		{
+			positions.reserve(vertices.size());
+			uvs.reserve(vertices.size());
+			for (const auto& vertex : vertices)
+			{
+				positions.push_back(AuxMeshTriangles::to_vec3(vertex.m_position));
+				uvs.push_back(Vec3(AuxMeshTriangles::uv_of(vertex), 0.0f));
+			}
+		}, mesh.m_vertex);
+		//its sub meshes (the whole mesh when there are none)
+		Render::Mesh::SubMeshList submeshes = mesh.m_submesh;
+		if (submeshes.empty())
+		{
+			size_t count = positions.size();
+			if (!mesh.m_index.empty())
+			{
+				count = mesh.m_index.size();
+			}
+			submeshes.push_back(Render::SubMesh(Render::DRAW_TRIANGLES, (unsigned int)count, 0));
+		}
+		Vector<Vec3> uvs_out;
+		for (size_t submesh_id = 0; submesh_id < submeshes.size(); ++submesh_id)
+		{
+			const Render::SubMesh& submesh = submeshes[submesh_id];
+			const bool triangles = submesh.m_draw_type == Render::DRAW_TRIANGLES;
+			const bool taken = !filter || filter(submesh_id);
+			if (triangles && taken)
+			{
+				AuxMeshTriangles::add(out, mesh, submesh, positions);
+				AuxMeshTriangles::add(uvs_out, mesh, submesh, uvs);
+			}
+		}
+		out_uvs.clear();
+		out_uvs.reserve(uvs_out.size());
+		for (const Vec3& uv : uvs_out)
+		{
+			out_uvs.push_back(Vec2(uv));
 		}
 		return true;
 	}

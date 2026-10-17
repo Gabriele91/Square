@@ -57,6 +57,8 @@ namespace Square
             //GPU keeps no copy of them); filter: the sub meshes taken (by their index), none: all
             //of them; false: its file cannot be read
             bool local_triangles(Vector<Vec3>& out, const std::function<bool(size_t submesh)>& filter = nullptr) const;
+            //the same, with the uv of each vertex (a vertex without uv: 0)
+            bool local_triangles(Vector<Vec3>& out, Vector<Vec2>& out_uvs, const std::function<bool(size_t submesh)>& filter = nullptr) const;
 
             //its vertices, indices and sub meshes, read from its file (the GPU keeps no copy of
             //them); false: its file cannot be read

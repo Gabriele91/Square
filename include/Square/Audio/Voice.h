@@ -53,7 +53,7 @@ namespace Audio
 		void loop(bool loop);
 		void volume(float volume);
 		void pitch(float pitch);                      //1 = normal, 2 = one octave up
-		void fade(float from, float to, float seconds);
+		void fade(float from, float to, float seconds); //from < 0 = the volume now
 
 		//3D (world space, units per second)
 		void position(const Vec3& position);
