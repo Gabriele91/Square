@@ -21,6 +21,8 @@ namespace Scene
 	{
 		//the longest step of the simulation (a slow frame: more steps)
 		static constexpr float s_step = 1.0f / 30.0f;
+		//the longest prewarm (a value broken in a file: no endless start)
+		static constexpr float s_max_prewarm = 30.0f;
 
 		//an attribute of the settings of an emitter (a field of them: the functions of an attribute
 		//capture nothing)
@@ -39,10 +41,12 @@ namespace Scene
 				});
 		}
 
-		//a unit vector around an axis within an angle (a cone), by two random numbers [0, 1)
-		static Vec3 in_cone(const Vec3& axis, float angle, float u, float v)
+		//a unit vector around an axis between two angles (a cone, hollow inside up to the first one),
+		//by two random numbers [0, 1)
+		static Vec3 in_cone(const Vec3& axis, float inner, float outer, float u, float v)
 		{
-			const float cos_theta = 1.0f - u * (1.0f - std::cos(angle));
+			const float cos_inner = std::cos(std::min(inner, outer));
+			const float cos_theta = cos_inner - u * (cos_inner - std::cos(outer));
 			const float sin_theta = std::sqrt(std::max(1.0f - cos_theta * cos_theta, 0.0f));
 			const float phi = 6.28318530718f * v;
 			const Vec3 helper = std::abs(axis.y) < 0.99f ? Vec3(0.0f, 1.0f, 0.0f) : Vec3(1.0f, 0.0f, 0.0f);
@@ -87,6 +91,7 @@ namespace Scene
 		setting<Vec3, &Settings::m_box>(ctx, "box", defaults.m_box);
 		setting<Vec3, &Settings::m_direction>(ctx, "direction", defaults.m_direction);
 		setting<float, &Settings::m_spread>(ctx, "spread", defaults.m_spread);
+		setting<float, &Settings::m_spread_min>(ctx, "spread_min", defaults.m_spread_min);
 		setting<Vec2, &Settings::m_speed>(ctx, "speed", defaults.m_speed);
 		setting<Vec3, &Settings::m_gravity>(ctx, "gravity", defaults.m_gravity);
 		setting<float, &Settings::m_drag>(ctx, "drag", defaults.m_drag);
@@ -153,10 +158,10 @@ namespace Scene
 			, random(Vec2(-1.0f, 1.0f)) * m_settings.m_box.z
 		);
 		particle.m_position = Vec3(model * Vec4(local, 1.0f));
-		//toward: its direction (the space of the actor) within the spread
+		//toward: its direction (the space of the actor) within the spread, out of the spread min
 		Vec3 axis = Vec3(model * Vec4(m_settings.m_direction, 0.0f));
 		axis = length(axis) > 0.0f ? normalize(axis) : Vec3(0.0f, 1.0f, 0.0f);
-		const Vec3 way = in_cone(axis, m_settings.m_spread, random(Vec2(0.0f, 1.0f)), random(Vec2(0.0f, 1.0f)));
+		const Vec3 way = in_cone(axis, m_settings.m_spread_min, m_settings.m_spread, random(Vec2(0.0f, 1.0f)), random(Vec2(0.0f, 1.0f)));
 		particle.m_velocity = way * random(m_settings.m_speed);
 		particle.m_life = std::max(random(m_settings.m_life), 0.01f);
 		particle.m_scale = 1.0f + m_settings.m_size_random * random(Vec2(-1.0f, 1.0f));
@@ -217,7 +222,8 @@ namespace Scene
 		//full at once: its first seconds
 		if (!m_warmed)
 		{
-			for (float warmed = 0.0f; warmed < m_settings.m_prewarm; warmed += s_step)
+			const float prewarm = std::isfinite(m_settings.m_prewarm) ? std::min(m_settings.m_prewarm, s_max_prewarm) : 0.0f;
+			for (float warmed = 0.0f; warmed < prewarm; warmed += s_step)
 			{
 				simulate(s_step);
 			}

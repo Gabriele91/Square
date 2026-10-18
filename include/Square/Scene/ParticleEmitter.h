@@ -5,7 +5,8 @@
 //  An emitter of particles: simulated on the CPU (every update of its actor), drawn as sprites
 //  (Render::SpriteBatch: a draw call for at most SpriteBatch::sprites_max of them), its material a
 //  sprite effect (Sprite, SpriteAdditive). Its particles are born in its box (the space of its
-//  actor), rate a second, toward its direction within its spread (a cone), at a speed, live a
+//  actor), rate a second, toward its direction within its spread (a cone; hollow inside up to
+//  spread_min: a ring, e.g. a shock wave on the ground), at a speed, live a
 //  time, then fall by the gravity (world) and slow by the drag; their size and their color go from
 //  the ones of the start to the ones of the end, they turn; the frames of the flipbook of the
 //  material by their life (frame_by_life), else by the time. They live in the world (the emitter
@@ -43,6 +44,7 @@ namespace Scene
 			Vec3  m_box{ 0.0f };                         //half sides of the box where they are born (the space of the actor)
 			Vec3  m_direction{ 0.0f, 1.0f, 0.0f };       //where they go (the space of the actor)
 			float m_spread{ 0.3f };                      //radians around it (a cone)
+			float m_spread_min{ 0.0f };                  //radians around it at least (a ring: a cone hollow inside)
 			Vec2  m_speed{ 1.0f, 2.0f };                 //world units a second, between
 			Vec3  m_gravity{ 0.0f, 0.0f, 0.0f };         //world units a second a second (world)
 			float m_drag{ 0.0f };                        //the speed lost a second (a share)
