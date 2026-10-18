@@ -164,7 +164,7 @@ namespace Video
 		SUPER  = 0b1000
 	};
 
-	enum MouseButtonEvent : char
+	enum MouseButtonEvent : signed char
 	{
 		MOUSE_UNKNOWN  = -1,
 		MOUSE_BUTTON_1 = 0,
@@ -227,6 +227,13 @@ namespace Video
 		void subscrive_mouse_move_listener(std::function<void(double x, double y)> listener);
 		void subscrive_mouse_scroll_listener(std::function<void(double scroll)> listener);
 		void subscrive_touch_listener(std::function<void(FingerEvent fevent, ActionEvent action)> listener);
+		//the fingers on the screen and where (the pixels of the window): down (PRESS), moved
+		//(REPEAT), up (RELEASE); none without a touch screen
+		void subscrive_finger_listener(std::function<void(FingerEvent finger, ActionEvent action, double x, double y)> listener);
+		//the gravity of the device (m/s^2) in the space of the screen as it is shown (x right, y up,
+		//z out of it), while its sensor is on (enable_tilt); none without a sensor (a computer)
+		void subscrive_tilt_listener(std::function<void(double x, double y, double z)> listener);
+		void enable_tilt(bool enable);
 		void subscrive_window_listener(std::function<void(WindowEvent wevent)> listener);
 		void subscrive_window_move_listener(std::function<void(double x, double y)> listener);
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////

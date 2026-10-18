@@ -88,6 +88,7 @@ namespace UI
 		virtual void on_mouse_button(Video::MouseButtonEvent button, Video::ActionEvent action) override;
 		virtual void on_mouse_move(const Vec2& position) override;
 		virtual void on_mouse_scroll(float scroll) override;
+		virtual void on_finger(Video::FingerEvent finger, Video::ActionEvent action, const Vec2& position) override;
 		//RenderOverlay
 		virtual void draw_overlay(Render::Context& render) override;
 
@@ -102,6 +103,9 @@ namespace UI
 		Vector<Weak<UI::DataModel::State>> m_models;
 		int                          m_modifiers{ 0 };
 		bool                         m_wants_mouse{ false };
+		//the fingers down on the UI (touches of RmlUi: a drag scrolls), the mouse of the first one
+		//not read meanwhile (RmlUi makes it from the touches)
+		int                          m_fingers{ 0 };
 		IVec2                        m_reference_size{ 0, 0 };
 	};
 }

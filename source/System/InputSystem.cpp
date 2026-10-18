@@ -70,16 +70,34 @@ namespace Square
 			for (auto* listener : m_listeners) listener->on_mouse_scroll(float(scroll));
 			if (auto* instance = app()) instance->mouse_scroll_event(scroll);
 		});
+		m_finger_places.fill(Vec2(0.0f));
+		m_finger_places_next.fill(Vec2(0.0f));
+		m_input->subscrive_finger_listener([this](Video::FingerEvent finger, Video::ActionEvent action, double x, double y)
+		{
+			const Vec2 position{ float(x), float(y) };
+			if (size_t(finger) < FINGER_COUNT)
+			{
+				change(m_fingers_next[size_t(finger)], action);
+				m_finger_places_next[size_t(finger)] = position;
+			}
+			for (auto* listener : m_listeners) listener->on_finger(finger, action, position);
+		});
+		m_input->subscrive_tilt_listener([this](double x, double y, double z)
+		{
+			m_tilt = Vec3(float(x), float(y), float(z));
+			m_tilted = true;
+		});
 		m_input->subscrive_window_listener([this, app](Video::WindowEvent event)
 		{
 			for (auto* listener : m_listeners) listener->on_window(event);
 			if (auto* instance = app()) instance->window_event(event);
 			if (event == Video::WindowEvent::CLOSE) m_close_requested = true;
-			//no focus: no key is held any more (their release goes to another window)
+			//no focus: no key is held any more (their release goes to another window), no finger
 			if (event == Video::WindowEvent::LOST_FOCUS)
 			{
 				for (auto& key : m_keys_next) if (key.down) change(key, Video::ActionEvent::RELEASE);
 				for (auto& button : m_buttons_next) if (button.down) change(button, Video::ActionEvent::RELEASE);
+				for (auto& finger : m_fingers_next) if (finger.down) change(finger, Video::ActionEvent::RELEASE);
 			}
 		});
 		return true;
@@ -102,6 +120,8 @@ namespace Square
 		//the state of this frame
 		latch(m_keys, m_keys_next);
 		latch(m_buttons, m_buttons_next);
+		latch(m_fingers, m_fingers_next);
+		m_finger_places = m_finger_places_next;
 		m_mouse_delta = m_mouse_next - m_mouse;
 		m_mouse = m_mouse_next;
 		m_scroll = m_scroll_next;
@@ -200,6 +220,40 @@ namespace Square
 	float InputSystem::scroll() const
 	{
 		return m_scroll;
+	}
+
+	bool InputSystem::down(Video::FingerEvent finger) const
+	{
+		return size_t(finger) < FINGER_COUNT && m_fingers[size_t(finger)].down;
+	}
+
+	bool InputSystem::pressed(Video::FingerEvent finger) const
+	{
+		return size_t(finger) < FINGER_COUNT && m_fingers[size_t(finger)].pressed;
+	}
+
+	bool InputSystem::released(Video::FingerEvent finger) const
+	{
+		return size_t(finger) < FINGER_COUNT && m_fingers[size_t(finger)].released;
+	}
+
+	const Vec2& InputSystem::finger(Video::FingerEvent finger) const
+	{
+		static const Vec2 s_none(0.0f);
+		return size_t(finger) < FINGER_COUNT ? m_finger_places[size_t(finger)] : s_none;
+	}
+
+	void InputSystem::tilt(bool enable)
+	{
+		if (m_input) m_input->enable_tilt(enable);
+		if (!enable) m_tilted = false;
+	}
+
+	bool InputSystem::tilt(Vec3& gravity) const
+	{
+		if (!m_tilted) return false;
+		gravity = m_tilt;
+		return true;
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////

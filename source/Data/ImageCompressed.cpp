@@ -9,6 +9,7 @@
 //  the other from the largest (Render::texture_level_bytes).
 //
 #include <cstring>
+#include <algorithm>
 #include <thread>
 #include "Square/Config.h"
 #include "Square/Data/Image.h"
@@ -279,6 +280,150 @@ namespace Data
 			return load_ktx(data_file, out_levels, image_width, image_height, image_levels, image_format);
 		}
 		return false;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+	// BC decoding: the 16 pixels of a block
+	//a color of 5:6:5 bits to 8 bits
+	static void decode_565(unsigned int color, unsigned char out[4])
+	{
+		const unsigned int r = (color >> 11) & 0x1F;
+		const unsigned int g = (color >> 5) & 0x3F;
+		const unsigned int b = color & 0x1F;
+		out[0] = (unsigned char)((r << 3) | (r >> 2));
+		out[1] = (unsigned char)((g << 2) | (g >> 4));
+		out[2] = (unsigned char)((b << 3) | (b >> 2));
+		out[3] = 255;
+	}
+
+	//the colors of BC1/BC3 (8 bytes): RGBA of the 16 pixels; BC1 with its transparent black
+	static void decode_color_block(const unsigned char* block, bool bc1, unsigned char pixels[16 * 4])
+	{
+		const unsigned int color0 = block[0] | (block[1] << 8);
+		const unsigned int color1 = block[2] | (block[3] << 8);
+		unsigned char palette[4][4];
+		decode_565(color0, palette[0]);
+		decode_565(color1, palette[1]);
+		const bool four_colors = !bc1 || color0 > color1;
+		for (int channel = 0; channel != 3; ++channel)
+		{
+			const int c0 = palette[0][channel];
+			const int c1 = palette[1][channel];
+			palette[2][channel] = (unsigned char)(four_colors ? (2 * c0 + c1) / 3 : (c0 + c1) / 2);
+			palette[3][channel] = (unsigned char)(four_colors ? (c0 + 2 * c1) / 3 : 0);
+		}
+		palette[2][3] = 255;
+		palette[3][3] = four_colors ? 255 : 0;
+		const unsigned int indices = read_u32(block + 4);
+		for (int pixel = 0; pixel != 16; ++pixel)
+		{
+			const unsigned int index = (indices >> (2 * pixel)) & 0x3;
+			std::memcpy(pixels + pixel * 4, palette[index], 4);
+		}
+	}
+
+	//a channel of BC3 (alpha), BC4, BC5 (8 bytes): the 16 values
+	static void decode_channel_block(const unsigned char* block, unsigned char values[16])
+	{
+		const int v0 = block[0];
+		const int v1 = block[1];
+		int palette[8];
+		palette[0] = v0;
+		palette[1] = v1;
+		if (v0 > v1)
+		{
+			for (int i = 1; i != 7; ++i)
+			{
+				palette[i + 1] = ((7 - i) * v0 + i * v1) / 7;
+			}
+		}
+		else
+		{
+			for (int i = 1; i != 5; ++i)
+			{
+				palette[i + 1] = ((5 - i) * v0 + i * v1) / 5;
+			}
+			palette[6] = 0;
+			palette[7] = 255;
+		}
+		//48 bits of indices, 3 a value
+		unsigned long long bits = 0;
+		for (int byte = 0; byte != 6; ++byte)
+		{
+			bits |= (unsigned long long)block[2 + byte] << (8 * byte);
+		}
+		for (int pixel = 0; pixel != 16; ++pixel)
+		{
+			values[pixel] = (unsigned char)palette[(bits >> (3 * pixel)) & 0x7];
+		}
+	}
+
+	//the pixels of a block (its channels) by format
+	static void decode_block(const unsigned char* block, Render::TextureFormat format, unsigned char* pixels, unsigned int channels)
+	{
+		unsigned char values[16];
+		switch (format)
+		{
+		case Render::TF_BC1:
+			decode_color_block(block, true, pixels);
+			break;
+		case Render::TF_BC3:
+			decode_color_block(block + 8, false, pixels);
+			decode_channel_block(block, values);
+			for (int pixel = 0; pixel != 16; ++pixel)
+			{
+				pixels[pixel * 4 + 3] = values[pixel];
+			}
+			break;
+		case Render::TF_BC4:
+		case Render::TF_BC5:
+			for (unsigned int channel = 0; channel != channels; ++channel)
+			{
+				decode_channel_block(block + 8 * channel, values);
+				for (int pixel = 0; pixel != 16; ++pixel)
+				{
+					pixels[pixel * channels + channel] = values[pixel];
+				}
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	Vector<unsigned char> Image::decompress_bc
+	(
+		const unsigned char* blocks,
+		unsigned long width,
+		unsigned long height,
+		Render::TextureFormat format
+	)
+	{
+		Vector<unsigned char> out;
+		const unsigned int block_bytes = Render::texture_block_bytes(format);
+		if (!blocks || !width || !height || !block_bytes || format == Render::TF_ASTC_4x4)
+		{
+			return out;
+		}
+		const unsigned int channels = format == Render::TF_BC4 ? 1 : format == Render::TF_BC5 ? 2 : 4;
+		out.resize(size_t(width) * height * channels);
+		unsigned char pixels[16 * 4];
+		const unsigned char* block = blocks;
+		for (unsigned long block_y = 0; block_y < height; block_y += 4)
+		{
+			for (unsigned long block_x = 0; block_x < width; block_x += 4)
+			{
+				decode_block(block, format, pixels, channels);
+				block += block_bytes;
+				//the pixels of the block inside the image
+				for (unsigned long y = 0; y != 4 && block_y + y < height; ++y)
+				{
+					const unsigned long columns = std::min<unsigned long>(4, width - block_x);
+					std::memcpy(out.data() + ((block_y + y) * width + block_x) * channels, pixels + y * 4 * channels, columns * channels);
+				}
+			}
+		}
+		return out;
 	}
 
 	Vector<unsigned char> Image::compress_bc

@@ -83,6 +83,13 @@ namespace UI
 		Vec2 size() const;
 		Vec2 position() const;
 
+		//its scroll (an element with overflow: its content higher than it): how far down (pixels),
+		//the height of its content, the height shown of it
+		float scroll_top() const;
+		void  scroll_top(float top);
+		float scroll_height() const;
+		float client_height() const;
+
 		//children: a new one of a tag at the end, removed from its parent
 		Element create_child(const String& tag);
 		void remove();

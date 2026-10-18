@@ -5,7 +5,9 @@
 //  Copyright Â© 2017 Gabriele Di Bari. All rights reserved.
 //
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
+#include <thread>
 #include "Square/Core/Time.h"
 #include "Square/Core/Allocator/Memory.h"
 #include "Square/Core/Allocator/DebugAllocator.h"
@@ -147,6 +149,16 @@ namespace Square
     double Application::last_delta_time() const
     {
         return m_last_delta_time;
+    }
+
+    void Application::frame_rate(int fps)
+    {
+        m_frame_rate = std::max(fps, 0);
+    }
+
+    int Application::frame_rate() const
+    {
+        return m_frame_rate;
     }
     
     IVec2 Application::screen_size() const
@@ -435,6 +447,18 @@ namespace Square
             m_context.late_update_systems(m_last_delta_time);
             //close
             if (input_system && input_system->close_requested()) break;
+            //at most frame_rate frames a second: the rest of the time of this frame waited
+            if (m_frame_rate > 0)
+            {
+                const double expected_ms = 1000.0 / double(m_frame_rate);
+                const double frame_time_ms = Time::get_ms_time() - last_time;
+                const double left_ms = expected_ms - frame_time_ms;
+                if (left_ms > 0.0)
+                { 
+                    const auto time_to_sleep_mms = std::chrono::microseconds(static_cast<long long>(left_ms * 1000.0));
+                    std::this_thread::sleep_for(time_to_sleep_mms);
+                }
+            }
         }
 
         //send event

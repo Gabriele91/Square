@@ -554,6 +554,10 @@ namespace Render
 		bool create_swapchain();
 		void destroy_swapchain();
 		bool acquire_image();
+#if defined(__ANDROID__)
+		//a new window (the activity back from the background): its surface, its swap chain
+		bool recreate_surface();
+#endif
 		void present_frame();
 		//the frames
 		FrameVK& frame() { return m_frames[m_frame_index % VK_FRAMES]; }
@@ -605,6 +609,9 @@ namespace Render
 		VkInstance               m_instance{ VK_NULL_HANDLE };
 		VkDebugUtilsMessengerEXT m_messenger{ VK_NULL_HANDLE };
 		VkSurfaceKHR             m_surface{ VK_NULL_HANDLE };
+#if defined(__ANDROID__)
+		void*                    m_surface_window{ nullptr }; //the native window of the surface
+#endif
 		VkPhysicalDevice         m_physical{ VK_NULL_HANDLE };
 		VkPhysicalDeviceProperties m_properties{};
 		VkPhysicalDeviceFeatures m_features{};

@@ -48,7 +48,7 @@ namespace Square
 		// 8 bytes: Submesh array size
 		// 8 bytes: Submesh element size
 		// N bytes:	Submesh data (N = Submesh array size * Submesh element size)
-		enum class StaticMeshLayoutType : char
+		enum class StaticMeshLayoutType : signed char
 		{
 			SMLTYPE_POSITON2D = 0,
 			SMLTYPE_POSITON3D = 1,

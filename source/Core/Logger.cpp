@@ -3,6 +3,9 @@
 #include <sstream>
 #include "Square/Core/Logger.h"
 
+#if defined(__ANDROID__)
+    #include <android/log.h>
+#endif
 #if defined(_WIN32)
     #include <Windows.h>   
     #include <debugapi.h>
@@ -115,7 +118,13 @@ namespace Square
             output << " [" << tag << "] ";
             output << value;
             output << std::endl;
+        #if defined(__ANDROID__)
+            //Android: no console, the log of the system (logcat, tag Square)
+            const int priority = stream == stderr ? ANDROID_LOG_ERROR : ANDROID_LOG_INFO;
+            __android_log_write(priority, "Square", output.str().c_str());
+        #else
             fprintf(stream, "%s", output.str().c_str());
+        #endif
         }
     };
 

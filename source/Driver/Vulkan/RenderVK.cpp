@@ -25,6 +25,13 @@ namespace Render
 		static constexpr VkDeviceSize s_zero_bytes = 64 * 1024;
 		//the sets of a descriptor pool (more pools when it is full)
 		static constexpr uint32_t s_pool_sets = 2048;
+		//Android: suboptimal while the display is rotated (the frames are not pre-rotated, the
+		//compositor rotates them): not a reason to make the swap chain again
+#if defined(__ANDROID__)
+		static constexpr bool s_suboptimal_by_rotation = true;
+#else
+		static constexpr bool s_suboptimal_by_rotation = false;
+#endif
 
 		static VkCompareOp compare(DepthFuncType type)
 		{
@@ -205,6 +212,9 @@ namespace Render
 			logger()->error("Vulkan: unable to make the surface of the window");
 			return false;
 		}
+#endif
+#if defined(__ANDROID__)
+		m_surface_window = m_resources->get_device_context();
 #endif
 		if (!pick_device(context.m_gpu_type)) return false;
 		if (!create_device()) return false;
@@ -595,6 +605,12 @@ namespace Render
 		VkSurfaceCapabilitiesKHR capabilities;
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physical, m_surface, &capabilities);
 		VkExtent2D extent = capabilities.currentExtent;
+#if defined(__ANDROID__)
+		//Android: the size of the window as it is shown (its current extent is in the orientation
+		//of the display, rotated by the compositor: no pre-rotation of the frames)
+		extent.width = std::clamp(m_resources->width(), capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+		extent.height = std::clamp(m_resources->height(), capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+#endif
 		if (extent.width == 0xFFFFFFFF)
 		{
 			extent.width = std::clamp(m_resources->width(), capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
@@ -665,6 +681,12 @@ namespace Render
 		                | (capabilities.supportedUsageFlags & (VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT));
 		info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		info.preTransform = capabilities.currentTransform;
+#if defined(__ANDROID__)
+		if (capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
+		{
+			info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+		}
+#endif
 		info.compositeAlpha = (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
 		                    ? VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
 		                    : VkCompositeAlphaFlagBitsKHR(capabilities.supportedCompositeAlpha & -int(capabilities.supportedCompositeAlpha));
@@ -745,9 +767,47 @@ namespace Render
 		m_swapchain.m_acquired = false;
 	}
 
+#if defined(__ANDROID__)
+	bool ContextVK::recreate_surface()
+	{
+		end_render_pass();
+		if (m_frame_open)
+		{
+			flush_and_wait();
+		}
+		destroy_swapchain();
+		if (m_surface)
+		{
+			vkDestroySurfaceKHR(m_instance, m_surface, AllocationVK::callbacks());
+			m_surface = VK_NULL_HANDLE;
+		}
+		m_surface_window = m_resources->get_device_context();
+		if (SurfaceVK::create(m_instance, m_resources, &m_surface) != VK_SUCCESS)
+		{
+			logger()->error("Vulkan: unable to make the surface of the new window");
+			m_surface = VK_NULL_HANDLE;
+			return false;
+		}
+		VkBool32 present = VK_FALSE;
+		vkGetPhysicalDeviceSurfaceSupportKHR(m_physical, m_queue_family, m_surface, &present);
+		if (!present)
+		{
+			logger()->error("Vulkan: the queue can not present to the new window");
+			return false;
+		}
+		m_swapchain.m_dirty = true;
+		return true;
+	}
+#endif
+
 	bool ContextVK::acquire_image()
 	{
 		if (m_swapchain.m_acquired) return true;
+#if defined(__ANDROID__)
+		//Android: no window (the activity in the background), or a new one: a new surface
+		if (!m_resources->get_device_context()) return false;
+		if (m_resources->get_device_context() != m_surface_window && !recreate_surface()) return false;
+#endif
 		//the window changed (its size, its vsync): the swap chain made again
 		const bool resized = m_resources->width() != m_swapchain.m_extent.width || m_resources->height() != m_swapchain.m_extent.height;
 		const bool vsync = m_resources->get_vsync() != m_swapchain.m_vsync;
@@ -775,7 +835,7 @@ namespace Render
 		{
 			return false;
 		}
-		m_swapchain.m_dirty = result == VK_SUBOPTIMAL_KHR;
+		m_swapchain.m_dirty = result == VK_SUBOPTIMAL_KHR && !AuxVK::s_suboptimal_by_rotation;
 		m_swapchain.m_image = image;
 		m_swapchain.m_acquired = true;
 		m_swapchain.m_acquired_waited = false;
@@ -801,7 +861,7 @@ namespace Render
 			info.pSwapchains = &m_swapchain.m_swapchain;
 			info.pImageIndices = &image;
 			const VkResult result = vkQueuePresentKHR(m_queue, &info);
-			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+			if (result == VK_ERROR_OUT_OF_DATE_KHR || (result == VK_SUBOPTIMAL_KHR && !AuxVK::s_suboptimal_by_rotation))
 			{
 				m_swapchain.m_dirty = true;
 			}

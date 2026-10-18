@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- made by square_android_app (CMake): do not edit, it is made again -->
+<resources>
+    <string name="app_name">@SQUARE_ANDROID_NAME@</string>
+</resources>

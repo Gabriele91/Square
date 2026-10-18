@@ -409,7 +409,11 @@ namespace Resource
 		if (!render || !Render::is_compressed_format(format) || !levels) return false;
 		//the GPU samples it?
 		const Render::RenderDriverInfo& info = render->get_render_driver_info();
-		if (format == Render::TF_ASTC_4x4 ? !info.m_texture_astc : !info.m_texture_bc) return false;
+		if (format == Render::TF_ASTC_4x4 && !info.m_texture_astc) return false;
+		if (format != Render::TF_ASTC_4x4 && !info.m_texture_bc)
+		{
+			return build_decompressed(attr, levels_data, width, height, levels, format);
+		}
 		//a new texture
 		destoy();
 		m_width = width;
@@ -446,6 +450,37 @@ namespace Resource
 			}
 		);
 		return m_ctx_texture != nullptr;
+	}
+
+	bool Texture::build_decompressed
+	(
+		const Attributes& attr,
+		const unsigned char* levels_data,
+		unsigned long width,
+		unsigned long height,
+		unsigned int  levels,
+		Render::TextureFormat format
+	)
+	{
+		const Vector<unsigned char> pixels = Data::Image::decompress_bc(levels_data, width, height, format);
+		if (pixels.empty()) return false;
+		Render::TextureFormat pixel_format = Render::TF_RGBA8;
+		Render::TextureType   pixel_type = Render::TT_RGBA;
+		if (format == Render::TF_BC4)
+		{
+			pixel_format = Render::TF_R8;
+			pixel_type = Render::TT_R;
+		}
+		else if (format == Render::TF_BC5)
+		{
+			pixel_format = Render::TF_RG8;
+			pixel_type = Render::TT_RG;
+		}
+		//the levels of the file as the mipmaps of the GPU
+		Attributes pixel_attr = attr;
+		pixel_attr.m_build_mipmap = levels > 1;
+		destoy();
+		return build(pixel_attr, pixels.data(), width, height, pixel_format, pixel_type);
 	}
 
 	Render::Texture* Texture::get_context_texture() const

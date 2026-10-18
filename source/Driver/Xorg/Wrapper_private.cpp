@@ -1589,11 +1589,16 @@ namespace Xorg
 		input->m_scroll = listener;
 	}
 
-	void Input::subscrive_touch_listener(std::function<void(FingerEvent fevent, ActionEvent action)> listener) 
+	void Input::subscrive_touch_listener(std::function<void(FingerEvent fevent, ActionEvent action)> listener)
 	{
 		auto* input = (Xorg::InputXorg*)m_native;
 		input->m_touch = listener;
 	}
+
+	//no touch screen, no tilt sensor (a computer)
+	void Input::subscrive_finger_listener(std::function<void(FingerEvent finger, ActionEvent action, double x, double y)> listener) {}
+	void Input::subscrive_tilt_listener(std::function<void(double x, double y, double z)> listener) {}
+	void Input::enable_tilt(bool enable) {}
 
 	void Input::subscrive_window_listener(std::function<void(WindowEvent wevent)> listener)
 	{

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- made by square_android_app (CMake): do not edit, it is made again -->
+<resources>
+    <!-- Full screen, the color of the splash, also under the cutout of the camera -->
+    <style name="Theme.Square" parent="android:Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@color/square_splash</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+    <color name="square_splash">@SQUARE_ANDROID_SPLASH_COLOR@</color>
+</resources>

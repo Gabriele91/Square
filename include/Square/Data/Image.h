@@ -133,6 +133,17 @@ namespace  Data
 			Render::TextureFormat format
 		);
 
+		//decompress a level of BC1 or BC3 (pixels RGBA, 4 bytes), BC4 (R, 1 byte) or BC5 (RG, 2
+		//bytes), row after row from the top: a GPU without BC (mobile) gets the pixels; empty on a
+		//wrong input
+		static SQUARE_API Vector<unsigned char> decompress_bc
+		(
+			const unsigned char* blocks,
+			unsigned long width,
+			unsigned long height,
+			Render::TextureFormat format
+		);
+
 		//compress a level to ASTC 4x4 (LDR, medium quality, the threads of the CPU): pixels RGBA
 		//(4 bytes), row after row from the top; empty on a wrong input
 		static SQUARE_API Vector<unsigned char> compress_astc

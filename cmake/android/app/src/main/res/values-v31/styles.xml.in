@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- made by square_android_app (CMake): do not edit, it is made again -->
+<resources>
+    <!-- Android 12+: the splash of the system (its color, the icon of the game) -->
+    <style name="Theme.Square" parent="android:Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@color/square_splash</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowSplashScreenBackground">@color/square_splash</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/square_icon</item>
+    </style>
+</resources>

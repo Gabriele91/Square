@@ -32,6 +32,9 @@
 	#include <unistd.h>
     #include <stdint.h>
     #include <limits.h>
+    #if defined(__ANDROID__)
+    #include <dlfcn.h> // dladdr(): the folder of the libraries of the application
+    #endif
     #if defined(__linux)
     #include <sys/sendfile.h> // sendfile()
     #include <fcntl.h>
@@ -93,6 +96,14 @@ namespace Filesystem
 			char buffer[MAX_PATH];
 			int bytes = GetModuleFileName(NULL, buffer, MAX_PATH);
 			if (bytes) return get_directory(buffer);
+		#elif defined(__ANDROID__)
+			//the process is the one of Android (app_process): the folder of the libraries of the
+			//application (of this one, Square), where its drivers are
+			Dl_info info;
+			if (dladdr((void*)&program_dir, &info) && info.dli_fname)
+			{
+				return get_directory(info.dli_fname);
+			}
 		#elif defined(__linux)
 			//path
 			char buffer[PATH_MAX]{ '\0' };

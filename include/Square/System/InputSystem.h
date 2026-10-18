@@ -5,8 +5,9 @@
 //  The input of the window (Video::Input): reads the events at the start of the frame
 //  (update) and sends them to the application (AppInterface).
 //  It also keeps the state of the frame, for who asks it (components, systems): keys and mouse
-//  buttons held, pressed or released in this frame, the mouse position, and the actions (a
-//  name bound to one or more keys: "forward" -> up, W).
+//  buttons held, pressed or released in this frame, the mouse position, the fingers on a touch
+//  screen and the tilt of the device (a phone), and the actions (a name bound to one or more
+//  keys: "forward" -> up, W).
 //  Ring DRIVER: the state is ready before the scene updates.
 //
 #pragma once
@@ -33,6 +34,9 @@ namespace Square
 		virtual void on_mouse_button(Video::MouseButtonEvent button, Video::ActionEvent action) {}
 		virtual void on_mouse_move(const Vec2& position) {}
 		virtual void on_mouse_scroll(float scroll) {}
+		//a finger on the screen: down (PRESS), moved (REPEAT), up (RELEASE), where (pixels of the
+		//window); its first one is also the mouse (its events after the down, before the up)
+		virtual void on_finger(Video::FingerEvent finger, Video::ActionEvent action, const Vec2& position) {}
 		virtual void on_window(Video::WindowEvent event) {}
 	};
 
@@ -81,6 +85,18 @@ namespace Square
 		//wheel scroll in this frame
 		float scroll() const;
 
+		//the fingers on a touch screen (FINGER1, FINGER2...): held, went down in this frame, went
+		//up in this frame, where (pixels of the window: the last place of one up)
+		bool down(Video::FingerEvent finger) const;
+		bool pressed(Video::FingerEvent finger) const;
+		bool released(Video::FingerEvent finger) const;
+		const Vec2& finger(Video::FingerEvent finger) const;
+
+		//the tilt of the device: its sensor on while asked (a phone; a computer: none), the gravity
+		//in the space of the screen (x right, y up, z out of it, m/s^2); false: none yet
+		void tilt(bool enable);
+		bool tilt(Vec3& gravity) const;
+
 		//actions: a name bound to keys (any of them)
 		void bind(const String& action, Video::KeyboardEvent key);
 		void unbind(const String& action);
@@ -98,6 +114,7 @@ namespace Square
 		};
 		static constexpr size_t KEY_COUNT    = size_t(Video::KEY_LAST) + 1;
 		static constexpr size_t BUTTON_COUNT = size_t(Video::MOUSE_BUTTON_LAST) + 1;
+		static constexpr size_t FINGER_COUNT = size_t(Video::FINGERMAX);
 
 		//an event (next: the state being built by the events, until the next update)
 		static void change(Button& button, Video::ActionEvent action);
@@ -117,6 +134,13 @@ namespace Square
 		Vec2  m_mouse_delta{ 0.0f };
 		float m_scroll{ 0.0f };
 		float m_scroll_next{ 0.0f };
+		Array<Button, FINGER_COUNT> m_fingers;
+		Array<Button, FINGER_COUNT> m_fingers_next;
+		Array<Vec2, FINGER_COUNT>   m_finger_places;
+		Array<Vec2, FINGER_COUNT>   m_finger_places_next;
+		//the tilt: the last gravity, any yet
+		Vec3  m_tilt{ 0.0f };
+		bool  m_tilted{ false };
 		//actions
 		UnorderedMap<String, Vector<Video::KeyboardEvent>> m_actions;
 	};

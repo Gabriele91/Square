@@ -24,8 +24,10 @@ set(SOURCE_FILES
     VmaVK.cpp
     ${VOLK_DIR}/volk.c
 )
-# Xorg: the surface of its window (Xlib)
-if(UNIX AND NOT APPLE)
+# Android: the surface of its window (ANativeWindow); Xorg: the surface of its window (Xlib)
+if(ANDROID)
+    list(APPEND SOURCE_FILES SurfaceAndroidVK.cpp)
+elseif(UNIX AND NOT APPLE)
     list(APPEND SOURCE_FILES SurfaceVK.cpp)
 endif()
 
@@ -83,7 +85,9 @@ if(WIN32)
     set(CMAKE_CXX_FLAGS_DEBUG " /Zi /Od /MDd")
 elseif(UNIX)
     target_link_libraries(${PROJECT_NAME} PRIVATE dl)
-    if(NOT APPLE)
+    if(ANDROID)
+        target_link_libraries(${PROJECT_NAME} PRIVATE android log)
+    elseif(NOT APPLE)
         target_link_libraries(${PROJECT_NAME} PRIVATE X11)
     endif()
 endif()

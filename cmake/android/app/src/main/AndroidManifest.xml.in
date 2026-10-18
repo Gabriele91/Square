@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- @SQUARE_ANDROID_NAME@ (made by square_android_app, CMake: do not edit, it is made again): a
+     NativeActivity (no Java code) that loads lib@SQUARE_ANDROID_TARGET@.so (android_main) -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Vulkan 1.1 (the backend of Android), the touch screen and the gamepads not required -->
+    <uses-feature android:name="android.hardware.vulkan.version" android:version="0x401000" android:required="true" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.gamepad" android:required="false" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@drawable/square_icon"
+        android:hasCode="false"
+        android:isGame="true"
+        android:appCategory="game"
+        android:theme="@style/Theme.Square">
+
+        <activity
+            android:name="android.app.NativeActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="@SQUARE_ANDROID_ORIENTATION@"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density">
+            <meta-data android:name="android.app.lib_name" android:value="@SQUARE_ANDROID_TARGET@" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

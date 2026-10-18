@@ -406,6 +406,8 @@ namespace Square
 
 	void UISystem::on_mouse_button(Video::MouseButtonEvent button, Video::ActionEvent action)
 	{
+		//(a finger: its touch, not its mouse)
+		if (m_fingers > 0) return;
 		if (Rml::Context* ui_context = m_ui.native(); ui_context && button >= 0)
 		{
 			//buttons: 0 left, 1 right, 2 middle in both
@@ -418,6 +420,7 @@ namespace Square
 
 	void UISystem::on_mouse_move(const Vec2& position)
 	{
+		if (m_fingers > 0) return;
 		if (Rml::Context* ui_context = m_ui.native())
 		{
 			//false: over an element of a document
@@ -431,6 +434,32 @@ namespace Square
 		{
 			//RmlUi: positive down, the engine: positive up
 			ui_context->ProcessMouseWheel(-scroll, m_modifiers);
+		}
+	}
+
+	void UISystem::on_finger(Video::FingerEvent finger, Video::ActionEvent action, const Vec2& position)
+	{
+		Rml::Context* ui_context = m_ui.native();
+		if (!ui_context) return;
+		//a touch of RmlUi: a tap a click, a drag over what scrolls scrolls it (with its inertia)
+		const Rml::TouchList touches{ Rml::Touch{ Rml::TouchId(finger), Rml::Vector2f(position.x, position.y) } };
+		switch (action)
+		{
+		case Video::PRESS:
+			++m_fingers;
+			m_wants_mouse = !ui_context->ProcessTouchStart(touches, m_modifiers);
+			break;
+		case Video::REPEAT:
+			if (m_fingers > 0) m_wants_mouse = !ui_context->ProcessTouchMove(touches, m_modifiers);
+			break;
+		case Video::RELEASE:
+			if (m_fingers > 0)
+			{
+				ui_context->ProcessTouchEnd(touches, m_modifiers);
+				--m_fingers;
+			}
+			break;
+		default: break;
 		}
 	}
 }

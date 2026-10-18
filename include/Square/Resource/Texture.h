@@ -140,6 +140,18 @@ namespace Resource
 
 		//the DDS/KTX of a file: false when it is not one or the GPU cannot sample its format
 		bool load_compressed(const Attributes& attr, const Vector< unsigned char >& data_file);
+
+		//a BC texture for a GPU without BC (mobile): its first level decompressed by the CPU, its
+		//mipmaps built by the GPU
+		bool build_decompressed
+		(
+			const Attributes& attr,
+			const unsigned char* levels_data,
+			unsigned long width,
+			unsigned long height,
+			unsigned int  levels,
+			Render::TextureFormat format
+		);
 	};
 }
 }

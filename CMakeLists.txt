@@ -36,6 +36,13 @@ set(GLM_IS_MASTER_PROJECT OFF CACHE BOOL "Do not install GLM" FORCE)
 set(GLM_BUILD_INSTALL OFF CACHE BOOL "Do not install GLM" FORCE)
 add_subdirectory(${SQUARE_ROOT_DIR}/dependencies/glm)
 
+# Android: the optimized configurations with the link time optimization of every library (ThinLTO
+# of clang: the calls across the files inlined), -O3 by the flags of Release
+if(ANDROID)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RETAIL ON)
+endif()
+
 # The static libraries in the shared ones (HLSL2ALL, Square): position independent code (also in
 # Retail, its flags without the -fPIC of the Release ones of HLSL2ALL)
 if(UNIX AND NOT APPLE)
@@ -77,9 +84,16 @@ endif()
 set(ASTCENC_CLI OFF CACHE BOOL "Do not build the astcenc command line tools" FORCE)
 set(ASTCENC_WERROR OFF CACHE BOOL "Do not treat the astcenc warnings as errors" FORCE)
 set(ASTCENC_UNIVERSAL_BUILD OFF CACHE BOOL "One astcenc library also on macOS" FORCE)
-set(ASTCENC_ISA_NATIVE ON CACHE BOOL "astcenc with the SIMD of the compiler defaults" FORCE)
+# (Android: cross compiled, no -march=native of the host; NEON, its baseline on arm64)
+if(ANDROID)
+    set(ASTCENC_ISA_NATIVE OFF CACHE BOOL "astcenc with NEON on Android" FORCE)
+    set(ASTCENC_ISA_NEON ON CACHE BOOL "astcenc with NEON on Android" FORCE)
+    set(SQUARE_ASTCENC_LIBRARY astcenc-neon-static)
+else()
+    set(ASTCENC_ISA_NATIVE ON CACHE BOOL "astcenc with the SIMD of the compiler defaults" FORCE)
+    set(SQUARE_ASTCENC_LIBRARY astcenc-native-static)
+endif()
 add_subdirectory(${SQUARE_ROOT_DIR}/dependencies/astc-encoder EXCLUDE_FROM_ALL)
-set(SQUARE_ASTCENC_LIBRARY astcenc-native-static)
 
 # FreeType (the fonts of RmlUi): static, with our zlib (above, found by its find_package as
 # ZLIB::ZLIB), without the other optional dependencies (libpng: only the color emoji fonts)
@@ -141,6 +155,14 @@ option(SQUARE_RENDER_PROFILER "Compile the render profiler (CPU/GPU times of the
 if(SQUARE_RENDER_PROFILER)
     add_compile_definitions($<$<NOT:$<CONFIG:Retail>>:RENDER_PROFILER>)
 endif()
+
+# The modules of the engine (engine/cmake): the games on Android (square_add_game,
+# square_android_app), for the engine and for the game that has it as its subdirectory
+list(APPEND CMAKE_MODULE_PATH ${SQUARE_ROOT_DIR}/cmake)
+if(NOT SQUARE_TOP_LEVEL)
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} PARENT_SCOPE)
+endif()
+include(SquareAndroid)
 
 # Add square
 add_subdirectory(source)

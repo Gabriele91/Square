@@ -1,0 +1,19 @@
+// @SQUARE_ANDROID_NAME@ on Android (made by square_android_app, CMake: do not edit, it is made
+// again): one application (app), the NativeActivity of the game; its native code is the CMake
+// project of the game (the game, the engine, its Vulkan driver)
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "@SQUARE_ANDROID_TARGET@"
+include(":app")

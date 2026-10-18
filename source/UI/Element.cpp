@@ -212,6 +212,27 @@ namespace UI
 		return Vec2(offset.x, offset.y);
 	}
 
+	//scroll
+	float Element::scroll_top() const
+	{
+		return m_element ? m_element->GetScrollTop() : 0.0f;
+	}
+
+	void Element::scroll_top(float top)
+	{
+		if (m_element) m_element->SetScrollTop(top);
+	}
+
+	float Element::scroll_height() const
+	{
+		return m_element ? m_element->GetScrollHeight() : 0.0f;
+	}
+
+	float Element::client_height() const
+	{
+		return m_element ? m_element->GetClientHeight() : 0.0f;
+	}
+
 	//children
 	Element Element::create_child(const String& tag)
 	{

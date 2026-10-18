@@ -85,6 +85,21 @@ elseif(APPLE)
         "-framework AudioToolbox"
     )
 
+elseif(ANDROID)
+  # Android (before the Unix one: Android is a Unix too): the NativeActivity of the game, its
+  # window (ANativeWindow) and its input; the glue of the NDK in the game (below: it calls the
+  # android_main of the game, SquareMain.h)
+  file(GLOB ANDROID_SRC CONFIGURE_DEPENDS Driver/Android/*.cpp)
+  list(APPEND OS_SOURCES ${ANDROID_SRC})
+  list(APPEND OS_LIBS android
+                      log
+                      dl
+                      m)
+
+  # Add Vulkan Driver (the only one of Android)
+  add_subdirectory(Driver/Vulkan)
+  list(APPEND INSTALL_DY_LIBS SqVulkan)
+
 elseif(UNIX AND NOT APPLE)
   file(GLOB LINUX_SRC Driver/Xorg/*.cpp)
   list(APPEND OS_SOURCES ${LINUX_SRC})
@@ -102,9 +117,11 @@ elseif(UNIX AND NOT APPLE)
   list(APPEND INSTALL_DY_LIBS SqVulkan)
 endif()
 
-# Add OGL Driver
-add_subdirectory(Driver/OpenGL4)
-list(APPEND INSTALL_DY_LIBS SqOpenGL)
+# Add OGL Driver (OpenGL 4 of the desktop: not on Android)
+if(NOT ANDROID)
+    add_subdirectory(Driver/OpenGL4)
+    list(APPEND INSTALL_DY_LIBS SqOpenGL)
+endif()
 
 # Add Metal Driver (Apple only)
 if(APPLE)
@@ -132,6 +149,14 @@ endif()
 # memory with it: a std::string made in one, freed in the other; see Square/Core/Allocator/MemoryOperators.h)
 target_sources(Square INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Core/Allocator/MemoryOperators.cpp>)
 target_include_directories(Square INTERFACE $<BUILD_INTERFACE:${SQUARE_ROOT_DIR}/include>)
+# Android: the glue of the NDK (its ANativeActivity_onCreate, the thread of android_main) in the
+# library of the game, the one the NativeActivity loads; its header also for the engine
+if(ANDROID)
+    set(SQUARE_ANDROID_GLUE_DIR ${ANDROID_NDK}/sources/android/native_app_glue)
+    target_sources(Square INTERFACE $<BUILD_INTERFACE:${SQUARE_ANDROID_GLUE_DIR}/android_native_app_glue.c>)
+    target_include_directories(Square PUBLIC $<BUILD_INTERFACE:${SQUARE_ANDROID_GLUE_DIR}>)
+    target_link_libraries(Square INTERFACE android log)
+endif()
 # the configuration of RmlUi (its containers: the ones of Square) also in the modules that include
 # the headers of Square::UI
 target_compile_definitions(Square INTERFACE "RMLUI_CUSTOM_CONFIGURATION_FILE=\"${RMLUI_CUSTOM_CONFIGURATION_FILE}\"")
