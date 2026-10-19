@@ -200,7 +200,8 @@ namespace Scene
 		const Mat4& model = owner->global_model_matrix();
 		const Vec3  center = Vec3(model * Vec4(m_center, 1.0f));
 		const Vec3  eye = Vec3(camera.model()[3]);
-		const float distance = length(eye - center);
+		//(the bias: as if it were nearer, farther)
+		const float distance = length(eye - center) / std::max(settings.m_bias, 0.01f);
 		switch (m_mode)
 		{
 		case LodMode::DISTANCE:

@@ -164,6 +164,10 @@ namespace Square
 		//how the levels of detail of the world are chosen (their cross-fade, a level forced)
 		const Render::LevelOfDetailSettings& levels_of_detail() const;
 		void levels_of_detail(const Render::LevelOfDetailSettings& settings);
+		//the share of the size of its cameras their scene is drawn at, then stretched to them (the
+		//deferred pipeline: the UI drawn after it at the size of the window; 1: as it is)
+		float resolution_scale() const;
+		void resolution_scale(float scale);
 		//the occlusion culling of its cameras on the CPU (Render::SoftwareOcclusion)
 		const Render::SoftwareOcclusion::Settings& occlusion() const;
 		void occlusion(const Render::SoftwareOcclusion::Settings& settings);
@@ -202,6 +206,7 @@ namespace Square
 		bool        m_visible{ true };
 		double      m_time{ 0.0 };
 		Render::LevelOfDetailSettings m_levels_of_detail;
+		float       m_resolution_scale{ 1.0f };
 		Render::SoftwareOcclusion::Settings m_occlusion;
 		Vector< Shared<Render::PostEffect> > m_post_effects;
 		//drawer

@@ -438,6 +438,20 @@ namespace Square
 		}
 	}
 
+	float RenderInstance::resolution_scale() const
+	{
+		return m_resolution_scale;
+	}
+
+	void RenderInstance::resolution_scale(float scale)
+	{
+		m_resolution_scale = std::clamp(scale, 0.1f, 1.0f);
+		if (m_drawer)
+		{
+			m_drawer->resolution_scale(m_resolution_scale);
+		}
+	}
+
 	const Vec4& RenderInstance::clear_color() const
 	{
 		return m_clear_color;
@@ -509,6 +523,7 @@ namespace Square
 		m_drawer = MakeShared<Render::Drawer>(context());
 		m_drawer->post_effects(m_post_effects);
 		m_drawer->levels_of_detail(m_levels_of_detail);
+		m_drawer->resolution_scale(m_resolution_scale);
 		m_drawer->occlusion(m_occlusion);
 		if ((m_pipeline & RP_FORWARD) && !(m_pipeline & RP_DEFERRED))
 		{

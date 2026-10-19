@@ -31,6 +31,9 @@ namespace Render
 		//a level for all of them, wherever the camera is (a photo: 0, the most detailed; a group
 		//with fewer levels: its last one); -1: by the camera
 		int   m_force_level{ -1 };
+		//how far each level goes: its distance times it (1: as made; less: the simpler levels
+		//nearer, cheaper; more: farther, finer)
+		float m_bias{ 1.0f };
 	};
 
 	class SQUARE_API LevelOfDetail : public BaseObject

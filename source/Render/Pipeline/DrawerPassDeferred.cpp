@@ -22,6 +22,7 @@
 #include "Square/Render/Pipeline/ForwardShading.h"
 #include "Square/Render/Profiler.h"
 #include <cmath>
+#include <algorithm>
 
 namespace Square
 {
@@ -43,6 +44,46 @@ namespace Render
 
 	//a camera that moves farther than this in a frame is a cut: no motion from the last frame
 	static constexpr float s_velocity_camera_cut = 20.0f;
+
+	//a camera as another one drawn at a share of its size (Drawer::resolution_scale): its viewport
+	//scaled, the rest of it as the camera
+	class ScaledCamera : public Camera
+	{
+	public:
+
+		ScaledCamera(const Camera& camera, float scale)
+		: m_camera(camera)
+		, m_viewport(camera.viewport())
+		{
+			const IVec4& full = camera.viewport().viewport();
+			m_viewport.viewport(IVec4
+			(
+				  int(std::round(float(full.x) * scale))
+				, int(std::round(float(full.y) * scale))
+				, std::max(int(std::round(float(full.z) * scale)), 1)
+				, std::max(int(std::round(float(full.w) * scale)), 1)
+			));
+			time(camera.time());
+			enable(camera.enable());
+		}
+
+		virtual const Mat4& model() const override { return m_camera.model(); }
+		virtual const Mat4& view() const override { return m_camera.view(); }
+		virtual const Mat4& projection() const override { return m_camera.projection(); }
+		virtual const Render::Viewport& viewport() const override { return m_viewport; }
+		virtual const Geometry::Frustum& frustum() const override { return m_camera.frustum(); }
+
+		virtual void set(UniformBufferCamera* gpubuffer) const override
+		{
+			m_camera.set(gpubuffer);
+			gpubuffer->m_viewport = Vec4(m_viewport.viewport());
+		}
+
+	private:
+
+		const Camera&    m_camera;
+		Render::Viewport m_viewport;
+	};
 
 	
 	//////////////////////////////////////////////////////////////////////
@@ -527,8 +568,12 @@ namespace Render
 	, const PoolQueues& queues
 	)
 	{
+		//the scene at a share of the size of the camera (then stretched to it by the present)
+		const float scale = drawer.resolution_scale();
+		const ScaledCamera scaled(camera, scale);
+		const Camera& scene = scale < 1.0f ? static_cast<const Camera&>(scaled) : camera;
 		//viewport size in pixels
-		const Vec4& viewport = camera.viewport().viewport();
+		const IVec4& viewport = scene.viewport().viewport();
 		const IVec2 size((int)viewport.z, (int)viewport.w);
 		if (size.x <= 0 || size.y <= 0) return;
 		//(re)build buffers if needed
@@ -538,7 +583,7 @@ namespace Render
 		//1) geometry into the G-Buffer
 		{
 			SQUARE_RENDER_SCOPE(render(), "G-Buffer");
-			geometry_pass(clear_color, num_of_pass, camera, queues, &drawer.occlusion());
+			geometry_pass(clear_color, num_of_pass, scene, queues, &drawer.occlusion());
 		}
 		//1a) the velocity of the renderables with their own motion blur (an effect needs it)
 		m_velocity_drawn = false;
@@ -546,39 +591,43 @@ namespace Render
 		if (PostEffectChain::any_velocity(post_effects))
 		{
 			SQUARE_RENDER_SCOPE(render(), "Velocity");
-			m_velocity_drawn = velocity_pass(camera, queues);
+			m_velocity_drawn = velocity_pass(scene, queues);
 		}
 		//1b) G-Buffer post effects (SSAO...)
 		if (PostEffectChain::any(post_effects, PES_GBUFFER))
 		{
 			SQUARE_RENDER_SCOPE(render(), "G-Buffer effects");
-			m_post_effects.draw_gbuffer(post_effects, post_effect_frame(camera));
+			m_post_effects.draw_gbuffer(post_effects, post_effect_frame(scene));
 		}
 		//2) accumulate lights into the light buffer
 		{
 			SQUARE_RENDER_SCOPE(render(), "Lights");
-			light_pass(ambient_color, camera, queues);
+			light_pass(ambient_color, scene, queues);
 		}
 		//2b) blend the translucent renderables over it (forward shaded)
 		{
 			SQUARE_RENDER_SCOPE(render(), "Translucent");
-			translucent_pass(ambient_color, camera, queues);
+			translucent_pass(ambient_color, scene, queues);
 		}
 		//2c) color post effects, on the light buffer
 		Texture* frame = m_light_texture;
 		if (PostEffectChain::any(post_effects, PES_COLOR))
 		{
 			SQUARE_RENDER_SCOPE(render(), "Color effects");
-			frame = m_post_effects.draw_color(post_effects, post_effect_frame(camera), m_light_texture);
+			frame = m_post_effects.draw_color(post_effects, post_effect_frame(scene), m_light_texture);
 		}
 		//3) present the frame to the screen (or the debug view of a post effect)
 		if (Texture* debug = PostEffectChain::debug_texture(post_effects)) frame = debug;
 		{
 			SQUARE_RENDER_SCOPE(render(), "Present");
 			present_pass(camera, frame);
-			//4) copy depth for later passes (no-op on backends without blit support)
-			const IVec4 area(0, 0, size.x, size.y);
-			render().copy_target_to_target(area, m_gbuffer->target(), area, nullptr, RT_DEPTH);
+			//4) copy depth for later passes (no-op on backends without blit support; a scene
+			//scaled: not the size of the screen, none)
+			if (scale >= 1.0f)
+			{
+				const IVec4 area(0, 0, size.x, size.y);
+				render().copy_target_to_target(area, m_gbuffer->target(), area, nullptr, RT_DEPTH);
+			}
 		}
 	}
 
@@ -655,6 +704,11 @@ namespace Render
 		if (auto uniform_light = m_shader_present->uniform("g_light"))
 		{
 			uniform_light->set(frame);
+		}
+		//(the screen: the frame stretched to it, a scene scaled)
+		if (auto uniform_viewport = m_shader_present->uniform("g_viewport"))
+		{
+			uniform_viewport->set(Vec4(camera.viewport().viewport()));
 		}
 		else
 		{

@@ -6,6 +6,7 @@
 //  Copyright © 2018 Gabriele Di Bari. All rights reserved.
 //
 #include <set>
+#include <algorithm>
 #include "Square/Core/Context.h"
 #include "Square/System/RenderSystem.h"
 #include "Square/Driver/Render.h"
@@ -342,6 +343,17 @@ namespace Render
     void Drawer::add(Shared<Square::Render::DrawerPass> pass)
     {
         m_rendering_pass[draw_pass_type_to_index(pass->type())].push_back(pass);
+    }
+
+    //the share of the size of a camera its scene is drawn at
+    void Drawer::resolution_scale(float scale)
+    {
+        m_resolution_scale = std::clamp(scale, 0.1f, 1.0f);
+    }
+
+    float Drawer::resolution_scale() const
+    {
+        return m_resolution_scale;
     }
 }
 }
