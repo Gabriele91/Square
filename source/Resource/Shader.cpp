@@ -73,6 +73,36 @@ namespace Resource
 			return out;
 		}
 
+		//a source as a key: without its #line (the files of the machine that loaded it: a path of
+		//Windows, none on Android, DISABLE_SHARER_PREPROCESS_LINE_SET) and its empty lines (the ones
+		//around the #line); the same source, the same key on every machine
+		static String key_source(const String& source)
+		{
+			static constexpr const char   s_line[] = "#line";
+			static constexpr const size_t s_line_length = sizeof(s_line) - 1;
+			String out;
+			out.reserve(source.size());
+			size_t start = 0;
+			while (start < source.size())
+			{
+				size_t end = source.find('\n', start);
+				if (end == String::npos)
+				{
+					end = source.size();
+				}
+				const size_t first = source.find_first_not_of(" \t\r", start);
+				const bool empty = first == String::npos || first >= end;
+				const bool line = !empty && source.compare(first, s_line_length, s_line) == 0;
+				if (!empty && !line)
+				{
+					out.append(source, start, end - start);
+					out += '\n';
+				}
+				start = end + 1;
+			}
+			return out;
+		}
+
 		//the location of each input of a vertex stage of Vulkan by its semantic: the attribute of the
 		//input layouts (Render::AttributeType), as DirectX matches them by semantic
 		static Vector< std::pair<String, unsigned int> > vertex_input_locations()
@@ -203,6 +233,13 @@ namespace Resource
 		const ShaderCache::Key key = ShaderCache::key(cache_key(postprocessed_source, target));
 		const ShaderCache& cache = render_system->shader_cache();
 		ShaderStages stages;
+		//(a release with a pack has all of them: one not there, a pack of other shaders or of
+		//another target, from the folder of the runtime, else translated here)
+		if (!cache.pack().empty() && !cache.in_pack(language, key))
+		{
+			const String name = *resource_name() ? String(resource_name()) : Filesystem::get_filename(path);
+			context().logger()->warning("Shader: " + name + " not in the pack " + cache.pack() + " (" + language + ")");
+		}
 		if (!cache.find(language, key, stages))
 		{
 			if (!translate(postprocessed_source, stages)) return false;
@@ -216,12 +253,13 @@ namespace Resource
 	{
 		//what makes the stages: the target (its language, its version), the version of the
 		//converter, the source preprocessed (its includes, its defines, the common header in it:
-		//the backend, the gamma correction); never the driver (a pack serves every machine)
+		//the backend, the gamma correction); never the driver nor the files of the machine (a pack
+		//serves every machine)
 		String what = target.name();
 		what += "|" + to_string(source.m_version);
 		what += source.m_texture_target ? "|texture" : "|screen";
 		what += "|cache" + to_string(ShaderCache::version);
-		what += "|" + source.m_source;
+		what += "|" + AuxShader::key_source(source.m_source);
 		return what;
 	}
 

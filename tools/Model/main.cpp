@@ -44,7 +44,7 @@ static Square::Shell::ParserCommands s_ShellCommands
     , Square::Shell::Command{ "swapzy",  "s", "swap z with y coord"                      , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
     , Square::Shell::Command{ "lhs",     "l", "convert in left hand"                     , Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(true)               }
     , Square::Shell::Command{ "shadow",  "r", "force shadow resolution [size]"           , Square::Shell::ValueType::value_int   , false, Square::Shell::Value_t(0)                  }
-    , Square::Shell::Command{ "images",  "m", "texture images [bc, astc, png, keep]"     , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("bc"))  }
+    , Square::Shell::Command{ "images",  "m", "texture images [all, bc, astc, png, keep]", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("all")) }
     , Square::Shell::Command{ "pack",    "p", "pack the output folder in an archive (.sqz)", Square::Shell::ValueType::value_none  , false, Square::Shell::Value_t(false)              }
     , Square::Shell::Command{ "cascades","c", "cascades of the directional lights [1-8]"  , Square::Shell::ValueType::value_int   , false, Square::Shell::Value_t(0)                  }
     , Square::Shell::Command{ "static",  "t", "the nodes static by default (they do not move: cached in the shadows; a node: its \"square_static\")", Square::Shell::ValueType::value_none, false, Square::Shell::Value_t(false) }
@@ -566,10 +566,10 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
     {
         shadow_resoluction = std::get<int>(shadow_it->second);
     }
-    // images: bc (converted and compressed in DDS, the default), astc (compressed in KTX), png
-    // (converted) or keep (copied as they are)
+    // images: all (converted, compressed in DDS and in KTX: every platform, the default), bc
+    // (compressed in DDS), astc (compressed in KTX), png (converted) or keep (copied as they are)
     bool convert_images = true;
-    ImageConverter::Compression compression = ImageConverter::Compression::BC;
+    ImageConverter::Compression compression = ImageConverter::Compression::ALL;
     if (auto images_it = args.find("images"); images_it != args.end())
     if (auto images_str = std::get<Square::String>(images_it->second); images_str.size())
     {
@@ -586,9 +586,13 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
         {
             compression = ImageConverter::Compression::ASTC;
         }
-        else if (!Square::case_insensitive_equal(images_str, "bc"))
+        else if (Square::case_insensitive_equal(images_str, "bc"))
         {
-            std::cout << "unknown images mode: " << images_str << " (bc, astc, png, keep)" << std::endl;
+            compression = ImageConverter::Compression::BC;
+        }
+        else if (!Square::case_insensitive_equal(images_str, "all"))
+        {
+            std::cout << "unknown images mode: " << images_str << " (all, bc, astc, png, keep)" << std::endl;
             return -1;
         }
     }

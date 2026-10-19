@@ -37,14 +37,28 @@ namespace ImageConverter
     {
         NONE,
         BC,   //DDS: BC5 the normal maps (the shaders rebuild z), BC3 with alpha, else BC1
-        ASTC  //KTX: ASTC 4x4 (Apple GPUs, mobiles; not the desktop ones)
+        ASTC, //KTX: ASTC 4x4 (Apple GPUs, mobiles; not the desktop ones)
+        ALL   //both: the DDS (the url of the texture) and the KTX of the same name next to it, the
+              //images of every platform (AssetPack keeps the ones of each release)
     };
 
-    //the extension of the files of a compression (".dds", ".ktx")
+    //the extension of the files of a compression (".dds", ".ktx"; empty: NONE, ALL, not a file)
     Square::String extension(Compression compression);
 
     //the image (a file the engine reads: the m_data of convert/convert_normal_map) compressed,
     //with its levels down to 1x1 (box filter; the normal maps normalized); m_data empty when it
     //cannot be (not decoded; BC: a size not a multiple of 4, DirectX wants it)
-    Result compress(const Square::Vector<unsigned char>& file, bool normal_map, Compression compression);
+    //(threads of ASTC: 0 the ones of the CPU, 1 the caller only: more images compressed at once)
+    Result compress(const Square::Vector<unsigned char>& file, bool normal_map, Compression compression, unsigned int threads = 0);
+
+    //the same from its pixels (RGBA, rows from the top: an image decoded from a DDS or a KTX)
+    Result compress_rgba
+    (
+        const Square::Vector<unsigned char>& rgba,
+        unsigned long width,
+        unsigned long height,
+        bool normal_map,
+        Compression compression,
+        unsigned int threads = 0
+    );
 }

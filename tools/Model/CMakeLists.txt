@@ -19,7 +19,7 @@ add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 # Source files
 set(SOURCE_FILES
     main.cpp
-    ImageConverter.cpp
+    ${SQUARE_ROOT_DIR}/tools/Common/ImageConverter.cpp
     SquareExtras.cpp
     TextureManager.cpp
     MaterialManager.cpp
@@ -42,6 +42,7 @@ target_compile_definitions(Model PRIVATE SQUARE_ENGINE_DIR="${SQUARE_ROOT_DIR}")
 # Include directories
 target_include_directories(Model PRIVATE 
     ${SQUARE_ROOT_DIR}/include
+    ${SQUARE_ROOT_DIR}/tools/Common
     ${SQUARE_ROOT_DIR}/dependencies/glm/
     ${SQUARE_ROOT_DIR}/dependencies/glad/include
 )

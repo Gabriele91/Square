@@ -194,10 +194,11 @@ function(square_android_apk target project module)
             "-DLIBRARIES=${libraries}"
             -DOUTPUT=${project}/app/jniLibs/${SQUARE_ANDROID_ABI}
             -P ${module}/SquareAndroidPackage.cmake
+        # (no daemon: a daemon of Gradle keeps the output of the build open, the build never ends)
         COMMAND ${CMAKE_COMMAND} -E env
             "JAVA_HOME=${SQUARE_ANDROID_JAVA_HOME}"
             "ANDROID_HOME=${SQUARE_ANDROID_SDK}"
-            ${gradle} --console=plain -p ${project} assemble${SQUARE_ANDROID_CONFIG}
+            ${gradle} --no-daemon --console=plain -p ${project} assemble${SQUARE_ANDROID_CONFIG}
         WORKING_DIRECTORY ${project}
         COMMENT "Android: the APK of ${target} (${SQUARE_ANDROID_CONFIG})"
         USES_TERMINAL

@@ -18,7 +18,10 @@ option(SQUARE_BUILD_EXAMPLES "Build the examples of the engine" ${SQUARE_TOP_LEV
 # - Retail: optimized as Release, without any debug tool (SQUARE_RETAIL; only warnings and errors
 #   in the log). Single configuration generators: -DCMAKE_BUILD_TYPE=Retail (its own build folder)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;Retail" CACHE STRING "The configurations" FORCE)
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release Retail)
+# (the configuration of a single configuration generator: none with Visual Studio, Ninja Multi-Config)
+if(DEFINED CACHE{CMAKE_BUILD_TYPE})
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release Retail)
+endif()
 foreach(language C CXX)
     set(CMAKE_${language}_FLAGS_RETAIL "${CMAKE_${language}_FLAGS_RELEASE}" CACHE STRING "Flags of ${language} in Retail (as Release)" FORCE)
 endforeach()

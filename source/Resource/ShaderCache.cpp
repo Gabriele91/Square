@@ -177,6 +177,11 @@ namespace Resource
 		return found;
 	}
 
+	bool ShaderCache::in_pack(const String& language, const Key& key) const
+	{
+		return !m_pack.empty() && Filesystem::exists(file_of(m_pack, language, key));
+	}
+
 	bool ShaderCache::store(const String& language, const Key& key, const ShaderStages& stages) const
 	{
 		bool stored = false;

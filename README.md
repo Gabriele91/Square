@@ -16,7 +16,7 @@ Square renders with DirectX 11, OpenGL 4, Metal and Vulkan (Windows) from a sing
 | Post effects | SSAO, Bloom, screen space reflections (deferred) |
 | Textures | BC1/BC3/BC4/BC5 (DDS) and ASTC 4x4 (KTX) with mipmaps, PNG fallback |
 | Scene | Actors and components, worlds and levels, automatic serialization (binary and JSON) |
-| Tools | `Model`: glTF/GLB to engine assets (actors, meshes, materials, compressed textures); `ShaderPack`: the shaders of a game translated offline |
+| Tools | `Model`: glTF/GLB to engine assets (actors, meshes, materials, compressed textures); `ShaderPack`: the shaders of a game translated offline; `AssetPack`: the archives of a game for the release of a platform |
 
 The examples are `HelloWorld` and `HelloWorldCSM`.
 
@@ -91,7 +91,33 @@ Gradle's (Apache 2.0, its `LICENSE` there).
 ```bat
 build\bin\Model.exe -i model.glb -o assets\model -n model -f bgz -r 1024
 ```
-Textures are compressed to BC by default; `-m astc` targets Apple GPUs and mobiles, `-m png` keeps them uncompressed. See [tools/Model/README.md](tools/Model/README.md).
+Textures are written for every platform by default (`-m all`: the PNG, its DDS in BC for the
+desktop, the url of the texture, and its KTX in ASTC for the mobiles next to it); `-m bc`, `-m astc`
+one of them, `-m png` uncompressed. See [tools/Model/README.md](tools/Model/README.md).
+
+### The archives of a release
+
+`AssetPack` makes the archives (`.sqz`) of a game for a platform: each texture in the compression of
+its GPUs (desktop: BC in DDS; mobile: ASTC in KTX) from the best image it has (one already in that
+compression, else its image not compressed: a file, its fallback or its bytes in the `.sqtex`,
+else the image of the other compression decoded and compressed again), the same images in one
+file, the images no texture uses removed (the fallbacks too, `-f` keeps them). Its report
+(`assetpack_<platform>.txt`): each archive, each texture, and the files more archives have the same.
+
+```bat
+buildin\AssetPack.exe -t android -i assets -o releasendroidssets
+buildin\AssetPack.exe -t windows -i assetsrena.sqz,assets	itle.sqz -o release\windowsssets
+```
+
+`cmake/SquareRelease.cmake` makes the release of a game: the desktop and Android built in their
+configurations (Release, Retail), installed, their archives (`AssetPack`) and their shaders
+(`ShaderPack`) for their platform, in `release/` (desktop: the game installed; Android: the APK and
+`files/`, the resources to push in the files of the application):
+
+```bat
+cmake -P engine\cmake\SquareRelease.cmake
+cmake "-DPLATFORMS=android" "-DCONFIGS=Retail" "-DARCHIVES=arena.sqz;title.sqz" -P engine\cmake\SquareRelease.cmake
+```
 
 ## Shaders
 

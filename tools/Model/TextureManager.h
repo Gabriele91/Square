@@ -76,4 +76,6 @@ private:
     //the converted image compressed, and itself as fallback, in files next to the textures: the
     //"url"/"fallback" lines of a .sqtex ("" when it cannot be compressed)
     Square::String compress_image(size_t image_id, bool normal_map, const Square::String& texture_name, const Square::Vector<unsigned char>& converted);
+    //the KTX (ASTC) of an image next to its DDS (its name without extension): Compression::ALL
+    bool compress_mobile_image(size_t image_id, bool normal_map, const Square::String& image_name, const Square::Vector<unsigned char>& converted);
 };

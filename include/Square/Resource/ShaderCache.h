@@ -61,6 +61,8 @@ namespace Resource
 		//the stages of a shader translated for a language (the pack, then the folder); false: not
 		//there (or not whole)
 		bool find(const String& language, const Key& key, ShaderStages& stages) const;
+		//a shader in the pack (its file there; no pack: false)
+		bool in_pack(const String& language, const Key& key) const;
 		//the stages of a shader translated: into the folder of the runtime
 		bool store(const String& language, const Key& key, const ShaderStages& stages) const;
 

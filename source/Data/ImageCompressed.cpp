@@ -522,17 +522,31 @@ namespace Data
 		return out;
 	}
 
+	//the threads of a compression: the ones asked, else the ones of the CPU (at least one)
+	static unsigned int compression_threads(unsigned int threads)
+	{
+		if (threads)
+		{
+			return threads;
+		}
+		return std::max(1u, std::thread::hardware_concurrency());
+	}
+
 	Vector<unsigned char> Image::compress_astc
 	(
 		const unsigned char* rgba,
 		unsigned long width,
-		unsigned long height
+		unsigned long height,
+		unsigned int threads_asked
 	)
 	{
 		Vector<unsigned char> out;
-		if (!rgba || !width || !height) return out;
-		//the encoder, for the threads of the CPU (each one compresses blocks of the image)
-		const unsigned int threads = std::thread::hardware_concurrency() ? std::thread::hardware_concurrency() : 1;
+		if (!rgba || !width || !height)
+		{
+			return out;
+		}
+		//the encoder, for its threads (each one compresses blocks of the image)
+		const unsigned int threads = compression_threads(threads_asked);
 		astcenc_config config;
 		astcenc_context* context = nullptr;
 		if (astcenc_config_init(ASTCENC_PRF_LDR, 4, 4, 1, ASTCENC_PRE_MEDIUM, 0, &config) != ASTCENC_SUCCESS
@@ -551,19 +565,76 @@ namespace Data
 		const astcenc_swizzle swizzle{ ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 		out.resize(Render::texture_level_bytes(Render::TF_ASTC_4x4, image.dim_x, image.dim_y));
 		Vector<astcenc_error> errors(threads, ASTCENC_SUCCESS);
-		Vector<std::thread> workers;
-		for (unsigned int thread_index = 0; thread_index != threads; ++thread_index)
+		auto compress = [&](unsigned int thread_index)
 		{
-			workers.emplace_back([&, thread_index]()
-			{
-				errors[thread_index] = astcenc_compress_image(context, &image, &swizzle, out.data(), out.size(), thread_index);
-			});
+			errors[thread_index] = astcenc_compress_image(context, &image, &swizzle, out.data(), out.size(), thread_index);
+		};
+		//one thread: the caller (no thread made for each level)
+		if (threads == 1)
+		{
+			compress(0);
 		}
-		for (auto& worker : workers) worker.join();
+		else
+		{
+			Vector<std::thread> workers;
+			for (unsigned int thread_index = 0; thread_index != threads; ++thread_index)
+			{
+				workers.emplace_back(compress, thread_index);
+			}
+			for (auto& worker : workers)
+			{
+				worker.join();
+			}
+		}
 		astcenc_context_free(context);
 		for (astcenc_error error : errors)
 		{
-			if (error != ASTCENC_SUCCESS) return Vector<unsigned char>();
+			if (error != ASTCENC_SUCCESS)
+			{
+				return Vector<unsigned char>();
+			}
+		}
+		return out;
+	}
+
+	Vector<unsigned char> Image::decompress_astc
+	(
+		const unsigned char* blocks,
+		unsigned long width,
+		unsigned long height
+	)
+	{
+		Vector<unsigned char> out;
+		if (!blocks || !width || !height)
+		{
+			return out;
+		}
+		//the decoder (one thread: the caller decodes a level at once)
+		astcenc_config config;
+		astcenc_context* context = nullptr;
+		if (astcenc_config_init(ASTCENC_PRF_LDR, 4, 4, 1, ASTCENC_PRE_MEDIUM, ASTCENC_FLG_DECOMPRESS_ONLY, &config) != ASTCENC_SUCCESS)
+		{
+			return out;
+		}
+		if (astcenc_context_alloc(&config, 1, &context, nullptr) != ASTCENC_SUCCESS)
+		{
+			return out;
+		}
+		out.resize(size_t(width) * height * 4);
+		void* slices[1] = { out.data() };
+		astcenc_image image;
+		image.dim_x = (unsigned int)width;
+		image.dim_y = (unsigned int)height;
+		image.dim_z = 1;
+		image.data_type = ASTCENC_TYPE_U8;
+		image.data = slices;
+		const astcenc_swizzle swizzle{ ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
+		const size_t blocks_size = Render::texture_level_bytes(Render::TF_ASTC_4x4, image.dim_x, image.dim_y);
+		const astcenc_error error = astcenc_decompress_image(context, blocks, blocks_size, &image, &swizzle, 0);
+		astcenc_context_free(context);
+		if (error != ASTCENC_SUCCESS)
+		{
+			return Vector<unsigned char>();
 		}
 		return out;
 	}

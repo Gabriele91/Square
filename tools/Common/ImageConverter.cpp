@@ -336,73 +336,164 @@ namespace ImageConverter
         }
     }
 
+    //the file of each compression
+    struct CompressionFile
+    {
+        Compression m_compression;
+        const char* m_extension;
+    };
+    static const CompressionFile s_compression_files[] =
+    {
+        { Compression::BC,   ".dds" },
+        { Compression::ASTC, ".ktx" },
+    };
+
     Square::String extension(Compression compression)
     {
-        switch (compression)
+        for (const CompressionFile& file : s_compression_files)
         {
-        case Compression::BC:   return ".dds";
-        case Compression::ASTC: return ".ktx";
-        default:                return Square::String();
+            if (file.m_compression == compression)
+            {
+                return file.m_extension;
+            }
         }
+        return Square::String();
     }
 
-    Result compress(const Square::Vector<unsigned char>& file, bool normal_map, Compression compression)
+    //an alpha not opaque in some pixel (RGBA)
+    static bool has_alpha_of(const Square::Vector<unsigned char>& rgba)
+    {
+        for (size_t i = 3; i < rgba.size(); i += 4)
+        {
+            if (rgba[i] != 255)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //the format of a compression: ASTC, else BC5 the normal maps, BC3 with alpha, BC1
+    static Square::Render::TextureFormat format_of(Compression compression, bool normal_map, bool has_alpha)
+    {
+        using namespace Square::Render;
+        if (compression == Compression::ASTC)
+        {
+            return TF_ASTC_4x4;
+        }
+        if (normal_map)
+        {
+            return TF_BC5;
+        }
+        if (has_alpha)
+        {
+            return TF_BC3;
+        }
+        return TF_BC1;
+    }
+
+    //the blocks of a level in a format
+    static Square::Vector<unsigned char> compress_level(const Level& level, Square::Render::TextureFormat format, unsigned int threads)
+    {
+        if (format == Square::Render::TF_ASTC_4x4)
+        {
+            return Square::Data::Image::compress_astc(level.m_rgba.data(), level.m_width, level.m_height, threads);
+        }
+        return Square::Data::Image::compress_bc(level.m_rgba.data(), level.m_width, level.m_height, format);
+    }
+
+    //the file of the levels: KTX (ASTC), DDS (BC)
+    static Square::Vector<unsigned char> encode_levels
+    (
+        const Square::Vector<unsigned char>& levels_data,
+        unsigned long width,
+        unsigned long height,
+        unsigned int levels,
+        Square::Render::TextureFormat format
+    )
+    {
+        if (format == Square::Render::TF_ASTC_4x4)
+        {
+            return Square::Data::Image::encode_ktx(levels_data.data(), width, height, levels, format);
+        }
+        return Square::Data::Image::encode_dds(levels_data.data(), width, height, levels, format);
+    }
+
+    Result compress_rgba
+    (
+        const Square::Vector<unsigned char>& rgba,
+        unsigned long width,
+        unsigned long height,
+        bool normal_map,
+        Compression compression,
+        unsigned int threads
+    )
     {
         Result result;
-        Level level;
-        bool has_alpha = false;
         if (compression == Compression::NONE)
         {
             result.m_description = "not compressed";
             return result;
         }
+        if (compression == Compression::BC && (width % 4 || height % 4))
+        {
+            result.m_description = "not compressed (" + Square::to_string(width) + "x" + Square::to_string(height) + ": BC wants a multiple of 4)";
+            return result;
+        }
+        const Square::Render::TextureFormat format = format_of(compression, normal_map, has_alpha_of(rgba));
+        //the levels, down to 1x1
+        Level level;
+        level.m_rgba = rgba;
+        level.m_width = width;
+        level.m_height = height;
+        Square::Vector<unsigned char> levels_data;
+        unsigned int levels = 0;
+        while (true)
+        {
+            const Square::Vector<unsigned char> blocks = compress_level(level, format, threads);
+            if (blocks.empty())
+            {
+                result.m_description = "not compressed (encoder error)";
+                return result;
+            }
+            levels_data.insert(levels_data.end(), blocks.begin(), blocks.end());
+            ++levels;
+            if (level.m_width == 1 && level.m_height == 1)
+            {
+                break;
+            }
+            level = half_level(level, normal_map);
+        }
+        //the file
+        static const char* format_names[] = { "BC1", "BC3", "BC4", "BC5", "ASTC 4x4" };
+        const char* format_name = format_names[format - Square::Render::TF_BC1];
+        result.m_data = encode_levels(levels_data, width, height, levels, format);
+        Square::String container = "DDS ";
+        if (format == Square::Render::TF_ASTC_4x4)
+        {
+            container = "KTX ";
+        }
+        result.m_description = container + format_name
+                             + ", " + Square::to_string(levels) + " levels"
+                             + ", " + Square::to_string(result.m_data.size() / 1024) + " KB";
+        return result;
+    }
+
+    Result compress(const Square::Vector<unsigned char>& file, bool normal_map, Compression compression, unsigned int threads)
+    {
+        Result result;
+        if (compression == Compression::NONE)
+        {
+            result.m_description = "not compressed";
+            return result;
+        }
+        Level level;
+        bool has_alpha = false;
         if (!decode_rgba(file, level, has_alpha))
         {
             result.m_description = "not compressed (not an image of 8 bit channels)";
             return result;
         }
-        if (compression == Compression::BC && (level.m_width % 4 || level.m_height % 4))
-        {
-            result.m_description = "not compressed (" + Square::to_string(level.m_width) + "x" + Square::to_string(level.m_height) + ": BC wants a multiple of 4)";
-            return result;
-        }
-        //the format
-        using namespace Square::Render;
-        const TextureFormat format = compression == Compression::ASTC ? TF_ASTC_4x4
-                                   : normal_map ? TF_BC5
-                                   : has_alpha  ? TF_BC3
-                                   :              TF_BC1;
-        //the levels, down to 1x1
-        const unsigned long width = level.m_width;
-        const unsigned long height = level.m_height;
-        Square::Vector<unsigned char> levels_data;
-        unsigned int levels = 0;
-        bool compressed = true;
-        while (true)
-        {
-            Square::Vector<unsigned char> blocks = format == TF_ASTC_4x4
-                                              ? Square::Data::Image::compress_astc(level.m_rgba.data(), level.m_width, level.m_height)
-                                              : Square::Data::Image::compress_bc(level.m_rgba.data(), level.m_width, level.m_height, format);
-            compressed = !blocks.empty();
-            if (!compressed) break;
-            levels_data.insert(levels_data.end(), blocks.begin(), blocks.end());
-            ++levels;
-            if (level.m_width == 1 && level.m_height == 1) break;
-            level = half_level(level, normal_map);
-        }
-        if (!compressed)
-        {
-            result.m_description = "not compressed (encoder error)";
-            return result;
-        }
-        //the file
-        static const char* format_names[] = { "BC1", "BC3", "BC4", "BC5", "ASTC 4x4" };
-        const char* format_name = format_names[format - TF_BC1];
-        result.m_data = format == TF_ASTC_4x4
-                      ? Square::Data::Image::encode_ktx(levels_data.data(), width, height, levels, format)
-                      : Square::Data::Image::encode_dds(levels_data.data(), width, height, levels, format);
-        result.m_description = Square::String(format == TF_ASTC_4x4 ? "KTX " : "DDS ") + format_name
-                             + ", " + Square::to_string(levels) + " levels, " + Square::to_string(result.m_data.size() / 1024) + " KB";
-        return result;
+        return compress_rgba(level.m_rgba, level.m_width, level.m_height, normal_map, compression, threads);
     }
 }

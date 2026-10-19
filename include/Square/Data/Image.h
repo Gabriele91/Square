@@ -144,13 +144,24 @@ namespace  Data
 			Render::TextureFormat format
 		);
 
-		//compress a level to ASTC 4x4 (LDR, medium quality, the threads of the CPU): pixels RGBA
-		//(4 bytes), row after row from the top; empty on a wrong input
+		//decompress a level of ASTC 4x4 (LDR) to its pixels RGBA, row after row from the top;
+		//empty on a wrong input
+		static SQUARE_API Vector<unsigned char> decompress_astc
+		(
+			const unsigned char* blocks,
+			unsigned long width,
+			unsigned long height
+		);
+
+		//compress a level to ASTC 4x4 (LDR, medium quality; threads: 0 the ones of the CPU, 1 the
+		//caller only, when the caller compresses more images at once): pixels RGBA (4 bytes), row
+		//after row from the top; empty on a wrong input
 		static SQUARE_API Vector<unsigned char> compress_astc
 		(
 			const unsigned char* rgba,
 			unsigned long width,
-			unsigned long height
+			unsigned long height,
+			unsigned int threads = 0
 		);
 
 		//encode the levels of a BC texture in a DDS file; empty on a wrong input

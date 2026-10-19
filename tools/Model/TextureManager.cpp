@@ -259,9 +259,32 @@ size_t TextureManager::add_texture_internal(size_t image_id, bool normal_map, co
     return m_textures.size();
 }
 
+//the compression of the url of a texture (ALL: its DDS, the KTX next to it)
+static ImageConverter::Compression url_compression(ImageConverter::Compression compression)
+{
+    if (compression == ImageConverter::Compression::ALL)
+    {
+        return ImageConverter::Compression::BC;
+    }
+    return compression;
+}
+
+bool TextureManager::compress_mobile_image(size_t image_id, bool normal_map, const Square::String& image_name, const Square::Vector<unsigned char>& converted)
+{
+    ImageConverter::Result result = ImageConverter::compress(converted, normal_map, ImageConverter::Compression::ASTC);
+    m_context.logger()->info("image " + m_image_names[image_id] + ": " + result.m_description);
+    if (result.m_data.empty())
+    {
+        return false;
+    }
+    const Square::String image_file = image_name + ImageConverter::extension(ImageConverter::Compression::ASTC);
+    return Square::Filesystem::binary_file_write_all(Square::Filesystem::join(m_output, image_file), result.m_data);
+}
+
 Square::String TextureManager::compress_image(size_t image_id, bool normal_map, const Square::String& texture_name, const Square::Vector<unsigned char>& converted)
 {
-    ImageConverter::Result result = ImageConverter::compress(converted, normal_map, m_compression);
+    const ImageConverter::Compression compression = url_compression(m_compression);
+    ImageConverter::Result result = ImageConverter::compress(converted, normal_map, compression);
     m_context.logger()->info("image " + m_image_names[image_id] + ": " + result.m_description);
     if (result.m_data.empty()) return Square::String();
     //the extension of the converted image (PNG, BMP, TGA, else as it was: JPEG)
@@ -270,13 +293,19 @@ Square::String TextureManager::compress_image(size_t image_id, bool normal_map, 
     const bool jpeg = converted.size() >= 3 && converted[0] == 0xFF && converted[1] == 0xD8;
     const Square::String fallback_extension = png ? ".png" : bmp ? ".bmp" : jpeg ? ".jpg" : ".tga";
     //"_img"/"_fallback": apart from the .sqtex named after the image (they are texture resources too)
-    const Square::String image_file = m_names.make(texture_name + "_img", "image_img") + ImageConverter::extension(m_compression);
+    const Square::String image_name = m_names.make(texture_name + "_img", "image_img");
+    const Square::String image_file = image_name + ImageConverter::extension(compression);
     const Square::String fallback_file = m_names.make(texture_name + "_fallback", "image_fallback") + fallback_extension;
     if (!Square::Filesystem::binary_file_write_all(Square::Filesystem::join(m_output, image_file), result.m_data)
     ||  !Square::Filesystem::binary_file_write_all(Square::Filesystem::join(m_output, fallback_file), converted))
     {
         m_context.logger()->warning("unable to write the images of: " + texture_name);
         return Square::String();
+    }
+    //ALL: the KTX of the mobiles next to the DDS (the same name)
+    if (m_compression == ImageConverter::Compression::ALL && !compress_mobile_image(image_id, normal_map, image_name, converted))
+    {
+        m_context.logger()->warning("unable to write the mobile image of: " + texture_name);
     }
     return "url \"" + image_file + "\"\nfallback \"" + fallback_file + "\"\n";
 }

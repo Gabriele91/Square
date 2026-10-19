@@ -12,3 +12,6 @@ endif()
 add_subdirectory(Model)
 # ShaderPack: the shaders translated offline for the targets of a platform (the pack of a Retail build)
 add_subdirectory(ShaderPack)
+# AssetPack: the archives of the resources of a game for the release of a platform (the compression
+# of its textures, the same images in one file, a report)
+add_subdirectory(AssetPack)
