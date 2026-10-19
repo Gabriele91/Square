@@ -7,9 +7,9 @@
 #include "Screen_private.h"
 #include "Window_private.h"
 #include "Input_private.h"
-#include <android/log.h>
+#include "Square/Core/Application.h"
+#include "Square/Core/SharedLibrary.h"
 #include <algorithm>
-#include <dlfcn.h>
 
 namespace Square
 {
@@ -37,13 +37,8 @@ namespace Android
 	void DeviceResourcesAVK::set_vsync(bool vsync) { m_vsync = vsync; }
 
 	//ANativeWindow_setFrameRate (Android 11, API 30: the application runs from Android 10, its
-	//function looked for at run time); null without it
+	//function looked for at run time, in libandroid: RTLD_DEFAULT does not see it)
 	using SetFrameRate = int32_t (*)(ANativeWindow* window, float frame_rate, int8_t compatibility);
-	static SetFrameRate set_frame_rate_function()
-	{
-		static SetFrameRate function = (SetFrameRate)dlsym(RTLD_DEFAULT, "ANativeWindow_setFrameRate");
-		return function;
-	}
 
 	bool DeviceResourcesAVK::set_frame_rate(unsigned int fps)
 	{
@@ -55,14 +50,28 @@ namespace Android
 
 	void DeviceResourcesAVK::apply_frame_rate()
 	{
-		SetFrameRate function = set_frame_rate_function();
-		if (!function || !s_activity.m_native_window)
+		if (!s_activity.m_native_window)
 		{
 			return;
 		}
-		//0: no rate asked, the display as the system wants it (120 Hz)
-		const int8_t compatibility = 0; //ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT
-		function(s_activity.m_native_window, float(m_frame_rate), compatibility);
+		//its library open while its function is called (already loaded by the application)
+		void* library = SharedLibrary::open("libandroid.so");
+		if (!library)
+		{
+			return;
+		}
+		if (auto function = (SetFrameRate)SharedLibrary::get(library, "ANativeWindow_setFrameRate"))
+		{
+			//0: no rate asked, the display as the system wants it (120 Hz)
+			const int8_t compatibility = 0; //ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT
+			const int32_t result = function(s_activity.m_native_window, float(m_frame_rate), compatibility);
+			if (auto app = Application::instance())
+			if (auto logger = app->logger())
+			{
+				logger->info("Android: frame rate " + to_string(m_frame_rate) + " asked to the window (" + to_string(int(result)) + ")");
+			}
+		}
+		SharedLibrary::close(library);
 	}
 
 	unsigned int DeviceResourcesAVK::width()
@@ -120,9 +129,11 @@ namespace Android
 		//Vulkan only (the window has not a context of its own)
 		if (m_info.m_context.m_type != ContextInfo::CTX_VULKAN)
 		{
-			const int context = int(m_info.m_context.m_type);
-			__android_log_print(ANDROID_LOG_ERROR, "Square",
-			                    "Android: only the Vulkan backend (-b vk), not the context %d", context);
+			if (auto app = Application::instance())
+			if (auto logger = app->logger())
+			{
+				logger->error("Android: only the Vulkan backend (-b vk), not the context " + to_string(int(m_info.m_context.m_type)));
+			}
 		}
 		m_vk_device = new DeviceResourcesAVK(*this);
 	}

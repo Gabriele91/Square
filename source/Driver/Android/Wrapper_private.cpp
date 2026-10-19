@@ -11,6 +11,7 @@
 #include "Input_private.h"
 #include "SystemBars_private.h"
 #include "Square/Driver/Android.h"
+#include "Square/Core/Application.h"
 #include <android/log.h>
 #include <unistd.h>
 #include <cstdlib>
@@ -156,7 +157,11 @@ namespace Android
 			}
 			if (!s_activity.m_gravity)
 			{
-				__android_log_print(ANDROID_LOG_WARN, "Square", "Android: no gravity sensor, no tilt");
+				if (auto app = Application::instance())
+				if (auto logger = app->logger())
+				{
+					logger->warning("Android: no gravity sensor, no tilt");
+				}
 				s_activity.m_tilt_wanted = false;
 				return;
 			}
@@ -391,6 +396,7 @@ namespace Android
 	{
 		const char* resources = app->activity->externalDataPath;
 		const char* home = app->activity->internalDataPath;
+		//(before the application: no logger of the engine yet, the log of the system)
 		if (resources && chdir(resources) != 0)
 		{
 			__android_log_print(ANDROID_LOG_ERROR, "Square", "Android: no resource folder %s", resources);
@@ -446,6 +452,7 @@ namespace Android
 		const String name = line.substr(0, equal);
 		const String value = line.substr(equal + 1);
 		setenv(name.c_str(), value.c_str(), 1);
+		//(before the application: no logger of the engine yet, the log of the system)
 		__android_log_print(ANDROID_LOG_INFO, "Square", "Android: %s=%s (env.txt)", name.c_str(), value.c_str());
 	}
 
