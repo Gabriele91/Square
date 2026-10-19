@@ -70,7 +70,7 @@ namespace Render
 		const Mat4  inverse_view_projection = inverse(projection * frame.m_camera->view());
 		//the angle of a pixel (a flake at least that wide)
 		const float fov_y = 2.0f * std::atan(1.0f / std::max(std::abs(projection[1][1]), 0.0001f));
-		const float pixel_angle = frame.m_size.y > 0 ? 2.0f * std::tan(fov_y * 0.5f) / float(frame.m_size.y) : 0.001f;
+		const float pixel_angle = frame.m_size.y > 0 ? 2.0f * std::tan(fov_y * 0.5f) / (float(frame.m_size.y) * frame.m_rect.y) : 0.001f;
 		Texture* position = frame.m_gbuffer ? frame.m_gbuffer->texture(DrawerPassDeferred::GB_POSITION) : nullptr;
 		draw_fullscreen(frame, frame.m_destination, m_shader.get(), BlendState(), [&](Resource::Shader& shader)
 		{

@@ -19,10 +19,11 @@ Sampler2D(g_normal);
 Sampler2D(g_albedo);
 Sampler2D(g_emissive);
 
-//screen uv from SV_POSITION (same convention on every backend, no y flip)
+//the uv of the G-Buffer of a pixel from SV_POSITION (same convention on every backend, no y flip;
+//its texel: the G-Buffer as large as the screen, a scene scaled in its corner)
 Vec2 deferred_screen_uv(in Vec4 sv_position)
 {
-	return (sv_position.xy - camera.m_viewport.xy) / camera.m_viewport.zw;
+	return sv_position.xy / textureSize2D(g_position, 0);
 }
 
 //////////////////////////////////////////////////////////////////////

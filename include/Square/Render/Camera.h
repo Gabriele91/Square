@@ -41,6 +41,10 @@ namespace Render
         //the time of the world: x its seconds, y the seconds of the frame (the animations of the
         //materials: AnimatedUV.hlsl)
         CBAlignas Vec4 m_time{ 0.0f };
+        //the share of its targets its scene covers (xy; zw: 1 / xy): a scene drawn at a share of
+        //the screen (Drawer::resolution_scale) in the corner of targets as large as the screen
+        //(FrameRect.hlsl); 1: all of them
+        CBAlignas Vec4 m_rect{ 1.0f };
     };
     //Camera info
     class SQUARE_API Camera : public BaseObject

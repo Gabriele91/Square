@@ -37,7 +37,8 @@ float ssr_surface_difference(in Vec3 ray_position, in Vec2 uv, out bool valid)
 {
 	valid = uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0;
 	if (!valid) return -1.0;
-	Vec4 surface = gbuffer_world(texture2DLod(g_position, uv, 0.0), uv);
+	Vec2 target_uv = frame_target_uv(uv);
+	Vec4 surface = gbuffer_world(texture2DLod(g_position, target_uv, 0.0), target_uv);
 	if (surface.w < 0.5) return -1.0; //background: nothing to hit
 	return length(ray_position - camera.m_position) - length(surface.xyz - camera.m_position);
 }
@@ -146,7 +147,7 @@ bool ssr_march_screen(in Vec3 origin, in Vec3 ray, in float jitter, out Vec2 hit
 	if (delta.y > 0.0) s_max = min(s_max, (1.0 - uv0.y) / delta.y);
 	if (delta.y < 0.0) s_max = min(s_max, -uv0.y / delta.y);
 	//the step: one pixel at least, the visible part of the ray in the steps
-	Vec2  pixels = abs(delta * ssr_size) * s_max;
+	Vec2  pixels = abs(delta * ssr_size * camera.m_rect.xy) * s_max;
 	float length_pixels = max(pixels.x, pixels.y);
 	if (length_pixels < 1.0) return false;
 	float step_s = max(s_max / float(steps), s_max / length_pixels);
@@ -198,7 +199,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		float w;
 		Vec2 projected = ssr_project(g_pos.xyz, w);
 		//error in pixels, less the half pixel between this target and the G-Buffer (black: right)
-		return Vec4(saturate(length((projected - uv) * ssr_size) - 0.75), 0.0, 0.0, 1.0);
+		return Vec4(saturate(length((frame_target_uv(projected) - uv) * ssr_size) - 0.75), 0.0, 0.0, 1.0);
 	}
 	Vec4  g_nor = texture2DLod(g_normal, uv, 0.0);
 	float roughness = ssr_roughness(gbuffer_material(g_nor), gbuffer_model(g_nor));
@@ -219,7 +220,8 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	                            : ssr_march_world(origin, ray, jitter, hit_uv, hit_t);
 	if (!hit) return Vec4(0.0, 0.0, 0.0, 0.0);
 	//a back face (the ray hits it from behind): nothing
-	Vec3 hit_normal = gbuffer_decode_normal(texture2DLod(g_normal, hit_uv, 0.0));
+	Vec2 hit_target = frame_target_uv(hit_uv);
+	Vec3 hit_normal = gbuffer_decode_normal(texture2DLod(g_normal, hit_target, 0.0));
 	if (dot(hit_normal, ray) > 0.0) return Vec4(0.0, 0.0, 0.0, 0.0);
 	//confidence: screen border, distance along the ray, rays to the camera, roughness
 	Vec2  border = min(hit_uv, 1.0 - hit_uv) / ssr_fade;
@@ -228,7 +230,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	float roughness_fade = 1.0 - saturate(roughness / max_roughness);
 	float confidence = border_fade * distance_fade * camera_fade * roughness_fade;
 	//the color of the frame there (a NaN/Inf pixel counts as black)
-	Vec3 color = texture2DLod(g_source, hit_uv, 0.0).rgb;
+	Vec3 color = texture2DLod(g_source, hit_target, 0.0).rgb;
 	if (any(isnan(color)) || any(isinf(color))) color = Vec3(0.0, 0.0, 0.0);
 	return Vec4(max(color, Vec3(0.0, 0.0, 0.0)), confidence);
 }

@@ -22,9 +22,10 @@ float gbuffer_view_sign()
 }
 
 //the world position (xyz) of a pixel and if a surface is there (w: 1, the background 0): its
-//texel of the first target, its uv on the screen
-Vec4 gbuffer_world(in Vec4 texel, in Vec2 uv)
+//texel of the first target, its uv of the targets (the scene in a share of them: camera.m_rect)
+Vec4 gbuffer_world(in Vec4 texel, in Vec2 target_uv)
 {
+	const Vec2 uv = target_uv * camera.m_rect.zw;
 	const float z = -texel.r * gbuffer_view_sign();
 	const float surface = texel.r < 0.0 ? 1.0 : 0.0;
 	//the uv on the screen as normalized device coordinates (the rows go down on D3D/Metal, up

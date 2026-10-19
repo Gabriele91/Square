@@ -438,18 +438,47 @@ namespace Square
 		}
 	}
 
-	float RenderInstance::resolution_scale() const
+	const Vec2& RenderInstance::resolution_scale() const
 	{
 		return m_resolution_scale;
 	}
 
-	void RenderInstance::resolution_scale(float scale)
+	void RenderInstance::resolution_scale(const Vec2& scale)
 	{
-		m_resolution_scale = std::clamp(scale, 0.1f, 1.0f);
+		m_resolution_scale = glm::clamp(scale, Vec2(0.1f), Vec2(1.0f));
 		if (m_drawer)
 		{
-			m_drawer->resolution_scale(m_resolution_scale);
+			m_drawer->resolution_scale(m_resolution_scale * m_dynamic_scale);
 		}
+	}
+
+	const Render::DynamicResolution::Settings& RenderInstance::dynamic_resolution() const
+	{
+		return m_dynamic_resolution.settings();
+	}
+
+	void RenderInstance::dynamic_resolution(const Render::DynamicResolution::Settings& settings)
+	{
+		m_dynamic_resolution.settings(settings);
+	}
+
+	const Vec2& RenderInstance::dynamic_scale() const
+	{
+		return m_dynamic_scale;
+	}
+
+	float RenderInstance::dynamic_fps() const
+	{
+		const float target = m_dynamic_resolution.settings().m_target_fps;
+		if (target > 0.0f) return target;
+		//the limit of the application, else the refresh of its screen
+		auto* app = Application::instance();
+		if (!app) return 60.0f;
+		const FrameRate& frames = app->frames();
+		if (frames.m_mode == FrameMode::LIMIT && frames.m_fps > 0) return float(frames.m_fps);
+		auto* window = app->window();
+		const unsigned int refresh = window && window->device() ? window->device()->get_refresh() : 0;
+		return refresh > 0 ? float(refresh) : 60.0f;
 	}
 
 	const Vec4& RenderInstance::clear_color() const
@@ -523,7 +552,7 @@ namespace Square
 		m_drawer = MakeShared<Render::Drawer>(context());
 		m_drawer->post_effects(m_post_effects);
 		m_drawer->levels_of_detail(m_levels_of_detail);
-		m_drawer->resolution_scale(m_resolution_scale);
+		m_drawer->resolution_scale(m_resolution_scale * m_dynamic_scale);
 		m_drawer->occlusion(m_occlusion);
 		if ((m_pipeline & RP_FORWARD) && !(m_pipeline & RP_DEFERRED))
 		{
@@ -566,6 +595,13 @@ namespace Square
 	void RenderInstance::draw(double delta_time)
 	{
 		if (!m_drawer) return;
+		//the scene lower while the frames are late
+		const Vec2 dynamic = m_dynamic_resolution.update(float(delta_time), dynamic_fps());
+		if (glm::any(glm::greaterThan(glm::abs(dynamic - m_dynamic_scale), Vec2(0.001f))))
+		{
+			m_dynamic_scale = dynamic;
+			m_drawer->resolution_scale(m_resolution_scale * m_dynamic_scale);
+		}
 		m_time += delta_time;
 		m_drawer->time(Vec2(float(m_time), float(delta_time)));
 		m_drawer->draw(m_clear_color, m_ambient_color, m_collection);

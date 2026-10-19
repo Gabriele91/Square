@@ -48,7 +48,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	{
 		if (abs(i) > radius) continue;
 		Vec2 sample_uv = uv + texel * float(i);
-		if (sample_uv.x < 0.0 || sample_uv.x > 1.0 || sample_uv.y < 0.0 || sample_uv.y > 1.0) continue;
+		if (!frame_inside(sample_uv)) continue;
 		Vec4 p1 = gbuffer_world(texture2DLod(g_position, sample_uv, 0.0), sample_uv);
 		if (p1.w < 0.5) continue; //the background is not a surface
 		Vec3  n1 = gbuffer_decode_normal(texture2DLod(g_normal, sample_uv, 0.0));

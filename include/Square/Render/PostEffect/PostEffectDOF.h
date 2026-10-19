@@ -64,7 +64,7 @@ namespace Render
 		//pass (radius and motion scaled to its pixels)
 		void blur(PostEffectFrame& frame, Target* target, const IVec2& size);
 		//the uniforms of the pass of a size (the settings: of a 1080p frame)
-		void uniforms(Resource::Shader& shader, const IVec2& size) const;
+		void uniforms(Resource::Shader& shader, const IVec2& size, const Vec2& rect) const;
 
 		Settings                 m_settings;
 		Shared<Resource::Shader> m_shader;

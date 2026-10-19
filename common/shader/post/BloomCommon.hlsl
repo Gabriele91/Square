@@ -9,18 +9,22 @@
 //  optimizer to inline them).
 //
 #pragma once
+#include <FrameRect>
+
+//a tap of a texture at an offset of texels, kept in the scene
+#define BLOOM_TAP(uv, texel, x, y) frame_clamp((uv) + (texel) * Vec2(x, y), 1.0 / (texel))
 
 //3x3 tent of a texture around uv (texel: of that texture)
 #define BLOOM_TENT(name, uv, texel)                                                                        \
-	( ( texture2DLod(name, (uv), 0.0).rgb * 4.0                                                            \
-	  + ( texture2DLod(name, (uv) + (texel) * Vec2(-1.0,  0.0), 0.0).rgb                                    \
-	    + texture2DLod(name, (uv) + (texel) * Vec2( 1.0,  0.0), 0.0).rgb                                    \
-	    + texture2DLod(name, (uv) + (texel) * Vec2( 0.0, -1.0), 0.0).rgb                                    \
-	    + texture2DLod(name, (uv) + (texel) * Vec2( 0.0,  1.0), 0.0).rgb ) * 2.0                            \
-	  + texture2DLod(name, (uv) + (texel) * Vec2(-1.0, -1.0), 0.0).rgb                                      \
-	  + texture2DLod(name, (uv) + (texel) * Vec2( 1.0, -1.0), 0.0).rgb                                      \
-	  + texture2DLod(name, (uv) + (texel) * Vec2(-1.0,  1.0), 0.0).rgb                                      \
-	  + texture2DLod(name, (uv) + (texel) * Vec2( 1.0,  1.0), 0.0).rgb ) / 16.0 )
+	( ( texture2DLod(name, BLOOM_TAP(uv, texel,  0.0,  0.0), 0.0).rgb * 4.0                                 \
+	  + ( texture2DLod(name, BLOOM_TAP(uv, texel, -1.0,  0.0), 0.0).rgb                                     \
+	    + texture2DLod(name, BLOOM_TAP(uv, texel,  1.0,  0.0), 0.0).rgb                                     \
+	    + texture2DLod(name, BLOOM_TAP(uv, texel,  0.0, -1.0), 0.0).rgb                                     \
+	    + texture2DLod(name, BLOOM_TAP(uv, texel,  0.0,  1.0), 0.0).rgb ) * 2.0                             \
+	  + texture2DLod(name, BLOOM_TAP(uv, texel, -1.0, -1.0), 0.0).rgb                                       \
+	  + texture2DLod(name, BLOOM_TAP(uv, texel,  1.0, -1.0), 0.0).rgb                                       \
+	  + texture2DLod(name, BLOOM_TAP(uv, texel, -1.0,  1.0), 0.0).rgb                                       \
+	  + texture2DLod(name, BLOOM_TAP(uv, texel,  1.0,  1.0), 0.0).rgb ) / 16.0 )
 
 float bloom_luma(Vec3 color)
 {
@@ -31,7 +35,7 @@ float bloom_luma(Vec3 color)
 //spread through the blurs over the whole screen, so it counts as black
 Vec3 bloom_sample(Vec2 uv, float max_value)
 {
-	Vec3 color = texture2DLod(g_source, uv, 0.0).rgb;
+	Vec3 color = texture2DLod(g_source, frame_clamp(uv, textureSize2D(g_source, 0)), 0.0).rgb;
 	if (any(isnan(color)) || any(isinf(color))) return Vec3(0.0, 0.0, 0.0);
 	return clamp(color, Vec3(0.0, 0.0, 0.0), Vec3(max_value, max_value, max_value));
 }

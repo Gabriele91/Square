@@ -8,6 +8,7 @@
 //  that pixel, from the view depth (along the camera forward) and the view rays.
 //
 #pragma once
+#include <FrameRect>
 
 Vec2  ssao_full_size; //pixels of the frame (G-Buffer)
 float ssao_scale;     //1: full size, 2: half size
@@ -29,8 +30,9 @@ float ssao_view_depth(in Vec3 world)
 
 //world point at the uv of the frame, at a view depth. The rows of the targets go down on
 //D3D/Metal, up on OpenGL (as SSRCommon)
-Vec3 ssao_world(in Vec2 uv, in float depth)
+Vec3 ssao_world(in Vec2 target_uv, in float depth)
 {
+	Vec2 uv = frame_screen_uv(target_uv);
 #ifdef SQ_BACKEND_GLSL
 	Vec2 ndc = Vec2(uv.x * 2.0 - 1.0, uv.y * 2.0 - 1.0);
 #else

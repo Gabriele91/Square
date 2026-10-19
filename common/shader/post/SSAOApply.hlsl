@@ -44,7 +44,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		for (int y = 0; y < 2; ++y)
 		for (int x = 0; x < 2; ++x)
 		{
-			Vec2  sample_uv = (base + Vec2(float(x), float(y)) + 0.5) / ssao_size;
+			Vec2  sample_uv = frame_clamp((base + Vec2(float(x), float(y)) + 0.5) / ssao_size, ssao_size);
 			float bilinear = (x == 0 ? 1.0 - f.x : f.x) * (y == 0 ? 1.0 - f.y : f.y);
 			//a little of the bilinear always: no surface of the 4 like this pixel, still smooth
 			float weight = bilinear * (ssao_depth_weight(texture2DLod(g_depth, sample_uv, 0.0).r, center, ssao_sharpness) + 0.001);

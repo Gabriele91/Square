@@ -9,6 +9,7 @@
 //
 #include <Vertex>
 #include <DeferredFullscreen>
+#include <FrameRect>
 
 Sampler2D(g_source);
 Vec2 fxaa_size;    //pixels of the frame
@@ -24,10 +25,10 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	Vec2 texel = 1.0 / fxaa_size;
 	Vec2 uv = input.m_position.xy * texel;
 	Vec3 rgb_m  = texture2DLod(g_source, uv, 0.0).rgb;
-	Vec3 rgb_nw = texture2DLod(g_source, uv + Vec2(-1.0, -1.0) * texel, 0.0).rgb;
-	Vec3 rgb_ne = texture2DLod(g_source, uv + Vec2( 1.0, -1.0) * texel, 0.0).rgb;
-	Vec3 rgb_sw = texture2DLod(g_source, uv + Vec2(-1.0,  1.0) * texel, 0.0).rgb;
-	Vec3 rgb_se = texture2DLod(g_source, uv + Vec2( 1.0,  1.0) * texel, 0.0).rgb;
+	Vec3 rgb_nw = texture2DLod(g_source, frame_clamp(uv + Vec2(-1.0, -1.0) * texel, fxaa_size), 0.0).rgb;
+	Vec3 rgb_ne = texture2DLod(g_source, frame_clamp(uv + Vec2( 1.0, -1.0) * texel, fxaa_size), 0.0).rgb;
+	Vec3 rgb_sw = texture2DLod(g_source, frame_clamp(uv + Vec2(-1.0,  1.0) * texel, fxaa_size), 0.0).rgb;
+	Vec3 rgb_se = texture2DLod(g_source, frame_clamp(uv + Vec2( 1.0,  1.0) * texel, fxaa_size), 0.0).rgb;
 	float luma_m  = fxaa_luma(rgb_m);
 	float luma_nw = fxaa_luma(rgb_nw);
 	float luma_ne = fxaa_luma(rgb_ne);
@@ -45,10 +46,10 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	float scale = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);
 	dir = clamp(dir * scale, Vec2(-fxaa_params.z, -fxaa_params.z), Vec2(fxaa_params.z, fxaa_params.z)) * texel;
 	//two blends along it: near, far
-	Vec3 rgb_a = 0.5 * (texture2DLod(g_source, uv + dir * (1.0 / 3.0 - 0.5), 0.0).rgb +
-	                    texture2DLod(g_source, uv + dir * (2.0 / 3.0 - 0.5), 0.0).rgb);
-	Vec3 rgb_b = rgb_a * 0.5 + 0.25 * (texture2DLod(g_source, uv + dir * -0.5, 0.0).rgb +
-	                                   texture2DLod(g_source, uv + dir *  0.5, 0.0).rgb);
+	Vec3 rgb_a = 0.5 * (texture2DLod(g_source, frame_clamp(uv + dir * (1.0 / 3.0 - 0.5), fxaa_size), 0.0).rgb +
+	                    texture2DLod(g_source, frame_clamp(uv + dir * (2.0 / 3.0 - 0.5), fxaa_size), 0.0).rgb);
+	Vec3 rgb_b = rgb_a * 0.5 + 0.25 * (texture2DLod(g_source, frame_clamp(uv + dir * -0.5, fxaa_size), 0.0).rgb +
+	                                   texture2DLod(g_source, frame_clamp(uv + dir *  0.5, fxaa_size), 0.0).rgb);
 	float luma_b = fxaa_luma(rgb_b);
 	if (luma_b < luma_min || luma_b > luma_max) return Vec4(rgb_a, 1.0);
 	return Vec4(rgb_b, 1.0);

@@ -42,7 +42,7 @@ float ssr_level_weight(float lod, float level)
 //a sample of the trace, premultiplied by its confidence
 Vec4 ssr_trace(Vec2 uv)
 {
-	Vec4 value = texture2DLod(g_reflection, uv, 0.0);
+	Vec4 value = texture2DLod(g_reflection, frame_clamp(uv, textureSize2D(g_reflection, 0)), 0.0);
 	return Vec4(value.rgb * value.a, value.a);
 }
 

@@ -31,7 +31,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		for (int m = 0; m < 16; ++m)
 		{
 			float s = (float(m) / 15.0 - 0.5) * motion;
-			Vec2  suv = uv + Vec2(s * texel.x, 0.0);
+			Vec2  suv = frame_clamp(uv + Vec2(s * texel.x, 0.0), dof_size);
 			Vec4  sg = gbuffer_world(texture2DLod(g_position, suv, 0.0), suv);
 			//only the near things smeared (not the far background into them)
 			float w = dof_near_focus(sg) > 0.5 ? 1.0 : 0.15;
@@ -51,7 +51,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		float r = sqrt(float(i) / float(samples));
 		float a = float(i) * 2.39996323;
 		Vec2  offset = Vec2(cos(a), sin(a)) * r * radius;
-		Vec2  suv = uv + offset * texel;
+		Vec2  suv = frame_clamp(uv + offset * texel, dof_size);
 		float scoc = dof_coc(gbuffer_world(texture2DLod(g_position, suv, 0.0), suv)) * dof_params.x;
 		//a sample counts as far as its own blur reaches the pixel (a sharp one in front: little)
 		float w = saturate(scoc - r * radius + 1.0);

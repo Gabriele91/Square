@@ -22,7 +22,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	Vec2  sun = rays_sun_uv(w);
 	if (w <= 0.0) return Vec4(0.0, 0.0, 0.0, 1.0);
 	const int samples = int(rays_blur.w);
-	Vec2  advance = (uv - sun) * rays_blur.x / rays_blur.w;
+	Vec2  advance = (uv - frame_target_uv(sun)) * rays_blur.x / rays_blur.w;
 	Vec2  at = uv;
 	Vec3  sum = Vec3(0.0, 0.0, 0.0);
 	float light = 1.0;
@@ -31,7 +31,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	{
 		if (i >= samples) break;
 		at -= advance;
-		sum += texture2DLod(g_mask, at, 0.0).rgb * light * rays_blur.z;
+		sum += texture2DLod(g_mask, frame_clamp(at, rays_size), 0.0).rgb * light * rays_blur.z;
 		light *= rays_blur.y;
 	}
 	return Vec4(sum, 1.0);

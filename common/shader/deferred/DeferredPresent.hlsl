@@ -16,13 +16,14 @@
 
 Sampler2D(g_light);
 Vec4 g_viewport; //the screen (pixels: x, y, width, height)
+Vec2 g_rect;     //the share of the frame the scene covers (in its corner)
 
 Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 {
 	Vec2 size = textureSize2D(g_light, 0);
 	Vec2 screen = max(g_viewport.zw, Vec2(1.0, 1.0));
 	//the texel under the pixel (as large: the texel itself), its four around it
-	Vec2 texel = (input.m_position.xy - g_viewport.xy) / screen * size - 0.5;
+	Vec2 texel = (input.m_position.xy - g_viewport.xy) / screen * size * g_rect - 0.5;
 	Vec2 base = floor(texel);
 	Vec2 blend = texel - base;
 	Vec2 uv = (base + 0.5) / size;

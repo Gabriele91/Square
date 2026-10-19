@@ -17,6 +17,7 @@
 #include "Square/System/System.h"
 #include "Square/Render/Collection.h"
 #include "Square/Render/Pipeline/SoftwareOcclusion.h"
+#include "Square/Render/DynamicResolution.h"
 
 namespace Square
 {
@@ -164,10 +165,17 @@ namespace Square
 		//how the levels of detail of the world are chosen (their cross-fade, a level forced)
 		const Render::LevelOfDetailSettings& levels_of_detail() const;
 		void levels_of_detail(const Render::LevelOfDetailSettings& settings);
-		//the share of the size of its cameras their scene is drawn at, then stretched to them (the
-		//deferred pipeline: the UI drawn after it at the size of the window; 1: as it is)
-		float resolution_scale() const;
-		void resolution_scale(float scale);
+		//the share of the size of its cameras their scene is drawn at, by axis, then stretched to
+		//them (the deferred pipeline: its targets as large as the camera, the scene in their
+		//corner, a change of a frame free; the UI drawn after it at the size of the window; 1: as
+		//it is)
+		const Vec2& resolution_scale() const;
+		void resolution_scale(const Vec2& scale);
+		//the scene lower while the frames are late (Render::DynamicResolution, by axis, times the
+		//resolution scale; its range 0: off), the share of it now
+		const Render::DynamicResolution::Settings& dynamic_resolution() const;
+		void dynamic_resolution(const Render::DynamicResolution::Settings& settings);
+		const Vec2& dynamic_scale() const;
 		//the occlusion culling of its cameras on the CPU (Render::SoftwareOcclusion)
 		const Render::SoftwareOcclusion::Settings& occlusion() const;
 		void occlusion(const Render::SoftwareOcclusion::Settings& settings);
@@ -206,7 +214,12 @@ namespace Square
 		bool        m_visible{ true };
 		double      m_time{ 0.0 };
 		Render::LevelOfDetailSettings m_levels_of_detail;
-		float       m_resolution_scale{ 1.0f };
+		Vec2        m_resolution_scale{ 1.0f, 1.0f };
+		Render::DynamicResolution m_dynamic_resolution;
+		Vec2        m_dynamic_scale{ 1.0f, 1.0f };
+		//the rate of the frames of the dynamic resolution (its target, the limit of the
+		//application, the refresh of the screen, 60)
+		float dynamic_fps() const;
 		Render::SoftwareOcclusion::Settings m_occlusion;
 		Vector< Shared<Render::PostEffect> > m_post_effects;
 		//drawer

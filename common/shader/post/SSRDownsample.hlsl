@@ -9,6 +9,7 @@
 //
 #include <Vertex>
 #include <DeferredFullscreen>
+#include <FrameRect>
 
 Sampler2D(g_source);
 Vec2  ssr_size;        //pixels of the target
@@ -17,7 +18,7 @@ float ssr_premultiply; //1: g_source is the trace (color, confidence)
 //a sample of g_source, premultiplied (a NaN/Inf pixel counts as nothing)
 Vec4 ssr_sample(Vec2 uv)
 {
-	Vec4 value = texture2DLod(g_source, uv, 0.0);
+	Vec4 value = texture2DLod(g_source, frame_clamp(uv, textureSize2D(g_source, 0)), 0.0);
 	if (any(isnan(value)) || any(isinf(value))) return Vec4(0.0, 0.0, 0.0, 0.0);
 	if (ssr_premultiply > 0.5) value.rgb *= value.a;
 	return value;

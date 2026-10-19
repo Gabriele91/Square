@@ -26,7 +26,7 @@ Vec2 ssao_pixels; //pixels of the frame of a world unit at distance 1, radius on
 float ssao_occlusion(in Vec3 p, in Vec3 n, in Vec2 uv)
 {
 	//out of the screen: nothing (the clamped texel is another point)
-	if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return 0.0;
+	if (!frame_inside(uv)) return 0.0;
 	float depth = texture2DLod(g_depth, uv, 0.0).r; //in a loop: no derivatives
 	//background: nothing
 	if (depth <= 0.0) return 0.0;

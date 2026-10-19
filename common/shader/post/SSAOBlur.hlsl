@@ -39,7 +39,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		for (int x = -2; x < 2; ++x)
 		{
 			if (float(x) < first || float(x) > last || float(y) < first || float(y) > last) continue;
-			Vec2  sample_uv = uv + Vec2(float(x), float(y)) / ssao_size;
+			Vec2  sample_uv = frame_clamp(uv + Vec2(float(x), float(y)) / ssao_size, ssao_size);
 			float weight = ssao_depth_weight(texture2DLod(g_depth, sample_uv, 0.0).r, center, ssao_sharpness); //in a loop: no derivatives
 			sum += texture2DLod(g_ao, sample_uv, 0.0).r * weight;
 			weights += weight;
@@ -54,7 +54,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		{
 			float offset = float(i);
 			if (abs(offset) > radius) continue;
-			Vec2  sample_uv = uv + texel_step * offset;
+			Vec2  sample_uv = frame_clamp(uv + texel_step * offset, ssao_size);
 			float weight = exp(-offset * offset * inv_two_sigma2)
 			             * ssao_depth_weight(texture2DLod(g_depth, sample_uv, 0.0).r, center, ssao_sharpness);
 			sum += texture2DLod(g_ao, sample_uv, 0.0).r * weight;

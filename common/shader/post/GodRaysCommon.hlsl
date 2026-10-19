@@ -7,6 +7,7 @@
 //  rays fade).
 //
 #pragma once
+#include <FrameRect>
 
 //uv of the screen of the sun (a direction: a point at infinity); w: its clip w (not positive:
 //behind the camera). The rows of the targets go down on D3D/Metal, up on OpenGL

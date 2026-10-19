@@ -10,6 +10,7 @@
 #include <Camera>
 #include <Vertex>
 #include <DeferredFullscreen>
+#include <FrameRect>
 
 Sampler2D(g_source);
 Sampler2D(g_velocity);
@@ -19,7 +20,7 @@ Vec4 mb_params; //shutter, max pixels, min pixels, samples
 //the motion of a pixel in pixels (the shutter, at most max pixels)
 Vec2 mb_motion(in Vec2 uv)
 {
-	Vec2  motion = texture2DLod(g_velocity, uv, 0.0).xy * mb_size * mb_params.x;
+	Vec2  motion = texture2DLod(g_velocity, frame_clamp(uv, mb_size), 0.0).xy * mb_size * camera.m_rect.xy * mb_params.x;
 	float pixels = length(motion);
 	if (pixels <= mb_params.y) return motion;
 	return motion * (mb_params.y / pixels);
@@ -54,7 +55,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	for (int i = 0; i < 32; ++i)
 	{
 		if (i >= samples) break;
-		sum += texture2DLod(g_source, start + step * float(i), 0.0).rgb;
+		sum += texture2DLod(g_source, frame_clamp(start + step * float(i), mb_size), 0.0).rgb;
 	}
 	return Vec4(sum / float(samples), 1.0);
 }

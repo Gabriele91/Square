@@ -79,7 +79,7 @@ namespace Render
 		auto& render = *frame.m_render;
 		SQUARE_RENDER_SCOPE(render, shader->profile_name().c_str());
 		render.enable_render_target(target);
-		render.set_viewport_state({ Vec4(0.0f, 0.0f, float(frame.m_size.x), float(frame.m_size.y)) });
+		render.set_viewport_state({ Vec4(0.0f, 0.0f, std::ceil(float(frame.m_size.x) * frame.m_rect.x), std::ceil(float(frame.m_size.y) * frame.m_rect.y)) });
 		render.set_depth_buffer_state({ DM_DISABLE });
 		render.set_blend_state(blend);
 		render.set_cullface_state({ CF_BACK });

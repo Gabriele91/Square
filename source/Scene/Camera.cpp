@@ -158,6 +158,7 @@ namespace Scene
         gpubuffer->m_projection = viewport().projection();
         gpubuffer->m_view = view();
         gpubuffer->m_time = Vec4(time().x, time().y, 0.0f, 0.0f);
+        gpubuffer->m_rect = Vec4(1.0f);
         //invo camera in world space
         if(auto actor = Component::actor().lock())
         {

@@ -71,8 +71,9 @@ namespace Render
 		Render::Context*  m_render{ nullptr };
 		const Camera*     m_camera{ nullptr };
 		ConstBuffer*      m_camera_buffer{ nullptr }; //"Camera" cbuffer, already updated for the camera
-		IVec2             m_size{ 0, 0 };             //pixels
+		IVec2             m_size{ 0, 0 };             //pixels of the targets
 		Vec4              m_viewport{ 0.0f };         //viewport of the camera (pixels)
+		Vec2              m_rect{ 1.0f, 1.0f };       //the share of the targets the scene covers (in their corner: a scene drawn at a share of the screen; FrameRect.hlsl)
 		Mesh*             m_quad{ nullptr };          //full-screen quad (NDC)
 		//deferred
 		const GBuffer*    m_gbuffer{ nullptr };       //nullptr in forward
@@ -136,8 +137,9 @@ namespace Render
 
 		//a shader of the resources (nullptr and a warning if it is missing)
 		Shared<Resource::Shader> load_shader(const String& name);
-		//draw a shader on the whole target (full-screen quad, no depth, the blend given); binds the
-		//"Camera" cbuffer; set the uniforms in the callback (the shader is bound)
+		//draw a shader on the target (full-screen quad, no depth, the blend given): on the share of
+		//it the scene covers (m_size times m_rect); binds the "Camera" cbuffer; set the uniforms in
+		//the callback (the shader is bound)
 		void draw_fullscreen
 		(
 			  PostEffectFrame& frame

@@ -122,6 +122,7 @@ namespace Render
 		Vec3             m_previous_eye{ 0.0f };
 		bool             m_previous_camera{ false };
 		IVec2            m_size{ 0, 0 };
+		Vec2             m_rect{ 1.0f, 1.0f }; //the share of the buffers the scene of this frame covers
 		//post effects: the color chain
 		PostEffectChain  m_post_effects;
 

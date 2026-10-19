@@ -9,6 +9,7 @@
 #pragma once
 #include <Camera>
 #include <GBufferPosition>
+#include <FrameRect>
 
 Sampler2D(g_source);
 Sampler2D(g_position);
@@ -36,5 +37,5 @@ float dof_near_focus(in Vec4 g_pos)
 //the motion along x of a pixel (pixels of the pass): on what is near, growing to the right
 float dof_motion_pixels(in Vec4 g_pos, in Vec2 uv)
 {
-	return dof_motion.x * dof_near_focus(g_pos) * smoothstep(dof_motion.y, dof_motion.z, uv.x);
+	return dof_motion.x * dof_near_focus(g_pos) * smoothstep(dof_motion.y, dof_motion.z, frame_screen_uv(uv).x);
 }

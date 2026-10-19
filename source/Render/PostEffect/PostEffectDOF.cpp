@@ -78,7 +78,7 @@ namespace Render
 				Texture* position = frame.m_gbuffer->texture(DrawerPassDeferred::GB_POSITION);
 				draw_fullscreen(frame, frame.m_destination, m_shader_composite.get(), BlendState(), [&](Resource::Shader& shader)
 				{
-					uniforms(shader, frame.m_size);
+					uniforms(shader, frame.m_size, frame.m_rect);
 					if (auto u = shader.uniform("g_source"))   u->set(frame.m_source);
 					if (auto u = shader.uniform("g_position")) u->set(position);
 					if (auto u = shader.uniform("g_blur"))     u->set(m_blur_texture);
@@ -99,16 +99,17 @@ namespace Render
 		pass.m_size = size;
 		draw_fullscreen(pass, target, m_shader.get(), BlendState(), [&](Resource::Shader& shader)
 		{
-			uniforms(shader, size);
+			uniforms(shader, size, frame.m_rect);
 			if (auto u = shader.uniform("g_source"))   u->set(frame.m_source);
 			if (auto u = shader.uniform("g_position")) u->set(position);
 		});
 	}
 
-	void DOF::uniforms(Resource::Shader& shader, const IVec2& size) const
+	void DOF::uniforms(Resource::Shader& shader, const IVec2& size, const Vec2& rect) const
 	{
-		//the radius and the motion in pixels of the pass (the settings: of a 1080p frame)
-		const float pixels = float(size.y) / 1080.0f;
+		//the radius and the motion in pixels of the pass (the settings: of a 1080p frame; the
+		//pixels of the scene, a share of the pass)
+		const float pixels = float(size.y) * rect.y / 1080.0f;
 		const float radius = std::max(m_settings.max_radius, 0.0f) * pixels;
 		const float motion = std::max(m_settings.motion, 0.0f) * pixels;
 		const float half = std::max(m_settings.focus_range, 0.0f) * 0.5f;

@@ -138,9 +138,9 @@ namespace Render
         //how the levels of detail are chosen (RenderInstance::levels_of_detail)
         void levels_of_detail(const LevelOfDetailSettings& settings) { m_levels_of_detail = settings; }
         const LevelOfDetailSettings& levels_of_detail() const { return m_levels_of_detail; }
-        //the share of the size of a camera its scene is drawn at (RenderInstance::resolution_scale)
-        void resolution_scale(float scale);
-        float resolution_scale() const;
+        //the share of the size of a camera its scene is drawn at, by axis (RenderInstance::resolution_scale)
+        void resolution_scale(const Vec2& scale);
+        const Vec2& resolution_scale() const;
         //the time of the world (x: seconds, y: the seconds of the frame): its cameras have it
         void time(const Vec2& time) { m_time = time; }
         const Vec2& time() const { return m_time; }
@@ -167,7 +167,7 @@ namespace Render
         Vector< Shared<DrawerPass> > m_rendering_pass[RPT_MAX];
         Vector< Shared<PostEffect> > m_post_effects;
         LevelOfDetailSettings m_levels_of_detail;
-        float m_resolution_scale{ 1.0f };
+        Vec2 m_resolution_scale{ 1.0f, 1.0f };
         Vec2 m_time{ 0.0f, 0.0f };
         SoftwareOcclusion m_occlusion;
 

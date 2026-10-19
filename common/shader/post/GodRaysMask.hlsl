@@ -38,7 +38,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	Vec2  sun = rays_sun_uv(w);
 	if (w <= 0.0) return Vec4(0.0, 0.0, 0.0, 1.0);
 	//the sky near the sun
-	Vec2  offset = (uv - sun) * Vec2(rays_mask.z, 1.0);
+	Vec2  offset = (frame_screen_uv(uv) - sun) * Vec2(rays_mask.z, 1.0);
 	float close = saturate(1.0 - length(offset) / rays_mask.y);
 	Vec3  sky = max(texture2DLod(g_source, uv, 0.0).rgb - rays_mask.x, Vec3(0.0, 0.0, 0.0));
 	return Vec4(sky * close * close, 1.0);

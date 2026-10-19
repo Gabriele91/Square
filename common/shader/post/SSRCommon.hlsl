@@ -6,6 +6,7 @@
 //  <Camera>.
 //
 #pragma once
+#include <FrameRect>
 
 //uv of the screen of a world point (the one of the G-Buffer, from SV_POSITION); w: clip w (not
 //positive: behind the camera). The rows of the targets go down on D3D/Metal, up on OpenGL

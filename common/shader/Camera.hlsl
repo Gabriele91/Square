@@ -15,6 +15,7 @@ struct CameraStruct
 	Mat4 m_model;
 	Vec3 m_position;
 	Vec4 m_time; //x: the seconds of the world, y: the seconds of the frame
+	Vec4 m_rect; //the share of its targets its scene covers (xy; zw: 1 / xy), see FrameRect
 };
 cbuffer Camera
 {

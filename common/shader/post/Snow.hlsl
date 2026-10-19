@@ -10,6 +10,7 @@
 //  pixel (G-Buffer positions), lit by the frame behind it.
 //
 #include <Camera>
+#include <FrameRect>
 #include <GBufferPosition>
 #include <Vertex>
 #include <DeferredFullscreen>
@@ -53,6 +54,7 @@ float snow_distance(in Vec3 origin, in Vec3 direction, in Vec3 center, in float 
 Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 {
 	Vec2 uv = input.m_position.xy / snow_size;
+	Vec2 screen = frame_screen_uv(uv);
 	Vec3 color = texture2DLod(g_source, uv, 0.0).rgb;
 	//the distance of the geometry of the pixel (none: far away)
 	float scene = 1e6;
@@ -63,9 +65,9 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	}
 	//the view ray of the pixel
 #ifdef SQ_BACKEND_GLSL
-	Vec2 ndc = Vec2(uv.x * 2.0 - 1.0, uv.y * 2.0 - 1.0);
+	Vec2 ndc = Vec2(screen.x * 2.0 - 1.0, screen.y * 2.0 - 1.0);
 #else
-	Vec2 ndc = Vec2(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0);
+	Vec2 ndc = Vec2(screen.x * 2.0 - 1.0, 1.0 - screen.y * 2.0);
 #endif
 	Vec4 far_point = mul(Vec4(ndc, 0.5, 1.0), snow_inverse);
 	Vec3 direction = normalize(far_point.xyz / far_point.w - camera.m_position);

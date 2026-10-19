@@ -101,7 +101,7 @@ namespace Render
 		const Vec4 ray_right(view_ray(1.0f, 0.0f) - forward, 0.0f);
 		const Vec4 ray_up(view_ray(0.0f, 1.0f) - forward, 0.0f);
 		//pixels of one world unit at distance 1: half the screen height times the focal (P[1][1])
-		const float pixel_scale = 0.5f * float(frame.m_size.y) * std::abs(frame.m_camera->projection()[1][1]);
+		const float pixel_scale = 0.5f * float(frame.m_size.y) * frame.m_rect.y * std::abs(frame.m_camera->projection()[1][1]);
 		Texture* position = frame.m_gbuffer->texture(DrawerPassDeferred::GB_POSITION);
 		Texture* normal   = frame.m_gbuffer->texture(DrawerPassDeferred::GB_NORMAL);
 		const Vec2 size(float(frame.m_size.x), float(frame.m_size.y));

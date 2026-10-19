@@ -7,6 +7,7 @@
 //
 #include <Vertex>
 #include <DeferredFullscreen>
+#include <FrameRect>
 
 Sampler2D(g_rays);
 Vec2 rays_size; //pixels of the target
@@ -22,7 +23,7 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 		[unroll]
 		for (int x = -1; x <= 1; ++x)
 		{
-			sum += texture2DLod(g_rays, uv + Vec2(float(x), float(y)) * texel, 0.0).rgb;
+			sum += texture2DLod(g_rays, frame_clamp(uv + Vec2(float(x), float(y)) * texel, rays_size), 0.0).rgb;
 		}
 	}
 	return Vec4(sum / 9.0, 1.0);

@@ -45,27 +45,33 @@ namespace Render
 	//a camera that moves farther than this in a frame is a cut: no motion from the last frame
 	static constexpr float s_velocity_camera_cut = 20.0f;
 
-	//a camera as another one drawn at a share of its size (Drawer::resolution_scale): its viewport
-	//scaled, the rest of it as the camera
+	//a camera as another one drawn at a share of its size, by axis (Drawer::resolution_scale): its
+	//viewport scaled (in the corner of its targets), the share it covers in its buffer, the rest
+	//of it as the camera
 	class ScaledCamera : public Camera
 	{
 	public:
 
-		ScaledCamera(const Camera& camera, float scale)
+		ScaledCamera(const Camera& camera, const Vec2& scale)
 		: m_camera(camera)
 		, m_viewport(camera.viewport())
 		{
 			const IVec4& full = camera.viewport().viewport();
-			m_viewport.viewport(IVec4
+			const IVec4  scaled
 			(
-				  int(std::round(float(full.x) * scale))
-				, int(std::round(float(full.y) * scale))
-				, std::max(int(std::round(float(full.z) * scale)), 1)
-				, std::max(int(std::round(float(full.w) * scale)), 1)
-			));
+				  int(std::round(float(full.x) * scale.x))
+				, int(std::round(float(full.y) * scale.y))
+				, std::max(int(std::round(float(full.z) * scale.x)), 1)
+				, std::max(int(std::round(float(full.w) * scale.y)), 1)
+			);
+			m_viewport.viewport(scaled);
+			//(the share of the pixels really drawn)
+			m_rect = Vec2(float(scaled.z) / float(std::max(full.z, 1)), float(scaled.w) / float(std::max(full.w, 1)));
 			time(camera.time());
 			enable(camera.enable());
 		}
+
+		const Vec2& rect() const { return m_rect; }
 
 		virtual const Mat4& model() const override { return m_camera.model(); }
 		virtual const Mat4& view() const override { return m_camera.view(); }
@@ -77,12 +83,14 @@ namespace Render
 		{
 			m_camera.set(gpubuffer);
 			gpubuffer->m_viewport = Vec4(m_viewport.viewport());
+			gpubuffer->m_rect = Vec4(m_rect, 1.0f / m_rect.x, 1.0f / m_rect.y);
 		}
 
 	private:
 
 		const Camera&    m_camera;
 		Render::Viewport m_viewport;
+		Vec2             m_rect{ 1.0f, 1.0f };
 	};
 
 	
@@ -568,14 +576,17 @@ namespace Render
 	, const PoolQueues& queues
 	)
 	{
-		//the scene at a share of the size of the camera (then stretched to it by the present)
-		const float scale = drawer.resolution_scale();
-		const ScaledCamera scaled(camera, scale);
-		const Camera& scene = scale < 1.0f ? static_cast<const Camera&>(scaled) : camera;
-		//viewport size in pixels
-		const IVec4& viewport = scene.viewport().viewport();
+		//viewport size in pixels: the size of the buffers
+		const IVec4& viewport = camera.viewport().viewport();
 		const IVec2 size((int)viewport.z, (int)viewport.w);
 		if (size.x <= 0 || size.y <= 0) return;
+		//the scene at a share of the size of the camera, in the corner of the buffers (then
+		//stretched to it by the present)
+		const Vec2 scale = drawer.resolution_scale();
+		const bool scaled_on = scale.x < 1.0f || scale.y < 1.0f;
+		const ScaledCamera scaled(camera, scale);
+		const Camera& scene = scaled_on ? static_cast<const Camera&>(scaled) : camera;
+		m_rect = scaled_on ? scaled.rect() : Vec2(1.0f, 1.0f);
 		//(re)build buffers if needed
 		if (!build_buffers(size)) return;
 		//post effects of the world
@@ -623,7 +634,7 @@ namespace Render
 			present_pass(camera, frame);
 			//4) copy depth for later passes (no-op on backends without blit support; a scene
 			//scaled: not the size of the screen, none)
-			if (scale >= 1.0f)
+			if (!scaled_on)
 			{
 				const IVec4 area(0, 0, size.x, size.y);
 				render().copy_target_to_target(area, m_gbuffer->target(), area, nullptr, RT_DEPTH);
@@ -674,6 +685,7 @@ namespace Render
 		frame.m_camera_buffer = m_cb_camera.get(); //updated by the geometry pass
 		frame.m_size          = m_size;
 		frame.m_viewport      = camera.viewport().viewport();
+		frame.m_rect          = m_rect;
 		frame.m_quad          = m_quad.get();
 		frame.m_gbuffer       = m_gbuffer.get();
 		frame.m_occlusion     = m_occlusion_target;
@@ -705,10 +717,14 @@ namespace Render
 		{
 			uniform_light->set(frame);
 		}
-		//(the screen: the frame stretched to it, a scene scaled)
+		//(the screen: the frame stretched to it from the share of it drawn, a scene scaled)
 		if (auto uniform_viewport = m_shader_present->uniform("g_viewport"))
 		{
 			uniform_viewport->set(Vec4(camera.viewport().viewport()));
+		}
+		if (auto uniform_rect = m_shader_present->uniform("g_rect"))
+		{
+			uniform_rect->set(m_rect);
 		}
 		else
 		{

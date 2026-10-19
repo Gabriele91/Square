@@ -346,12 +346,12 @@ namespace Render
     }
 
     //the share of the size of a camera its scene is drawn at
-    void Drawer::resolution_scale(float scale)
+    void Drawer::resolution_scale(const Vec2& scale)
     {
-        m_resolution_scale = std::clamp(scale, 0.1f, 1.0f);
+        m_resolution_scale = glm::clamp(scale, Vec2(0.1f), Vec2(1.0f));
     }
 
-    float Drawer::resolution_scale() const
+    const Vec2& Drawer::resolution_scale() const
     {
         return m_resolution_scale;
     }

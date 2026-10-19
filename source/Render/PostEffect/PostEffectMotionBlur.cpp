@@ -50,7 +50,7 @@ namespace Render
 			return;
 		}
 		//the pixels of this frame (the settings: of a 1080p one)
-		const float max_pixels = std::max(m_settings.max_pixels, 0.0f) * float(frame.m_size.y) / 1080.0f;
+		const float max_pixels = std::max(m_settings.max_pixels, 0.0f) * float(frame.m_size.y) * frame.m_rect.y / 1080.0f;
 		draw_fullscreen(frame, frame.m_destination, m_shader.get(), BlendState(), [&](Resource::Shader& shader)
 		{
 			if (auto u = shader.uniform("g_source"))   u->set(frame.m_source);
