@@ -409,8 +409,13 @@ namespace Resource
 		if (!render || !Render::is_compressed_format(format) || !levels) return false;
 		//the GPU samples it?
 		const Render::RenderDriverInfo& info = render->get_render_driver_info();
-		if (format == Render::TF_ASTC_4x4 && !info.m_texture_astc) return false;
-		if (format != Render::TF_ASTC_4x4 && !info.m_texture_bc)
+		//ASTC: only by the GPU; BC: by the GPU, else decompressed by the CPU
+		const bool astc = format == Render::TF_ASTC_4x4;
+		if (astc && !info.m_texture_astc)
+		{
+			return false;
+		}
+		if (!astc && !info.m_texture_bc)
 		{
 			return build_decompressed(attr, levels_data, width, height, levels, format);
 		}
@@ -452,6 +457,33 @@ namespace Resource
 		return m_ctx_texture != nullptr;
 	}
 
+	//a BC format as the format of its pixels decompressed (Data::Image::decompress_bc)
+	struct DecompressedOf
+	{
+		Render::TextureFormat m_compressed;
+		Render::TextureFormat m_format;
+		Render::TextureType   m_type;
+	};
+	static const DecompressedOf s_decompressed_of[] =
+	{
+		{ Render::TF_BC1, Render::TF_RGBA8, Render::TT_RGBA },
+		{ Render::TF_BC3, Render::TF_RGBA8, Render::TT_RGBA },
+		{ Render::TF_BC4, Render::TF_R8,    Render::TT_R    },
+		{ Render::TF_BC5, Render::TF_RG8,   Render::TT_RG   },
+	};
+
+	static const DecompressedOf* decompressed_of(Render::TextureFormat format)
+	{
+		for (const DecompressedOf& decompressed : s_decompressed_of)
+		{
+			if (decompressed.m_compressed == format)
+			{
+				return &decompressed;
+			}
+		}
+		return nullptr;
+	}
+
 	bool Texture::build_decompressed
 	(
 		const Attributes& attr,
@@ -462,24 +494,22 @@ namespace Resource
 		Render::TextureFormat format
 	)
 	{
-		const Vector<unsigned char> pixels = Data::Image::decompress_bc(levels_data, width, height, format);
-		if (pixels.empty()) return false;
-		Render::TextureFormat pixel_format = Render::TF_RGBA8;
-		Render::TextureType   pixel_type = Render::TT_RGBA;
-		if (format == Render::TF_BC4)
+		const DecompressedOf* decompressed = decompressed_of(format);
+		if (!decompressed)
 		{
-			pixel_format = Render::TF_R8;
-			pixel_type = Render::TT_R;
+			return false;
 		}
-		else if (format == Render::TF_BC5)
+		const Vector<unsigned char> pixels = Data::Image::decompress_bc(levels_data, width, height, format);
+		if (pixels.empty())
 		{
-			pixel_format = Render::TF_RG8;
-			pixel_type = Render::TT_RG;
+			return false;
 		}
 		//the levels of the file as the mipmaps of the GPU
 		Attributes pixel_attr = attr;
 		pixel_attr.m_build_mipmap = levels > 1;
 		destoy();
+		const Render::TextureFormat pixel_format = decompressed->m_format;
+		const Render::TextureType   pixel_type = decompressed->m_type;
 		return build(pixel_attr, pixels.data(), width, height, pixel_format, pixel_type);
 	}
 

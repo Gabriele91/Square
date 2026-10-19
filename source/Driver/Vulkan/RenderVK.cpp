@@ -431,6 +431,13 @@ namespace Render
 			extensions.push_back(VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME);
 			m_vertex_layer = true;
 		}
+		//the times of the presents (Android: the frames on the vsyncs of the frame rate)
+		const bool display_timing = AuxVK::has_extension(available, PresentTimingVK::extension());
+		if (display_timing)
+		{
+			extensions.push_back(PresentTimingVK::extension());
+		}
+		m_present_timing.available(display_timing);
 		const float priority = 1.0f;
 		VkDeviceQueueCreateInfo queue{ VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
 		queue.queueFamilyIndex = m_queue_family;
@@ -704,6 +711,7 @@ namespace Render
 			vkDestroySwapchainKHR(m_device, old, AllocationVK::callbacks());
 		}
 		m_swapchain.m_format = format.format;
+		m_present_timing.swapchain(m_device, m_swapchain.m_swapchain);
 		//its images (as textures), the semaphores of their presents
 		uint32_t image_count = 0;
 		vkGetSwapchainImagesKHR(m_device, m_swapchain.m_swapchain, &image_count, nullptr);
@@ -763,6 +771,7 @@ namespace Render
 		{
 			vkDestroySwapchainKHR(m_device, m_swapchain.m_swapchain, AllocationVK::callbacks());
 			m_swapchain.m_swapchain = VK_NULL_HANDLE;
+			m_present_timing.reset();
 		}
 		m_swapchain.m_acquired = false;
 	}
@@ -805,8 +814,15 @@ namespace Render
 		if (m_swapchain.m_acquired) return true;
 #if defined(__ANDROID__)
 		//Android: no window (the activity in the background), or a new one: a new surface
-		if (!m_resources->get_device_context()) return false;
-		if (m_resources->get_device_context() != m_surface_window && !recreate_surface()) return false;
+		void* window = m_resources->get_device_context();
+		if (!window)
+		{
+			return false;
+		}
+		if (window != m_surface_window && !recreate_surface())
+		{
+			return false;
+		}
 #endif
 		//the window changed (its size, its vsync): the swap chain made again
 		const bool resized = m_resources->width() != m_swapchain.m_extent.width || m_resources->height() != m_swapchain.m_extent.height;
@@ -860,8 +876,19 @@ namespace Render
 			info.swapchainCount = 1;
 			info.pSwapchains = &m_swapchain.m_swapchain;
 			info.pImageIndices = &image;
+			//the time of the present: on the vsyncs of the frame rate (if the device paces them)
+			VkPresentTimeGOOGLE time{};
+			VkPresentTimesInfoGOOGLE times{ VK_STRUCTURE_TYPE_PRESENT_TIMES_INFO_GOOGLE };
+			if (m_present_timing.next(m_resources->get_frame_rate(), time))
+			{
+				times.swapchainCount = 1;
+				times.pTimes = &time;
+				info.pNext = &times;
+			}
 			const VkResult result = vkQueuePresentKHR(m_queue, &info);
-			if (result == VK_ERROR_OUT_OF_DATE_KHR || (result == VK_SUBOPTIMAL_KHR && !AuxVK::s_suboptimal_by_rotation))
+			const bool out_of_date = result == VK_ERROR_OUT_OF_DATE_KHR;
+			const bool suboptimal = result == VK_SUBOPTIMAL_KHR && !AuxVK::s_suboptimal_by_rotation;
+			if (out_of_date || suboptimal)
 			{
 				m_swapchain.m_dirty = true;
 			}

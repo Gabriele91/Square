@@ -17,15 +17,24 @@ namespace Android
 {
 	void InputAndroid::send_keyboard_event(KeyboardEvent kevent, short mode, ActionEvent action)
 	{
-		if (m_keyboard) m_keyboard(kevent, mode, action);
+		if (m_keyboard)
+		{
+			m_keyboard(kevent, mode, action);
+		}
 	}
 	void InputAndroid::send_character_event(int character, short mode, bool plain)
 	{
-		if (m_character) m_character(character, mode, plain);
+		if (m_character)
+		{
+			m_character(character, mode, plain);
+		}
 	}
 	void InputAndroid::send_mouse_button_event(MouseButtonEvent mevent, ActionEvent action)
 	{
-		if (m_mouse_button) m_mouse_button(mevent, action);
+		if (m_mouse_button)
+		{
+			m_mouse_button(mevent, action);
+		}
 	}
 	//the pixels of the screen to the pixels of the frames (their size: set_size)
 	static void to_frame(const WindowAndroid* window, double& x, double& y)
@@ -42,144 +51,205 @@ namespace Android
 	void InputAndroid::send_mouse_move_event(double x, double y)
 	{
 		to_frame(m_window_ref, x, y);
-		if (m_mouse_move) m_mouse_move(x, y);
+		if (m_mouse_move)
+		{
+			m_mouse_move(x, y);
+		}
 	}
 	void InputAndroid::send_finger_event(FingerEvent finger, ActionEvent action, double x, double y)
 	{
 		to_frame(m_window_ref, x, y);
-		if (m_finger) m_finger(finger, action, x, y);
+		if (m_finger)
+		{
+			m_finger(finger, action, x, y);
+		}
 	}
 	void InputAndroid::send_tilt_event(double x, double y, double z)
 	{
-		if (m_tilt) m_tilt(x, y, z);
+		if (m_tilt)
+		{
+			m_tilt(x, y, z);
+		}
 	}
 	void InputAndroid::send_mouse_scroll_event(double scroll)
 	{
-		if (m_scroll) m_scroll(scroll);
+		if (m_scroll)
+		{
+			m_scroll(scroll);
+		}
 	}
 	void InputAndroid::send_touch_event(FingerEvent fevent, ActionEvent action)
 	{
-		if (m_touch) m_touch(fevent, action);
+		if (m_touch)
+		{
+			m_touch(fevent, action);
+		}
 	}
 	void InputAndroid::send_window_event(WindowEvent wevent)
 	{
-		if (m_window) m_window(wevent);
+		if (m_window)
+		{
+			m_window(wevent);
+		}
 	}
 	void InputAndroid::send_window_move_event(double x, double y)
 	{
-		if (m_window_move) m_window_move(x, y);
+		if (m_window_move)
+		{
+			m_window_move(x, y);
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////
 	// KEYS
-	//the letters, the digits and the keypad: ranges of both
-	static KeyboardEvent translate_range_key(int32_t code)
+	//a key of Android as a key of the engine
+	struct KeyOf
 	{
-		if (code >= AKEYCODE_A && code <= AKEYCODE_Z)
+		int32_t       m_code;
+		KeyboardEvent m_key;
+	};
+	//a range of keys of Android (its first, its last) as the keys of the engine from the first
+	struct KeyRange
+	{
+		int32_t       m_first;
+		int32_t       m_last;
+		KeyboardEvent m_key;
+	};
+	//a state of a modifier of Android as the one of the engine
+	struct ModOf
+	{
+		int32_t          m_meta;
+		KeyboardModEvent m_mod;
+	};
+
+	//the letters, the digits, the keypad, the functions
+	static const KeyRange s_key_ranges[] =
+	{
+		{ AKEYCODE_A,        AKEYCODE_Z,        KEY_A    },
+		{ AKEYCODE_0,        AKEYCODE_9,        KEY_0    },
+		{ AKEYCODE_NUMPAD_0, AKEYCODE_NUMPAD_9, KEY_KP_0 },
+		{ AKEYCODE_F1,       AKEYCODE_F12,      KEY_F1   },
+	};
+
+	//the other keys: the back of the system is the escape of the game (its menus); the buttons of a
+	//gamepad are the keys of the menus and of the race (until the engine has its gamepads): A enter,
+	//B and start escape, X the power, the triggers forward and backward
+	static const KeyOf s_keys[] =
+	{
+		{ AKEYCODE_SPACE,           KEY_SPACE         },
+		{ AKEYCODE_APOSTROPHE,      KEY_APOSTROPHE    },
+		{ AKEYCODE_COMMA,           KEY_COMMA         },
+		{ AKEYCODE_MINUS,           KEY_MINUS         },
+		{ AKEYCODE_PERIOD,          KEY_PERIOD        },
+		{ AKEYCODE_SLASH,           KEY_SLASH         },
+		{ AKEYCODE_SEMICOLON,       KEY_SEMICOLON     },
+		{ AKEYCODE_EQUALS,          KEY_EQUAL         },
+		{ AKEYCODE_LEFT_BRACKET,    KEY_LEFT_BRACKET  },
+		{ AKEYCODE_BACKSLASH,       KEY_BACKSLASH     },
+		{ AKEYCODE_RIGHT_BRACKET,   KEY_RIGHT_BRACKET },
+		{ AKEYCODE_GRAVE,           KEY_GRAVE_ACCENT  },
+		{ AKEYCODE_BACK,            KEY_ESCAPE        },
+		{ AKEYCODE_ESCAPE,          KEY_ESCAPE        },
+		{ AKEYCODE_ENTER,           KEY_ENTER         },
+		{ AKEYCODE_TAB,             KEY_TAB           },
+		{ AKEYCODE_DEL,             KEY_BACKSPACE     },
+		{ AKEYCODE_INSERT,          KEY_INSERT        },
+		{ AKEYCODE_FORWARD_DEL,     KEY_DELETE        },
+		{ AKEYCODE_DPAD_RIGHT,      KEY_RIGHT         },
+		{ AKEYCODE_DPAD_LEFT,       KEY_LEFT          },
+		{ AKEYCODE_DPAD_DOWN,       KEY_DOWN          },
+		{ AKEYCODE_DPAD_UP,         KEY_UP            },
+		{ AKEYCODE_PAGE_UP,         KEY_PAGE_UP       },
+		{ AKEYCODE_PAGE_DOWN,       KEY_PAGE_DOWN     },
+		{ AKEYCODE_MOVE_HOME,       KEY_HOME          },
+		{ AKEYCODE_MOVE_END,        KEY_END           },
+		{ AKEYCODE_CAPS_LOCK,       KEY_CAPS_LOCK     },
+		{ AKEYCODE_SCROLL_LOCK,     KEY_SCROLL_LOCK   },
+		{ AKEYCODE_NUM_LOCK,        KEY_NUM_LOCK      },
+		{ AKEYCODE_SYSRQ,           KEY_PRINT_SCREEN  },
+		{ AKEYCODE_BREAK,           KEY_PAUSE         },
+		{ AKEYCODE_NUMPAD_DOT,      KEY_KP_DECIMAL    },
+		{ AKEYCODE_NUMPAD_DIVIDE,   KEY_KP_DIVIDE     },
+		{ AKEYCODE_NUMPAD_MULTIPLY, KEY_KP_MULTIPLY   },
+		{ AKEYCODE_NUMPAD_SUBTRACT, KEY_KP_SUBTRACT   },
+		{ AKEYCODE_NUMPAD_ADD,      KEY_KP_ADD        },
+		{ AKEYCODE_NUMPAD_ENTER,    KEY_KP_ENTER      },
+		{ AKEYCODE_NUMPAD_EQUALS,   KEY_KP_EQUAL      },
+		{ AKEYCODE_SHIFT_LEFT,      KEY_LEFT_SHIFT    },
+		{ AKEYCODE_CTRL_LEFT,       KEY_LEFT_CONTROL  },
+		{ AKEYCODE_ALT_LEFT,        KEY_LEFT_ALT      },
+		{ AKEYCODE_META_LEFT,       KEY_LEFT_SUPER    },
+		{ AKEYCODE_SHIFT_RIGHT,     KEY_RIGHT_SHIFT   },
+		{ AKEYCODE_CTRL_RIGHT,      KEY_RIGHT_CONTROL },
+		{ AKEYCODE_ALT_RIGHT,       KEY_RIGHT_ALT     },
+		{ AKEYCODE_META_RIGHT,      KEY_RIGHT_SUPER   },
+		{ AKEYCODE_MENU,            KEY_MENU          },
+		{ AKEYCODE_BUTTON_A,        KEY_ENTER         },
+		{ AKEYCODE_BUTTON_B,        KEY_ESCAPE        },
+		{ AKEYCODE_BUTTON_START,    KEY_ESCAPE        },
+		{ AKEYCODE_BUTTON_X,        KEY_SPACE         },
+		{ AKEYCODE_BUTTON_R2,       KEY_UP            },
+		{ AKEYCODE_BUTTON_L2,       KEY_DOWN          },
+		{ AKEYCODE_DPAD_CENTER,     KEY_ENTER         },
+	};
+
+	//the keys of the system, not of the game (its volume)
+	static const int32_t s_system_keys[] =
+	{
+		AKEYCODE_VOLUME_UP,
+		AKEYCODE_VOLUME_DOWN,
+		AKEYCODE_VOLUME_MUTE,
+	};
+
+	static const ModOf s_mods[] =
+	{
+		{ AMETA_SHIFT_ON, KeyboardModEvent::SHIFT   },
+		{ AMETA_CTRL_ON,  KeyboardModEvent::CONTROL },
+		{ AMETA_ALT_ON,   KeyboardModEvent::ALT     },
+		{ AMETA_META_ON,  KeyboardModEvent::SUPER   },
+	};
+
+	static KeyboardEvent translate_key(int32_t code)
+	{
+		for (const KeyRange& range : s_key_ranges)
 		{
-			return KeyboardEvent(KEY_A + (code - AKEYCODE_A));
+			if (code >= range.m_first && code <= range.m_last)
+			{
+				return KeyboardEvent(range.m_key + (code - range.m_first));
+			}
 		}
-		if (code >= AKEYCODE_0 && code <= AKEYCODE_9)
+		for (const KeyOf& key : s_keys)
 		{
-			return KeyboardEvent(KEY_0 + (code - AKEYCODE_0));
-		}
-		if (code >= AKEYCODE_NUMPAD_0 && code <= AKEYCODE_NUMPAD_9)
-		{
-			return KeyboardEvent(KEY_KP_0 + (code - AKEYCODE_NUMPAD_0));
-		}
-		if (code >= AKEYCODE_F1 && code <= AKEYCODE_F12)
-		{
-			return KeyboardEvent(KEY_F1 + (code - AKEYCODE_F1));
+			if (key.m_code == code)
+			{
+				return key.m_key;
+			}
 		}
 		return KEY_INVALID;
 	}
 
-	//the buttons of a gamepad, as the keys of the menus and of the race (until the engine has its
-	//gamepads): A enter, B and start escape, X the power, the triggers forward and backward
-	static KeyboardEvent translate_gamepad_key(int32_t code)
+	static bool is_system_key(int32_t code)
 	{
-		switch (code)
+		for (int32_t system_key : s_system_keys)
 		{
-		case AKEYCODE_BUTTON_A:      return KEY_ENTER;
-		case AKEYCODE_BUTTON_B:      return KEY_ESCAPE;
-		case AKEYCODE_BUTTON_START:  return KEY_ESCAPE;
-		case AKEYCODE_BUTTON_X:      return KEY_SPACE;
-		case AKEYCODE_BUTTON_R2:     return KEY_UP;
-		case AKEYCODE_BUTTON_L2:     return KEY_DOWN;
-		case AKEYCODE_DPAD_CENTER:   return KEY_ENTER;
-		default:                     return KEY_INVALID;
+			if (system_key == code)
+			{
+				return true;
+			}
 		}
-	}
-
-	static KeyboardEvent translate_key(int32_t code)
-	{
-		const KeyboardEvent range = translate_range_key(code);
-		if (range != KEY_INVALID)
-		{
-			return range;
-		}
-		switch (code)
-		{
-		case AKEYCODE_SPACE:          return KEY_SPACE;
-		case AKEYCODE_APOSTROPHE:     return KEY_APOSTROPHE;
-		case AKEYCODE_COMMA:          return KEY_COMMA;
-		case AKEYCODE_MINUS:          return KEY_MINUS;
-		case AKEYCODE_PERIOD:         return KEY_PERIOD;
-		case AKEYCODE_SLASH:          return KEY_SLASH;
-		case AKEYCODE_SEMICOLON:      return KEY_SEMICOLON;
-		case AKEYCODE_EQUALS:         return KEY_EQUAL;
-		case AKEYCODE_LEFT_BRACKET:   return KEY_LEFT_BRACKET;
-		case AKEYCODE_BACKSLASH:      return KEY_BACKSLASH;
-		case AKEYCODE_RIGHT_BRACKET:  return KEY_RIGHT_BRACKET;
-		case AKEYCODE_GRAVE:          return KEY_GRAVE_ACCENT;
-		//the back of the system: the escape of the game (its menus)
-		case AKEYCODE_BACK:           return KEY_ESCAPE;
-		case AKEYCODE_ESCAPE:         return KEY_ESCAPE;
-		case AKEYCODE_ENTER:          return KEY_ENTER;
-		case AKEYCODE_TAB:            return KEY_TAB;
-		case AKEYCODE_DEL:            return KEY_BACKSPACE;
-		case AKEYCODE_INSERT:         return KEY_INSERT;
-		case AKEYCODE_FORWARD_DEL:    return KEY_DELETE;
-		case AKEYCODE_DPAD_RIGHT:     return KEY_RIGHT;
-		case AKEYCODE_DPAD_LEFT:      return KEY_LEFT;
-		case AKEYCODE_DPAD_DOWN:      return KEY_DOWN;
-		case AKEYCODE_DPAD_UP:        return KEY_UP;
-		case AKEYCODE_PAGE_UP:        return KEY_PAGE_UP;
-		case AKEYCODE_PAGE_DOWN:      return KEY_PAGE_DOWN;
-		case AKEYCODE_MOVE_HOME:      return KEY_HOME;
-		case AKEYCODE_MOVE_END:       return KEY_END;
-		case AKEYCODE_CAPS_LOCK:      return KEY_CAPS_LOCK;
-		case AKEYCODE_SCROLL_LOCK:    return KEY_SCROLL_LOCK;
-		case AKEYCODE_NUM_LOCK:       return KEY_NUM_LOCK;
-		case AKEYCODE_SYSRQ:          return KEY_PRINT_SCREEN;
-		case AKEYCODE_BREAK:          return KEY_PAUSE;
-		case AKEYCODE_NUMPAD_DOT:     return KEY_KP_DECIMAL;
-		case AKEYCODE_NUMPAD_DIVIDE:  return KEY_KP_DIVIDE;
-		case AKEYCODE_NUMPAD_MULTIPLY:return KEY_KP_MULTIPLY;
-		case AKEYCODE_NUMPAD_SUBTRACT:return KEY_KP_SUBTRACT;
-		case AKEYCODE_NUMPAD_ADD:     return KEY_KP_ADD;
-		case AKEYCODE_NUMPAD_ENTER:   return KEY_KP_ENTER;
-		case AKEYCODE_NUMPAD_EQUALS:  return KEY_KP_EQUAL;
-		case AKEYCODE_SHIFT_LEFT:     return KEY_LEFT_SHIFT;
-		case AKEYCODE_CTRL_LEFT:      return KEY_LEFT_CONTROL;
-		case AKEYCODE_ALT_LEFT:       return KEY_LEFT_ALT;
-		case AKEYCODE_META_LEFT:      return KEY_LEFT_SUPER;
-		case AKEYCODE_SHIFT_RIGHT:    return KEY_RIGHT_SHIFT;
-		case AKEYCODE_CTRL_RIGHT:     return KEY_RIGHT_CONTROL;
-		case AKEYCODE_ALT_RIGHT:      return KEY_RIGHT_ALT;
-		case AKEYCODE_META_RIGHT:     return KEY_RIGHT_SUPER;
-		case AKEYCODE_MENU:           return KEY_MENU;
-		default:                      return translate_gamepad_key(code);
-		}
+		return false;
 	}
 
 	static short translate_mods(int32_t meta)
 	{
 		short mods = 0;
-		if (meta & AMETA_SHIFT_ON) mods |= KeyboardModEvent::SHIFT;
-		if (meta & AMETA_CTRL_ON)  mods |= KeyboardModEvent::CONTROL;
-		if (meta & AMETA_ALT_ON)   mods |= KeyboardModEvent::ALT;
-		if (meta & AMETA_META_ON)  mods |= KeyboardModEvent::SUPER;
+		for (const ModOf& mod : s_mods)
+		{
+			if (meta & mod.m_meta)
+			{
+				mods |= mod.m_mod;
+			}
+		}
 		return mods;
 	}
 
@@ -189,7 +259,12 @@ namespace Android
 	{
 		if (key >= KEY_A && key <= KEY_Z)
 		{
-			return (mods & KeyboardModEvent::SHIFT) ? int(key) : int(key) - int(KEY_A) + 'a';
+			//(the keys are the upper case letters)
+			if (mods & KeyboardModEvent::SHIFT)
+			{
+				return int(key);
+			}
+			return int(key) - int(KEY_A) + 'a';
 		}
 		if (key >= KEY_0 && key <= KEY_9)
 		{
@@ -205,8 +280,7 @@ namespace Android
 	static int32_t key_event(InputAndroid& input, const AInputEvent* event)
 	{
 		const int32_t code = AKeyEvent_getKeyCode(event);
-		//the volume of the system: not of the game
-		if (code == AKEYCODE_VOLUME_UP || code == AKEYCODE_VOLUME_DOWN || code == AKEYCODE_VOLUME_MUTE)
+		if (is_system_key(code))
 		{
 			return 0;
 		}
@@ -225,7 +299,11 @@ namespace Android
 		ActionEvent action = ActionEvent::RELEASE;
 		if (key_action == AKEY_EVENT_ACTION_DOWN)
 		{
-			action = repeat ? ActionEvent::REPEAT : ActionEvent::PRESS;
+			action = ActionEvent::PRESS;
+			if (repeat)
+			{
+				action = ActionEvent::REPEAT;
+			}
 			const int character = character_of(key, mods);
 			const bool plain = !(mods & (KeyboardModEvent::CONTROL | KeyboardModEvent::ALT));
 			if (character != -1)
@@ -259,17 +337,37 @@ namespace Android
 		{ AMOTION_EVENT_AXIS_HAT_Y,  1.0f, KEY_DOWN,  false },
 	};
 
+	//a key down or up
+	static ActionEvent action_of(bool down)
+	{
+		if (down)
+		{
+			return ActionEvent::PRESS;
+		}
+		return ActionEvent::RELEASE;
+	}
+
+	//a direction held: pressed over the half, released under the third (no flicker at the
+	//threshold)
+	static bool axis_down(const AxisKey& axis_key, float value)
+	{
+		if (axis_key.m_down)
+		{
+			return value > 0.33f;
+		}
+		return value > 0.5f;
+	}
+
 	static int32_t joystick_event(InputAndroid& input, const AInputEvent* event)
 	{
-		//pressed over the half, released under the third (no flicker at the threshold)
 		for (AxisKey& axis_key : s_axis_keys)
 		{
-			const float value = AMotionEvent_getAxisValue(event, axis_key.m_axis, 0) * axis_key.m_sign;
-			const bool  down = axis_key.m_down ? value > 0.33f : value > 0.5f;
+			const float axis = AMotionEvent_getAxisValue(event, axis_key.m_axis, 0);
+			const bool  down = axis_down(axis_key, axis * axis_key.m_sign);
 			if (down != axis_key.m_down)
 			{
 				axis_key.m_down = down;
-				input.send_keyboard_event(axis_key.m_key, 0, down ? ActionEvent::PRESS : ActionEvent::RELEASE);
+				input.send_keyboard_event(axis_key.m_key, 0, action_of(down));
 			}
 		}
 		return 1;
@@ -277,18 +375,20 @@ namespace Android
 
 	////////////////////////////////////////////////////////////////////////////////////
 	// MOUSE
-	static MouseButtonEvent translate_mouse_button(int32_t button)
+	//a button of Android (its bit in the state of the buttons) as the one of the engine
+	struct MouseButtonOf
 	{
-		switch (button)
-		{
-		case AMOTION_EVENT_BUTTON_PRIMARY:   return MOUSE_BUTTON_LEFT;
-		case AMOTION_EVENT_BUTTON_SECONDARY: return MOUSE_BUTTON_RIGHT;
-		case AMOTION_EVENT_BUTTON_TERTIARY:  return MOUSE_BUTTON_MIDDLE;
-		case AMOTION_EVENT_BUTTON_BACK:      return MOUSE_BUTTON_4;
-		case AMOTION_EVENT_BUTTON_FORWARD:   return MOUSE_BUTTON_5;
-		default:                             return MOUSE_UNKNOWN;
-		}
-	}
+		int32_t          m_mask;
+		MouseButtonEvent m_button;
+	};
+	static const MouseButtonOf s_mouse_buttons_of[] =
+	{
+		{ AMOTION_EVENT_BUTTON_PRIMARY,   MOUSE_BUTTON_LEFT   },
+		{ AMOTION_EVENT_BUTTON_SECONDARY, MOUSE_BUTTON_RIGHT  },
+		{ AMOTION_EVENT_BUTTON_TERTIARY,  MOUSE_BUTTON_MIDDLE },
+		{ AMOTION_EVENT_BUTTON_BACK,      MOUSE_BUTTON_4      },
+		{ AMOTION_EVENT_BUTTON_FORWARD,   MOUSE_BUTTON_5      },
+	};
 
 	//the buttons held by the mouse (its last event): the ones changed are pressed or released
 	static int32_t s_mouse_buttons = 0;
@@ -297,13 +397,12 @@ namespace Android
 	{
 		const int32_t changed = buttons ^ s_mouse_buttons;
 		s_mouse_buttons = buttons;
-		for (int32_t bit = 0; bit != 8; ++bit)
+		for (const MouseButtonOf& button : s_mouse_buttons_of)
 		{
-			const int32_t mask = 1 << bit;
-			const MouseButtonEvent button = translate_mouse_button(mask);
-			if ((changed & mask) && button != MOUSE_UNKNOWN)
+			if (changed & button.m_mask)
 			{
-				input.send_mouse_button_event(button, (buttons & mask) ? ActionEvent::PRESS : ActionEvent::RELEASE);
+				const bool down = (buttons & button.m_mask) != 0;
+				input.send_mouse_button_event(button.m_button, action_of(down));
 			}
 		}
 	}
@@ -311,7 +410,9 @@ namespace Android
 	static int32_t mouse_event(InputAndroid& input, const AInputEvent* event)
 	{
 		const int32_t action = AMotionEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
-		input.send_mouse_move_event(AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0));
+		const float x = AMotionEvent_getX(event, 0);
+		const float y = AMotionEvent_getY(event, 0);
+		input.send_mouse_move_event(x, y);
 		mouse_buttons(input, AMotionEvent_getButtonState(event));
 		if (action == AMOTION_EVENT_ACTION_SCROLL)
 		{
@@ -329,7 +430,11 @@ namespace Android
 	static FingerEvent finger_of(int32_t pointer_id)
 	{
 		const int32_t finger = pointer_id + 1;
-		return finger < int32_t(FINGERMAX) ? FingerEvent(finger) : FINGER_NULL;
+		if (finger >= int32_t(FINGERMAX))
+		{
+			return FINGER_NULL;
+		}
+		return FingerEvent(finger);
 	}
 
 	//a finger down (with where it is): the first one is also the mouse (its left button), after it
@@ -341,12 +446,16 @@ namespace Android
 		if (finger != FINGER_NULL)
 		{
 			input.send_touch_event(finger, ActionEvent::PRESS);
-			input.send_finger_event(finger, ActionEvent::PRESS, AMotionEvent_getX(event, index), AMotionEvent_getY(event, index));
+			const float x = AMotionEvent_getX(event, index);
+			const float y = AMotionEvent_getY(event, index);
+			input.send_finger_event(finger, ActionEvent::PRESS, x, y);
 		}
 		if (s_os_context.m_mouse_pointer == -1)
 		{
 			s_os_context.m_mouse_pointer = id;
-			input.send_mouse_move_event(AMotionEvent_getX(event, index), AMotionEvent_getY(event, index));
+			const float x = AMotionEvent_getX(event, index);
+			const float y = AMotionEvent_getY(event, index);
+			input.send_mouse_move_event(x, y);
 			input.send_mouse_button_event(MOUSE_BUTTON_LEFT, ActionEvent::PRESS);
 		}
 	}
@@ -358,14 +467,18 @@ namespace Android
 		if (s_os_context.m_mouse_pointer == id)
 		{
 			s_os_context.m_mouse_pointer = -1;
-			input.send_mouse_move_event(AMotionEvent_getX(event, index), AMotionEvent_getY(event, index));
+			const float x = AMotionEvent_getX(event, index);
+			const float y = AMotionEvent_getY(event, index);
+			input.send_mouse_move_event(x, y);
 			input.send_mouse_button_event(MOUSE_BUTTON_LEFT, ActionEvent::RELEASE);
 		}
 		const FingerEvent finger = finger_of(id);
 		if (finger != FINGER_NULL)
 		{
 			input.send_touch_event(finger, ActionEvent::RELEASE);
-			input.send_finger_event(finger, ActionEvent::RELEASE, AMotionEvent_getX(event, index), AMotionEvent_getY(event, index));
+			const float x = AMotionEvent_getX(event, index);
+			const float y = AMotionEvent_getY(event, index);
+			input.send_finger_event(finger, ActionEvent::RELEASE, x, y);
 		}
 	}
 
@@ -379,11 +492,15 @@ namespace Android
 			const FingerEvent finger = finger_of(id);
 			if (finger != FINGER_NULL)
 			{
-				input.send_finger_event(finger, ActionEvent::REPEAT, AMotionEvent_getX(event, index), AMotionEvent_getY(event, index));
+				const float x = AMotionEvent_getX(event, index);
+				const float y = AMotionEvent_getY(event, index);
+				input.send_finger_event(finger, ActionEvent::REPEAT, x, y);
 			}
 			if (id == s_os_context.m_mouse_pointer)
 			{
-				input.send_mouse_move_event(AMotionEvent_getX(event, index), AMotionEvent_getY(event, index));
+				const float x = AMotionEvent_getX(event, index);
+				const float y = AMotionEvent_getY(event, index);
+				input.send_mouse_move_event(x, y);
 			}
 		}
 	}
@@ -402,7 +519,9 @@ namespace Android
 	{
 		const int32_t full_action = AMotionEvent_getAction(event);
 		const int32_t action = full_action & AMOTION_EVENT_ACTION_MASK;
-		const size_t  index = size_t((full_action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT);
+		//the pointer of the action (its index in the event)
+		const int32_t pointer_bits = full_action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK;
+		const size_t  index = size_t(pointer_bits >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT);
 		switch (action)
 		{
 		case AMOTION_EVENT_ACTION_DOWN:
@@ -425,34 +544,42 @@ namespace Android
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////
-	static bool is_source(int32_t source, int32_t kind)
+	//a source of the motions (its bits) and who reads its events (the first one that matches)
+	struct MotionSource
 	{
-		return (source & kind) == kind;
+		int32_t m_source;
+		int32_t (*m_event)(InputAndroid& input, const AInputEvent* event);
+	};
+	static const MotionSource s_motion_sources[] =
+	{
+		{ AINPUT_SOURCE_JOYSTICK,    joystick_event },
+		{ AINPUT_SOURCE_MOUSE,       mouse_event    },
+		{ AINPUT_SOURCE_TOUCHSCREEN, touch_event    },
+	};
+
+	static int32_t motion_event(InputAndroid& input, const AInputEvent* event)
+	{
+		const int32_t source = AInputEvent_getSource(event);
+		for (const MotionSource& motion : s_motion_sources)
+		{
+			if ((source & motion.m_source) == motion.m_source)
+			{
+				return motion.m_event(input, event);
+			}
+		}
+		return 0;
 	}
 
 	int32_t input_event(InputAndroid& input, const AInputEvent* event)
 	{
 		const int32_t type = AInputEvent_getType(event);
-		const int32_t source = AInputEvent_getSource(event);
 		if (type == AINPUT_EVENT_TYPE_KEY)
 		{
 			return key_event(input, event);
 		}
-		if (type != AINPUT_EVENT_TYPE_MOTION)
+		if (type == AINPUT_EVENT_TYPE_MOTION)
 		{
-			return 0;
-		}
-		if (is_source(source, AINPUT_SOURCE_JOYSTICK))
-		{
-			return joystick_event(input, event);
-		}
-		if (is_source(source, AINPUT_SOURCE_MOUSE))
-		{
-			return mouse_event(input, event);
-		}
-		if (is_source(source, AINPUT_SOURCE_TOUCHSCREEN))
-		{
-			return touch_event(input, event);
+			return motion_event(input, event);
 		}
 		return 0;
 	}

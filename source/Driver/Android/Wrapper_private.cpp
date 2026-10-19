@@ -49,12 +49,20 @@ namespace Android
 
 	WindowAndroid* main_window()
 	{
-		return s_os_context.m_windows.empty() ? nullptr : s_os_context.m_windows.begin()->second;
+		if (s_os_context.m_windows.empty())
+		{
+			return nullptr;
+		}
+		return s_os_context.m_windows.begin()->second;
 	}
 
 	InputAndroid* main_input()
 	{
-		return s_os_context.m_input.empty() ? nullptr : s_os_context.m_input.begin()->second;
+		if (s_os_context.m_input.empty())
+		{
+			return nullptr;
+		}
+		return s_os_context.m_input.begin()->second;
 	}
 
 	static void send_window_event(WindowEvent event)
@@ -85,18 +93,33 @@ namespace Android
 		int rotation = s_activity.m_rotation;
 		jobject activity = app->activity->clazz;
 		jclass activity_class = env->GetObjectClass(activity);
-		jmethodID get_manager = env->GetMethodID(activity_class, "getWindowManager", "()Landroid/view/WindowManager;");
-		jobject manager = get_manager ? env->CallObjectMethod(activity, get_manager) : nullptr;
+		jmethodID get_manager = env->GetMethodID(activity_class,
+		                                         "getWindowManager",
+		                                         "()Landroid/view/WindowManager;");
+		jobject manager = nullptr;
+		if (get_manager)
+		{
+			manager = env->CallObjectMethod(activity, get_manager);
+		}
 		if (manager)
 		{
 			jclass manager_class = env->GetObjectClass(manager);
-			jmethodID get_display = env->GetMethodID(manager_class, "getDefaultDisplay", "()Landroid/view/Display;");
-			jobject display = get_display ? env->CallObjectMethod(manager, get_display) : nullptr;
+			jmethodID get_display = env->GetMethodID(manager_class,
+			                                         "getDefaultDisplay",
+			                                         "()Landroid/view/Display;");
+			jobject display = nullptr;
+			if (get_display)
+			{
+				display = env->CallObjectMethod(manager, get_display);
+			}
 			if (display)
 			{
 				jclass display_class = env->GetObjectClass(display);
 				jmethodID get_rotation = env->GetMethodID(display_class, "getRotation", "()I");
-				if (get_rotation) rotation = int(env->CallIntMethod(display, get_rotation));
+				if (get_rotation)
+				{
+					rotation = int(env->CallIntMethod(display, get_rotation));
+				}
 				env->DeleteLocalRef(display_class);
 				env->DeleteLocalRef(display);
 			}
@@ -138,7 +161,11 @@ namespace Android
 				s_activity.m_tilt_wanted = false;
 				return;
 			}
-			s_activity.m_sensor_queue = ASensorManager_createEventQueue(s_activity.m_sensors, s_activity.m_app->looper, LOOPER_ID_USER, nullptr, nullptr);
+			s_activity.m_sensor_queue = ASensorManager_createEventQueue(s_activity.m_sensors,
+		                                                            s_activity.m_app->looper,
+		                                                            LOOPER_ID_USER,
+		                                                            nullptr,
+		                                                            nullptr);
 			s_activity.m_rotation = display_rotation();
 		}
 		if (!s_activity.m_sensor_queue)
@@ -213,6 +240,11 @@ namespace Android
 		if (WindowAndroid* window = main_window())
 		{
 			window->update_size();
+			//(its frame rate on the new native window)
+			if (window->m_vk_device)
+			{
+				window->m_vk_device->apply_frame_rate();
+			}
 		}
 		if (again)
 		{
@@ -250,14 +282,16 @@ namespace Android
 		case APP_CMD_TERM_WINDOW:
 			window_terminated();
 			break;
-		case APP_CMD_WINDOW_RESIZED:
 		case APP_CMD_CONFIG_CHANGED:
-		case APP_CMD_CONTENT_RECT_CHANGED:
 			//(turned: the other landscape, the tilt turned with it)
-			if (command == APP_CMD_CONFIG_CHANGED && s_activity.m_sensor_queue)
+			if (s_activity.m_sensor_queue)
 			{
 				s_activity.m_rotation = display_rotation();
 			}
+			window_resized();
+			break;
+		case APP_CMD_WINDOW_RESIZED:
+		case APP_CMD_CONTENT_RECT_CHANGED:
 			window_resized();
 			break;
 		case APP_CMD_GAINED_FOCUS:
@@ -314,10 +348,15 @@ namespace Android
 		}
 		while (true)
 		{
-			const bool wait = !activity_running() && !app->destroyRequested;
+			//in the background: wait for an event (-1), else only the ones there (0)
+			int timeout = 0;
+			if (!activity_running() && !app->destroyRequested)
+			{
+				timeout = -1;
+			}
 			android_poll_source* source = nullptr;
 			int events = 0;
-			const int ident = ALooper_pollOnce(wait ? -1 : 0, nullptr, &events, (void**)&source);
+			const int ident = ALooper_pollOnce(timeout, nullptr, &events, (void**)&source);
 			if (ident >= 0 && source)
 			{
 				source->process(app, source);
@@ -390,6 +429,28 @@ namespace Android
 
 	//the environment of the file env.txt in the resource folder (a line NAME=VALUE): the variables
 	//of the engine and of the game (SQUARE_HEAP, RUSH_BENCH...), no shell to set them on Android
+	//a line of env.txt as a variable (NAME=VALUE; an empty line, a #comment, no name: none)
+	static void line_environment(String line)
+	{
+		if (!line.empty() && line.back() == '\r')
+		{
+			line.pop_back();
+		}
+		if (line.empty() || line[0] == '#')
+		{
+			return;
+		}
+		const size_t equal = line.find('=');
+		if (equal == String::npos || equal == 0)
+		{
+			return;
+		}
+		const String name = line.substr(0, equal);
+		const String value = line.substr(equal + 1);
+		setenv(name.c_str(), value.c_str(), 1);
+		__android_log_print(ANDROID_LOG_INFO, "Square", "Android: %s=%s (env.txt)", name.c_str(), value.c_str());
+	}
+
 	static void file_environment()
 	{
 		std::ifstream file("env.txt");
@@ -400,19 +461,7 @@ namespace Android
 		String line;
 		while (std::getline(file, line))
 		{
-			if (!line.empty() && line.back() == '\r')
-			{
-				line.pop_back();
-			}
-			const size_t equal = line.find('=');
-			if (line.empty() || line[0] == '#' || equal == String::npos || equal == 0)
-			{
-				continue;
-			}
-			const String name = line.substr(0, equal);
-			const String value = line.substr(equal + 1);
-			setenv(name.c_str(), value.c_str(), 1);
-			__android_log_print(ANDROID_LOG_INFO, "Square", "Android: %s=%s (env.txt)", name.c_str(), value.c_str());
+			line_environment(line);
 		}
 	}
 

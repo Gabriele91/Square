@@ -17,6 +17,7 @@ set(SOURCE_FILES
     ${SQUARE_ROOT_DIR}/source/Core/Container/String.cpp
     AllocationVK.cpp
     InterfaceVK.cpp
+    PresentTimingVK.cpp
     RenderVK.cpp
     ResourcesVK.cpp
     ShaderVK.cpp
@@ -35,6 +36,7 @@ endif()
 set(HEADER_FILES
     AllocationVK.h
     Interface.h
+    PresentTimingVK.h
     RenderVK.h
     SpirvReflection.h
     VulkanConfig.h

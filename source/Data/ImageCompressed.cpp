@@ -296,6 +296,33 @@ namespace Data
 		out[3] = 255;
 	}
 
+	//the two colors between the ends of a block: four colors (a third and two thirds), else
+	//three colors (the half) and the transparent black (BC1)
+	static void decode_color_palette(bool four_colors, unsigned char palette[4][4])
+	{
+		for (int channel = 0; channel != 3; ++channel)
+		{
+			const int c0 = palette[0][channel];
+			const int c1 = palette[1][channel];
+			if (four_colors)
+			{
+				palette[2][channel] = (unsigned char)((2 * c0 + c1) / 3);
+				palette[3][channel] = (unsigned char)((c0 + 2 * c1) / 3);
+			}
+			else
+			{
+				palette[2][channel] = (unsigned char)((c0 + c1) / 2);
+				palette[3][channel] = 0;
+			}
+		}
+		palette[2][3] = 255;
+		palette[3][3] = 255;
+		if (!four_colors)
+		{
+			palette[3][3] = 0;
+		}
+	}
+
 	//the colors of BC1/BC3 (8 bytes): RGBA of the 16 pixels; BC1 with its transparent black
 	static void decode_color_block(const unsigned char* block, bool bc1, unsigned char pixels[16 * 4])
 	{
@@ -304,16 +331,7 @@ namespace Data
 		unsigned char palette[4][4];
 		decode_565(color0, palette[0]);
 		decode_565(color1, palette[1]);
-		const bool four_colors = !bc1 || color0 > color1;
-		for (int channel = 0; channel != 3; ++channel)
-		{
-			const int c0 = palette[0][channel];
-			const int c1 = palette[1][channel];
-			palette[2][channel] = (unsigned char)(four_colors ? (2 * c0 + c1) / 3 : (c0 + c1) / 2);
-			palette[3][channel] = (unsigned char)(four_colors ? (c0 + 2 * c1) / 3 : 0);
-		}
-		palette[2][3] = 255;
-		palette[3][3] = four_colors ? 255 : 0;
+		decode_color_palette(!bc1 || color0 > color1, palette);
 		const unsigned int indices = read_u32(block + 4);
 		for (int pixel = 0; pixel != 16; ++pixel)
 		{
@@ -391,6 +409,32 @@ namespace Data
 		}
 	}
 
+	//the channels of the pixels of a BC format: R (BC4), RG (BC5), RGBA (BC1, BC3)
+	struct BCChannels
+	{
+		Render::TextureFormat m_format;
+		unsigned int          m_channels;
+	};
+	static const BCChannels s_bc_channels[] =
+	{
+		{ Render::TF_BC1, 4 },
+		{ Render::TF_BC3, 4 },
+		{ Render::TF_BC4, 1 },
+		{ Render::TF_BC5, 2 },
+	};
+
+	static unsigned int bc_channels(Render::TextureFormat format)
+	{
+		for (const BCChannels& bc : s_bc_channels)
+		{
+			if (bc.m_format == format)
+			{
+				return bc.m_channels;
+			}
+		}
+		return 4;
+	}
+
 	Vector<unsigned char> Image::decompress_bc
 	(
 		const unsigned char* blocks,
@@ -405,7 +449,7 @@ namespace Data
 		{
 			return out;
 		}
-		const unsigned int channels = format == Render::TF_BC4 ? 1 : format == Render::TF_BC5 ? 2 : 4;
+		const unsigned int channels = bc_channels(format);
 		out.resize(size_t(width) * height * channels);
 		unsigned char pixels[16 * 4];
 		const unsigned char* block = blocks;
@@ -419,7 +463,9 @@ namespace Data
 				for (unsigned long y = 0; y != 4 && block_y + y < height; ++y)
 				{
 					const unsigned long columns = std::min<unsigned long>(4, width - block_x);
-					std::memcpy(out.data() + ((block_y + y) * width + block_x) * channels, pixels + y * 4 * channels, columns * channels);
+					const size_t first = ((block_y + y) * width + block_x) * channels;
+					const unsigned char* row = pixels + y * 4 * channels;
+					std::memcpy(out.data() + first, row, columns * channels);
 				}
 			}
 		}

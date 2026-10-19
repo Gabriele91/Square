@@ -138,8 +138,10 @@ namespace Square
 		//application loads (before AppInterface::start); on by default
 		void splash_screen(bool enable);
 		bool splash_screen() const;
-		//the frames a second at most (0: no limit, as fast as the display lets it): the loop waits
-		//the rest of the time of a frame (a phone: 60, 30, steady, less battery)
+		//the frames a second at most (0: no limit, as fast as the display lets it): the window
+		//paces them when it can (DeviceResources::set_frame_rate: the display at that rate, as the
+		//vsync), else the loop waits the rest of the time of a frame (a phone: 60, 30, steady, less
+		//battery)
 		void frame_rate(int fps);
 		int  frame_rate() const;
         //get attr (const)
@@ -174,6 +176,7 @@ namespace Square
         AppInterface*       m_instance{ nullptr };
 		bool                m_splash_screen{ true };
 		int                 m_frame_rate{ 0 };
+		bool                m_frame_rate_paced{ false }; //by the window (no wait of the loop)
 		//context (delta of update)
         double              m_last_delta_time{ 0 };
 		//context (application context)

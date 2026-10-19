@@ -22,7 +22,8 @@ namespace SurfaceVK
 
 	VkResult create(VkInstance instance, Video::DeviceResources* resources, VkSurfaceKHR* surface)
 	{
-		auto create_android_surface = (PFN_vkCreateAndroidSurfaceKHR)vkGetInstanceProcAddr(instance, "vkCreateAndroidSurfaceKHR");
+		PFN_vkVoidFunction function = vkGetInstanceProcAddr(instance, "vkCreateAndroidSurfaceKHR");
+		auto create_android_surface = (PFN_vkCreateAndroidSurfaceKHR)function;
 		if (!create_android_surface)
 		{
 			return VK_ERROR_EXTENSION_NOT_PRESENT;

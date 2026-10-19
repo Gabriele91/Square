@@ -106,6 +106,14 @@ namespace Video
 		virtual bool get_vsync() = 0;
 		virtual void set_vsync(bool) = 0;
 
+		//the frames a second of the window at most (0: as many as it can), as the vsync: true when
+		//the window paces them itself (its display at that rate, the swap waits for it), false (by
+		//default) when the application has to wait (Application::frame_rate)
+		virtual bool set_frame_rate(unsigned int fps);
+		//the frames a second asked (0: as many as it can; by default 0: the window does not know
+		//them), for the driver that paces its frames (Vulkan: the times of its presents)
+		virtual unsigned int get_frame_rate();
+
 		virtual void* get_device() = 0;
 		virtual void* get_device_context(size_t i=0) = 0;
 		virtual void* get_swap_chain() = 0;

@@ -9,6 +9,7 @@
 #include "Input_private.h"
 #include <android/log.h>
 #include <algorithm>
+#include <dlfcn.h>
 
 namespace Square
 {
@@ -35,6 +36,42 @@ namespace Android
 	bool DeviceResourcesAVK::get_vsync() { return m_vsync; }
 	void DeviceResourcesAVK::set_vsync(bool vsync) { m_vsync = vsync; }
 
+	//ANativeWindow_setFrameRate (Android 11, API 30: the application runs from Android 10, its
+	//function looked for at run time); null without it
+	using SetFrameRate = int32_t (*)(ANativeWindow* window, float frame_rate, int8_t compatibility);
+	static SetFrameRate set_frame_rate_function()
+	{
+		static SetFrameRate function = (SetFrameRate)dlsym(RTLD_DEFAULT, "ANativeWindow_setFrameRate");
+		return function;
+	}
+
+	bool DeviceResourcesAVK::set_frame_rate(unsigned int fps)
+	{
+		m_frame_rate = fps;
+		apply_frame_rate();
+		//a hint only: the system may keep its display faster (a multiple of the rate: 120 Hz for
+		//60, a Samsung S22): the application still waits, the driver of Vulkan puts its frames on
+		//the vsyncs of the rate (get_frame_rate: the times of its presents)
+		return false;
+	}
+
+	unsigned int DeviceResourcesAVK::get_frame_rate()
+	{
+		return m_frame_rate;
+	}
+
+	void DeviceResourcesAVK::apply_frame_rate()
+	{
+		SetFrameRate function = set_frame_rate_function();
+		if (!function || !s_activity.m_native_window)
+		{
+			return;
+		}
+		//0: no rate asked, the display as the system wants it (120 Hz)
+		const int8_t compatibility = 0; //ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT
+		function(s_activity.m_native_window, float(m_frame_rate), compatibility);
+	}
+
 	unsigned int DeviceResourcesAVK::width()
 	{
 		unsigned int size[2];
@@ -51,7 +88,11 @@ namespace Android
 
 	void* DeviceResourcesAVK::get_device()
 	{
-		return s_activity.m_app ? (void*)s_activity.m_app->activity : nullptr;
+		if (!s_activity.m_app)
+		{
+			return nullptr;
+		}
+		return (void*)s_activity.m_app->activity;
 	}
 
 	void* DeviceResourcesAVK::get_device_context(size_t i)
@@ -86,7 +127,9 @@ namespace Android
 		//Vulkan only (the window has not a context of its own)
 		if (m_info.m_context.m_type != ContextInfo::CTX_VULKAN)
 		{
-			__android_log_print(ANDROID_LOG_ERROR, "Square", "Android: only the Vulkan backend (-b vk), not the context %d", int(m_info.m_context.m_type));
+			const int context = int(m_info.m_context.m_type);
+			__android_log_print(ANDROID_LOG_ERROR, "Square",
+			                    "Android: only the Vulkan backend (-b vk), not the context %d", context);
 		}
 		m_vk_device = new DeviceResourcesAVK(*this);
 	}

@@ -120,7 +120,11 @@ namespace Square
             output << std::endl;
         #if defined(__ANDROID__)
             //Android: no console, the log of the system (logcat, tag Square)
-            const int priority = stream == stderr ? ANDROID_LOG_ERROR : ANDROID_LOG_INFO;
+            int priority = ANDROID_LOG_INFO;
+            if (stream == stderr)
+            {
+                priority = ANDROID_LOG_ERROR;
+            }
             __android_log_write(priority, "Square", output.str().c_str());
         #else
             fprintf(stream, "%s", output.str().c_str());

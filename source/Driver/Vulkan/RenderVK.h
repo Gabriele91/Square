@@ -17,6 +17,7 @@
 //
 #pragma once
 #include "VulkanConfig.h"
+#include "PresentTimingVK.h"
 #include <array>
 #include <memory>
 #include <string>
@@ -635,6 +636,7 @@ namespace Render
 		Vector<std::pair<uint64, std::function<void()>>> m_garbage;
 		//the swap chain, the default target (its image, the depth of the driver)
 		SwapChainVK              m_swapchain;
+		PresentTimingVK          m_present_timing; //the frames on the vsyncs of the frame rate
 		UniquePtr<Texture> m_default_depth;
 		Target                   m_default_target;
 		//the states

@@ -31,6 +31,13 @@ namespace Android
 		virtual bool get_vsync() override;
 		virtual void set_vsync(bool vsync) override;
 
+		//the frames a second: the display of the native window asked at that rate (Android 11+, a
+		//hint: the system may keep it faster), the application still waits (false)
+		virtual bool set_frame_rate(unsigned int fps) override;
+		virtual unsigned int get_frame_rate() override;
+		//the frame rate again on a new native window (back from the background)
+		void apply_frame_rate();
+
 		//the size of the native window (the size of the swap chain)
 		virtual unsigned int width() override;
 		virtual unsigned int height() override;
@@ -55,6 +62,7 @@ namespace Android
 
 		const WindowAndroid& m_window;
 		bool                 m_vsync{ true };
+		unsigned int         m_frame_rate{ 0 };
 		std::function<void(DeviceResources*)> m_callback{ nullptr };
 	};
 

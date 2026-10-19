@@ -25,7 +25,9 @@ endif()
 set(CMAKE_CXX_FLAGS_RETAIL "${CMAKE_CXX_FLAGS_RELEASE}")
 
 # Square project
-file(GLOB SOURCES Core/*.cpp
+# (CONFIGURE_DEPENDS: a new file found by the next build, also the one of Gradle)
+file(GLOB SOURCES CONFIGURE_DEPENDS
+                  Core/*.cpp
                   Core/Allocator/*.cpp
                   Core/Container/*.cpp
                   Audio/*.cpp

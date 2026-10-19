@@ -154,6 +154,13 @@ namespace Square
     void Application::frame_rate(int fps)
     {
         m_frame_rate = std::max(fps, 0);
+        //the window paces the frames (the display at that rate), else the loop waits
+        m_frame_rate_paced = false;
+        if (m_window && m_window->device())
+        {
+            const bool paced = m_window->device()->set_frame_rate((unsigned int)m_frame_rate);
+            m_frame_rate_paced = paced && m_frame_rate > 0;
+        }
     }
 
     int Application::frame_rate() const
@@ -384,6 +391,11 @@ namespace Square
                                (screen_height - window_size.y) / 2);
         //enable render context and  disable vSync (auto by Video::Window)
         m_window->acquire_context();
+        //the frames a second asked before the window: to it now
+        if (m_frame_rate > 0)
+        {
+            frame_rate(m_frame_rate);
+        }
 
         //the systems registered as AUTOMATIC, from the lower ring up: render device, input, ..., scene
         m_context.start_systems();
@@ -448,7 +460,7 @@ namespace Square
             //close
             if (input_system && input_system->close_requested()) break;
             //at most frame_rate frames a second: the rest of the time of this frame waited
-            if (m_frame_rate > 0)
+            if (m_frame_rate > 0 && !m_frame_rate_paced)
             {
                 const double expected_ms = 1000.0 / double(m_frame_rate);
                 const double frame_time_ms = Time::get_ms_time() - last_time;
