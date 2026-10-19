@@ -65,23 +65,26 @@ the context (`-d` in the examples).
 ## Android
 
 A game is a `NativeActivity` (no Java code) over Vulkan 1.1 (`arm64-v8a`, Android 10+): the
-platform layer in `source/Driver/Android`, the Vulkan surface in `SqVulkan`. The CMake modules of
-`cmake/` (in `CMAKE_MODULE_PATH`) make its application:
+platform layer in `source/Driver/Android`, the Vulkan surface and the times of its presents in
+`SqVulkan`. The CMake modules of `cmake/` (in `CMAKE_MODULE_PATH`) build it:
 
+- `SquarePlatform.cmake`, included by the game before its `project()`: `SQUARE_PLATFORM` desktop
+  or android (the NDK of the Android SDK, its toolchain, `arm64-v8a`, `android-29`, `c++_shared`);
 - `square_add_game(<target> <sources>)`: the executable of the game, on Android the library of its
   NativeActivity (`lib<target>.so`, its `android_main` by `square_main`, SquareMain.h);
 - `square_android_app(<target> NAME <name> PACKAGE <package> [ICON] [SPLASH_COLOR] [ORIENTATION]
-  [VERSION_NAME] [VERSION_CODE] [RESOURCES <paths>])`: configured on the desktop, the Gradle project
-  of the game in `<build>/android/<target>` (from `cmake/android`) and its targets
-  `<target>_android` (the APK, Gradle with the NDK on the game), `<target>_android_install`,
-  `<target>_android_push` (the resources on the device, `SQUARE_ANDROID_PUSH` more of them),
-  `<target>_android_run`;
-- `SquareAndroidPush.cmake` (`cmake -P`): the resources, `args.txt` (the command line) and
-  `env.txt` (the environment) of the game on the device.
+  [VERSION_NAME] [VERSION_CODE] [RESOURCES <paths>])`: on Android the APK of the configuration in
+  the build of everything (`<target>_apk`: the libraries of the build in the Gradle project of the
+  game, `<build>/android/<target>` from `cmake/android`, Gradle only packs them) and its deploy:
+  `<target>_android_install`, `<target>_android_push` (the resources, `SQUARE_ANDROID_PUSH` more of
+  them), `<target>_android_run`, `<target>_android_log`;
+- `SquareAndroidPackage.cmake`, `SquareAndroidPush.cmake` (`cmake -P`): the libraries in the APK;
+  the resources, `args.txt` (the command line) and `env.txt` (the environment) of the game on the
+  device.
 
-It needs a JDK 17 and the Android SDK with its NDK and CMake (`SQUARE_ANDROID_SDK`,
-`SQUARE_ANDROID_JAVA_HOME`, `SQUARE_ANDROID_NDK_VERSION`...: found from `ANDROID_HOME`,
-`JAVA_HOME`). The Gradle wrapper of `cmake/android` is Gradle's (Apache 2.0, its `LICENSE` there).
+It needs a JDK 17 (`SQUARE_ANDROID_JAVA_HOME`: `JAVA_HOME`) and the Android SDK with its NDK
+(`SQUARE_ANDROID_NDK_VERSION`, else the newest one). The Gradle wrapper of `cmake/android` is
+Gradle's (Apache 2.0, its `LICENSE` there).
 
 ## Assets
 

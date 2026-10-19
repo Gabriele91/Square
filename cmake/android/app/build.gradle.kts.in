@@ -1,6 +1,7 @@
 // The application of @SQUARE_ANDROID_NAME@ (made by square_android_app, CMake: do not edit, it is
 // made again): a NativeActivity (no Java code), its library lib@SQUARE_ANDROID_TARGET@.so with the
-// engine (libSquare.so) and its Vulkan driver (libSqVulkan.so), built by the CMake of the game.
+// engine (libSquare.so) and its Vulkan driver (libSqVulkan.so), built by the CMake of the game with
+// the NDK and copied in jniLibs (no native build here: Gradle packs them).
 // The resources of the game are not in the APK: the target @SQUARE_ANDROID_TARGET@_android_push
 plugins {
     id("com.android.application")
@@ -10,6 +11,7 @@ android {
     namespace = "@SQUARE_ANDROID_PACKAGE@"
     compileSdk = @SQUARE_ANDROID_COMPILE_SDK@
     buildToolsVersion = "@SQUARE_ANDROID_BUILD_TOOLS@"
+    // the NDK of the build (its tools strip the libraries in the APK)
     ndkVersion = "@SQUARE_ANDROID_NDK_VERSION@"
 
     defaultConfig {
@@ -19,41 +21,27 @@ android {
         versionCode = @SQUARE_ANDROID_VERSION_CODE@
         versionName = "@SQUARE_ANDROID_VERSION_NAME@"
         ndk {
-            abiFilters += listOf(@SQUARE_ANDROID_ABIS@)
-        }
-        externalNativeBuild {
-            cmake {
-                // one C++ runtime shared by the game, the engine and its drivers
-                arguments += listOf("-DANDROID_STL=c++_shared")
-                // the game, the engine and its driver (not every target of the dependencies:
-                // their tests); the driver is loaded at run time, not linked
-                targets += listOf(@SQUARE_ANDROID_TARGETS@)
-            }
+            abiFilters += listOf("@SQUARE_ANDROID_ABI@")
         }
     }
 
     // The configurations of the engine: Debug, Release (debug tools), Retail (no debug tool)
     buildTypes {
-        getByName("debug") {
-            externalNativeBuild { cmake { arguments += listOf("-DCMAKE_BUILD_TYPE=Debug") } }
-        }
         getByName("release") {
             isMinifyEnabled = false
             // not debuggable: no debugger hooks, the drivers in their optimized mode
             isDebuggable = false
             signingConfig = signingConfigs.getByName("debug")
-            externalNativeBuild { cmake { arguments += listOf("-DCMAKE_BUILD_TYPE=Release") } }
         }
         create("retail") {
             initWith(getByName("release"))
-            externalNativeBuild { cmake { arguments += listOf("-DCMAKE_BUILD_TYPE=Retail") } }
         }
     }
 
-    externalNativeBuild {
-        cmake {
-            path = file("@SQUARE_ANDROID_CMAKE_LISTS@")
-            version = "@SQUARE_ANDROID_CMAKE_VERSION@"
+    // the libraries of the build of the game
+    sourceSets {
+        getByName("main") {
+            jniLibs.srcDirs("jniLibs")
         }
     }
 

@@ -16,19 +16,18 @@
 #       [RESOURCES   <path>...]           # its resources (files, folders, relative to its folder)
 #   )
 #
-# Configured on the desktop (not with the NDK), it makes the Gradle project of the application in
-# <build>/android/<target> (from engine/cmake/android) and its targets:
-#   <target>_android          the APK of the configuration (Gradle: CMake with the NDK on the game)
+# Configured with the NDK (its toolchain: -DCMAKE_TOOLCHAIN_FILE=<ndk>/build/cmake/android.toolchain.cmake
+# -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-29 -DANDROID_STL=c++_shared), the libraries of
+# the game are built by this build, then packed in its APK by the Gradle project of the application
+# (in <build>/android/<target>, from engine/cmake/android: no native build of its own):
+#   <target>_apk              the APK of the configuration (in the build of everything: ALL)
 #   <target>_android_install  the APK on the device (adb)
-#   <target>_android_debug, _release, _retail, <target>_android_install_debug, _release, _retail
-#                             the same of a configuration, whatever the one of the desktop build
 #   <target>_android_push     the resources on the device (SQUARE_ANDROID_PUSH: more of them, the
 #                             maps...), in the files of the application (its working folder)
 #   <target>_android_run      the game started on the device
 #   <target>_android_log      the log of the engine on the device (logcat, tag Square)
-# It needs the Android SDK (SQUARE_ANDROID_SDK: ANDROID_HOME by default) with its NDK and CMake
-# (SQUARE_ANDROID_NDK_VERSION, SQUARE_ANDROID_CMAKE_VERSION), a JDK 17 (SQUARE_ANDROID_JAVA_HOME:
-# JAVA_HOME by default); without them, no target. Built with the NDK: nothing to do.
+# The Android SDK is the one of the NDK (SQUARE_ANDROID_SDK), Gradle needs a JDK 17
+# (SQUARE_ANDROID_JAVA_HOME: JAVA_HOME by default). On the desktop: nothing to do.
 
 # (its folder and the one of the engine: for the functions called by the game, out of this scope)
 set_property(GLOBAL PROPERTY SQUARE_ANDROID_DIR "${CMAKE_CURRENT_LIST_DIR}")
@@ -49,28 +48,10 @@ function(square_add_game target)
 endfunction()
 
 #################################################################################################
-# the tools of the host
-function(square_android_find_sdk out)
-    set(candidates "$ENV{ANDROID_HOME}" "$ENV{ANDROID_SDK_ROOT}")
-    if(WIN32)
-        list(APPEND candidates "$ENV{LOCALAPPDATA}/Android/Sdk")
-    elseif(APPLE)
-        list(APPEND candidates "$ENV{HOME}/Library/Android/sdk")
-    else()
-        list(APPEND candidates "$ENV{HOME}/Android/Sdk")
-    endif()
-    foreach(candidate ${candidates})
-        if(candidate AND EXISTS "${candidate}/platform-tools")
-            file(TO_CMAKE_PATH "${candidate}" candidate)
-            set(${out} "${candidate}" PARENT_SCOPE)
-            return()
-        endif()
-    endforeach()
-    set(${out} "" PARENT_SCOPE)
-endfunction()
-
+# the tools of the Android build
+# the JDK of Gradle
 function(square_android_find_java out)
-    if(WIN32)
+    if(CMAKE_HOST_WIN32)
         set(java bin/java.exe)
         file(GLOB candidates
             "C:/Program Files/Java/jdk-17*"
@@ -95,41 +76,34 @@ function(square_android_find_java out)
     set(${out} "" PARENT_SCOPE)
 endfunction()
 
-if(NOT ANDROID)
-    square_android_find_sdk(SQUARE_ANDROID_SDK_FOUND)
+# the SDK of the NDK (<sdk>/ndk/<version>)
+function(square_android_find_sdk out)
+    get_filename_component(ndks "${ANDROID_NDK}" DIRECTORY)
+    get_filename_component(sdk "${ndks}" DIRECTORY)
+    if(EXISTS "${sdk}/platform-tools")
+        set(${out} "${sdk}" PARENT_SCOPE)
+        return()
+    endif()
+    set(${out} "$ENV{ANDROID_HOME}" PARENT_SCOPE)
+endfunction()
+
+if(ANDROID)
     square_android_find_java(SQUARE_ANDROID_JAVA_FOUND)
-    set(SQUARE_ANDROID_SDK "${SQUARE_ANDROID_SDK_FOUND}" CACHE PATH "The Android SDK (the Android builds of the games)")
-    set(SQUARE_ANDROID_JAVA_HOME "${SQUARE_ANDROID_JAVA_FOUND}" CACHE PATH "The JDK 17 of Gradle (the Android builds of the games)")
-    set(SQUARE_ANDROID_NDK_VERSION "28.2.13676358" CACHE STRING "The NDK of the Android builds")
-    set(SQUARE_ANDROID_CMAKE_VERSION "3.31.6" CACHE STRING "The CMake of the SDK of the Android builds")
-    set(SQUARE_ANDROID_COMPILE_SDK "35" CACHE STRING "The Android platform of the builds (compile and target SDK)")
-    set(SQUARE_ANDROID_BUILD_TOOLS "35.0.0" CACHE STRING "The build tools of the Android builds")
-    set(SQUARE_ANDROID_MIN_SDK "29" CACHE STRING "The oldest Android of the games (29: Android 10, Vulkan 1.1)")
-    set(SQUARE_ANDROID_ABIS "arm64-v8a" CACHE STRING "The ABIs of the Android builds (a list)")
+    square_android_find_sdk(SQUARE_ANDROID_SDK_FOUND)
+    set(SQUARE_ANDROID_JAVA_HOME "${SQUARE_ANDROID_JAVA_FOUND}" CACHE PATH "The JDK 17 of Gradle (the APK of the games)")
+    set(SQUARE_ANDROID_SDK "${SQUARE_ANDROID_SDK_FOUND}" CACHE PATH "The Android SDK (the APK of the games)")
+    set(SQUARE_ANDROID_COMPILE_SDK "35" CACHE STRING "The Android platform of the APK (compile and target SDK)")
+    set(SQUARE_ANDROID_BUILD_TOOLS "35.0.0" CACHE STRING "The build tools of the APK")
     set(SQUARE_ANDROID_GRADLE "" CACHE FILEPATH "A Gradle in place of the wrapper of the project (empty: the wrapper)")
     set(SQUARE_ANDROID_PUSH "" CACHE STRING "More resources of the game pushed to the device (a list, relative to the game: assets/valley.sqz)")
 endif()
 
 #################################################################################################
 # the Gradle project of a game
-function(square_android_app target)
-    if(ANDROID)
-        return()
-    endif()
-    cmake_parse_arguments(APP "" "NAME;PACKAGE;ICON;SPLASH_COLOR;ORIENTATION;VERSION_NAME;VERSION_CODE" "RESOURCES" ${ARGN})
-    if(NOT APP_NAME OR NOT APP_PACKAGE)
-        message(FATAL_ERROR "square_android_app(${target}): NAME and PACKAGE are needed")
-    endif()
-    if(APP_PACKAGE MATCHES "-")
-        message(FATAL_ERROR "square_android_app(${target}): an Android package has no '-' (${APP_PACKAGE})")
-    endif()
-    if(NOT SQUARE_ANDROID_SDK OR NOT SQUARE_ANDROID_JAVA_HOME)
-        message(STATUS "Android: no SDK or JDK 17 (SQUARE_ANDROID_SDK, SQUARE_ANDROID_JAVA_HOME): no Android targets for ${target}")
-        return()
-    endif()
+# the values of the templates (in the scope of square_android_app)
+macro(square_android_values target)
     get_property(module GLOBAL PROPERTY SQUARE_ANDROID_DIR)
     get_property(engine GLOBAL PROPERTY SQUARE_ANDROID_ENGINE_DIR)
-    # defaults
     if(NOT APP_ICON)
         set(APP_ICON ${engine}/common/texture/square_icon.png)
     endif()
@@ -146,7 +120,13 @@ function(square_android_app target)
     if(NOT APP_VERSION_CODE)
         set(APP_VERSION_CODE 1)
     endif()
-    # the values of the templates
+    # the build type of Gradle: the configuration of the engine (debug, release, retail)
+    set(SQUARE_ANDROID_CONFIG "${CMAKE_BUILD_TYPE}")
+    if(NOT SQUARE_ANDROID_CONFIG)
+        set(SQUARE_ANDROID_CONFIG Release)
+    endif()
+    string(TOLOWER "${SQUARE_ANDROID_CONFIG}" SQUARE_ANDROID_CONFIG_NAME)
+    get_filename_component(SQUARE_ANDROID_NDK_VERSION "${ANDROID_NDK}" NAME)
     set(SQUARE_ANDROID_TARGET ${target})
     set(SQUARE_ANDROID_NAME "${APP_NAME}")
     set(SQUARE_ANDROID_PACKAGE "${APP_PACKAGE}")
@@ -154,12 +134,12 @@ function(square_android_app target)
     set(SQUARE_ANDROID_ORIENTATION "${APP_ORIENTATION}")
     set(SQUARE_ANDROID_VERSION_NAME "${APP_VERSION_NAME}")
     set(SQUARE_ANDROID_VERSION_CODE "${APP_VERSION_CODE}")
-    set(SQUARE_ANDROID_CMAKE_LISTS "${CMAKE_SOURCE_DIR}/CMakeLists.txt")
-    set(SQUARE_ANDROID_TARGETS "\"${target}\", \"Square\", \"HLSL2ALL\", \"SqVulkan\"")
-    string(REPLACE ";" "\", \"" SQUARE_ANDROID_ABIS "\"${SQUARE_ANDROID_ABIS}\"")
-    # the project: the static files, the templates, the icon, the SDK
-    set(template ${module}/android)
-    set(project ${CMAKE_BINARY_DIR}/android/${target})
+    set(SQUARE_ANDROID_MIN_SDK "${ANDROID_PLATFORM_LEVEL}")
+    set(SQUARE_ANDROID_ABI "${ANDROID_ABI}")
+endmacro()
+
+# the project: the static files, the templates, the icon, the SDK
+function(square_android_project project template icon)
     file(COPY
         ${template}/gradlew
         ${template}/gradlew.bat
@@ -176,59 +156,74 @@ function(square_android_app target)
             app/src/main/res/values-v31/styles.xml)
         configure_file(${template}/${file}.in ${project}/${file} @ONLY)
     endforeach()
-    configure_file(${APP_ICON} ${project}/app/src/main/res/drawable-nodpi/square_icon.png COPYONLY)
+    configure_file(${icon} ${project}/app/src/main/res/drawable-nodpi/square_icon.png COPYONLY)
     file(WRITE ${project}/local.properties "sdk.dir=${SQUARE_ANDROID_SDK}\n")
-    # the tools: Gradle (its wrapper, or the one given) with its JDK, adb
+endfunction()
+
+# the C++ runtime of the libraries (ANDROID_STL c++_shared): in the APK with them
+function(square_android_stl out)
+    # (the triple of the architecture: the name of the toolchain without its compiler)
+    string(REGEX REPLACE "-clang$" "" triple "${ANDROID_TOOLCHAIN_NAME}")
+    set(stl "${ANDROID_TOOLCHAIN_ROOT}/sysroot/usr/lib/${triple}/libc++_shared.so")
+    if(NOT EXISTS "${stl}")
+        message(FATAL_ERROR "square_android_app: no ${stl} (ANDROID_STL=c++_shared)")
+    endif()
+    set(${out} "${stl}" PARENT_SCOPE)
+endfunction()
+
+# the APK: the libraries of the game in its folder of libraries (jniLibs), then Gradle
+function(square_android_apk target project module)
     if(SQUARE_ANDROID_GRADLE)
         set(gradle "${SQUARE_ANDROID_GRADLE}")
-    elseif(WIN32)
+    elseif(CMAKE_HOST_WIN32)
         set(gradle ${project}/gradlew.bat)
     else()
         set(gradle ${project}/gradlew)
     endif()
-    set(run_gradle ${CMAKE_COMMAND} -E env "JAVA_HOME=${SQUARE_ANDROID_JAVA_HOME}" "ANDROID_HOME=${SQUARE_ANDROID_SDK}" ${gradle} --console=plain -p ${project})
-    if(WIN32)
+    square_android_stl(stl)
+    # (the list with '|': a ';' would split the argument of the command)
+    set(libraries
+        $<TARGET_FILE:${target}>
+        $<TARGET_FILE:Square>
+        $<TARGET_FILE:HLSL2ALL>
+        $<TARGET_FILE:SqVulkan>
+        ${stl})
+    string(REPLACE ";" "|" libraries "${libraries}")
+    add_custom_target(${target}_apk ALL
+        COMMAND ${CMAKE_COMMAND}
+            "-DLIBRARIES=${libraries}"
+            -DOUTPUT=${project}/app/jniLibs/${SQUARE_ANDROID_ABI}
+            -P ${module}/SquareAndroidPackage.cmake
+        COMMAND ${CMAKE_COMMAND} -E env
+            "JAVA_HOME=${SQUARE_ANDROID_JAVA_HOME}"
+            "ANDROID_HOME=${SQUARE_ANDROID_SDK}"
+            ${gradle} --console=plain -p ${project} assemble${SQUARE_ANDROID_CONFIG}
+        WORKING_DIRECTORY ${project}
+        COMMENT "Android: the APK of ${target} (${SQUARE_ANDROID_CONFIG})"
+        USES_TERMINAL
+        VERBATIM)
+    add_dependencies(${target}_apk ${target} Square HLSL2ALL SqVulkan)
+endfunction()
+
+# the device: the APK, the resources, the game started, its log
+function(square_android_device target project module resources)
+    if(CMAKE_HOST_WIN32)
         set(adb ${SQUARE_ANDROID_SDK}/platform-tools/adb.exe)
     else()
         set(adb ${SQUARE_ANDROID_SDK}/platform-tools/adb)
     endif()
-    # the targets: the APK of the configuration (assembleRelease...), on the device, its resources,
-    # the game started
-    add_custom_target(${target}_android
-        COMMAND ${run_gradle} assemble$<CONFIG>
-        WORKING_DIRECTORY ${project}
-        COMMENT "Android: the APK of ${target} ($<CONFIG>)"
-        USES_TERMINAL
-        VERBATIM)
+    set(apk ${project}/app/build/outputs/apk/${SQUARE_ANDROID_CONFIG_NAME}/app-${SQUARE_ANDROID_CONFIG_NAME}.apk)
     add_custom_target(${target}_android_install
-        COMMAND ${run_gradle} install$<CONFIG>
-        WORKING_DIRECTORY ${project}
-        COMMENT "Android: ${target} ($<CONFIG>) on the device"
+        COMMAND ${adb} install -r ${apk}
+        COMMENT "Android: ${target} (${SQUARE_ANDROID_CONFIG}) on the device"
         USES_TERMINAL
         VERBATIM)
-    # the same of each configuration of the engine (Gradle: its build types debug, release, retail)
-    foreach(config Debug Release Retail)
-        string(TOLOWER ${config} config_name)
-        add_custom_target(${target}_android_${config_name}
-            COMMAND ${run_gradle} assemble${config}
-            WORKING_DIRECTORY ${project}
-            COMMENT "Android: the APK of ${target} (${config})"
-            USES_TERMINAL
-            VERBATIM)
-        add_custom_target(${target}_android_install_${config_name}
-            COMMAND ${run_gradle} install${config}
-            WORKING_DIRECTORY ${project}
-            COMMENT "Android: ${target} (${config}) on the device"
-            USES_TERMINAL
-            VERBATIM)
-    endforeach()
     # (the list with '|': a ';' would split the argument of the command)
-    set(resources ${APP_RESOURCES} ${SQUARE_ANDROID_PUSH})
     string(REPLACE ";" "|" resources "${resources}")
     add_custom_target(${target}_android_push
         COMMAND ${CMAKE_COMMAND}
             -DADB=${adb}
-            -DPACKAGE=${APP_PACKAGE}
+            -DPACKAGE=${SQUARE_ANDROID_PACKAGE}
             -DROOT=${CMAKE_CURRENT_SOURCE_DIR}
             "-DRESOURCES=${resources}"
             -P ${module}/SquareAndroidPush.cmake
@@ -236,7 +231,7 @@ function(square_android_app target)
         USES_TERMINAL
         VERBATIM)
     add_custom_target(${target}_android_run
-        COMMAND ${adb} shell am start -n ${APP_PACKAGE}/android.app.NativeActivity
+        COMMAND ${adb} shell am start -n ${SQUARE_ANDROID_PACKAGE}/android.app.NativeActivity
         COMMENT "Android: ${target} started on the device"
         VERBATIM)
     add_custom_target(${target}_android_log
@@ -244,5 +239,27 @@ function(square_android_app target)
         COMMENT "Android: the log of ${target} (logcat, tag Square)"
         USES_TERMINAL
         VERBATIM)
-    message(STATUS "Android: ${target} (${APP_PACKAGE}) in ${project}: targets ${target}_android, ${target}_android_install, ${target}_android_push, ${target}_android_run")
+endfunction()
+
+function(square_android_app target)
+    if(NOT ANDROID)
+        return()
+    endif()
+    cmake_parse_arguments(APP "" "NAME;PACKAGE;ICON;SPLASH_COLOR;ORIENTATION;VERSION_NAME;VERSION_CODE" "RESOURCES" ${ARGN})
+    if(NOT APP_NAME OR NOT APP_PACKAGE)
+        message(FATAL_ERROR "square_android_app(${target}): NAME and PACKAGE are needed")
+    endif()
+    if(APP_PACKAGE MATCHES "-")
+        message(FATAL_ERROR "square_android_app(${target}): an Android package has no '-' (${APP_PACKAGE})")
+    endif()
+    if(NOT SQUARE_ANDROID_SDK OR NOT SQUARE_ANDROID_JAVA_HOME)
+        message(STATUS "Android: no SDK or JDK 17 (SQUARE_ANDROID_SDK, SQUARE_ANDROID_JAVA_HOME): no APK of ${target}")
+        return()
+    endif()
+    square_android_values(${target})
+    set(project ${CMAKE_BINARY_DIR}/android/${target})
+    square_android_project(${project} ${module}/android ${APP_ICON})
+    square_android_apk(${target} ${project} ${module})
+    square_android_device(${target} ${project} ${module} "${APP_RESOURCES};${SQUARE_ANDROID_PUSH}")
+    message(STATUS "Android: ${target} (${APP_PACKAGE}, ${SQUARE_ANDROID_CONFIG}) in ${project}")
 endfunction()
