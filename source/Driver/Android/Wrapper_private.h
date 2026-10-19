@@ -39,9 +39,7 @@ namespace Android
 		bool           m_resize_pending{ false };  //the size of the frames changed (set_size): RESIZE
 		Vector<String> m_arguments;
 		Vector<const char*> m_argv;
-		//the tilt: the gravity sensor (else the accelerometer), its queue on the looper of the game,
-		//on while the game asks it (enable_tilt) and the activity is in the foreground; the rotation
-		//of the display (0, 1, 2, 3: 0, 90, 180, 270 degrees; the gravity in the space of the screen)
+		//tilt: gravity sensor, its queue, asked, on, rotation of the display (0..3)
 		ASensorManager*    m_sensors{ nullptr };
 		const ASensor*     m_gravity{ nullptr };
 		ASensorEventQueue* m_sensor_queue{ nullptr };
@@ -68,7 +66,7 @@ namespace Android
 	WindowAndroid* main_window();
 	//the input of the engine (of its window), null before it is made
 	InputAndroid* main_input();
-	//the tilt sensor asked on or off (on: while the activity is in the foreground)
+	//tilt sensor on/off (on: in the foreground)
 	void enable_tilt(bool enable);
 }
 }

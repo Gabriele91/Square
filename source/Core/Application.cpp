@@ -151,21 +151,67 @@ namespace Square
         return m_last_delta_time;
     }
 
-    void Application::frame_rate(int fps)
+    void Application::frames(const FrameRate& frames)
     {
-        m_frame_rate = std::max(fps, 0);
-        //the window paces the frames (the display at that rate), else the loop waits
-        m_frame_rate_paced = false;
-        if (m_window && m_window->device())
+        m_frames = frames;
+        //a limit of 0: the vsync
+        if (m_frames.m_mode == FrameMode::LIMIT && !m_frames.m_fps)
         {
-            const bool paced = m_window->device()->set_frame_rate((unsigned int)m_frame_rate);
-            m_frame_rate_paced = paced && m_frame_rate > 0;
+            m_frames.m_mode = FrameMode::VSYNC;
+        }
+        apply_frames();
+    }
+
+    const FrameRate& Application::frames() const
+    {
+        return m_frames;
+    }
+
+    void Application::apply_frames()
+    {
+        Render::Context* driver = render();
+        if (!driver)
+        {
+            m_pacing = FramePacing::NONE;
+            return;
+        }
+        switch (m_frames.m_mode)
+        {
+        case FrameMode::FREE:
+            driver->set_vsync(false);
+            driver->set_frame_rate(0);
+            m_pacing = FramePacing::NONE;
+        break;
+        case FrameMode::VSYNC:
+            driver->set_vsync(true);
+            driver->set_frame_rate(0);
+            m_pacing = FramePacing::NONE;
+        break;
+        case FrameMode::LIMIT:
+            //by the driver (on the vsync), else by the loop (no vsync: a frame would wait the next one)
+            driver->set_vsync(true);
+            m_pacing = FramePacing::DRIVER;
+            if (!driver->set_frame_rate(m_frames.m_fps))
+            {
+                driver->set_vsync(false);
+                m_pacing = FramePacing::WAIT;
+            }
+        break;
+        default: break;
         }
     }
 
-    int Application::frame_rate() const
+    void Application::wait_frame()
     {
-        return m_frame_rate;
+        //a frame after the last one (late more than a frame: from now)
+        const double frame_ms = 1000.0 / double(m_frames.m_fps);
+        const double now_ms = Time::get_ms_time();
+        if (now_ms - m_next_frame_ms > frame_ms)
+        {
+            m_next_frame_ms = now_ms;
+        }
+        m_next_frame_ms += frame_ms;
+        Time::wait_until_ms(m_next_frame_ms);
     }
     
     IVec2 Application::screen_size() const
@@ -389,13 +435,8 @@ namespace Square
         //center
         m_window->set_position((screen_width - window_size.x) / 2,
                                (screen_height - window_size.y) / 2);
-        //enable render context and  disable vSync (auto by Video::Window)
+        //enable render context
         m_window->acquire_context();
-        //the frames a second asked before the window: to it now
-        if (m_frame_rate > 0)
-        {
-            frame_rate(m_frame_rate);
-        }
 
         //the systems registered as AUTOMATIC, from the lower ring up: render device, input, ..., scene
         m_context.start_systems();
@@ -407,6 +448,8 @@ namespace Square
             m_window = nullptr;
             return false;
         }
+        //frames
+        frames(driver.m_frames);
 
         //the splash screen while the application loads (start: its resources, its scene)
         if (m_splash_screen) Render::SplashScreen::show(m_context);
@@ -442,6 +485,8 @@ namespace Square
         //loop: every frame the systems up the rings (input), the application, the systems
         //down the rings (render last)
         auto* input_system = System::get<InputSystem>(m_context);
+        //(the waits of the frames: to the ms)
+        Time::precise_timer(true);
         while (true)
         {
             //compute delta time
@@ -459,19 +504,16 @@ namespace Square
             m_context.late_update_systems(m_last_delta_time);
             //close
             if (input_system && input_system->close_requested()) break;
-            //at most frame_rate frames a second: the rest of the time of this frame waited
-            if (m_frame_rate > 0 && !m_frame_rate_paced)
+            //frame rate
+            switch (m_pacing)
             {
-                const double expected_ms = 1000.0 / double(m_frame_rate);
-                const double frame_time_ms = Time::get_ms_time() - last_time;
-                const double left_ms = expected_ms - frame_time_ms;
-                if (left_ms > 0.0)
-                { 
-                    const auto time_to_sleep_mms = std::chrono::microseconds(static_cast<long long>(left_ms * 1000.0));
-                    std::this_thread::sleep_for(time_to_sleep_mms);
-                }
+            case FramePacing::WAIT: wait_frame(); break;
+            case FramePacing::DRIVER:
+            case FramePacing::NONE:
+            default: break;
             }
         }
+        Time::precise_timer(false);
 
         //send event
         if (auto* scene_world = world())

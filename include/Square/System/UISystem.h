@@ -103,8 +103,7 @@ namespace UI
 		Vector<Weak<UI::DataModel::State>> m_models;
 		int                          m_modifiers{ 0 };
 		bool                         m_wants_mouse{ false };
-		//the fingers down on the UI (touches of RmlUi: a drag scrolls), the mouse of the first one
-		//not read meanwhile (RmlUi makes it from the touches)
+		//fingers down (their mouse: ignored)
 		int                          m_fingers{ 0 };
 		IVec2                        m_reference_size{ 0, 0 };
 	};

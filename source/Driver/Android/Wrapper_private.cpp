@@ -75,8 +75,7 @@ namespace Android
 
 	////////////////////////////////////////////////////////////////////////////////////
 	// TILT
-	//the rotation of the display (0, 1, 2, 3): Display.getRotation of the activity (JNI, the game
-	//thread attached for it)
+	//rotation of the display, 0..3 (JNI: Display.getRotation)
 	static int display_rotation()
 	{
 		android_app* app = s_activity.m_app;
@@ -135,7 +134,7 @@ namespace Android
 		return rotation & 3;
 	}
 
-	//the sensor on while asked and the activity in the foreground (no battery in the background)
+	//sensor on while asked and in the foreground
 	static void tilt_update()
 	{
 		const bool on = s_activity.m_tilt_wanted && s_activity.m_resumed && s_activity.m_app;
@@ -185,8 +184,7 @@ namespace Android
 		s_activity.m_tilt_on = on;
 	}
 
-	//the events of the sensor: the last one, in the space of the screen as it is shown (the
-	//rotation of the display; Android: the remap of SensorManager.remapCoordinateSystem)
+	//last gravity of the sensor, on the screen (its rotation)
 	static void tilt_events()
 	{
 		if (!s_activity.m_sensor_queue)

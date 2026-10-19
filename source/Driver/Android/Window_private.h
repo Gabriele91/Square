@@ -34,7 +34,6 @@ namespace Android
 		//the frames a second: the display of the native window asked at that rate (Android 11+, a
 		//hint: the system may keep it faster), the application still waits (false)
 		virtual bool set_frame_rate(unsigned int fps) override;
-		virtual unsigned int get_frame_rate() override;
 		//the frame rate again on a new native window (back from the background)
 		void apply_frame_rate();
 

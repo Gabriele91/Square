@@ -34,8 +34,7 @@ namespace Square
 		virtual void on_mouse_button(Video::MouseButtonEvent button, Video::ActionEvent action) {}
 		virtual void on_mouse_move(const Vec2& position) {}
 		virtual void on_mouse_scroll(float scroll) {}
-		//a finger on the screen: down (PRESS), moved (REPEAT), up (RELEASE), where (pixels of the
-		//window); its first one is also the mouse (its events after the down, before the up)
+		//a finger: down, moved (REPEAT), up, its position
 		virtual void on_finger(Video::FingerEvent finger, Video::ActionEvent action, const Vec2& position) {}
 		virtual void on_window(Video::WindowEvent event) {}
 	};
@@ -85,15 +84,13 @@ namespace Square
 		//wheel scroll in this frame
 		float scroll() const;
 
-		//the fingers on a touch screen (FINGER1, FINGER2...): held, went down in this frame, went
-		//up in this frame, where (pixels of the window: the last place of one up)
+		//fingers: held, went down in this frame, went up in this frame, position (pixels)
 		bool down(Video::FingerEvent finger) const;
 		bool pressed(Video::FingerEvent finger) const;
 		bool released(Video::FingerEvent finger) const;
 		const Vec2& finger(Video::FingerEvent finger) const;
 
-		//the tilt of the device: its sensor on while asked (a phone; a computer: none), the gravity
-		//in the space of the screen (x right, y up, z out of it, m/s^2); false: none yet
+		//tilt: its sensor on/off, the gravity on the screen (x right, y up; false: none)
 		void tilt(bool enable);
 		bool tilt(Vec3& gravity) const;
 
@@ -138,7 +135,7 @@ namespace Square
 		Array<Button, FINGER_COUNT> m_fingers_next;
 		Array<Vec2, FINGER_COUNT>   m_finger_places;
 		Array<Vec2, FINGER_COUNT>   m_finger_places_next;
-		//the tilt: the last gravity, any yet
+		//tilt
 		Vec3  m_tilt{ 0.0f };
 		bool  m_tilted{ false };
 		//actions

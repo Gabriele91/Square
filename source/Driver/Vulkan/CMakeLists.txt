@@ -15,6 +15,8 @@ set(VMA_DIR ${SQUARE_ROOT_DIR}/dependencies/VulkanMemoryAllocator/include)
 set(SOURCE_FILES
     ${SQUARE_ROOT_DIR}/source/Core/Allocator/MemoryOperators.cpp
     ${SQUARE_ROOT_DIR}/source/Core/Container/String.cpp
+    ${SQUARE_ROOT_DIR}/source/Core/Time.cpp
+    ${SQUARE_ROOT_DIR}/source/Driver/Window.cpp
     AllocationVK.cpp
     InterfaceVK.cpp
     PresentTimingVK.cpp
@@ -85,6 +87,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Ob2 /DNDEBUG /MD")
     set(CMAKE_CXX_FLAGS_DEBUG " /Zi /Od /MDd")
+    # Time.cpp (its timer: timeBeginPeriod)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Winmm.lib)
 elseif(UNIX)
     target_link_libraries(${PROJECT_NAME} PRIVATE dl)
     if(ANDROID)

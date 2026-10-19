@@ -17,6 +17,10 @@ namespace Time
 	SQUARE_API double get_ms_time();
 	//get time in second
     SQUARE_API double get_time();
+	//wait until a time in millisecond (asleep, awake its last ms)
+	SQUARE_API void wait_until_ms(double ms);
+	//the timer of the system at 1 ms (Windows: else 15.6 ms), while enabled
+	SQUARE_API void precise_timer(bool enable);
     //timer object
     class SQUARE_API Timer
     {

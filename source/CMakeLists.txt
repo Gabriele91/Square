@@ -58,7 +58,8 @@ if(WIN32)
                          _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING) 
     list(APPEND OS_LIBS Shlwapi.lib
                         Gdi32.lib
-                        Opengl32.lib)
+                        Opengl32.lib
+                        Winmm.lib)
                         
     # Add DX11 Driver
     add_subdirectory(Driver/DirectX11)

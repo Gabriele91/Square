@@ -5,6 +5,7 @@
 //  Copyright � 2016 Gabriele. All rights reserved.
 //
 #include "Window_private.h"
+#include <cmath>
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
 
@@ -57,6 +58,16 @@ namespace Video
 {
 namespace Cocoa
 {
+    //the refresh of the main display, Hz (0: unknown)
+    static unsigned int cocoa_refresh()
+    {
+        CGDisplayModeRef mode = CGDisplayCopyDisplayMode(CGMainDisplayID());
+        if (!mode) return 0;
+        const double refresh = CGDisplayModeGetRefreshRate(mode);
+        CGDisplayModeRelease(mode);
+        return (unsigned int)std::lround(refresh);
+    }
+
     struct SQUARE_API DeviceResourcesGL : public DeviceResources
     {
     public:
@@ -93,10 +104,15 @@ namespace Cocoa
             return m_vsync;
         }
 		virtual void set_vsync(bool vsync) override
-		{ 
+		{
 			GLint interval = (GLint)vsync;
             [m_glcontext setValues: (const GLint * _Nonnull)&interval forParameter: NSOpenGLCPSwapInterval];
 			m_vsync = vsync;
+		}
+		virtual bool set_frame_rate(unsigned int fps) override
+		{
+			//NSOpenGL: a vsync a swap at most (the rate of its display)
+			return swap_interval(cocoa_refresh(), fps) == 1;
 		}
 
         virtual void* get_device()                       override { return (__bridge void*)m_glcontext; }

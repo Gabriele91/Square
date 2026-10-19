@@ -604,10 +604,19 @@ namespace Render
 	}
 
 
+	void ContextDX11::set_vsync(bool vsync)
+	{
+		if (m_device_resouces) m_device_resouces->set_vsync(vsync);
+	}
+
+	bool ContextDX11::set_frame_rate(unsigned int fps)
+	{
+		//its window: the vsyncs of a frame (DXGI)
+		return m_device_resouces && m_device_resouces->set_frame_rate(fps);
+	}
+
 	bool ContextDX11::init(Video::DeviceResources* resource)
 	{
-		//disable vsync
-		resource->set_vsync(false);
 		//save ref to device resouces
 		m_device_resouces = resource;
 		//window

@@ -357,6 +357,9 @@ namespace Render
         virtual void close() override;
         virtual bool is_srgb_framebuffer() const override;
 
+        virtual void set_vsync(bool vsync) override;
+        virtual bool set_frame_rate(unsigned int fps) override;
+
         virtual const ClearColorState& get_clear_color_state() override;
         virtual void set_clear_color_state(const ClearColorState& cf) override;
         virtual void clear(int type = CLEAR_COLOR_DEPTH) override;
@@ -489,6 +492,8 @@ namespace Render
 
         id<MTLDevice>               m_device       { nil };
         CAMetalLayer*               m_layer        { nil };
+        Video::DeviceResources*     m_resources    { nullptr }; //its window (its vsync)
+        unsigned int                m_frame_rate   { 0 };       //frames a second at most of its presents (0: none)
         id<MTLCommandQueue>         m_queue        { nil };
         id<MTLCommandBuffer>        m_cmd_buf      { nil };
         id<MTLRenderCommandEncoder> m_encoder      { nil };
@@ -530,6 +535,7 @@ namespace Render
         void ensure_encoder(MTLRenderPassDescriptor* rpd = nil);
         void end_encoder();
         void commit_frame();
+        void present_drawable();
         void log_draw_state(const char* fn, unsigned int n); // diagnostic logging
 
         id<MTLRenderPipelineState> get_or_create_pso();

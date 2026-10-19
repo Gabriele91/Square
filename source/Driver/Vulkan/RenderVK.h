@@ -409,6 +409,9 @@ namespace Render
 		virtual void close() override;
 		virtual bool is_srgb_framebuffer() const override;
 
+		virtual void set_vsync(bool vsync) override;
+		virtual bool set_frame_rate(unsigned int fps) override;
+
 		virtual const ClearColorState& get_clear_color_state() override;
 		virtual void set_clear_color_state(const ClearColorState& cf) override;
 		virtual void clear(int type = CLEAR_COLOR_DEPTH) override;
@@ -636,7 +639,7 @@ namespace Render
 		Vector<std::pair<uint64, std::function<void()>>> m_garbage;
 		//the swap chain, the default target (its image, the depth of the driver)
 		SwapChainVK              m_swapchain;
-		PresentTimingVK          m_present_timing; //the frames on the vsyncs of the frame rate
+		PresentTimingVK          m_present_timing; //the presents at the frame rate
 		UniquePtr<Texture> m_default_depth;
 		Target                   m_default_target;
 		//the states

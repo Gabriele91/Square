@@ -437,8 +437,7 @@ namespace Android
 		return FingerEvent(finger);
 	}
 
-	//a finger down (with where it is): the first one is also the mouse (its left button), after it
-	//(who reads the fingers knows the mouse that follows is a finger)
+	//finger down (the first one: also the mouse, after it)
 	static void touch_down(InputAndroid& input, const AInputEvent* event, size_t index)
 	{
 		const int32_t id = AMotionEvent_getPointerId(event, index);
@@ -460,7 +459,7 @@ namespace Android
 		}
 	}
 
-	//a finger up: the mouse first (the finger still down), then the finger
+	//finger up (its mouse before it)
 	static void touch_up(InputAndroid& input, const AInputEvent* event, size_t index)
 	{
 		const int32_t id = AMotionEvent_getPointerId(event, index);
@@ -482,7 +481,7 @@ namespace Android
 		}
 	}
 
-	//the fingers moved: each one (REPEAT), the mouse the first one
+	//fingers moved
 	static void touch_move(InputAndroid& input, const AInputEvent* event)
 	{
 		const size_t count = AMotionEvent_getPointerCount(event);

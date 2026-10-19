@@ -8,6 +8,7 @@
 #include "Screen_private.h"
 #include "Window_private.h"
 #include "Input_private.h"
+#include <algorithm>
 #include <cmath>
 
 #ifndef GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB
@@ -21,6 +22,9 @@ namespace Video
 {
 namespace Xorg
 {
+	//the refresh of the display (its primary output), Hz (0: unknown)
+	static unsigned int x11_refresh();
+
     struct SQUARE_API DeviceResourcesXGL : public DeviceResources
 	{
 	public:
@@ -49,6 +53,18 @@ namespace Xorg
 		virtual bool get_vsync() { return m_vsync; }
 		virtual void set_vsync(bool vsync)
 		{
+			m_vsync = vsync;
+			apply_swap();
+		}
+		virtual bool set_frame_rate(unsigned int fps) override
+		{
+			//its display: the vsyncs of a frame
+			m_interval = swap_interval(x11_refresh(), fps);
+			return apply_swap() && m_interval != 0;
+		}
+		//the vsyncs of a swap (GLX_EXT, MESA, SGI swap control), false: none
+		bool apply_swap()
+		{
 			typedef void(*PFNGLXSWAPINTERVALEXTPROC)(Display*, GLXDrawable, int);
 			typedef int(*PFNGLXSWAPINTERVALMESAPROC)(unsigned int);
 			typedef int(*PFNGLXSWAPINTERVALSGIPROC)(int);
@@ -56,21 +72,24 @@ namespace Xorg
 			auto glXSwapIntervalEXT  = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalEXT");
 			auto glXSwapIntervalMESA = (PFNGLXSWAPINTERVALMESAPROC)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalMESA");
 			auto glXSwapIntervalSGI  = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalSGI");
+			const int interval = m_vsync ? int(std::max<unsigned int>(m_interval, 1)) : 0;
 			//on the current context
 			GLXDrawable drawable = glXGetCurrentDrawable();
 			if (glXSwapIntervalEXT && drawable)
 			{
-				glXSwapIntervalEXT(glXGetCurrentDisplay(), drawable, vsync ? 1 : 0);
-				m_vsync = vsync;
+				glXSwapIntervalEXT(glXGetCurrentDisplay(), drawable, interval);
+				return true;
 			}
-			else if (glXSwapIntervalMESA)
+			if (glXSwapIntervalMESA)
 			{
-				if (glXSwapIntervalMESA(vsync ? 1 : 0) == 0) m_vsync = vsync;
+				return glXSwapIntervalMESA((unsigned int)interval) == 0;
 			}
-			else if (glXSwapIntervalSGI && vsync) // SGI can't set 0
+			//(SGI: not 0)
+			if (glXSwapIntervalSGI && interval)
 			{
-				if (glXSwapIntervalSGI(1) == 0) m_vsync = vsync;
+				return glXSwapIntervalSGI(interval) == 0;
 			}
+			return false;
 		}
 
 		virtual void* get_device()					   override { return (void*)nullptr; }
@@ -88,6 +107,7 @@ namespace Xorg
 	protected:
 		const ContextInfo& m_info_context;
 		bool m_vsync{ true };
+		unsigned int m_interval{ 0 }; //vsyncs of a frame (0: one)
 	};
 
 	//the native window for the driver of Vulkan: get_device the display, get_device_context the
@@ -112,6 +132,7 @@ namespace Xorg
 
 		virtual bool get_vsync() override { return m_vsync; }
 		virtual void set_vsync(bool vsync) override { m_vsync = vsync; }
+		virtual unsigned int get_refresh() override { return x11_refresh(); }
 
 		//the size of the window (the size of the swap chain), followed by its ConfigureNotify
 		virtual unsigned int width() override
@@ -330,6 +351,26 @@ namespace Xorg
 	static double x11_randr_refresh(const XRRModeInfo& mode)
 	{
 		return (mode.hTotal && mode.vTotal) ? double(mode.dotClock) / (double(mode.hTotal) * double(mode.vTotal)) : 0.0;
+	}
+
+	static unsigned int x11_refresh()
+	{
+		Display* display = s_os_context.m_xdisplay;
+		if (!display) return 0;
+		XWindow root_xwindow = DefaultRootWindow(display);
+		XRRScreenResources* resources = XRRGetScreenResourcesCurrent(display, root_xwindow);
+		if (!resources) return 0;
+		unsigned int refresh = 0;
+		const RRCrtc crtc = x11_randr_crtc(resources, root_xwindow);
+		XRRCrtcInfo* crtc_info = crtc ? XRRGetCrtcInfo(display, resources, crtc) : nullptr;
+		for (int i = 0; crtc_info && i != resources->nmode; ++i)
+		{
+			if (resources->modes[i].id != crtc_info->mode) continue;
+			refresh = (unsigned int)std::lround(x11_randr_refresh(resources->modes[i]));
+		}
+		if (crtc_info) XRRFreeCrtcInfo(crtc_info);
+		XRRFreeScreenResources(resources);
+		return refresh;
 	}
 
 	//switch the display to a mode of the given size (as win32 does), saving the desktop one

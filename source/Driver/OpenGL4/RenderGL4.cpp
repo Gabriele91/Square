@@ -1012,6 +1012,17 @@ namespace Render
 	}
 #endif
 
+	void ContextGL4::set_vsync(bool vsync)
+	{
+		if (m_resources) m_resources->set_vsync(vsync);
+	}
+
+	bool ContextGL4::set_frame_rate(unsigned int fps)
+	{
+		//its window: the vsyncs of a swap (swap interval)
+		return m_resources && m_resources->set_frame_rate(fps);
+	}
+
 	bool ContextGL4::init(Video::DeviceResources* resource)
 	{
 		//init glad
@@ -1027,11 +1038,10 @@ namespace Render
 		// log info
 		logger()->info("GLAD OGL loaded: " + to_string(GLAD_VERSION_MAJOR(gl_loaded_version)) + "." + to_string(GLAD_VERSION_MINOR(gl_loaded_version)));
 #endif
-		//disable vsync
+		//its window
+		m_resources = resource;
 		if(resource != nullptr)
 		{
-			// VSync
-			resource->set_vsync(false);
 			// SRGB?
 			if(resource->get_context_info().m_srgb)
 			{

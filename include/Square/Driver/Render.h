@@ -1030,6 +1030,10 @@ namespace Render
 		virtual void close() = 0;
 		virtual bool is_srgb_framebuffer() const = 0;
 
+		//frames: the vsync, the frames a second at most (0: none; false: the driver can not keep them)
+		virtual void set_vsync(bool vsync) = 0;
+		virtual bool set_frame_rate(unsigned int fps) = 0;
+
 		virtual const ClearColorState& get_clear_color_state() = 0;
 		virtual void set_clear_color_state(const ClearColorState& cf) = 0;
 		virtual void clear(int type = CLEAR_COLOR_DEPTH) = 0;

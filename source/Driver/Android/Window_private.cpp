@@ -47,17 +47,10 @@ namespace Android
 
 	bool DeviceResourcesAVK::set_frame_rate(unsigned int fps)
 	{
+		//a hint (a Samsung keeps 120 Hz): the driver of Vulkan keeps the rate
 		m_frame_rate = fps;
 		apply_frame_rate();
-		//a hint only: the system may keep its display faster (a multiple of the rate: 120 Hz for
-		//60, a Samsung S22): the application still waits, the driver of Vulkan puts its frames on
-		//the vsyncs of the rate (get_frame_rate: the times of its presents)
 		return false;
-	}
-
-	unsigned int DeviceResourcesAVK::get_frame_rate()
-	{
-		return m_frame_rate;
 	}
 
 	void DeviceResourcesAVK::apply_frame_rate()

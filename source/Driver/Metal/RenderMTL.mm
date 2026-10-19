@@ -542,12 +542,27 @@ void ContextMTL::end_encoder()
     if (m_encoder) { [m_encoder endEncoding]; m_encoder = nil; }
 }
 
+void ContextMTL::present_drawable()
+{
+    if (!m_drawable) return;
+    //at most the frame rate: a frame apart from the last present
+    if (m_frame_rate)
+    {
+        if (@available(macOS 10.15.4, iOS 10.3, *))
+        {
+            [m_cmd_buf presentDrawable:m_drawable afterMinimumDuration:1.0 / double(m_frame_rate)];
+            return;
+        }
+    }
+    [m_cmd_buf presentDrawable:m_drawable];
+}
+
 void ContextMTL::commit_frame()
 {
     end_encoder();
     if (m_cmd_buf)
     {
-        if (m_drawable) [m_cmd_buf presentDrawable:m_drawable];
+        present_drawable();
         [m_cmd_buf commit];
         m_cmd_buf = nil;
     }
@@ -790,8 +805,25 @@ void ContextMTL::apply_state_to_encoder()
 // ContextMTL — init / close
 // ──────────────────────────────────────────────────────────────────────────────
 
+void ContextMTL::set_vsync(bool vsync)
+{
+    if (m_resources) m_resources->set_vsync(vsync);
+}
+
+bool ContextMTL::set_frame_rate(unsigned int fps)
+{
+    //its presents a frame apart at least (presentDrawable:afterMinimumDuration:)
+    m_frame_rate = 0;
+    if (@available(macOS 10.15.4, iOS 10.3, *))
+    {
+        m_frame_rate = fps;
+    }
+    return m_frame_rate != 0;
+}
+
 bool ContextMTL::init(Video::DeviceResources* resource)
 {
+    m_resources = resource;
     m_device = (__bridge id<MTLDevice>)resource->get_device();
     m_layer  = (__bridge CAMetalLayer*)resource->get_device_context();
 

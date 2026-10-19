@@ -92,7 +92,7 @@ namespace Square
 			for (auto* listener : m_listeners) listener->on_window(event);
 			if (auto* instance = app()) instance->window_event(event);
 			if (event == Video::WindowEvent::CLOSE) m_close_requested = true;
-			//no focus: no key is held any more (their release goes to another window), no finger
+			//no focus: no key is held any more (their release goes to another window)
 			if (event == Video::WindowEvent::LOST_FOCUS)
 			{
 				for (auto& key : m_keys_next) if (key.down) change(key, Video::ActionEvent::RELEASE);

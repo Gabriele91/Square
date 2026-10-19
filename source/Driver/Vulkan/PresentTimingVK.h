@@ -1,13 +1,11 @@
 //
 //  PresentTimingVK.h
-//  Square, the driver of Vulkan: the frames on the vsyncs of a frame rate (VK_GOOGLE_display_timing,
-//  Android): each present asked at a time, the last one shown plus the time of a frame of the rate
-//  (60: 16.7 ms, two vsyncs of a display at 120 Hz), half a vsync before (its slack); the times
-//  shown read back from the presentation engine, so the frames stay on its vsyncs (the way of
-//  Swappy). The vsync read at each present: a display that changes its rate (Samsung: 24 Hz while
-//  the screen is still, at the start) does not hold the frames at its slow rate
+//  Square, the driver of Vulkan: the presents at a frame rate, on the vsyncs of the display.
+//  Their times asked (VK_GOOGLE_display_timing: Android, MoltenVK), else the last one waited
+//  shown (VK_KHR_present_wait: Windows, Linux)
 //
 #pragma once
+#include "Square/Config.h"
 #include "VulkanConfig.h"
 
 namespace Square
@@ -17,31 +15,53 @@ namespace Render
 	class PresentTimingVK
 	{
 	public:
-		//the extension, if the device has it (enabled with the device)
-		static const char* extension();
-		void available(bool available);
-		bool available() const;
+		enum class Method
+		{
+			NONE,
+			DISPLAY_TIMING,
+			PRESENT_WAIT
+		};
 
-		//a new swap chain: the times shown again
+		//the method of a device: its extensions, its features (in the chain of its create info)
+		void choose(VkPhysicalDevice physical, uint32_t api_version, const Vector<VkExtensionProperties>& available, Vector<const char*>& extensions, void*& features);
+		Method method() const;
+
+		//a new swap chain
 		void swapchain(VkDevice device, VkSwapchainKHR swapchain);
 		void reset();
 
-		//the time of the next present (its id, its time): false, no time asked (no frame rate, no
-		//extension, no vsync of the display)
-		bool next(unsigned int frame_rate, VkPresentTimeGOOGLE& time);
+		//its frame rate (0: none) on a display (its refresh, Hz): false, not kept
+		bool frame_rate(unsigned int fps, unsigned int refresh);
+		//a present: its time or its id in its info
+		void present(VkPresentInfoKHR& info);
 
 	private:
-		//the times shown since the last call: the last one kept (its id, its time)
+		//the time of the next present (false: none)
+		bool display_timing(unsigned int frame_rate);
+		//the last present shown, then its vsyncs after it (false: none)
+		bool present_wait();
+		//the last present shown (its id, its time), the vsync of the display (0: unknown)
 		void read_shown();
-		//the vsync of the display now (0: unknown)
 		uint64_t read_refresh() const;
 
-		bool           m_available{ false };
+		Method         m_method{ Method::NONE };
+		unsigned int   m_frame_rate{ 0 };
 		VkDevice       m_device{ VK_NULL_HANDLE };
 		VkSwapchainKHR m_swapchain{ VK_NULL_HANDLE };
-		uint32_t       m_present_id{ 0 };   //the last present asked
-		uint32_t       m_shown_id{ 0 };     //the last present shown
-		uint64_t       m_shown_ns{ 0 };     //its time
+		//DISPLAY_TIMING
+		uint32_t       m_present_id{ 0 };
+		uint32_t       m_shown_id{ 0 };
+		uint64_t       m_shown_ns{ 0 };
+		VkPresentTimeGOOGLE      m_time{};
+		VkPresentTimesInfoGOOGLE m_times{ VK_STRUCTURE_TYPE_PRESENT_TIMES_INFO_GOOGLE };
+		//PRESENT_WAIT
+		uint64_t       m_wait_id{ 0 };
+		double         m_wait_shown_ms{ 0.0 };
+		unsigned int   m_interval{ 0 };     //vsyncs of a frame (0: not kept)
+		double         m_vsync_ms{ 0.0 };
+		VkPresentIdKHR m_ids{ VK_STRUCTURE_TYPE_PRESENT_ID_KHR };
+		VkPhysicalDevicePresentIdFeaturesKHR   m_id_features{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_ID_FEATURES_KHR };
+		VkPhysicalDevicePresentWaitFeaturesKHR m_wait_features{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR };
 	};
 }
 }

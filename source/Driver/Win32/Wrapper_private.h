@@ -37,6 +37,8 @@ namespace Win32
 	//a window just made: of the client area asked (its borders of its style and of the DPI of its
 	//monitor, not known before it is made)
 	SQUARE_API void fit_window_size(HWND window, const unsigned int size[2]);
+	//the refresh of a monitor, Hz (0: unknown)
+	SQUARE_API unsigned int monitor_refresh(HMONITOR monitor);
 	///////////////////////////////////////////////////////////////////////////////////
 }
 }

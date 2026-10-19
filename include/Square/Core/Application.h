@@ -87,6 +87,20 @@ namespace Square
         GPU_LOW
     };
 
+	//frames: as fast as they can, on the vsync, at most a frame rate
+	enum class FrameMode
+	{
+		FREE,
+		VSYNC,
+		LIMIT
+	};
+
+	struct SQUARE_API FrameRate
+	{
+		FrameMode    m_mode{ FrameMode::FREE };
+		unsigned int m_fps{ 0 }; //LIMIT
+	};
+
 	struct SQUARE_API WindowRenderDriver
 	{
 		Render::RenderDriver m_type{ Render::DR_OPENGL };
@@ -97,6 +111,7 @@ namespace Square
         GpuType m_gpu_type{ GpuType::GPU_DEFAULT };
 		bool m_srgb{ true };
 		bool m_debug{ false };
+		FrameRate m_frames;
 	};
         
     class SQUARE_API Application
@@ -138,12 +153,9 @@ namespace Square
 		//application loads (before AppInterface::start); on by default
 		void splash_screen(bool enable);
 		bool splash_screen() const;
-		//the frames a second at most (0: no limit, as fast as the display lets it): the window
-		//paces them when it can (DeviceResources::set_frame_rate: the display at that rate, as the
-		//vsync), else the loop waits the rest of the time of a frame (a phone: 60, 30, steady, less
-		//battery)
-		void frame_rate(int fps);
-		int  frame_rate() const;
+		//frames (at the start: WindowRenderDriver::m_frames)
+		void frames(const FrameRate& frames);
+		const FrameRate& frames() const;
         //get attr (const)
         const AppInterface*   app_instance() const;
         Allocator*            allocator() const;
@@ -175,8 +187,18 @@ namespace Square
 		//info instance
         AppInterface*       m_instance{ nullptr };
 		bool                m_splash_screen{ true };
-		int                 m_frame_rate{ 0 };
-		bool                m_frame_rate_paced{ false }; //by the window (no wait of the loop)
+		//frames: as asked, who keeps their rate
+		enum class FramePacing
+		{
+			NONE,
+			DRIVER,
+			WAIT
+		};
+		FrameRate           m_frames;
+		FramePacing         m_pacing{ FramePacing::NONE };
+		double              m_next_frame_ms{ 0.0 }; //WAIT: the time of the next frame
+		void apply_frames();
+		void wait_frame();
 		//context (delta of update)
         double              m_last_delta_time{ 0 };
 		//context (application context)

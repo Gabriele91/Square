@@ -406,7 +406,7 @@ namespace Square
 
 	void UISystem::on_mouse_button(Video::MouseButtonEvent button, Video::ActionEvent action)
 	{
-		//(a finger: its touch, not its mouse)
+		//(a finger: its touch)
 		if (m_fingers > 0) return;
 		if (Rml::Context* ui_context = m_ui.native(); ui_context && button >= 0)
 		{
@@ -441,7 +441,7 @@ namespace Square
 	{
 		Rml::Context* ui_context = m_ui.native();
 		if (!ui_context) return;
-		//a touch of RmlUi: a tap a click, a drag over what scrolls scrolls it (with its inertia)
+		//touches of RmlUi (a drag: a scroll)
 		const Rml::TouchList touches{ Rml::Touch{ Rml::TouchId(finger), Rml::Vector2f(position.x, position.y) } };
 		switch (action)
 		{

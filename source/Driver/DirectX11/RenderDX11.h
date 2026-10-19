@@ -457,6 +457,8 @@ namespace Render
 		virtual void print_info() override;
 
 		virtual bool init(Video::DeviceResources* resource) override;
+		virtual void set_vsync(bool vsync) override;
+		virtual bool set_frame_rate(unsigned int fps) override;
 		virtual void close() override;
 		virtual bool is_srgb_framebuffer() const override;
 

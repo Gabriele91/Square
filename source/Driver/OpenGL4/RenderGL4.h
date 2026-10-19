@@ -495,6 +495,9 @@ namespace Render
 		virtual void close() override;
 		virtual bool is_srgb_framebuffer() const override;
 
+		virtual void set_vsync(bool vsync) override;
+		virtual bool set_frame_rate(unsigned int fps) override;
+
 		virtual const ClearColorState& get_clear_color_state() override;
 		virtual void set_clear_color_state(const ClearColorState& cf) override;
 		virtual void clear(int type = CLEAR_COLOR_DEPTH) override;
@@ -695,6 +698,8 @@ namespace Render
 		bool          m_gpu_timer_in_frame{ false };
 		bool          m_gpu_timer_supported{ false };
 #endif
+		//its window (its vsync, its swap interval: every configuration, Retail too)
+		Video::DeviceResources* m_resources{ nullptr };
 	};
 }
 }

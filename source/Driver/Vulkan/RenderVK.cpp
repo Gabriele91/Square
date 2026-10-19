@@ -181,6 +181,20 @@ namespace Render
 		return m_srgb;
 	}
 
+	void ContextVK::set_vsync(bool vsync)
+	{
+		//(the swap chain made again at the next frame)
+		if (m_resources) m_resources->set_vsync(vsync);
+	}
+
+	bool ContextVK::set_frame_rate(unsigned int fps)
+	{
+		//its presents on the refresh of its window (the window: a hint, Android)
+		if (!m_resources) return false;
+		m_resources->set_frame_rate(fps);
+		return m_present_timing.frame_rate(fps, m_resources->get_refresh());
+	}
+
 	bool ContextVK::init(Video::DeviceResources* resource)
 	{
 		m_resources = resource;
@@ -431,13 +445,13 @@ namespace Render
 			extensions.push_back(VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME);
 			m_vertex_layer = true;
 		}
-		//the times of the presents (Android: the frames on the vsyncs of the frame rate)
-		const bool display_timing = AuxVK::has_extension(available, PresentTimingVK::extension());
-		if (display_timing)
+		//the features enabled (their chain), the presents at a frame rate (their extension)
+		void* features = nullptr;
+		if (m_api_version >= VK_API_VERSION_1_2)
 		{
-			extensions.push_back(PresentTimingVK::extension());
+			features = &enabled12;
 		}
-		m_present_timing.available(display_timing);
+		m_present_timing.choose(m_physical, m_api_version, available, extensions, features);
 		const float priority = 1.0f;
 		VkDeviceQueueCreateInfo queue{ VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
 		queue.queueFamilyIndex = m_queue_family;
@@ -449,10 +463,7 @@ namespace Render
 		info.enabledExtensionCount = uint32_t(extensions.size());
 		info.ppEnabledExtensionNames = extensions.data();
 		info.pEnabledFeatures = &enabled;
-		if (m_api_version >= VK_API_VERSION_1_2)
-		{
-			info.pNext = &enabled12;
-		}
+		info.pNext = features;
 		if (vkCreateDevice(m_physical, &info, AllocationVK::callbacks(), &m_device) != VK_SUCCESS)
 		{
 			logger()->error("Vulkan: unable to make the device");
@@ -876,15 +887,8 @@ namespace Render
 			info.swapchainCount = 1;
 			info.pSwapchains = &m_swapchain.m_swapchain;
 			info.pImageIndices = &image;
-			//the time of the present: on the vsyncs of the frame rate (if the device paces them)
-			VkPresentTimeGOOGLE time{};
-			VkPresentTimesInfoGOOGLE times{ VK_STRUCTURE_TYPE_PRESENT_TIMES_INFO_GOOGLE };
-			if (m_present_timing.next(m_resources->get_frame_rate(), time))
-			{
-				times.swapchainCount = 1;
-				times.pTimes = &time;
-				info.pNext = &times;
-			}
+			//at the frame rate
+			m_present_timing.present(info);
 			const VkResult result = vkQueuePresentKHR(m_queue, &info);
 			const bool out_of_date = result == VK_ERROR_OUT_OF_DATE_KHR;
 			const bool suboptimal = result == VK_SUBOPTIMAL_KHR && !AuxVK::s_suboptimal_by_rotation;

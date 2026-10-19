@@ -42,6 +42,10 @@ namespace Win32
 
 		virtual bool get_vsync() override { return m_vsync; }
 		virtual void set_vsync(bool vsync) override { m_vsync = vsync; }
+		virtual unsigned int get_refresh() override
+		{
+			return monitor_refresh(MonitorFromWindow(m_window, MONITOR_DEFAULTTONEAREST));
+		}
 
 		//the client area of the window (the size of the swap chain)
 		virtual unsigned int width() override

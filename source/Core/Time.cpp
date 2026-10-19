@@ -5,9 +5,12 @@
 //  Copyright © 2016 Gabriele. All rights reserved.
 //
 #include "Square/Core/Time.h"
+#include <chrono>
+#include <thread>
 // os libs
 #ifdef _WIN32
 #include <windows.h>
+#include <timeapi.h>
 #else
 #include <sys/time.h>
 #endif
@@ -16,6 +19,31 @@ namespace Square
 {
 namespace Time
 {
+    //////////////////////////////////////////////////////////////////////
+	//wait
+	void wait_until_ms(double ms)
+	{
+		//awake the last ms (a sleep wakes up late)
+		static constexpr double s_awake_ms = 2.0;
+		const double left_ms = ms - get_ms_time();
+		if (left_ms > s_awake_ms)
+		{
+			std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>((left_ms - s_awake_ms) * 1000.0)));
+		}
+		while (get_ms_time() < ms)
+		{
+			std::this_thread::yield();
+		}
+	}
+
+	void precise_timer(bool enable)
+	{
+#ifdef _WIN32
+		if (enable) timeBeginPeriod(1);
+		else        timeEndPeriod(1);
+#endif
+	}
+
     //////////////////////////////////////////////////////////////////////
 	//ticks
     unsigned long long get_ticks_time()

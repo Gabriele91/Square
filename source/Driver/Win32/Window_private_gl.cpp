@@ -8,6 +8,7 @@
 #include "Square/Driver/Window.h"
 #include "Square/Driver/Input.h"
 #include "Wrapper_private.h"
+#include <algorithm>
 
 namespace Square
 {
@@ -45,18 +46,25 @@ namespace Win32
 		}
 
 		virtual bool get_vsync() { return m_vsync; }
-		virtual void set_vsync(bool vsync) 
-		{  
+		virtual void set_vsync(bool vsync)
+		{
+			m_vsync = vsync;
+			apply_swap();
+		}
+		virtual bool set_frame_rate(unsigned int fps) override
+		{
+			//its monitor: the vsyncs of a frame
+			m_interval = swap_interval(monitor_refresh(MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST)), fps);
+			return apply_swap() && m_interval != 0;
+		}
+		//the vsyncs of a swap (WGL_EXT_swap_control), false: none
+		bool apply_swap()
+		{
 			typedef BOOL(APIENTRY *PFNWGLSWAPINTERVALPROC)(int);
-			PFNWGLSWAPINTERVALPROC wglSwapIntervalEXT = nullptr;
-			//get ptr
-			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress("wglSwapIntervalEXT");
-			//test
-			if (wglSwapIntervalEXT)
-			{
-				m_vsync = vsync;
-				wglSwapIntervalEXT(m_vsync);
-			}
+			auto wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress("wglSwapIntervalEXT");
+			if (!wglSwapIntervalEXT) return false;
+			const int interval = m_vsync ? int(std::max<unsigned int>(m_interval, 1)) : 0;
+			return wglSwapIntervalEXT(interval) == TRUE;
 		}
 
 		virtual void* get_device()					   override { return (void*)m_hRC; }
@@ -77,6 +85,7 @@ namespace Win32
 		const HGLRC& m_hRC;
 		const ContextInfo& m_info_context;
 		bool  m_vsync{ true };
+		unsigned int m_interval{ 0 }; //vsyncs of a frame (0: one)
 	};
 
 	// OpenGL Window

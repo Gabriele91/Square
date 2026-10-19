@@ -8,6 +8,7 @@
 #include "Square/Driver/Window.h"
 #include "Square/Driver/Input.h"
 #include "Wrapper_private.h"
+#include <algorithm>
 
 #include <d3d11_3.h>
 #include <DXGI1_3.h>
@@ -50,6 +51,7 @@ namespace Win32
 
 		virtual bool get_vsync() { return m_vsync; }
 		virtual void set_vsync(bool vsync) { m_vsync = vsync; }
+		virtual bool set_frame_rate(unsigned int fps) override;
 
 		//implement
 		virtual unsigned int width() override { return m_bb_desc.Width; }
@@ -103,8 +105,9 @@ namespace Win32
 		D3D11_VIEWPORT          m_viewport;
 		const WindowInfo&		m_info;
 
-		//enable/disable vsync
+		//enable/disable vsync, vsyncs of a frame (0: one)
 		bool m_vsync;
+		UINT m_interval{ 0 };
 
 		//-----------------------------------------------------------------------------
 		// Callback
@@ -238,8 +241,24 @@ namespace Win32
 	{
 		if (m_DXGI_swap_chain)
 		{
-			m_DXGI_swap_chain->Present(get_vsync(), 0);
+			const UINT interval = m_vsync ? std::max<UINT>(m_interval, 1) : 0;
+			m_DXGI_swap_chain->Present(interval, 0);
 		}
+	}
+
+	bool DeviceResourcesDX::set_frame_rate(unsigned int fps)
+	{
+		m_interval = 0;
+		if (!fps || !m_DXGI_swap_chain) return false;
+		//its monitor (DXGI: the output of the swap chain)
+		IDXGIOutput* output = nullptr;
+		if (FAILED(m_DXGI_swap_chain->GetContainingOutput(&output)) || !output) return false;
+		DXGI_OUTPUT_DESC desc{};
+		const bool known = SUCCEEDED(output->GetDesc(&desc));
+		output->Release();
+		if (!known) return false;
+		m_interval = swap_interval(monitor_refresh(desc.Monitor), fps);
+		return m_interval != 0;
 	}
 
 	HRESULT DeviceResourcesDX::configure_backbuffer()

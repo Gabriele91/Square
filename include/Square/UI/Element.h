@@ -83,8 +83,7 @@ namespace UI
 		Vec2 size() const;
 		Vec2 position() const;
 
-		//its scroll (an element with overflow: its content higher than it): how far down (pixels),
-		//the height of its content, the height shown of it
+		//scroll: top, height of the content, height shown (pixels)
 		float scroll_top() const;
 		void  scroll_top(float top);
 		float scroll_height() const;

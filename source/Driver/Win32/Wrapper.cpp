@@ -158,6 +158,18 @@ namespace Video
 			size_out[1] = window_rect.bottom - window_rect.top;
 		}
 
+		unsigned int monitor_refresh(HMONITOR monitor)
+		{
+			MONITORINFOEXW info{};
+			info.cbSize = sizeof(info);
+			if (!monitor || !GetMonitorInfoW(monitor, &info)) return 0;
+			DEVMODEW mode{};
+			mode.dmSize = sizeof(mode);
+			if (!EnumDisplaySettingsW(info.szDevice, ENUM_CURRENT_SETTINGS, &mode)) return 0;
+			//(0 or 1: the default of the hardware, unknown)
+			return mode.dmDisplayFrequency > 1 ? (unsigned int)mode.dmDisplayFrequency : 0;
+		}
+
 		void fit_window_size(HWND window, const unsigned int size[2])
 		{
 			if (!window) return;
