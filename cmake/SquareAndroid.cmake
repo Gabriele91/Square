@@ -20,9 +20,12 @@
 # <build>/android/<target> (from engine/cmake/android) and its targets:
 #   <target>_android          the APK of the configuration (Gradle: CMake with the NDK on the game)
 #   <target>_android_install  the APK on the device (adb)
+#   <target>_android_debug, _release, _retail, <target>_android_install_debug, _release, _retail
+#                             the same of a configuration, whatever the one of the desktop build
 #   <target>_android_push     the resources on the device (SQUARE_ANDROID_PUSH: more of them, the
 #                             maps...), in the files of the application (its working folder)
 #   <target>_android_run      the game started on the device
+#   <target>_android_log      the log of the engine on the device (logcat, tag Square)
 # It needs the Android SDK (SQUARE_ANDROID_SDK: ANDROID_HOME by default) with its NDK and CMake
 # (SQUARE_ANDROID_NDK_VERSION, SQUARE_ANDROID_CMAKE_VERSION), a JDK 17 (SQUARE_ANDROID_JAVA_HOME:
 # JAVA_HOME by default); without them, no target. Built with the NDK: nothing to do.
@@ -203,6 +206,22 @@ function(square_android_app target)
         COMMENT "Android: ${target} ($<CONFIG>) on the device"
         USES_TERMINAL
         VERBATIM)
+    # the same of each configuration of the engine (Gradle: its build types debug, release, retail)
+    foreach(config Debug Release Retail)
+        string(TOLOWER ${config} config_name)
+        add_custom_target(${target}_android_${config_name}
+            COMMAND ${run_gradle} assemble${config}
+            WORKING_DIRECTORY ${project}
+            COMMENT "Android: the APK of ${target} (${config})"
+            USES_TERMINAL
+            VERBATIM)
+        add_custom_target(${target}_android_install_${config_name}
+            COMMAND ${run_gradle} install${config}
+            WORKING_DIRECTORY ${project}
+            COMMENT "Android: ${target} (${config}) on the device"
+            USES_TERMINAL
+            VERBATIM)
+    endforeach()
     # (the list with '|': a ';' would split the argument of the command)
     set(resources ${APP_RESOURCES} ${SQUARE_ANDROID_PUSH})
     string(REPLACE ";" "|" resources "${resources}")
@@ -219,6 +238,11 @@ function(square_android_app target)
     add_custom_target(${target}_android_run
         COMMAND ${adb} shell am start -n ${APP_PACKAGE}/android.app.NativeActivity
         COMMENT "Android: ${target} started on the device"
+        VERBATIM)
+    add_custom_target(${target}_android_log
+        COMMAND ${adb} logcat -s Square
+        COMMENT "Android: the log of ${target} (logcat, tag Square)"
+        USES_TERMINAL
         VERBATIM)
     message(STATUS "Android: ${target} (${APP_PACKAGE}) in ${project}: targets ${target}_android, ${target}_android_install, ${target}_android_push, ${target}_android_run")
 endfunction()
