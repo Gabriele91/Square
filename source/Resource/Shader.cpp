@@ -74,8 +74,9 @@ namespace Resource
 		}
 
 		//a source as a key: without its #line (the files of the machine that loaded it: a path of
-		//Windows, none on Android, DISABLE_SHARER_PREPROCESS_LINE_SET) and its empty lines (the ones
-		//around the #line); the same source, the same key on every machine
+		//Windows, none on Android, DISABLE_SHARER_PREPROCESS_LINE_SET), its empty lines (the ones
+		//around the #line) and the spaces at the end of its lines (a \r: read by Android, not by
+		//Windows); the same source, the same key on every machine
 		static String key_source(const String& source)
 		{
 			static constexpr const char   s_line[] = "#line";
@@ -95,7 +96,9 @@ namespace Resource
 				const bool line = !empty && source.compare(first, s_line_length, s_line) == 0;
 				if (!empty && !line)
 				{
-					out.append(source, start, end - start);
+					//(without its end: the \r of a file of Windows, kept by the files of Android)
+					const size_t last = source.find_last_not_of(" \t\r", end - 1);
+					out.append(source, start, last + 1 - start);
 					out += '\n';
 				}
 				start = end + 1;
