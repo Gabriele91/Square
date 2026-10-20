@@ -24,7 +24,7 @@ namespace Render
 
 		Material();
 
-		Material(Shared<Effect> effect);
+		Material(const Shared<Effect>& effect);
 
 		virtual ~Material();
 		

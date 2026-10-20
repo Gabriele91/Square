@@ -42,7 +42,7 @@ namespace Scene
 		virtual ~Level();
 
 		//add an actor
-		void add(Shared<Actor> child);
+		void add(const Shared<Actor>& child);
 
 		// Load a new actor from a file; an instance is cread at every call,
 		Shared<Actor> load_actor(const String& resource_name);
@@ -55,10 +55,10 @@ namespace Scene
 		Shared<Actor> find_actor(const String& name);
 
 		//contains an actor
-		bool contains(Shared<Actor> child) const;
+		bool contains(const Shared<Actor>& child) const;
 
 		//remove an actor
-		bool remove(Shared<Actor> child);
+		bool remove(const Shared<Actor>& child);
 
 		// Visit all actors DSF (each one by reference, see Actor::visit)
 		void visit(const std::function<bool(const Shared<Actor>&)>& callback);
@@ -107,13 +107,13 @@ namespace Scene
 		ActorList m_actors;
 
 		//Call by an actor when is add into level 
-		void on_add_a_actor(Shared<Actor> actor);
-		void on_remove_a_actor(Shared<Actor> actor);
+		void on_add_a_actor(const Shared<Actor>& actor);
+		void on_remove_a_actor(const Shared<Actor>& actor);
 
 		//Call by component add into level / actor: sent to the systems of the world (their
 		//collections: render, collisions...)
-		void on_add_a_component(Shared<Actor> actor, Shared<Component> component);
-		void on_remove_a_component(Shared<Actor> actor, Shared<Component> component);
+		void on_add_a_component(const Shared<Actor>& actor, const Shared<Component>& component);
+		void on_remove_a_component(const Shared<Actor>& actor, const Shared<Component>& component);
 
 		//every component of its actors leaves the systems of the world (the actors are cleared,
 		//the level leaves the world, or it is not active), or comes back to them (active again)

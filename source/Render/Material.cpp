@@ -14,7 +14,7 @@ namespace Render
 	};
 
 	Material::Material() {}
-	Material::Material(Shared<Effect> effect)
+	Material::Material(const Shared<Effect>& effect)
 	{
 		//effect
 		m_effect = effect;

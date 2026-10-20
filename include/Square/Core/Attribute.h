@@ -99,7 +99,7 @@ namespace Square
 			const String&      name,
 			VariantType             value_type,
             Variant&&               default_value,
-			Shared<AttributeAccess> access,
+			const Shared<AttributeAccess>& access,
 			Type			        type = Type::DEFAULT
 		)
         :m_default(std::forward<Variant>(default_value))

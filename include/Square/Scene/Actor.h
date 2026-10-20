@@ -58,20 +58,20 @@ namespace Scene
         void visit(const std::function<bool(const Shared<Actor>&)>& callback);
 
         //add a child
-        void add(Shared<Actor> child);
-        void add(Shared<Component> component);
+        void add(const Shared<Actor>& child);
+        void add(const Shared<Component>& component);
 
         //remove a child
-        void remove(Shared<Actor> child);
-        void remove(Shared<Component> component);
+        void remove(const Shared<Actor>& child);
+        void remove(const Shared<Component>& component);
         void remove_from_parent();
         
         //get parent
         Weak<Actor> parent() const;
         
         //contains an actor
-        bool contains(Shared<Actor> child) const;
-        bool contains(Shared<Component> component) const;
+        bool contains(const Shared<Actor>& child) const;
+        bool contains(const Shared<Component>& component) const;
 
         template< class T >
         bool contains() const

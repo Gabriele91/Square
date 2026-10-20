@@ -134,7 +134,7 @@ namespace Render
                    unsigned char pass_types = DrawerPassType::RPT_ALL);
         
         //add a pass
-        void add(Shared<DrawerPass> pass);
+        void add(const Shared<DrawerPass>& pass);
         //how the levels of detail are chosen (RenderInstance::levels_of_detail)
         void levels_of_detail(const LevelOfDetailSettings& settings) { m_levels_of_detail = settings; }
         const LevelOfDetailSettings& levels_of_detail() const { return m_levels_of_detail; }

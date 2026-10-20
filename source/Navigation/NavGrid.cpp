@@ -102,7 +102,7 @@ namespace Navigation
 		clear();
 		if (!actor) return false;
 		Vector<Vec3> triangles;
-		actor->visit([&triangles](Shared<Scene::Actor> node) -> bool
+		actor->visit([&triangles](const Shared<Scene::Actor>& node) -> bool
 		{
 			if (node->contains<Scene::StaticMesh>()) node->component<Scene::StaticMesh>()->triangles(triangles);
 			return true;

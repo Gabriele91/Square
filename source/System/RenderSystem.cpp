@@ -541,7 +541,7 @@ namespace Square
 		m_visible = visible;
 	}
 
-	void RenderInstance::add_post_effect(Shared<Render::PostEffect> effect)
+	void RenderInstance::add_post_effect(const Shared<Render::PostEffect>& effect)
 	{
 		if (!effect || std::find(m_post_effects.begin(), m_post_effects.end(), effect) != m_post_effects.end()) return;
 		m_post_effects.push_back(effect);

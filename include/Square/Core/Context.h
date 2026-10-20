@@ -83,8 +83,8 @@ namespace Square
         std::optional<const VariantRef> variable(const String& name) const;
         
 		//Object fectory
-        void add_object(Shared<ObjectFactory> object_fectory);
-        void add_resource(Shared<ObjectFactory> object_fectory,const Vector< String >& exts);
+        void add_object(const Shared<ObjectFactory>& object_fectory);
+        void add_resource(const Shared<ObjectFactory>& object_fectory,const Vector< String >& exts);
         
 		//The folder of the engine (its common/: its effects, its shaders, the UI of the debug panel),
 		//relative to the resource folder or absolute; empty: the resource folder itself (the engine
@@ -120,7 +120,7 @@ namespace Square
 
 		//System class: in the object factory (like add_resource), with when it starts (start-up
 		//or on demand) and its ring; called by the object_registration of a system
-		void add_system(Shared<ObjectFactory> object_fectory, SystemStartup startup, unsigned int ring);
+		void add_system(const Shared<ObjectFactory>& object_fectory, SystemStartup startup, unsigned int ring);
 		const SystemInfo* system_info(const String& name) const;
 		const SystemInfo* system_info(uint64 id) const;
 

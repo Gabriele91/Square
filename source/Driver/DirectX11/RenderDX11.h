@@ -346,8 +346,8 @@ namespace Render
 			bool		m_found{ false };
 			INT         m_slot[ST_N_SHADER];
 			size_t      m_size{ 0 };
-			Map<String, size_t> m_fields;
-			Map<String, UniformDX11> m_fields_uniforms;
+			UnorderedMap<String, size_t> m_fields;
+			UnorderedMap<String, UniformDX11> m_fields_uniforms;
 
 			GlobalBufferInfo()
 			{

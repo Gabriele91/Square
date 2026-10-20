@@ -110,7 +110,7 @@ namespace Scene
 	}
 	
 	//add an actor
-	void Level::add(Shared<Actor> actor)
+	void Level::add(const Shared<Actor>& actor)
 	{
 		if (!actor) return;
 		actor->remove_from_parent();
@@ -139,7 +139,7 @@ namespace Scene
 	}
 
 	//remove an actor
-	bool Level::remove(Shared<Actor> actor)
+	bool Level::remove(const Shared<Actor>& actor)
 	{
 		if (auto parent = actor->parent().lock(); !parent)
 		{
@@ -252,7 +252,7 @@ namespace Scene
 	}
 
 	//contains an actor
-	bool Level::contains(Shared<Actor> actor) const
+	bool Level::contains(const Shared<Actor>& actor) const
 	{
 		//local
 		if (std::find(m_actors.begin(), m_actors.end(), actor) != m_actors.end()) return true;
@@ -329,7 +329,7 @@ namespace Scene
 	}
 
 	//added an actor
-	void Level::on_add_a_actor(Shared<Actor> actor)
+	void Level::on_add_a_actor(const Shared<Actor>& actor)
 	{
 		for (auto component : actor->components())
 		{
@@ -337,7 +337,7 @@ namespace Scene
 		}
 	}
 	//remove an actor
-	void Level::on_remove_a_actor(Shared<Actor> actor)
+	void Level::on_remove_a_actor(const Shared<Actor>& actor)
 	{
 		for (auto component : actor->components())
 		{
@@ -348,7 +348,7 @@ namespace Scene
 	//every component of its actors leaves the systems of the world, or comes back
 	void Level::remove_components()
 	{
-		visit([this](Shared<Actor> actor) -> bool
+		visit([this](const Shared<Actor>& actor) -> bool
 		{
 			for (auto& component : actor->components()) on_remove_a_component(actor, component.second);
 			return true;
@@ -356,7 +356,7 @@ namespace Scene
 	}
 	void Level::add_components()
 	{
-		visit([this](Shared<Actor> actor) -> bool
+		visit([this](const Shared<Actor>& actor) -> bool
 		{
 			for (auto& component : actor->components()) on_add_a_component(actor, component.second);
 			return true;
@@ -365,7 +365,7 @@ namespace Scene
 
 	//added a component: to the systems of the world (the render collection is in the
 	//RenderInstance of the world)
-	void Level::on_add_a_component(Shared<Actor> actor, Shared<Component> component)
+	void Level::on_add_a_component(const Shared<Actor>& actor, const Shared<Component>& component)
 	{
 		//not active: out of the systems (add_components when active again)
 		if (!m_active) return;
@@ -375,7 +375,7 @@ namespace Scene
 		}
 	}
 	//remove a component
-	void Level::on_remove_a_component(Shared<Actor> actor, Shared<Component> component)
+	void Level::on_remove_a_component(const Shared<Actor>& actor, const Shared<Component>& component)
 	{
 		//not active: already out of the systems
 		if (!m_active) return;

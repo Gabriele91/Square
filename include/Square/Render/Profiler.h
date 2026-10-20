@@ -156,7 +156,7 @@ namespace Render
 		Vector<Node>                    m_nodes;
 		Map<std::pair<int, String>, int> m_node_map;
 		Vector<ShaderNode>              m_shader_nodes;
-		Map<String, int>           m_shader_map;
+		UnorderedMap<String, int>  m_shader_map;
 		//the window
 		unsigned int m_cpu_frames{ 0 };
 		unsigned int m_gpu_frames{ 0 };

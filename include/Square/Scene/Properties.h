@@ -62,7 +62,7 @@ namespace Scene
 		Square::Vec4 vector(const String& name, const Square::Vec4& fallback) const;
 		String  string(const String& name, const String& fallback) const;
 		//all of them
-		const Map<String, Value>& values() const { return m_values; }
+		const UnorderedMap<String, Value>& values() const { return m_values; }
 
 		//regs
 		static void object_registration(Square::Context& ctx);
@@ -88,7 +88,7 @@ namespace Scene
 		template < typename T, T Packed::* Field >
 		static void packed_attribute(Square::Context& ctx, const char* name);
 
-		Map<String, Value> m_values;
+		UnorderedMap<String, Value> m_values;
 		Packed                       m_packed; //(while deserialized)
 	};
 }

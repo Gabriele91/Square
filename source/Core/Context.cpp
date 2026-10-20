@@ -221,11 +221,11 @@ namespace Square
     }
     
     //Object fectory
-    void BaseContext::add_object(Shared<ObjectFactory> object_fectory)
+    void BaseContext::add_object(const Shared<ObjectFactory>& object_fectory)
     {
         m_object_factories[object_fectory->info().id()] = object_fectory;
     }
-    void BaseContext::add_resource(Shared<ObjectFactory> object_fectory,const Vector< String >& exts)
+    void BaseContext::add_resource(const Shared<ObjectFactory>& object_fectory,const Vector< String >& exts)
     {
         add_object(object_fectory);
         m_resources_info[object_fectory->info().id()] = exts;
@@ -486,7 +486,7 @@ namespace Square
     }
 
 	//System class
-	void BaseContext::add_system(Shared<ObjectFactory> object_fectory, SystemStartup startup, unsigned int ring)
+	void BaseContext::add_system(const Shared<ObjectFactory>& object_fectory, SystemStartup startup, unsigned int ring)
 	{
 		add_object(object_fectory);
 		m_systems_info[object_fectory->info().id()] = SystemInfo{ startup, ring };

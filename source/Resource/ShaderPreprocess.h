@@ -176,7 +176,7 @@ namespace Resource
         bool        m_files_as_name{ true };
         ParserState m_state{ PS_OK };
         //mapof once
-        Map<String,bool> m_once_map;
+        UnorderedMap<String,bool> m_once_map;
 		//loader
 		ParserState load
 		(

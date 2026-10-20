@@ -191,7 +191,8 @@ namespace Square
 
 		//post effects of the world, in the order they are drawn (see Render/PostEffect.h):
 		//the effects of the pipeline stage (G-Buffer effects only in deferred)
-		void add_post_effect(Shared<Render::PostEffect> effect);
+		void add_post_effect(const Shared<Render::PostEffect>& effect);
+		//(by value: an effect of its own list, std::remove would overwrite it while it shifts them)
 		void remove_post_effect(Shared<Render::PostEffect> effect);
 		void post_effects(const Vector< Shared<Render::PostEffect> >& effects);
 		const Vector< Shared<Render::PostEffect> >& post_effects() const;

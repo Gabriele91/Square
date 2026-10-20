@@ -10,7 +10,7 @@ namespace Render
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// EffectParameter
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
-	void EffectParameter::set(Shared<Resource::Texture> texture) {}
+	void EffectParameter::set(const Shared<Resource::Texture>& texture) {}
 	void EffectParameter::set(int i) {}
 	void EffectParameter::set(float f) {}
 	void EffectParameter::set(double d) {}
@@ -129,13 +129,13 @@ namespace Render
 			m_value = Shared<Resource::Texture>(nullptr);
 			m_type = EffectParameterType::PT_TEXTURE;
 		}
-		EffectParameterTexture(Allocator* allocator, Shared<Resource::Texture> value) : EffectParameter(allocator)
+		EffectParameterTexture(Allocator* allocator, const Shared<Resource::Texture>& value) : EffectParameter(allocator)
 		{
 			m_value = value;
 			m_type = EffectParameterType::PT_TEXTURE;
 		}
 		//set value
-		virtual void set(Shared<Resource::Texture> value) override
+		virtual void set(const Shared<Resource::Texture>& value) override
 		{
 			m_value = value;
 		}

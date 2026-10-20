@@ -1811,10 +1811,10 @@ namespace Render
 	{
 	}
 
-	static Map<String, DXGI_FORMAT> reflaction_input_layout(ID3DBlob* shader)
+	static UnorderedMap<String, DXGI_FORMAT> reflaction_input_layout(ID3DBlob* shader)
 	{
 		//////////////////////////////////////
-		Map<String, DXGI_FORMAT> semantic_type_map;
+		UnorderedMap<String, DXGI_FORMAT> semantic_type_map;
 		//////////////////////////////////////
 		ID3D11ShaderReflection* shader_ref = nullptr;
 		if (FAILED(D3DReflect(

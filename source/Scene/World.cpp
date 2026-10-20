@@ -56,7 +56,7 @@ namespace Scene
 			for (const Shared<Level>& level : m_levels)
 			{
 				if (!level->active()) continue;
-				level->visit([&](Shared<Actor> actor) -> bool
+				level->visit([&](const Shared<Actor>& actor) -> bool
 				{
 					for (auto& component : actor->components()) new_instance->on_add_component(actor, component.second);
 					return true;
@@ -151,7 +151,7 @@ namespace Scene
 	}
 
 	//contains an actor
-	bool World::contains(Shared<Actor> child) const
+	bool World::contains(const Shared<Actor>& child) const
 	{
 		//search
 		for (const Shared<Level>& level : m_levels)
@@ -160,7 +160,7 @@ namespace Scene
 		//return
 		return false;
 	}
-	bool World::contains(Shared<Level> level_) const
+	bool World::contains(const Shared<Level>& level_) const
 	{
 		//search
 		for (const Shared<Level>& level : m_levels)
@@ -171,7 +171,7 @@ namespace Scene
 	}
 
 	//remove an actor
-	bool World::remove(Shared<Actor> child)
+	bool World::remove(const Shared<Actor>& child)
 	{
 		//search
 		for (Shared<Level>& level : m_levels)
@@ -180,7 +180,7 @@ namespace Scene
 		//return
 		return false;
 	}
-	bool World::remove(Shared<Level> level_)
+	bool World::remove(const Shared<Level>& level_)
 	{
 		//remove child from list
 		auto it = std::find(m_levels.begin(), m_levels.end(), level_);

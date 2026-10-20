@@ -276,7 +276,7 @@ namespace Scene
 			auto child = owner->child(m_levels[i].m_actor);
 			if (!child) continue;
 			Renderables& renderables = m_renderables[i];
-			child->visit([&renderables](Shared<Actor> part) -> bool
+			child->visit([&renderables](const Shared<Actor>& part) -> bool
 			{
 				for (const auto& component : part->components())
 				{

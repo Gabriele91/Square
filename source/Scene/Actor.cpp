@@ -270,7 +270,7 @@ namespace Scene
     }
     
     //add a child
-    void Actor::add(Shared<Actor> child)
+    void Actor::add(const Shared<Actor>& child)
     {
 		if (!child) return;
         child->remove_from_parent();
@@ -279,7 +279,7 @@ namespace Scene
 		child->level(level());
 		child->dirty();
     }
-    void Actor::add(Shared<Component> component)
+    void Actor::add(const Shared<Component>& component)
     {
 		if (!component) return;
         //Olready added
@@ -296,7 +296,7 @@ namespace Scene
     }
     
     //remove a child
-    void Actor::remove(Shared<Actor> child)
+    void Actor::remove(const Shared<Actor>& child)
     {
         if (child)
         if(auto parent = child->m_parent.lock(); parent.get() == this)
@@ -314,7 +314,7 @@ namespace Scene
 			}
         }
     }
-    void Actor::remove(Shared<Component> component)
+    void Actor::remove(const Shared<Component>& component)
     {
         if (!component) return;
         //Is your own
@@ -358,7 +358,7 @@ namespace Scene
     }
     
     //contains an actor
-    bool Actor::contains(Shared<Actor> child) const
+    bool Actor::contains(const Shared<Actor>& child) const
     {
         //local
         if(std::find(m_childs.begin(), m_childs.end(), child) != m_childs.end()) return true;
@@ -367,7 +367,7 @@ namespace Scene
         //fail
         return false;
     }
-    bool Actor::contains(Shared<Component> component) const
+    bool Actor::contains(const Shared<Component>& component) const
     {
         if (!component) return false;
         auto component_it = m_components.find(component->object_id());

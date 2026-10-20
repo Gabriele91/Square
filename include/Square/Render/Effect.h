@@ -149,7 +149,7 @@ namespace Render
 	//parameter class
 	struct SQUARE_API EffectParameter
 	{
-		virtual void set(Shared< Resource::Texture > texture);
+		virtual void set(const Shared< Resource::Texture >& texture);
 		virtual void set(int i);
 		virtual void set(float f);
 		virtual void set(double d);

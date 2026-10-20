@@ -61,12 +61,12 @@ namespace Scene
 		Shared<Actor> find_actor(const String& name);
 
 		//contains an actor
-		bool contains(Shared<Actor> child) const;
-		bool contains(Shared<Level> child) const;
+		bool contains(const Shared<Actor>& child) const;
+		bool contains(const Shared<Level>& child) const;
 
 		//remove an actor
-		bool remove(Shared<Actor> child);
-		bool remove(Shared<Level> child);
+		bool remove(const Shared<Actor>& child);
+		bool remove(const Shared<Level>& child);
 			
 		//every frame (SceneSystem): the levels, and the components of their actors
 		void update(double delta_time);

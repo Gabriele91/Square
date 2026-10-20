@@ -340,7 +340,7 @@ namespace Render
     }
 
     //add a pass
-    void Drawer::add(Shared<Square::Render::DrawerPass> pass)
+    void Drawer::add(const Shared<Square::Render::DrawerPass>& pass)
     {
         m_rendering_pass[draw_pass_type_to_index(pass->type())].push_back(pass);
     }
