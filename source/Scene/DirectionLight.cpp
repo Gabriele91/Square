@@ -86,6 +86,12 @@ namespace Scene
 		, float(0.2f)
 		, [](const DirectionLight* plight) -> float       { return plight->cascade_margin(); }
 		, [](DirectionLight* plight, const float& margin) { plight->cascade_margin(margin); });
+
+		ctx.add_attribute_function<DirectionLight, int>
+		("cascade_moves"
+		, int(0)
+		, [](const DirectionLight* plight) -> int      { return int(plight->cascade_moves()); }
+		, [](DirectionLight* plight, const int& moves) { plight->cascade_moves((unsigned int)std::max(moves, 0)); });
     }
 
 	//light
@@ -203,6 +209,16 @@ namespace Scene
 	float DirectionLight::cascade_margin() const
 	{
 		return m_cascade_margin;
+	}
+
+	void DirectionLight::cascade_moves(unsigned int moves)
+	{
+		m_cascade_moves = moves;
+	}
+
+	unsigned int DirectionLight::cascade_moves() const
+	{
+		return m_cascade_moves;
 	}
 
 	bool DirectionLight::stable_cascades() const
@@ -558,23 +574,71 @@ namespace Scene
 		const Mat4 light_view = look_at(Vec3(0.0f, 0.0f, 0.0f), Vec3(m_direction), Constants::axis_y);
 		const Vec2 depth = stable_depth(light_view);
 		const Mat4& camera_view = camera.view();
+		//each one: where its slice is, if it is out of it (a new one: out)
+		struct Slice
+		{
+			Vec2  m_at{ 0.0f };
+			float m_half{ 0.0f };
+			bool  m_out{ false };
+		};
+		Array<Slice, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> slices;
 		for (unsigned int i = 0; i < cascades; ++i)
 		{
 			const Mat4 projection = Square::perspective(viewport.fov(), viewport.aspect(), depths[i], depths[i + 1]);
 			const auto [center, radius] = CSMAux::slice_sphere(CSMAux::slice_corners(inverse(projection * camera_view)));
-			const float half = radius * (1.0f + m_cascade_margin);
-			const Vec2 at = Vec2(light_view * Vec4(center, 1.0f));
-			//it stays while the slice is inside it; else around the slice, on the grid of its texels
+			const StableCascade& cascade = m_stable[i];
+			Slice& slice = slices[i];
+			slice.m_half = radius * (1.0f + m_cascade_margin);
+			slice.m_at = Vec2(light_view * Vec4(center, 1.0f));
+			const Vec2 offset = glm::abs(slice.m_at - cascade.m_center);
+			const float slack = slice.m_half - radius;
+			slice.m_out = !cascade.m_valid || offset.x > slack || offset.y > slack;
+		}
+		//the ones moved: the new ones always; the others at most cascade_moves (0: all), the ones
+		//that waited first, then the nearer ones
+		Array<bool, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> moved{};
+		unsigned int moves = 0;
+		auto move = [&](unsigned int i)
+		{
 			StableCascade& cascade = m_stable[i];
-			const Vec2 offset = glm::abs(at - cascade.m_center);
-			const bool inside = cascade.m_valid && offset.x <= half - radius && offset.y <= half - radius;
-			if (!inside)
+			const Slice& slice = slices[i];
+			if (cascade.m_valid)
 			{
-				const float texel = (2.0f * half) / float(std::max(size.x, 1));
-				cascade.m_center = glm::round(at / texel) * texel;
-				cascade.m_half = half;
-				cascade.m_valid = true;
+				++moves;
 			}
+			//around its slice, on the grid of its texels
+			const float texel = (2.0f * slice.m_half) / float(std::max(size.x, 1));
+			cascade.m_center = glm::round(slice.m_at / texel) * texel;
+			cascade.m_half = slice.m_half;
+			cascade.m_valid = true;
+			moved[i] = true;
+		};
+		auto can_move = [&](unsigned int i)
+		{
+			return !m_stable[i].m_valid || m_cascade_moves == 0 || moves < m_cascade_moves;
+		};
+		for (unsigned int i = 0; i < cascades; ++i)
+		{
+			if (slices[i].m_out && m_stable[i].m_waiting && can_move(i))
+			{
+				move(i);
+			}
+		}
+		for (unsigned int i = 0; i < cascades; ++i)
+		{
+			if (slices[i].m_out && !moved[i] && can_move(i))
+			{
+				move(i);
+			}
+		}
+		//the ones out, not moved: first the next frame
+		for (unsigned int i = 0; i < cascades; ++i)
+		{
+			m_stable[i].m_waiting = slices[i].m_out && !moved[i];
+		}
+		for (unsigned int i = 0; i < cascades; ++i)
+		{
+			const StableCascade& cascade = m_stable[i];
 			const Vec2 low = cascade.m_center - Vec2(cascade.m_half);
 			const Vec2 high = cascade.m_center + Vec2(cascade.m_half);
 			data.m_projection[i] = CSMAux::csm_ortho(low.x, high.x, high.y, low.y, depth.x, depth.y);

@@ -76,6 +76,11 @@ namespace Scene
 		CascadeFit cascade_fit() const;
 		void       cascade_margin(float margin);
 		float      cascade_margin() const;
+		//at most this many stable cascades moved in a frame, the others a frame later (their caches
+		//kept: no frame drawing the static casters of all of them; the ones that waited first); 0:
+		//no limit
+		void         cascade_moves(unsigned int moves);
+		unsigned int cascade_moves() const;
 		//its cascades stay (the cache of the shadow pass can keep them)
 		virtual bool stable_cascades() const override;
 
@@ -120,6 +125,7 @@ namespace Scene
 		Geometry::AABoundingBox m_scene_size;
 		CascadeFit m_cascade_fit{ CascadeFit::FOLLOW };
 		float m_cascade_margin{ 0.2f };
+		unsigned int m_cascade_moves{ 0 };
 		bool m_cascade_colors{ false };
 		mutable Render::UniformDirectionShadowLight m_cache_udirectionshadowlight;
 		//a stable cascade: where it is (its center in the space of the light), its half side; what
@@ -129,6 +135,7 @@ namespace Scene
 			Vec2  m_center{ 0.0f };
 			float m_half{ 0.0f };
 			bool  m_valid{ false };
+			bool  m_waiting{ false }; //out of its slice, not moved (cascade_moves): first the next frame
 		};
 		mutable Array<StableCascade, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> m_stable;
 		mutable Vector<float> m_stable_key;
