@@ -6,6 +6,7 @@
 //
 #include "Square/Render/DynamicResolution.h"
 #include <algorithm>
+#include <cmath>
 
 namespace Square
 {
@@ -13,24 +14,26 @@ namespace Render
 {
 	namespace AuxDynamicResolution
 	{
-		static constexpr float s_late = 1.08f;           //late: the frames over the budget by this share
-		static constexpr float s_gpu_late = 0.85f;       //late too: the GPU over this share of the budget
-		static constexpr float s_gpu_room = 0.7f;        //a step higher: the GPU under this share of the budget
-		static constexpr float s_average = 8.0f;         //the average of the frames: its speed (a share a second)
-		static constexpr float s_down = 0.15f;           //a step lower (of the level)
-		static constexpr float s_up = 0.05f;             //a step higher
-		static constexpr float s_cooldown = 0.5f;        //seconds after a change, before it looks again
-		static constexpr float s_probe = 1.5f;           //seconds of a try
-		static constexpr float s_first_wait = 2.0f;      //seconds on time before a try
-		static constexpr float s_longest_wait = 30.0f;
-		static constexpr float s_glide = 6.0f;           //the level shown going to its level (a share a second)
+		static constexpr float s_late = 1.1f;            //late: the frames over the budget by its tolerance (10%)
+		static constexpr float s_gpu_room = 0.85f;        //higher: the GPU under this share of the budget
+		static constexpr float s_window = 0.5f;          //seconds of the frames it looks at
+		static constexpr float s_up = 0.1f;              //higher on time: a share of the scene a second
+		static constexpr float s_glide = 6.0f;           //the share shown going to its target (a share a second)
 		static constexpr float s_longest_frame = 0.25f;  //seconds: a longer frame is a loading, not counted
+		static constexpr float s_largest_range = 0.9f;   //the scene at least a tenth
 	}
 
 	void DynamicResolution::settings(const Settings& settings)
 	{
 		m_settings = settings;
-		if (m_settings.m_range <= 0.0f) reset();
+		if (m_settings.m_range <= 0.0f)
+		{
+			reset();
+			return;
+		}
+		//(its share within the new range)
+		m_share = std::max(m_share, lowest());
+		m_shown = std::max(m_shown, lowest());
 	}
 
 	const DynamicResolution::Settings& DynamicResolution::settings() const
@@ -40,115 +43,80 @@ namespace Render
 
 	void DynamicResolution::reset()
 	{
-		m_level = 0.0f;
-		m_shown = 0.0f;
-		m_wait = AuxDynamicResolution::s_first_wait;
-		enter(State::COOLDOWN);
+		m_share = 1.0f;
+		m_shown = 1.0f;
+		enter(State::SETTLE);
 	}
 
 	Vec2 DynamicResolution::update(float delta_time, float fps, float gpu_ms)
 	{
 		using namespace AuxDynamicResolution;
 		if (m_settings.m_range <= 0.0f) return Vec2(1.0f);
-		//(a loading: not a frame to count)
+		//(a loading: its frames forgotten, a new window)
 		if (delta_time > s_longest_frame)
 		{
-			enter(State::COOLDOWN);
+			enter(State::SETTLE);
 		}
 		else
 		{
-			const float frame_ms = delta_time * 1000.0f;
-			m_frame_ms = m_frame_ms > 0.0f ? m_frame_ms + (frame_ms - m_frame_ms) * std::min(s_average * delta_time, 1.0f) : frame_ms;
-			//their GPU time, an average too (unknown: none)
-			if (gpu_ms < 0.0f)
-			{
-				m_gpu_ms = -1.0f;
-			}
-			else if (m_gpu_ms < 0.0f)
-			{
-				m_gpu_ms = gpu_ms;
-			}
-			else
-			{
-				m_gpu_ms += (gpu_ms - m_gpu_ms) * std::min(s_average * delta_time, 1.0f);
-			}
-			m_time += delta_time;
+			push(delta_time);
+			const float budget_ms = 1000.0f / std::max(fps, 1.0f);
 			switch (m_state)
 			{
-			case State::STEADY:
-				//late: lower at once; on time long enough: a step higher, on trial
-				if (late(fps))
-				{
-					m_level = std::min(m_level + s_down, 1.0f);
-					enter(State::COOLDOWN);
-				}
-				else if (m_level > 0.0f && m_time >= m_wait && room(fps))
-				{
-					m_level = std::max(m_level - s_up, 0.0f);
-					enter(State::PROBE);
-				}
+			case State::SETTLE:
+				//a whole window of frames after a change: its effect seen
+				if (m_window >= s_window) m_state = State::WATCH;
 			break;
-			case State::PROBE:
-				//late again: back, a longer wait; on time: kept, the first wait again
-				if (late(fps))
+			case State::WATCH:
+			{
+				const float average_ms = m_window * 1000.0f / float(std::max<size_t>(m_frames.size(), 1));
+				if (average_ms > budget_ms * s_late)
 				{
-					m_level = std::min(m_level + s_up, 1.0f);
-					m_wait = std::min(m_wait * 2.0f, s_longest_wait);
-					enter(State::COOLDOWN);
+					//as much lower as they are late: its time goes with its pixels (one axis: the
+					//share, two: its square)
+					const bool both = m_settings.m_width && m_settings.m_height;
+					const float ratio = budget_ms / average_ms;
+					m_share = std::max(m_share * (both ? std::sqrt(ratio) : ratio), lowest());
+					enter(State::SETTLE);
 				}
-				else if (m_time >= s_probe)
+				else if (gpu_ms < 0.0f || gpu_ms < budget_ms * s_gpu_room)
 				{
-					m_wait = s_first_wait;
-					enter(State::STEADY);
+					m_share = std::min(m_share + s_up * delta_time, 1.0f);
 				}
-			break;
-			case State::COOLDOWN:
-				if (m_time >= s_cooldown) enter(State::STEADY);
+			}
 			break;
 			}
-			//the level shown gliding to it
-			m_shown += (m_level - m_shown) * std::min(s_glide * delta_time, 1.0f);
 		}
-		const float share = 1.0f - m_settings.m_range * m_shown;
-		return Vec2(m_settings.m_width ? share : 1.0f, m_settings.m_height ? share : 1.0f);
+		//the share shown gliding to it
+		m_shown += (m_share - m_shown) * std::min(s_glide * delta_time, 1.0f);
+		return Vec2(m_settings.m_width ? m_shown : 1.0f, m_settings.m_height ? m_shown : 1.0f);
 	}
 
-	bool DynamicResolution::late(float fps) const
+	void DynamicResolution::push(float delta_time)
 	{
-		using namespace AuxDynamicResolution;
-		const float budget_ms = 1000.0f / std::max(fps, 1.0f);
-		if (m_frame_ms > budget_ms * s_late)
+		m_frames.push_back(delta_time);
+		m_window += delta_time;
+		//(the older ones out, the newest always in)
+		size_t out = 0;
+		while (out + 1 < m_frames.size() && m_window - m_frames[out] >= AuxDynamicResolution::s_window)
 		{
-			return true;
+			m_window -= m_frames[out];
+			++out;
 		}
-		//(on the vsync: the frames as long as the budget, their GPU says how near it they are)
-		if (m_gpu_ms >= 0.0f)
-		{
-			return m_gpu_ms > budget_ms * s_gpu_late;
-		}
-		return false;
-	}
-
-	bool DynamicResolution::room(float fps) const
-	{
-		const float budget_ms = 1000.0f / std::max(fps, 1.0f);
-		if (m_gpu_ms < 0.0f)
-		{
-			return true;
-		}
-		return m_gpu_ms <= budget_ms * AuxDynamicResolution::s_gpu_room;
+		if (out) m_frames.erase(m_frames.begin(), m_frames.begin() + out);
 	}
 
 	void DynamicResolution::enter(State state)
 	{
 		m_state = state;
-		m_time = 0.0f;
-		//(the averages again from the next frame: the change seen)
-		if (state == State::COOLDOWN)
-		{
-			m_frame_ms = 0.0f;
-			m_gpu_ms = -1.0f;
-		}
+		//(a new window: the frames of before not counted)
+		m_frames.clear();
+		m_window = 0.0f;
+	}
+
+	float DynamicResolution::lowest() const
+	{
+		return 1.0f - std::clamp(m_settings.m_range, 0.0f, AuxDynamicResolution::s_largest_range);
 	}
 }
 }

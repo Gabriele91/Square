@@ -117,6 +117,7 @@ namespace Render
 	 , const PoolQueues&            queues
 	 , const Vector<QueueType>& queue_types
 	 , const ForwardShadingBuffers& buffers
+	 , const std::function<bool(const Renderable&)>& skip
 	)
 	{
 		//parameters
@@ -199,10 +200,15 @@ namespace Render
 		{
 			for (auto randerable : RenderableQuery(queues, { queue_type }))
 			{
-				if (randerable && randerable->can_draw())
+				if (!randerable || !randerable->can_draw())
 				{
-					AuxForwardShading::add(list, randerable, technique_name, queues);
+					continue;
 				}
+				if (skip && skip(*randerable))
+				{
+					continue;
+				}
+				AuxForwardShading::add(list, randerable, technique_name, queues);
 			}
 			list.draw(render, inputs, queue_type == RQ_OPAQUE, light_setup);
 		}

@@ -13,6 +13,7 @@
 #include "Square/Math/Linear.h"
 #include "Square/Render/Pipeline/Drawer.h"
 #include <vector>
+#include <functional>
 
 namespace Square
 {
@@ -34,7 +35,8 @@ namespace Render
 	};
 
 	//draw the renderables of queue_types (in queue order) with the technique technique_name
-	//of their effects; renderables whose effect has no such technique are skipped
+	//of their effects; renderables whose effect has no such technique are skipped, the ones
+	//skip says true too (drawn elsewhere)
 	SQUARE_API void draw_forward
 	(
 	   Render::Context&              render
@@ -44,6 +46,7 @@ namespace Render
 	 , const PoolQueues&             queues
 	 , const Vector<QueueType>& queue_types
 	 , const ForwardShadingBuffers&  buffers
+	 , const std::function<bool(const Renderable&)>& skip = nullptr
 	);
 }
 }

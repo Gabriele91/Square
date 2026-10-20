@@ -8,6 +8,8 @@ surface(VertexShaderOutput input)
 {
 	float albedo_alpha;
 	SurfaceData data = material_standard(input, albedo_alpha);
+	//(far, into the G-Buffer: dithered)
+	dither_opaque(data, input);
 	//return
 	surface_return(data);
 }

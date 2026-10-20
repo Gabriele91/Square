@@ -166,3 +166,14 @@ SurfaceData material_standard(VertexShaderOutput input, out float albedo_alpha)
 	data.m_roughness = texture2D(roughness_map, input.m_uv).g * roughness; // glTF uses G channel for the roughness
 	return data;
 }
+
+// A translucent surface far drawn opaque into the G-Buffer (SQ_DITHER_ALWAYS: its "deferred"
+// technique, DrawerPassDeferred): its pixels dropped by a pattern of its final alpha; called
+// by the effect right before surface_return (its alpha set); else nothing
+void dither_opaque(inout SurfaceData data, VertexShaderOutput input)
+{
+#if defined(SQ_DITHER_ALWAYS)
+	if (data.m_alpha <= dither_threshold(input.m_position.xy)) discard;
+	data.m_alpha = 1.0;
+#endif
+}

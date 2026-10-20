@@ -81,6 +81,25 @@ sub_effect
             }
         }
     }
+    //deferred rendering pipeline, far: into the G-Buffer as an opaque surface, its pixels dropped
+    //by a pattern of its alpha (the dither: always, LevelOfDetailSettings::m_translucent_distance)
+    technique "deferred"
+    {
+        variants clip(mask, dither)
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface param(cull)
+            lights off
+            shader source
+            {
+                #define DEFERRED_RENDERING
+                #define SQ_DITHER_ALWAYS
+                #include "PBRWater.hlsl"
+            }
+        }
+    }
     //deferred rendering pipeline: drawn into the light buffer (linear, encoded by the present)
     technique "translucent"
     {

@@ -34,6 +34,10 @@ namespace Render
 		//how far each level goes: its distance times it (1: as made; less: the simpler levels
 		//nearer, cheaper; more: farther, finer)
 		float m_bias{ 1.0f };
+		//the translucent renderables farther than this (world units from the camera) drawn as the
+		//opaque ones, dithered by their alpha (the deferred pipeline: into the G-Buffer by the
+		//"deferred" technique of their effects; the ones without it blended as they are); 0: never
+		float m_translucent_distance{ 0.0f };
 	};
 
 	class SQUARE_API LevelOfDetail : public BaseObject

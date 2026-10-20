@@ -28,6 +28,36 @@ namespace Square
 {
 namespace Render
 {
+	namespace AuxDrawerPassDeferred
+	{
+		//the technique of the G-Buffer (the opaque ones, the translucent ones far, dithered)
+		static const String s_gbuffer_technique{ "deferred" };
+
+		//every material of a renderable with a technique (its effect: none, not drawn by it)
+		static bool has_technique(const Renderable& renderable, const String& name)
+		{
+			const size_t count = renderable.materials_count();
+			if (!count)
+			{
+				return false;
+			}
+			for (size_t id = 0; id != count; ++id)
+			{
+				auto material = renderable.material(id).lock();
+				if (!material)
+				{
+					return false;
+				}
+				auto effect = material->effect();
+				if (!effect || !effect->technique(name))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
 	//light volume model matrix
 	struct UniformLightVolume
 	{
@@ -258,14 +288,25 @@ namespace Render
 		camera.set(&ucamera);
 		render().update_steam_CB(m_cb_camera.get(), (const unsigned char*)&ucamera, sizeof(ucamera));
 		//the opaque queue in batches (by pass and material; front to back in a batch), each
-		//renderable its transform (and the cross-fade of its level of detail)
-		static const String s_technique{ "deferred" };
+		//renderable its transform (and the cross-fade of its level of detail); the translucent
+		//ones far with them, dithered by their alpha
+		using AuxDrawerPassDeferred::s_gbuffer_technique;
 		m_gbuffer_draws.clear();
 		for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE }))
 		{
 			if (randerable && randerable->can_draw())
 			{
-				m_gbuffer_draws.add(randerable, s_technique);
+				m_gbuffer_draws.add(randerable, s_gbuffer_technique);
+			}
+		}
+		if (!m_dithered.empty())
+		{
+			for (auto randerable : RenderableQuery(queues, { RQ_TRANSLUCENT }))
+			{
+				if (randerable && randerable->can_draw() && dithered(*randerable))
+				{
+					m_gbuffer_draws.add(randerable, s_gbuffer_technique);
+				}
 			}
 		}
 		m_gbuffer_draws.draw(render(), inputs);
@@ -589,6 +630,8 @@ namespace Render
 		m_rect = scaled_on ? scaled.rect() : Vec2(1.0f, 1.0f);
 		//(re)build buffers if needed
 		if (!build_buffers(size)) return;
+		//the translucent renderables far: into the G-Buffer, dithered (not blended)
+		choose_dithered(drawer, queues);
 		//post effects of the world
 		const auto& post_effects = drawer.post_effects();
 		//1) geometry into the G-Buffer
@@ -642,6 +685,36 @@ namespace Render
 		}
 	}
 
+	void DrawerPassDeferred::choose_dithered(const Drawer& drawer, const PoolQueues& queues)
+	{
+		m_dithered.clear();
+		const float distance = drawer.levels_of_detail().m_translucent_distance;
+		if (distance <= 0.0f)
+		{
+			return;
+		}
+		//(the depth of each one in the queue: from the camera)
+		for (auto it = queues[RQ_TRANSLUCENT].begin(); it != queues[RQ_TRANSLUCENT].end(); ++it)
+		{
+			const QueueElement* element = *it;
+			if (!element || element->m_depth < distance)
+			{
+				continue;
+			}
+			auto renderable = it.lock<Renderable>();
+			if (renderable && AuxDrawerPassDeferred::has_technique(*renderable, AuxDrawerPassDeferred::s_gbuffer_technique))
+			{
+				m_dithered.push_back(renderable.get());
+			}
+		}
+		std::sort(m_dithered.begin(), m_dithered.end());
+	}
+
+	bool DrawerPassDeferred::dithered(const Renderable& renderable) const
+	{
+		return std::binary_search(m_dithered.begin(), m_dithered.end(), &renderable);
+	}
+
 	void DrawerPassDeferred::translucent_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues)
 	{
 		if (!queues[RQ_TRANSLUCENT].size()) return;
@@ -669,6 +742,8 @@ namespace Render
 				, m_cb_point_shadow_light.get()
 				, m_cb_spot_shadow_light.get()
 			  }
+			//(the far ones: in the G-Buffer)
+			, [this](const Renderable& renderable) { return dithered(renderable); }
 		);
 		render().disable_render_target(m_light_target);
 		//restore state

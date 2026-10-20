@@ -31,7 +31,8 @@ parameters
 }
 
 //Translucent PBR: alpha blended, drawn after the opaque scene, back to front.
-//It is not written into the G-Buffer and it does not cast shadows (it receives them).
+//It is not written into the G-Buffer and it does not cast shadows (it receives them); far
+//(LevelOfDetailSettings::m_translucent_distance) it is: "deferred", dithered by its alpha.
 sub_effect
 {
     queue { type translucent }
@@ -61,6 +62,25 @@ sub_effect
             shader source
             {
                 #define FORWARD_RENDERING
+                #include "PBR.hlsl"
+            }
+        }
+    }
+    //deferred rendering pipeline, far: into the G-Buffer as an opaque surface, its pixels dropped
+    //by a pattern of its alpha (the dither: always)
+    technique "deferred"
+    {
+        variants skinned clip(mask, dither)
+        pass
+        {
+            zbuffer less
+            blend off
+            cullface param(cull)
+            lights off
+            shader source
+            {
+                #define DEFERRED_RENDERING
+                #define SQ_DITHER_ALWAYS
                 #include "PBR.hlsl"
             }
         }

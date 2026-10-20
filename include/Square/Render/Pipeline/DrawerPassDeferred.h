@@ -128,6 +128,12 @@ namespace Render
 
 		//the draws of the G-Buffer in batches (by pass and material)
 		DrawList         m_gbuffer_draws;
+		//the translucent renderables of the frame drawn into the G-Buffer, dithered (farther than
+		//LevelOfDetailSettings::m_translucent_distance, a "deferred" technique in each effect of
+		//theirs), sorted; chosen at the start of a frame
+		Vector<const Renderable*> m_dithered;
+		void choose_dithered(const Drawer& drawer, const PoolQueues& queues);
+		bool dithered(const Renderable& renderable) const;
 		//constant buffers
 		Shared<Render::ConstBuffer> m_cb_camera;
 		Shared<Render::ConstBuffer> m_cb_transform;
