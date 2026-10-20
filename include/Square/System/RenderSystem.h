@@ -18,6 +18,7 @@
 #include "Square/Render/Collection.h"
 #include "Square/Render/Pipeline/SoftwareOcclusion.h"
 #include "Square/Render/DynamicResolution.h"
+#include "Square/Render/DynamicThermal.h"
 
 namespace Square
 {
@@ -176,6 +177,12 @@ namespace Square
 		const Render::DynamicResolution::Settings& dynamic_resolution() const;
 		void dynamic_resolution(const Render::DynamicResolution::Settings& settings);
 		const Vec2& dynamic_scale() const;
+		//the scene lower while the device is hot (Render::DynamicThermal, by axis, times the
+		//scales above; its range 0: off), the share of it now, its level (0: cool, 1: all its range)
+		const Render::DynamicThermal::Settings& dynamic_thermal() const;
+		void dynamic_thermal(const Render::DynamicThermal::Settings& settings);
+		const Vec2& thermal_scale() const;
+		float thermal_level() const;
 		//the occlusion culling of its cameras on the CPU (Render::SoftwareOcclusion)
 		const Render::SoftwareOcclusion::Settings& occlusion() const;
 		void occlusion(const Render::SoftwareOcclusion::Settings& settings);
@@ -217,6 +224,12 @@ namespace Square
 		Vec2        m_resolution_scale{ 1.0f, 1.0f };
 		Render::DynamicResolution m_dynamic_resolution;
 		Vec2        m_dynamic_scale{ 1.0f, 1.0f };
+		Render::DynamicThermal m_dynamic_thermal;
+		Vec2        m_thermal_scale{ 1.0f, 1.0f };
+		float       m_thermal_logged{ 0.0f }; //the level of the heat last written in the log, its status
+		Video::ThermalStatus m_thermal_status_logged{ Video::ThermalStatus::UNKNOWN };
+		//the scale of the scene: its resolution scale, the dynamic one, the thermal one
+		Vec2 scene_scale() const;
 		//the rate of the frames of the dynamic resolution (its target, the limit of the
 		//application, the refresh of the screen, 60)
 		float dynamic_fps() const;

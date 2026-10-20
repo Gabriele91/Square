@@ -374,6 +374,11 @@ namespace Render
 		size_t                       m_descriptor_pool{ 0 };
 		//the bytes of the staging buffers of its uploads
 		VkDeviceSize                 m_staging_bytes{ 0 };
+		//the timestamps of its frame (its start, its end: the GPU time of the frame, every
+		//configuration), its start written, its end written too (read when the slot comes back)
+		VkQueryPool                  m_frame_queries{ VK_NULL_HANDLE };
+		bool                         m_frame_timing{ false };
+		bool                         m_frame_timed{ false };
 #if defined(RENDER_PROFILER)
 		VkQueryPool                  m_queries{ VK_NULL_HANDLE };
 #endif
@@ -411,6 +416,7 @@ namespace Render
 
 		virtual void set_vsync(bool vsync) override;
 		virtual bool set_frame_rate(unsigned int fps) override;
+		virtual float gpu_frame_ms() override;
 
 		virtual const ClearColorState& get_clear_color_state() override;
 		virtual void set_clear_color_state(const ClearColorState& cf) override;
@@ -640,6 +646,11 @@ namespace Render
 		//the swap chain, the default target (its image, the depth of the driver)
 		SwapChainVK              m_swapchain;
 		PresentTimingVK          m_present_timing; //the presents at the frame rate
+		//the GPU time of the last frame done (its timestamps; < 0: unknown); its timestamps at
+		//the start of a frame (the last one of its slot read), at its end
+		float                    m_gpu_frame_ms{ -1.0f };
+		void frame_timer_begin(FrameVK& current);
+		void frame_timer_end(FrameVK& current);
 		UniquePtr<Texture> m_default_depth;
 		Target                   m_default_target;
 		//the states

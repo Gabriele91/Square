@@ -290,6 +290,7 @@ namespace Square
 		if (m_profiler) m_profiler->begin_frame();
 		#endif
 		m_delta_time = delta_time;
+		if (m_render) m_render->frame_begin();
 		draw();
 		if (m_render)
 		{
@@ -361,7 +362,11 @@ namespace Square
 
 	void RenderSystem::present()
 	{
-		if (m_render) m_render->print_errors();
+		if (m_render)
+		{
+			m_render->frame_end();
+			m_render->print_errors();
+		}
 		if (auto* window = context().window()) window->swap();
 	}
 
@@ -448,7 +453,7 @@ namespace Square
 		m_resolution_scale = glm::clamp(scale, Vec2(0.1f), Vec2(1.0f));
 		if (m_drawer)
 		{
-			m_drawer->resolution_scale(m_resolution_scale * m_dynamic_scale);
+			m_drawer->resolution_scale(scene_scale());
 		}
 	}
 
@@ -465,6 +470,31 @@ namespace Square
 	const Vec2& RenderInstance::dynamic_scale() const
 	{
 		return m_dynamic_scale;
+	}
+
+	const Render::DynamicThermal::Settings& RenderInstance::dynamic_thermal() const
+	{
+		return m_dynamic_thermal.settings();
+	}
+
+	void RenderInstance::dynamic_thermal(const Render::DynamicThermal::Settings& settings)
+	{
+		m_dynamic_thermal.settings(settings);
+	}
+
+	const Vec2& RenderInstance::thermal_scale() const
+	{
+		return m_thermal_scale;
+	}
+
+	float RenderInstance::thermal_level() const
+	{
+		return m_dynamic_thermal.level();
+	}
+
+	Vec2 RenderInstance::scene_scale() const
+	{
+		return m_resolution_scale * m_dynamic_scale * m_thermal_scale;
 	}
 
 	float RenderInstance::dynamic_fps() const
@@ -552,7 +582,7 @@ namespace Square
 		m_drawer = MakeShared<Render::Drawer>(context());
 		m_drawer->post_effects(m_post_effects);
 		m_drawer->levels_of_detail(m_levels_of_detail);
-		m_drawer->resolution_scale(m_resolution_scale * m_dynamic_scale);
+		m_drawer->resolution_scale(scene_scale());
 		m_drawer->occlusion(m_occlusion);
 		if ((m_pipeline & RP_FORWARD) && !(m_pipeline & RP_DEFERRED))
 		{
@@ -596,11 +626,43 @@ namespace Square
 	{
 		if (!m_drawer) return;
 		//the scene lower while the frames are late
-		const Vec2 dynamic = m_dynamic_resolution.update(float(delta_time), dynamic_fps());
-		if (glm::any(glm::greaterThan(glm::abs(dynamic - m_dynamic_scale), Vec2(0.001f))))
+		//(the GPU time of the frames: the driver, when it knows it)
+		float gpu_ms = -1.0f;
+		if (auto system = System::get<RenderSystem>(context()))
+		{
+			if (Render::Context* render = system->render())
+			{
+				gpu_ms = render->gpu_frame_ms();
+			}
+		}
+		const Vec2 dynamic = m_dynamic_resolution.update(float(delta_time), dynamic_fps(), gpu_ms);
+		//the scene lower while the device is hot (the device of the window of the application)
+		Video::DeviceResources* device = nullptr;
+		if (Application* app = Application::instance())
+		{
+			if (Video::Window* window = app->window())
+			{
+				device = window->device();
+			}
+		}
+		const Vec2 thermal = m_dynamic_thermal.update(float(delta_time), device);
+		const bool dynamic_changed = glm::any(glm::greaterThan(glm::abs(dynamic - m_dynamic_scale), Vec2(0.001f)));
+		const bool thermal_changed = glm::any(glm::greaterThan(glm::abs(thermal - m_thermal_scale), Vec2(0.001f)));
+		if (dynamic_changed || thermal_changed)
 		{
 			m_dynamic_scale = dynamic;
-			m_drawer->resolution_scale(m_resolution_scale * m_dynamic_scale);
+			m_thermal_scale = thermal;
+			m_drawer->resolution_scale(scene_scale());
+		}
+		//(the heat in the log at each status, at each step of a tenth of its level)
+		static constexpr float s_thermal_log_step = 0.1f;
+		const Video::ThermalState& state = m_dynamic_thermal.state();
+		const bool status_changed = state.m_status != m_thermal_status_logged;
+		if (status_changed || std::abs(m_dynamic_thermal.level() - m_thermal_logged) >= s_thermal_log_step)
+		{
+			m_thermal_logged = m_dynamic_thermal.level();
+			m_thermal_status_logged = state.m_status;
+			context().logger()->info("Thermal: status " + to_string(int(state.m_status)) + ", headroom " + to_string(state.m_headroom) + ", level " + to_string(m_thermal_logged) + ", scene " + to_string(m_thermal_scale.x));
 		}
 		m_time += delta_time;
 		m_drawer->time(Vec2(float(m_time), float(delta_time)));

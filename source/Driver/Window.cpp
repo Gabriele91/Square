@@ -20,6 +20,11 @@ namespace Video
 		return 0;
 	}
 
+	bool DeviceResources::get_thermal(int forecast, ThermalState& state)
+	{
+		return false;
+	}
+
 	unsigned int DeviceResources::swap_interval(unsigned int refresh, unsigned int fps)
 	{
 		//at most 4 vsyncs (DXGI), a refresh of 59 Hz as 60

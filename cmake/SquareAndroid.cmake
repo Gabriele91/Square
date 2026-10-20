@@ -136,6 +136,17 @@ macro(square_android_values target)
     set(SQUARE_ANDROID_VERSION_CODE "${APP_VERSION_CODE}")
     set(SQUARE_ANDROID_MIN_SDK "${ANDROID_PLATFORM_LEVEL}")
     set(SQUARE_ANDROID_ABI "${ANDROID_ABI}")
+    # the APK profileable by adb (simpleperf, the profiler of Android Studio) with the profiler of
+    # the engine: SQUARE_RENDER_PROFILER, never in Retail (the build that ships); the element of
+    # the manifest, else none
+    set(SQUARE_PERF OFF)
+    if(SQUARE_RENDER_PROFILER AND NOT SQUARE_ANDROID_CONFIG STREQUAL "Retail")
+        set(SQUARE_PERF ON)
+    endif()
+    set(SQUARE_PERF_MANIFEST "")
+    if(SQUARE_PERF)
+        set(SQUARE_PERF_MANIFEST "<profileable android:shell=\"true\" />")
+    endif()
 endmacro()
 
 # the project: the static files, the templates, the icon, the SDK

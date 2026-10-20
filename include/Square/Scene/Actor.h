@@ -53,8 +53,9 @@ namespace Scene
 		Actor(Context& context, const String& name);
         virtual ~Actor();
         
-        // Visit
-        void visit(const std::function<bool(Shared<Actor>)>& callback);
+        // Visit (the actor, then its children while the callback says true; the actor by
+        // reference: a callback taking it by value still fits, it copies it)
+        void visit(const std::function<bool(const Shared<Actor>&)>& callback);
 
         //add a child
         void add(Shared<Actor> child);

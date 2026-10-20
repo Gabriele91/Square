@@ -36,6 +36,9 @@ namespace Android
 		virtual bool set_frame_rate(unsigned int fps) override;
 		//the frame rate again on a new native window (back from the background)
 		void apply_frame_rate();
+		//the heat of the phone (AThermal: its status Android 11+, its headroom Android 12+), read
+		//at most once a second (the system: no headroom more often), the last one between
+		virtual bool get_thermal(int forecast, ThermalState& state) override;
 
 		//the size of the native window (the size of the swap chain)
 		virtual unsigned int width() override;
@@ -62,6 +65,13 @@ namespace Android
 		const WindowAndroid& m_window;
 		bool                 m_vsync{ true };
 		unsigned int         m_frame_rate{ 0 };
+		//AThermal: libandroid, its manager (none: no AThermal), the last state read and when
+		void*                m_thermal_library{ nullptr };
+		void*                m_thermal_manager{ nullptr };
+		bool                 m_thermal_opened{ false };
+		ThermalState         m_thermal;
+		double               m_thermal_ms{ 0.0 };
+		void read_thermal(int forecast);
 		std::function<void(DeviceResources*)> m_callback{ nullptr };
 	};
 

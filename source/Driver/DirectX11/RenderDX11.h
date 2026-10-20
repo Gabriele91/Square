@@ -459,6 +459,9 @@ namespace Render
 		virtual bool init(Video::DeviceResources* resource) override;
 		virtual void set_vsync(bool vsync) override;
 		virtual bool set_frame_rate(unsigned int fps) override;
+		virtual float gpu_frame_ms() override;
+		virtual void frame_begin() override;
+		virtual void frame_end() override;
 		virtual void close() override;
 		virtual bool is_srgb_framebuffer() const override;
 
@@ -684,6 +687,24 @@ namespace Render
 		///////////////////////////////////////////////////////////////////////////////////
 		bool dx_op_success(HRESULT h) const;
 		mutable List<String> m_errors;
+		///////////////////////////////////////////////////////////////////////////////////
+		//the GPU time of its frames: a ring of their queries (its clock, its start, its end),
+		//each read some frames later when done (no flush, no wait)
+		struct FrameTimer
+		{
+			ID3D11Query* m_disjoint{ nullptr };
+			ID3D11Query* m_start{ nullptr };
+			ID3D11Query* m_end{ nullptr };
+			bool         m_pending{ false };
+		};
+		static constexpr size_t FRAME_TIMERS = 4;
+		FrameTimer m_frame_timers[FRAME_TIMERS];
+		size_t     m_frame_timer{ 0 };      //the slot of the frame now
+		bool       m_frame_timing{ false };
+		float      m_gpu_frame_ms{ -1.0f };
+		//the frames done, from the oldest (one not done: the newer ones neither)
+		void read_frame_timers();
+		void release_frame_timers();
 		///////////////////////////////////////////////////////////////////////////////////
 #if defined(RENDER_PROFILER)
 		//GPU timer

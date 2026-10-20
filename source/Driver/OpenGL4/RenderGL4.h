@@ -497,6 +497,9 @@ namespace Render
 
 		virtual void set_vsync(bool vsync) override;
 		virtual bool set_frame_rate(unsigned int fps) override;
+		virtual float gpu_frame_ms() override;
+		virtual void frame_begin() override;
+		virtual void frame_end() override;
 
 		virtual const ClearColorState& get_clear_color_state() override;
 		virtual void set_clear_color_state(const ClearColorState& cf) override;
@@ -700,6 +703,22 @@ namespace Render
 #endif
 		//its window (its vsync, its swap interval: every configuration, Retail too)
 		Video::DeviceResources* m_resources{ nullptr };
+		//the GPU time of its frames: a ring of their timestamps (start, end), each read some
+		//frames later when available (no wait)
+		struct FrameTimer
+		{
+			GLuint m_start{ 0 };
+			GLuint m_end{ 0 };
+			bool   m_pending{ false };
+		};
+		static constexpr size_t FRAME_TIMERS = 4;
+		FrameTimer m_frame_timers[FRAME_TIMERS];
+		size_t     m_frame_timer{ 0 };      //the slot of the frame now
+		bool       m_frame_timing{ false };
+		int        m_frame_timer_bits{ -1 }; //the bits of the timestamps (0: none; < 0: not asked yet)
+		float      m_gpu_frame_ms{ -1.0f };
+		//the frames done, from the oldest (one not available: the newer ones neither)
+		void read_frame_timers();
 	};
 }
 }

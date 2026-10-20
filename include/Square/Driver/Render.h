@@ -1033,6 +1033,13 @@ namespace Render
 		//frames: the vsync, the frames a second at most (0: none; false: the driver can not keep them)
 		virtual void set_vsync(bool vsync) = 0;
 		virtual bool set_frame_rate(unsigned int fps) = 0;
+		//the GPU time of the last frame done, ms (its commands, from their start to their end;
+		//< 0: unknown, a driver without the timestamps of its frames)
+		virtual float gpu_frame_ms() = 0;
+		//a frame: its commands begin, they end (before its present), by the render system; the
+		//timestamps of its GPU time for a driver that does not see its frames (none by default)
+		virtual void frame_begin() {}
+		virtual void frame_end() {}
 
 		virtual const ClearColorState& get_clear_color_state() = 0;
 		virtual void set_clear_color_state(const ClearColorState& cf) = 0;

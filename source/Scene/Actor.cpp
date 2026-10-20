@@ -246,15 +246,27 @@ namespace Scene
         }
     }
 
-    void Actor::visit(const std::function<bool(Shared<Actor>)>& callback)
+    namespace AuxActor
     {
-        if (callback(shared_from_this()))
+        //an actor, then its children (each one kept while it is visited: a callback may remove
+        //it from its parent); the actor of the callback by reference (no copy of each node)
+        static void visit(const Shared<Actor>& actor, const std::function<bool(const Shared<Actor>&)>& callback)
         {
-            for (auto child : childs())
+            if (!callback(actor))
             {
-                child->visit(callback);
+                return;
+            }
+            for (Shared<Actor> child : actor->childs())
+            {
+                visit(child, callback);
             }
         }
+    }
+
+    void Actor::visit(const std::function<bool(const Shared<Actor>&)>& callback)
+    {
+        //(the shared pointer of the root once, not of every node)
+        AuxActor::visit(shared_from_this(), callback);
     }
     
     //add a child

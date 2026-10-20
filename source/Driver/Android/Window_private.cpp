@@ -9,7 +9,10 @@
 #include "Input_private.h"
 #include "Square/Core/Application.h"
 #include "Square/Core/SharedLibrary.h"
+#include "Square/Core/Time.h"
 #include <algorithm>
+#include <cmath>
+#include <iterator>
 
 namespace Square
 {
@@ -17,11 +20,50 @@ namespace Video
 {
 namespace Android
 {
+	namespace AuxWindowAndroid
+	{
+		//AThermal (Android 11, API 30; its headroom Android 12, API 31: the application runs from
+		//Android 10, its functions looked for at run time, in libandroid)
+		using ThermalAcquire = void* (*)();
+		using ThermalRelease = void (*)(void* manager);
+		using ThermalStatusOf = int (*)(void* manager);
+		using ThermalHeadroom = float (*)(void* manager, int forecast);
+
+		//the status by the one of AThermal (ATHERMAL_STATUS_NONE 0 ... SHUTDOWN 6; ERROR -1: unknown)
+		static const ThermalStatus s_thermal_status[] =
+		{
+			ThermalStatus::NONE,
+			ThermalStatus::LIGHT,
+			ThermalStatus::MODERATE,
+			ThermalStatus::SEVERE,
+			ThermalStatus::CRITICAL,
+			ThermalStatus::EMERGENCY,
+			ThermalStatus::SHUTDOWN
+		};
+
+		//the system: a headroom at most once a second (else none)
+		static constexpr double s_thermal_period_ms = 1000.0;
+	}
+
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DEVICE RESOURCES
 	DeviceResourcesAVK::DeviceResourcesAVK(const WindowAndroid& window) : m_window(window) {}
 
-	DeviceResourcesAVK::~DeviceResourcesAVK() {}
+	DeviceResourcesAVK::~DeviceResourcesAVK()
+	{
+		using namespace AuxWindowAndroid;
+		if (m_thermal_manager)
+		{
+			if (auto release = (ThermalRelease)SharedLibrary::get(m_thermal_library, "AThermal_releaseManager"))
+			{
+				release(m_thermal_manager);
+			}
+		}
+		if (m_thermal_library)
+		{
+			SharedLibrary::close(m_thermal_library);
+		}
+	}
 
 	void DeviceResourcesAVK::callback_target_changed(std::function<void(DeviceResources*)> callback)
 	{
@@ -72,6 +114,53 @@ namespace Android
 			}
 		}
 		SharedLibrary::close(library);
+	}
+
+	bool DeviceResourcesAVK::get_thermal(int forecast, ThermalState& state)
+	{
+		const double now_ms = Time::get_ms_time();
+		if (!m_thermal_opened || now_ms - m_thermal_ms >= AuxWindowAndroid::s_thermal_period_ms)
+		{
+			m_thermal_ms = now_ms;
+			read_thermal(forecast);
+		}
+		state = m_thermal;
+		return m_thermal.m_status != ThermalStatus::UNKNOWN || m_thermal.m_headroom >= 0.0f;
+	}
+
+	void DeviceResourcesAVK::read_thermal(int forecast)
+	{
+		using namespace AuxWindowAndroid;
+		//its manager once (none: an Android before 11)
+		if (!m_thermal_opened)
+		{
+			m_thermal_opened = true;
+			m_thermal_library = SharedLibrary::open("libandroid.so");
+			auto acquire = m_thermal_library ? (ThermalAcquire)SharedLibrary::get(m_thermal_library, "AThermal_acquireManager") : nullptr;
+			m_thermal_manager = acquire ? acquire() : nullptr;
+		}
+		if (!m_thermal_manager)
+		{
+			return;
+		}
+		m_thermal = ThermalState();
+		if (auto status_of = (ThermalStatusOf)SharedLibrary::get(m_thermal_library, "AThermal_getCurrentThermalStatus"))
+		{
+			const int status = status_of(m_thermal_manager);
+			if (status >= 0 && status < int(std::size(s_thermal_status)))
+			{
+				m_thermal.m_status = s_thermal_status[status];
+			}
+		}
+		//(NaN: unknown, as an Android 11 or a read too soon)
+		if (auto headroom_of = (ThermalHeadroom)SharedLibrary::get(m_thermal_library, "AThermal_getThermalHeadroom"))
+		{
+			const float headroom = headroom_of(m_thermal_manager, forecast);
+			if (std::isfinite(headroom))
+			{
+				m_thermal.m_headroom = std::max(headroom, 0.0f);
+			}
+		}
 	}
 
 	unsigned int DeviceResourcesAVK::width()

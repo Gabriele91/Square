@@ -563,6 +563,18 @@ void ContextMTL::commit_frame()
     if (m_cmd_buf)
     {
         present_drawable();
+        //its GPU time, when it is done (from the start to the end of its commands)
+        if (@available(macOS 10.15, iOS 10.3, *))
+        {
+            Shared<std::atomic<float>> gpu_frame_ms = m_gpu_frame_ms;
+            [m_cmd_buf addCompletedHandler:^(id<MTLCommandBuffer> command_buffer)
+            {
+                if (command_buffer.GPUEndTime > command_buffer.GPUStartTime)
+                {
+                    gpu_frame_ms->store(float((command_buffer.GPUEndTime - command_buffer.GPUStartTime) * 1000.0));
+                }
+            }];
+        }
         [m_cmd_buf commit];
         m_cmd_buf = nil;
     }
@@ -819,6 +831,11 @@ bool ContextMTL::set_frame_rate(unsigned int fps)
         m_frame_rate = fps;
     }
     return m_frame_rate != 0;
+}
+
+float ContextMTL::gpu_frame_ms()
+{
+    return m_gpu_frame_ms ? m_gpu_frame_ms->load() : -1.0f;
 }
 
 bool ContextMTL::init(Video::DeviceResources* resource)

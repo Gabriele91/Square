@@ -130,7 +130,7 @@ namespace Scene
 		return new_actor;
 	}
 	
-	void Level::visit(const std::function<bool(Shared<Actor>)>& callback)
+	void Level::visit(const std::function<bool(const Shared<Actor>&)>& callback)
 	{
 		for (auto actor : m_actors)
 		{
@@ -312,7 +312,7 @@ namespace Scene
 	void Level::update(double delta_time)
 	{
 		if (!m_active || m_paused) return;
-		visit([delta_time](Shared<Actor> actor) -> bool
+		visit([delta_time](const Shared<Actor>& actor) -> bool
 		{
 			for (auto& component : actor->components()) component.second->on_update(delta_time);
 			return true;
@@ -321,7 +321,7 @@ namespace Scene
 	void Level::late_update(double delta_time)
 	{
 		if (!m_active || m_paused) return;
-		visit([delta_time](Shared<Actor> actor) -> bool
+		visit([delta_time](const Shared<Actor>& actor) -> bool
 		{
 			for (auto& component : actor->components()) component.second->on_late_update(delta_time);
 			return true;

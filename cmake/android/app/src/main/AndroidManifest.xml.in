@@ -16,6 +16,10 @@
         android:appCategory="game"
         android:theme="@style/Theme.Square">
 
+        <!-- its CPU profiled by adb (simpleperf, the Android Studio profiler) with the profiler of
+             the engine (SQUARE_RENDER_PROFILER: Debug and Release; never Retail, nothing here) -->
+        @SQUARE_PERF_MANIFEST@
+
         <activity
             android:name="android.app.NativeActivity"
             android:exported="true"

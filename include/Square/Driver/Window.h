@@ -94,6 +94,27 @@ namespace Video
 		WindowInfo(Screen* screen) :m_screen(screen) {}
 	};
 
+	//the heat of a device as its system says it (the state of its throttling)
+	enum class ThermalStatus
+	{
+		UNKNOWN,
+		NONE,
+		LIGHT,
+		MODERATE,
+		SEVERE,
+		CRITICAL,
+		EMERGENCY,
+		SHUTDOWN
+	};
+
+	//the heat of a device: its status, its headroom (some seconds ahead: 0 cool, 1 the system
+	//slows it hard, more: over; < 0 unknown)
+	struct SQUARE_API ThermalState
+	{
+		ThermalStatus m_status{ ThermalStatus::UNKNOWN };
+		float         m_headroom{ -1.0f };
+	};
+
 	struct SQUARE_API DeviceResources
 	{
 	public:
@@ -112,6 +133,9 @@ namespace Video
 		virtual unsigned int get_refresh();
 		//the vsyncs of a frame at a frame rate (0: the rate is not a divisor of the refresh)
 		static unsigned int swap_interval(unsigned int refresh, unsigned int fps);
+		//the heat of its device, its headroom forecast seconds ahead (false: unknown, by default;
+		//a phone: Android 11+, its headroom Android 12+)
+		virtual bool get_thermal(int forecast, ThermalState& state);
 
 		virtual void* get_device() = 0;
 		virtual void* get_device_context(size_t i=0) = 0;

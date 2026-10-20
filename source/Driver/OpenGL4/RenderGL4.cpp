@@ -1023,6 +1023,64 @@ namespace Render
 		return m_resources && m_resources->set_frame_rate(fps);
 	}
 
+	float ContextGL4::gpu_frame_ms()
+	{
+		return m_gpu_frame_ms;
+	}
+
+	void ContextGL4::frame_begin()
+	{
+		//the timestamps of the device (none: no time)
+		if (m_frame_timer_bits < 0)
+		{
+			GLint bits = 0;
+			glGetQueryiv(GL_TIMESTAMP, GL_QUERY_COUNTER_BITS, &bits);
+			m_frame_timer_bits = int(bits);
+		}
+		if (m_frame_timer_bits == 0) return;
+		read_frame_timers();
+		//the slot of this frame (one still not available: lost, the GPU too far behind)
+		FrameTimer& timer = m_frame_timers[m_frame_timer % FRAME_TIMERS];
+		if (!timer.m_start)
+		{
+			glGenQueries(1, &timer.m_start);
+			glGenQueries(1, &timer.m_end);
+		}
+		timer.m_pending = false;
+		glQueryCounter(timer.m_start, GL_TIMESTAMP);
+		m_frame_timing = true;
+	}
+
+	void ContextGL4::frame_end()
+	{
+		if (!m_frame_timing) return;
+		FrameTimer& timer = m_frame_timers[m_frame_timer % FRAME_TIMERS];
+		glQueryCounter(timer.m_end, GL_TIMESTAMP);
+		timer.m_pending = true;
+		m_frame_timing = false;
+		++m_frame_timer;
+	}
+
+	void ContextGL4::read_frame_timers()
+	{
+		//from the oldest slot (the one of this frame, written the longest ago) to the newest
+		for (size_t i = 0; i != FRAME_TIMERS; ++i)
+		{
+			FrameTimer& timer = m_frame_timers[(m_frame_timer + i) % FRAME_TIMERS];
+			if (!timer.m_pending) continue;
+			GLint available = 0;
+			glGetQueryObjectiv(timer.m_end, GL_QUERY_RESULT_AVAILABLE, &available);
+			if (!available) return;
+			GLuint64 start = 0;
+			GLuint64 end = 0;
+			glGetQueryObjectui64v(timer.m_start, GL_QUERY_RESULT, &start);
+			glGetQueryObjectui64v(timer.m_end, GL_QUERY_RESULT, &end);
+			timer.m_pending = false;
+			//(nanoseconds)
+			if (end > start) m_gpu_frame_ms = float(double(end - start) * 1.0e-6);
+		}
+	}
+
 	bool ContextGL4::init(Video::DeviceResources* resource)
 	{
 		//init glad
@@ -1144,6 +1202,13 @@ namespace Render
 	void ContextGL4::close()
 	{
 		if (s_vao_attributes) glDeleteVertexArrays(1, &s_vao_attributes);
+		for (FrameTimer& timer : m_frame_timers)
+		{
+			if (timer.m_start) glDeleteQueries(1, &timer.m_start);
+			if (timer.m_end) glDeleteQueries(1, &timer.m_end);
+			timer = FrameTimer();
+		}
+		m_frame_timing = false;
 #if defined(RENDER_PROFILER)
 		for (GpuTimerFrame& frame : m_gpu_timer_frames)
 		{

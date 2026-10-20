@@ -615,6 +615,77 @@ namespace Render
 		return m_device_resouces && m_device_resouces->set_frame_rate(fps);
 	}
 
+	float ContextDX11::gpu_frame_ms()
+	{
+		return m_gpu_frame_ms;
+	}
+
+	void ContextDX11::frame_begin()
+	{
+		if (!device() || !device_context()) return;
+		read_frame_timers();
+		//the slot of this frame (one still not done: lost, the GPU too far behind)
+		FrameTimer& timer = m_frame_timers[m_frame_timer % FRAME_TIMERS];
+		if (!timer.m_disjoint)
+		{
+			const D3D11_QUERY_DESC disjoint{ D3D11_QUERY_TIMESTAMP_DISJOINT, 0 };
+			const D3D11_QUERY_DESC stamp{ D3D11_QUERY_TIMESTAMP, 0 };
+			if (!dx_op_success(device()->CreateQuery(&disjoint, &timer.m_disjoint))
+			||  !dx_op_success(device()->CreateQuery(&stamp, &timer.m_start))
+			||  !dx_op_success(device()->CreateQuery(&stamp, &timer.m_end)))
+			{
+				return;
+			}
+		}
+		timer.m_pending = false;
+		device_context()->Begin(timer.m_disjoint);
+		device_context()->End(timer.m_start);
+		m_frame_timing = true;
+	}
+
+	void ContextDX11::frame_end()
+	{
+		if (!m_frame_timing) return;
+		FrameTimer& timer = m_frame_timers[m_frame_timer % FRAME_TIMERS];
+		device_context()->End(timer.m_end);
+		device_context()->End(timer.m_disjoint);
+		timer.m_pending = true;
+		m_frame_timing = false;
+		++m_frame_timer;
+	}
+
+	void ContextDX11::read_frame_timers()
+	{
+		//from the oldest slot (the one of this frame, written the longest ago) to the newest
+		for (size_t i = 0; i != FRAME_TIMERS; ++i)
+		{
+			FrameTimer& timer = m_frame_timers[(m_frame_timer + i) % FRAME_TIMERS];
+			if (!timer.m_pending) continue;
+			D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint{};
+			if (device_context()->GetData(timer.m_disjoint, &disjoint, sizeof(disjoint), D3D11_ASYNC_GETDATA_DONOTFLUSH) != S_OK) return;
+			UINT64 start = 0;
+			UINT64 end = 0;
+			if (device_context()->GetData(timer.m_start, &start, sizeof(start), D3D11_ASYNC_GETDATA_DONOTFLUSH) != S_OK) return;
+			if (device_context()->GetData(timer.m_end, &end, sizeof(end), D3D11_ASYNC_GETDATA_DONOTFLUSH) != S_OK) return;
+			timer.m_pending = false;
+			//(the clock changed in the frame: its time is wrong)
+			if (disjoint.Disjoint || !disjoint.Frequency || end <= start) continue;
+			m_gpu_frame_ms = float(double(end - start) * 1000.0 / double(disjoint.Frequency));
+		}
+	}
+
+	void ContextDX11::release_frame_timers()
+	{
+		for (FrameTimer& timer : m_frame_timers)
+		{
+			if (timer.m_disjoint) timer.m_disjoint->Release();
+			if (timer.m_start) timer.m_start->Release();
+			if (timer.m_end) timer.m_end->Release();
+			timer = FrameTimer();
+		}
+		m_frame_timing = false;
+	}
+
 	bool ContextDX11::init(Video::DeviceResources* resource)
 	{
 		//save ref to device resouces
@@ -686,6 +757,7 @@ namespace Render
 
 	void ContextDX11::close()
 	{
+		release_frame_timers();
 #if defined(RENDER_PROFILER)
 		release_gpu_timer();
 #endif

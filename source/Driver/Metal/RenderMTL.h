@@ -359,6 +359,7 @@ namespace Render
 
         virtual void set_vsync(bool vsync) override;
         virtual bool set_frame_rate(unsigned int fps) override;
+        virtual float gpu_frame_ms() override;
 
         virtual const ClearColorState& get_clear_color_state() override;
         virtual void set_clear_color_state(const ClearColorState& cf) override;
@@ -494,6 +495,9 @@ namespace Render
         CAMetalLayer*               m_layer        { nil };
         Video::DeviceResources*     m_resources    { nullptr }; //its window (its vsync)
         unsigned int                m_frame_rate   { 0 };       //frames a second at most of its presents (0: none)
+        //the GPU time of the last frame done, ms (< 0: none yet): written by the handler of its
+        //command buffer (a thread of Metal), shared with it (it may end after the context)
+        Shared<std::atomic<float>>  m_gpu_frame_ms { MakeShared<std::atomic<float>>(-1.0f) };
         id<MTLCommandQueue>         m_queue        { nil };
         id<MTLCommandBuffer>        m_cmd_buf      { nil };
         id<MTLRenderCommandEncoder> m_encoder      { nil };

@@ -195,6 +195,11 @@ namespace Render
 		return m_present_timing.frame_rate(fps, m_resources->get_refresh());
 	}
 
+	float ContextVK::gpu_frame_ms()
+	{
+		return m_gpu_frame_ms;
+	}
+
 	bool ContextVK::init(Video::DeviceResources* resource)
 	{
 		m_resources = resource;
@@ -514,6 +519,14 @@ namespace Render
 			if (vkCreateFence(m_device, &fence, AllocationVK::callbacks(), &frame.m_fence) != VK_SUCCESS) return false;
 			VkSemaphoreCreateInfo semaphore{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
 			if (vkCreateSemaphore(m_device, &semaphore, AllocationVK::callbacks(), &frame.m_acquired) != VK_SUCCESS) return false;
+			//the timestamps of the frame (every configuration: the dynamic resolution)
+			if (m_properties.limits.timestampComputeAndGraphics)
+			{
+				VkQueryPoolCreateInfo queries{ VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO };
+				queries.queryType = VK_QUERY_TYPE_TIMESTAMP;
+				queries.queryCount = 2;
+				vkCreateQueryPool(m_device, &queries, AllocationVK::callbacks(), &frame.m_frame_queries);
+			}
 #if defined(RENDER_PROFILER)
 			if (m_properties.limits.timestampComputeAndGraphics)
 			{
@@ -595,6 +608,10 @@ namespace Render
 			if (frame.m_pool) vkDestroyCommandPool(m_device, frame.m_pool, AllocationVK::callbacks());
 			if (frame.m_fence) vkDestroyFence(m_device, frame.m_fence, AllocationVK::callbacks());
 			if (frame.m_acquired) vkDestroySemaphore(m_device, frame.m_acquired, AllocationVK::callbacks());
+			if (frame.m_frame_queries)
+			{
+				vkDestroyQueryPool(m_device, frame.m_frame_queries, AllocationVK::callbacks());
+			}
 #if defined(RENDER_PROFILER)
 			if (frame.m_queries) vkDestroyQueryPool(m_device, frame.m_queries, AllocationVK::callbacks());
 #endif
@@ -923,11 +940,46 @@ namespace Render
 		VkCommandBufferBeginInfo begin{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 		begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 		vkBeginCommandBuffer(current.m_commands, &begin);
+		frame_timer_begin(current);
 		current.m_uploads_open = false;
 		m_frame_open = true;
 		m_pass_open = false;
 		m_bound_pipeline = VK_NULL_HANDLE;
 		m_dynamic_dirty = true;
+	}
+
+	void ContextVK::frame_timer_begin(FrameVK& current)
+	{
+		if (!current.m_frame_queries)
+		{
+			return;
+		}
+		//the last frame of this slot: done (its fence waited), its time
+		if (current.m_frame_timed)
+		{
+			uint64_t stamps[2] = { 0, 0 };
+			const VkResult result = vkGetQueryPoolResults(m_device, current.m_frame_queries, 0, 2, sizeof(stamps), stamps, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT);
+			if (result == VK_SUCCESS && stamps[1] > stamps[0])
+			{
+				const double period_ms = double(m_properties.limits.timestampPeriod) * 1.0e-6;
+				m_gpu_frame_ms = float(double(stamps[1] - stamps[0]) * period_ms);
+			}
+		}
+		current.m_frame_timed = false;
+		vkCmdResetQueryPool(current.m_commands, current.m_frame_queries, 0, 2);
+		vkCmdWriteTimestamp(current.m_commands, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, current.m_frame_queries, 0);
+		current.m_frame_timing = true;
+	}
+
+	void ContextVK::frame_timer_end(FrameVK& current)
+	{
+		if (!current.m_frame_timing)
+		{
+			return;
+		}
+		vkCmdWriteTimestamp(current.m_commands, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, current.m_frame_queries, 1);
+		current.m_frame_timing = false;
+		current.m_frame_timed = true;
 	}
 
 	VkCommandBuffer ContextVK::commands()
@@ -964,6 +1016,7 @@ namespace Render
 			gpu_timer_end_frame();
 		}
 #endif
+		frame_timer_end(current);
 		Vector<VkCommandBuffer> buffers;
 		if (current.m_uploads_open)
 		{
@@ -1010,6 +1063,8 @@ namespace Render
 		if (!m_frame_open) return;
 		FrameVK& current = frame();
 		end_render_pass();
+		//(a frame cut by a flush: not timed)
+		current.m_frame_timing = false;
 		Vector<VkCommandBuffer> buffers;
 		if (current.m_uploads_open)
 		{
