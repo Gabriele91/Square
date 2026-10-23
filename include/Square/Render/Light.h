@@ -149,9 +149,10 @@ namespace Render
 
 		// For CSM
 		virtual void set_scene_size(const Geometry::AABoundingBox& scene);
-		//its cascades stay where they are while the camera moves a little (a directional light
-		//with stable cascades: the shadow pass keeps their static casters in a cache)
+		//its cascades stay where they are while the camera moves a little 
 		virtual bool stable_cascades() const { return false; }
+		// number of cascades that are updated with dynamic objects 
+		virtual unsigned int dynamic_cascades() const { return 3; }
 
 		//get viewport shadow camera
 

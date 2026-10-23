@@ -1,6 +1,7 @@
 //include
 #include <unordered_map>
 #include "Square/Config.h"
+#include "Square/Core/Environment.h"
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/SharedLibrary.h"
 #include "Square/Core/Logger.h"
@@ -122,7 +123,7 @@ namespace Render
         #if defined(WIN32)
             Vector<String> locations;
         #else
-            Vector<String> locations = get_shared_lib_env_paths();
+            Vector<String> locations = Environment::library_paths();
         #endif
         locations.push_back(program_dir());
         #if !defined(WIN32)

@@ -12,15 +12,29 @@
 set(SQUARE_PLATFORM "desktop" CACHE STRING "The platform of the build: desktop, android")
 set_property(CACHE SQUARE_PLATFORM PROPERTY STRINGS desktop android)
 
-# the Android SDK of the host (its platform tools: adb)
+# the Android SDK of the host (its platform tools: adb): the variables, then where it is installed
+# by default (Android Studio, the packages of the system)
 function(square_platform_android_sdk out)
     set(candidates "$ENV{ANDROID_HOME}" "$ENV{ANDROID_SDK_ROOT}")
     if(CMAKE_HOST_WIN32)
-        list(APPEND candidates "$ENV{LOCALAPPDATA}/Android/Sdk")
+        list(APPEND candidates
+            "$ENV{LOCALAPPDATA}/Android/Sdk"
+            "$ENV{APPDATA}/Android/Sdk"
+            "$ENV{USERPROFILE}/Android/Sdk"
+            "C:/Android/Sdk"
+            "C:/Program Files (x86)/Android/android-sdk")
     elseif(CMAKE_HOST_APPLE)
-        list(APPEND candidates "$ENV{HOME}/Library/Android/sdk")
+        list(APPEND candidates
+            "$ENV{HOME}/Library/Android/sdk"
+            "/opt/homebrew/share/android-commandlinetools"
+            "/usr/local/share/android-commandlinetools")
     else()
-        list(APPEND candidates "$ENV{HOME}/Android/Sdk")
+        list(APPEND candidates
+            "$ENV{HOME}/Android/Sdk"
+            "$ENV{HOME}/Android/sdk"
+            "$ENV{HOME}/android-sdk"
+            "/opt/android-sdk"
+            "/usr/lib/android-sdk")
     endif()
     foreach(candidate ${candidates})
         if(candidate AND EXISTS "${candidate}/platform-tools")

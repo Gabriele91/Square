@@ -10,6 +10,7 @@
 #include <HLSL2ALL/HLSL2ALL.h>
 //Square includes
 #include "Square/Config.h"
+#include "Square/Core/Environment.h"
 #include "Square/System/RenderSystem.h"
 #include "Square/Core/Application.h"
 #include "Square/Core/Filesystem.h"
@@ -605,7 +606,8 @@ namespace Resource
 #ifdef SQUARE_DEBUG_TOOLS
 		//the GLSL made, in a folder (SQUARE_DUMP_GLSL): what the driver compiles, by stage, named
 		//by the hash of the vertex source (the stages of a shader together)
-		if (const char* dump = std::getenv("SQUARE_DUMP_GLSL"))
+		const String dump = Environment::variable("SQUARE_DUMP_GLSL");
+		if (dump.size())
 		{
 			const size_t id = std::hash<String>()(shader_sources[Render::ST_VERTEX_SHADER] + shader_sources[Render::ST_FRAGMENT_SHADER]);
 			for (const ShaderStage& stage : stages)

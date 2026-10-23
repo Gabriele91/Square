@@ -15,3 +15,6 @@ add_subdirectory(ShaderPack)
 # AssetPack: the archives of the resources of a game for the release of a platform (the compression
 # of its textures, the same images in one file, a report)
 add_subdirectory(AssetPack)
+# Builder: the builds of a game (cmake, ninja, a compiler or an SDK; Debug, Release, Retail; its
+# release, its deploy on a mobile), a command line and a window
+add_subdirectory(Builder)

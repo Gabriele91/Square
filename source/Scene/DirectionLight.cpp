@@ -88,10 +88,10 @@ namespace Scene
 		, [](DirectionLight* plight, const float& margin) { plight->cascade_margin(margin); });
 
 		ctx.add_attribute_function<DirectionLight, int>
-		("cascade_moves"
+		("cascade_max_updates_per_frame"
 		, int(0)
-		, [](const DirectionLight* plight) -> int      { return int(plight->cascade_moves()); }
-		, [](DirectionLight* plight, const int& moves) { plight->cascade_moves((unsigned int)std::max(moves, 0)); });
+		, [](const DirectionLight* plight) -> int      { return int(plight->cascade_max_updates_per_frame()); }
+		, [](DirectionLight* plight, const int& moves) { plight->cascade_max_updates_per_frame((unsigned int)std::max(moves, 0)); });
     }
 
 	//light
@@ -211,14 +211,25 @@ namespace Scene
 		return m_cascade_margin;
 	}
 
-	void DirectionLight::cascade_moves(unsigned int moves)
+    void DirectionLight::dynamic_cascades(unsigned int cascades)
+    {
+        m_dynamic_cascades = std::clamp<unsigned int>(cascades, 0, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES);
+    }
+
+    unsigned int DirectionLight::dynamic_cascades() const
+    {
+        return m_dynamic_cascades;
+    }
+
+
+	void DirectionLight::cascade_max_updates_per_frame(unsigned int moves)
 	{
-		m_cascade_moves = moves;
+		m_cascade_max_updates_per_frame = moves;
 	}
 
-	unsigned int DirectionLight::cascade_moves() const
+	unsigned int DirectionLight::cascade_max_updates_per_frame() const
 	{
-		return m_cascade_moves;
+		return m_cascade_max_updates_per_frame;
 	}
 
 	bool DirectionLight::stable_cascades() const
@@ -597,14 +608,14 @@ namespace Scene
 		//the ones moved: the new ones always; the others at most cascade_moves (0: all), the ones
 		//that waited first, then the nearer ones
 		Array<bool, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> moved{};
-		unsigned int moves = 0;
-		auto move = [&](unsigned int i)
+		unsigned int updates_this_frame = 0;
+		auto update_cascade = [&](unsigned int i)
 		{
 			StableCascade& cascade = m_stable[i];
 			const Slice& slice = slices[i];
 			if (cascade.m_valid)
 			{
-				++moves;
+				++updates_this_frame;
 			}
 			//around its slice, on the grid of its texels
 			const float texel = (2.0f * slice.m_half) / float(std::max(size.x, 1));
@@ -613,22 +624,22 @@ namespace Scene
 			cascade.m_valid = true;
 			moved[i] = true;
 		};
-		auto can_move = [&](unsigned int i)
+		auto can_update_cascade = [&](unsigned int i)
 		{
-			return !m_stable[i].m_valid || m_cascade_moves == 0 || moves < m_cascade_moves;
+			return !m_stable[i].m_valid || m_cascade_max_updates_per_frame == 0 || updates_this_frame < m_cascade_max_updates_per_frame;
 		};
 		for (unsigned int i = 0; i < cascades; ++i)
 		{
-			if (slices[i].m_out && m_stable[i].m_waiting && can_move(i))
+			if (slices[i].m_out && m_stable[i].m_waiting && can_update_cascade(i))
 			{
-				move(i);
+				update_cascade(i);
 			}
 		}
 		for (unsigned int i = 0; i < cascades; ++i)
 		{
-			if (slices[i].m_out && !moved[i] && can_move(i))
+			if (slices[i].m_out && !moved[i] && can_update_cascade(i))
 			{
-				move(i);
+				update_cascade(i);
 			}
 		}
 		//the ones out, not moved: first the next frame

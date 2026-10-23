@@ -11,6 +11,7 @@
 #include <mutex>
 #include <new>
 #include "Square/Driver/Render.h"
+#include "Square/Core/Environment.h"
 #include "Square/Render/Light.h"
 #include "Square/Render/Material.h"
 #include "Square/Render/Renderable.h"
@@ -195,13 +196,12 @@ namespace Render
 #if defined(SQUARE_DEBUG_TOOLS)
 	void DrawList::test(const char* environment_variable)
 	{
-		const char* value = std::getenv(environment_variable);
 		m_test = Test::NONE;
-		if (value && std::strcmp(value, "ordered") == 0)
+		if (Environment::is(environment_variable, "ordered"))
 		{
 			m_test = Test::ORDERED;
 		}
-		else if (value && std::strcmp(value, "off") == 0)
+		else if (Environment::is(environment_variable, "off"))
 		{
 			m_test = Test::OFF;
 		}

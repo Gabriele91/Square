@@ -1,5 +1,6 @@
 #include "Square/Core/Filesystem.h"
 #include "Square/Core/StringUtilities.h"
+#include "Square/Core/Environment.h"
 #include "FilesystemArchive.h"
 #include <sstream>
 #include <cstdlib>
@@ -56,40 +57,6 @@ namespace Square
 {
 namespace Filesystem
 {
-    Vector<String> get_shared_lib_env_paths()
-    {
-        String raw;
-        
-        #ifdef _WIN32
-            const char* env_var = std::getenv("PATH");
-            raw = env_var ? env_var : "";
-            const char delimiter = ';';
-        #elif defined(__linux)
-            const char* env_var = std::getenv("LD_LIBRARY_PATH");
-            raw = env_var ? env_var : "";
-            const char delimiter = ':';
-        #elif defined(__APPLE__)
-            const char* env_var = std::getenv("DYLD_LIBRARY_PATH");
-            raw = env_var ? env_var : "";
-            const char delimiter = ':';
-        #else
-            #error "OS not supported"
-        #endif
-    
-        // Splitting the path into parts
-        Vector<String> paths;
-        StringStream ss(raw);
-        String path;
-    
-        while (std::getline(ss, path, delimiter)) {
-            if (!path.empty()) {
-                paths.push_back(path);
-            }
-        }
-    
-        return paths;
-    }
-	
 	String program_dir()
 	{
 		#ifdef _WIN32
@@ -140,29 +107,29 @@ namespace Filesystem
 
     String home_dir()
     {
-        const char *home_dir = std::getenv("HOME");
-        if (home_dir && *home_dir) return home_dir;
+        const String home = Environment::variable("HOME");
+        if (home.size()) return home;
         #ifdef _WIN32
         //Windows: HOME only in some shells (Git Bash), the profile of the user always
-        const char *profile = std::getenv("USERPROFILE");
-        if (profile && *profile) return profile;
-        #endif
+        return Environment::variable("USERPROFILE");
+        #else
         return "";
+        #endif
     }
     
     String app_data_dir()
     {
         #if defined(_WIN32)
-            const char *app_data = std::getenv("APPDATA");
-            if (app_data && *app_data) return app_data;
+            const String app_data = Environment::variable("APPDATA");
+            if (app_data.size()) return app_data;
             const String home = home_dir();
             return home.size() ? join(join(home, "AppData"), "Roaming") : "";
         #elif defined(__APPLE__)
             const String home = home_dir();
             return home.size() ? join(join(home, "Library"), "Application Support") : "";
         #else
-            const char *data_home = std::getenv("XDG_DATA_HOME");
-            if (data_home && *data_home) return data_home;
+            const String data_home = Environment::variable("XDG_DATA_HOME");
+            if (data_home.size()) return data_home;
             const String home = home_dir();
             return home.size() ? join(join(home, ".local"), "share") : "";
         #endif

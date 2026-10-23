@@ -181,10 +181,9 @@ namespace Render
 		bool                                         m_static_cache{ true };
 		UnorderedMap<const Light*, StaticCache> m_caches;
 		//the caches of the cascades, by light
-		bool                                          m_cascades_cache{ true };
-		int                                           m_dynamic_cascades{ 3 };
+		bool                                     m_cascades_cache{ true };
 		UnorderedMap<const Light*, CascadeCache> m_cascade_caches;
-		size_t                                       m_draws{ 0 };
+		size_t                                   m_draws{ 0 };
 	};
 }
 }

@@ -51,18 +51,29 @@ endfunction()
 # the tools of the Android build
 # the JDK of Gradle
 function(square_android_find_java out)
+    # (JAVA_HOME, then where a JDK 17 is installed by default: its vendors, Android Studio)
     if(CMAKE_HOST_WIN32)
         set(java bin/java.exe)
         file(GLOB candidates
             "C:/Program Files/Java/jdk-17*"
             "C:/Program Files/Eclipse Adoptium/jdk-17*"
+            "C:/Program Files/Microsoft/jdk-17*"
+            "C:/Program Files/Zulu/zulu-17*"
             "C:/Program Files/Android/Android Studio/jbr"
+            "$ENV{LOCALAPPDATA}/Programs/Android Studio/jbr"
         )
     else()
         set(java bin/java)
         file(GLOB candidates
             "/usr/lib/jvm/java-17*"
+            "/usr/lib/jvm/temurin-17*"
+            "/usr/lib/jvm/jdk-17*"
+            "$ENV{HOME}/android-studio/jbr"
+            "/opt/android-studio/jbr"
+            "/snap/android-studio/current/jbr"
             "/Library/Java/JavaVirtualMachines/*17*/Contents/Home"
+            "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+            "/usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
             "/Applications/Android Studio.app/Contents/jbr/Contents/Home"
         )
     endif()

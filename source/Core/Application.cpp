@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <thread>
 #include "Square/Core/Time.h"
+#include "Square/Core/Environment.h"
 #include "Square/Core/Allocator/Memory.h"
 #include "Square/Core/Allocator/DebugAllocator.h"
 #include "Square/Core/Allocator/FrameAllocator.h"
@@ -426,6 +427,7 @@ namespace Square
         winfo.m_size[1] = window_size.y;
         winfo.m_fullscreen = mode == WindowMode::FULLSCREEN;
         winfo.m_resize     = mode == WindowMode::RESIZABLE;
+        winfo.m_title      = app_name;
         m_window = SQ_NEW(allocator(), Video::Window, AllocType::ALCT_DEFAULT) Video::Window(winfo);
         //save instance
         m_instance = app;
@@ -467,9 +469,9 @@ namespace Square
     #if !defined(SQUARE_RETAIL)
         //the profile of the heap (SQUARE_HEAP_PROFILE=N: N frames after 300, see MemoryProfiler.h)
         MemoryProfiler heap_profiler(Memory::heap());
-        if (const char* profile = std::getenv("SQUARE_HEAP_PROFILE"))
+        if (Environment::has("SQUARE_HEAP_PROFILE"))
         {
-            const long frames = std::strtol(profile, nullptr, 10);
+            const long frames = Environment::integer("SQUARE_HEAP_PROFILE", 600);
             heap_profiler.start(frames > 0 ? (unsigned int)frames : 600, 300);
         }
     #endif

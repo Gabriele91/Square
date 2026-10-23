@@ -16,7 +16,8 @@ namespace Memory
 	//the heap: a pointer to it, read at every block (made once)
 	static std::atomic<BinnedAllocator*> s_heap{ nullptr };
 
-	//its range (SQUARE_HEAP=system: none, malloc)
+	//its range (SQUARE_HEAP=system: none, malloc; std::getenv, not Environment: no String before
+	//the heap)
 	static size_t heap_reserve()
 	{
 		const char* heap = std::getenv("SQUARE_HEAP");

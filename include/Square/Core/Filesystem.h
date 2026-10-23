@@ -11,7 +11,6 @@ namespace Square
 {
 namespace Filesystem
 {
-    SQUARE_API Vector<String> get_shared_lib_env_paths();
 	SQUARE_API String program_dir();
     SQUARE_API String working_dir();
     SQUARE_API String home_dir();

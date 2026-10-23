@@ -14,13 +14,13 @@ namespace Render
 {
 	namespace AuxDynamicResolution
 	{
-		static constexpr float s_late = 1.1f;            //late: the frames over the budget by its tolerance (10%)
-		static constexpr float s_gpu_room = 0.85f;        //higher: the GPU under this share of the budget
-		static constexpr float s_window = 0.5f;          //seconds of the frames it looks at
-		static constexpr float s_up = 0.1f;              //higher on time: a share of the scene a second
-		static constexpr float s_glide = 6.0f;           //the share shown going to its target (a share a second)
-		static constexpr float s_longest_frame = 0.25f;  //seconds: a longer frame is a loading, not counted
-		static constexpr float s_largest_range = 0.9f;   //the scene at least a tenth
+		static constexpr float s_late = 1.15f;            //late: the frames over the budget by its tolerance (10%)
+		static constexpr float s_gpu_room = 0.70f;        //higher: the GPU under this share of the budget
+		static constexpr float s_window = 0.33f;          //seconds of the frames it looks at
+		static constexpr float s_up = 0.1f;               //higher on time: a share of the scene a second
+		static constexpr float s_glide = 6.0f;            //the share shown going to its target (a share a second)
+		static constexpr float s_longest_frame = 0.25f;   //seconds: a longer frame is a loading, not counted
+		static constexpr float s_largest_range = 0.9f;    //the scene at least a tenth
 	}
 
 	void DynamicResolution::settings(const Settings& settings)

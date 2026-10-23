@@ -11,6 +11,7 @@
 #include "Input_private.h"
 #include "SystemBars_private.h"
 #include "Square/Driver/Android.h"
+#include "Square/Core/Environment.h"
 #include "Square/Core/Application.h"
 #include <android/log.h>
 #include <unistd.h>
@@ -404,8 +405,8 @@ namespace Android
 		//(also the data of the application, app_data_dir: the shader cache; no .local/share there)
 		if (home)
 		{
-			setenv("HOME", home, 1);
-			setenv("XDG_DATA_HOME", home, 1);
+			Environment::set("HOME", home);
+			Environment::set("XDG_DATA_HOME", home);
 		}
 	}
 
@@ -436,22 +437,13 @@ namespace Android
 	//a line of env.txt as a variable (NAME=VALUE; an empty line, a #comment, no name: none)
 	static void line_environment(String line)
 	{
-		if (!line.empty() && line.back() == '\r')
-		{
-			line.pop_back();
-		}
-		if (line.empty() || line[0] == '#')
+		String name;
+		String value;
+		if (!Environment::parse(line, name, value))
 		{
 			return;
 		}
-		const size_t equal = line.find('=');
-		if (equal == String::npos || equal == 0)
-		{
-			return;
-		}
-		const String name = line.substr(0, equal);
-		const String value = line.substr(equal + 1);
-		setenv(name.c_str(), value.c_str(), 1);
+		Environment::set(name, value);
 		//(before the application: no logger of the engine yet, the log of the system)
 		__android_log_print(ANDROID_LOG_INFO, "Square", "Android: %s=%s (env.txt)", name.c_str(), value.c_str());
 	}

@@ -172,16 +172,6 @@ namespace Render
         return m_cascades_cache;
     }
 
-    void DrawerPassShadow::dynamic_cascades(int cascades)
-    {
-        m_dynamic_cascades = std::clamp(cascades, 0, int(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
-    }
-
-    int DrawerPassShadow::dynamic_cascades() const
-    {
-        return m_dynamic_cascades;
-    }
-
     //draw
     void DrawerPassShadow::draw
     (
@@ -390,7 +380,7 @@ namespace Render
 			render().disable_render_target(cache.m_blank->target());
 		}
 		//the cascades out of date: new, moved, their static casters changed
-		const int count = std::clamp(cascades.m_options.y, 1, int(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
+		const unsigned int count = static_cast<const unsigned int>(std::clamp(cascades.m_options.y, 1, int(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES)));
 		Array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> hashes;
 		cascades_casters(queues, cascades, hashes);
 		uint32 dirty = 0;
@@ -422,9 +412,9 @@ namespace Render
 		}
 		//into the shadow map: the nearer ones (the dynamic casters over them, every frame), the
 		//farther ones only when drawn again (nothing over them: as their caches)
-		const int nearer = std::min(m_dynamic_cascades, count);
+		const unsigned int nearer = std::min(light.dynamic_cascades(), count);
 		uint32 dynamic = 0;
-		for (int i = 0; i != nearer; ++i)
+		for (unsigned int i = 0; i != nearer; ++i)
 		{
 			dynamic |= MULTI_PASS_LAYER_BIT(i);
 		}

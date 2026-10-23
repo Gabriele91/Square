@@ -13,6 +13,7 @@
 #include "Square/Core/StringUtilities.h"
 #include "Square/Core/UtfConvert.h"
 #include "Square/Core/Filesystem.h"
+#include "Square/Core/Environment.h"
 #include "Square/Core/SmartPointers.h"
 #include "Square/Core/StringUtilities.h"
 #include "Square/Core/ShellParser.h"

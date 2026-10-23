@@ -3,6 +3,7 @@
 //  Square
 //
 #include "Square/Core/Context.h"
+#include "Square/Core/Environment.h"
 #include "Square/Core/Application.h"
 #include "Square/Driver/Render.h"
 #include "Square/Driver/Window.h"
@@ -121,10 +122,10 @@ namespace Square
 		//layers by target)
 		static void capabilities_off(Render::RenderDriverInfo& info, Context& context)
 		{
-			if (const char* off = std::getenv("SQUARE_DRIVER_CAPS_OFF"))
+			const String off = Environment::variable("SQUARE_DRIVER_CAPS_OFF");
+			if (off.size())
 			{
-				StringStream list(off);
-				for (String capability; std::getline(list, capability, ',');)
+				for (const String& capability : Environment::list("SQUARE_DRIVER_CAPS_OFF", ','))
 				{
 					if (capability == "geometry")
 					{
@@ -594,7 +595,10 @@ namespace Square
 			context().logger()->info("Rendering: deferred");
 			m_drawer->create<Render::DrawerPassDeferred>();
 		}
-		if (m_shadows) m_drawer->create<Render::DrawerPassShadow>();
+		if (m_shadows)
+		{ 
+			m_drawer->create<Render::DrawerPassShadow>();
+		}
 		m_debug_pass = nullptr;
 #if defined(SQUARE_DEBUG_TOOLS)
 		const bool debug_tools = true;
