@@ -32,7 +32,7 @@ static Square::Shell::ParserCommands s_ShellCommands
     , Square::Shell::Command{ "compiler", "x", "the compiler [msvc, clang-cl; gcc, clang; ndk] (default: the first found)", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("")) }
     , Square::Shell::Command{ "output",   "o", "the folder of the builds (default: <game>/builds)"               , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("")) }
     , Square::Shell::Command{ "engine",   "e", "the folder of the engine (default: the one of the game)"         , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("")) }
-    , Square::Shell::Command{ "assets",   "a", "the release of the platform: the archives, the shaders packed"   , Square::Shell::ValueType::value_none,   false, Square::Shell::Value_t(false) }
+    , Square::Shell::Command{ "assets",   "a", "the assets packed for the platform (any configuration): the archives in the compression of its GPUs, the shaders in shaders.sqz", Square::Shell::ValueType::value_none,   false, Square::Shell::Value_t(false) }
     , Square::Shell::Command{ "deploy",   "d", "a mobile: the APK installed, its resources pushed"               , Square::Shell::ValueType::value_none,   false, Square::Shell::Value_t(false) }
     , Square::Shell::Command{ "run",      "r", "the game started (on the device, on the desktop)"                , Square::Shell::ValueType::value_none,   false, Square::Shell::Value_t(false) }
     , Square::Shell::Command{ "plan",     "n", "the steps of the build, not run"                                 , Square::Shell::ValueType::value_none,   false, Square::Shell::Value_t(false) }
@@ -517,7 +517,7 @@ private:
             "<div class=\"row\"><span class=\"label\">Compiler</span>" + compilers + "</div>"
             "<div class=\"row\"><span class=\"label\">Config</span>" + configs + "</div>"
             "<div class=\"row\"><span class=\"label\">Steps</span>"
-            "<label class=\"choice\"><input type=\"checkbox\" data-checked=\"assets\"/> assets (release)</label>"
+            "<label class=\"choice\"><input type=\"checkbox\" data-checked=\"assets\"/> pack assets (textures of the GPU, shaders.sqz)</label>"
             "<label class=\"choice\"><input type=\"checkbox\" data-checked=\"deploy\"/> deploy (mobile)</label>"
             "<label class=\"choice\"><input type=\"checkbox\" data-checked=\"run\"/> run</label>"
             "</div>"

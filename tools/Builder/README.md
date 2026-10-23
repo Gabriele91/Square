@@ -58,7 +58,7 @@ Builder -p android -c Debug -n                          its steps, not run
 | `-x` compiler | msvc, clang-cl; gcc, clang; ndk (default: the first found) |
 | `-o` output | the folder of the builds (default: `<game>/builds`) |
 | `-e` engine | the folder of the engine (default: the one of the game, `-DSQUARE_DIR`) |
-| `-a` | assets: the release of the platform |
+| `-a` | the assets packed for the platform, in any configuration (Debug, Release, Retail): the archives in the compression of its GPUs, shaders.sqz |
 | `-d` | deploy: a mobile |
 | `-r` | run |
 | `-n` | the steps, not run |

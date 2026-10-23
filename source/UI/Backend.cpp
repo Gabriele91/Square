@@ -15,16 +15,13 @@
 #include "Square/Resource/Shader.h"
 #include "Square/System/RenderSystem.h"
 #include "Square/Render/Profiler.h"
+#include "Square/Render/CodeShaders.h"
 #include "Backend.h"
 
 namespace Square
 {
 namespace UI
 {
-	//the shader of the UI
-	static const char* s_shader_source =
-	#include "UI.hlsl"
-	;
 
 	//a vertex of the geometry (the colour of RmlUi as floats)
 	struct UIVertex
@@ -57,7 +54,7 @@ namespace UI
 		//shader and layout of the vertices
 		m_shader = MakeShared<Resource::Shader>(m_context);
 		m_shader->profile_name("UI");
-		if (!m_shader->compile(s_shader_source, {}))
+		if (!m_shader->compile(Render::CodeShaders::ui(), {}))
 		{
 			m_shader.reset();
 			return false;

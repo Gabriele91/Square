@@ -76,6 +76,7 @@
 #include "Square/Render/Transform.h"
 #include "Square/Render/Renderable.h"
 #include "Square/Render/Occluder.h"
+#include "Square/Render/CodeShaders.h"
 #include "Square/Render/SpriteBatch.h"
 #include "Square/Render/LevelOfDetail.h"
 #include "Square/Render/VertexLayout.h"

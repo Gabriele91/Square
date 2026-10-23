@@ -11,6 +11,7 @@
 #include "Square/Driver/Render.h"
 #include "Square/Driver/Window.h"
 #include "Square/Render/BasicMesh.h"
+#include "Square/Render/CodeShaders.h"
 #include "Square/Render/Mesh.h"
 #include "Square/Render/SplashScreen.h"
 #include "Square/Resource/Shader.h"
@@ -59,10 +60,6 @@ namespace Render
 {
 namespace SplashScreen
 {
-	//the shader of the icon
-	static const char* s_shader_source =
-	#include "SplashScreen.hlsl"
-	;
 
 	//share of the shorter side of the window taken by the icon
 	static constexpr float s_icon_scale = 0.4f;
@@ -105,7 +102,7 @@ namespace SplashScreen
 		}
 		//the shader, the quad
 		auto shader = MakeShared<Resource::Shader>(context);
-		if (!shader->compile(s_shader_source, {})) return false;
+		if (!shader->compile(CodeShaders::splash_screen(), {})) return false;
 		auto quad = BasicMesh::build_quad(context);
 		if (!quad) return false;
 		//the icon in the middle, s_icon_scale of the shorter side, its aspect

@@ -147,6 +147,7 @@ public:
         }
         const Square::Vector<Square::String> effects = context().resource_names<Resource::Effect>();
         const Square::Vector<Square::String> shaders = programs();
+        const Square::Vector<Square::String> code_sources = Render::CodeShaders::all();
         //each target: every effect, every shader (new instances: none kept from another target)
         Square::OStringStream report;
         size_t failures = 0;
@@ -170,7 +171,16 @@ public:
                 failed << (ok ? "" : "    FAILED shader " + name + "\n");
                 failures += ok ? 0 : 1;
             }
-            report << AuxShaderPack::describe(target) << ": " << loaded << " of " << (effects.size() + shaders.size()) << "\n" << failed.str();
+            //the shaders the engine compiles from its code (the splash screen, the UI)
+            for (size_t i = 0; i != code_sources.size(); ++i)
+            {
+                auto shader = MakeShared<Resource::Shader>(context());
+                const bool ok = shader->compile(code_sources[i], {});
+                loaded += ok ? 1 : 0;
+                failed << (ok ? "" : "    FAILED shader of the engine's code " + Square::to_string(i) + "\n");
+                failures += ok ? 0 : 1;
+            }
+            report << AuxShaderPack::describe(target) << ": " << loaded << " of " << (effects.size() + shaders.size() + code_sources.size()) << "\n" << failed.str();
             context().logger()->info("ShaderPack: " + AuxShaderPack::describe(target) + " done");
         }
         render_system->shader_target(driver);

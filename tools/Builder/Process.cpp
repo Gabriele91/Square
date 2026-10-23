@@ -272,6 +272,47 @@ namespace Builder
         }
         return int(code);
     }
+
+    int Process::run_quiet(const Command& command)
+    {
+        if (m_stop)
+        {
+            return s_stopped;
+        }
+        if (command.m_arguments.empty())
+        {
+            return s_not_started;
+        }
+        std::wstring command_line = AuxProcess::wide(text(command));
+        std::wstring directory = AuxProcess::wide(command.m_directory);
+        std::wstring environment;
+        void* environment_block = nullptr;
+        if (!command.m_environment.empty())
+        {
+            environment = AuxProcess::environment_block(command.m_environment);
+            environment_block = &environment[0];
+        }
+        const wchar_t* folder = nullptr;
+        if (!directory.empty())
+        {
+            folder = directory.c_str();
+        }
+        //(no handle inherited, no job: what it starts outlives it, free of the tool)
+        STARTUPINFOW startup{};
+        startup.cb = sizeof(startup);
+        PROCESS_INFORMATION process{};
+        const DWORD flags = CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW;
+        if (!CreateProcessW(nullptr, &command_line[0], nullptr, nullptr, FALSE, flags, environment_block, folder, &startup, &process))
+        {
+            return s_not_started;
+        }
+        CloseHandle(process.hThread);
+        WaitForSingleObject(process.hProcess, INFINITE);
+        DWORD code = 0;
+        GetExitCodeProcess(process.hProcess, &code);
+        CloseHandle(process.hProcess);
+        return int(code);
+    }
 #else
     void Process::stop()
     {
@@ -372,6 +413,73 @@ namespace Builder
         {
             return s_stopped;
         }
+        if (WIFEXITED(status))
+        {
+            return WEXITSTATUS(status);
+        }
+        return s_not_started;
+    }
+
+    int Process::run_quiet(const Command& command)
+    {
+        if (m_stop)
+        {
+            return s_stopped;
+        }
+        if (command.m_arguments.empty())
+        {
+            return s_not_started;
+        }
+        Square::Vector<char*> arguments;
+        for (const Square::String& argument : command.m_arguments)
+        {
+            arguments.push_back(const_cast<char*>(argument.c_str()));
+        }
+        arguments.push_back(nullptr);
+        Square::Vector<Square::String> variables;
+        for (const auto& [name, value] : command.m_environment)
+        {
+            variables.push_back(name + "=" + value);
+        }
+        Square::Vector<char*> environment;
+        for (const Square::String& variable : variables)
+        {
+            environment.push_back(const_cast<char*>(variable.c_str()));
+        }
+        environment.push_back(nullptr);
+        const pid_t child = fork();
+        if (child < 0)
+        {
+            return s_not_started;
+        }
+        if (child == 0)
+        {
+            //the child: a session of its own, nothing of the tool (its files closed, the null
+            //device in and out)
+            setsid();
+            const int null = open("/dev/null", O_RDWR);
+            for (int fd = 0; fd != 3; ++fd)
+            {
+                dup2(null, fd);
+            }
+            const long open_max = sysconf(_SC_OPEN_MAX);
+            for (int fd = 3; fd < open_max && fd < 4096; ++fd)
+            {
+                close(fd);
+            }
+            if (!command.m_directory.empty() && chdir(command.m_directory.c_str()) != 0)
+            {
+                _exit(127);
+            }
+            if (!command.m_environment.empty())
+            {
+                environ = environment.data();
+            }
+            execvp(arguments[0], arguments.data());
+            _exit(127);
+        }
+        int status = 0;
+        waitpid(child, &status, 0);
         if (WIFEXITED(status))
         {
             return WEXITSTATUS(status);

@@ -41,6 +41,9 @@ namespace Builder
         //a command run to its end, each line of its output given: its code (s_not_started: no
         //program; s_stopped: stopped)
         int run(const Command& command, const LineCallback& line);
+        //a command run to its end, nothing of the tool given to it (no pipe, no handle, no output
+        //read): a server it starts (adb's) holds nothing of the tool, never the output of a step
+        int run_quiet(const Command& command);
         //the one running stopped (from another thread), the next ones not started
         void stop();
         //stopped (until reset)

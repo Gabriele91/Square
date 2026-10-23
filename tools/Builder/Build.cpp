@@ -179,6 +179,136 @@ namespace Builder
             return out;
         }
 
+        //a file newer than another (or the other not there)
+        static bool newer(const std::filesystem::path& file, const std::filesystem::path& than)
+        {
+            std::error_code error;
+            if (!std::filesystem::exists(than, error))
+            {
+                return true;
+            }
+            return std::filesystem::last_write_time(file, error) > std::filesystem::last_write_time(than, error);
+        }
+
+        //the files of a folder of the game newer than the ones of the release (or not there) copied
+        //into it (their time kept: adb pushes what is newer than on the device): how many
+        static int sync_tree(const std::filesystem::path& from, const std::filesystem::path& to, const LineCallback& log)
+        {
+            int count = 0;
+            std::error_code error;
+            for (const auto& entry : std::filesystem::recursive_directory_iterator(from, error))
+            {
+                if (!entry.is_regular_file())
+                {
+                    continue;
+                }
+                const std::filesystem::path target = to / std::filesystem::relative(entry.path(), from, error);
+                if (!newer(entry.path(), target))
+                {
+                    continue;
+                }
+                std::filesystem::create_directories(target.parent_path(), error);
+                std::filesystem::copy_file(entry.path(), target, std::filesystem::copy_options::overwrite_existing, error);
+                log("  " + text_of(target.generic_u8string()));
+                ++count;
+            }
+            return count;
+        }
+
+        //the newest file under some folders (the sources of the shaders: their effects, their
+        //shaders)
+        static std::filesystem::file_time_type newest(const Square::Vector<std::filesystem::path>& folders)
+        {
+            std::filesystem::file_time_type out{};
+            std::error_code error;
+            for (const std::filesystem::path& folder : folders)
+            {
+                for (const auto& entry : std::filesystem::recursive_directory_iterator(folder, error))
+                {
+                    if (entry.is_regular_file())
+                    {
+                        out = std::max(out, entry.last_write_time(error));
+                    }
+                }
+            }
+            return out;
+        }
+
+        //the release of a platform as the game is now, without packing again: its files the game
+        //changed since (config, effects, the engine's common...) copied again; its packed ones
+        //(the archives, shaders.sqz) only told when older than their sources (pack assets again)
+        static int refresh_release(const Square::String& game, const Square::String& engine, const Square::String& files, const LineCallback& log)
+        {
+            namespace fs = std::filesystem;
+            const fs::path root = fs::u8path(game);
+            const fs::path release = fs::u8path(files);
+            std::error_code error;
+            int copied = 0;
+            Square::Vector<Square::String> stale;
+            for (const auto& entry : fs::directory_iterator(release, error))
+            {
+                const Square::String name = text_of(entry.path().filename().u8string());
+                const fs::path source = root / entry.path().filename();
+                //(the shaders packed: older than an effect or a shader of the game, of the engine)
+                if (name == "shaders.sqz")
+                {
+                    const Square::Vector<fs::path> sources{ root / "assets/effect", root / "assets/shader", fs::u8path(engine) / "common" };
+                    if (newest(sources) > entry.last_write_time(error))
+                    {
+                        stale.push_back(name);
+                    }
+                    continue;
+                }
+                if (entry.is_regular_file())
+                {
+                    if (fs::exists(source, error) && newer(source, entry.path()))
+                    {
+                        fs::copy_file(source, entry.path(), fs::copy_options::overwrite_existing, error);
+                        log("  " + text_of(entry.path().generic_u8string()));
+                        ++copied;
+                    }
+                    continue;
+                }
+                //(the engine's common: the one of the engine of the game)
+                if (name == "engine")
+                {
+                    copied += sync_tree(fs::u8path(engine) / "common", entry.path() / "common", log);
+                    continue;
+                }
+                if (name != "assets")
+                {
+                    if (fs::is_directory(source, error))
+                    {
+                        copied += sync_tree(source, entry.path(), log);
+                    }
+                    continue;
+                }
+                //assets: its folders copied again, its archives (packed) only told
+                for (const auto& asset : fs::directory_iterator(entry.path(), error))
+                {
+                    const fs::path asset_source = source / asset.path().filename();
+                    if (asset.is_directory())
+                    {
+                        if (fs::is_directory(asset_source, error))
+                        {
+                            copied += sync_tree(asset_source, asset.path(), log);
+                        }
+                        continue;
+                    }
+                    if (fs::exists(asset_source, error) && newer(asset_source, asset.path()))
+                    {
+                        stale.push_back("assets/" + text_of(asset.path().filename().u8string()));
+                    }
+                }
+            }
+            log("the release: " + Square::to_string(copied) + " files of the game copied again");
+            for (const Square::String& name : stale)
+            {
+                log("warning: " + name + " is older than its sources: pack assets again to push it");
+            }
+            return 0;
+        }
+
         //a command of cmake: its arguments, its environment
         static Command cmake(const Toolchain& toolchain, const Square::Vector<Square::String>& arguments, const Environment& environment)
         {
@@ -566,12 +696,35 @@ namespace Builder
         {
             log("deploy: " + request.m_platform + " has none (its release: the assets)");
         }
+        //the server of adb started first, out of the steps: started by a step's adb it would keep
+        //that step's output open (its handles inherited), the step never ending
+        const Square::String adb = toolchain.adb();
+        if (platform->m_mobile && (request.m_deploy || request.m_run))
+        {
+            steps.push_back({ "start adb", Command(), [adb](Process& process, const LineCallback& log) -> int
+            {
+                Command command;
+                command.m_arguments = { adb, "start-server" };
+                log("> " + Process::text(command));
+                return process.run_quiet(command);
+            } });
+        }
         if (request.m_deploy && platform->m_mobile)
         {
             steps.push_back({ "install the APK", cmake(toolchain, { "--build", build, "--target", target + "_android_install" }, environment), nullptr });
-            if (request.m_assets)
+            //(the release of a pack before: its files the game changed since copied again, the
+            //packed ones told when older than their sources)
+            const bool released = request.m_assets || Square::Filesystem::is_directory(files);
+            if (released && !request.m_assets)
             {
-                const Square::String adb = toolchain.adb();
+                const Square::String game = request.m_game;
+                steps.push_back({ "refresh the release", Command(), [=](Process&, const LineCallback& log) -> int
+                {
+                    return refresh_release(game, engine, files, log);
+                } });
+            }
+            if (released)
+            {
                 const Square::String push = join(engine, "cmake/SquareAndroidPush.cmake");
                 const Toolchain* push_chain = &toolchain;
                 steps.push_back({ "push the release", Command(), [=](Process& process, const LineCallback& log) -> int
@@ -598,6 +751,10 @@ namespace Builder
             }
             else
             {
+                if (log)
+                {
+                    log("deploy: no release of " + request.m_platform + "-" + lower(config) + " yet: the resources of the game as they are (not packed, no maps): pack assets once");
+                }
                 steps.push_back({ "push the resources", cmake(toolchain, { "--build", build, "--target", target + "_android_push" }, environment), nullptr });
             }
         }
