@@ -147,7 +147,7 @@ public:
         }
         const Square::Vector<Square::String> effects = context().resource_names<Resource::Effect>();
         const Square::Vector<Square::String> shaders = programs();
-        const Square::Vector<Square::String> code_sources = Render::CodeShaders::all();
+        const auto code_sources = Render::BuiltInShaders::all();
         //each target: every effect, every shader (new instances: none kept from another target)
         Square::OStringStream report;
         size_t failures = 0;

@@ -15,7 +15,7 @@
 #include "Square/Resource/Shader.h"
 #include "Square/System/RenderSystem.h"
 #include "Square/Render/Profiler.h"
-#include "Square/Render/CodeShaders.h"
+#include "Square/Render/BuiltInShaders.h"
 #include "Backend.h"
 
 namespace Square
@@ -54,7 +54,7 @@ namespace UI
 		//shader and layout of the vertices
 		m_shader = MakeShared<Resource::Shader>(m_context);
 		m_shader->profile_name("UI");
-		if (!m_shader->compile(Render::CodeShaders::ui(), {}))
+		if (!m_shader->compile(Render::BuiltInShaders::get(Render::BuiltInShaders::UI_SHADER), {}))
 		{
 			m_shader.reset();
 			return false;

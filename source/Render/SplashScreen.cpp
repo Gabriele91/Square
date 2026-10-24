@@ -11,7 +11,7 @@
 #include "Square/Driver/Render.h"
 #include "Square/Driver/Window.h"
 #include "Square/Render/BasicMesh.h"
-#include "Square/Render/CodeShaders.h"
+#include "Square/Render/BuiltInShaders.h"
 #include "Square/Render/Mesh.h"
 #include "Square/Render/SplashScreen.h"
 #include "Square/Resource/Shader.h"
@@ -102,13 +102,22 @@ namespace SplashScreen
 		}
 		//the shader, the quad
 		auto shader = MakeShared<Resource::Shader>(context);
-		if (!shader->compile(CodeShaders::splash_screen(), {})) return false;
+		if (!shader->compile(BuiltInShaders::get(BuiltInShaders::SPLASH_SCREEN_SHADER), {}))
+		{ 
+			return false;
+		}
 		auto quad = BasicMesh::build_quad(context);
-		if (!quad) return false;
+		if (!quad)
+		{ 
+			return false;
+		}
 		//the icon in the middle, s_icon_scale of the shorter side, its aspect
 		unsigned int width = 0, height = 0;
 		window->get_size(width, height);
-		if (!width || !height) return false;
+		if (!width || !height)
+		{ 
+			return false;
+		}
 		const float side = float(std::min(width, height)) * s_icon_scale;
 		const float aspect = float(texture->get_width()) / float(std::max<unsigned long>(texture->get_height(), 1));
 		const Vec4 rect(side * aspect / float(width), side / float(height), 0.0f, 0.0f);
