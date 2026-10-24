@@ -7,9 +7,9 @@
 //  a hitch forgotten soon) against the budget of their rate (the target, else the limit of the
 //  application, else the refresh of the screen): late (over the budget plus its tolerance, 10%)
 //  lower at once, as much as they are late (its pixels: the time of the scene), then a new
-//  window before it looks again; on time, a little higher every second (none with the GPU near
-//  the budget: Render::Context::gpu_frame_ms). Its share glides to its target (no jump); a long
-//  frame (a loading) is not counted, its window again.
+//  window before it looks again; on time, a little higher every second (up_rate; none with the
+//  GPU near the budget: Render::Context::gpu_frame_ms): down fast, up slowly. Its share glides to its target (no jump); a long frame (a loading) is not
+//  counted, its window again.
 //
 #pragma once
 #include "Square/Config.h"
@@ -29,6 +29,7 @@ namespace Render
 			bool  m_width{ true };      //the axes it lowers
 			bool  m_height{ true };
 			float m_target_fps{ 0.0f }; //the rate of the frames (0: the limit of the application, else the refresh)
+			float m_up_rate{ 0.05f };   //higher on time: a share of the scene a second
 		};
 
 		//its settings (its share kept, within its range)

@@ -17,7 +17,6 @@ namespace Render
 		static constexpr float s_late = 1.15f;            //late: the frames over the budget by its tolerance (10%)
 		static constexpr float s_gpu_room = 0.70f;        //higher: the GPU under this share of the budget
 		static constexpr float s_window = 0.33f;          //seconds of the frames it looks at
-		static constexpr float s_up = 0.1f;               //higher on time: a share of the scene a second
 		static constexpr float s_glide = 6.0f;            //the share shown going to its target (a share a second)
 		static constexpr float s_longest_frame = 0.25f;   //seconds: a longer frame is a loading, not counted
 		static constexpr float s_largest_range = 0.9f;    //the scene at least a tenth
@@ -81,7 +80,7 @@ namespace Render
 				}
 				else if (gpu_ms < 0.0f || gpu_ms < budget_ms * s_gpu_room)
 				{
-					m_share = std::min(m_share + s_up * delta_time, 1.0f);
+					m_share = std::min(m_share + std::max(m_settings.m_up_rate, 0.0f) * delta_time, 1.0f);
 				}
 			}
 			break;

@@ -178,7 +178,7 @@ namespace Render
 		//the draws of the casters in batches (by pass and material)
 		DrawList                                     m_caster_draws;
 		//the caches of the static casters, by light
-		bool                                         m_static_cache{ true };
+		bool                                    m_static_cache{ true };
 		UnorderedMap<const Light*, StaticCache> m_caches;
 		//the caches of the cascades, by light
 		bool                                     m_cascades_cache{ true };
