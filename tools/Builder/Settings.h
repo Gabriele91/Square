@@ -29,6 +29,7 @@ namespace Builder
         Square::String m_platform;    //windows, linux, macos, android (empty: the host)
         Square::String m_config{ "Release" };
         Square::String m_compiler;    //empty: the first one found for the platform
+        bool           m_compile{ true }; //false: the build of before
         bool           m_assets{ false };
         bool           m_deploy{ false };
         bool           m_run{ false };

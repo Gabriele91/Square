@@ -399,6 +399,7 @@ namespace Builder
         request.m_platform = settings.m_platform;
         request.m_config = settings.m_config;
         request.m_compiler = settings.m_compiler;
+        request.m_compile = settings.m_compile;
         request.m_assets = settings.m_assets;
         request.m_deploy = settings.m_deploy;
         request.m_run = settings.m_run;
@@ -414,6 +415,7 @@ namespace Builder
         settings.m_platform = m_platform;
         settings.m_config = m_config;
         settings.m_compiler = m_compiler;
+        settings.m_compile = m_compile;
         settings.m_assets = m_assets;
         settings.m_deploy = m_deploy;
         settings.m_run = m_run;
@@ -525,8 +527,16 @@ namespace Builder
         const Square::String& root = request.m_build_root;
         const Square::String build = folder(root, request.m_platform, request.m_compiler, config);
         const Square::String& target = request.m_target;
+        //not compiled: the build of before (its files installed, its targets of the device)
+        if (!request.m_compile && !Square::Filesystem::is_file(join(build, "build.ninja")))
+        {
+            return fail(log, "not compiled: no build in " + build + " (compile it once)");
+        }
         //configure, build (a mobile: its APK; the desktop: its drivers too, the game loads them)
-        steps.push_back({ "configure", configure(toolchain, request, *platform, compiler, config, build, environment), nullptr });
+        if (request.m_compile)
+        {
+            steps.push_back({ "configure", configure(toolchain, request, *platform, compiler, config, build, environment), nullptr });
+        }
         Square::Vector<Square::String> build_arguments{ "--build", build, "--target" };
         if (platform->m_mobile)
         {
@@ -540,7 +550,10 @@ namespace Builder
                 build_arguments.push_back(driver);
             }
         }
-        steps.push_back({ "build", cmake(toolchain, build_arguments, environment), nullptr });
+        if (request.m_compile)
+        {
+            steps.push_back({ "build", cmake(toolchain, build_arguments, environment), nullptr });
+        }
         //the release of the platform: <root>/release/<platform>-<config>
         const Square::String release = join(root, "release/" + request.m_platform + "-" + lower(config));
         Square::String files = release;
@@ -569,7 +582,19 @@ namespace Builder
                 return fail(log, "no environment of " + host_compiler.m_name);
             }
             const Square::String tools = folder(root, Toolchain::host(), host_compiler.m_name, "Release");
-            if (tools != build)
+            //(not compiled: the tools of before)
+            if (!request.m_compile)
+            {
+                for (const Square::String& tool : s_tools)
+                {
+                    const Square::String program = join(tools, "bin/" + Square::Environment::program_name(tool));
+                    if (!Square::Filesystem::is_file(program))
+                    {
+                        return fail(log, "not compiled: no " + program + " (compile with pack assets once)");
+                    }
+                }
+            }
+            if (request.m_compile && tools != build)
             {
                 steps.push_back({ "configure the tools", configure(toolchain, request, host_platform, host_compiler, "Release", tools, host_environment), nullptr });
             }
@@ -579,7 +604,10 @@ namespace Builder
             {
                 tools_arguments.push_back(driver);
             }
-            steps.push_back({ "build the tools", cmake(toolchain, tools_arguments, host_environment), nullptr });
+            if (request.m_compile)
+            {
+                steps.push_back({ "build the tools", cmake(toolchain, tools_arguments, host_environment), nullptr });
+            }
             //the release folder made again: the game installed (a mobile: its APK, its files)
             steps.push_back({ "clean " + release, Command(), [release](Process&, const LineCallback& log) -> int
             {

@@ -44,6 +44,7 @@ namespace Builder
 
         static const Flag s_flags[] =
         {
+            { "compile", &Settings::m_compile },
             { "assets", &Settings::m_assets },
             { "deploy", &Settings::m_deploy },
             { "run",    &Settings::m_run },

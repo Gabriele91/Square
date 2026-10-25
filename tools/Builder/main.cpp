@@ -32,6 +32,7 @@ static Square::Shell::ParserCommands s_ShellCommands
     , Square::Shell::Command{ "compiler", "x", "the compiler [msvc, clang-cl; gcc, clang; ndk] (default: the first found)", Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("")) }
     , Square::Shell::Command{ "output",   "o", "the folder of the builds (default: <game>/builds)"               , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("")) }
     , Square::Shell::Command{ "engine",   "e", "the folder of the engine (default: the one of the game)"         , Square::Shell::ValueType::value_string, false, Square::Shell::Value_t(Square::String("")) }
+    , Square::Shell::Command{ "no-compile", "u", "nothing configured or compiled (the game, the tools): the build of before (its assets packed: -a, deployed: -d, run: -r)", Square::Shell::ValueType::value_none, false, Square::Shell::Value_t(false) }
     , Square::Shell::Command{ "assets",   "a", "the assets packed for the platform (any configuration): the archives in the compression of its GPUs, the shaders in shaders.sqz", Square::Shell::ValueType::value_none,   false, Square::Shell::Value_t(false) }
     , Square::Shell::Command{ "deploy",   "d", "a mobile: the APK installed, its resources pushed"               , Square::Shell::ValueType::value_none,   false, Square::Shell::Value_t(false) }
     , Square::Shell::Command{ "run",      "r", "the game started (on the device, on the desktop)"                , Square::Shell::ValueType::value_none,   false, Square::Shell::Value_t(false) }
@@ -272,6 +273,7 @@ private:
     Square::String m_ninja;
     Square::String m_android_sdk;
     Square::String m_java_home;
+    bool           m_compile{ true };
     bool           m_assets{ false };
     bool           m_deploy{ false };
     bool           m_run{ false };
@@ -312,6 +314,7 @@ private:
     {
         return
         {
+            { "compile", &m_compile },
             { "assets", &m_assets },
             { "deploy", &m_deploy },
             { "run",    &m_run },
@@ -332,6 +335,7 @@ private:
         }
         m_config = request.m_config;
         m_compiler = request.m_compiler;
+        m_compile = request.m_compile;
         m_assets = request.m_assets;
         m_deploy = request.m_deploy;
         m_run = request.m_run;
@@ -370,6 +374,7 @@ private:
         out.m_platform = m_platform;
         out.m_config = m_config;
         out.m_compiler = m_compiler;
+        out.m_compile = m_compile;
         out.m_assets = m_assets;
         out.m_deploy = m_deploy;
         out.m_run = m_run;
@@ -517,6 +522,7 @@ private:
             "<div class=\"row\"><span class=\"label\">Compiler</span>" + compilers + "</div>"
             "<div class=\"row\"><span class=\"label\">Config</span>" + configs + "</div>"
             "<div class=\"row\"><span class=\"label\">Steps</span>"
+            "<label class=\"choice\"><input type=\"checkbox\" data-checked=\"compile\"/> compile</label>"
             "<label class=\"choice\"><input type=\"checkbox\" data-checked=\"assets\"/> pack assets (textures of the GPU, shaders.sqz)</label>"
             "<label class=\"choice\"><input type=\"checkbox\" data-checked=\"deploy\"/> deploy (mobile)</label>"
             "<label class=\"choice\"><input type=\"checkbox\" data-checked=\"run\"/> run</label>"
@@ -527,7 +533,7 @@ private:
             "<div class=\"row\"><span class=\"label\">Android SDK</span><input type=\"text\" data-value=\"android_sdk\"/></div>"
             "<div class=\"row\"><span class=\"label\">JDK 17</span><input type=\"text\" data-value=\"java_home\"/></div>"
             "<div class=\"row buttons\">"
-            "<button data-if=\"!running\" data-event-click=\"build\">Build</button>"
+            "<button data-if=\"!running\" data-event-click=\"build\">Start</button>"
             "<button data-if=\"!running\" data-event-click=\"plan\">Plan</button>"
             "<button data-if=\"!running\" data-event-click=\"detect\">Detect</button>"
             "<button data-if=\"running\" data-event-click=\"stop\">Stop</button>"
@@ -603,6 +609,7 @@ square_main(s_ShellCommands)(Square::Application& app, Square::Shell::ParserValu
     AuxBuilder::text_of(args, "compiler", settings.m_compiler);
     AuxBuilder::text_of(args, "output", settings.m_build_root);
     AuxBuilder::text_of(args, "engine", settings.m_engine);
+    settings.m_compile = !std::get<bool>(args.at("no-compile"));
     settings.m_assets = std::get<bool>(args.at("assets"));
     settings.m_deploy = std::get<bool>(args.at("deploy"));
     settings.m_run = std::get<bool>(args.at("run"));

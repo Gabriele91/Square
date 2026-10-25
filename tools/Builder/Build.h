@@ -3,11 +3,13 @@
 //  Builder
 //
 //  A build of a game: its request (the game, its target, the platform, the configuration, the
-//  compiler; its assets, its deploy, its run) made into its steps, then run one after the other,
-//  stopped at the first that fails:
+//  compiler; its compile, its assets, its deploy, its run) made into its steps, then run one
+//  after the other, stopped at the first that fails:
 //
 //      configure   cmake -G Ninja (<build root>/<platform>-<compiler>-<config>)
 //      build       the target (Android: its APK, <target>_apk; the desktop: with its drivers)
+//                  (not compiled: neither of them, nor the tools: the build and the tools of a
+//                  compile before)
 //      assets      the release of the platform (as engine/cmake/SquareRelease.cmake): the tools
 //                  of the host (AssetPack, ShaderPack), the game installed, its archives in the
 //                  compression of its GPUs, its shaders packed (<build root>/release/<platform>-<config>)
@@ -33,6 +35,7 @@ namespace Builder
         Square::String m_platform;
         Square::String m_config;
         Square::String m_compiler;
+        bool           m_compile{ true };
         bool           m_assets{ false };
         bool           m_deploy{ false };
         bool           m_run{ false };

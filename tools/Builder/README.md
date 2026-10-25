@@ -46,6 +46,8 @@ Each one the one given (the command line, the window, the settings), else found:
 Builder -s                                              the tools found
 Builder -g . -t Rush -p windows -c Release              a build
 Builder -g . -t Rush -p android -c Retail -a -d -r      the release on the device, started
+Builder -p android -c Retail -u -d                      deployed, nothing compiled
+Builder -p android -c Retail -u -a -d                   the assets packed again, deployed, nothing compiled
 Builder -p android -c Debug -n                          its steps, not run
 ```
 
@@ -58,6 +60,7 @@ Builder -p android -c Debug -n                          its steps, not run
 | `-x` compiler | msvc, clang-cl; gcc, clang; ndk (default: the first found) |
 | `-o` output | the folder of the builds (default: `<game>/builds`) |
 | `-e` engine | the folder of the engine (default: the one of the game, `-DSQUARE_DIR`) |
+| `-u` | not compiled: nothing configured or built (the game, the tools): the build of before |
 | `-a` | the assets packed for the platform, in any configuration (Debug, Release, Retail): the archives in the compression of its GPUs, shaders.sqz |
 | `-d` | deploy: a mobile |
 | `-r` | run |
@@ -74,5 +77,5 @@ Without `-p`, `-s` or `-n`: the window. What was asked last is kept in
 
 ## The window
 
-The fields of a build, the tools (empty: found), Build, Plan (its steps), Detect (the tools found
+The fields of a build, the tools (empty: found), the steps (compile, pack assets, deploy, run: the ones not ticked skipped), Start (the steps ticked), Plan (their steps), Detect (the tools found
 again), Stop (the command running and all it started), the log of the last 400 lines.
