@@ -26,12 +26,14 @@ Vec4 fragment(DeferredVSOutput input) : SV_TARGET0
 	Vec2 texel = (input.m_position.xy - g_viewport.xy) / screen * size * g_rect - 0.5;
 	Vec2 base = floor(texel);
 	Vec2 blend = texel - base;
-	Vec2 uv = (base + 0.5) / size;
-	Vec2 step = 1.0 / size;
+	//(only the texels drawn: the ones out of the share at its edges are not of this frame)
+	Vec2 last = max(floor(size * g_rect + 0.5) - 1.0, Vec2(0.0, 0.0));
+	Vec2 low = (clamp(base, Vec2(0.0, 0.0), last) + 0.5) / size;
+	Vec2 high = (clamp(base + 1.0, Vec2(0.0, 0.0), last) + 0.5) / size;
 	Vec4 color = lerp
 	(
-		  lerp(texture2DLod(g_light, uv, 0.0), texture2DLod(g_light, uv + Vec2(step.x, 0.0), 0.0), blend.x)
-		, lerp(texture2DLod(g_light, uv + Vec2(0.0, step.y), 0.0), texture2DLod(g_light, uv + step, 0.0), blend.x)
+		  lerp(texture2DLod(g_light, low, 0.0), texture2DLod(g_light, Vec2(high.x, low.y), 0.0), blend.x)
+		, lerp(texture2DLod(g_light, Vec2(low.x, high.y), 0.0), texture2DLod(g_light, high, 0.0), blend.x)
 		, blend.y
 	);
 	color.a = 1.0;

@@ -184,6 +184,7 @@ namespace Render
 
 		Square::Context& m_context;
 		IVec2            m_size{ 0, 0 };
+		Vec2             m_rect{ 1.0f, 1.0f }; //the share of the targets drawn at the last frame
 		Texture*         m_textures[2]{ nullptr, nullptr };
 		Target*          m_targets[2]{ nullptr, nullptr };
 	};

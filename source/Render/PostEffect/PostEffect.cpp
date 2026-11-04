@@ -16,16 +16,33 @@ namespace Square
 {
 namespace Render
 {
-	//a color texture (linear, clamp, one level: it is drawn and read at level 0) and a target on it
+	//a target cleared to black, all of it (a scene scaled draws only its corner: the rest is read
+	//by the bilinear samples at its edges, the blurs)
+	static void clear_color_target(Render::Context& render, Target* target)
+	{
+		if (target)
+		{
+			render.enable_render_target(target);
+			render.set_clear_color_state({ Vec4(0.0f) });
+			render.clear(CLEAR_COLOR);
+			render.disable_render_target(target);
+		}
+	}
+
+	//a color texture (linear, clamp, one level: it is drawn and read at level 0) and a target on it,
+	//black (a new texture: its memory as it was, any color)
 	static bool build_color_target(Render::Context& render, const IVec2& size, TextureFormat format, Texture*& texture, Target*& target, bool linear = true)
 	{
 		texture = render.create_texture(
 			{ format, (unsigned int)size.x, (unsigned int)size.y, nullptr, TT_RGBA, TTF_FLOAT, false },
 			{ linear ? TMIN_LINEAR : TMIN_NEAREST, linear ? TMAG_LINEAR : TMAG_NEAREST, TEDGE_CLAMP, TEDGE_CLAMP, TEDGE_CLAMP, false, 0, 1 }
 		);
-		if (!texture) return false;
-		target = render.create_render_target({ Render::TargetField{ texture, RT_COLOR } });
-		return target != nullptr;
+		if (texture)
+		{
+			target = render.create_render_target({ Render::TargetField{ texture, RT_COLOR } });
+			clear_color_target(render, target);
+		}
+		return texture != nullptr && target != nullptr;
 	}
 
 	static void release_color_target(Render::Context& render, Texture*& texture, Target*& target)
@@ -186,21 +203,33 @@ namespace Render
 
 	Texture* PostEffectChain::draw_color(const Vector< Shared<PostEffect> >& effects, PostEffectFrame frame, Texture* source)
 	{
-		if (!any(effects, PES_COLOR) || !build(frame.m_size)) return source;
-		//ping-pong: each effect reads the result of the previous one
 		Texture* current = source;
-		int next = 0;
-		for (auto& effect : effects)
+		if (any(effects, PES_COLOR) && build(frame.m_size))
 		{
-			if (!effect || !effect->enabled() || effect->stage() != PES_COLOR) continue;
-			//(nothing to do on this frame: no copy, the next one reads the same)
-			if (!effect->active(frame)) continue;
-			frame.m_source = current;
-			frame.m_destination = m_targets[next];
-			SQUARE_RENDER_SCOPE(render(), effect->object_name().c_str());
-			effect->draw(frame);
-			current = m_textures[next];
-			next = 1 - next;
+			//the share drawn changed (the resolution scale): out of it the frames of before, black
+			if (frame.m_rect != m_rect)
+			{
+				for (int i = 0; i != 2; ++i)
+				{
+					clear_color_target(render(), m_targets[i]);
+				}
+				m_rect = frame.m_rect;
+			}
+			//ping-pong: each effect reads the result of the previous one (one with nothing to do on
+			//this frame: no copy, the next one reads the same)
+			int next = 0;
+			for (auto& effect : effects)
+			{
+				if (effect && effect->enabled() && effect->stage() == PES_COLOR && effect->active(frame))
+				{
+					frame.m_source = current;
+					frame.m_destination = m_targets[next];
+					SQUARE_RENDER_SCOPE(render(), effect->object_name().c_str());
+					effect->draw(frame);
+					current = m_textures[next];
+					next = 1 - next;
+				}
+			}
 		}
 		return current;
 	}
