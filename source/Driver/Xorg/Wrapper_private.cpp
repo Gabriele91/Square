@@ -1556,6 +1556,11 @@ namespace Xorg
 			XNextEvent(Xorg::s_os_context.m_xdisplay, &event);
 			Xorg::proc_xevent(event);
 		}
+		//the gamepads
+		for (auto& input : Xorg::s_os_context.m_input)
+		{
+			input.second->gamepads_update();
+		}
 	}
 
 	//subscrive events
@@ -1599,6 +1604,24 @@ namespace Xorg
 	void Input::subscrive_finger_listener(std::function<void(FingerEvent finger, ActionEvent action, double x, double y)> listener) {}
 	void Input::subscrive_tilt_listener(std::function<void(double x, double y, double z)> listener) {}
 	void Input::enable_tilt(bool enable) {}
+
+	void Input::subscrive_gamepad_listener(std::function<void(int pad, bool connected)> listener)
+	{
+		auto* input = (Xorg::InputXorg*)m_native;
+		input->m_gamepads.m_connected = listener;
+	}
+
+	void Input::subscrive_gamepad_button_listener(std::function<void(int pad, GamepadButton button, ActionEvent action)> listener)
+	{
+		auto* input = (Xorg::InputXorg*)m_native;
+		input->m_gamepads.m_button = listener;
+	}
+
+	void Input::subscrive_gamepad_axis_listener(std::function<void(int pad, GamepadAxis axis, double value)> listener)
+	{
+		auto* input = (Xorg::InputXorg*)m_native;
+		input->m_gamepads.m_axis = listener;
+	}
 
 	void Input::subscrive_window_listener(std::function<void(WindowEvent wevent)> listener)
 	{

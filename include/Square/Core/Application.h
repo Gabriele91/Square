@@ -51,6 +51,10 @@ namespace Square
         virtual void mouse_button_event(Video::MouseButtonEvent button,  Video::ActionEvent action) { }
         virtual void mouse_scroll_event(double scroll) { }
 
+        //a gamepad: connected or gone, a button down or up
+        virtual void gamepad_event(int pad, bool connected) { }
+        virtual void gamepad_button_event(int pad, Video::GamepadButton button, Video::ActionEvent action) { }
+
         virtual void window_event(Video::WindowEvent event) { }
 
         virtual void start() = 0;

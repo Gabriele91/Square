@@ -852,6 +852,24 @@ namespace Android
 		Android::enable_tilt(enable);
 	}
 
+	void Input::subscrive_gamepad_listener(std::function<void(int pad, bool connected)> listener)
+	{
+		auto* input = (Android::InputAndroid*)m_native;
+		input->m_gamepads.m_connected = listener;
+	}
+
+	void Input::subscrive_gamepad_button_listener(std::function<void(int pad, GamepadButton button, ActionEvent action)> listener)
+	{
+		auto* input = (Android::InputAndroid*)m_native;
+		input->m_gamepads.m_button = listener;
+	}
+
+	void Input::subscrive_gamepad_axis_listener(std::function<void(int pad, GamepadAxis axis, double value)> listener)
+	{
+		auto* input = (Android::InputAndroid*)m_native;
+		input->m_gamepads.m_axis = listener;
+	}
+
 	void Input::subscrive_window_listener(std::function<void(WindowEvent wevent)> listener)
 	{
 		auto* input = (Android::InputAndroid*)m_native;

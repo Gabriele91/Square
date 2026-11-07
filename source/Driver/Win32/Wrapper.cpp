@@ -973,6 +973,8 @@ namespace Video
 		Win32::InputWin32* in = new Win32::InputWin32();
 		//set wnd
 		in->m_window_ref = wnd;
+		//its gamepads
+		in->gamepads_load();
 		//set ref to conteiner
 		in->m_input_ref = input;
 		//add to map
@@ -996,6 +998,8 @@ namespace Video
 		}
 		//remove prob
 		SetWindowLongPtr((HWND)in->m_window_ref->native(), GWLP_USERDATA, 0);
+		//its gamepads
+		in->gamepads_unload();
 		//dealloc
 		delete in;
 		//to null
@@ -1479,6 +1483,12 @@ namespace Video
 			}
 		}
 		Win32RepeatAux::enqueue_repeat_events();
+		//the gamepads: to the window in front (the others: as nothing held)
+		const HWND front = GetForegroundWindow();
+		for (auto* input : s_os_context.m_input)
+		{
+			input->gamepads_update(input->m_window_ref && (HWND)input->m_window_ref->native() == front);
+		}
 	}
 	//subscrive events
 	void Input::subscrive_keyboard_listener(std::function<void(KeyboardEvent kevent, short mode, ActionEvent action)> listener)
@@ -1521,6 +1531,24 @@ namespace Video
 	void Input::subscrive_finger_listener(std::function<void(FingerEvent finger, ActionEvent action, double x, double y)> listener) {}
 	void Input::subscrive_tilt_listener(std::function<void(double x, double y, double z)> listener) {}
 	void Input::enable_tilt(bool enable) {}
+
+	void Input::subscrive_gamepad_listener(std::function<void(int pad, bool connected)> listener)
+	{
+		auto* input = (Win32::InputWin32*)m_native;
+		input->m_gamepads.m_connected = listener;
+	}
+
+	void Input::subscrive_gamepad_button_listener(std::function<void(int pad, GamepadButton button, ActionEvent action)> listener)
+	{
+		auto* input = (Win32::InputWin32*)m_native;
+		input->m_gamepads.m_button = listener;
+	}
+
+	void Input::subscrive_gamepad_axis_listener(std::function<void(int pad, GamepadAxis axis, double value)> listener)
+	{
+		auto* input = (Win32::InputWin32*)m_native;
+		input->m_gamepads.m_axis = listener;
+	}
 
 	void Input::subscrive_window_listener(std::function<void(WindowEvent wevent)> listener)
 	{

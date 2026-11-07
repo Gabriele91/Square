@@ -86,6 +86,7 @@ elseif(APPLE)
         "-framework CoreFoundation"
         "-framework CoreAudio"
         "-framework AudioToolbox"
+        "-framework GameController"
     )
 
 elseif(ANDROID)

@@ -6,8 +6,9 @@
 //  (update) and sends them to the application (AppInterface).
 //  It also keeps the state of the frame, for who asks it (components, systems): keys and mouse
 //  buttons held, pressed or released in this frame, the mouse position, the fingers on a touch
-//  screen and the tilt of the device (a phone), and the actions (a name bound to one or more
-//  keys: "forward" -> up, W).
+//  screen and the tilt of the device (a phone), the gamepads (their buttons, sticks and
+//  triggers), and the actions (a name bound to one or more keys and gamepad buttons:
+//  "forward" -> up, W, RT).
 //  Ring DRIVER: the state is ready before the scene updates.
 //
 #pragma once
@@ -37,6 +38,10 @@ namespace Square
 		//a finger: down, moved (REPEAT), up, its position
 		virtual void on_finger(Video::FingerEvent finger, Video::ActionEvent action, const Vec2& position) {}
 		virtual void on_window(Video::WindowEvent event) {}
+		//a gamepad: connected or gone, a button down or up, an axis moved
+		virtual void on_gamepad(int pad, bool connected) {}
+		virtual void on_gamepad_button(int pad, Video::GamepadButton button, Video::ActionEvent action) {}
+		virtual void on_gamepad_axis(int pad, Video::GamepadAxis axis, float value) {}
 	};
 
 	//..................
@@ -94,8 +99,18 @@ namespace Square
 		void tilt(bool enable);
 		bool tilt(Vec3& gravity) const;
 
-		//actions: a name bound to keys (any of them)
+		//gamepads: connected ones, one connected; their buttons held, went down, went up in this
+		//frame; their axes (Video::GamepadAxis); pad -1: any of them (an axis: the one most moved)
+		int  gamepads() const;
+		bool gamepad(int pad) const;
+		bool down(Video::GamepadButton button, int pad = -1) const;
+		bool pressed(Video::GamepadButton button, int pad = -1) const;
+		bool released(Video::GamepadButton button, int pad = -1) const;
+		float axis(Video::GamepadAxis axis, int pad = -1) const;
+
+		//actions: a name bound to keys and to gamepad buttons (any of them)
 		void bind(const String& action, Video::KeyboardEvent key);
+		void bind(const String& action, Video::GamepadButton button);
 		void unbind(const String& action);
 		bool action(const String& action) const;          //one of its keys held
 		bool action_pressed(const String& action) const;  //one of its keys went down in this frame
@@ -112,6 +127,18 @@ namespace Square
 		static constexpr size_t KEY_COUNT    = size_t(Video::KEY_LAST) + 1;
 		static constexpr size_t BUTTON_COUNT = size_t(Video::MOUSE_BUTTON_LAST) + 1;
 		static constexpr size_t FINGER_COUNT = size_t(Video::FINGERMAX);
+		static constexpr size_t PAD_COUNT    = size_t(Video::GAMEPAD_MAX);
+		static constexpr size_t PAD_BUTTONS  = size_t(Video::GAMEPAD_BUTTON_COUNT);
+		static constexpr size_t PAD_AXES     = size_t(Video::GAMEPAD_AXIS_COUNT);
+		//a gamepad: connected, its buttons, its axes
+		struct Pad
+		{
+			bool                     connected{ false };
+			Array<Button, PAD_BUTTONS> buttons;
+			Array<float, PAD_AXES>   axes{};
+		};
+		//a button of a pad (pad -1: any)
+		bool pad_button(Video::GamepadButton button, int pad, bool Button::* state) const;
 
 		//an event (next: the state being built by the events, until the next update)
 		static void change(Button& button, Video::ActionEvent action);
@@ -138,7 +165,11 @@ namespace Square
 		//tilt
 		Vec3  m_tilt{ 0.0f };
 		bool  m_tilted{ false };
+		//gamepads
+		Array<Pad, PAD_COUNT> m_pads;
+		Array<Pad, PAD_COUNT> m_pads_next;
 		//actions
 		UnorderedMap<String, Vector<Video::KeyboardEvent>> m_actions;
+		UnorderedMap<String, Vector<Video::GamepadButton>> m_pad_actions;
 	};
 }

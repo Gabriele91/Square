@@ -9,6 +9,7 @@
 #include "Square/Driver/Window.h"
 #include "Square/Driver/Input.h"
 #include "Wrapper_private.h"
+#include "../Gamepad_private.h"
 
 namespace Square
 {
@@ -30,6 +31,9 @@ namespace Cocoa
         std::function<void(FingerEvent fevent, ActionEvent action)>                       m_touch{ nullptr };
         std::function<void(WindowEvent wevent)>                                           m_window{ nullptr };
         std::function<void(double x, double y)>                                           m_window_move{ nullptr };
+        //its gamepads (GameController: the ones it knows, in their order): the changes sent (the
+        //application not active: as nothing held)
+        GamepadEvents                                                                     m_gamepads;
         //save actions
         ActionEvent m_action_keyboard_state[KeyboardEvent::KEY_LAST];
         ActionEvent m_action_mouse_state[MouseButtonEvent::MOUSE_BUTTON_LAST];
@@ -53,6 +57,9 @@ namespace Cocoa
         void send_window_event(WindowEvent wevent);
         
         void send_window_move_event(double x, double y);
+
+        //their state now, sent
+        void gamepads_update();
     };
 }
 }

@@ -197,6 +197,48 @@ namespace Video
 		FINGERMAX
 	};
 
+	//a gamepad: up to GAMEPAD_MAX of them, the layout of an Xbox pad on every system (A down, B
+	//right, X left, Y up); its triggers also as buttons (pressed over half their way)
+	constexpr int GAMEPAD_MAX = 4;
+
+	enum GamepadButton : signed char
+	{
+		GAMEPAD_UNKNOWN = -1,
+		GAMEPAD_A = 0,
+		GAMEPAD_B,
+		GAMEPAD_X,
+		GAMEPAD_Y,
+		GAMEPAD_LEFT_SHOULDER,
+		GAMEPAD_RIGHT_SHOULDER,
+		GAMEPAD_LEFT_TRIGGER,
+		GAMEPAD_RIGHT_TRIGGER,
+		GAMEPAD_BACK,
+		GAMEPAD_START,
+		GAMEPAD_LEFT_THUMB,
+		GAMEPAD_RIGHT_THUMB,
+		GAMEPAD_DPAD_UP,
+		GAMEPAD_DPAD_DOWN,
+		GAMEPAD_DPAD_LEFT,
+		GAMEPAD_DPAD_RIGHT,
+		GAMEPAD_BUTTON_COUNT
+	};
+
+	//its sticks: -1 to 1 (x right, y up), its triggers: 0 to 1; past their dead zone (0 within it)
+	enum GamepadAxis : signed char
+	{
+		GAMEPAD_LEFT_X = 0,
+		GAMEPAD_LEFT_Y,
+		GAMEPAD_RIGHT_X,
+		GAMEPAD_RIGHT_Y,
+		GAMEPAD_LEFT_TRIGGER_AXIS,
+		GAMEPAD_RIGHT_TRIGGER_AXIS,
+		GAMEPAD_AXIS_COUNT
+	};
+
+	//serialize: "A", "LB", "RT", "START", "DPAD UP"... ("": none)
+	SQUARE_API StringView gamepad_button_to_string(GamepadButton button);
+	SQUARE_API GamepadButton gamepad_button_from_string(StringView button, GamepadButton button_default);
+
 	enum class WindowEvent : unsigned char
 	{
 		MINIMIZED,
@@ -232,6 +274,11 @@ namespace Video
 		//tilt: the gravity on the screen (x right, y up), its sensor on/off
 		void subscrive_tilt_listener(std::function<void(double x, double y, double z)> listener);
 		void enable_tilt(bool enable);
+		//gamepads (each system its own: XInput, the events of Android, GameController, evdev): one
+		//connected or gone, its buttons (down, up), its axes (a new value)
+		void subscrive_gamepad_listener(std::function<void(int pad, bool connected)> listener);
+		void subscrive_gamepad_button_listener(std::function<void(int pad, GamepadButton button, ActionEvent action)> listener);
+		void subscrive_gamepad_axis_listener(std::function<void(int pad, GamepadAxis axis, double value)> listener);
 		void subscrive_window_listener(std::function<void(WindowEvent wevent)> listener);
 		void subscrive_window_move_listener(std::function<void(double x, double y)> listener);
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////

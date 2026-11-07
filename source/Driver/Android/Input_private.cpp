@@ -1,13 +1,15 @@
 //
 //  Square
 //
-//  Android: the input of the window (the events of the activity): keyboard and gamepad keys,
-//  mouse, touch screen (its first finger also as the mouse: the UI).
+//  Android: the input of the window (the events of the activity): keyboard keys, gamepads
+//  (their keys and their sticks, as gamepad events), mouse, touch screen (its first finger also
+//  as the mouse: the UI).
 //
 #include "Screen_private.h"
 #include "Window_private.h"
 #include "Input_private.h"
 #include <android/keycodes.h>
+#include <algorithm>
 
 namespace Square
 {
@@ -184,12 +186,6 @@ namespace Android
 		{ AKEYCODE_ALT_RIGHT,       KEY_RIGHT_ALT     },
 		{ AKEYCODE_META_RIGHT,      KEY_RIGHT_SUPER   },
 		{ AKEYCODE_MENU,            KEY_MENU          },
-		{ AKEYCODE_BUTTON_A,        KEY_ENTER         },
-		{ AKEYCODE_BUTTON_B,        KEY_ESCAPE        },
-		{ AKEYCODE_BUTTON_START,    KEY_ESCAPE        },
-		{ AKEYCODE_BUTTON_X,        KEY_SPACE         },
-		{ AKEYCODE_BUTTON_R2,       KEY_UP            },
-		{ AKEYCODE_BUTTON_L2,       KEY_DOWN          },
 		{ AKEYCODE_DPAD_CENTER,     KEY_ENTER         },
 	};
 
@@ -277,12 +273,101 @@ namespace Android
 		return -1;
 	}
 
+	////////////////////////////////////////////////////////////////////////////////////
+	// GAMEPADS
+	//its slot (a device not seen yet: the first free one, connected; none free: -1)
+	static int gamepad_of(InputAndroid& input, int32_t device)
+	{
+		for (int pad = 0; pad != GAMEPAD_MAX; ++pad)
+		{
+			if (input.m_gamepad_devices[size_t(pad)] == device)
+			{
+				return pad;
+			}
+		}
+		for (int pad = 0; pad != GAMEPAD_MAX; ++pad)
+		{
+			if (input.m_gamepad_devices[size_t(pad)] == -1)
+			{
+				input.m_gamepad_devices[size_t(pad)] = device;
+				input.m_gamepad_states[size_t(pad)] = GamepadState();
+				input.m_gamepad_states[size_t(pad)].connected = true;
+				return pad;
+			}
+		}
+		return -1;
+	}
+
+	//the keys of a gamepad as its buttons (the triggers: also from their axes)
+	struct PadButtonOf
+	{
+		int32_t       m_code;
+		GamepadButton m_button;
+	};
+	static const PadButtonOf s_pad_buttons[] =
+	{
+		{ AKEYCODE_BUTTON_A,      GAMEPAD_A              },
+		{ AKEYCODE_BUTTON_B,      GAMEPAD_B              },
+		{ AKEYCODE_BUTTON_X,      GAMEPAD_X              },
+		{ AKEYCODE_BUTTON_Y,      GAMEPAD_Y              },
+		{ AKEYCODE_BUTTON_L1,     GAMEPAD_LEFT_SHOULDER  },
+		{ AKEYCODE_BUTTON_R1,     GAMEPAD_RIGHT_SHOULDER },
+		{ AKEYCODE_BUTTON_L2,     GAMEPAD_LEFT_TRIGGER   },
+		{ AKEYCODE_BUTTON_R2,     GAMEPAD_RIGHT_TRIGGER  },
+		{ AKEYCODE_BUTTON_SELECT, GAMEPAD_BACK           },
+		{ AKEYCODE_BACK,          GAMEPAD_BACK           },
+		{ AKEYCODE_BUTTON_START,  GAMEPAD_START          },
+		{ AKEYCODE_BUTTON_THUMBL, GAMEPAD_LEFT_THUMB     },
+		{ AKEYCODE_BUTTON_THUMBR, GAMEPAD_RIGHT_THUMB    },
+		{ AKEYCODE_DPAD_UP,       GAMEPAD_DPAD_UP        },
+		{ AKEYCODE_DPAD_DOWN,     GAMEPAD_DPAD_DOWN      },
+		{ AKEYCODE_DPAD_LEFT,     GAMEPAD_DPAD_LEFT      },
+		{ AKEYCODE_DPAD_RIGHT,    GAMEPAD_DPAD_RIGHT     },
+	};
+
+	static GamepadButton pad_button_of(int32_t code)
+	{
+		for (const PadButtonOf& button : s_pad_buttons)
+		{
+			if (button.m_code == code)
+			{
+				return button.m_button;
+			}
+		}
+		return GAMEPAD_UNKNOWN;
+	}
+
+	//a key of a gamepad (its source a gamepad, or a key only of gamepads): 1 used
+	static int32_t gamepad_key_event(InputAndroid& input, const AInputEvent* event, int32_t code)
+	{
+		const GamepadButton button = pad_button_of(code);
+		const bool from_pad = (AInputEvent_getSource(event) & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD;
+		const bool pad_only = code >= AKEYCODE_BUTTON_A && code <= AKEYCODE_BUTTON_MODE;
+		if (button == GAMEPAD_UNKNOWN || !(from_pad || pad_only))
+		{
+			return 0;
+		}
+		const int pad = gamepad_of(input, AInputEvent_getDeviceId(event));
+		const int32_t key_action = AKeyEvent_getAction(event);
+		if (pad >= 0 && (key_action == AKEY_EVENT_ACTION_DOWN || key_action == AKEY_EVENT_ACTION_UP))
+		{
+			GamepadState& state = input.m_gamepad_states[size_t(pad)];
+			state.buttons[size_t(button)] = key_action == AKEY_EVENT_ACTION_DOWN;
+			input.m_gamepads.send(pad, state);
+		}
+		return 1;
+	}
+
 	static int32_t key_event(InputAndroid& input, const AInputEvent* event)
 	{
 		const int32_t code = AKeyEvent_getKeyCode(event);
 		if (is_system_key(code))
 		{
 			return 0;
+		}
+		if (gamepad_key_event(input, event, code))
+		{
+			return 1;
 		}
 		const KeyboardEvent key = translate_key(code);
 		if (key == KEY_INVALID)
@@ -317,25 +402,10 @@ namespace Android
 
 	////////////////////////////////////////////////////////////////////////////////////
 	// GAMEPAD AXES
-	//a direction of a stick (or of the hat) as a key held, while it is over its threshold
-	struct AxisKey
-	{
-		int32_t       m_axis;
-		float         m_sign;
-		KeyboardEvent m_key;
-		bool          m_down;
-	};
-	static AxisKey s_axis_keys[] =
-	{
-		{ AMOTION_EVENT_AXIS_X,     -1.0f, KEY_LEFT,  false },
-		{ AMOTION_EVENT_AXIS_X,      1.0f, KEY_RIGHT, false },
-		{ AMOTION_EVENT_AXIS_Y,     -1.0f, KEY_UP,    false },
-		{ AMOTION_EVENT_AXIS_Y,      1.0f, KEY_DOWN,  false },
-		{ AMOTION_EVENT_AXIS_HAT_X, -1.0f, KEY_LEFT,  false },
-		{ AMOTION_EVENT_AXIS_HAT_X,  1.0f, KEY_RIGHT, false },
-		{ AMOTION_EVENT_AXIS_HAT_Y, -1.0f, KEY_UP,    false },
-		{ AMOTION_EVENT_AXIS_HAT_Y,  1.0f, KEY_DOWN,  false },
-	};
+	//its sticks (y up: Android down), its triggers (some pads: brake and gas), its hat as the
+	//buttons of its pad
+	static constexpr float s_stick_dead = 0.15f;
+	static constexpr float s_trigger_dead = 0.05f;
 
 	//a key down or up
 	static ActionEvent action_of(bool down)
@@ -347,29 +417,29 @@ namespace Android
 		return ActionEvent::RELEASE;
 	}
 
-	//a direction held: pressed over the half, released under the third (no flicker at the
-	//threshold)
-	static bool axis_down(const AxisKey& axis_key, float value)
-	{
-		if (axis_key.m_down)
-		{
-			return value > 0.33f;
-		}
-		return value > 0.5f;
-	}
-
 	static int32_t joystick_event(InputAndroid& input, const AInputEvent* event)
 	{
-		for (AxisKey& axis_key : s_axis_keys)
+		const int pad = gamepad_of(input, AInputEvent_getDeviceId(event));
+		if (pad < 0)
 		{
-			const float axis = AMotionEvent_getAxisValue(event, axis_key.m_axis, 0);
-			const bool  down = axis_down(axis_key, axis * axis_key.m_sign);
-			if (down != axis_key.m_down)
-			{
-				axis_key.m_down = down;
-				input.send_keyboard_event(axis_key.m_key, 0, action_of(down));
-			}
+			return 1;
 		}
+		auto axis = [event](int32_t which) { return AMotionEvent_getAxisValue(event, which, 0); };
+		GamepadState& state = input.m_gamepad_states[size_t(pad)];
+		gamepad_stick(axis(AMOTION_EVENT_AXIS_X), -axis(AMOTION_EVENT_AXIS_Y), s_stick_dead, state.axes[GAMEPAD_LEFT_X], state.axes[GAMEPAD_LEFT_Y]);
+		gamepad_stick(axis(AMOTION_EVENT_AXIS_Z), -axis(AMOTION_EVENT_AXIS_RZ), s_stick_dead, state.axes[GAMEPAD_RIGHT_X], state.axes[GAMEPAD_RIGHT_Y]);
+		const float left = std::max(axis(AMOTION_EVENT_AXIS_LTRIGGER), axis(AMOTION_EVENT_AXIS_BRAKE));
+		const float right = std::max(axis(AMOTION_EVENT_AXIS_RTRIGGER), axis(AMOTION_EVENT_AXIS_GAS));
+		state.axes[GAMEPAD_LEFT_TRIGGER_AXIS] = gamepad_trigger(left, s_trigger_dead);
+		state.axes[GAMEPAD_RIGHT_TRIGGER_AXIS] = gamepad_trigger(right, s_trigger_dead);
+		//(its hat: the d-pad of the pads that do not send it as keys)
+		const float hat_x = axis(AMOTION_EVENT_AXIS_HAT_X);
+		const float hat_y = axis(AMOTION_EVENT_AXIS_HAT_Y);
+		state.buttons[GAMEPAD_DPAD_LEFT] = hat_x < -0.5f;
+		state.buttons[GAMEPAD_DPAD_RIGHT] = hat_x > 0.5f;
+		state.buttons[GAMEPAD_DPAD_UP] = hat_y < -0.5f;
+		state.buttons[GAMEPAD_DPAD_DOWN] = hat_y > 0.5f;
+		input.m_gamepads.send(pad, state);
 		return 1;
 	}
 

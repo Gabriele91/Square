@@ -750,6 +750,11 @@ namespace Cocoa
             if (event == nil)  break;
             [NSApp sendEvent:event];
         }
+        // The gamepads
+        for (auto& pair : Cocoa::s_os_context.m_input)
+        {
+            pair.second->gamepads_update();
+        }
         // Re-fire REPEAT for all held keys every frame (mirrors Windows behavior)
         for (auto& pair : Cocoa::s_os_context.m_input)
         {
@@ -829,6 +834,24 @@ namespace Cocoa
     void Input::subscrive_tilt_listener(std::function<void(double x, double y, double z)> listener) {}
     void Input::enable_tilt(bool enable) {}
     
+    void Input::subscrive_gamepad_listener(std::function<void(int pad, bool connected)> listener)
+    {
+        auto* input = (Cocoa::InputCocoa*)m_native;
+        input->m_gamepads.m_connected = listener;
+    }
+
+    void Input::subscrive_gamepad_button_listener(std::function<void(int pad, GamepadButton button, ActionEvent action)> listener)
+    {
+        auto* input = (Cocoa::InputCocoa*)m_native;
+        input->m_gamepads.m_button = listener;
+    }
+
+    void Input::subscrive_gamepad_axis_listener(std::function<void(int pad, GamepadAxis axis, double value)> listener)
+    {
+        auto* input = (Cocoa::InputCocoa*)m_native;
+        input->m_gamepads.m_axis = listener;
+    }
+
     void Input::subscrive_window_listener(std::function<void(WindowEvent wevent)> listener)
     {
         auto* input = (Cocoa::InputCocoa*)m_native;

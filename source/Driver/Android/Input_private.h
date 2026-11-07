@@ -9,6 +9,7 @@
 #include "Square/Driver/Window.h"
 #include "Square/Driver/Input.h"
 #include "Wrapper_private.h"
+#include "../Gamepad_private.h"
 
 namespace Square
 {
@@ -30,6 +31,11 @@ namespace Android
 		std::function<void(double x, double y, double z)>							m_tilt{ nullptr };
 		std::function<void(WindowEvent wevent)>										m_window{ nullptr };
 		std::function<void(double x, double y)>										m_window_move{ nullptr };
+		//its gamepads: the changes sent; each one a device (its id), its state (from its keys
+		//and its motions)
+		GamepadEvents																m_gamepads;
+		std::array<int32_t, GAMEPAD_MAX>												m_gamepad_devices{ -1, -1, -1, -1 };
+		std::array<GamepadState, GAMEPAD_MAX>											m_gamepad_states{};
 
 		void send_keyboard_event(KeyboardEvent kevent, short mode, ActionEvent action);
 		void send_character_event(int character, short mode, bool plain);

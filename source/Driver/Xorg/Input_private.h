@@ -9,6 +9,8 @@
 #include "Square/Driver/Window.h"
 #include "Square/Driver/Input.h"
 #include "Wrapper_private.h"
+#include "../Gamepad_private.h"
+#include <chrono>
 
 ///////////////////////////////////////////////////
 
@@ -30,6 +32,28 @@ namespace Xorg
 		std::function<void(FingerEvent fevent, ActionEvent action)>					m_touch{ nullptr };
 		std::function<void(WindowEvent wevent)>										m_window{ nullptr };
 		std::function<void(double x, double y)>										m_window_move{ nullptr };
+		//its gamepads (evdev: /dev/input/event*, the ones with the buttons of a gamepad): each one
+		//its device (-1: none), its path, the range of its axes (by ABS_*), its raw axes, its
+		//state; when they were looked for (again every two seconds: one plugged in); the focus of
+		//its window (none: as nothing held); the changes sent
+		struct GamepadDevice
+		{
+			int                       fd{ -1 };
+			std::string               path;
+			std::array<float, 0x40>   min{};
+			std::array<float, 0x40>   max{};
+			std::array<float, 0x40>   raw{};
+		};
+		std::array<GamepadDevice, GAMEPAD_MAX>     m_gamepad_devices{};
+		std::array<GamepadState, GAMEPAD_MAX>      m_gamepad_states{};
+		std::chrono::steady_clock::time_point     m_gamepad_scan{};
+		bool                                       m_gamepad_scanned{ false };
+		bool                                       m_focus{ true };
+		GamepadEvents                              m_gamepads;
+
+		~InputXorg();
+		//the devices plugged in looked for, their events read, the changes sent
+		void gamepads_update();
 
 		void send_keyboard_event(KeyboardEvent kevent, short mode, ActionEvent action);
 		void send_character_event(int character, short mode, bool plain);

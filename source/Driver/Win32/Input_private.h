@@ -8,6 +8,9 @@
 #include "Square/Config.h"
 #include "Square/Driver/Window.h"
 #include "Square/Driver/Input.h"
+#include "Square/Core/SharedLibrary.h"
+#include "../Gamepad_private.h"
+#include <memory>
 #include <windows.h>
 #include <Variant>
 
@@ -17,6 +20,13 @@ namespace Video
 {
 namespace Win32
 {
+	//a shared library, closed when it goes
+	struct SharedLibraryClose
+	{
+		void operator()(void* library) const { SharedLibrary::close(library); }
+	};
+	using SharedLibraryPtr = std::unique_ptr<void, SharedLibraryClose>;
+
 	struct SQUARE_API InputWin32
 	{
 		Window*																					 m_window_ref   { nullptr };
@@ -39,9 +49,26 @@ namespace Win32
 		void send_window_event(WindowEvent wevent);
 		void send_window_move_event(double x, double y);
 
+		//its gamepads (XInput: an Xbox pad and the ones like it): its library (none: no gamepad),
+		//their state, when a slot with nothing in it was asked (slow: again once a second), the
+		//changes sent (no focus: as nothing held)
+		using XInputGetState = DWORD(WINAPI*)(DWORD, void*);
+		SharedLibraryPtr                      m_xinput;
+		XInputGetState                        m_xinput_get_state{ nullptr };
+		std::array<GamepadState, GAMEPAD_MAX> m_gamepad_states{};
+		std::array<ULONGLONG, GAMEPAD_MAX>    m_gamepad_asked{};
+		GamepadEvents                         m_gamepads;
+
+		//its library loaded, unloaded
+		void gamepads_load();
+		void gamepads_unload();
+		//their state now, sent (focus: the window in front)
+		void gamepads_update(bool focus);
+
 		using EventKey = std::variant < KeyboardEvent, MouseButtonEvent >;
 		UnorderedMap<EventKey, MSG> m_event_pool;
 	};
+
 }
 }
 }

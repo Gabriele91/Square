@@ -7,6 +7,7 @@
 #include "Wrapper_private.h"
 #include "Window_private.h"
 #include "Input_private.h"
+#import <GameController/GameController.h>
 
 //////////////////////////////////////////////////////////////////////////////
 //translate
@@ -262,6 +263,45 @@ namespace Cocoa
     void InputCocoa::send_window_move_event(double x, double y)
     {
         if (m_window_move) m_window_move(x, y);
+    }
+
+    void InputCocoa::gamepads_update()
+    {
+        NSArray<GCController*>* controllers = [GCController controllers];
+        const bool focus = [NSApp isActive];
+        for (int pad = 0; pad != GAMEPAD_MAX; ++pad)
+        {
+            GamepadState state;
+            GCExtendedGamepad* gamepad = NSUInteger(pad) < controllers.count ? controllers[NSUInteger(pad)].extendedGamepad : nil;
+            if (gamepad)
+            {
+                state.connected = true;
+                //(not active: as nothing held)
+                if (focus)
+                {
+                    state.buttons[GAMEPAD_A] = gamepad.buttonA.isPressed;
+                    state.buttons[GAMEPAD_B] = gamepad.buttonB.isPressed;
+                    state.buttons[GAMEPAD_X] = gamepad.buttonX.isPressed;
+                    state.buttons[GAMEPAD_Y] = gamepad.buttonY.isPressed;
+                    state.buttons[GAMEPAD_LEFT_SHOULDER] = gamepad.leftShoulder.isPressed;
+                    state.buttons[GAMEPAD_RIGHT_SHOULDER] = gamepad.rightShoulder.isPressed;
+                    state.buttons[GAMEPAD_BACK] = gamepad.buttonOptions != nil && gamepad.buttonOptions.isPressed;
+                    state.buttons[GAMEPAD_START] = gamepad.buttonMenu.isPressed;
+                    state.buttons[GAMEPAD_LEFT_THUMB] = gamepad.leftThumbstickButton != nil && gamepad.leftThumbstickButton.isPressed;
+                    state.buttons[GAMEPAD_RIGHT_THUMB] = gamepad.rightThumbstickButton != nil && gamepad.rightThumbstickButton.isPressed;
+                    state.buttons[GAMEPAD_DPAD_UP] = gamepad.dpad.up.isPressed;
+                    state.buttons[GAMEPAD_DPAD_DOWN] = gamepad.dpad.down.isPressed;
+                    state.buttons[GAMEPAD_DPAD_LEFT] = gamepad.dpad.left.isPressed;
+                    state.buttons[GAMEPAD_DPAD_RIGHT] = gamepad.dpad.right.isPressed;
+                    //(its own dead zones: the sticks a little more, round)
+                    gamepad_stick(gamepad.leftThumbstick.xAxis.value, gamepad.leftThumbstick.yAxis.value, 0.1f, state.axes[GAMEPAD_LEFT_X], state.axes[GAMEPAD_LEFT_Y]);
+                    gamepad_stick(gamepad.rightThumbstick.xAxis.value, gamepad.rightThumbstick.yAxis.value, 0.1f, state.axes[GAMEPAD_RIGHT_X], state.axes[GAMEPAD_RIGHT_Y]);
+                    state.axes[GAMEPAD_LEFT_TRIGGER_AXIS] = gamepad_trigger(gamepad.leftTrigger.value, 0.05f);
+                    state.axes[GAMEPAD_RIGHT_TRIGGER_AXIS] = gamepad_trigger(gamepad.rightTrigger.value, 0.05f);
+                }
+            }
+            m_gamepads.send(pad, state);
+        }
     }
 }
 }

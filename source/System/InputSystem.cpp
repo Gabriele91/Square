@@ -9,6 +9,7 @@
 #include "Square/Core/ClassObjectRegistration.h"
 #include "Square/System/InputSystem.h"
 #include <algorithm>
+#include <cmath>
 
 namespace Square
 {
@@ -87,6 +88,32 @@ namespace Square
 			m_tilt = Vec3(float(x), float(y), float(z));
 			m_tilted = true;
 		});
+		m_input->subscrive_gamepad_listener([this, app](int pad, bool connected)
+		{
+			if (pad >= 0 && size_t(pad) < PAD_COUNT)
+			{
+				m_pads_next[size_t(pad)].connected = connected;
+			}
+			for (auto* listener : m_listeners) listener->on_gamepad(pad, connected);
+			if (auto* instance = app()) instance->gamepad_event(pad, connected);
+		});
+		m_input->subscrive_gamepad_button_listener([this, app](int pad, Video::GamepadButton button, Video::ActionEvent action)
+		{
+			if (pad >= 0 && size_t(pad) < PAD_COUNT && button >= 0 && size_t(button) < PAD_BUTTONS)
+			{
+				change(m_pads_next[size_t(pad)].buttons[size_t(button)], action);
+			}
+			for (auto* listener : m_listeners) listener->on_gamepad_button(pad, button, action);
+			if (auto* instance = app()) instance->gamepad_button_event(pad, button, action);
+		});
+		m_input->subscrive_gamepad_axis_listener([this](int pad, Video::GamepadAxis axis, double value)
+		{
+			if (pad >= 0 && size_t(pad) < PAD_COUNT && axis >= 0 && size_t(axis) < PAD_AXES)
+			{
+				m_pads_next[size_t(pad)].axes[size_t(axis)] = float(value);
+			}
+			for (auto* listener : m_listeners) listener->on_gamepad_axis(pad, axis, float(value));
+		});
 		m_input->subscrive_window_listener([this, app](Video::WindowEvent event)
 		{
 			for (auto* listener : m_listeners) listener->on_window(event);
@@ -98,6 +125,11 @@ namespace Square
 				for (auto& key : m_keys_next) if (key.down) change(key, Video::ActionEvent::RELEASE);
 				for (auto& button : m_buttons_next) if (button.down) change(button, Video::ActionEvent::RELEASE);
 				for (auto& finger : m_fingers_next) if (finger.down) change(finger, Video::ActionEvent::RELEASE);
+				for (auto& pad : m_pads_next)
+				{
+					for (auto& button : pad.buttons) if (button.down) change(button, Video::ActionEvent::RELEASE);
+					pad.axes.fill(0.0f);
+				}
 			}
 		});
 		return true;
@@ -111,6 +143,7 @@ namespace Square
 			m_input = nullptr;
 		}
 		m_actions.clear();
+		m_pad_actions.clear();
 	}
 
 	void InputSystem::update(double delta_time)
@@ -121,6 +154,12 @@ namespace Square
 		latch(m_keys, m_keys_next);
 		latch(m_buttons, m_buttons_next);
 		latch(m_fingers, m_fingers_next);
+		for (size_t pad = 0; pad != PAD_COUNT; ++pad)
+		{
+			m_pads[pad].connected = m_pads_next[pad].connected;
+			m_pads[pad].axes = m_pads_next[pad].axes;
+			latch(m_pads[pad].buttons, m_pads_next[pad].buttons);
+		}
 		m_finger_places = m_finger_places_next;
 		m_mouse_delta = m_mouse_next - m_mouse;
 		m_mouse = m_mouse_next;
@@ -257,6 +296,61 @@ namespace Square
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////
+	//gamepads
+	int InputSystem::gamepads() const
+	{
+		return int(std::count_if(m_pads.begin(), m_pads.end(), [](const Pad& pad) { return pad.connected; }));
+	}
+
+	bool InputSystem::gamepad(int pad) const
+	{
+		return pad >= 0 && size_t(pad) < PAD_COUNT && m_pads[size_t(pad)].connected;
+	}
+
+	bool InputSystem::pad_button(Video::GamepadButton button, int pad, bool Button::* state) const
+	{
+		if (button < 0 || size_t(button) >= PAD_BUTTONS) return false;
+		if (pad >= 0)
+		{
+			return size_t(pad) < PAD_COUNT && m_pads[size_t(pad)].buttons[size_t(button)].*state;
+		}
+		for (const Pad& any : m_pads) if (any.buttons[size_t(button)].*state) return true;
+		return false;
+	}
+
+	bool InputSystem::down(Video::GamepadButton button, int pad) const
+	{
+		return pad_button(button, pad, &Button::down);
+	}
+
+	bool InputSystem::pressed(Video::GamepadButton button, int pad) const
+	{
+		return pad_button(button, pad, &Button::pressed);
+	}
+
+	bool InputSystem::released(Video::GamepadButton button, int pad) const
+	{
+		return pad_button(button, pad, &Button::released);
+	}
+
+	float InputSystem::axis(Video::GamepadAxis axis, int pad) const
+	{
+		if (axis < 0 || size_t(axis) >= PAD_AXES) return 0.0f;
+		if (pad >= 0)
+		{
+			return size_t(pad) < PAD_COUNT ? m_pads[size_t(pad)].axes[size_t(axis)] : 0.0f;
+		}
+		//(any: the one most moved)
+		float most = 0.0f;
+		for (const Pad& any : m_pads)
+		{
+			if (std::abs(any.axes[size_t(axis)]) > std::abs(most)) 
+				most = any.axes[size_t(axis)];
+		}
+		return most;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////
 	//actions
 	void InputSystem::bind(const String& action, Video::KeyboardEvent key)
 	{
@@ -264,32 +358,42 @@ namespace Square
 		if (std::find(keys.begin(), keys.end(), key) == keys.end()) keys.push_back(key);
 	}
 
+	void InputSystem::bind(const String& action, Video::GamepadButton button)
+	{
+		auto& buttons = m_pad_actions[action];
+		if (std::find(buttons.begin(), buttons.end(), button) == buttons.end()) buttons.push_back(button);
+	}
+
 	void InputSystem::unbind(const String& action)
 	{
 		m_actions.erase(action);
+		m_pad_actions.erase(action);
 	}
 
 	bool InputSystem::action(const String& action) const
 	{
 		auto it = m_actions.find(action);
-		if (it == m_actions.end()) return false;
-		for (auto key : it->second) if (down(key)) return true;
+		if (it != m_actions.end()) for (auto key : it->second) if (down(key)) return true;
+		auto pad = m_pad_actions.find(action);
+		if (pad != m_pad_actions.end()) for (auto button : pad->second) if (down(button)) return true;
 		return false;
 	}
 
 	bool InputSystem::action_pressed(const String& action) const
 	{
 		auto it = m_actions.find(action);
-		if (it == m_actions.end()) return false;
-		for (auto key : it->second) if (pressed(key)) return true;
+		if (it != m_actions.end()) for (auto key : it->second) if (pressed(key)) return true;
+		auto pad = m_pad_actions.find(action);
+		if (pad != m_pad_actions.end()) for (auto button : pad->second) if (pressed(button)) return true;
 		return false;
 	}
 
 	bool InputSystem::action_released(const String& action) const
 	{
 		auto it = m_actions.find(action);
-		if (it == m_actions.end()) return false;
-		for (auto key : it->second) if (released(key)) return true;
+		if (it != m_actions.end()) for (auto key : it->second) if (released(key)) return true;
+		auto pad = m_pad_actions.find(action);
+		if (pad != m_pad_actions.end()) for (auto button : pad->second) if (released(button)) return true;
 		return false;
 	}
 }

@@ -162,6 +162,14 @@ namespace AuxKeys
 	}
 
 	static constexpr Table s_table = make_table();
+
+	//names of the buttons of a gamepad, in the order of GamepadButton
+	static constexpr StringView s_gamepad_names[] =
+	{
+		"A", "B", "X", "Y", "LB", "RB", "LT", "RT", "BACK", "START", "L3", "R3",
+		"DPAD UP", "DPAD DOWN", "DPAD LEFT", "DPAD RIGHT"
+	};
+	static_assert(std::size(s_gamepad_names) == size_t(GAMEPAD_BUTTON_COUNT), "a name for every button");
 }
 	//////////////////////////////////////////////////////////////
 	//serialize
@@ -184,6 +192,27 @@ namespace AuxKeys
 			}
 		}
 		return key_default;
+	}
+
+	StringView gamepad_button_to_string(GamepadButton button)
+	{
+		if (button < 0 || button >= GAMEPAD_BUTTON_COUNT)
+		{
+			return StringView();
+		}
+		return AuxKeys::s_gamepad_names[size_t(button)];
+	}
+
+	GamepadButton gamepad_button_from_string(StringView button, GamepadButton button_default)
+	{
+		for (size_t i = 0; i != std::size(AuxKeys::s_gamepad_names); ++i)
+		{
+			if (AuxKeys::s_gamepad_names[i] == button)
+			{
+				return GamepadButton(i);
+			}
+		}
+		return button_default;
 	}
 }
 }
