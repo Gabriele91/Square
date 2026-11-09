@@ -30,6 +30,7 @@ namespace Render
 	DrawerPassShadow::DrawerPassShadow(Square::Context& context)
     : DrawerPass(context.allocator(),RPT_SHADOW)
     , m_context(context)
+    , m_finest(context.allocator())
     {
 		m_cb_camera = Render::stream_constant_buffer<Render::UniformBufferCamera>(&render());
 		m_cb_transform = Render::stream_constant_buffer<Render::UniformBufferTransform>(&render());
@@ -242,7 +243,7 @@ namespace Render
 			if (m_cascades_cache && light.stable_cascades())
 			{
 				//its cascades stay: their caches
-				draw_cascades(light, udirectionshadow, queues, technique_name, inputs);
+				draw_cascades(light, udirectionshadow, collection, queues, technique_name, inputs);
 			}
 			else
 			{
@@ -303,6 +304,7 @@ namespace Render
 		{
 		case Casters::STATIC:  return renderable.is_static();
 		case Casters::DYNAMIC: return !renderable.is_static();
+		case Casters::FINEST:  return renderable.is_static() && renderable.lod_level() <= 0;
 		case Casters::ALL:
 		default:               return true;
 		}
@@ -361,6 +363,7 @@ namespace Render
     (
       const Light& light
     , const UniformDirectionShadowLight& cascades
+    , const Collection& collection
     , const PoolQueues& queues
     , const String& technique_name
     , EffectPassInputs& inputs
@@ -383,6 +386,8 @@ namespace Render
 		const unsigned int count = static_cast<const unsigned int>(std::clamp(cascades.m_options.y, 1, int(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES)));
 		Array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> hashes;
 		cascades_casters(queues, cascades, hashes);
+		//(the scene cascade, the farthest one: only when it moved, its casters drawn once)
+		const uint32 scene = light.scene_cascade() ? MULTI_PASS_LAYER_BIT(count - 1) : 0;
 		uint32 dirty = 0;
 		for (int i = 0; i != count; ++i)
 		{
@@ -390,7 +395,7 @@ namespace Render
 			const Vector<unsigned char> view = AuxShadowCache::key(cascades.m_view[i]);
 			key.insert(key.end(), view.begin(), view.end());
 			const bool moved = cache.m_keys[i] != key;
-			const bool changed = cache.m_casters[i] != hashes[i];
+			const bool changed = !MULTI_PASS_HAS_LAYER(scene, i) && cache.m_casters[i] != hashes[i];
 			if (made || moved || changed)
 			{
 				dirty |= MULTI_PASS_LAYER_BIT(i);
@@ -398,7 +403,8 @@ namespace Render
 				cache.m_casters[i] = hashes[i];
 			}
 		}
-		//their static casters again (each layer cleared: the far depth copied in)
+		//their static casters again (each layer cleared: the far depth copied in); the scene one at
+		//their finest level of detail
 		if (dirty != 0)
 		{
 			for (int i = 0; i != count; ++i)
@@ -408,7 +414,17 @@ namespace Render
 					render().copy_texture_layer(cache.m_blank->texture(), 0, cache.m_buffer->texture(), (unsigned int)i);
 				}
 			}
-			draw_into(*cache.m_buffer, false, queues, technique_name, inputs, &cascades, Casters::STATIC, dirty, true);
+			const uint32 nearer_dirty = dirty & ~scene;
+			const uint32 scene_dirty = dirty & scene;
+			if (nearer_dirty != 0)
+			{
+				draw_into(*cache.m_buffer, false, queues, technique_name, inputs, &cascades, Casters::STATIC, nearer_dirty, true);
+			}
+			if (scene_dirty != 0)
+			{
+				finest_casters(collection);
+				draw_into(*cache.m_buffer, false, m_finest, technique_name, inputs, &cascades, Casters::FINEST, scene_dirty, true);
+			}
 		}
 		//into the shadow map: the nearer ones (the dynamic casters over them, every frame), the
 		//farther ones only when drawn again (nothing over them: as their caches)
@@ -429,6 +445,24 @@ namespace Render
 		if (dynamic != 0)
 		{
 			draw_into(shadow, false, queues, technique_name, inputs, &cascades, Casters::DYNAMIC, dynamic, false);
+		}
+    }
+
+    void DrawerPassShadow::finest_casters(const Collection& collection)
+    {
+		//(opaque, as the casters of a directional light; drawn once: no order)
+		m_finest.clear();
+		for (const Weak<Renderable>& weak_renderable : collection.m_renderables)
+		{
+			auto renderable = weak_renderable.lock();
+			const bool caster = renderable
+			                 && renderable->can_draw_any_level()
+			                 && takes(*renderable, Casters::FINEST)
+			                 && renderable->material().lock()->queue().m_type == RQ_OPAQUE;
+			if (caster)
+			{
+				m_finest[RQ_OPAQUE].push_front_to_back(weak_renderable, 0.0f);
+			}
 		}
     }
 
@@ -525,8 +559,11 @@ namespace Render
 		m_caster_draws.clear();
 		for (auto randerable : RenderableQuery(queues, { RQ_OPAQUE, RQ_TRANSLUCENT }))
 		{
-			const bool caster = randerable && randerable->can_draw() && randerable->casts_shadow() && takes(*randerable, casters);
-			const bool drawn = caster && (!settle || settled(*randerable));
+			//(the finest level: shown or not, whole)
+			const bool finest = casters == Casters::FINEST;
+			const bool can = randerable && (finest ? randerable->can_draw_any_level() : randerable->can_draw());
+			const bool caster = can && randerable->casts_shadow() && takes(*randerable, casters);
+			const bool drawn = caster && (!settle || finest || settled(*randerable));
 			if (drawn)
 			{
 				uint32 mask = layers;

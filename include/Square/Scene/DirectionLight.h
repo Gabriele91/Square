@@ -77,13 +77,18 @@ namespace Scene
 		void       cascade_margin(float margin);
 		float      cascade_margin() const;
 		void                 dynamic_cascades(unsigned int);
-		virtual unsigned int dynamic_cascades() const;     
+		virtual unsigned int dynamic_cascades() const override;
 		//at most this many stable cascades moved in a frame, the others a frame later (their caches
 		//kept: no frame drawing the static casters of all of them; the ones that waited first); 0:
 		//no limit
 		void         cascade_max_updates_per_frame(unsigned int moves);
 		unsigned int cascade_max_updates_per_frame() const;
-		//its cascades stay (the cache of the shadow pass can keep them)
+		//its farthest cascade the whole scene (as far as the camera sees), kept while the scene stays
+		//in it and the light does not turn: its static casters drawn once in the cache of the
+		//shadow pass
+		void scene_cascade(bool enable);
+		virtual bool scene_cascade() const override;
+		//its cascades stay (the cache of the shadow pass can keep them; a scene cascade too)
 		virtual bool stable_cascades() const override;
 
 		//all events
@@ -117,6 +122,8 @@ namespace Scene
 		void stable_uniform(Render::UniformDirectionShadowLight& data, const Render::Camera& camera) const;
 		//the depth of the light over the scene, the same while the scene stays in it
 		Vec2 stable_depth(const Mat4& light_view) const;
+		//the farthest cascade over the whole scene (a scene cascade)
+		void scene_uniform(Render::UniformDirectionShadowLight& data, const Render::Camera& camera) const;
 
 		Vec3 m_direction;
 		Mat3 m_rotation;
@@ -144,6 +151,16 @@ namespace Scene
 		mutable Vector<float> m_stable_key;
 		mutable Vec2 m_stable_depth{ 0.0f };
 		mutable bool m_stable_depth_valid{ false };
+		//the scene cascade: the sun it was made for, its box in the space of that sun
+		bool m_scene_cascade{ false };
+		struct SceneCascade
+		{
+			Vec3 m_direction{ 0.0f };
+			Vec3 m_low{ 0.0f };
+			Vec3 m_high{ 0.0f };
+			bool m_valid{ false };
+		};
+		mutable SceneCascade m_scene;
 	};
 }
 }

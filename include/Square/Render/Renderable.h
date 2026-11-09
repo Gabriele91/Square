@@ -68,7 +68,7 @@ namespace Render
 
 		virtual void visible(bool enable)  { m_visible = enable; }
 
-		virtual bool can_draw() const { return visible() && lod_shown() && material().lock() && transform().lock(); }
+		virtual bool can_draw() const { return can_draw_any_level() && lod_shown(); }
 
 		//its fade by its level of detail (a LevelOfDetail, Scene::LodGroup: the level it selects
 		//for the camera drawn), apart from visible: 1 drawn, 0 not; t in (0, 1) fading in, drawn
@@ -77,6 +77,11 @@ namespace Render
 		inline void  lod_fade(float fade) { m_lod_fade = fade; }
 		inline float lod_fade() const { return m_lod_fade; }
 		inline bool  lod_shown() const { return m_lod_fade != 0.0f; }
+		//the level of detail it is of (its LevelOfDetail: 0 the finest; -1: none, the only one)
+		inline void lod_level(int level) { m_lod_level = level; }
+		inline int  lod_level() const { return m_lod_level; }
+		//it can be drawn whatever its level of detail shows (a shadow map at the finest one)
+		bool can_draw_any_level() const { return visible() && material().lock() && transform().lock(); }
 
 		//drawn instanced (many copies in a draw call: Scene::InstancedMesh): the passes take the
 		//instanced variant of the techniques of its effects (Render::EV_INSTANCED)
@@ -122,6 +127,7 @@ namespace Render
 
 		bool  m_visible{ true };
 		float m_lod_fade{ 1.0f };
+		int   m_lod_level{ -1 };
 		bool  m_motion_blur{ false };
 		bool  m_cast_shadow{ true };
 	};

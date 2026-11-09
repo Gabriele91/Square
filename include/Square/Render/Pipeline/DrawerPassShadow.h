@@ -13,7 +13,10 @@
 //  cascade: drawn again only when the cascade moved or its static casters changed (their levels
 //  of detail as they are shown: the fading ones settled); its dynamic casters only in the nearer
 //  cascades (dynamic_cascades), over a copy of their caches; the farther ones are their caches.
-//  A directional light whose cascades follow the camera draws all of them every frame.
+//  A directional light whose cascades follow the camera draws all of them every frame; with a
+//  scene cascade (Light::scene_cascade: its farthest one the whole scene, kept) it keeps the
+//  caches, the scene one drawn again only when it moves (not for the levels of detail), its static
+//  casters at their finest level of detail (shown or not for the camera).
 //
 #pragma once
 #include <array>
@@ -68,12 +71,14 @@ namespace Render
 
     protected:
 
-		//the casters drawn: all of them, the static ones (a cache), the dynamic ones (over it)
+		//the casters drawn: all of them, the static ones (a cache), the dynamic ones (over it), the
+		//static ones at their finest level of detail, shown or not (a scene cascade)
 		enum class Casters
 		{
 			ALL,
 			STATIC,
-			DYNAMIC
+			DYNAMIC,
+			FINEST
 		};
 
 		//the cache of a light: its static casters (its buffer), the uniform of its shadow when
@@ -138,15 +143,20 @@ namespace Render
 		, bool settle = false
 		);
 		//the shadow map of a directional light with stable cascades: the caches of the cascades
-		//(drawn again if out of date), the nearer ones copied in, the dynamic casters over them
+		//(drawn again if out of date; a scene one by the casters of the collection at their finest
+		//level of detail), the nearer ones copied in, the dynamic casters over them
 		void draw_cascades
 		(
 		  const Light& light
 		, const UniformDirectionShadowLight& cascades
+		, const Collection& collection
 		, const PoolQueues& queues
 		, const String& technique_name
 		, EffectPassInputs& inputs
 		);
+		//the static casters of the collection at their finest level of detail, shown or not (into
+		//m_finest)
+		void finest_casters(const Collection& collection);
 		//the shadow map of a light that does not move: its cache (drawn again if out of date)
 		//copied in, the dynamic casters over it
 		void draw_cached
@@ -177,6 +187,8 @@ namespace Render
 		Shared<Render::ConstBuffer> m_cb_direction_light;
 		//the draws of the casters in batches (by pass and material)
 		DrawList                                     m_caster_draws;
+		//the casters of a scene cascade (its memory kept)
+		PoolQueues                                   m_finest;
 		//the caches of the static casters, by light
 		bool                                    m_static_cache{ true };
 		UnorderedMap<const Light*, StaticCache> m_caches;

@@ -1227,6 +1227,9 @@ namespace Render
 		//the oldest frame done by the GPU: its id (the count of gpu_timer_begin_frame before it)
 		//and its timestamps, in ms from the first one (negative: not sampled); false when none is ready
 		virtual bool gpu_timer_read_frame(uint64& frame_id, Vector<double>& timestamps_ms) { return false; }
+		//the CPU waiting for the images of the screen (acquired), in all (ms, from the start): in
+		//the scope of a pass it is time waited, not worked (with RENDER_PROFILER, else 0)
+		virtual double acquire_wait_ms() const { return 0.0; }
 
 		//profiler (see Render/Profiler.h): the passes open their scopes on it, nullptr when off
 		void set_profiler(Profiler* profiler) { m_profiler = profiler; }

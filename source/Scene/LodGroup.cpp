@@ -118,7 +118,9 @@ namespace Scene
 			const Vec3& b = box.get_max();
 			for (int corner = 0; corner != 8; ++corner)
 			{
-				const Vec3 local((corner & 1) ? b.x : a.x, (corner & 2) ? b.y : a.y, (corner & 4) ? b.z : a.z);
+				const Vec3 local((corner & 1) ? b.x : a.x, 
+				                 (corner & 2) ? b.y : a.y, 
+								 (corner & 4) ? b.z : a.z);
 				const Vec3 point = Vec3(model * Vec4(local, 1.0f));
 				low = min(low, point);
 				high = max(high, point);
@@ -276,13 +278,15 @@ namespace Scene
 			auto child = owner->child(m_levels[i].m_actor);
 			if (!child) continue;
 			Renderables& renderables = m_renderables[i];
-			child->visit([&renderables](const Shared<Actor>& part) -> bool
+			const int level = int(i);
+			child->visit([&renderables, level](const Shared<Actor>& part) -> bool
 			{
 				for (const auto& component : part->components())
 				{
 					auto renderable = DynamicPointerCast<Render::Renderable, Component>(component.second);
 					if (renderable)
 					{
+						renderable->lod_level(level);
 						renderables.push_back(renderable);
 					}
 				}
@@ -391,6 +395,7 @@ namespace Scene
 				if (auto renderable = weak_renderable.lock())
 				{
 					renderable->lod_fade(1.0f);
+					renderable->lod_level(-1);
 				}
 			}
 		}

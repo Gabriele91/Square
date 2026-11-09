@@ -151,6 +151,9 @@ namespace Render
 		virtual void set_scene_size(const Geometry::AABoundingBox& scene);
 		//its cascades stay where they are while the camera moves a little 
 		virtual bool stable_cascades() const { return false; }
+		//its farthest cascade the whole scene, kept: its static casters drawn once (again only when
+		//it moves, not when their levels of detail change)
+		virtual bool scene_cascade() const { return false; }
 		// number of cascades that are updated with dynamic objects 
 		virtual unsigned int dynamic_cascades() const { return 3; }
 

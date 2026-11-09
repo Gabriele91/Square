@@ -232,9 +232,23 @@ namespace Scene
 		return m_cascade_max_updates_per_frame;
 	}
 
+	void DirectionLight::scene_cascade(bool enable)
+	{
+		if (m_scene_cascade != enable)
+		{
+			m_scene_cascade = enable;
+			m_scene.m_valid = false;
+		}
+	}
+
+	bool DirectionLight::scene_cascade() const
+	{
+		return m_scene_cascade;
+	}
+
 	bool DirectionLight::stable_cascades() const
 	{
-		return m_cascade_fit == CascadeFit::STABLE;
+		return m_cascade_fit == CascadeFit::STABLE || m_scene_cascade;
 	}
 
 	//object methods
@@ -531,31 +545,44 @@ namespace Scene
 			radius = std::ceil(radius * 16.0f) / 16.0f;
 			return { center, radius };
 		}
+
+		//the box of the scene (a little larger, as the fit by the box) in the space of the light
+		std::tuple<Vec3, Vec3> scene_box(const Geometry::AABoundingBox& scene, const Mat4& light_view)
+		{
+			const Mat4 scene_matrix = scene.to_matrix() * Square::scale(Vec3{ 1.1f, 1.1f, 1.1f });
+			Vec3 low(std::numeric_limits<float>::max());
+			Vec3 high(std::numeric_limits<float>::lowest());
+			for (int corner = 0; corner != 8; ++corner)
+			{
+				const Vec4 unit(float(corner & 1), float((corner >> 1) & 1), float((corner >> 2) & 1), 1.0f);
+				const Vec3 point = Vec3(light_view * scene_matrix * unit);
+				low = glm::min(low, point);
+				high = glm::max(high, point);
+			}
+			return { low, high };
+		}
+
+		//a range kept while the scene stays in it, not much smaller (a hovercraft at its border: the
+		//cascades do not move); else again, with a margin
+		void keep_range(float& kept_low, float& kept_high, bool valid, float low, float high)
+		{
+			const bool out = low < kept_low || high > kept_high;
+			const bool smaller = (high - low) < (kept_high - kept_low) * 0.5f;
+			if (!valid || out || smaller)
+			{
+				const float pad = (high - low) * 0.1f;
+				kept_low = low - pad;
+				kept_high = high + pad;
+			}
+		}
 	}
 
 	Vec2 DirectionLight::stable_depth(const Mat4& light_view) const
 	{
-		//the depth of the scene (a little larger, as the fit by the box) in the space of the light
-		const Mat4 scene_matrix = m_scene_size.to_matrix() * Square::scale(Vec3{ 1.1f, 1.1f, 1.1f });
-		Vec2 depth(std::numeric_limits<float>::max(), std::numeric_limits<float>::lowest());
-		for (int corner = 0; corner != 8; ++corner)
-		{
-			const Vec4 unit(float(corner & 1), float((corner >> 1) & 1), float((corner >> 2) & 1), 1.0f);
-			const float z = Vec3(light_view * scene_matrix * unit).z;
-			depth.x = std::min(depth.x, z);
-			depth.y = std::max(depth.y, z);
-		}
-		//the one kept while the scene stays in it, not much smaller (a hovercraft at its border: the
-		//cascades do not move); else again, with a margin
-		const float kept = m_stable_depth.y - m_stable_depth.x;
-		const bool out = depth.x < m_stable_depth.x || depth.y > m_stable_depth.y;
-		const bool smaller = (depth.y - depth.x) < kept * 0.5f;
-		if (!m_stable_depth_valid || out || smaller)
-		{
-			const float pad = (depth.y - depth.x) * 0.1f;
-			m_stable_depth = Vec2(depth.x - pad, depth.y + pad);
-			m_stable_depth_valid = true;
-		}
+		//the depth of the scene in the space of the light, the one kept while the scene stays in it
+		const auto [low, high] = CSMAux::scene_box(m_scene_size, light_view);
+		CSMAux::keep_range(m_stable_depth.x, m_stable_depth.y, m_stable_depth_valid, low.z, high.z);
+		m_stable_depth_valid = true;
 		return m_stable_depth;
 	}
 
@@ -658,6 +685,31 @@ namespace Scene
 		}
 	}
 
+	void DirectionLight::scene_uniform(Render::UniformDirectionShadowLight& data, const Render::Camera& camera) const
+	{
+		//the light it was made for: the light turned, made again
+		if (!m_scene.m_valid || m_scene.m_direction != m_direction)
+		{
+			m_scene.m_direction = m_direction;
+			m_scene.m_valid = false;
+		}
+		//the scene in the space of that sun, its box kept while the scene stays in it (each axis)
+		const Mat4 light_view = look_at(Vec3(0.0f, 0.0f, 0.0f), m_scene.m_direction, Constants::axis_y);
+		const auto [low, high] = CSMAux::scene_box(m_scene_size, light_view);
+		for (int axis = 0; axis != 3; ++axis)
+		{
+			CSMAux::keep_range(m_scene.m_low[axis], m_scene.m_high[axis], m_scene.m_valid, low[axis], high[axis]);
+		}
+		m_scene.m_valid = true;
+		//the farthest one, square (its texels as wide as tall), as far as the camera sees
+		const unsigned int last = (unsigned int)m_cascades - 1;
+		const Vec2 center = (Vec2(m_scene.m_low) + Vec2(m_scene.m_high)) * 0.5f;
+		const float half = std::max(m_scene.m_high.x - m_scene.m_low.x, m_scene.m_high.y - m_scene.m_low.y) * 0.5f;
+		data.m_projection[last] = CSMAux::csm_ortho(center.x - half, center.x + half, center.y + half, center.y - half, m_scene.m_low.z, m_scene.m_high.z);
+		data.m_view[last] = light_view;
+		data.m_data[last] = Vec3(camera.viewport().far(), 0.0f, 0.0f);
+	}
+
 	void DirectionLight::set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera, bool draw_shadow_map) const
 	{
 		const bool drawn = actor().lock() && draw_shadow_map;
@@ -668,6 +720,10 @@ namespace Scene
 		else if (drawn)
 		{
 			CSMAux::set_uniform(m_cache_udirectionshadowlight, *camera, m_scene_size, m_buffer, m_rotation, m_direction, m_buffer.size(), (unsigned int)m_cascades, m_shadow_distance);
+		}
+		if (drawn && m_scene_cascade)
+		{
+			scene_uniform(m_cache_udirectionshadowlight, *camera);
 		}
 		std::memcpy(data, &m_cache_udirectionshadowlight, sizeof(Render::UniformDirectionShadowLight));
 		//the filter and the cascades: every frame (the filter changes without a new shadow map)

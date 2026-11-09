@@ -10,6 +10,7 @@
 	#include "SurfaceVK.h"
 #endif
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <sstream>
 
@@ -869,7 +870,13 @@ namespace Render
 		if (!m_swapchain.m_swapchain) return false;
 		begin_frame();
 		uint32_t image = 0;
+#if defined(RENDER_PROFILER)
+		const auto acquiring = std::chrono::steady_clock::now();
+#endif
 		VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain.m_swapchain, UINT64_MAX, frame().m_acquired, VK_NULL_HANDLE, &image);
+#if defined(RENDER_PROFILER)
+		m_acquire_wait_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - acquiring).count();
+#endif
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			m_swapchain.m_dirty = true;

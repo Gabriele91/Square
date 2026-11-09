@@ -551,6 +551,7 @@ namespace Render
 		virtual void gpu_timer_end_frame() override;
 		virtual int  gpu_timer_timestamp() override;
 		virtual bool gpu_timer_read_frame(uint64& frame_id, Vector<double>& timestamps_ms) override;
+		virtual double acquire_wait_ms() const override { return m_acquire_wait_ms; }
 #endif
 
 	private:
@@ -700,6 +701,7 @@ namespace Render
 		uint64                   m_gpu_timer_frame_id{ 0 };
 		bool                     m_gpu_timer_in_frame{ false };
 		bool                     m_gpu_timer_supported{ false };
+		double                   m_acquire_wait_ms{ 0.0 }; //the CPU waiting for the images of the screen, in all
 #endif
 	};
 }
