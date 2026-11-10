@@ -12,17 +12,38 @@
 #include "SystemBars_private.h"
 #include "Square/Driver/Android.h"
 #include "Square/Core/Environment.h"
+#include "Square/Core/Filesystem.h"
 #include "Square/Core/Application.h"
-#include <android/log.h>
+#include "Square/Core/Logger.h"
 #include <unistd.h>
 #include <cstdlib>
 #include <cstdio>
-#include <fstream>
 #include <algorithm>
 #include <sstream>
+#include <string_view>
 
 namespace Square
 {
+
+namespace AuxWrapperAndroid
+{
+	//the command line and the environment of the game: the extras of the intent that started the
+	//activity, the files of the resource folder (not in Retail), where a variable came from (log)
+	static constexpr std::string_view s_extra_arguments = "args";
+	static constexpr std::string_view s_extra_environment = "env";
+	static constexpr std::string_view s_file_arguments = "args.txt";
+	static constexpr std::string_view s_file_environment = "env.txt";
+	static constexpr std::string_view s_from_intent = "intent";
+	//its log (the logger of the system: before the application too)
+	static constexpr std::string_view s_log_prefix = "Android: ";
+	static constexpr std::string_view s_no_resource_folder = "no resource folder ";
+	//JNI: Activity.getIntent, Intent.getStringExtra
+	static constexpr std::string_view s_get_intent = "getIntent";
+	static constexpr std::string_view s_get_intent_signature = "()Landroid/content/Intent;";
+	static constexpr std::string_view s_get_string_extra = "getStringExtra";
+	static constexpr std::string_view s_get_string_extra_signature = "(Ljava/lang/String;)Ljava/lang/String;";
+}
+
 namespace Video
 {
 namespace Android
@@ -397,10 +418,10 @@ namespace Android
 	{
 		const char* resources = app->activity->externalDataPath;
 		const char* home = app->activity->internalDataPath;
-		//(before the application: no logger of the engine yet, the log of the system)
+		//(before the application: the logger of the system, the one it takes)
 		if (resources && chdir(resources) != 0)
 		{
-			__android_log_print(ANDROID_LOG_ERROR, "Square", "Android: no resource folder %s", resources);
+			get_logger_intance(LoggerType::LOGGER_OS_DEFAULT)->error(String(AuxWrapperAndroid::s_log_prefix) + String(AuxWrapperAndroid::s_no_resource_folder) + resources);
 		}
 		//(also the data of the application, app_data_dir: the shader cache; no .local/share there)
 		if (home)
@@ -410,19 +431,58 @@ namespace Android
 		}
 	}
 
-	//the arguments of the file args.txt in the resource folder (the working one)
-	static void file_arguments(Vector<String>& arguments)
+	//a text extra of the intent that started the activity (getStringExtra; none: empty)
+	static String intent_extra(const char* name)
 	{
-		std::ifstream file("args.txt");
-		if (!file.is_open())
+		String out;
+		android_app* app = s_activity.m_app;
+		JNIEnv* env = nullptr;
+		if (app && app->activity && app->activity->vm && app->activity->vm->AttachCurrentThread(&env, nullptr) == JNI_OK && env)
 		{
-			return;
+			jobject activity = app->activity->clazz;
+			jclass activity_class = env->GetObjectClass(activity);
+			jmethodID get_intent = env->GetMethodID(activity_class, AuxWrapperAndroid::s_get_intent.data(), AuxWrapperAndroid::s_get_intent_signature.data());
+			jobject intent = get_intent ? env->CallObjectMethod(activity, get_intent) : nullptr;
+			if (intent)
+			{
+				jclass intent_class = env->GetObjectClass(intent);
+				jmethodID get_extra = env->GetMethodID(intent_class, AuxWrapperAndroid::s_get_string_extra.data(), AuxWrapperAndroid::s_get_string_extra_signature.data());
+				jstring key = env->NewStringUTF(name);
+				jstring value = get_extra ? (jstring)env->CallObjectMethod(intent, get_extra, key) : nullptr;
+				if (value)
+				{
+					const char* chars = env->GetStringUTFChars(value, nullptr);
+					if (chars)
+					{
+						out = chars;
+						env->ReleaseStringUTFChars(value, chars);
+					}
+					env->DeleteLocalRef(value);
+				}
+				env->DeleteLocalRef(key);
+				env->DeleteLocalRef(intent_class);
+				env->DeleteLocalRef(intent);
+			}
+			env->DeleteLocalRef(activity_class);
+			if (env->ExceptionCheck())
+			{
+				env->ExceptionClear();
+			}
+			app->activity->vm->DetachCurrentThread();
 		}
-		String argument;
-		while (file >> argument)
+		return out;
+	}
+
+	//a file of the resource folder (the working one), its text (none: empty)
+	static String resource_text(const char* name)
+	{
+		OStringStream out;
+		Filesystem::Stream::FileIStream file(name);
+		if (file.is_open())
 		{
-			arguments.push_back(argument);
+			out << file.rdbuf();
 		}
+		return out.str();
 	}
 
 	//the activity in the foreground, with its window and its focus: its orientation already the
@@ -432,33 +492,73 @@ namespace Android
 		return s_activity.m_native_window && s_activity.m_resumed && s_activity.m_focused;
 	}
 
-	//the environment of the file env.txt in the resource folder (a line NAME=VALUE): the variables
-	//of the engine and of the game (SQUARE_HEAP, RUSH_BENCH...), no shell to set them on Android
-	//a line of env.txt as a variable (NAME=VALUE; an empty line, a #comment, no name: none)
-	static void line_environment(String line)
+	//a variable of the environment (NAME=VALUE; empty, a #comment, no name: none); from: where it
+	//comes from, for the log
+	static void line_environment(const String& line, const char* from)
 	{
 		String name;
 		String value;
-		if (!Environment::parse(line, name, value))
+		if (Environment::parse(line, name, value))
 		{
-			return;
+			Environment::set(name, value);
+			//(before the application: the logger of the system, the one it takes)
+			get_logger_intance(LoggerType::LOGGER_OS_DEFAULT)->info(String(AuxWrapperAndroid::s_log_prefix) + name + "=" + value + " (" + from + ")");
 		}
-		Environment::set(name, value);
-		//(before the application: no logger of the engine yet, the log of the system)
-		__android_log_print(ANDROID_LOG_INFO, "Square", "Android: %s=%s (env.txt)", name.c_str(), value.c_str());
 	}
 
-	static void file_environment()
+	//the environment of the game (SQUARE_HEAP, RUSH_BENCH...), no shell to set it on Android: the
+	//extra "env" of the intent (am start --es env "A=1;B=2"), else (not in Retail) the file env.txt
+	//in the resource folder (a line NAME=VALUE)
+	static void start_environment()
 	{
-		std::ifstream file("env.txt");
-		if (!file.is_open())
+		String text = intent_extra(AuxWrapperAndroid::s_extra_environment.data());
+		const char* from = AuxWrapperAndroid::s_from_intent.data();
+#if !defined(SQUARE_RETAIL)
+		if (text.empty())
 		{
-			return;
+			text = resource_text(AuxWrapperAndroid::s_file_environment.data());
+			from = AuxWrapperAndroid::s_file_environment.data();
 		}
+#endif
 		String line;
-		while (std::getline(file, line))
+		for (char c : text)
 		{
-			line_environment(line);
+			if (c == '\n' || c == ';')
+			{
+				line_environment(line, from);
+				line.clear();
+			}
+			else
+			{
+				line += c;
+			}
+		}
+		line_environment(line, from);
+	}
+
+	//the command line of the game: the extra "args" of the intent (am start --es args "-m maya"),
+	//else (not in Retail) the file args.txt in the resource folder
+	static void start_arguments(Vector<String>& arguments)
+	{
+#if !defined(SQUARE_RETAIL)
+		{		
+			String text = resource_text(AuxWrapperAndroid::s_file_arguments.data());
+			IStringStream stream(text);
+			String argument;
+			while (stream >> argument)
+			{
+				arguments.push_back(argument);
+			}
+		}
+#endif
+		{		
+			String text = intent_extra(AuxWrapperAndroid::s_extra_arguments.data());
+			IStringStream stream(text);
+			String argument;
+			while (stream >> argument)
+			{
+				arguments.push_back(argument);
+			}
 		}
 	}
 
@@ -485,7 +585,7 @@ namespace Android
 		//still starting)
 		keep_system_bars_hidden(app->activity);
 		activity_folders(app);
-		file_environment();
+		start_environment();
 		//the game starts with its window (the size of the screen)
 		wait_window();
 	}
@@ -493,10 +593,8 @@ namespace Android
 	void arguments(int& argc, const char**& argv)
 	{
 		s_activity.m_arguments.clear();
-		s_activity.m_arguments.push_back("Square");
-		s_activity.m_arguments.push_back("-b");
-		s_activity.m_arguments.push_back("vk");
-		file_arguments(s_activity.m_arguments);
+		s_activity.m_arguments.push_back("Square::android");
+		start_arguments(s_activity.m_arguments);
 		s_activity.m_argv.clear();
 		for (const String& argument : s_activity.m_arguments)
 		{

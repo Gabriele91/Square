@@ -9,6 +9,7 @@
 #include <zlib.h>
 #include <fstream>
 #include <memory>
+#include <string_view>
 
 #ifdef _WIN32
 	#include <windows.h>
@@ -52,6 +53,13 @@
 	#define SEPARETOR_STR "/"
     #define OS_MAX_PATH PATH_MAX
 #endif
+
+namespace AuxFilesystem
+{
+	//the modes of fopen of a file as it is on the disk (FileIStream, FileOStream)
+	static constexpr std::string_view s_read_binary = "rb";
+	static constexpr std::string_view s_write_binary = "wb";
+}
 
 namespace Square
 {
@@ -974,6 +982,146 @@ namespace Stream
     void GZIStream::close()
     {
         buf_.close();
+    }
+#pragma endregion
+
+#pragma region FileStreambuf
+    FileStreambuf::FileStreambuf() : m_file(nullptr)
+    {
+        setg(m_buffer, m_buffer, m_buffer);
+    }
+
+    FileStreambuf::~FileStreambuf()
+    {
+        close();
+    }
+
+    bool FileStreambuf::open(const String& filename, const char* mode)
+    {
+        close();
+        m_file = std::fopen(filename.c_str(), mode);
+        setg(m_buffer, m_buffer, m_buffer);
+        return m_file != nullptr;
+    }
+
+    bool FileStreambuf::is_open() const
+    {
+        return m_file != nullptr;
+    }
+
+    void FileStreambuf::close()
+    {
+        if (m_file)
+        {
+            std::fclose(m_file);
+            m_file = nullptr;
+        }
+    }
+
+    int FileStreambuf::overflow(int ch)
+    {
+        int out = EOF;
+        if (m_file)
+        {
+            out = ch == EOF || std::fputc(ch, m_file) != EOF ? traits_type::not_eof(ch) : EOF;
+        }
+        return out;
+    }
+
+    std::streamsize FileStreambuf::xsputn(const char* s, std::streamsize count)
+    {
+        return m_file ? std::streamsize(std::fwrite(s, 1, size_t(count), m_file)) : 0;
+    }
+
+    int FileStreambuf::underflow()
+    {
+        int out = EOF;
+        if (gptr() < egptr())
+        {
+            out = traits_type::to_int_type(*gptr());
+        }
+        else if (m_file)
+        {
+            const size_t count = std::fread(m_buffer, 1, sizeof(m_buffer), m_file);
+            if (count > 0)
+            {
+                setg(m_buffer, m_buffer, m_buffer + count);
+                out = traits_type::to_int_type(*gptr());
+            }
+        }
+        return out;
+    }
+
+    int FileStreambuf::sync()
+    {
+        return m_file && std::fflush(m_file) != 0 ? -1 : 0;
+    }
+#pragma endregion
+
+#pragma region FileOStream
+    FileOStream::FileOStream() : std::ostream(&m_buffer) {}
+
+    FileOStream::FileOStream(const String& filename) : std::ostream(&m_buffer)
+    {
+        open(filename);
+    }
+
+    bool FileOStream::open(const String& filename)
+    {
+        const bool opened = m_buffer.open(filename, AuxFilesystem::s_write_binary.data());
+        if (opened)
+        {
+            clear();
+        }
+        else
+        {
+            setstate(std::ios_base::failbit);
+        }
+        return opened;
+    }
+
+    bool FileOStream::is_open() const
+    {
+        return m_buffer.is_open();
+    }
+
+    void FileOStream::close()
+    {
+        flush();
+        m_buffer.close();
+    }
+#pragma endregion
+
+#pragma region FileIStream
+    FileIStream::FileIStream() : std::istream(&m_buffer) {}
+
+    FileIStream::FileIStream(const String& filename) : std::istream(&m_buffer)
+    {
+        open(filename);
+    }
+
+    bool FileIStream::open(const String& filename)
+    {
+        const bool opened = m_buffer.open(filename, AuxFilesystem::s_read_binary.data());
+        if (opened)
+        {
+            clear();
+        }
+        else
+        {
+            setstate(std::ios_base::failbit);
+        }
+        return opened;
+    }
+
+    bool FileIStream::is_open() const
+    {
+        return m_buffer.is_open();
+    }
+
+    void FileIStream::close()
+    {
+        m_buffer.close();
     }
 #pragma endregion
 }

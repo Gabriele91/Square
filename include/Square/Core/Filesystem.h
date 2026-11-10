@@ -6,6 +6,7 @@
 //
 #pragma once
 #include "Square/Config.h"
+#include <cstdio>
 
 namespace Square
 {
@@ -126,6 +127,56 @@ namespace Filesystem
 
         private:
             GZStreambuf buf_;
+        };
+
+        //a file as it is on the disk (not compressed); not found: not open, its stream failed (no
+        //exception)
+        class SQUARE_API FileStreambuf : public std::streambuf
+        {
+            static const size_t s_buffer_size = 8192;
+        public:
+            FileStreambuf();
+            ~FileStreambuf() override;
+
+            bool open(const String& filename, const char* mode);
+            bool is_open() const;
+            void close();
+
+        protected:
+            int overflow(int ch) override;
+            std::streamsize xsputn(const char* s, std::streamsize count) override;
+            int underflow() override;
+            int sync() override;
+
+        private:
+            FILE* m_file;
+            char m_buffer[s_buffer_size];
+        };
+
+        class SQUARE_API FileOStream : public std::ostream
+        {
+        public:
+            FileOStream();
+            explicit FileOStream(const String& filename);
+            bool open(const String& filename);
+            bool is_open() const;
+            void close();
+
+        private:
+            FileStreambuf m_buffer;
+        };
+
+        class SQUARE_API FileIStream : public std::istream
+        {
+        public:
+            FileIStream();
+            explicit FileIStream(const String& filename);
+            bool open(const String& filename);
+            bool is_open() const;
+            void close();
+
+        private:
+            FileStreambuf m_buffer;
         };
     }
 }

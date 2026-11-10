@@ -52,7 +52,8 @@ inline bool square_same_build()
 #if defined( __ANDROID__ )
 #include "Square/Driver/Android.h"
 // Android: the NativeActivity calls android_main (in the thread of the glue of the NDK), with its
-// command line made by the engine (the backend of Android, the arguments of args.txt)
+// command line made by the engine (the backend of Android, the arguments of the extra "args" of
+// its intent, else, not in Retail, of args.txt)
 #define square_main(shell_commands)\
 	int square_main(::Square::Application& app, ::Square::Shell::ParserValue& args, ::Square::Shell::Error& errors);\
 	extern "C" void android_main(struct android_app* android)\
