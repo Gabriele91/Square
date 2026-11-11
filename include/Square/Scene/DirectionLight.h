@@ -83,13 +83,19 @@ namespace Scene
 		//no limit
 		void         cascade_max_updates_per_frame(unsigned int moves);
 		unsigned int cascade_max_updates_per_frame() const;
-		//its farthest cascade the whole scene (as far as the camera sees), kept while the scene stays
-		//in it and the light does not turn: its static casters drawn once in the cache of the
-		//shadow pass
+		//a baked map of the whole scene, its own (its size: scene_map_size), kept while the scene
+		//stays in it and the light does not turn: its static casters drawn once at their finest
+		//level of detail; its cascades the dynamic casters only
 		void scene_cascade(bool enable);
 		virtual bool scene_cascade() const override;
-		//its cascades stay (the cache of the shadow pass can keep them; a scene cascade too)
+		void scene_map_size(const IVec2& size);
+		const IVec2& scene_map_size() const;
+		virtual const Render::ShadowBuffer* baked_shadow_buffer() const override;
+		//its cascades stay (the cache of the shadow pass can keep them)
 		virtual bool stable_cascades() const override;
+		//the sun of the scene (by hand: its post effects follow it; none chosen: no sun)
+		void sun(bool enable);
+		virtual bool sun() const override;
 
 		//all events
 		virtual void on_attach(Actor& entity)      override;
@@ -122,8 +128,8 @@ namespace Scene
 		void stable_uniform(Render::UniformDirectionShadowLight& data, const Render::Camera& camera) const;
 		//the depth of the light over the scene, the same while the scene stays in it
 		Vec2 stable_depth(const Mat4& light_view) const;
-		//the farthest cascade over the whole scene (a scene cascade)
-		void scene_uniform(Render::UniformDirectionShadowLight& data, const Render::Camera& camera) const;
+		//its baked map over the whole scene (a scene cascade)
+		void scene_uniform(Render::UniformDirectionShadowLight& data) const;
 
 		Vec3 m_direction;
 		Mat3 m_rotation;
@@ -151,8 +157,13 @@ namespace Scene
 		mutable Vector<float> m_stable_key;
 		mutable Vec2 m_stable_depth{ 0.0f };
 		mutable bool m_stable_depth_valid{ false };
-		//the scene cascade: the sun it was made for, its box in the space of that sun
+		//the scene cascade: its baked map, its size, the sun it was made for, its box in the space of
+		//that sun
 		bool m_scene_cascade{ false };
+		//the sun of the scene
+		bool m_sun{ false };
+		Render::ShadowBuffer m_baked;
+		IVec2 m_baked_size{ 2048 };
 		struct SceneCascade
 		{
 			Vec3 m_direction{ 0.0f };

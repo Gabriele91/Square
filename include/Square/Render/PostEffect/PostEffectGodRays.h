@@ -85,6 +85,7 @@ namespace Render
 		Shared<Resource::Shader> m_shader_composite;
 		Shared<Resource::Shader> m_shader_copy;
 		Shared<Resource::Shader> m_shader_volume;
+		Shared<Resource::Shader> m_shader_volume_baked;
 		Shared<Resource::Shader> m_shader_volume_blur;
 	};
 }

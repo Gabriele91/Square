@@ -65,6 +65,10 @@ namespace Render
 		Shared<Render::ConstBuffer> m_cb_spot_light;
 
 		Shared<Render::ConstBuffer> m_cb_direction_shadow_light;
+
+		//the cascades of the sun of the post effects (its own: the buffer of the lights changes with each one)
+
+		Shared<Render::ConstBuffer> m_cb_sun_shadow_light;
 		Shared<Render::ConstBuffer> m_cb_point_shadow_light;
 		Shared<Render::ConstBuffer> m_cb_spot_shadow_light;
         //post effects: intermediate target (color + depth), color chain, final copy

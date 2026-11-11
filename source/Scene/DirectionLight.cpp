@@ -92,6 +92,12 @@ namespace Scene
 		, int(0)
 		, [](const DirectionLight* plight) -> int      { return int(plight->cascade_max_updates_per_frame()); }
 		, [](DirectionLight* plight, const int& moves) { plight->cascade_max_updates_per_frame((unsigned int)std::max(moves, 0)); });
+
+		ctx.add_attribute_function<DirectionLight, bool>
+		("sun"
+		, bool(false)
+		, [](const DirectionLight* plight) -> bool    { return plight->sun(); }
+		, [](DirectionLight* plight, const bool& sun) { plight->sun(sun); });
     }
 
 	//light
@@ -99,6 +105,7 @@ namespace Scene
 	: Component(context)
 	, SharedObject<DirectionLight>(context.allocator())
 	, m_buffer(context)
+	, m_baked(context)
 	{
 		m_rotation = Mat3(1);
 		m_direction = Constants::axis_z;
@@ -238,6 +245,14 @@ namespace Scene
 		{
 			m_scene_cascade = enable;
 			m_scene.m_valid = false;
+			if (enable)
+			{
+				m_baked.build(m_baked_size, Render::ShadowBuffer::SB_TEXTURE_CSM, 1);
+			}
+			else
+			{
+				m_baked.destoy();
+			}
 		}
 	}
 
@@ -246,9 +261,41 @@ namespace Scene
 		return m_scene_cascade;
 	}
 
+	void DirectionLight::sun(bool enable)
+	{
+		m_sun = enable;
+	}
+
+	bool DirectionLight::sun() const
+	{
+		return m_sun;
+	}
+
+	void DirectionLight::scene_map_size(const IVec2& size)
+	{
+		if (m_baked_size != size)
+		{
+			m_baked_size = size;
+			if (m_scene_cascade)
+			{
+				m_baked.build(m_baked_size, Render::ShadowBuffer::SB_TEXTURE_CSM, 1);
+			}
+		}
+	}
+
+	const IVec2& DirectionLight::scene_map_size() const
+	{
+		return m_baked_size;
+	}
+
+	const Render::ShadowBuffer* DirectionLight::baked_shadow_buffer() const
+	{
+		return m_scene_cascade && m_baked.texture() ? &m_baked : nullptr;
+	}
+
 	bool DirectionLight::stable_cascades() const
 	{
-		return m_cascade_fit == CascadeFit::STABLE || m_scene_cascade;
+		return m_cascade_fit == CascadeFit::STABLE;
 	}
 
 	//object methods
@@ -685,7 +732,7 @@ namespace Scene
 		}
 	}
 
-	void DirectionLight::scene_uniform(Render::UniformDirectionShadowLight& data, const Render::Camera& camera) const
+	void DirectionLight::scene_uniform(Render::UniformDirectionShadowLight& data) const
 	{
 		//the light it was made for: the light turned, made again
 		if (!m_scene.m_valid || m_scene.m_direction != m_direction)
@@ -701,13 +748,11 @@ namespace Scene
 			CSMAux::keep_range(m_scene.m_low[axis], m_scene.m_high[axis], m_scene.m_valid, low[axis], high[axis]);
 		}
 		m_scene.m_valid = true;
-		//the farthest one, square (its texels as wide as tall), as far as the camera sees
-		const unsigned int last = (unsigned int)m_cascades - 1;
+		//square (its texels as wide as tall)
 		const Vec2 center = (Vec2(m_scene.m_low) + Vec2(m_scene.m_high)) * 0.5f;
 		const float half = std::max(m_scene.m_high.x - m_scene.m_low.x, m_scene.m_high.y - m_scene.m_low.y) * 0.5f;
-		data.m_projection[last] = CSMAux::csm_ortho(center.x - half, center.x + half, center.y + half, center.y - half, m_scene.m_low.z, m_scene.m_high.z);
-		data.m_view[last] = light_view;
-		data.m_data[last] = Vec3(camera.viewport().far(), 0.0f, 0.0f);
+		data.m_baked_projection = CSMAux::csm_ortho(center.x - half, center.x + half, center.y + half, center.y - half, m_scene.m_low.z, m_scene.m_high.z);
+		data.m_baked_view = light_view;
 	}
 
 	void DirectionLight::set(Render::UniformDirectionShadowLight* data, const Render::Camera* camera, bool draw_shadow_map) const
@@ -721,13 +766,15 @@ namespace Scene
 		{
 			CSMAux::set_uniform(m_cache_udirectionshadowlight, *camera, m_scene_size, m_buffer, m_rotation, m_direction, m_buffer.size(), (unsigned int)m_cascades, m_shadow_distance);
 		}
-		if (drawn && m_scene_cascade)
+		const bool baked = baked_shadow_buffer() != nullptr;
+		if (drawn && baked)
 		{
-			scene_uniform(m_cache_udirectionshadowlight, *camera);
+			scene_uniform(m_cache_udirectionshadowlight);
 		}
 		std::memcpy(data, &m_cache_udirectionshadowlight, sizeof(Render::UniformDirectionShadowLight));
-		//the filter and the cascades: every frame (the filter changes without a new shadow map)
-		data->m_options = IVec4(int(shadow_filter()), m_cascades, m_cascade_colors ? 1 : 0, 0);
+		//the filter, the cascades, its baked map: every frame (the filter changes without a new
+		//shadow map)
+		data->m_options = IVec4(int(shadow_filter()), m_cascades, m_cascade_colors ? 1 : 0, baked ? 1 : 0);
 	}
 
 	void DirectionLight::set_scene_size(const Geometry::AABoundingBox& scene)

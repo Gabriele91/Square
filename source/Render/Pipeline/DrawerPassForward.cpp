@@ -38,6 +38,7 @@ namespace Render
 		m_cb_spot_light = Render::stream_constant_buffer<Render::UniformSpotLight>(&render());
 		
 		m_cb_direction_shadow_light = Render::stream_constant_buffer<Render::UniformDirectionShadowLight>(&render());
+		m_cb_sun_shadow_light = Render::stream_constant_buffer<Render::UniformDirectionShadowLight>(&render());
 		m_cb_point_shadow_light = Render::stream_constant_buffer<Render::UniformPointShadowLight>(&render());
 		m_cb_spot_shadow_light = Render::stream_constant_buffer<Render::UniformSpotShadowLight>(&render());
 		//post effects: full-screen quad and the final copy
@@ -119,6 +120,8 @@ namespace Render
             frame.m_quad          = m_quad.get();
             //the forward shaders write linear colors on an sRGB framebuffer, encoded ones otherwise
             frame.m_linear        = render().is_srgb_framebuffer();
+            //the sun (the light chosen)
+            frame.m_sun.find(render(), camera, queues, m_cb_sun_shadow_light.get());
             Texture* result = m_post_effects.draw_color(post_effects, frame, m_frame->texture(0));
             //or the debug view of a post effect
             if (Texture* debug = PostEffectChain::debug_texture(post_effects)) result = debug;

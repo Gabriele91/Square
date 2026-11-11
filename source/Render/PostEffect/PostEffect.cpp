@@ -9,6 +9,9 @@
 #include "Square/Driver/Render.h"
 #include "Square/Render/Mesh.h"
 #include "Square/Render/PostEffect/PostEffect.h"
+#include "Square/Render/Light.h"
+#include "Square/Render/Queue.h"
+#include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/Profiler.h"
 #include "Square/Resource/Shader.h"
 
@@ -16,6 +19,35 @@ namespace Square
 {
 namespace Render
 {
+	void PostEffectSun::find(Render::Context& render, const Camera& camera, const PoolQueues& queues, ConstBuffer* shadow_buffer)
+	{
+		*this = PostEffectSun();
+		for (auto weak_light : queues[RQ_DIRECTION_LIGHT])
+		{
+			auto light = weak_light->lock<Light>();
+			const bool chosen = light && light->visible() && light->sun();
+			if (chosen)
+			{
+				UniformDirectionLight udirection_light;
+				light->set(&udirection_light);
+				m_direction = udirection_light.m_direction;
+				m_color = udirection_light.m_diffuse;
+				//(its cascades for the camera, in its own buffer: the ones of the lights change)
+				if (light->shadow() && shadow_buffer)
+				{
+					UniformDirectionShadowLight udirection_shadow_light;
+					light->set(&udirection_shadow_light, &camera, false);
+					update_constant_buffer(&render, shadow_buffer, &udirection_shadow_light);
+					m_shadow_buffer = shadow_buffer;
+					m_shadow_map = light->shadow_buffer().texture();
+					const ShadowBuffer* baked = light->baked_shadow_buffer();
+					m_baked_map = baked ? baked->texture() : nullptr;
+				}
+				break;
+			}
+		}
+	}
+
 	//a target cleared to black, all of it (a scene scaled draws only its corner: the rest is read
 	//by the bilinear samples at its edges, the blurs)
 	static void clear_color_target(Render::Context& render, Target* target)

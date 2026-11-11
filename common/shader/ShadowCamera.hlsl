@@ -63,7 +63,9 @@ struct DirectionShadowCameraStruct
 	Mat4 m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 	Mat4 m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 	Vec3 m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // x: the depth (view) where the cascade ends; y, z: free
-	IVec4 m_options; // x: the filter (0 none, 1 PCF, 2 PCSS), y: the cascades
+	IVec4 m_options; // x: the filter (0 none, 1 PCF, 2 PCSS), y: the cascades, z: the cascades in colors, w: its baked map
+	Mat4 m_baked_projection; // its baked map (m_options.w 1): the static casters of the whole scene
+	Mat4 m_baked_view;
 };
 
 cbuffer DirectionShadowCamera

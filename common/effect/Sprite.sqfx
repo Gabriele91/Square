@@ -48,7 +48,7 @@ sub_effect
             blend src_alpha one
             cullface off
             lights spot_point_direction
-            shadows spot_point_direction
+            shadows spot_point_direction baked
             shader source
             {
                 #define FORWARD_RENDERING
@@ -78,7 +78,7 @@ sub_effect
             blend src_alpha one
             cullface off
             lights spot_point_direction
-            shadows spot_point_direction
+            shadows spot_point_direction baked
             shader source
             {
                 #define FORWARD_RENDERING

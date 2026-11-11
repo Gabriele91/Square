@@ -159,6 +159,7 @@ namespace Render
 		m_gbuffer_draws.test("SQUARE_TEST_GBUFFER");
 		#endif
 		m_cb_direction_shadow_light = Render::stream_constant_buffer<Render::UniformDirectionShadowLight>(&render());
+		m_cb_sun_shadow_light       = Render::stream_constant_buffer<Render::UniformDirectionShadowLight>(&render());
 		m_cb_point_shadow_light     = Render::stream_constant_buffer<Render::UniformPointShadowLight>(&render());
 		m_cb_spot_shadow_light      = Render::stream_constant_buffer<Render::UniformSpotShadowLight>(&render());
 		//light shaders
@@ -167,6 +168,7 @@ namespace Render
 		m_shader_point     = context.resource<Resource::Shader>("DeferredPointLight");
 		m_shader_spot      = context.resource<Resource::Shader>("DeferredSpotLight");
 		m_shader_direction_shadow = context.resource<Resource::Shader>("DeferredDirectionShadowLight");
+		m_shader_direction_shadow_baked = context.resource<Resource::Shader>("DeferredDirectionShadowBakedLight");
 		m_shader_point_shadow     = context.resource<Resource::Shader>("DeferredPointShadowLight");
 		m_shader_spot_shadow      = context.resource<Resource::Shader>("DeferredSpotShadowLight");
 		m_shader_present   = context.resource<Resource::Shader>("DeferredPresent");
@@ -416,13 +418,18 @@ namespace Render
 		//////////////////////////////////////////////////////////////////
 		// DIRECTIONAL lights, full-screen
 		//////////////////////////////////////////////////////////////////
+		//the sun of the post effects (the light chosen)
+		m_sun.find(render(), camera, queues, m_cb_sun_shadow_light.get());
 		if (queues[RQ_DIRECTION_LIGHT].size())
 		{
 			SQUARE_RENDER_SCOPE(render(), "Direction lights");
-			//the shaders: no shadow, shadow (its filter, by the light, in the shader)
-			for (bool with_shadow : { false, true })
+			//the shaders: no shadow, shadow, shadow with a baked map (its filter, by the light, in the
+			//shader)
+			for (int kind = 0; kind != 3; ++kind)
 			{
-				auto& shader = with_shadow ? m_shader_direction_shadow : m_shader_direction;
+				const bool with_shadow = kind != 0;
+				const bool with_baked = kind == 2;
+				auto& shader = !with_shadow ? m_shader_direction : with_baked ? m_shader_direction_shadow_baked : m_shader_direction_shadow;
 				if (!shader || !shader->base_shader()) continue;
 				bool shader_bound = false;
 				for (auto weak_light : queues[RQ_DIRECTION_LIGHT])
@@ -431,6 +438,7 @@ namespace Render
 					//jump?
 					if (!light->visible()) continue;
 					if (light->shadow() != with_shadow) continue;
+					if (with_shadow && (light->baked_shadow_buffer() != nullptr) != with_baked) continue;
 					//bind only when a light of this kind exists
 					if (!shader_bound)
 					{
@@ -454,16 +462,17 @@ namespace Render
 						Render::UniformDirectionShadowLight udirection_shadow_light;
 						light->set(&udirection_shadow_light, &camera, false);
 						Render::update_constant_buffer(&render(), m_cb_direction_shadow_light.get(), &udirection_shadow_light);
-						//the sun of the post effects: the first one (its cascades stay in the buffer)
-						if (!m_sun_shadow_map)
-						{
-							m_sun_shadow_map = light->shadow_buffer().texture();
-							m_sun_direction = udirection_light.m_direction;
-							m_sun_color = udirection_light.m_diffuse;
-						}
 						if (auto uniform_shadow_map = shader->uniform("direction_shadow_map"))
 						{
 							uniform_shadow_map->set(light->shadow_buffer().texture());
+						}
+						//its baked map (the shader of a baked light)
+						if (with_baked)
+						{
+							if (auto uniform_baked_map = shader->uniform("direction_baked_shadow_map"))
+							{
+								uniform_baked_map->set(light->baked_shadow_buffer()->texture());
+							}
 						}
 					}
 					//draw
@@ -641,7 +650,6 @@ namespace Render
 		}
 		//1a) the velocity of the renderables with their own motion blur (an effect needs it)
 		m_velocity_drawn = false;
-		m_sun_shadow_map = nullptr;
 		if (PostEffectChain::any_velocity(post_effects))
 		{
 			SQUARE_RENDER_SCOPE(render(), "Velocity");
@@ -766,10 +774,7 @@ namespace Render
 		frame.m_occlusion     = m_occlusion_target;
 		frame.m_velocity      = m_velocity_drawn ? m_velocity_texture : nullptr;
 		frame.m_linear        = true; //the light buffer is linear HDR
-		frame.m_sun_direction = m_sun_direction;
-		frame.m_sun_color     = m_sun_color;
-		frame.m_sun_shadow_map = m_sun_shadow_map;
-		frame.m_sun_shadow_buffer = m_sun_shadow_map ? m_cb_direction_shadow_light.get() : nullptr;
+		frame.m_sun           = m_sun;
 		return frame;
 	}
 

@@ -26,8 +26,9 @@ float rays_noise(in Vec2 pixel)
 	return frac(52.9829189 * frac(dot(pixel, Vec2(0.06711056, 0.00583715))));
 }
 
-//a point of the air in the light of the sun (1) or in its shadow (0); past the shadow: lit
-float rays_lit(in Vec3 position)
+//a point of the air in the light of the sun (1) or in its shadow (0) by its cascades; past the
+//shadow: lit
+float rays_lit_cascades(in Vec3 position)
 {
 	float depth = abs(mul(Vec4(position, 1.0), camera.m_view).z);
 	uint  cascades = uint(clamp(direction_shadow_camera.m_options.y, 1, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES));
@@ -46,6 +47,40 @@ float rays_lit(in Vec3 position)
 	float current = coords.z;
 #endif
 	return current - 0.001 <= closest ? 1.0 : 0.0;
+}
+
+#ifdef SQ_SHADOW_BAKED
+//... by its baked map (the static casters of the whole scene); out of it: lit
+float rays_lit_baked(in Vec3 position)
+{
+	Vec4  light_space = mul(mul(Vec4(position, 1.0), direction_shadow_camera.m_baked_view), direction_shadow_camera.m_baked_projection);
+	Vec3  coords = light_space.xyz / light_space.w;
+	coords.xy = coords.xy * 0.5 + 0.5;
+	float lit = 1.0;
+	if (coords.x > 0.0 && coords.x < 1.0 && coords.y > 0.0 && coords.y < 1.0)
+	{
+		coords = invY(coords);
+		float closest = shadow2DArray(direction_baked_shadow_map, Vec3(coords.xy, 0)).r;
+#ifdef SQ_BACKEND_GLSL
+		float current = coords.z * 0.5 + 0.5;
+#else
+		float current = coords.z;
+#endif
+		lit = current - 0.001 <= closest ? 1.0 : 0.0;
+	}
+	return lit;
+}
+#endif
+
+//a point of the air in the light of the sun (1) or in its shadow (0): its cascades, by its baked
+//map (SQ_SHADOW_BAKED: GodRaysVolumeBaked)
+float rays_lit(in Vec3 position)
+{
+	float lit = rays_lit_cascades(position);
+#ifdef SQ_SHADOW_BAKED
+	lit *= rays_lit_baked(position);
+#endif
+	return lit;
 }
 
 Vec4 fragment(DeferredVSOutput input) : SV_TARGET0

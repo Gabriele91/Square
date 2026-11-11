@@ -38,6 +38,7 @@ namespace Render
 {
 	class Camera;
 	class GBuffer;
+	class PoolQueues;
 	class Mesh;
 
 	//when a post effect is drawn
@@ -65,6 +66,22 @@ namespace Render
 		return glm::max(size / post_effect_scale(resolution), IVec2(1, 1));
 	}
 
+	//the sun of a frame: the direction light chosen as the sun (Light::sun), visible: where its light
+	//goes, its color, with its shadow its cascades (the "DirectionShadowCamera" cbuffer: its own,
+	//updated for it), its shadow map, its baked map (Light::baked_shadow_buffer); none: no shadow
+	struct PostEffectSun
+	{
+		Vec3         m_direction{ 0.0f, -1.0f, 0.0f };
+		Vec3         m_color{ 0.0f };
+		ConstBuffer* m_shadow_buffer{ nullptr };
+		Texture*     m_shadow_map{ nullptr };
+		Texture*     m_baked_map{ nullptr };
+
+		//the sun of the direction lights of the queues (its cascades for the camera into the buffer);
+		//none: as it was made
+		SQUARE_API void find(Render::Context& render, const Camera& camera, const PoolQueues& queues, ConstBuffer* shadow_buffer);
+	};
+
 	//what a post effect gets to draw a frame (a camera)
 	struct PostEffectFrame
 	{
@@ -83,13 +100,8 @@ namespace Render
 		Texture*          m_velocity{ nullptr };      //motion on the screen (uv, RG) of the renderables with their own motion blur, 0 elsewhere (nullptr: none drawn)
 		Target*           m_destination{ nullptr };   //the effect writes here
 		bool              m_linear{ true };           //source in linear space (false: already sRGB encoded)
-		//the sun (deferred: the first direction light with a shadow drawn): where its light goes,
-		//its color, its cascades (the "DirectionShadowCamera" cbuffer, updated for it) and its
-		//shadow map; nullptr: none
-		Vec3              m_sun_direction{ 0.0f, -1.0f, 0.0f };
-		Vec3              m_sun_color{ 0.0f };
-		ConstBuffer*      m_sun_shadow_buffer{ nullptr };
-		Texture*          m_sun_shadow_map{ nullptr };
+		//the sun (PostEffectSun::find: forward and deferred)
+		PostEffectSun     m_sun;
 	};
 
 	class SQUARE_API PostEffect : public BaseObject

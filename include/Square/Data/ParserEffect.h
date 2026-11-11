@@ -100,6 +100,9 @@ namespace Parser
 			ShaderField              m_shader;
 			LightsField	             m_lights{ LT_COLOR }; //enable lights
 			LightsField				 m_shadows{ LT_NONE  }; //enable shadows
+			//"shadows ... baked": its direction lights also with a baked map (SQ_SHADOW_BAKED: a pass
+			//more, Light::baked_shadow_buffer)
+			bool                     m_shadow_baked{ false };
 			int                      m_draw_count{ 1 };    //multi-pass: times to draw
 			int                      m_instances{ 1 };     //instanced draw: instance count per draw
 		};
@@ -108,7 +111,7 @@ namespace Parser
 		{
 			String m_name;
 			Vector< PassField > m_pass;
-			//"variants instanced clip": the Render::EffectVariant declared (each combination is compiled)
+			//"variants { instanced clip }": the Render::EffectVariant declared (each combination is compiled)
 			unsigned char m_variants{ Render::EV_NONE };
 			//"clip(mask, dither)": the parameters that turn the clip variant on (none: only the fade
 			//of a level of detail)

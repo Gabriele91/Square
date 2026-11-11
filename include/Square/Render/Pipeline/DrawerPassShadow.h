@@ -13,10 +13,11 @@
 //  cascade: drawn again only when the cascade moved or its static casters changed (their levels
 //  of detail as they are shown: the fading ones settled); its dynamic casters only in the nearer
 //  cascades (dynamic_cascades), over a copy of their caches; the farther ones are their caches.
-//  A directional light whose cascades follow the camera draws all of them every frame; with a
-//  scene cascade (Light::scene_cascade: its farthest one the whole scene, kept) it keeps the
-//  caches, the scene one drawn again only when it moves (not for the levels of detail), its static
-//  casters at their finest level of detail (shown or not for the camera).
+//  A directional light whose cascades follow the camera draws all of them every frame. A
+//  directional light with a baked map (Light::baked_shadow_buffer: the whole scene, its own
+//  texture) draws its static casters there at their finest level of detail (shown or not for the
+//  camera), again only when it moved or they changed (not for the levels of detail); its cascades
+//  then the dynamic casters only, every frame.
 //
 #pragma once
 #include <array>
@@ -103,6 +104,16 @@ namespace Render
 			size_t m_used{ 0 }; //the draw of the pass it was last used at
 		};
 
+		//the baked map of a directional light when it was drawn: its texture, its place, the hash
+		//of its static casters
+		struct BakedCache
+		{
+			const Texture*        m_texture{ nullptr };
+			Vector<unsigned char> m_key;
+			uint64                m_casters{ 0 };
+			size_t                m_used{ 0 }; //the draw of the pass it was last used at
+		};
+
 		//a renderable among the casters asked
 		bool takes(const Renderable& renderable, Casters casters) const;
 		//its level of detail settled (a cache: the one more than half shown drawn whole, the other
@@ -143,8 +154,7 @@ namespace Render
 		, bool settle = false
 		);
 		//the shadow map of a directional light with stable cascades: the caches of the cascades
-		//(drawn again if out of date; a scene one by the casters of the collection at their finest
-		//level of detail), the nearer ones copied in, the dynamic casters over them
+		//(drawn again if out of date), the nearer ones copied in, the dynamic casters over them
 		void draw_cascades
 		(
 		  const Light& light
@@ -154,9 +164,20 @@ namespace Render
 		, const String& technique_name
 		, EffectPassInputs& inputs
 		);
+		//the baked map of a directional light: the static casters of the collection at their finest
+		//level of detail, drawn again if out of date (the uniform of its cascades: set again after)
+		void draw_baked
+		(
+		  const Light& light
+		, const ShadowBuffer& baked
+		, const UniformDirectionShadowLight& cascades
+		, const Collection& collection
+		, const String& technique_name
+		, EffectPassInputs& inputs
+		);
 		//the static casters of the collection at their finest level of detail, shown or not (into
-		//m_finest)
-		void finest_casters(const Collection& collection);
+		//m_finest), their hash (which ones, where)
+		uint64 finest_casters(const Collection& collection);
 		//the shadow map of a light that does not move: its cache (drawn again if out of date)
 		//copied in, the dynamic casters over it
 		void draw_cached
@@ -187,7 +208,7 @@ namespace Render
 		Shared<Render::ConstBuffer> m_cb_direction_light;
 		//the draws of the casters in batches (by pass and material)
 		DrawList                                     m_caster_draws;
-		//the casters of a scene cascade (its memory kept)
+		//the casters of a baked map (its memory kept)
 		PoolQueues                                   m_finest;
 		//the caches of the static casters, by light
 		bool                                    m_static_cache{ true };
@@ -195,6 +216,8 @@ namespace Render
 		//the caches of the cascades, by light
 		bool                                     m_cascades_cache{ true };
 		UnorderedMap<const Light*, CascadeCache> m_cascade_caches;
+		//the baked maps, by light
+		UnorderedMap<const Light*, BakedCache>   m_baked_caches;
 		size_t                                   m_draws{ 0 };
 	};
 }

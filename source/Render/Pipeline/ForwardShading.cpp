@@ -24,7 +24,9 @@ namespace Render
 	namespace AuxForwardShading
 	{
 		//the draws of a pass with each light of a queue (the visible ones, until one whose shadow is
-		//not the one of the pass, as they are in the queue)
+		//not the one of the pass, as they are in the queue; the shadow of a direction light: the
+		//ones with a baked map in its baked pass, the others in the other one; a technique with no
+		//baked pass: all of them in it, their cascades only)
 		static void add_lit
 		(
 			  DrawList& list
@@ -35,6 +37,7 @@ namespace Render
 			, EffectParameters* parameters
 			, const Queue& lights
 			, bool shadow
+			, bool any_bake
 		)
 		{
 			for (auto element : lights)
@@ -45,6 +48,11 @@ namespace Render
 					if (light->shadow() != shadow)
 					{
 						break;
+					}
+					const bool baked = shadow && light->type() == LightType::DIRECTION && light->baked_shadow_buffer() != nullptr;
+					if (!any_bake && baked != pass.m_baked)
+					{
+						continue;
 					}
 					for (int draw_id = 0; draw_id < pass.m_draw_count; ++draw_id)
 					{
@@ -76,6 +84,12 @@ namespace Render
 				}
 				if (technique)
 				{
+					//(a pass for the lights with a baked map: else they go in the other one)
+					bool baked_pass = false;
+					for (const EffectPass& pass : *technique)
+					{
+						baked_pass = baked_pass || pass.m_baked;
+					}
 					size_t pass_index = 0;
 					for (EffectPass& pass : *technique)
 					{
@@ -96,9 +110,9 @@ namespace Render
 								}
 							}
 							break;
-						case EffectPass::LT_DIRECTION: add_lit(list, renderable, material_id, pass, pass_index, parameters, queues[RQ_DIRECTION_LIGHT], shadow); break;
-						case EffectPass::LT_POINT:     add_lit(list, renderable, material_id, pass, pass_index, parameters, queues[RQ_POINT_LIGHT], shadow); break;
-						case EffectPass::LT_SPOT:      add_lit(list, renderable, material_id, pass, pass_index, parameters, queues[RQ_SPOT_LIGHT], shadow); break;
+						case EffectPass::LT_DIRECTION: add_lit(list, renderable, material_id, pass, pass_index, parameters, queues[RQ_DIRECTION_LIGHT], shadow, !baked_pass); break;
+						case EffectPass::LT_POINT:     add_lit(list, renderable, material_id, pass, pass_index, parameters, queues[RQ_POINT_LIGHT], shadow, true); break;
+						case EffectPass::LT_SPOT:      add_lit(list, renderable, material_id, pass, pass_index, parameters, queues[RQ_SPOT_LIGHT], shadow, true); break;
 						default: break;
 						}
 						++pass_index;
@@ -159,6 +173,8 @@ namespace Render
 					light.set(&udirection_shadow_light, &camera, false);
 					Render::update_constant_buffer(&render, buffers.m_direction_shadow_light, &udirection_shadow_light);
 					inputs.m_shadow_map = light.shadow_buffer().texture();
+					const ShadowBuffer* baked = light.baked_shadow_buffer();
+					inputs.m_baked_shadow_map = baked ? baked->texture() : nullptr;
 				}
 			}
 			break;

@@ -52,6 +52,7 @@ namespace Parser
         constexpr std::string_view point                = "point";
         constexpr std::string_view spot                 = "spot";
         constexpr std::string_view area                 = "area";
+        constexpr std::string_view baked                = "baked";
         // shader block
         constexpr std::string_view source = "source";
     }
@@ -605,21 +606,29 @@ namespace Parser
 
 	bool Effect::parse_variants(const char*& ptr, TechniqueField& technique)
 	{
-		//the names on its line: instanced, skinned, clip (its parameters)
-		skip_line_space(m_context->m_line, ptr);
-		Render::EffectVariant variant = AuxVariants::skip_variant(ptr);
-		if (variant == Render::EV_NONE)
+		//"{ names }": instanced, skinned, clip (its parameters), on one line or more
+		skip_space_and_comments(m_context->m_line, ptr);
+		if (!is_start_table(*ptr))
 		{
-			push_error("variants: instanced, skinned or clip expected");
+			push_error("variants: { expected");
 			return false;
 		}
-		while (variant != Render::EV_NONE)
+		++ptr;
+		skip_space_and_comments(m_context->m_line, ptr);
+		while (!is_end_table(*ptr))
 		{
+			const Render::EffectVariant variant = AuxVariants::skip_variant(ptr);
+			if (variant == Render::EV_NONE)
+			{
+				push_error("variants: instanced, skinned, clip or } expected");
+				return false;
+			}
 			technique.m_variants |= variant;
 			if (variant == Render::EV_CLIP && !parse_clip_parameters(ptr, technique)) return false;
-			skip_line_space(m_context->m_line, ptr);
-			variant = AuxVariants::skip_variant(ptr);
+			skip_space_and_comments(m_context->m_line, ptr);
 		}
+		//skip }
+		++ptr;
 		return true;
 	}
 
@@ -1071,11 +1080,23 @@ namespace Parser
 		//!! is ambient? shadow not supported !!
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		//light selector keyword (same grammar as lights, minus ambient)
-		if (match_light_selector(ptr, pass.m_shadows)) return true;
-		//error
-		push_error("Shadows parameter not valid");
-		//end
-		return false;
+		if (!match_light_selector(ptr, pass.m_shadows))
+		{
+			push_error("Shadows parameter not valid");
+			return false;
+		}
+		//"baked": its direction lights also with a baked map (their pass with SQ_SHADOW_BAKED)
+		skip_line_space(m_context->m_line, ptr);
+		if (cstr_cmp_skip(ptr, keyword::baked))
+		{
+			if (!(pass.m_shadows & LightsField::LT_DIRECTION))
+			{
+				push_error("shadows: baked needs the direction lights");
+				return false;
+			}
+			pass.m_shadow_baked = true;
+		}
+		return true;
 	}
     bool Effect::parse_shader(const char*& ptr, PassField& pass)
     {

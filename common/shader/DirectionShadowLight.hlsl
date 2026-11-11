@@ -15,6 +15,13 @@
 #define SHADOW_FADE_ON 1        // 1: the fades above on; 0: off (test: the shadow as it is)
 #include <ShadowCamera>
 Sampler2DArray(direction_shadow_map)
+// SQ_SHADOW_BAKED (its own shaders: DeferredDirectionShadowBakedLight, a pass "shadows
+// direction_baked"): its baked map, the static casters of the whole scene (a layer), the cascades
+// the dynamic ones only; else the cascades all of them (the farther ones a cache of the static
+// casters, Unity and Unreal alike)
+#ifdef SQ_SHADOW_BAKED
+Sampler2DArray(direction_baked_shadow_map)
+#endif
 // Material option: 1 = lit by this light without its shadow (e.g. glows, light beams).
 // A material that does not set it gets 0: shadows on.
 #ifndef IGNORE_SHADOWS_UNIFORM
@@ -197,8 +204,77 @@ Vec4 rh_mul_direction_light_view_projection(in Vec4 position, uint id)
 	return mul(position_new, rh_projection);
 }
 
+#ifdef SQ_SHADOW_BAKED
+//its baked map: the world size of a texel, the normalized depth per world unit
+float baked_texel_world_size()
+{
+	float width = 2.0 / max(abs(direction_shadow_camera.m_baked_projection[0][0]), 0.000001);
+	return width / textureSize2DArray(direction_baked_shadow_map, 0).x;
+}
+
+float baked_depth_per_world()
+{
+	float scale = abs(direction_shadow_camera.m_baked_projection[2][2]);
+#ifdef SQ_BACKEND_GLSL
+	scale *= 0.5;
+#endif
+	return max(scale, 0.000001);
+}
+
+//the shadow of its baked map (the static casters of the whole scene): as the cascades (a normal
+//offset, a depth bias in its texels), a PCF of 3 x 3 (the filter none: one sample); out of it none
 //light_dir: to the light
-Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec3 normal)
+float direction_light_baked_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec3 normal)
+{
+	Vec3  n = normalize(normal);
+	float NoL = saturate(dot(n, normalize(light_dir)));
+	float texel_world = baked_texel_world_size();
+	Vec4  offset_position = Vec4(fposition.xyz / fposition.w + n * texel_world * lerp(NORMAL_OFFSET_MIN, NORMAL_OFFSET_MAX, 1.0 - NoL), 1.0);
+	Vec4  light_position = mul(mul(offset_position, direction_shadow_camera.m_baked_view), direction_shadow_camera.m_baked_projection);
+	Vec3  proj_coords = light_position.xyz / light_position.w;
+	proj_coords.xy = proj_coords.xy * 0.5 + 0.5;
+	float shadow = 1.0;
+	bool  inside = proj_coords.x > 0.0 && proj_coords.x < 1.0 && proj_coords.y > 0.0 && proj_coords.y < 1.0;
+	if (inside)
+	{
+		proj_coords = invY(proj_coords);
+#ifdef SQ_BACKEND_GLSL
+		float current_depth = proj_coords.z * 0.5 + 0.5;
+#else
+		float current_depth = proj_coords.z;
+#endif
+		float slope = min(sqrt(1.0 - NoL * NoL) / max(NoL, 0.0001), SLOPE_BIAS_MAX_TAN);
+		float bias = (BIAS_TEXELS + SLOPE_BIAS_TEXELS * slope) * texel_world * baked_depth_per_world();
+		bool  one_sample = shadow_one_sample > 0.5 || direction_shadow_camera.m_options.x == SHADOW_FILTER_NONE;
+		if (one_sample)
+		{
+			float depth = shadow2DArray(direction_baked_shadow_map, Vec3(proj_coords.xy, 0)).r;
+			shadow = (current_depth - bias) <= depth ? 1.0 : 0.0;
+		}
+		else
+		{
+			Vec2  texel = Vec2(1.0, 1.0) / textureSize2DArray(direction_baked_shadow_map, 0);
+			float lit = 0.0;
+			[unroll]
+			for (int x = -1; x <= 1; ++x)
+			{
+				[unroll]
+				for (int y = -1; y <= 1; ++y)
+				{
+					float depth = shadow2DArray(direction_baked_shadow_map, Vec3(proj_coords.xy + Vec2(x, y) * texel, 0)).r;
+					lit += (current_depth - bias) <= depth ? 1.0 : 0.0;
+				}
+			}
+			shadow = lit / 9.0;
+		}
+	}
+	return shadow;
+}
+#endif
+
+//the shadow of the cascades
+//light_dir: to the light
+float direction_light_cascades_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec3 normal)
 {
 	// Get cascade id
 	Vec4 view_fposition = mul(fposition, camera.m_view);
@@ -258,6 +334,17 @@ Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec
 #else
 	return shadow;
 #endif
+}
+
+//the shadow: its cascades, by its baked map (SQ_SHADOW_BAKED)
+//light_dir: to the light
+Vec4 direction_light_compute_shadow(in Vec4 fposition, in Vec3 light_dir, in Vec3 normal)
+{
+	float shadow = direction_light_cascades_shadow(fposition, light_dir, normal);
+#ifdef SQ_SHADOW_BAKED
+	shadow *= direction_light_baked_shadow(fposition, light_dir, normal);
+#endif
+	return shadow;
 }
 
 //the light tinted by the cascade of a point (debug: m_options.z, the cascades in colors; out of

@@ -299,6 +299,8 @@ namespace Render
 		Render::ConstBuffer*   m_spot_light{ nullptr };
 
 		Render::Texture*       m_shadow_map{ nullptr };
+		//the baked map of a directional light (Light::baked_shadow_buffer; none: nullptr)
+		Render::Texture*       m_baked_shadow_map{ nullptr };
 		Render::ConstBuffer*   m_direction_shadow_light{ nullptr };
 		Render::ConstBuffer*   m_point_shadow_light{ nullptr };
 		Render::ConstBuffer*   m_spot_shadow_light{ nullptr };
@@ -397,6 +399,8 @@ namespace Render
 		};
 		LightsType m_support_light { LT_NONE };
 		LightsType m_support_shadow{ LT_NONE };
+		//the shadow of a direction light with a baked map (SQ_SHADOW_BAKED: Light::baked_shadow_buffer)
+		bool       m_baked{ false };
 		//uniforms lights
 		Render::Uniform*             m_uniform_ambient_light{ nullptr };
 		Render::UniformConstBuffer*  m_uniform_spot{ nullptr };
@@ -404,6 +408,7 @@ namespace Render
 		Render::UniformConstBuffer*  m_uniform_direction{ nullptr };
 		//uniforms shadows
 		Render::Uniform*			 m_uniform_shadow_map{ nullptr };
+		Render::Uniform*			 m_uniform_baked_shadow_map{ nullptr };
 		Render::UniformConstBuffer*  m_uniform_spot_shadow{ nullptr };
 		Render::UniformConstBuffer*  m_uniform_point_shadow{ nullptr };
 		Render::UniformConstBuffer*  m_uniform_direction_shadow{ nullptr };

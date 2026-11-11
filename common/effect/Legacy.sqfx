@@ -24,7 +24,10 @@ sub_effect
 	//import shadow forward
     technique "forward"
     {
-        variants clip(mask)
+        variants
+        {
+            clip(mask)
+        }
         pass 
         {
             zbuffer less
@@ -43,7 +46,7 @@ sub_effect
             blend one one  
             cullface param(cull)
             lights spot_point_direction
-			shadows spot_point_direction
+			shadows spot_point_direction baked
             shader source 
             {
                 #define FORWARD_RENDERING
@@ -54,7 +57,10 @@ sub_effect
 	//deferred: single geometry pass, fills the G-Buffer (lighting done later)
 	technique "deferred"
 	{
-		variants clip(mask)
+		variants
+		{
+			clip(mask)
+		}
 		pass
 		{
 			zbuffer less

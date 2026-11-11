@@ -367,6 +367,13 @@ namespace Render
 		{
 			m_uniform_shadow_map->set(inputs.m_shadow_map);
 		}
+		if (m_uniform_baked_shadow_map)
+		{		
+			if(Render::Texture* baked_shadow_map = inputs.m_baked_shadow_map ? inputs.m_baked_shadow_map : inputs.m_shadow_map)
+			{
+				m_uniform_baked_shadow_map->set(baked_shadow_map);
+			}
+		}
 		if (inputs.m_direction_shadow_light && m_uniform_direction_shadow && m_uniform_direction_shadow->is_valid())
 		{
 			m_uniform_direction_shadow->bind(inputs.m_direction_shadow_light);

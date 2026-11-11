@@ -35,6 +35,7 @@ namespace Render
 		m_shader_composite.reset();
 		m_shader_copy.reset();
 		m_shader_volume.reset();
+		m_shader_volume_baked.reset();
 		m_shader_volume_blur.reset();
 	}
 
@@ -78,7 +79,7 @@ namespace Render
 			return;
 		}
 		//volumetric: the sun with its shadow map
-		const bool sun_shadow = frame.m_sun_shadow_map && frame.m_sun_shadow_buffer;
+		const bool sun_shadow = frame.m_sun.m_shadow_map && frame.m_sun.m_shadow_buffer;
 		if (m_settings.volumetric && sun_shadow)
 		{
 			draw_volumetric(frame, size);
@@ -130,8 +131,11 @@ namespace Render
 	void GodRays::draw_volumetric(PostEffectFrame& frame, const IVec2& size)
 	{
 		if (!m_shader_volume) m_shader_volume = load_shader("GodRaysVolume");
+		if (!m_shader_volume_baked) m_shader_volume_baked = load_shader("GodRaysVolumeBaked");
 		if (!m_shader_volume_blur) m_shader_volume_blur = load_shader("GodRaysVolumeBlur");
-		if (!m_shader_volume || !m_shader_volume_blur)
+		//(a sun with a baked map: its shader, by it too)
+		const Shared<Resource::Shader>& volume = frame.m_sun.m_baked_map ? m_shader_volume_baked : m_shader_volume;
+		if (!volume || !m_shader_volume_blur)
 		{
 			copy(frame);
 			return;
@@ -139,12 +143,12 @@ namespace Render
 		Texture* position = frame.m_gbuffer->texture(DrawerPassDeferred::GB_POSITION);
 		//toward the sun (the one of the frame), the hue of its color (not its strength: a strong sun
 		//would burn the frame; how much light: the intensity) by the settings
-		const float sun_length = length(frame.m_sun_direction);
-		const Vec3  sun_direction = sun_length > 0.0001f ? frame.m_sun_direction / sun_length : Vec3(0.0f, -1.0f, 0.0f);
+		const float sun_length = length(frame.m_sun.m_direction);
+		const Vec3  sun_direction = sun_length > 0.0001f ? frame.m_sun.m_direction / sun_length : Vec3(0.0f, -1.0f, 0.0f);
 		//(w: negative, the rays always visible in the composite)
 		const Vec4  sun = Vec4(-sun_direction, -1.0f);
-		const float sun_peak = std::max({ frame.m_sun_color.x, frame.m_sun_color.y, frame.m_sun_color.z, 0.0001f });
-		const Vec3  color = frame.m_sun_color / sun_peak * m_settings.color;
+		const float sun_peak = std::max({ frame.m_sun.m_color.x, frame.m_sun.m_color.y, frame.m_sun.m_color.z, 0.0001f });
+		const Vec3  color = frame.m_sun.m_color / sun_peak * m_settings.color;
 		const Vec2  frame_size = Vec2(float(frame.m_size.x), float(frame.m_size.y));
 		const Vec2  rays_size = Vec2(float(size.x), float(size.y));
 		const int   steps = std::clamp(m_settings.steps, 1, 128);
@@ -152,10 +156,12 @@ namespace Render
 		PostEffectFrame small = frame;
 		small.m_size = size;
 		//1) the light in the air along the rays
-		draw_fullscreen(small, m_mask_target, m_shader_volume.get(), BlendState(), [&](Resource::Shader& shader)
+		draw_fullscreen(small, m_mask_target, volume.get(), BlendState(), [&](Resource::Shader& shader)
 		{
-			render().bind_uniform_CB(frame.m_sun_shadow_buffer, shader.base_shader(), "DirectionShadowCamera");
-			if (auto u = shader.uniform("direction_shadow_map")) u->set(frame.m_sun_shadow_map);
+			render().bind_uniform_CB(frame.m_sun.m_shadow_buffer, shader.base_shader(), "DirectionShadowCamera");
+			if (auto u = shader.uniform("direction_shadow_map")) u->set(frame.m_sun.m_shadow_map);
+			//its baked map (the shader of a baked sun)
+			if (auto u = shader.uniform("direction_baked_shadow_map")) u->set(frame.m_sun.m_baked_map);
 			if (auto u = shader.uniform("g_position"))  u->set(position);
 			if (auto u = shader.uniform("rays_size"))   u->set(rays_size);
 			if (auto u = shader.uniform("rays_sun"))    u->set(sun);

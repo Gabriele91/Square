@@ -39,7 +39,11 @@ sub_effect
     //forward rendering pipeline: drawn on the screen target
     technique "forward"
     {
-        variants skinned clip(mask, dither)
+        variants
+        {
+            skinned
+            clip(mask, dither)
+        }
         pass
         {
             zbuffer less_equal read_only
@@ -58,7 +62,7 @@ sub_effect
             blend src_alpha one
             cullface param(cull)
             lights spot_point_direction
-            shadows spot_point_direction
+            shadows spot_point_direction baked
             shader source
             {
                 #define FORWARD_RENDERING
@@ -70,7 +74,11 @@ sub_effect
     //by a pattern of its alpha (the dither: always)
     technique "deferred"
     {
-        variants skinned clip(mask, dither)
+        variants
+        {
+            skinned
+            clip(mask, dither)
+        }
         pass
         {
             zbuffer less
@@ -88,7 +96,11 @@ sub_effect
     //deferred rendering pipeline: drawn into the light buffer (linear, encoded by the present)
     technique "translucent"
     {
-        variants skinned clip(mask, dither)
+        variants
+        {
+            skinned
+            clip(mask, dither)
+        }
         pass
         {
             zbuffer less_equal read_only
@@ -108,7 +120,7 @@ sub_effect
             blend src_alpha one
             cullface param(cull)
             lights spot_point_direction
-            shadows spot_point_direction
+            shadows spot_point_direction baked
             shader source
             {
                 #define FORWARD_RENDERING

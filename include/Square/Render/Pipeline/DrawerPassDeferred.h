@@ -110,10 +110,8 @@ namespace Render
 		Render::Texture* m_velocity_texture{ nullptr };
 		Render::Target*  m_velocity_target{ nullptr };
 		bool             m_velocity_drawn{ false };
-		//the sun of the frame (the first direction light with a shadow): for the post effects
-		Vec3             m_sun_direction{ 0.0f, -1.0f, 0.0f };
-		Vec3             m_sun_color{ 0.0f };
-		Render::Texture* m_sun_shadow_map{ nullptr };
+		//the sun of the frame (the direction light chosen: Light::sun), for the post effects
+		PostEffectSun    m_sun;
 		//the last frame: the model of each renderable drawn in the velocity, the camera
 		UnorderedMap<const Renderable*, Mat4> m_previous_models;
 		UnorderedMap<const Renderable*, Mat4> m_current_models;
@@ -144,6 +142,8 @@ namespace Render
 		Shared<Render::ConstBuffer> m_cb_velocity;
 		//shadow constant buffers
 		Shared<Render::ConstBuffer> m_cb_direction_shadow_light;
+		//the cascades of the sun (its own: the buffer of the lights changes with each one)
+		Shared<Render::ConstBuffer> m_cb_sun_shadow_light;
 		Shared<Render::ConstBuffer> m_cb_point_shadow_light;
 		Shared<Render::ConstBuffer> m_cb_spot_shadow_light;
 
@@ -154,6 +154,8 @@ namespace Render
 		Shared<Resource::Shader> m_shader_spot;
 		//light shaders with shadow mapping
 		Shared<Resource::Shader> m_shader_direction_shadow;
+		//(a light with a baked map: Light::baked_shadow_buffer)
+		Shared<Resource::Shader> m_shader_direction_shadow_baked;
 		Shared<Resource::Shader> m_shader_point_shadow;
 		Shared<Resource::Shader> m_shader_spot_shadow;
 		Shared<Resource::Shader> m_shader_present;

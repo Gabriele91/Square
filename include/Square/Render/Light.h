@@ -96,7 +96,11 @@ namespace Render
 		CBArrMat4        m_projection[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 		CBArrMat4        m_view[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES];
 		CBArrVec3        m_data[DIRECTION_SHADOW_CSM_NUMBER_OF_FACES]; // x: the depth (view) where the cascade ends; y, z: free (> hlsl packet rule: float4 for a float in array)
-		IVec4            m_options{ 0, DIRECTION_SHADOW_CSM_DEFAULT_FACES, 0, 0 }; //x: the ShadowFilter, y: the cascades, z: the cascades in colors (debug) (a vector: its own register after the array)
+		IVec4            m_options{ 0, DIRECTION_SHADOW_CSM_DEFAULT_FACES, 0, 0 }; //x: the ShadowFilter, y: the cascades, z: the cascades in colors (debug), w: its baked map (a vector: its own register after the array)
+		//its baked map (m_options.w 1, Light::baked_shadow_buffer): the static casters of the whole
+		//scene, its projection, its view
+		Mat4             m_baked_projection{ 1.0f };
+		Mat4             m_baked_view{ 1.0f };
 	};
 
 	CBStruct UniformPointShadowLight
@@ -151,9 +155,14 @@ namespace Render
 		virtual void set_scene_size(const Geometry::AABoundingBox& scene);
 		//its cascades stay where they are while the camera moves a little 
 		virtual bool stable_cascades() const { return false; }
-		//its farthest cascade the whole scene, kept: its static casters drawn once (again only when
-		//it moves, not when their levels of detail change)
+		//a baked map of the whole scene, kept: its static casters drawn once (again only when it
+		//moves, not when their levels of detail change), its cascades the dynamic ones only
 		virtual bool scene_cascade() const { return false; }
+		//its baked map (scene_cascade; none: nullptr)
+		virtual const ShadowBuffer* baked_shadow_buffer() const { return nullptr; }
+		//the sun of the scene, chosen by hand (its post effects follow it: the god rays; a light not
+		//chosen: none)
+		virtual bool sun() const { return false; }
 		// number of cascades that are updated with dynamic objects 
 		virtual unsigned int dynamic_cascades() const { return 3; }
 

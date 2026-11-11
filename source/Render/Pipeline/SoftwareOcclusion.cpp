@@ -97,11 +97,15 @@ namespace Render
 #endif
 
 		//an edge of a triangle along a row: its value at the center of a pixel x is
-		//m_at_zero + m_step * (x + 0.5), its sign by the winding (inside: >= 0)
+		//m_at_zero + m_step * (x + 0.5), its sign by the winding (inside: >= 0); m_step_y its step
+		//down a row; m_inner how much less it is at the worst corner of a pixel (all of a pixel
+		//inside: its value at the center at least m_inner)
 		struct RowEdge
 		{
 			float m_at_zero{ 0.0f };
 			float m_step{ 0.0f };
+			float m_step_y{ 0.0f };
+			float m_inner{ 0.0f };
 		};
 
 		//the edge from a to b on the row of centers py, by the winding (sign: 1 or -1)
@@ -111,13 +115,16 @@ namespace Render
 			RowEdge out;
 			out.m_at_zero = ((b.x - a.x) * (py - a.y) + (b.y - a.y) * a.x) * sign;
 			out.m_step = -(b.y - a.y) * sign;
+			out.m_step_y = (b.x - a.x) * sign;
+			out.m_inner = 0.5f * (std::abs(out.m_step) + std::abs(out.m_step_y));
 			return out;
 		}
 
-		//the pixels of a row from low_x to high_x inside the three edges: the inverse of their depth
-		//(the depths of the vertices by the edges, by scale) kept where it is nearer. Some pixels
-		//at once (Lanes), the rest one by one
-		static void raster_row(float* row, int low_x, int high_x, const RowEdge (&edges)[3], const Vec3& depths, float scale)
+		//the pixels of a row from low_x to high_x all inside the three edges (conservative: a pixel
+		//only partly covered is not hidden, what is behind it may be seen there): the inverse of
+		//their depth (the depths of the vertices by the edges, by scale), the farthest in the pixel
+		//(less margin), kept where it is nearer. Some pixels at once (Lanes), the rest one by one
+		static void raster_row(float* row, int low_x, int high_x, const RowEdge (&edges)[3], const Vec3& depths, float scale, float margin)
 		{
 			int x = low_x;
 #if defined(SQUARE_OCCLUSION_AVX) || defined(SQUARE_OCCLUSION_SSE4) || defined(SQUARE_OCCLUSION_NEON)
@@ -125,19 +132,23 @@ namespace Render
 			const Lanes::Float at0 = Lanes::set(edges[0].m_at_zero), step0 = Lanes::set(edges[0].m_step);
 			const Lanes::Float at1 = Lanes::set(edges[1].m_at_zero), step1 = Lanes::set(edges[1].m_step);
 			const Lanes::Float at2 = Lanes::set(edges[2].m_at_zero), step2 = Lanes::set(edges[2].m_step);
+			const Lanes::Float inner0 = Lanes::set(-edges[0].m_inner);
+			const Lanes::Float inner1 = Lanes::set(-edges[1].m_inner);
+			const Lanes::Float inner2 = Lanes::set(-edges[2].m_inner);
 			const Lanes::Float z0 = Lanes::set(depths.x), z1 = Lanes::set(depths.y), z2 = Lanes::set(depths.z);
 			const Lanes::Float factor = Lanes::set(scale);
+			const Lanes::Float farther = Lanes::set(-margin);
 			for (; x + Lanes::count - 1 <= high_x; x += Lanes::count)
 			{
 				const Lanes::Float px = Lanes::add(Lanes::set(float(x) + 0.5f), ramp);
 				const Lanes::Float w0 = Lanes::add(at0, Lanes::mul(step0, px));
 				const Lanes::Float w1 = Lanes::add(at1, Lanes::mul(step1, px));
 				const Lanes::Float w2 = Lanes::add(at2, Lanes::mul(step2, px));
-				const Lanes::Float inside = Lanes::both(Lanes::both(Lanes::positive(w0), Lanes::positive(w1)), Lanes::positive(w2));
+				const Lanes::Float inside = Lanes::both(Lanes::both(Lanes::positive(Lanes::add(w0, inner0)), Lanes::positive(Lanes::add(w1, inner1))), Lanes::positive(Lanes::add(w2, inner2)));
 				if (!Lanes::none(inside))
 				{
 					const Lanes::Float sum = Lanes::add(Lanes::add(Lanes::mul(w0, z0), Lanes::mul(w1, z1)), Lanes::mul(w2, z2));
-					const Lanes::Float value = Lanes::mul(sum, factor);
+					const Lanes::Float value = Lanes::add(Lanes::mul(sum, factor), farther);
 					const Lanes::Float old = Lanes::load(row + x);
 					Lanes::store(row + x, Lanes::select(inside, Lanes::max(old, value), old));
 				}
@@ -149,9 +160,9 @@ namespace Render
 				const float w0 = edges[0].m_at_zero + edges[0].m_step * px;
 				const float w1 = edges[1].m_at_zero + edges[1].m_step * px;
 				const float w2 = edges[2].m_at_zero + edges[2].m_step * px;
-				if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f)
+				if (w0 >= edges[0].m_inner && w1 >= edges[1].m_inner && w2 >= edges[2].m_inner)
 				{
-					const float value = (w0 * depths.x + w1 * depths.y + w2 * depths.z) * scale;
+					const float value = (w0 * depths.x + w1 * depths.y + w2 * depths.z) * scale - margin;
 					row[x] = std::max(row[x], value);
 				}
 			}
@@ -286,7 +297,7 @@ namespace Render
 		const Vec3 p1 = to_screen(b, m_size);
 		const Vec3 p2 = to_screen(c, m_size);
 		const float area = edge(p0, p1, p2.x, p2.y);
-		//its pixels (their centers inside it, either winding: both faces hide)
+		//its pixels (all of them inside it, either winding: both faces hide)
 		const int low_x = std::max(int(std::floor(std::min({ p0.x, p1.x, p2.x }))), 0);
 		const int low_y = std::max(int(std::floor(std::min({ p0.y, p1.y, p2.y }))), 0);
 		const int high_x = std::min(int(std::floor(std::max({ p0.x, p1.x, p2.x }))), m_size.x - 1);
@@ -298,6 +309,17 @@ namespace Render
 			const float sign = area > 0.0f ? 1.0f : -1.0f;
 			const float scale = sign / area;
 			const Vec3 depths(p0.z, p1.z, p2.z);
+			//(the inverse of the depth linear on the screen: its farthest in a pixel, half of its
+			//steps across and down less than at its center)
+			const RowEdge slopes[3]
+			{
+				  row_edge(p1, p2, 0.0f, sign)
+				, row_edge(p2, p0, 0.0f, sign)
+				, row_edge(p0, p1, 0.0f, sign)
+			};
+			const float step_x = (slopes[0].m_step * depths.x + slopes[1].m_step * depths.y + slopes[2].m_step * depths.z) * scale;
+			const float step_y = (slopes[0].m_step_y * depths.x + slopes[1].m_step_y * depths.y + slopes[2].m_step_y * depths.z) * scale;
+			const float margin = 0.5f * (std::abs(step_x) + std::abs(step_y));
 			Vector<float>& depth = m_levels[0];
 			for (int y = low_y; y <= high_y; ++y)
 			{
@@ -308,7 +330,7 @@ namespace Render
 					, row_edge(p2, p0, py, sign)
 					, row_edge(p0, p1, py, sign)
 				};
-				raster_row(depth.data() + size_t(y) * size_t(m_size.x), low_x, high_x, edges, depths, scale);
+				raster_row(depth.data() + size_t(y) * size_t(m_size.x), low_x, high_x, edges, depths, scale, margin);
 			}
 		}
 	}

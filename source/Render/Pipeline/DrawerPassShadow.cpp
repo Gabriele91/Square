@@ -238,9 +238,21 @@ namespace Render
 		{
 			Render::UniformDirectionShadowLight udirectionshadow;
 			light.set(&udirectionshadow, &camera);
+			const ShadowBuffer* baked = light.baked_shadow_buffer();
+			if (baked)
+			{
+				//its baked map: the static casters, drawn again only when out of date
+				draw_baked(light, *baked, udirectionshadow, collection, technique_name, inputs);
+			}
 			render().update_steam_CB(m_cb_direction_light.get(), (const unsigned char*)&udirectionshadow, sizeof(udirectionshadow));
 			render().set_viewport_state(light.shadow_viewport());
-			if (m_cascades_cache && light.stable_cascades())
+			if (baked)
+			{
+				//its cascades: the dynamic casters only, every frame
+				m_cascade_caches.erase(&light);
+				draw_into(light.shadow_buffer(), true, queues, technique_name, inputs, &udirectionshadow, Casters::DYNAMIC);
+			}
+			else if (m_cascades_cache && light.stable_cascades())
 			{
 				//its cascades stay: their caches
 				draw_cascades(light, udirectionshadow, collection, queues, technique_name, inputs);
@@ -386,8 +398,6 @@ namespace Render
 		const unsigned int count = static_cast<const unsigned int>(std::clamp(cascades.m_options.y, 1, int(DIRECTION_SHADOW_CSM_NUMBER_OF_FACES)));
 		Array<uint64, DIRECTION_SHADOW_CSM_NUMBER_OF_FACES> hashes;
 		cascades_casters(queues, cascades, hashes);
-		//(the scene cascade, the farthest one: only when it moved, its casters drawn once)
-		const uint32 scene = light.scene_cascade() ? MULTI_PASS_LAYER_BIT(count - 1) : 0;
 		uint32 dirty = 0;
 		for (int i = 0; i != count; ++i)
 		{
@@ -395,7 +405,7 @@ namespace Render
 			const Vector<unsigned char> view = AuxShadowCache::key(cascades.m_view[i]);
 			key.insert(key.end(), view.begin(), view.end());
 			const bool moved = cache.m_keys[i] != key;
-			const bool changed = !MULTI_PASS_HAS_LAYER(scene, i) && cache.m_casters[i] != hashes[i];
+			const bool changed = cache.m_casters[i] != hashes[i];
 			if (made || moved || changed)
 			{
 				dirty |= MULTI_PASS_LAYER_BIT(i);
@@ -403,8 +413,7 @@ namespace Render
 				cache.m_casters[i] = hashes[i];
 			}
 		}
-		//their static casters again (each layer cleared: the far depth copied in); the scene one at
-		//their finest level of detail
+		//their static casters again (each layer cleared: the far depth copied in)
 		if (dirty != 0)
 		{
 			for (int i = 0; i != count; ++i)
@@ -414,17 +423,7 @@ namespace Render
 					render().copy_texture_layer(cache.m_blank->texture(), 0, cache.m_buffer->texture(), (unsigned int)i);
 				}
 			}
-			const uint32 nearer_dirty = dirty & ~scene;
-			const uint32 scene_dirty = dirty & scene;
-			if (nearer_dirty != 0)
-			{
-				draw_into(*cache.m_buffer, false, queues, technique_name, inputs, &cascades, Casters::STATIC, nearer_dirty, true);
-			}
-			if (scene_dirty != 0)
-			{
-				finest_casters(collection);
-				draw_into(*cache.m_buffer, false, m_finest, technique_name, inputs, &cascades, Casters::FINEST, scene_dirty, true);
-			}
+			draw_into(*cache.m_buffer, false, queues, technique_name, inputs, &cascades, Casters::STATIC, dirty, true);
 		}
 		//into the shadow map: the nearer ones (the dynamic casters over them, every frame), the
 		//farther ones only when drawn again (nothing over them: as their caches)
@@ -448,10 +447,49 @@ namespace Render
 		}
     }
 
-    void DrawerPassShadow::finest_casters(const Collection& collection)
+    void DrawerPassShadow::draw_baked
+    (
+      const Light& light
+    , const ShadowBuffer& baked
+    , const UniformDirectionShadowLight& cascades
+    , const Collection& collection
+    , const String& technique_name
+    , EffectPassInputs& inputs
+    )
+    {
+		BakedCache& cache = m_baked_caches[&light];
+		cache.m_used = m_draws;
+		//out of date: another map (new, another size), moved (the light turned, the scene out of
+		//it), its static casters changed (which ones, where; not their levels of detail)
+		Vector<unsigned char> key = AuxShadowCache::key(cascades.m_baked_projection);
+		const Vector<unsigned char> view = AuxShadowCache::key(cascades.m_baked_view);
+		key.insert(key.end(), view.begin(), view.end());
+		const uint64 casters = finest_casters(collection);
+		const bool made = cache.m_texture != baked.texture();
+		const bool moved = cache.m_key != key;
+		const bool changed = cache.m_casters != casters;
+		if (made || moved || changed)
+		{
+			//as a single cascade: its projection, its view
+			UniformDirectionShadowLight scene = cascades;
+			scene.m_projection[0] = cascades.m_baked_projection;
+			scene.m_view[0] = cascades.m_baked_view;
+			scene.m_options.y = 1;
+			render().update_steam_CB(m_cb_direction_light.get(), (const unsigned char*)&scene, sizeof(scene));
+			render().set_viewport_state(Vec4(0.0f, 0.0f, float(baked.width()), float(baked.height())));
+			draw_into(baked, true, m_finest, technique_name, inputs, &scene, Casters::FINEST, MULTI_PASS_LAYER_BIT(0), true);
+			cache.m_texture = baked.texture();
+			cache.m_key = key;
+			cache.m_casters = casters;
+		}
+    }
+
+    uint64 DrawerPassShadow::finest_casters(const Collection& collection)
     {
 		//(opaque, as the casters of a directional light; drawn once: no order)
 		m_finest.clear();
+		//(FNV-1a: its offset basis)
+		uint64 value = 14695981039346656037ull;
 		for (const Weak<Renderable>& weak_renderable : collection.m_renderables)
 		{
 			auto renderable = weak_renderable.lock();
@@ -462,8 +500,17 @@ namespace Render
 			if (caster)
 			{
 				m_finest[RQ_OPAQUE].push_front_to_back(weak_renderable, 0.0f);
+				//which one, where
+				const Renderable* identity = renderable.get();
+				AuxShadowCache::hash(value, &identity, sizeof(identity));
+				if (auto transform = renderable->transform().lock())
+				{
+					const Mat4& model = transform->global_model_matrix();
+					AuxShadowCache::hash(value, &model, sizeof(model));
+				}
 			}
 		}
+		return value;
     }
 
     uint64 DrawerPassShadow::static_casters(const PoolQueues& queues) const
@@ -497,6 +544,7 @@ namespace Render
     {
 		AuxShadowCache::forget(m_caches, m_draws);
 		AuxShadowCache::forget(m_cascade_caches, m_draws);
+		AuxShadowCache::forget(m_baked_caches, m_draws);
     }
 
     void DrawerPassShadow::draw_into
