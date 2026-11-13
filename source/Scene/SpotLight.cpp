@@ -107,9 +107,9 @@ namespace Scene
 	{
 		this->Render::SpotLight::radius(light_r);
 		m_sphere.radius(this->Render::SpotLight::radius());
-		//dirty
+		//dirty (its projection: as far as it)
 		m_frustum_is_dirty = true;
-		m_viewport_is_dirty = false;
+		m_viewport_is_dirty = true;
 	}
 
 	//change outer cut_off aka change frustum

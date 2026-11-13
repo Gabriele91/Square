@@ -694,6 +694,10 @@ namespace Square
 		{
 			m_collection.m_lights.push_back(light);
 		}
+		else if (auto decal = DynamicPointerCast<Render::Decal, Scene::Component>(component))
+		{
+			m_collection.m_decals.push_back(decal);
+		}
 		else if (auto camera = DynamicPointerCast<Render::Camera, Scene::Component>(component))
 		{
 			m_collection.m_cameras.push_back(camera);
@@ -738,6 +742,15 @@ namespace Square
 				auto other = weak_light.lock();
 				return !other || other == light;
 			}), lights.end());
+		}
+		else if (auto decal = DynamicPointerCast<Render::Decal, Scene::Component>(component))
+		{
+			auto& decals = m_collection.m_decals;
+			decals.erase(std::remove_if(decals.begin(), decals.end(), [&](const Weak<Render::Decal>& weak_decal)
+			{
+				auto other = weak_decal.lock();
+				return !other || other == decal;
+			}), decals.end());
 		}
 		else if (auto camera = DynamicPointerCast<Render::Camera, Scene::Component>(component))
 		{

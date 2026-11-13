@@ -262,6 +262,7 @@ namespace Render
 		virtual void constant(const float constant);
         
 		virtual void set(UniformSpotLight* data) const override;
+
     public:
         Vec3  m_diffuse;
         Vec3  m_specular;

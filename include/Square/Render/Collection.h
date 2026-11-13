@@ -12,6 +12,7 @@
 #include "Square/Render/Queue.h"
 #include "Square/Render/Camera.h"
 #include "Square/Render/Light.h"
+#include "Square/Render/Decal.h"
 #include "Square/Render/Renderable.h"
 #include "Square/Render/LevelOfDetail.h"
 #include "Square/Render/Occluder.h"
@@ -40,11 +41,13 @@ namespace Render
         //all objects
         using Cameras = Vector < Weak<Camera> >;
         using Lights = Vector < Weak<Light> >;
+        using Decals = Vector < Weak<Decal> >;
 		using Renderables = Vector < Weak<Renderable> >;
 		using LevelsOfDetail = Vector < Weak<LevelOfDetail> >;
 		using Occluders = Vector < Weak<Occluder> >;
         Cameras m_cameras;
 		Lights m_lights;
+		Decals m_decals;
 		Renderables m_renderables;
 		//the groups of levels of detail: their level selected for each camera (before its queues)
 		LevelsOfDetail m_levels_of_detail;

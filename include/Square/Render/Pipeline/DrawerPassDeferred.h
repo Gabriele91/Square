@@ -85,7 +85,9 @@ namespace Render
 		//G-Buffer depth, their motion on the screen since the last frame; false: none drawn
 		bool velocity_pass(const Camera& camera, const PoolQueues& queues);
 		//light passes: accumulate all lights into the light buffer
-		void light_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues);
+		void light_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues, const Collection& collection);
+		//the decals of the collection seen (Render::Decal), their color added to the light buffer
+		void decal_pass(const Camera& camera, const Collection& collection);
 		//translucent pass: the translucent renderables, forward shaded ("translucent" technique)
 		//into the light buffer, over the lit opaque scene and tested against its depth
 		void translucent_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues);
@@ -138,6 +140,7 @@ namespace Render
 		Shared<Render::ConstBuffer> m_cb_direction_light;
 		Shared<Render::ConstBuffer> m_cb_point_light;
 		Shared<Render::ConstBuffer> m_cb_spot_light;
+		Shared<Render::ConstBuffer> m_cb_decal;
 		Shared<Render::ConstBuffer> m_cb_light_volume;
 		Shared<Render::ConstBuffer> m_cb_velocity;
 		//shadow constant buffers
@@ -158,6 +161,8 @@ namespace Render
 		Shared<Resource::Shader> m_shader_direction_shadow_baked;
 		Shared<Resource::Shader> m_shader_point_shadow;
 		Shared<Resource::Shader> m_shader_spot_shadow;
+		//the decals
+		Shared<Resource::Shader> m_shader_decal;
 		Shared<Resource::Shader> m_shader_present;
 		Shared<Resource::Shader> m_shader_velocity;
 

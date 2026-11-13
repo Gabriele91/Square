@@ -4,6 +4,7 @@
 //
 //  See DrawerPassDeferred.h for the high level description.
 //
+#include "Square/Resource/Texture.h"
 #include "Square/Core/Context.h"
 #include "Square/System/RenderSystem.h"
 #include "Square/Driver/Render.h"
@@ -14,6 +15,11 @@
 #include "Square/Render/Renderable.h"
 #include "Square/Render/Transform.h"
 #include "Square/Render/Light.h"
+#include "Square/Render/Decal.h"
+#include "Square/Render/Collection.h"
+#include "Square/Geometry/Intersection.h"
+#include "Square/Geometry/Sphere.h"
+#include "Square/Geometry/Frustum.h"
 #include "Square/Render/ShadowBuffer.h"
 #include "Square/Render/Pipeline/DrawerPassDeferred.h"
 #include "Square/Render/BasicMesh.h"
@@ -153,6 +159,7 @@ namespace Render
 		m_cb_direction_light = Render::stream_constant_buffer<Render::UniformDirectionLight>(&render());
 		m_cb_point_light     = Render::stream_constant_buffer<Render::UniformPointLight>(&render());
 		m_cb_spot_light      = Render::stream_constant_buffer<Render::UniformSpotLight>(&render());
+		m_cb_decal           = Render::stream_constant_buffer<Render::UniformDecal>(&render());
 		m_cb_light_volume    = Render::stream_constant_buffer<UniformLightVolume>(&render());
 		m_cb_velocity        = Render::stream_constant_buffer<UniformVelocity>(&render());
 		#if defined(SQUARE_DEBUG_TOOLS)
@@ -171,6 +178,7 @@ namespace Render
 		m_shader_direction_shadow_baked = context.resource<Resource::Shader>("DeferredDirectionShadowBakedLight");
 		m_shader_point_shadow     = context.resource<Resource::Shader>("DeferredPointShadowLight");
 		m_shader_spot_shadow      = context.resource<Resource::Shader>("DeferredSpotShadowLight");
+		m_shader_decal            = context.resource<Resource::Shader>("DeferredDecal");
 		m_shader_present   = context.resource<Resource::Shader>("DeferredPresent");
 		m_shader_velocity  = context.resource<Resource::Shader>("DeferredVelocity");
 		//volume meshes
@@ -373,7 +381,7 @@ namespace Render
 		return drawn;
 	}
 
-	void DrawerPassDeferred::light_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues)
+	void DrawerPassDeferred::light_pass(const Vec4& ambient_color, const Camera& camera, const PoolQueues& queues, const Collection& collection)
 	{
 		//all the light shaders are required
 		if (!m_shader_ambient   || !m_shader_ambient->base_shader()
@@ -608,6 +616,9 @@ namespace Render
 			render().set_depth_buffer_state({ DM_DISABLE });
 		}
 
+		//the decals: added to the light buffer
+		decal_pass(camera, collection);
+
 		//unbind light accumulation target and restore state
 		render().disable_render_target(m_light_target);
 		render().set_blend_state({});
@@ -664,7 +675,7 @@ namespace Render
 		//2) accumulate lights into the light buffer
 		{
 			SQUARE_RENDER_SCOPE(render(), "Lights");
-			light_pass(ambient_color, scene, queues);
+			light_pass(ambient_color, scene, queues, collection);
 		}
 		//2b) blend the translucent renderables over it (forward shaded)
 		{
@@ -690,6 +701,52 @@ namespace Render
 				const IVec4 area(0, 0, size.x, size.y);
 				render().copy_target_to_target(area, m_gbuffer->target(), area, nullptr, RT_DEPTH);
 			}
+		}
+	}
+
+	void DrawerPassDeferred::decal_pass(const Camera& camera, const Collection& collection)
+	{
+		//the ones seen: a sphere around their box (its back faces behind the shaded geometry, as the
+		//volumes of the lights: read-only depth >=), its texture added where the G-Buffer is in it
+		if (m_shader_decal && m_shader_decal->base_shader() && !collection.m_decals.empty())
+		{
+			SQUARE_RENDER_SCOPE(render(), "Decals");
+			render().set_depth_buffer_state({ DT_GREATER_EQUAL, DM_ENABLE_ONLY_READ });
+			auto& shader = m_shader_decal;
+			bool shader_bound = false;
+			for (const auto& weak_decal : collection.m_decals)
+			{
+				auto decal = weak_decal.lock();
+				const bool seen = decal && decal->visible() && decal->texture()
+				               && Geometry::Intersection::check(camera.frustum(), decal->bounding_sphere()) != Geometry::Intersection::OUTSIDE;
+				if (seen)
+				{
+					if (!shader_bound)
+					{
+						shader->bind();
+						render().bind_uniform_CB(m_cb_camera.get(), shader->base_shader(), "Camera");
+						bind_gbuffer(shader.get());
+						render().bind_uniform_CB(m_cb_decal.get(), shader->base_shader(), "Decal");
+						render().bind_uniform_CB(m_cb_light_volume.get(), shader->base_shader(), "LightVolume");
+						shader_bound = true;
+					}
+					Render::UniformDecal udecal;
+					decal->set(&udecal);
+					Render::update_constant_buffer(&render(), m_cb_decal.get(), &udecal);
+					if (auto uniform_map = shader->uniform("decal_map"))
+					{
+						uniform_map->set(decal->texture()->get_context_texture());
+					}
+					const Geometry::Sphere& sphere = decal->bounding_sphere();
+					const Mat4 model = scale(translate(Constants::identity<Mat4>(), sphere.get_center()), Vec3(sphere.get_radius()));
+					draw_light_volume(render(), m_cb_light_volume, m_sphere, model);
+				}
+			}
+			if (shader_bound)
+			{
+				shader->unbind();
+			}
+			render().set_depth_buffer_state({ DM_DISABLE });
 		}
 	}
 
