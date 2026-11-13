@@ -263,7 +263,34 @@ namespace Navigation
 
 	bool NavGrid::cell_walkable(int x, int z) const
 	{
-		return inside(x, z) && !m_cells[size_t(index(x, z))].m_blocked;
+		return inside(x, z) && !m_cells[size_t(index(x, z))].m_blocked && m_cells[size_t(index(x, z))].m_closed == 0;
+	}
+
+	void NavGrid::close(const Vec3& min, const Vec3& max, bool closed)
+	{
+		//the cells whose center is in the box (x/z)
+		int x0, z0, x1, z1;
+		to_cell(min, x0, z0);
+		to_cell(max, x1, z1);
+		x0 = std::max(x0, 0);
+		z0 = std::max(z0, 0);
+		x1 = std::min(x1, m_width - 1);
+		z1 = std::min(z1, m_height - 1);
+		for (int z = z0; z <= z1; ++z)
+		{
+			for (int x = x0; x <= x1; ++x)
+			{
+				Cell& cell = m_cells[size_t(index(x, z))];
+				if (closed)
+				{
+					++cell.m_closed;
+				}
+				else
+				{
+					cell.m_closed = std::max(cell.m_closed - 1, 0);
+				}
+			}
+		}
 	}
 
 	bool NavGrid::walkable(const Vec3& point) const

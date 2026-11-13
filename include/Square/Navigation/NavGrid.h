@@ -67,6 +67,11 @@ namespace Navigation
 		//the floor, smoothed (the first: from); false: no path
 		bool find_path(const Vec3& from, const Vec3& to, Vector<Vec3>& path) const;
 
+		//the cells under a box (x/z, from min to max) closed at run time (a door shut, a bridge
+		//fallen, a flood) or open again: not walkable while closed (closed twice: open after it is
+		//opened twice); its clearance is the one of the box (no erosion around it)
+		void close(const Vec3& min, const Vec3& max, bool closed);
+
 		//size of the grid (cells), a cell
 		int width() const { return m_width; }
 		int height() const { return m_height; }
@@ -80,6 +85,7 @@ namespace Navigation
 			float m_floor{ 0.0f };
 			bool  m_has_floor{ false };
 			bool  m_blocked{ false };
+			int   m_closed{ 0 }; //closed at run time (close), how many times
 		};
 
 		bool inside(int x, int z) const { return x >= 0 && z >= 0 && x < m_width && z < m_height; }
